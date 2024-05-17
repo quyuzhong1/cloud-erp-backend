@@ -633,16 +633,22 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
             detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
             //平台SKU
-            SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
-                // 非平台下载的订单
-                if (!SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
-                detailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
-                detailEntity.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
-                }
-            } else {
-                detailEntity.setPlatformSkuNo("");
-                detailEntity.setPlatformSpuNo("");
+//            SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
+//            if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
+//                // 非平台下载的订单
+//                if (!SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
+//                detailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
+//                detailEntity.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
+//                }
+//            } else {
+//                detailEntity.setPlatformSkuNo("");
+//                detailEntity.setPlatformSpuNo("");
+//            }
+            // 手工单不记录平台SKU和平台SPU
+           if (!SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
+               // 非平台下载的订单不记录SKU
+               detailEntity.setPlatformSkuNo("");
+               detailEntity.setPlatformSpuNo("");
             }
 
             //操作日志
