@@ -258,7 +258,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 平台sku编号
         detailDTO.setPlatformSkuNo(item.getSku());
         //平台产品id
-        detailDTO.setPlatformSpuNo(item.getVariantId());
+        detailDTO.setPlatformSpuNo(item.getProductId());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
