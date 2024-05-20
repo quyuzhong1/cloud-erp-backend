@@ -13,6 +13,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -708,4 +709,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param skuIds
      */
     void initProductCustom(List<String> skuIds);
+
+    /**
+     * 获取sku 采购信息
+     * @param skuIds
+     * @return
+     */
+    List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds);
 }

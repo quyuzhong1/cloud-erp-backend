@@ -426,16 +426,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
-        String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
-        String salesPlatform = dto.getSalesPlatform();
-        Boolean isAliExpress = aliExpress.equals(salesPlatform);
-
-        String country = Objects.nonNull(dto.getReceiver())?Objects.nonNull(dto.getReceiver().getCountry())?dto.getReceiver().getCountry():"":"";
-        LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO = logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
-        //最高报关金额
-        BigDecimal maxCustomsAmount = channelConstraintDTO.getMaxCustomsAmount();
-        //最低报关金额
-        BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
+//        String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
+//        String salesPlatform = dto.getSalesPlatform();
+//        Boolean isAliExpress = aliExpress.equals(salesPlatform);
+//
+//        String country = Objects.nonNull(dto.getReceiver())?Objects.nonNull(dto.getReceiver().getCountry())?dto.getReceiver().getCountry():"":"";
+//        LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO = logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
+//        //最高报关金额
+//        BigDecimal maxCustomsAmount = channelConstraintDTO.getMaxCustomsAmount();
+//        //最低报关金额
+//        BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
 
         LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
 
@@ -544,7 +544,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 sourceId(dto.getOrderId()).
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
-                iossCode(dto.getIossTaxNo()).
+                iossCode(logisticsChannel.getIsIossPrepay()? dto.getIossTaxNo(): "").
                 senderInfo(senderInfo).
                 returnInfo(returnInfo).
                 receiverInfoVO(receiverInfo).

@@ -938,7 +938,53 @@
         </if>
     </select>
 
-
+    <select id="getSkuInfoBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.version,
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.variant_property as variantProperty,
+        pl.declare_chinese_name as declareName,
+        pl.declare_model as declareModel,
+        pl.product_property_id AS productPropertyId,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        pi.category_id AS categoryId,
+        ps.sale_state as saleState,
+        pd.unit_name,
+        pd.status,
+        pp.moq,
+        pp.main_supplier as supplierId,
+        pd.warehouse_location as warehouseLocation,
+        pi.sale_method,
+        ppk.gross_weight,
+        pc.actual_tax_cost,
+        pc.target_tax_cost,
+        pc.retail_price,
+        ppk.product_size,
+        ppk.net_weight
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        WHERE pi.is_deleted = FALSE AND pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
     <select id="getSkuBaseBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
         SELECT
         pd.version,
@@ -1789,5 +1835,28 @@
             pd.is_deleted = FALSE
           AND pd.status = '2'
           AND pc.to_declare_price = 0
+    </select>
+
+    <select id="listSkuPurchaseBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.variant_property as variantProperty,
+        pd.unit_name,
+        pd.status,
+        pp.moq,
+        pp.main_supplier as supplierId,
+        pd.warehouse_location as warehouseLocation
+        FROM  product_detail pd
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
     </select>
 </mapper>
