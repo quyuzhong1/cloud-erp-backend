@@ -8,7 +8,9 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
 import com.common.business.utils.RedisUtil;
@@ -20,12 +22,15 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.mabang.ComboSkuInfoEntity;
 import com.erp.model.dmp.mabang.RedisMabngSkuEntity;
 import com.erp.model.dmp.mabang.SkuInfoEntity;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.MabangApiUtils;
@@ -71,7 +76,11 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         List<SkuInfoEntity> insertList = new ArrayList<>();
         List<SkuInfoEntity> pushToMqList = new ArrayList<>();
         for (SkuInfoEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByStockSku(entity.getStockSku());
+            if(StrUtil.isBlank(entity.getFinancial())){
+                sendWarnMsg(StrUtil.format("财务编码为空， 库存sku编码 = {}", entity.getStockSku()), dto.getJobTaskDTO());
+                continue;
+            }
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByFinancial(entity.getFinancial());
             List<SkuInfoEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
@@ -203,5 +212,21 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
             comboProductDetail.setQuantity(detail.getQuantity());
             return comboProductDetail;
         }).collect(Collectors.toList());
+    }
+
+
+    /***
+     * 发送预警信息
+     */
+    private void sendWarnMsg(String msg,  JobTaskDTO jobTaskDTO) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName(jobTaskDTO.getApiName());
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfo.setTitle(StrUtil.format("【{}】从{}拉取至{}失败",jobTaskDTO.getApiName(),jobTaskDTO.getDictPlatform(),"ERP"));
+        warnMsgInfo.setTableName("dmp_pull_task");
+        warnMsgInfo.setTableId("");
+        warnMsgInfo.setKeyInfo(msg);
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 }
