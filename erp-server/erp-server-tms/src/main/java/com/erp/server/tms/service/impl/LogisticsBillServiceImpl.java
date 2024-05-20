@@ -1014,6 +1014,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return  lambdaQuery().in(LogisticsBillEntity::getShopId,shopIdList).list();
     }
 
+    @Override
+    public List<LogisticsBillEntity> listBySoOutStockIdList(List<String> outstockIdList) {
+        if (CollectionUtils.isEmpty(outstockIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return  lambdaQuery().in(LogisticsBillEntity::getOutstockId,outstockIdList).list();
+    }
+
     /**
      * 初始化物流手机号信息
      * @param dto

@@ -5,11 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
-import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -114,4 +110,10 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics( FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
+    /**
+     * @description: 查询需要生成物流单的数据
+     * @author Will
+     * @date: 2024/5/20 18:22
+     */
+    List<SoOutstockEntity>  listRecoveryLogisticsBill();
 }

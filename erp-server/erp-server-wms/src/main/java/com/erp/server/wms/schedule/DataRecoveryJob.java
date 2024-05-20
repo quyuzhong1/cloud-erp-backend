@@ -87,6 +87,25 @@ public class DataRecoveryJob {
 
     }
 
+    /**
+     * @description: 根据销售出库单生成物流单
+     * @author Will
+     * @date: 2024/5/20 15:21
+     */
+    @XxlJob("recoveryLogisticsBill")
+    public void recoveryLogisticsBill() {
+        String jobParam = XxlJobHelper.getJobParam();
+
+        List<String> codeList = new ArrayList<>();
+        if (StrUtil.isNotBlank(jobParam)) {
+            JSONObject param = JSONUtil.parseObj(jobParam);
+            codeList = param.get("codeList", List.class);
+        }
+        List<String> errorCodeList = soOutstockService.recoveryLogisticsBill(codeList);
+        XxlJobHelper.log("修复失败的单号，code = {}", errorCodeList);
+    }
+
+
     private List<String> getInnerSoOutStockIds() {
         List<String> result= new ArrayList<>();
 

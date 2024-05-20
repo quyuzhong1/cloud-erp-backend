@@ -513,4 +513,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean afreshGenerateB2cOutstock(List<String> ids);
 
     void updateRemarkBySoId(String id,String remark);
+
+    /**
+     * @description: 物流单生成数据修复
+     * @author Will
+     * @date: 2024/5/20 15:55
+     * @param codeList
+     * @return List<String>
+     */
+    List<String> recoveryLogisticsBill(List<String> codeList);
 }
