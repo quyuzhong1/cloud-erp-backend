@@ -111,8 +111,8 @@ public class TikTokSdkClientService {
         shopInfoDTO.setBaseUrl("https://auth.tiktok-shops.com");
 
         JobTaskDTO task = new JobTaskDTO();
-        task.setLastTime(LocalDateTime.now().minusMonths(3));
-        task.setNextTime(LocalDateTime.now());
+        task.setLastTime(LocalDateTime.now().minusDays(3));
+        task.setNextTime(LocalDateTime.now().minusHours(3));
 
         List<OrdersBean> ordersBeans = sdkClientService.sendTikTokGetOrder(shopInfoDTO, task);
         for (OrdersBean ordersBean : ordersBeans) {
