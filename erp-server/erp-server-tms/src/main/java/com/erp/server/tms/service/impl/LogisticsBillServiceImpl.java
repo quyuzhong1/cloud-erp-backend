@@ -29,6 +29,7 @@ import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -41,6 +42,7 @@ import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.CfgRuleFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.tms.constant.TmsConstant;
@@ -48,6 +50,7 @@ import com.erp.server.tms.convert.LogisticsBillConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -81,8 +84,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Autowired
     private DictBasicService dictBasicService;
-    @Autowired
-    private LogisticsProductFeign logisticsProductFeign;
 
     @Autowired
     private LogisticsTrackService logisticsTrackService;
@@ -126,7 +127,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private LogisticsBillService logisticsBillService;
 
     @Autowired
-    private PlmTaskFeign plmTaskFeign;
+    private SoInfoFeign soInfoFeign;
 
     @Autowired
     private CfgRuleFeign cfgRuleFeign;
@@ -984,6 +985,76 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             return Collections.EMPTY_LIST;
         }
         return  lambdaQuery().in(LogisticsBillEntity::getShopId,shopIdList).list();
+    }
+
+    /**
+     * 初始化物流手机号信息
+     * @param dto
+     */
+    @Override
+    public void initLogisticsBillPhone(LogisticsBillDTO.BillPhoneDTO dto) {
+        initLogisticsBillPhoneByOrderType(OrderTypeEnum.B2B.getCode(), dto);
+        initLogisticsBillPhoneByOrderType(OrderTypeEnum.B2C.getCode(), dto);
+    }
+
+    /**
+     * 根据订单类型处理订单数据
+     * @param code
+     * @param dto
+     */
+    private void initLogisticsBillPhoneByOrderType(String code, LogisticsBillDTO.BillPhoneDTO dto) {
+        List<LogisticsBillEntity> list = null;
+        if (Objects.nonNull(dto) && CollectionUtils.isNotEmpty(dto.getIds())){
+            list = lambdaQuery().in(LogisticsBillEntity::getSourceId, dto.getIds())
+                    .eq(LogisticsBillEntity::getOrderType, code)
+                    .list();
+        }else {
+            list = lambdaQuery().eq(LogisticsBillEntity::getOrderType, code)
+                    .eq(LogisticsBillEntity::getTelNumber, "")
+                    .list();
+        }
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        List<List<LogisticsBillEntity>> partition = Lists.partition(list, 100);
+        partition.forEach(logisticsBillEntities -> {
+            processLogisticsBillPhone(logisticsBillEntities, code);
+        });
+    }
+
+    /**
+     * 数据处理
+     * @param logisticsBillEntities
+     * @param code
+     */
+    private void processLogisticsBillPhone(List<LogisticsBillEntity> logisticsBillEntities, String code) {
+        if (CollectionUtils.isEmpty(logisticsBillEntities)){
+            return;
+        }
+        List<String> orderIds = logisticsBillEntities.stream().map(LogisticsBillEntity::getSourceId).distinct().collect(Collectors.toList());
+        if (OrderTypeEnum.B2B.getCode().equals(code)){
+            List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(orderIds);
+            for (LogisticsBillEntity logisticsBillEntity : logisticsBillEntities) {
+                SoInfoEntity soInfo = soInfoList.stream().filter(e -> StringUtils.isNotEmpty(logisticsBillEntity.getSourceId())
+                        && e.getId().equals(logisticsBillEntity.getSourceId())).findFirst().orElse(null);
+                if (Objects.nonNull(soInfo) && StringUtils.isNotEmpty(soInfo.getTelNumber())){
+                    lambdaUpdate().set(LogisticsBillEntity::getTelNumber, soInfo.getTelNumber())
+                            .eq(LogisticsBillEntity::getId, logisticsBillEntity.getId()).update();
+                }
+
+            }
+        }else if (OrderTypeEnum.B2C.getCode().equals(code)){
+            List<SoB2cDTO.CustomerDTO> customerDTOS = soB2cFeign.listCustomer(orderIds);
+            for (LogisticsBillEntity logisticsBillEntity : logisticsBillEntities) {
+                SoB2cDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(e -> StringUtils.isNotEmpty(logisticsBillEntity.getSourceId())
+                        && e.getSoId().equals(logisticsBillEntity.getSourceId())).findFirst().orElse(null);
+                if (Objects.nonNull(customerDTO) && StringUtils.isNotEmpty(customerDTO.getTelNumber())){
+                    lambdaUpdate().set(LogisticsBillEntity::getTelNumber, customerDTO.getTelNumber())
+                            .eq(LogisticsBillEntity::getId, logisticsBillEntity.getId()).update();
+                }
+
+            }
+        }
     }
 
     /**
