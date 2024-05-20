@@ -996,8 +996,8 @@
         pd.variant_property as variantProperty,
         pd.unit_name,
         pd.status,
-        pd.warehouse_location as warehouseLocation,
-        pd.warehouse_location_large as warehouseLocationLarge
+        pd.warehouse_location_large as warehouseLocationLarge,
+        pd.warehouse_location as warehouseLocation
         FROM  product_detail pd
         WHERE
             pd.is_deleted = FALSE
