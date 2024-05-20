@@ -309,7 +309,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     private ApiResult<List<RegisterResponseVO>> processRegisterExpressDeliveryData  (List<Map<String, String>> mapList,List<LogisticsTrackDTO.UpdateTrackDTO> records,LogisticsService service) {
         RegisterTrackVO registerTrackVO = RegisterTrackVO.builder()
                 .authMap(mapList.get(0))
-                .logisticsRegisterVOS(convertRegisterData(records))
+                .logisticsRegisterVOS(LogisticsChannelConverter.INSTANCE.convertRegisterDataByTrack123(records))
                 .build();
         ApiResult<List<RegisterResponseVO>> listApiResult = service.registerLogisticsNumber(registerTrackVO);
         return listApiResult;
@@ -338,20 +338,6 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
         ApiResult<List<RegisterResponseVO>> track = service.oceanRegisterLogisticsNumber(requestList);
         return track;
-    }
-
-
-    /**
-     * 数据转换
-     *
-     * @param records
-     * @return
-     */
-    private List<LogisticsRegisterVO> convertRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
-        if (CollectionUtils.isEmpty(records)) {
-            return Collections.emptyList();
-        }
-        return LogisticsChannelConverter.INSTANCE.convertRegisterDataByTrack123(records);
     }
 
     @Override
