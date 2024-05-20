@@ -78,7 +78,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
      */
     private String getTableName(String platform){
         return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
-                platform, BusinessTypeEnum.INBOUND.getCode());
+                platform, BusinessTypeEnum.OUTBOUND.getCode());
     }
 
     @Override
@@ -127,8 +127,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
-        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-        warnMsgInfo.setTitle(StrUtil.format("平台入库消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfo.setTitle(StrUtil.format("平台出库消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
         warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg) ? "" : msg);
