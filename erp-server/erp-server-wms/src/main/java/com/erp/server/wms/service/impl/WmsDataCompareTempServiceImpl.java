@@ -95,8 +95,14 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
     // TODO 验证数据 & 数据赋值
     }
 
+    @Override
+	public void batchInsertWmsDataCompareTemp(List<WmsDataCompareTempEntity> list) {
+    	baseMapper.batchInsertWmsDataCompareTemp(list);
+	}
+    
 	@Override
 	public void deleteData(String taskId) {
 		baseMapper.deleteData(taskId);
 	}
+
 }
