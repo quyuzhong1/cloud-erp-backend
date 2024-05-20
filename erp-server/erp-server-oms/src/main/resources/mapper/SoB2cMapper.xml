@@ -551,6 +551,7 @@
             si.name AS customerName,
             sb2r.country,
             sb2r.full_address AS receiverAddress,
+            sb2r.tel_number AS telNumber,
             sb2r.receiver_name AS receiverName
          FROM so_b2c sb2c
          LEFT JOIN so_b2c_receiver sb2r
