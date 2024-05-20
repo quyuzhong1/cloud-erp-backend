@@ -72,16 +72,16 @@ public class TongYouCreateOrderRequest {
 
     //运费，有就传，没有默认 0
     @JSONField(name = "transport_cost")
-    private Number transportCost;
+    private Integer transportCost;
 
     //是否代收货款（0：否，1：是）
-    private Number cod;
+    private Integer cod;
 
     //代收货款币别（币别码）cod 填写 1，则该字段必填
     private String codCurrency;
 
     //代收货款金额（保留三位小数）cod 填写 1，则该字段必填
-    private Number codAmount;
+    private BigDecimal codAmount;
 
     //追踪条码
     private String trackNo;
