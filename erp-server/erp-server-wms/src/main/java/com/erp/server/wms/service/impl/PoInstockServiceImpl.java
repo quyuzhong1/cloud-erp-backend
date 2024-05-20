@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import cn.wangdian.erp.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -51,6 +53,8 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.mapper.PoInstockMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -136,6 +140,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private SyncWdtOtherInStockService syncWdtOtherInStockService;
+
+    @Resource
+    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
 
 
     @Override
@@ -651,7 +661,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             updatePodArrivalState(ids);
             
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> {
+                syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                //同步旺店通
+                syncApproveInStockToWdt(obj);
+            });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //中止当前审核流程
 
@@ -662,6 +676,31 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购入库单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "审核操作");
 
+    }
+
+    /**
+     * 将审核通过的采购入库单转换为其他入库单推送到旺店通
+     * @param entity 采购入库单 PoInstockEntity
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncApproveInStockToWdt(PoInstockEntity entity) {
+        List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
+        if(detailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+
+        List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
+        detailList.forEach(item -> {
+            CreateOtherStockinRequest.GoodsList good = new CreateOtherStockinRequest.GoodsList();
+            good.setSpecNo(item.getSkuNo());
+            good.setNum(BigDecimal.valueOf(item.getStockInQty()));
+            good.setPositionNo(item.getWarehouseLocation());
+            goodsList.add(good);
+        });
+
+        syncWdtOtherInStockService.syncDataToWdt(goodsList, entity.getDeliveryWarehouseId(), null);
     }
 
     private void setFirstMassInstock(List<String> ids) {
@@ -725,9 +764,38 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个采购入库单【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "反审核操作");
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        list.forEach(obj -> {
+            syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            //发送旺店通
+            syncDisApproveInStockToWdt(obj);
+        });
 
         return Boolean.TRUE;
+    }
+
+    /**
+     * 将反审核通过的采购入库单转换为其他出库推送给旺店通
+     * @param entity 采购入库单
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncDisApproveInStockToWdt(PoInstockEntity entity) {
+        List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
+        if(detailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+
+        List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
+        detailList.forEach(item -> {
+            CreateOtherStockoutRequest.GoodsList good = new CreateOtherStockoutRequest.GoodsList();
+            good.setSpecNo(item.getSkuNo());
+            good.setNum(BigDecimal.valueOf(item.getStockInQty()));
+            good.setPositionNo(item.getWarehouseLocation());
+            goodsList.add(good);
+        });
+
+        syncWdtOtherOutStockService.syncDataToWdt(goodsList, entity.getDeliveryWarehouseId(), null);
     }
 
     @Override
