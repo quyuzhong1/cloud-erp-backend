@@ -1,8 +1,11 @@
 package cn.wangdian.erp.sdk.api.wms.stockout.dto;
 
+import lombok.Data;
+
 import java.math.BigDecimal;
 import java.util.List;
 
+@Data
 public class CreateOtherStockoutRequest
 {
 	private String outerNo;
