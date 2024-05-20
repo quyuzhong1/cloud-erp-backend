@@ -540,4 +540,10 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/batchUpdateCancelAndLog")
     Boolean batchUpdateCancelAndLog(@RequestBody List<String> soB2cIdList);
 
+
+    /**
+     * 根据销售单号查询订单
+     */
+    @GetMapping("/feign/soB2c/getSoCode")
+    SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode);
 }

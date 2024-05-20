@@ -1805,6 +1805,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String trackNo;
 
+        /**
+         * 销售单号ID
+         */
+        private String soId;
 
 
     }
