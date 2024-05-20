@@ -77,7 +77,8 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         List<SkuInfoEntity> pushToMqList = new ArrayList<>();
         for (SkuInfoEntity entity : entityList) {
             if(StrUtil.isBlank(entity.getFinancial())){
-                sendWarnMsg(StrUtil.format("财务编码为空， 库存sku编码 = {}", entity.getStockSku()), dto.getJobTaskDTO());
+//                sendWarnMsg(StrUtil.format("财务编码为空， 库存sku编码 = {}", entity.getStockSku()), dto.getJobTaskDTO());
+//                log.error(StrUtil.format("财务编码为空， 库存sku编码 = {}", entity.getStockSku()), dto.getJobTaskDTO());
                 continue;
             }
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByFinancial(entity.getFinancial());
