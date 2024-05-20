@@ -148,4 +148,22 @@ public class TypeConversionWorker {
         }
     }
 
+    /**
+     * 获取手机尾号四位
+     * @param phoneSuffix
+     * @return
+     */
+    @Named("getPhoneSuffix4")
+    public String getPhoneSuffix4(String phoneSuffix){
+        if (StringUtils.isEmpty(phoneSuffix)){
+            return "";
+        }
+        //获取手机号后四位
+        if (phoneSuffix.length()<=4){
+            return phoneSuffix;
+        }else {
+            return phoneSuffix.substring(phoneSuffix.length() - 4);
+        }
+    }
+
 }

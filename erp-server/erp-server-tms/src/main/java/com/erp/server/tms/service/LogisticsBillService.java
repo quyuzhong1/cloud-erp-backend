@@ -220,4 +220,10 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return List<LogisticsBillEntity>
      */
     List<LogisticsBillEntity> listByShopIdList(List<String> shopIdList);
+
+    /**
+     * 初始化物流单手机号数据
+     * @param dto
+     */
+    void initLogisticsBillPhone(LogisticsBillDTO.BillPhoneDTO dto);
 }

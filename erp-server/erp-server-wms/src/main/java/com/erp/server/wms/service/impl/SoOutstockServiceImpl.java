@@ -842,6 +842,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (Objects.nonNull(soInfo)) {
                     addDTO.setShopId(soInfo.getCustomerId());
                     addDTO.setShopName(soInfo.getCustomerName());
+                    addDTO.setTelNumber(soInfo.getTelNumber());
                     addDTO.setOrderTime(soInfo.getCreateTime());
                     addDTO.setSalesPlatform(salesPlatform);
                     addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
@@ -864,6 +865,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (Objects.nonNull(customer)) {
                     addDTO.setShopId(customer.getShopId());
                     addDTO.setShopName(customer.getShopName());
+                    addDTO.setTelNumber(customer.getTelNumber());
                     //国家
                     String country = customer.getCountry();
                     String countryName = "";

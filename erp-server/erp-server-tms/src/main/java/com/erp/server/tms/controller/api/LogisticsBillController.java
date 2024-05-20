@@ -145,5 +145,15 @@ public class LogisticsBillController extends BaseController {
 
     }
 
+    /**
+     * 初始化历史物流单手机号数据
+     *
+     * @return
+     */
+    @PostMapping("/initLogisticsBillPhone")
+    public ApiResult<LogisticsTrackDTO.ViewDTO> initLogisticsBillPhone(@RequestBody LogisticsBillDTO.BillPhoneDTO dto) {
+        logisticsBillService.initLogisticsBillPhone(dto);
+        return success();
 
+    }
 }
