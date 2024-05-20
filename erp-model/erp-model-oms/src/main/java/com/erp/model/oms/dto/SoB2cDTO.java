@@ -217,6 +217,11 @@ public class SoB2cDTO implements Serializable {
         private String countryName;
 
         /**
+         * 国家代号
+         */
+        private String country;
+
+        /**
          * 是否对接了第三方海外仓
          * true 是
          */
