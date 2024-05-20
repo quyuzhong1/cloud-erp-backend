@@ -367,7 +367,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean  orderShipped(String  id);
 
-    /** 
+    /**
      * @description 运费测算后选择物流渠道
      * @param dto
      * @author Lambda
@@ -917,4 +917,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
+
+
+    /**
+     * 根据单号查询销售订单
+     */
+    SoB2cEntity getByCode(String soCode);
 }
