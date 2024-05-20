@@ -3083,6 +3083,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(shopIdList)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        // 国家信息
+        List<String> countryList = list.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getCountry()))
+                .map(SoB2cDTO.ListDTO::getCountry)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> countryNameMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(countryList)){
+            countryNameMap = sysDictFeign.listCountryByIds(countryList)
+                    .stream()
+                    .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
+        }
+
 
         List<String> ids = list.stream().map(SoB2cDTO.ListDTO::getId).collect(Collectors.toList());
 
@@ -3183,8 +3196,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
                 data.setShopName(shopInfoEntity.getName());
-                data.setCountryName(shopInfoEntity.getCountryName());
+//                data.setCountryName(shopInfoEntity.getCountryName());
             }
+            // 国家=买家信息国家
+            String countryName = countryNameMap.getOrDefault(data.getCountry(), "");
+            data.setCountryName(countryName);
+
             //中转信息
             TransferLogisticsChannelDTO.ListSelectDTO transferInfo = transferInfoList.stream().filter(v -> v.getId().equals(data.getTransferLogisticsChannelId())).findFirst().orElse(null);
             if (Objects.nonNull(transferInfo)) {
