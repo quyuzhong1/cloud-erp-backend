@@ -5318,8 +5318,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
+                    dto.setInvalidStatus(oldEntity.getInvalidStatus());
+                    if ("平台作废".equals(oldEntity.getRemark())) {
+                        oldEntity.setRemark("");
+                    }
                 }
             }
+            //TikTok
+            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                if ("CANCELLED".equalsIgnoreCase(platformOrderStatus)) {
+                    oldEntity.setApproveStatus(oldApproveStatus);
+                    dto.setPayStatus(oldEntity.getPayStatus());
+                    dto.setBillStatus(oldEntity.getBillStatus());
+                    dto.setInvalidStatus(oldEntity.getInvalidStatus());
+                    dto.setIsCancel(Boolean.TRUE);
+                }
+            }
+
+
 
             // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
             if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())){

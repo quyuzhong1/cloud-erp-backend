@@ -133,7 +133,6 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         Map<String, String> lableMap = new HashMap<>();
         lableMap.put("tikTokStatus", ordersBean.getStatus());
         orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
-
         if ("ON_HOLD".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
@@ -168,6 +167,8 @@ public class TikTokOrderDTO extends CleanBaseDTO {
             orderDTO.setInvalidStatus(Boolean.TRUE);
             orderDTO.setRemark("平台取消");
         }
+
+        orderDTO.setIsCancel(Boolean.FALSE);
         // 平台订单原始状态
         orderDTO.setPlatformOrderStatus(ordersBean.getStatus());
 
