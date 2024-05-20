@@ -1546,15 +1546,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         ProductDetailEntity entity = lambdaQuery().eq(ProductDetailEntity::getId, skuId).one();
         entity.setIsDeleted(Boolean.TRUE);
-        //更新金蝶
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+
+        //发送金蝶
+        sendPushTask(Arrays.asList(detailEntity),SyncOperateEnum.OPERATE_DELETE.getCode());
         return this.remove(queryWrapper);
     }
 
@@ -1583,19 +1577,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (list.size() != sign) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
-        list.forEach(req -> {
-            //更新金蝶
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
-            resultList.add(pushTaskEntity);
-        });
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+
+        //发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+
         List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(skuIds);
@@ -2089,15 +2074,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //发送通知
         noticeMessageService.approveProductNotice(userName, entity);
 
-        //审核通过后发送到金蝶系统
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+        //发送金蝶
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         return true;
     }
 
@@ -2304,15 +2282,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                 .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
-        //反审核发送到金蝶系统
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+
+        //发送金蝶
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return this.updateById(entity);
     }
 
@@ -2624,14 +2596,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95126);
         }
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+
+        //发送金蝶
+        sendPushTask(Arrays.asList(productDetailEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         return Boolean.TRUE;
     }
 
@@ -3173,15 +3140,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
 
-        //编辑通过后发送金蝶
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+        //发送金蝶
+        sendPushTask(Arrays.asList(detailEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
 
@@ -3602,16 +3562,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 //新增操作日志
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                         .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));
-                //审核通过发送金蝶
-                DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
-                //推送金蝶
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                    @Override
-                    public void afterCommit() {
-                        dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                    }
-                });
             });
+            //发送金蝶
+            sendPushTask(entityList,SyncOperateEnum.OPERATE_APPROVE.getCode());
         } else {
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
             //新增审核不通过意见
@@ -3662,19 +3615,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .in(ProductDetailEntity::getId, ids)
                 .update();
 
-        //反审核发送到金蝶系统
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
-        entityList.forEach(obj -> {
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-            resultList.add(pushTaskEntity);
-        });
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+        //发送金蝶
+        sendPushTask(entityList,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return flag;
     }
 
@@ -3722,19 +3664,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (entityListt.size() != sign) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
-        entityListt.forEach(req -> {
-            //更新金蝶
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
-            resultList.add(pushTaskEntity);
-        });
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+        //发送金蝶
+        sendPushTask(entityListt,SyncOperateEnum.OPERATE_DELETE.getCode());
 
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(ids);
@@ -4905,5 +4836,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         return baseMapper.getSkuBaseBySkuIds(skuIds);
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<ProductDetailEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 }

@@ -389,19 +389,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             List<Pair<String, String>> pairList = purchasePriceList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "删除");
             attachmentService.deleteByBusinessIds(ids);
-            //删除同步金蝶
-            List<DmpPushTaskEntity> resultList = new ArrayList<>();
-            purchasePriceList.forEach(obj -> {
-                DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
-                resultList.add(pushTaskEntity);
-            });
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(resultList);
-                }
-            });
+
+            //发送金蝶
+            sendPushTask(purchasePriceList,SyncOperateEnum.OPERATE_DELETE.getCode());
         }
         return result;
     }
@@ -517,19 +507,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             throw new ServiceException(ApiError.ERROR_94006);
         }
         //审核通过发送金蝶
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         if (dto.getType().equals(ScmConstant.PASS)) {
-            list.forEach(obj -> {
-                DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
-                resultList.add(pushTaskEntity);
-            });
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(resultList);
-                }
-            });
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -990,19 +970,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (result) {
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+
             //发送金蝶
-            List<DmpPushTaskEntity> resultList = new ArrayList<>();
-            list.forEach(obj -> {
-                DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-                resultList.add(pushTaskEntity);
-            });
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(resultList);
-                }
-            });
+            sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return result;
     }
@@ -1099,5 +1069,25 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
     }
 
-
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<PurchasePriceEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
 }

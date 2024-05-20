@@ -579,19 +579,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<Pair<String, String>> pairList = supplierList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
 
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "删除");
-            //删除同步金蝶
-            List<DmpPushTaskEntity> resultList = new ArrayList<>();
-            supplierList.forEach(obj -> {
-                DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
-                resultList.add(pushTaskEntity);
-            });
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(resultList);
-                }
-            });
+
+            //发送金蝶
+            sendPushTask(supplierList,SyncOperateEnum.OPERATE_DELETE.getCode());
         }
 
 
@@ -705,19 +695,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过发送金蝶
-            List<DmpPushTaskEntity> resultList = new ArrayList<>();
-            list.forEach(obj -> {
-                DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
-                resultList.add(pushTaskEntity);
-            });
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(resultList);
-                }
-            });
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -760,22 +739,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String content = String.format("编辑了供应商[%s] 启用状态 由[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
 
-        //发送金蝶
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
-        if (dto.getState()) {
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_DISABLE.getCode());
-            resultList.add(pushTaskEntity);
-        } else {
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_ENABLE.getCode());
-            resultList.add(pushTaskEntity);
-        }
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
         LogisticsSupplierDTO.UpdateDisabledDTO updateDisabledDTO = new LogisticsSupplierDTO.UpdateDisabledDTO();
         updateDisabledDTO.setSupplierId(supplierId);
         updateDisabledDTO.setDisabled(state);
@@ -787,6 +750,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         transferUpdateDisabledDTO.setDisabled(state);
         transferLogisticsFeign.updateDisabledBySupplierId(transferUpdateDisabledDTO);
 
+        //发送金蝶
+        String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
+        if (dto.getState()) {
+            operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
+        }
+        sendPushTask(Arrays.asList(supplier),operate);
         return this.updateById(supplier);
     }
 
@@ -889,19 +858,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+
             //发送金蝶
-            List<DmpPushTaskEntity> resultList = new ArrayList<>();
-            list.forEach(obj -> {
-                DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-                resultList.add(pushTaskEntity);
-            });
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(resultList);
-                }
-            });
+            sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return result;
     }
@@ -1698,6 +1657,26 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private void batchAddModuleOperateLog(String content, String code, List<Pair<String, String>> pairList, String operation) {
         moduleOperateLogService.batchAddModuleOperateLog(content, code, pairList, operation);
     }
-
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<SupplierEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
 
 }

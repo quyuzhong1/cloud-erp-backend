@@ -77,14 +77,8 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         if (StringUtils.isBlank(dto.getCode())) {
             return;
         }
-        //组装数据发送到金蝶
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+        //发送金蝶
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
     /**
@@ -112,27 +106,17 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setName(categoryName);
         this.updateById(entity);
 
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
-        //组装数据发送到金蝶
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        resultList.add(pushTaskEntity);
+        List<BasicCategoryEntity> resultList = new ArrayList<>();
+        resultList.add(entity);
         //编辑的时候如果变动了一级编码则需要更新金蝶二级类目编码
         if ("0".equals(found.getPid()) && !StringUtils.equals(dto.getCode(),found.getCode())) {
             List<BasicCategoryEntity> list = this.lambdaQuery().eq(BasicCategoryEntity::getPid, found.getId()).list();
             if (CollectionUtils.isNotEmpty(list)) {
-                list.forEach(obj -> {
-                    DmpPushTaskEntity dmpPushTaskEntity = syncKingdeeCategoryService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
-                    resultList.add(dmpPushTaskEntity);
-                });
+               resultList.addAll(list);
             }
         }
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+        //发送金蝶
+        sendPushTask(resultList,SyncOperateEnum.OPERATE_APPROVE.getCode());
         return Boolean.TRUE;
     }
 
@@ -224,15 +208,9 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     public Boolean deleteById(String id) {
         checkId(id);
         BasicCategoryEntity entity = this.getById(id);
-        //组装数据发送到金蝶
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+
+        //发送金蝶
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DELETE.getCode());
         return this.removeById(id);
     }
 
@@ -671,5 +649,27 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         }
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<BasicCategoryEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeCategoryService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 }

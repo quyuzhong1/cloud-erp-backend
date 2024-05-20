@@ -420,15 +420,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (dto.getType().equals(ApproveType.PASS)) {
             //自动生成采购订单
             autoGeneratePo(entity.getId());
-            //审核通过发送金蝶
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractOrderService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                }
-            });
+
+            //发送金蝶
+            sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -473,15 +467,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         // 更新审核信息
         updateApproveStatus(Arrays.asList(id), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
-        //审核通过发送金蝶
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractOrderService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+        //发送金蝶
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外订单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), entity.getId(), "反审核操作");
@@ -513,19 +500,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        log.info("删除 开始删除委外订单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
        super.removeByIds(ids);
 
-        //删除发送金蝶
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
-        list.forEach(obj -> {
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
-            resultList.add(pushTaskEntity);
-        });
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+        //发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
     }
 
     /**
@@ -1053,19 +1029,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //更新订单作废状态
         updateInvalidStatus(ids, remark);
 
-        //审核通过发送金蝶
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
-        list.forEach(obj -> {
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode());
-            resultList.add(pushTaskEntity);
-        });
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+        //发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个委外订单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "作废操作");
@@ -1475,6 +1440,26 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         entity.setSubcontractOrgName(subcontractOrgName);
     }
 
-
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<SubcontractOrderEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
 
 }

@@ -692,21 +692,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过发送金蝶
-            list.forEach(obj -> {
-                List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
-                resultList.addAll(dmpPushTaskList);
-            });
             //批量保存销售员信息
             customerSellerService.batchSellerHistory(list, LocalDate.now());
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+
         return Boolean.TRUE;
     }
 
@@ -752,19 +743,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
-            //审核通过发送金蝶
-            list.forEach(obj -> {
-                List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-                resultList.addAll(dmpPushTaskList);
-            });
+
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
         return result;
     }
 
@@ -791,7 +773,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (occupyCount > 0) {
             throw new ServiceException(ApiError.ERROR_92018);
         }
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
 
         //删除客户
         Boolean result = this.removeByIds(ids);
@@ -800,19 +781,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String content = "删除客户[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "删除");
-            //推送金蝶
-            list.forEach(obj -> {
-                List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
-                resultList.addAll(dmpPushTaskList);
-            });
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         }
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
         return result;
     }
 
@@ -925,25 +896,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
         String finalContent = "[%s]," + content;
         operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
-        List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
-        customerList.forEach(req -> {
-            //发送金蝶
-            if (dto.getDisabled()) {
-                List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeCustomerService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DISABLE.getCode());
-                pushTaskList.addAll(dmpPushTaskList);
-            } else {
-                List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeCustomerService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_ENABLE.getCode());
-                pushTaskList.addAll(dmpPushTaskList);
-            }
-        });
+
         boolean update = this.updateBatchById(customerList);
-        //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(pushTaskList);
-            }
-        });
+
+        //发送金蝶
+        String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
+        if (dto.getDisabled()) {
+            operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
+        }
+        sendPushTask(customerList,operate);
         return  update;
     }
 
@@ -1886,5 +1847,27 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             resultList.add(sellerUserDeptDTO);
         }
         return resultList;
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<CustomerInfoEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            List<DmpPushTaskEntity> pushTaskEntityList = syncKingdeeCustomerService.syncDataToKingdee(obj, operate);
+            resultList.addAll(pushTaskEntityList);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 }
