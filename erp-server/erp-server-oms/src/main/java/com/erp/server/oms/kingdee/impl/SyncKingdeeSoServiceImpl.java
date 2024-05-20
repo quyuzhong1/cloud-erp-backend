@@ -15,6 +15,7 @@ import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
@@ -107,7 +108,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Override
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(SoInfoEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(SoInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -310,7 +311,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
      * @param operate
      * @param resultMap
      */
-    private String saveTask (SoInfoEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (SoInfoEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());

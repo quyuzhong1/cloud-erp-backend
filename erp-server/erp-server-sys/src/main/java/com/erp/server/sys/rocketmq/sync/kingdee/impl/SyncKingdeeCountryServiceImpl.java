@@ -10,6 +10,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -49,7 +50,7 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(DictCountryEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(DictCountryEntity entity, String operate) {
 
         Map<String, Object> resultMap = new HashMap<>();
         Boolean isExistParent = true;
@@ -97,7 +98,7 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
         return saveTask(entity,operate,resultMap);
     }
 
-    private String saveTask(DictCountryEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask(DictCountryEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());

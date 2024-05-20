@@ -15,6 +15,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
@@ -71,7 +72,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(PurchasePriceEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(PurchasePriceEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //业务id
@@ -155,7 +156,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
      * 组装数据发送到金蝶
      */
     @Override
-    public String syncDataDetailToKingdee(List<PurchasePriceDetailEntity> details, Boolean disabled) {
+    public DmpPushTaskEntity syncDataDetailToKingdee(List<PurchasePriceDetailEntity> details, Boolean disabled) {
         if (CollectionUtils.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_98049);
         }
@@ -218,7 +219,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
      * @param operate
      * @param resultMap
      */
-    private String saveTask (PurchasePriceEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (PurchasePriceEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());

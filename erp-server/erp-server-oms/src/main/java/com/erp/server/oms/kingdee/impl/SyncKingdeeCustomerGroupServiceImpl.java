@@ -6,6 +6,7 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.CustomerGroupEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -34,7 +35,7 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(CustomerGroupEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(CustomerGroupEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //金蝶id
@@ -59,7 +60,7 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
      * @param operate
      * @param resultMap
      */
-    private String saveTask (CustomerGroupEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (CustomerGroupEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());

@@ -21,6 +21,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -39,6 +40,7 @@ import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.workflow.dto.BusinessTableDTO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -54,6 +56,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -110,6 +114,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
 
     /**
      * 添加bom
@@ -654,9 +662,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (ObjectUtils.isEmpty(bomInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
-        List<BomSkuDTO> bomList = bomSkuService.getByBomId(bomInfoEntity.getId());
         //更新金蝶
-        syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        List<DmpPushTaskEntity> pushTaskList = syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
         boolean flag = this.removeById(bomId);
         if (flag) {
             bomSkuService.deleteByBomId(bomId);
@@ -664,6 +671,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = BomOperateContent.DELETE;
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.DELETE.getType(), operateContent);
         }
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(pushTaskList);
+            }
+        });
         return flag;
     }
 
@@ -895,7 +909,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_PASS.getName(), BomStateEnum.WAIT_SUBMIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             //bom反审核
-            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
+            });
         }
         return result;
     }
@@ -1117,7 +1138,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
 //        }
         // 发送到金蝶
-        syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(dmpPushTaskList);
+            }
+        });
     }
 
 
@@ -1144,7 +1172,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             // 发送到金蝶
-            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
+            });
         }
     }
 
@@ -1179,7 +1214,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 String operateContent = getUpdateContent(oldBomList, bomSkuList);
                 bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.UPDATE.getType(), operateContent);
                 //再次发送到金蝶
-                syncKingdeeBomInfoService.syncDataToKingdee(bomEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeBomInfoService.syncDataToKingdee(bomEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                //推送金蝶
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        dmpMqFeign.sendTask(dmpPushTaskList);
+                    }
+                });
             }
         }
     }

@@ -11,9 +11,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
@@ -27,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,6 +53,8 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Autowired
     private SyncKingdeeCategoryService syncKingdeeCategoryService;
 
+    @Autowired
+    private DmpMqFeign dmpMqFeign;
 
     /**
      * 保存 产品分类信息
@@ -72,7 +78,13 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             return;
         }
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
     }
 
     /**
@@ -99,15 +111,28 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setCode(dto.getCode());
         entity.setName(categoryName);
         this.updateById(entity);
+
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        resultList.add(pushTaskEntity);
         //编辑的时候如果变动了一级编码则需要更新金蝶二级类目编码
         if ("0".equals(found.getPid()) && !StringUtils.equals(dto.getCode(),found.getCode())) {
             List<BasicCategoryEntity> list = this.lambdaQuery().eq(BasicCategoryEntity::getPid, found.getId()).list();
             if (CollectionUtils.isNotEmpty(list)) {
-                list.forEach(obj -> syncKingdeeCategoryService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+                list.forEach(obj -> {
+                    DmpPushTaskEntity dmpPushTaskEntity = syncKingdeeCategoryService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                    resultList.add(dmpPushTaskEntity);
+                });
             }
         }
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
         return Boolean.TRUE;
     }
 
@@ -200,7 +225,14 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         checkId(id);
         BasicCategoryEntity entity = this.getById(id);
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
         return this.removeById(id);
     }
 

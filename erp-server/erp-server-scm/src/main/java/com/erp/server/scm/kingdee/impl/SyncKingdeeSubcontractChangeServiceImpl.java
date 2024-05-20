@@ -15,6 +15,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.entity.*;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -72,7 +73,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(SubcontractChangeEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(SubcontractChangeEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //如果上游单据未发送成功则无需发送
@@ -217,7 +218,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
      * @param operate
      * @param resultMap
      */
-    private String saveTask (SubcontractChangeEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (SubcontractChangeEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());

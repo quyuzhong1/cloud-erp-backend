@@ -1,5 +1,6 @@
 package com.erp.server.plm.rocketmq.sync.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.BomInfoEntity;
 
 import java.util.List;
@@ -17,5 +18,5 @@ public interface SyncKingdeeBomInfoService {
      * @date: 2023/3/8 18:22
      * @param entity
      */
-    List<String> syncDataToKingdee(BomInfoEntity entity, String operate);
+    List<DmpPushTaskEntity> syncDataToKingdee(BomInfoEntity entity, String operate);
 }

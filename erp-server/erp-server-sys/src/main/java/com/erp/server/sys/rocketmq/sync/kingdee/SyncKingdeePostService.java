@@ -1,5 +1,6 @@
 package com.erp.server.sys.rocketmq.sync.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.entity.KingdeePostEntity;
 
 /**
@@ -18,5 +19,5 @@ public interface SyncKingdeePostService {
      * @date 2024-03-13 15:49
      * @author Lambda
      */
-    String syncDataToKingdee(KingdeePostEntity kingdeePostEntity, String code);
+    DmpPushTaskEntity syncDataToKingdee(KingdeePostEntity kingdeePostEntity, String code);
 }

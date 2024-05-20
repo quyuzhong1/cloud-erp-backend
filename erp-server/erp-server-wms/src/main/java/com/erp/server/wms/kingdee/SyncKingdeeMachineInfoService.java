@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 
 /**
@@ -13,5 +14,5 @@ public interface SyncKingdeeMachineInfoService {
     /**
      * 直接调拨单推送金蝶
      */
-    String syncDataToKingdee(MachineInfoEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(MachineInfoEntity entity, String operate);
 }

@@ -97,19 +97,15 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String saveTask(DmpPushTaskFeignDTO dto) {
+    public DmpPushTaskEntity saveTask(DmpPushTaskFeignDTO dto) {
         // 保存任务表
         DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
-        String entityId = saveOrUpdateDmpSyncTask(entity);
-        return entityId;
+        saveOrUpdateDmpSyncTask(entity);
+        return entity;
     }
 
     @Override
-    public void sendTask(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return;
-        }
-        List<DmpPushTaskEntity> dmpPushTaskEntityList = this.listByIds(ids);
+    public void sendTask(List<DmpPushTaskEntity> dmpPushTaskEntityList) {
         if (CollectionUtils.isEmpty(dmpPushTaskEntityList)) {
             return;
         }

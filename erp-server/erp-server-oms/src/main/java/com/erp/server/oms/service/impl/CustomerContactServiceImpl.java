@@ -7,6 +7,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -135,8 +136,8 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public List<String> updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList) {
-        List<String> pushTaskIdList = new ArrayList<>();
+    public List<DmpPushTaskEntity> updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList) {
+        List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
 
         List<CustomerContactEntity> saveOrUpdateList = new ArrayList<>(contactList.size());
         //这是修改的
@@ -161,8 +162,8 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             //删除联系人发送金蝶
             removeList.forEach(obj -> {
-                String pushTaskId = syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
-                pushTaskIdList.add(pushTaskId);
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
+                pushTaskList.add(pushTaskEntity);
             });
             this.removeByIds(deleteIdList);
         }
@@ -185,7 +186,7 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
             this.saveOrUpdateBatch(saveOrUpdateList);
         }
-        return pushTaskIdList;
+        return pushTaskList;
     }
 
     

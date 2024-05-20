@@ -7,6 +7,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
@@ -47,7 +48,7 @@ public class SyncKingdeeOperatorServiceImpl implements SyncKingdeeOperatorServic
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
-    public String syncDataToKingdee(KingdeeOperatorRefPostEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(KingdeeOperatorRefPostEntity entity, String operate) {
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException("金蝶业务员表数据不存在");
         }
@@ -79,7 +80,7 @@ public class SyncKingdeeOperatorServiceImpl implements SyncKingdeeOperatorServic
         return saveTask(entity, operate, resultMap);
     }
 
-    private String saveTask(KingdeeOperatorRefPostEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask(KingdeeOperatorRefPostEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());

@@ -1,5 +1,6 @@
 package com.erp.server.sys.rocketmq.sync.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 
 /**
@@ -17,5 +18,5 @@ public interface SyncKingdeeSysUserInfoService {
      * @param entity
      * @param operate
      */
-    String syncDataToKingdee(SysUserInfoEntity entity,String operate);
+    DmpPushTaskEntity syncDataToKingdee(SysUserInfoEntity entity, String operate);
 }

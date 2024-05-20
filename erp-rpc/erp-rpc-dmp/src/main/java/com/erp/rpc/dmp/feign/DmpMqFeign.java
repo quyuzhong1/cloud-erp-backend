@@ -25,18 +25,18 @@ public interface DmpMqFeign {
      * @return
      */
     @PostMapping("save/pushTask")
-    String saveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto);
+    DmpPushTaskEntity saveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto);
 
 
     /**
      * @description: 发送MQ消息
      * @author Will
      * @date: 2024/5/14 14:22
-     * @param ids
+     * @param list
      * @return String
      */
-    @PostMapping("send/pushTask")
-    Boolean sendTask(@RequestBody List<String> ids);
+    @PostMapping("send/sendTask")
+    Boolean sendTask(@RequestBody List<DmpPushTaskEntity> list);
 
     /**
      * 根据单个id查询推送任务

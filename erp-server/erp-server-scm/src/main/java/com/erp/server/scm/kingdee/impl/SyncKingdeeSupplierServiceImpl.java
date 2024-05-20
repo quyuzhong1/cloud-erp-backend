@@ -14,6 +14,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.*;
@@ -69,7 +70,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(SupplierEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(SupplierEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //业务id
@@ -192,7 +193,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
      * @param operate
      * @param resultMap
      */
-    private String saveTask (SupplierEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (SupplierEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());

@@ -17,6 +17,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.*;
@@ -90,7 +91,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
      * @Date 2023/4/24 11:27
      **/
     @Override
-    public String syncDataToKingdee(WarehouseReceiveEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(WarehouseReceiveEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
@@ -302,7 +303,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
      * @param operate
      * @param resultMap
      */
-    private String saveTask (WarehouseReceiveEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (WarehouseReceiveEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());

@@ -56,7 +56,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public List<String> syncDataToKingdee(BomInfoEntity entity,String operate) {
+    public List<DmpPushTaskEntity> syncDataToKingdee(BomInfoEntity entity,String operate) {
 
         //bom历史数据
         List<ProductBomHistoryEntity> bomHistoryList = productBomHistoryService.listByBomId(entity.getId());
@@ -72,7 +72,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
         List<Map<String, Object>> listMap = new ArrayList<>();
 
-        List<String> pushTaskIdList = new ArrayList<>();
+        List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
 
         for (ProductBomHistoryEntity productBomHistoryEntity : bomHistoryList) {
             Map<String, Object> resultMap = new HashMap<>();
@@ -98,8 +98,8 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
             //删除操作
             if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-                String id = saveTask(operate, resultMap);
-                pushTaskIdList.add(id);
+                DmpPushTaskEntity pushTaskEntity = saveTask(operate, resultMap);
+                pushTaskList.add(pushTaskEntity);
                 continue;
             }
             if (!entity.getBomVersion().equals(productBomHistoryEntity.getBomVersion())) {
@@ -125,10 +125,10 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         }
         listMap.forEach(obj -> {
             //生成任务
-            String id = saveTask(operate, obj);
-            pushTaskIdList.add(id);
+            DmpPushTaskEntity pushTaskEntity = saveTask(operate, obj);
+            pushTaskList.add(pushTaskEntity);
         });
-        return pushTaskIdList;
+        return pushTaskList;
     }
 
     /**
@@ -138,7 +138,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
      * @param operate
      * @param resultMap
      */
-    private String saveTask (String operate,Map<String, Object> resultMap) {
+    private DmpPushTaskEntity  saveTask (String operate,Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId((String)resultMap.get("id"));

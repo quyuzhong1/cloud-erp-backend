@@ -1,5 +1,6 @@
 package com.erp.server.sys.rocketmq.sync.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 
 /**
@@ -16,5 +17,5 @@ public interface SyncKingdeeGlobalAreaService {
      * @param entity
      * @param
      */
-    String syncDataToKingdee(DictGlobalAreaEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(DictGlobalAreaEntity entity, String operate);
 }

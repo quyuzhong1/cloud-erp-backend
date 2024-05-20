@@ -8,6 +8,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
@@ -44,7 +45,7 @@ public class SyncKingdeeGlobalAreaServiceImpl implements SyncKingdeeGlobalAreaSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(DictGlobalAreaEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(DictGlobalAreaEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         boolean isExistParent = false;
         resultMap.put("isExistParent", isExistParent);
@@ -75,7 +76,7 @@ public class SyncKingdeeGlobalAreaServiceImpl implements SyncKingdeeGlobalAreaSe
         return saveTask(entity,operate,resultMap);
     }
 
-    private String saveTask(DictGlobalAreaEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask(DictGlobalAreaEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());

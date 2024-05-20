@@ -37,21 +37,21 @@ public class DmpMqFeignController {
      * @return
      */
     @PostMapping("/save/pushTask")
-    public String saveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto){
-        String entityId = dmpPushTaskService.saveTask(dto);
-        return entityId;
+    public DmpPushTaskEntity saveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto){
+        DmpPushTaskEntity entity = dmpPushTaskService.saveTask(dto);
+        return entity;
     }
 
     /**
      * 推送任务
      * @author Will
      * @date: 2024/5/14 9:38
-     * @param ids
+     * @param list
      * @return Boolean
      */
     @PostMapping("/send/pushTask")
-    public Boolean sendTask(@RequestBody  List<String> ids){
-        dmpPushTaskService.sendTask(ids);
+    public Boolean sendTask(@RequestBody  List<DmpPushTaskEntity> list){
+        dmpPushTaskService.sendTask(list);
         return Boolean.TRUE;
     }
 

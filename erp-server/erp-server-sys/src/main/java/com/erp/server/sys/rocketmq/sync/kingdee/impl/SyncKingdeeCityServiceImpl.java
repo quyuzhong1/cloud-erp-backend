@@ -10,6 +10,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
@@ -45,7 +46,7 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
     private DmpMqFeign dmpMqFeign;
 
     @Override
-    public String syncDataToKingdee(DictCityEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(DictCityEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         Boolean isExistParent = true;
         resultMap.put("isExistParent", isExistParent);
@@ -90,7 +91,7 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
         return saveTask(entity,operate,resultMap);
     }
 
-    private String saveTask(DictCityEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask(DictCityEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());

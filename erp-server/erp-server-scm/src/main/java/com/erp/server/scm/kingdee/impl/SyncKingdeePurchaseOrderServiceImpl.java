@@ -18,6 +18,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.entity.*;
@@ -79,7 +80,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(PurchaseOrderEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(PurchaseOrderEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //如果上游单据未发送成功则无需发送
@@ -270,7 +271,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
      * @param operate
      * @param resultMap
      */
-    private String saveTask (PurchaseOrderEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (PurchaseOrderEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());

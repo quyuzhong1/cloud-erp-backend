@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.entity.CustomerContactEntity;
 
@@ -66,7 +67,7 @@ public interface CustomerContactService extends SuperService<CustomerContactEnti
      * @param contactList
      * @return void
      */
-    List<String> updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList);
+    List<DmpPushTaskEntity> updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList);
     /**
      * 修改金蝶同步信息
      * @Author Luo_WG

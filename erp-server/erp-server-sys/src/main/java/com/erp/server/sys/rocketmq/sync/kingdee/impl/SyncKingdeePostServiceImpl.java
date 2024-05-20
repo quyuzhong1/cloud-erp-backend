@@ -7,6 +7,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -40,7 +41,7 @@ public class SyncKingdeePostServiceImpl implements SyncKingdeePostService {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
-    public String syncDataToKingdee(KingdeePostEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(KingdeePostEntity entity, String operate) {
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException("金蝶岗位表不存在");
         }
@@ -68,7 +69,7 @@ public class SyncKingdeePostServiceImpl implements SyncKingdeePostService {
      * @date 2024-03-13 15:53
      * @author Lambda
      */
-    private String saveTask(KingdeePostEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask(KingdeePostEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());

@@ -17,6 +17,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.entity.*;
@@ -75,7 +76,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(PurchaseChangeEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(PurchaseChangeEntity entity, String operate) {
 
         //采购订单未同步成功则无需推送采购变更
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(entity.getPurchaseOrderId());
@@ -236,7 +237,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
      * @param operate
      * @param resultMap
      */
-    private String saveTask (PurchaseChangeEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (PurchaseChangeEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());

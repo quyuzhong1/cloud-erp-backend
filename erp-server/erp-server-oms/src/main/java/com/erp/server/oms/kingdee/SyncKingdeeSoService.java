@@ -1,5 +1,6 @@
 package com.erp.server.oms.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 
 /**
@@ -14,6 +15,6 @@ public interface SyncKingdeeSoService {
     /**
      * 推送金蝶
      */
-    String syncDataToKingdee(SoInfoEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(SoInfoEntity entity, String operate);
     void syncOrderToDmp(SoInfoEntity entity, String operate);
 }

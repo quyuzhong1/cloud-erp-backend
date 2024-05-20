@@ -9,6 +9,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -93,7 +94,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String syncDataToKingdee(SoChangeEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(SoChangeEntity entity, String operate) {
         String id = entity.getId();
 
         Map<String, Object> resultMap = new HashMap<>();
@@ -313,7 +314,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
      * @param operate
      * @param resultMap
      */
-    private String saveTask (SoChangeEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (SoChangeEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());

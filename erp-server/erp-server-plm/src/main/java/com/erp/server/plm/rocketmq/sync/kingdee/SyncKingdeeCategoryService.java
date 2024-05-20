@@ -1,5 +1,6 @@
 package com.erp.server.plm.rocketmq.sync.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 
 /**
@@ -16,5 +17,5 @@ public interface SyncKingdeeCategoryService {
      * @date: 2023/3/8 18:22
      * @param entity
      */
-    String syncDataToKingdee(BasicCategoryEntity entity,String operate);
+    DmpPushTaskEntity syncDataToKingdee(BasicCategoryEntity entity, String operate);
 }
