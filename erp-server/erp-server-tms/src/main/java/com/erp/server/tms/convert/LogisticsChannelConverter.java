@@ -175,10 +175,18 @@ public interface LogisticsChannelConverter {
     LogisticsSaleChannelEntity channelConvertByAliExpress(ChannelResponse chanelInfo);
     List<LogisticsSaleChannelEntity> channelConvertByAliExpress(List<ChannelResponse> chanelInfos);
 
-
+    @Mappings({
+            @Mapping(target = "trackNo", source = "trackNo"),
+            @Mapping(target = "courierCode", source = "courierCode"),
+            @Mapping(target = "extendFieldMap.phoneSuffix", source = "phoneSuffix", qualifiedByName = "getPhoneSuffix4")
+    })
     RegisterRequest registerTrackNoByTrack123(LogisticsRegisterVO logisticsRegisterVO);
     List<RegisterRequest> registerTrackNoByTrack123(List<LogisticsRegisterVO> logisticsRegisterVOS);
-    @Mapping(target = "trackNo",source = "trackNo")
+    @Mappings({
+        @Mapping(target = "trackNo",source = "trackNo"),
+        @Mapping(target = "phoneSuffix",source = "telNumber")
+    })
+    LogisticsRegisterVO convertRegisterDataByTrack123(LogisticsTrackDTO.UpdateTrackDTO record);
     List<LogisticsRegisterVO> convertRegisterDataByTrack123(List<LogisticsTrackDTO.UpdateTrackDTO> records);
 
     @Mappings({
