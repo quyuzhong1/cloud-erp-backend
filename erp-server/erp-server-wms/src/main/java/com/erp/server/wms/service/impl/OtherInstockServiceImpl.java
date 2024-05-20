@@ -4,6 +4,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import cn.wangdian.erp.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -55,6 +56,8 @@ import com.erp.server.wms.listener.OtherInStockExcelListener;
 import com.erp.server.wms.mapper.OtherInstockMapper;
 import com.erp.server.wms.query.OtherInstockQueryHandler;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -72,6 +75,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -129,6 +133,12 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private SyncWdtOtherInStockService syncWdtOtherInstockService;
+
+    @Resource
+    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
 
 
     @Override
@@ -361,7 +371,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(String id, String type, String comment) {
+    public BatchResultDTO approve(String id, String type, String comment){
         //根据ids查询
         OtherInstockEntity entity = this.getById(id);
         //审核中允许审核
@@ -382,6 +392,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             updateInventoryTransCore(entity);
             //推送金蝶
             syncKingdeeOtherInstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //推送旺店通
+            syncWdtOtherInstockService.syncDataToWdt(entity);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他入库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
@@ -419,9 +431,36 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //发送金蝶
         syncKingdeeOtherInstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
+        //发送旺店通
+        syncDisApproveInfoToWdt(entity);
+
         //操作日志
         operateLogService.addModuleOperateLog(StrUtil.format("反审核了一个其他入库单【{}】", entity.getCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单反审核");
+    }
+
+    /**
+     * 将其他入库单的反审核操作转换为其他出库单同步给旺店通
+     * @param entity 其他入库单
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncDisApproveInfoToWdt(OtherInstockEntity entity) {
+        List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
+
+        //填充SKU明细
+        List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
+        detailList.forEach(item -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            goods.setSpecNo(item.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(item.getActualQty()));
+            goods.setPositionNo(item.getWarehouseLocation());
+            goodsList.add(goods);
+        });
+
+        //推送数据
+        syncWdtOtherOutStockService.syncDataToWdt(goodsList, entity.getWarehouseId(), null);
     }
 
     @Override

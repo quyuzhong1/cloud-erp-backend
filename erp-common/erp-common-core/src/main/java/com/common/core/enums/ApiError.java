@@ -1282,6 +1282,8 @@ public enum ApiError implements Serializable {
     ERROR_OUT_WAREHOUSELOCATION_NOT_FOUND(94101,"取货仓位不存在"),
     ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
 
+    //旺店通异常
+    ERROR_3000(3000, "请求旺店通接口异常"),
 
 
     // 亚马逊公用异常
