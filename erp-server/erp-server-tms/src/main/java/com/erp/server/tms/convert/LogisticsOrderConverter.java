@@ -51,6 +51,7 @@ public interface LogisticsOrderConverter {
 
     @Mappings({
             @Mapping(target = "refNo", source = "deliveryNo"),
+            @Mapping(target = "iossNo", source = "iossCode"),
             @Mapping(target = "businessType", constant = "BDS"),
             //费用模式转换
             @Mapping(target = "dutyType", source = "logisticsChannelEntity.taxModel", qualifiedByName = "taxModelToDSF"),
