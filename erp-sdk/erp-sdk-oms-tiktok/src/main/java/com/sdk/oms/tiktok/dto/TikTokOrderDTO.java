@@ -365,6 +365,9 @@ public class TikTokOrderDTO extends CleanBaseDTO {
     private static PlatformOrderFinanceDTO parseFinances(OrdersBean ordersBean) {
         BigDecimal tax = BigDecimal.ZERO;
         for (LineItemsBean lineItem : ordersBean.getLineItems()) {
+            if (CollectionUtil.isEmpty(lineItem.getItemTax())) {
+                continue;
+            }
             BigDecimal bigDecimal = lineItem.getItemTax().stream()
                     .filter(req -> StringUtils.isNotBlank(req.getTaxType()) && "SALES_TAX".equalsIgnoreCase(req.getTaxType()))
                     .map(req -> req.getTaxAmount())
