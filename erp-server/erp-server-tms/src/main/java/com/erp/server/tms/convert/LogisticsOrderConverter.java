@@ -70,7 +70,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "recipientInfo.district", source = "receiverInfoVO.district"),
             @Mapping(target = "recipientInfo.street", source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "recipientInfo.post_code", source = "receiverInfoVO.zipCode"),
-            @Mapping(target = "recipientInfo.house_number", source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "recipientInfo.house_number", source = "receiverInfoVO.streetAddress"),
             //发货人
             @Mapping(target = "sender.first_name", source = "senderInfo.name"),
             @Mapping(target = "sender.phone", source = "senderInfo.telNumber"),
@@ -81,7 +81,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "sender.district", source = "senderInfo.districtName"),
             @Mapping(target = "sender.street", source = "senderInfo.addressFirst"),
             @Mapping(target = "sender.post_code", source = "senderInfo.zipCode"),
-            @Mapping(target = "sender.house_number", source = "senderInfo.addressFirst"),
+//            @Mapping(target = "sender.house_number", source = "senderInfo.streetAddress"),
             @Mapping(target = "returnInfo.isReturnOnDomestic", constant = "U"),
 //            @Mapping(target = "returnInfo.domesticReturnAddr.first_name", source = "senderInfo.name"),
 //            @Mapping(target = "returnInfo.domesticReturnAddr.phone", source = "senderInfo.telNumber"),
@@ -433,7 +433,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "material", source = "material"),
             @Mapping(target = "orderNo", source = "deliveryNo"),
             @Mapping(target = "passportNumber", source = "passportNumber"),
-            @Mapping(target = "source", source = "orderSource"),
+            @Mapping(target = "source", constant = "BCDC77BDC117750AC882462407E47D92"),
             @Mapping(target = "taxId", source = "taxId"),
             @Mapping(target = "iossVatId", source = "iossCode"),
             @Mapping(target = "isTaxed", constant = "0"),
@@ -471,7 +471,7 @@ public interface LogisticsOrderConverter {
     TongYouCreateOrderRequest orderRequestByTongYou(LogisticsOrderVO logisticsOrderVO);
     @Mappings({
             @Mapping(target = "currency" ,source = "destCurrency"),
-            @Mapping(target = "des" ,source = "productProperty"),
+            @Mapping(target = "des" ,constant = ""),
             @Mapping(target = "hs" ,source = "customsCode"),
             @Mapping(target = "nameCN" ,source = "declareChineseName"),
             @Mapping(target = "nameEN" ,source = "declareEnglishName"),
