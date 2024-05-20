@@ -453,11 +453,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
 
         //发货人信息
-        SenderInfo senderInfo = new SenderInfo();
+
         LogisticsAddressEntity logisticsAddress = deliverList.get(0);
-        BeanMapperUtils.copy(logisticsAddress, senderInfo);
+        SenderInfo senderInfo = LogisticsBillConverter.INSTANCE.convertSender(logisticsAddress);
+//        BeanMapperUtils.copy(logisticsAddress, senderInfo);
         //地址id
-        senderInfo.setId(logisticsAddress.getAddressId());
+//        senderInfo.setId(logisticsAddress.getAddressId());
 
         LogisticsAddressTypeEnum refundType = LogisticsAddressTypeEnum.REFUND;
         //退货地址信息

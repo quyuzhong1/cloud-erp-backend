@@ -7,6 +7,7 @@ import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.request.ParceInfoVO;
 import com.erp.model.tms.vo.request.ReceiverInfoVO;
+import com.erp.model.tms.vo.request.SenderInfo;
 import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -100,4 +101,11 @@ public interface LogisticsBillConverter {
             @Mapping(target = "zipCode", source = "zipCode"),
     })
     ReceiverInfoVO LogisticsAddressEntityToReceiverInfoVO(LogisticsAddressEntity logisticsAddressEntity);
+    @Mappings({
+            @Mapping(target = "id", source = "addressId"),
+            @Mapping(target = "name", source = "contact"),
+            @Mapping(target = "taxNumber", ignore = true),
+            @Mapping(target = "actId", ignore = true)
+    })
+    SenderInfo convertSender(LogisticsAddressEntity logisticsAddress);
 }

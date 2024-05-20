@@ -50,6 +50,7 @@ public interface LogisticsOrderConverter {
     LogisticsOrderConverter INSTANCE = Mappers.getMapper(LogisticsOrderConverter.class);
 
     @Mappings({
+            @Mapping(target = "cargoType", constant = "3"),
             @Mapping(target = "refNo", source = "deliveryNo"),
             @Mapping(target = "iossNo", source = "iossCode"),
             @Mapping(target = "businessType", constant = "BDS"),
@@ -420,7 +421,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "charged" ,source = "parceInfoVO.hasBattery",qualifiedByName = "boolToInteger"),
             @Mapping(target = "insuranceValue" ,source = "parceInfoVO.insuranceValue"),
             @Mapping(target = "insureValue" ,source = "parceInfoVO.insureValue"),
-            @Mapping(target = "itemType" ,source = "parceInfoVO.itemType",defaultValue = "4"),
+            @Mapping(target = "itemType" ,constant = "2"),
             @Mapping(target = "logisticsId" ,source = "logisticsSaleChannel.code"),
             @Mapping(target = "note" ,source = "remark"),
             @Mapping(target = "material" ,source = "material"),
