@@ -1562,7 +1562,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             result.setReceiver(receiverDTO);
         }
         LogisticsBillDTO.PackageDTO packageDTO = B2cOrderConverter.INSTANCE.convertPackage(soB2cLogisticsEntity);
-        packageDTO.setCurrency(entity.getCurrency());
+        packageDTO.setCurrency(CurrencyEnum.USD.getCurrencyCode());
         result.setPackageInfo(packageDTO);
         //获取申报信息
         List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
