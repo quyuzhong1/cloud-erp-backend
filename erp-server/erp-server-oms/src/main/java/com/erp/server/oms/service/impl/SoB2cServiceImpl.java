@@ -1559,9 +1559,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             LogisticsBillDTO.ReceiverDTO receiverDTO = B2cOrderConverter.INSTANCE.convertReceiver(receiverEntity);
             result.setReceiver(receiverDTO);
         }
-        LogisticsBillDTO.PackageDTO packageDTO = B2cOrderConverter.INSTANCE.convertPackage(soB2cLogisticsEntity);
-        packageDTO.setCurrency(entity.getCurrency());
-        result.setPackageInfo(packageDTO);
         //获取申报信息
         List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
         if (CollectionUtils.isEmpty(declareList)){
@@ -1589,6 +1586,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //        List<LogisticsBillDTO.SkuDTO> skuList = B2cOrderConverter.INSTANCE.convertSku(detailList);
 //        result.setSkuList(skuList);
         result.setProductVOS(productVOS);
+        LogisticsBillDTO.PackageDTO packageDTO = B2cOrderConverter.INSTANCE.convertPackage(soB2cLogisticsEntity);
+        packageDTO.setCurrency(productVOS.get(0).getDestCurrency());
+        result.setPackageInfo(packageDTO);
         return result;
     }
 
