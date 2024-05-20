@@ -9,6 +9,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -1559,9 +1561,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             LogisticsBillDTO.ReceiverDTO receiverDTO = B2cOrderConverter.INSTANCE.convertReceiver(receiverEntity);
             result.setReceiver(receiverDTO);
         }
-        LogisticsBillDTO.PackageDTO packageDTO = B2cOrderConverter.INSTANCE.convertPackage(soB2cLogisticsEntity);
-        packageDTO.setCurrency(entity.getCurrency());
-        result.setPackageInfo(packageDTO);
         //获取申报信息
         List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
         if (CollectionUtils.isEmpty(declareList)){
@@ -1589,6 +1588,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //        List<LogisticsBillDTO.SkuDTO> skuList = B2cOrderConverter.INSTANCE.convertSku(detailList);
 //        result.setSkuList(skuList);
         result.setProductVOS(productVOS);
+        LogisticsBillDTO.PackageDTO packageDTO = B2cOrderConverter.INSTANCE.convertPackage(soB2cLogisticsEntity);
+        packageDTO.setCurrency(productVOS.get(0).getDestCurrency());
+        result.setPackageInfo(packageDTO);
         return result;
     }
 
@@ -3001,6 +3003,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(shopIdList)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        // 国家信息
+        List<String> countryList = list.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getCountry()))
+                .map(SoB2cDTO.ListDTO::getCountry)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> countryNameMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(countryList)){
+            countryNameMap = sysDictFeign.listCountryByIds(countryList)
+                    .stream()
+                    .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
+        }
+
 
         List<String> ids = list.stream().map(SoB2cDTO.ListDTO::getId).collect(Collectors.toList());
 
@@ -3101,8 +3116,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
                 data.setShopName(shopInfoEntity.getName());
-                data.setCountryName(shopInfoEntity.getCountryName());
+//                data.setCountryName(shopInfoEntity.getCountryName());
             }
+            // 国家=买家信息国家
+            String countryName = countryNameMap.getOrDefault(data.getCountry(), "");
+            data.setCountryName(countryName);
+
             //中转信息
             TransferLogisticsChannelDTO.ListSelectDTO transferInfo = transferInfoList.stream().filter(v->v.getId().equals(data.getTransferLogisticsChannelId())).findFirst().orElse(null);
             if(Objects.nonNull(transferInfo)){
@@ -5554,7 +5573,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 
-    private SoB2cEntity getByCode(String soCode) {
+    @Override
+    public SoB2cEntity getByCode(String soCode) {
         return this.lambdaQuery().eq(SoB2cEntity::getCode, soCode).last("LIMIT 1").one();
     }
 
@@ -5774,6 +5794,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isBlank(dto.getSoCode())) {
             return Boolean.FALSE;
         }
+        // 记录跟踪号
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoId());
+        if (null == logisticsEntity){
+            throw new ServiceException("物流信息为空");
+        }
+        logisticsEntity.setCode(dto.getTrackNo());
+        logisticsEntity.setTrackNo(dto.getTrackNo());
+        soB2cLogisticsService.updateById(logisticsEntity);
+
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         //表示已发货
         Boolean isShipped = shipped.equals(billStatus);
@@ -7981,6 +8010,50 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         });
         return declareProductDTOS;
+    }
+
+    /**
+     * 修复sku历史成本单价问题
+     * @param dto
+     */
+    @Override
+    public void initCostPrice(SoB2cDTO.CostPriceDTO dto) {
+        //之前替换sku查询sql时，由于采购单价计算导致了数据使用了plm成本价，现在修复数据
+        if (CollectionUtils.isEmpty(dto.getIds()) && Objects.isNull(dto.getStartTime())){
+            return;
+        }
+        List<SoB2cDetailEntity> soB2cDetailEntities = null;
+        //获取需要修复的销售订单
+        if (CollectionUtils.isNotEmpty(dto.getIds())){
+            soB2cDetailEntities = soB2cDetailService.listByMainIds(dto.getIds());
+        }else if (Objects.nonNull(dto.getStartTime())){
+            LambdaQueryWrapper<SoB2cDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.or(wrapper ->{
+                wrapper.ge(SoB2cDetailEntity::getCreateTime, dto.getStartTime());
+                wrapper.ge(SoB2cDetailEntity::getUpdateTime, dto.getStartTime());
+            });
+            soB2cDetailEntities = soB2cDetailService.list(queryWrapper);
+        }
+        if (CollectionUtils.isEmpty(soB2cDetailEntities)){
+            return;
+        }
+        List<String> skuIds = soB2cDetailEntities.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //根据sku获取主供应商
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuPurchaseBySkuIds(skuIds);
+        //根据sku进行map
+        Map<String, SkuVO> listMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity()));
+        //比较信息
+        soB2cDetailEntities.forEach(soB2cDetailEntity -> {
+            String skuId = soB2cDetailEntity.getSkuId();
+            SkuVO skuVO = listMap.get(skuId);
+            BigDecimal actualTaxCost = Objects.isNull(skuVO)? BigDecimal.ZERO: Objects.isNull(skuVO.getActualTaxCost())? BigDecimal.ZERO : skuVO.getActualTaxCost();
+            if (!Objects.equals(soB2cDetailEntity.getTaxCost(), actualTaxCost)){
+                LambdaUpdateWrapper<SoB2cDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.set(SoB2cDetailEntity::getTaxCost, actualTaxCost);
+                updateWrapper.eq(SoB2cDetailEntity::getId, soB2cDetailEntity.getId());
+                soB2cDetailService.update(updateWrapper);
+            }
+        });
     }
 
     private ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList) {

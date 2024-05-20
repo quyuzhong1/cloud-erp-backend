@@ -917,4 +917,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
+
+    /**
+     * 修复历史平均成本数据数据
+     * @param dto
+     */
+    void initCostPrice(SoB2cDTO.CostPriceDTO dto);
+
+
+    /**
+     * 根据单号查询销售订单
+     */
+    SoB2cEntity getByCode(String soCode);
 }

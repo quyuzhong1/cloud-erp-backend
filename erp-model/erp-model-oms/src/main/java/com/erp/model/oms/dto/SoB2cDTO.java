@@ -217,6 +217,11 @@ public class SoB2cDTO implements Serializable {
         private String countryName;
 
         /**
+         * 国家代号
+         */
+        private String country;
+
+        /**
          * 是否对接了第三方海外仓
          * true 是
          */
@@ -1761,6 +1766,15 @@ public class SoB2cDTO implements Serializable {
 
         private String billStatus;
 
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 销售单号ID
+         */
+        private String soId;
 
 
     }
@@ -2406,5 +2420,17 @@ public class SoB2cDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CostPriceDTO {
+        /**
+         * 修复开始时间
+         */
+        private LocalDate startTime;
+
+        private List<String> ids;
     }
 }

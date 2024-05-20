@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -108,7 +109,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
         for (LogisticsGetLabelVO logisticsGetLabelVO : labelVO) {
             TongYouPrintLabelRequest request = TongYouPrintLabelRequest.builder()
                     .orderNo(logisticsGetLabelVO.getDeliveryNo())
-                    .trackNo(logisticsGetLabelVO.getTrackNo())
+                    .trackNo(StringUtils.isBlank(logisticsGetLabelVO.getTrackNo())? logisticsGetLabelVO.getTransportNo() : logisticsGetLabelVO.getTrackNo())
                     .logisticsId(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
                     .isPaoc(logisticsGetLabelVO.getIsPdn())
                     .isPcd(logisticsGetLabelVO.getIsPcd())

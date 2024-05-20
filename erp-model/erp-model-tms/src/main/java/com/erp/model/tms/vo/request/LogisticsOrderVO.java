@@ -65,7 +65,7 @@ public class LogisticsOrderVO implements Serializable {
     private Boolean isTaxed;
 
     //运费
-    private Number transportCost;
+    private Integer transportCost;
 
     //护照号
     private String passportNumber;
