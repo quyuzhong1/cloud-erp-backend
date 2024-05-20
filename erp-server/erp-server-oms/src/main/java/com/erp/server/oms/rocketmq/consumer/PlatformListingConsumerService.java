@@ -109,7 +109,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                         PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform()) ||
                         PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
                     paramDTO.setPlatformSpuNoList(Collections.singletonList(dto.getPlatformProductNo()));
-                    paramDTO.setPlatformSkuIdList(Collections.singletonList(dto.getPlatformSkuId()));
+                    paramDTO.setPlatformSkuIdList(StringUtils.isNotBlank(dto.getPlatformSkuId()) ? Collections.singletonList(dto.getPlatformSkuId()) : null);
                 }
                 paramDTO.setIsExpire(false);
                 List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
