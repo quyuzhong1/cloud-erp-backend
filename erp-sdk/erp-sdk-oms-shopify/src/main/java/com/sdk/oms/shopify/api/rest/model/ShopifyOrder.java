@@ -15,6 +15,7 @@ import com.sdk.oms.shopify.api.rest.model.serializer.LocalDateTimeSerializer;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -141,18 +142,18 @@ public class ShopifyOrder {
      */
     public String convertBillStatus() {
         // 配货中
-        return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
-
-//        if (null == this.fulfillmentStatus || StringUtils.isBlank(this.fulfillmentStatus)){
-//            // 配货中
-//            return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
-//        }
-//        // 已发货
-//        if ("fulfilled".equalsIgnoreCase(this.fulfillmentStatus)){
-//            return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
-//        }
-//        // 待发货
 //        return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+
+        if (null == this.fulfillmentStatus || StringUtils.isBlank(this.fulfillmentStatus)){
+            // 配货中
+            return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+        }
+        // 已发货
+        if ("fulfilled".equalsIgnoreCase(this.fulfillmentStatus)){
+            return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        }
+        // 待发货
+        return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
     }
 
 
