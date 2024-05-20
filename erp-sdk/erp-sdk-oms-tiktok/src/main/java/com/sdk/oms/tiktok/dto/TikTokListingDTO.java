@@ -29,7 +29,7 @@ public class TikTokListingDTO extends CleanBaseDTO {
         this.setIsClean(0);
         this.shopId = dto.getShopId();
         super.setPlatform(PlatformDictEnum.TIK_TOK.getCode());
-        this.setUniqueId(dataBean.getFid());
+        this.setUniqueId(dataBean.getSkus().get(0).getFid());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -51,7 +51,7 @@ public class TikTokListingDTO extends CleanBaseDTO {
         PlatformProductDTO resultDto = new PlatformProductDTO();
 
         //平台产品id
-        resultDto.setPlatformProductNo(dataBean.getSkus().get(0).getFid());
+        resultDto.setPlatformProductNo(dataBean.getFid());
         //平台sku
         resultDto.setPlatformSkuNo(dataBean.getSkus().get(0).getSellerSku());
         if (ObjectUtil.isNotEmpty(dataBean.getSkus().get(0).getSalesAttributes())) {
