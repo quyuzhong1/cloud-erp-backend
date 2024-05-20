@@ -684,9 +684,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             ProductPackDTO productPackDTO = new ProductPackDTO();
             productPackDTO.setSkuId(qcProductEntity.getSkuId());
             productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
-            productPackDTO.setProductLength(qcProductEntity.getProductLength());
-            productPackDTO.setProductWidth(qcProductEntity.getProductWidth());
-            productPackDTO.setProductHeight(qcProductEntity.getProductHeight());
+            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(qcProductEntity.getProductLength()));
+            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(qcProductEntity.getProductWidth()));
+            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(qcProductEntity.getProductHeight()));
             productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
             productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
             productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
