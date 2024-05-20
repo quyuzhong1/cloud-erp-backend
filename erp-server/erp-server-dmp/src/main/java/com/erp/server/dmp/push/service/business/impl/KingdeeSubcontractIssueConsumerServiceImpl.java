@@ -12,9 +12,9 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
-import com.erp.server.dmp.push.service.business.KingdeeOtherInstockConsumerService;
 import com.erp.server.dmp.push.service.business.KingdeeSubcontractIssueConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.kingdee.bos.webapi.entity.SaveParam;
@@ -47,7 +47,7 @@ public class KingdeeSubcontractIssueConsumerServiceImpl implements KingdeeSubcon
         //模块类型
         Integer type = ApiModuleTypeEnum.SUBCONTRACT_ISSUE.getCode();
 
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }

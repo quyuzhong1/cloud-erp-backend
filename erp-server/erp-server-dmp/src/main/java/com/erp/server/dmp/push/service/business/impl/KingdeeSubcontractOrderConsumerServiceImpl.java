@@ -14,6 +14,7 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -54,7 +55,7 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
         //操作项
         String operate = (String) map.get("operate");
 
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }

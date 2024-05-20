@@ -2,8 +2,6 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -13,7 +11,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -30,13 +27,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.scm.dto.*;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.scm.dto.SupplierAccountDTO;
-import com.erp.model.scm.dto.SupplierContactDTO;
-import com.erp.model.scm.dto.SupplierCredentialDTO;
-import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
 import com.erp.model.scm.entity.*;
@@ -46,14 +38,11 @@ import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.scm.enums.SupplierTabEnum;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DictBasicDTO;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -64,7 +53,6 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
-import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Maps;
@@ -79,6 +67,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -87,8 +77,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -161,8 +149,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private WmsTaskFeign wmsTaskFeign;
     @Autowired
     private TransferLogisticsFeign transferLogisticsFeign;
+
     @Resource
-    private PurchaseOrderDetailMapper purchaseOrderDetailMapper;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private KingdeePaymentConditionService  kingdeePaymentConditionService;
@@ -591,7 +580,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "删除");
             //删除同步金蝶
-            supplierList.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+            List<DmpPushTaskEntity> resultList = new ArrayList<>();
+            supplierList.forEach(obj -> {
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
+                resultList.add(pushTaskEntity);
+            });
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(resultList);
+                }
+            });
         }
 
 
@@ -706,7 +706,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            List<DmpPushTaskEntity> resultList = new ArrayList<>();
+            list.forEach(obj -> {
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                resultList.add(pushTaskEntity);
+            });
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(resultList);
+                }
+            });
         }
         return Boolean.TRUE;
     }
@@ -750,12 +761,21 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
 
         //发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         if (dto.getState()) {
-            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_DISABLE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_DISABLE.getCode());
+            resultList.add(pushTaskEntity);
         } else {
-            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_ENABLE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_ENABLE.getCode());
+            resultList.add(pushTaskEntity);
         }
-
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
         LogisticsSupplierDTO.UpdateDisabledDTO updateDisabledDTO = new LogisticsSupplierDTO.UpdateDisabledDTO();
         updateDisabledDTO.setSupplierId(supplierId);
         updateDisabledDTO.setDisabled(state);
@@ -870,7 +890,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
             //发送金蝶
-            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            List<DmpPushTaskEntity> resultList = new ArrayList<>();
+            list.forEach(obj -> {
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+                resultList.add(pushTaskEntity);
+            });
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(resultList);
+                }
+            });
         }
         return result;
     }

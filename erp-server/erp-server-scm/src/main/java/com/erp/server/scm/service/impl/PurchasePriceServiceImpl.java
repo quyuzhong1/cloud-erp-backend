@@ -25,6 +25,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
@@ -35,8 +36,8 @@ import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
@@ -55,6 +56,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -113,7 +116,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private PurchasePriceChangeService purchasePriceChangeService;
 
     @Resource
-    private SysDictFeign sysDictFeign;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private PurchasePriceQueryHandler purchasePriceQueryHandler;
@@ -387,8 +390,18 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "删除");
             attachmentService.deleteByBusinessIds(ids);
             //删除同步金蝶
-            purchasePriceList.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
-
+            List<DmpPushTaskEntity> resultList = new ArrayList<>();
+            purchasePriceList.forEach(obj -> {
+                DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
+                resultList.add(pushTaskEntity);
+            });
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(resultList);
+                }
+            });
         }
         return result;
     }
@@ -504,8 +517,19 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             throw new ServiceException(ApiError.ERROR_94006);
         }
         //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         if (dto.getType().equals(ScmConstant.PASS)) {
-            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> {
+                DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                resultList.add(pushTaskEntity);
+            });
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(resultList);
+                }
+            });
         }
         return Boolean.TRUE;
     }
@@ -967,7 +991,18 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
             //发送金蝶
-            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            List<DmpPushTaskEntity> resultList = new ArrayList<>();
+            list.forEach(obj -> {
+                DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+                resultList.add(pushTaskEntity);
+            });
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(resultList);
+                }
+            });
         }
         return result;
     }

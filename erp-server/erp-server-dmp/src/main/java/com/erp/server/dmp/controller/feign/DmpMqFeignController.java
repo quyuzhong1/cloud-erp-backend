@@ -49,7 +49,7 @@ public class DmpMqFeignController {
      * @param list
      * @return Boolean
      */
-    @PostMapping("/send/pushTask")
+    @PostMapping("/send/sendTask")
     public Boolean sendTask(@RequestBody  List<DmpPushTaskEntity> list){
         dmpPushTaskService.sendTask(list);
         return Boolean.TRUE;
