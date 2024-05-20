@@ -52,7 +52,6 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
-import com.rtfparserkit.rtf.Command;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -71,8 +70,6 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.rtfparserkit.rtf.Command.list;
 
 /**
  * <p>
@@ -635,13 +632,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             item.setProductGrade(sku.getProductGrade());
             item.setSaleMethod(productDetailEntity.getSaleMethod());
             item.setVariantProperty(sku.getVariantProperty());
-            item.setBoxHeight(LengthConverterUtil.mmToCm(sku.getBoxHeight()));
-            item.setBoxLength(LengthConverterUtil.mmToCm(sku.getBoxLength()));
-            item.setBoxWeight(LengthConverterUtil.mmToCm(sku.getBoxWeight()));
-            item.setBoxWidth(LengthConverterUtil.mmToCm(sku.getBoxWidth()));
-            item.setProductHeight(LengthConverterUtil.mmToCm(sku.getProductHeight()));
-            item.setProductLength(LengthConverterUtil.mmToCm(sku.getProductLength()));
-            item.setProductWidth(LengthConverterUtil.mmToCm(sku.getProductWidth()));
+            item.setBoxHeight(sku.getBoxHeight());
+            item.setBoxLength(sku.getBoxLength());
+            item.setBoxWeight(sku.getBoxWeight());
+            item.setBoxWidth(sku.getBoxWidth());
+            item.setProductHeight(sku.getProductHeight());
+            item.setProductLength(sku.getProductLength());
+            item.setProductWidth(sku.getProductWidth());
             item.setProductNetWeight(sku.getProductNetWeight());
             Boolean isFirstMassProduct = purchaseOrderList.stream().filter(p -> p.getId().equals(purchaseOrderId)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(false);
