@@ -481,6 +481,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 return 1;
             } else if (!StringUtils.isBlank(s1.getWarehouseLocation()) && StringUtils.isBlank(s2.getWarehouseLocation())) {
                 return -1;
+            } else if (org.apache.commons.lang3.StringUtils.isBlank(s1.getWarehouseLocation()) && org.apache.commons.lang3.StringUtils.isBlank(s2.getWarehouseLocation())) {
+                return 0;
             } else {
                 return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
             }
