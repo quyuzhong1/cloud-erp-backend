@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
@@ -125,7 +126,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         // 平台仓订单不走任何规则
         // 取消订单不走规则
-        if (!mainEntity.hasPlatformWarehouseOrder() || mainEntity.getIsCancel() ) {
+        if (!mainEntity.hasPlatformWarehouseOrder()
+                && !mainEntity.getIsCancel()
+                && !ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())
+        ) {
             // 已审核过的订单不走规则
             Integer count = operateLogService.lambdaQuery()
                     .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
