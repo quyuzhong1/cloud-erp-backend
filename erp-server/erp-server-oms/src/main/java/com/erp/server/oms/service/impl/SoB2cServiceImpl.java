@@ -5793,6 +5793,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isBlank(dto.getSoCode())) {
             return Boolean.FALSE;
         }
+        SoB2cEntity entity = this.getByCode(dto.getSoCode());
+        // 记录跟踪号
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        if (null == logisticsEntity){
+            throw new ServiceException("物流信息为空");
+        }
+        logisticsEntity.setCode(dto.getTrackNo());
+        logisticsEntity.setTrackNo(dto.getTrackNo());
+        soB2cLogisticsService.updateById(logisticsEntity);
+
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         //表示已发货
         Boolean isShipped = shipped.equals(billStatus);

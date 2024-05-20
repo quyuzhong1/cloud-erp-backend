@@ -107,6 +107,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
         updateStatus.setSoCode(soB2cCode);
         updateStatus.setBillStatus(billStatus);
+        updateStatus.setTrackNo(dto.getTrackNo());
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
             SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
