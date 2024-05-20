@@ -1,6 +1,11 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.entity.WmsDataCompareTempEntity;
 import com.common.business.service.SuperService;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.WmsDataCompareTempDTO;
 
@@ -32,5 +37,7 @@ public interface WmsDataCompareTempService extends SuperService<WmsDataCompareTe
     */
     Boolean update(WmsDataCompareTempDTO.UpdateDTO dto);
 
+    void batchInsertWmsDataCompareTemp(@Param("list")List<WmsDataCompareTempEntity> list);
+    
     void deleteData(String taskId);
 }
