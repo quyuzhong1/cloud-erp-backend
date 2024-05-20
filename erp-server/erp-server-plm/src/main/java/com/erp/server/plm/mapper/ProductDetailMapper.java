@@ -119,7 +119,21 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @author yl
      * @date 2023-03-21 12:06
      */
+    List<SkuVO> getSkuInfoBySkuIds(@Param("skuIds") List<String> skuIds);
+
+    /**
+     * 获取sku基础信息
+     * @param skuIds
+     * @return
+     */
     List<SkuVO> getSkuBaseBySkuIds(@Param("skuIds") List<String> skuIds);
+
+    /**
+     * 获取sku 采购信息
+     * @param skuIds
+     * @return
+     */
+    List<SkuVO> listSkuPurchaseBySkuIds(@Param("skuIds") List<String> skuIds);
 
     /**
      * 获取所有产品明细包括删除，用来同步到DMP

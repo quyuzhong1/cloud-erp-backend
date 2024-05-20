@@ -2407,4 +2407,16 @@ public class SoB2cDTO implements Serializable {
          */
         private String remark;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CostPriceDTO {
+        /**
+         * 修复开始时间
+         */
+        private LocalDate startTime;
+
+        private List<String> ids;
+    }
 }

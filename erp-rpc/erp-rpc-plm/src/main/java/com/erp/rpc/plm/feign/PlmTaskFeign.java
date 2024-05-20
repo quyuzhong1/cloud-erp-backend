@@ -79,6 +79,16 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/getSkuInfoByIds")
     List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
+    /**
+     * 根据skuid集合获取到sku 信息
+     *
+     * @param skuIds
+     * @return
+     * @author yl
+     * @date 2023-03-21 12:19
+     */
+    @PostMapping("feign/product/listSkuPurchaseBySkuIds")
+    List<SkuVO> listSkuPurchaseBySkuIds(@RequestBody List<String> skuIds);
 
     @PostMapping("feign/product/getSkuInfoAdvanceQuery")
     List<SkuVO> getSkuInfoAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
