@@ -5,7 +5,9 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOutboundDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.*;
+import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
@@ -15,6 +17,7 @@ import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
@@ -104,10 +107,19 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
         updateStatus.setSoCode(soB2cCode);
         updateStatus.setBillStatus(billStatus);
+        updateStatus.setTrackNo(dto.getTrackNo());
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
+            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
+
+            // 调用第三方平台SDK标记发货(无事务)
+            SoB2cEntity mainEntity = soB2cFeign.getById(generateB2cDTO.getSoId());
+            PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+            platformShipOrderDTO.setSoB2cId(mainEntity.getId());
+            platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
+            PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+
             try {
-                SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
                 LocalDateTime outBoundTime = dto.getOutBoundTime();
                 if(Objects.nonNull(outBoundTime)){
                     generateB2cDTO.setBillDate(outBoundTime.toLocalDate());

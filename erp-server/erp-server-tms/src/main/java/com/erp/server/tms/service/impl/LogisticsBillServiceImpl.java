@@ -414,16 +414,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
-        String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
-        String salesPlatform = dto.getSalesPlatform();
-        Boolean isAliExpress = aliExpress.equals(salesPlatform);
-
-        String country = Objects.nonNull(dto.getReceiver())?Objects.nonNull(dto.getReceiver().getCountry())?dto.getReceiver().getCountry():"":"";
-        LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO = logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
-        //最高报关金额
-        BigDecimal maxCustomsAmount = channelConstraintDTO.getMaxCustomsAmount();
-        //最低报关金额
-        BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
+//        String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
+//        String salesPlatform = dto.getSalesPlatform();
+//        Boolean isAliExpress = aliExpress.equals(salesPlatform);
+//
+//        String country = Objects.nonNull(dto.getReceiver())?Objects.nonNull(dto.getReceiver().getCountry())?dto.getReceiver().getCountry():"":"";
+//        LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO = logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
+//        //最高报关金额
+//        BigDecimal maxCustomsAmount = channelConstraintDTO.getMaxCustomsAmount();
+//        //最低报关金额
+//        BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
 
         LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
         //发货人信息
@@ -433,11 +433,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), LogisticsAddressTypeEnum.DELIVER.getName());
         }
         //发货人信息
-        SenderInfo senderInfo = new SenderInfo();
+
         LogisticsAddressEntity logisticsAddress = deliverList.get(0);
-        BeanMapperUtils.copy(logisticsAddress, senderInfo);
+        SenderInfo senderInfo = LogisticsBillConverter.INSTANCE.convertSender(logisticsAddress);
+//        BeanMapperUtils.copy(logisticsAddress, senderInfo);
         //地址id
-        senderInfo.setId(logisticsAddress.getAddressId());
+//        senderInfo.setId(logisticsAddress.getAddressId());
 
         LogisticsAddressTypeEnum refundType = LogisticsAddressTypeEnum.REFUND;
         //退货地址信息
@@ -518,7 +519,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 sourceId(dto.getOrderId()).
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
-                iossCode(dto.getIossTaxNo()).
+                iossCode(logisticsChannel.getIsIossPrepay()? dto.getIossTaxNo(): "").
                 senderInfo(senderInfo).
                 returnInfo(returnInfo).
                 receiverInfoVO(receiverInfo).

@@ -37,6 +37,14 @@
         task_id, main_data_type, compare_status, diff_fields, pk_field_value, system_data_id, compare_result, import_data_json, system_data_json
     </sql>
 
+	<insert id="batchInsertWmsDataCompareTemp">
+        insert into wms_data_compare_temp(id,task_id,main_data_type,compare_status,pk_field_value,import_data_json)
+        values
+        <foreach collection="list" item="l" separator=",">
+            (#{l.id},#{l.taskId},#{l.mainDataType},#{l.compareStatus},#{l.pkFieldValue},#{l.importDataJson})
+        </foreach>
+    </insert>
+
 	<delete id="deleteData">
 		delete from wms_data_compare_temp where task_id = #{taskId}
 	</delete>
