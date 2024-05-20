@@ -433,11 +433,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), LogisticsAddressTypeEnum.DELIVER.getName());
         }
         //发货人信息
-        SenderInfo senderInfo = new SenderInfo();
+
         LogisticsAddressEntity logisticsAddress = deliverList.get(0);
-        BeanMapperUtils.copy(logisticsAddress, senderInfo);
+        SenderInfo senderInfo = LogisticsBillConverter.INSTANCE.convertSender(logisticsAddress);
+//        BeanMapperUtils.copy(logisticsAddress, senderInfo);
         //地址id
-        senderInfo.setId(logisticsAddress.getAddressId());
+//        senderInfo.setId(logisticsAddress.getAddressId());
 
         LogisticsAddressTypeEnum refundType = LogisticsAddressTypeEnum.REFUND;
         //退货地址信息
