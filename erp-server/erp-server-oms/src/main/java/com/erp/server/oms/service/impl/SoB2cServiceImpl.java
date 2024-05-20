@@ -24,6 +24,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.CommonConstants;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
@@ -2852,6 +2853,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 logisticsChannelName = channelEntity.getName();
             }
         }
+
+        List<LogisticsSaleChannelEntity> list = FeignQuery.list(FeignQuery.create(LogisticsSaleChannelEntity.class)
+                .eq(LogisticsSaleChannelEntity::getCode, logisticsChannelId)
+        );
+        if (StringUtils.isBlank(logisticsChannelName)) {
+            logisticsChannelName = CollectionUtils.isNotEmpty(list) ? list.get(0).getCnName() : "";
+        }
+
         String transferLogisticsChannelId =  soB2cLogisticsEntity.getTransferLogisticsChannelId();
         List<TransferLogisticsChannelDTO.ListSelectDTO> transferInfoList = transferLogisticsFeign.listByTransferChannelIds(Arrays.asList(transferLogisticsChannelId));
         if(CollectionUtils.isNotEmpty(transferInfoList)){
