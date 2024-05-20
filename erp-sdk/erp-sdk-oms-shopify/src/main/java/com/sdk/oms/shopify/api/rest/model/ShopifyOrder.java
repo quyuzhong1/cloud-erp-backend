@@ -207,6 +207,10 @@ public class ShopifyOrder {
 //                APPROVE_ING("approveIng", "审核中"),
 //                REJECT("reject", "审核不通过"),
 //                APPROVE("approve", "已审核");
+        // 已发货=审核通过
+        if ("fulfilled".equalsIgnoreCase(this.fulfillmentStatus)){
+            return "approve";
+        }
         String code = this.financialStatus;
         ShopifyOrderFinancialStatusEnum statusEnum = ShopifyOrderFinancialStatusEnum.getByCode(code);
         if (null == statusEnum) {
