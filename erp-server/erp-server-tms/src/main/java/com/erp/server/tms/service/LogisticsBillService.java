@@ -226,4 +226,12 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @param dto
      */
     void initLogisticsBillPhone(LogisticsBillDTO.BillPhoneDTO dto);
+    /**
+     * @description: 根据销售出库单id集合查询
+     * @author Will
+     * @date: 2024/5/20 16:05
+     * @param outstockIdList
+     * @return List<LogisticsBillEntity>
+     */
+    List<LogisticsBillEntity> listBySoOutStockIdList(List<String> outstockIdList);
 }

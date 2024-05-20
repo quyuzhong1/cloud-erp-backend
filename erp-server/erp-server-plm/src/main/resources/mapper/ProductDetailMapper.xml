@@ -963,6 +963,7 @@
         pp.moq,
         pp.main_supplier as supplierId,
         pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge,
         pi.sale_method,
         ppk.gross_weight,
         pc.actual_tax_cost,
