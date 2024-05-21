@@ -11,7 +11,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class OrderEntity extends CleanBaseDTO {
+public class WangDianOrderEntity extends CleanBaseDTO {
 
     private String _id;
 
