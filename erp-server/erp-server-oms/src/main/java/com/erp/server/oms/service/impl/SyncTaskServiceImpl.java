@@ -3,14 +3,21 @@ package com.erp.server.oms.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.*;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.oms.kingdee.*;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,31 +61,42 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private SyncKingdeeSoChangeService syncKingdeeSoChangeService;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
         SourceTypeEnum sourceType = syncParamDTO.getSourceType();
-
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         switch (sourceType) {
             case CUSTOMER_INFO:
-                syncCustomerInfo(sourceDetailList);
-                return;
+                resultList = syncCustomerInfo(sourceDetailList);
+                break;
             case CUSTOMER_CONTACT:
-                syncCustomerContract(sourceDetailList);
-                return;
+                resultList = syncCustomerContract(sourceDetailList);
+                break;
             case CUSTOMER_GROUP:
-                syncCustomerGroup(sourceDetailList);
-                return;
+                resultList = syncCustomerGroup(sourceDetailList);
+                break;
             case SO_INFO:
-                syncSoInfo(sourceDetailList);
-                return;
+                resultList = syncSoInfo(sourceDetailList);
+                break;
             case SO_CHANGE:
-                syncSoChange(sourceDetailList);
-                return;
+                resultList = syncSoChange(sourceDetailList);
+                break;
             default:
-                return;
+                break;
         }
+        //推送金蝶
+        List<DmpPushTaskEntity> finalResultList = resultList;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(finalResultList);
+            }
+        });
     }
 
     /**
@@ -87,20 +105,23 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * @date: 2023/10/30 11:22
      * @param sourceDetailList
      */
-    private void syncCustomerInfo (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncCustomerInfo (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<CustomerInfoEntity> list = customerInfoService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncCustomerInfo >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             CustomerInfoEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeCustomerInfoService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeCustomerInfoService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.addAll(dmpPushTaskList);
         }
+        return resultList;
     }
 
     /**
@@ -109,20 +130,23 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * @date: 2023/10/30 11:22
      * @param sourceDetailList
      */
-    private void syncCustomerContract (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncCustomerContract (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<CustomerContactEntity> list = customerContactService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncCustomerContract >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             CustomerContactEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeCustomerContactService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeCustomerContactService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
@@ -131,20 +155,23 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * @date: 2023/10/30 11:22
      * @param sourceDetailList
      */
-    private void syncCustomerGroup (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncCustomerGroup (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<CustomerGroupEntity> list = customerGroupService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncCustomerGroup >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             CustomerGroupEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeCustomerGroupService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeCustomerGroupService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
@@ -153,22 +180,25 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * @date: 2023/10/30 11:22
      * @param sourceDetailList
      */
-    private void syncSoInfo (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncSoInfo (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<SoInfoEntity> list = soInfoService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncSoInfo >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             SoInfoEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeSoService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSoService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
             //同步订单数据到dmp
             syncKingdeeSoService.syncOrderToDmp(entity,syncParamDetailDTO.getSyncOperate());
         }
+        return resultList;
     }
 
     /**
@@ -177,19 +207,22 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * @date: 2023/10/30 11:22
      * @param sourceDetailList
      */
-    private void syncSoChange (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncSoChange (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<SoChangeEntity> list = soChangeService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncSoChange >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             SoChangeEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeSoChangeService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSoChangeService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 }

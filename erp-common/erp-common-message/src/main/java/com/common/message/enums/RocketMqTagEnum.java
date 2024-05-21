@@ -548,6 +548,12 @@ public enum RocketMqTagEnum {
      */
     ASYNC_GET_PLATFORM_LABEL_TAG(10001, RocketMqTagEnum.SYNC_TMS,"async_get_platform_label_tag"),
 
+    //-----------------------------旺店通编码从11001开始------------------------------------------------------------------
+    /**
+     * 同步产品资料到旺店通
+     */
+    WANGDIAN_PRODUCT_DETAIL_TAG(11001, RocketMqTagEnum.SYNC_WANGDIAN,"wangdian_product_detail_tag"),
+
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
@@ -588,6 +594,8 @@ public enum RocketMqTagEnum {
     public static final String AMZ_REPORT = "amz_report";
 
     public static final String FBA_SHIPMENT = "fba_shipment";
+
+    public static final String SYNC_WANGDIAN = "sync_wangdian";
 
     private Integer code;
 

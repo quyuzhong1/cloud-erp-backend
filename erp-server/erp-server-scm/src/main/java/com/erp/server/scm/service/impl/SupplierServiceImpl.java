@@ -18,7 +18,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -28,6 +27,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
@@ -42,6 +42,7 @@ import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -52,7 +53,6 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
-import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Maps;
@@ -67,6 +67,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -147,8 +149,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private WmsTaskFeign wmsTaskFeign;
     @Autowired
     private TransferLogisticsFeign transferLogisticsFeign;
+
     @Resource
-    private PurchaseOrderDetailMapper purchaseOrderDetailMapper;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private KingdeePaymentConditionService  kingdeePaymentConditionService;
@@ -218,7 +221,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             addEntity.setSrmDisabled(Boolean.TRUE);//默认禁用
         }
         addEntity.setSrmDisabledDate(LocalDate.now());
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = commonService.getUserInfo();
         if (Objects.nonNull(userInfo)){
             addEntity.setSrmOperateUserId(userInfo.getUid());
             addEntity.setSrmOperateUserName(userInfo.getUserName());
@@ -335,7 +338,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         BeanMapper.copy(supplier, old);
         //供应商srm状态是否修改
         if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled())){
-            LoginUser user = UserContext.getDefaultLoginUser();
+            LoginUser user = commonService.getUserInfo();
             if (Objects.nonNull(user)){
                 supplier.setSrmOperateUserId(user.getUid());
                 supplier.setSrmOperateUserName(user.getUserName());
@@ -576,8 +579,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<Pair<String, String>> pairList = supplierList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
 
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "删除");
-            //删除同步金蝶
-            supplierList.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
+            //发送金蝶
+            sendPushTask(supplierList,SyncOperateEnum.OPERATE_DELETE.getCode());
         }
 
 
@@ -691,8 +695,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -735,13 +739,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String content = String.format("编辑了供应商[%s] 启用状态 由[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
 
-        //发送金蝶
-        if (dto.getState()) {
-            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_DISABLE.getCode());
-        } else {
-            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_ENABLE.getCode());
-        }
-
         LogisticsSupplierDTO.UpdateDisabledDTO updateDisabledDTO = new LogisticsSupplierDTO.UpdateDisabledDTO();
         updateDisabledDTO.setSupplierId(supplierId);
         updateDisabledDTO.setDisabled(state);
@@ -753,6 +750,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         transferUpdateDisabledDTO.setDisabled(state);
         transferLogisticsFeign.updateDisabledBySupplierId(transferUpdateDisabledDTO);
 
+        //发送金蝶
+        String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
+        if (dto.getState()) {
+            operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
+        }
+        sendPushTask(Arrays.asList(supplier),operate);
         return this.updateById(supplier);
     }
 
@@ -787,7 +790,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         Boolean state = dto.getState();
         supplier.setSrmDisabled(state);
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = commonService.getUserInfo();
         if (Objects.nonNull(userInfo)){
             supplier.setSrmOperateUserId(userInfo.getUid());
             supplier.setSrmOperateUserName(userInfo.getUserName());
@@ -855,8 +858,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+
             //发送金蝶
-            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return result;
     }
@@ -1357,7 +1361,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         log.info("供应商撤销流程，ids=【{}】", ids);
 
         //撤销现有流程
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = commonService.getUserInfo();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
@@ -1524,7 +1528,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date: 2023/7/3 14:39
      */
     private void startProcess(List<SupplierEntity> list) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = commonService.getUserInfo();
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
         list.forEach(obj -> {
             ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
@@ -1551,7 +1555,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     private void approveProcess(List<SupplierEntity> list, BaseApproveParamDTO dto) {
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = commonService.getUserInfo();
         list.forEach(obj -> {
             ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
             approveDTO.setBusinessId(obj.getId());
@@ -1584,7 +1588,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * 更改状态
      */
     private Boolean updateApproveStatus(List<SupplierEntity> list, ApproveStatusEnum statusEnum) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = commonService.getUserInfo();
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
                 if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
@@ -1653,6 +1657,26 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private void batchAddModuleOperateLog(String content, String code, List<Pair<String, String>> pairList, String operation) {
         moduleOperateLogService.batchAddModuleOperateLog(content, code, pairList, operation);
     }
-
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<SupplierEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
 
 }

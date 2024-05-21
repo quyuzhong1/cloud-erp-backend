@@ -1,6 +1,8 @@
 package cn.wangdian.erp.sdk.api.goods;
 
 import cn.wangdian.erp.sdk.Pager;
+import cn.wangdian.erp.sdk.api.Result;
+import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
 import cn.wangdian.erp.sdk.api.goods.dto.GoodsPushRequest;
 import cn.wangdian.erp.sdk.api.goods.dto.GoodsSearchRequest;
 import cn.wangdian.erp.sdk.api.goods.dto.GoodsSearchResponse;
@@ -17,4 +19,6 @@ public interface GoodsAPI
 	GoodsSearchResponse search(GoodsSearchRequest request, Pager pager);
 
 
+	@Api(value = "goods.Goods.batchPush")
+	Result batchPush(List<GoodsBatchPushDTO> dto);
 }

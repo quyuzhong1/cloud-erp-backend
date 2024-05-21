@@ -11,11 +11,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
@@ -23,13 +23,11 @@ import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeOperatorRefPostMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
-import com.erp.server.sys.service.KingdeeOperatorRefPostService;
-import com.erp.server.sys.service.KingdeeUserRefPostService;
-import com.erp.server.sys.service.SysAccountingCompanyService;
-import com.erp.server.sys.service.SysUserInfoService;
+import com.erp.server.sys.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -37,7 +35,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,15 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     @Autowired
     private SysUserInfoService sysUserInfoService;
 
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -88,7 +98,14 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         handleDb(addEntity);
         Boolean result = this.save(addEntity);
         if (result) {
-            syncKingdeeOperatorService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeOperatorService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
         }
         return BatchResultDTO.success(addEntity.getId(), addEntity.getId(), OperationTypeEnum.ADD);
     }
@@ -237,7 +254,14 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         Boolean result = this.removeById(id);
         if (result && StringUtils.isNotBlank(kingdeeId)) {
             //金蝶推送
-            syncKingdeeOperatorService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeOperatorService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -268,7 +292,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     public List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
         List<UserInfoDTO.BusinessOperationUserDTO> resultList = new ArrayList<>(10);
         List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listInfo(dto);
-        String userId = UserContext.getDefaultLoginUser().getUid();
+        String userId = commonService.getUserInfo().getUid();
         UserInfoDTO.BusinessOperationUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
         if (findUser != null) {
             findUser.setIsMyState(1);

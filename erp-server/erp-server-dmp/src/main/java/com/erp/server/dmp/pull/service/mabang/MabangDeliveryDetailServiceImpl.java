@@ -215,11 +215,11 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
 
         //平台单据修改时间
         if (StringUtils.isNotBlank(orderEntity.getOperTime()) && !"null".equals(orderEntity.getOperTime())) {
-            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
+            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getOperTime()));
         }
         //发货时间
         if (StringUtils.isNotBlank(orderEntity.getExpressTime()) && !"null".equals(orderEntity.getExpressTime())) {
-            deliveryDetailInfoEntity.setDeliveryDate(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
+            deliveryDetailInfoEntity.setDeliveryDate(LocalDateUtil.strToLocalDateTime(orderEntity.getExpressTime()));
         }
         //备注
         deliveryDetailInfoEntity.setRemark(orderEntity.getRemark());

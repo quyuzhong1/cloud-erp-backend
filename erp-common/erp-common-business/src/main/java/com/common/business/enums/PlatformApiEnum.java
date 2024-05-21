@@ -128,6 +128,9 @@ public enum PlatformApiEnum {
      * 亚马逊api
      */
     FBA_SHIPMENT_DETAIL(65, "fba_shipment_detail", MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT, ""),
+
+    //----------------------------------------------------------旺店通----------------------------------------------------------------------------
+    WANGDIAN_TRADE(100, "wangdian.trade", MongoTableNameContant.WANGDIAN_TRADE, TaskConstant.WANGDIAN_PULL_DATA_TASK)
     ;
 
     /** 状态码 */
