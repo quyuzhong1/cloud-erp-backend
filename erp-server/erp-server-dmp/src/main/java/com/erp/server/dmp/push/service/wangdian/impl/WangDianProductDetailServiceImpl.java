@@ -29,7 +29,7 @@ public class WangDianProductDetailServiceImpl implements WangDianProductDetailSe
 
     @Override
     public void executeConsumer(List<GoodsBatchPushDTO> pushDTOS) {
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getName());
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
