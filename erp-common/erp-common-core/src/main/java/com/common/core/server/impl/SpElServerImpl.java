@@ -259,8 +259,13 @@ public class SpElServerImpl implements SpElServer {
     private String getContentList(String field, String addField, String compare, Object targetValue, SpElExpressionDTO spElDTO, Map<String, Object> detailMap) {
         String[] split = targetValue.toString().split(",");
         StringBuilder sb=new StringBuilder();
-        sb.append("#").append(addField);
-        sb.append(".").append(compare);
+        if (RuleCompareEnum.CONTAINS.getCode().equals(compare)){
+            sb.append("#").append(addField);
+            sb.append(".").append(compare);
+        }else if (RuleCompareEnum.NOT_CONTAINS.getCode().equals(compare)){
+            sb.append("!#").append(addField);
+            sb.append(".").append(RuleCompareEnum.CONTAINS.getCode());
+        }
         sb.append("(#").append(field).append(")");
         Map<String, Object> variables = spElDTO.getVariables();
         variables.put(addField, Arrays.asList(split));
