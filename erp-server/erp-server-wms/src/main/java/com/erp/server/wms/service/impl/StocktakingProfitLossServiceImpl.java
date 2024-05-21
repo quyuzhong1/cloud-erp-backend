@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import cn.wangdian.erp.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -41,9 +43,12 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeStocktakingLossService;
 import com.erp.server.wms.kingdee.SyncKingdeeStocktakingProfitService;
+import com.erp.server.wms.mapper.StocktakingProfitLossDetailMapper;
 import com.erp.server.wms.mapper.StocktakingProfitLossMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +61,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -113,6 +119,11 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private SyncWdtOtherInStockService syncWdtOtherInStockService;
+
+    @Resource
+    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
     /**
      * tab list
      *
@@ -486,14 +497,65 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 //盘盈单同步金蝶
                 if (isProfit) {
                     syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                    //审核通过的盘盈单转换为其他入库单推送到旺店通
+                    syncStocktakingProfitInfoToWdt(entity);
+
                 }
                 //盘亏单同步金蝶
                 if (isLoss) {
                     syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                    //审核通过的盘亏单转换为其他出库单推送到旺店通
+                    syncStocktakingLossInfoToWdt(entity);
                 }
             }
         }
         return result;
+    }
+
+    /**
+     * 将盘亏单转换为其他出库单并推送到旺店通
+     * @param entity 盘盈盘亏单
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncStocktakingLossInfoToWdt(StocktakingProfitLossEntity entity) {
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if(detailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        List<CreateOtherStockoutRequest. GoodsList> goodsList = new ArrayList<>(detailList.size());
+        detailList.forEach(item -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            goods.setSpecNo(item.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(item.getDiffQty()).abs());  //盘亏单的差异数量为负数,而旺店通不允许负数,这里取绝对值
+            goods.setPositionNo(item.getWarehouseLocation());
+            goodsList.add(goods);
+        });
+        syncWdtOtherOutStockService.syncDataToWdt(goodsList, detailList.get(0).getWarehouseId(), null);
+    }
+
+    /**
+     * 将盘盈单转换为其他入库单并推送到旺店通
+     * @param entity 盘盈盘亏单
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncStocktakingProfitInfoToWdt(StocktakingProfitLossEntity entity) {
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if(detailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
+        detailList.forEach(item -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            goods.setSpecNo(item.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(item.getDiffQty()));
+            goods.setPositionNo(item.getWarehouseLocation());
+            goodsList.add(goods);
+        });
+        syncWdtOtherInStockService.syncDataToWdt(goodsList, detailList.get(0).getWarehouseId(), null);
     }
 
     /**
