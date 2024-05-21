@@ -1,7 +1,9 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -27,7 +29,7 @@ public class SupplierPhaseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO extends PermissionsDTO implements Serializable{
         /**
          * 供应商表id
          */
@@ -218,6 +220,7 @@ public class SupplierPhaseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
         @StateEnumValue(strValues = {"all", "waitApprove"}, message = "搜索类型有误")

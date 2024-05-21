@@ -32,7 +32,6 @@ public class AmazonSoB2cHandle implements ISoB2cHandleService {
     private DmpMongoDbFeign dmpMongoDbFeign;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean handleRule(SoB2cEntity mainEntity) {
         //平台仓订单不走任何规则
         if (mainEntity.hasPlatformWarehouseOrder()) {
