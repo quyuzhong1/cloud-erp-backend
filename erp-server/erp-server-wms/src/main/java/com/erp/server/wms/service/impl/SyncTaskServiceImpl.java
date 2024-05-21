@@ -12,9 +12,11 @@ import com.erp.server.wms.kingdee.*;
 import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -113,6 +115,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
         SourceTypeEnum sourceType = syncParamDTO.getSourceType();
