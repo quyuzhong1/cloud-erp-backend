@@ -671,6 +671,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             
             //更新采购入库单明细对应采购订单明细的执行状态
             updatePodArrivalState(ids);
+            //修改采购收货单入库状态
+            warehouseReceiveService.updateReceiveInStockStatus(list);
 
             //审核通过发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
