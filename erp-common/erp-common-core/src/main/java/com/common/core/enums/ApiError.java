@@ -186,7 +186,9 @@ public enum ApiError implements Serializable {
     ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA(80006,"未找到上级辅助资料"),
     ERROR_NOT_EXIST_DMP_PUSH_TASK(80007,"未找到中台推送任务"),
     ERROR_STATUS_NO_NEED_SYNC(80008,"只有同步失败状态才可更新为无需同步"),
-
+    ERROR_THIRD_BINDED(80009,"第三方{}【{}】已经被【{}】绑定"),
+    ERROR_SYS_BINDED(80009,"{}【{}】已经被第三方【{}】绑定"),
+    ERROR_THIRD_SHOP_NOTFOUND(80010,"第三方店铺不存在"),
 
     /**
      * 工作流错误 workflow
