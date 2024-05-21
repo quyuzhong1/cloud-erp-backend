@@ -172,8 +172,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
     public void handleRule(SoB2cEntity mainEntity) {
         //订单状态
         String billStatus = mainEntity.getBillStatus();
