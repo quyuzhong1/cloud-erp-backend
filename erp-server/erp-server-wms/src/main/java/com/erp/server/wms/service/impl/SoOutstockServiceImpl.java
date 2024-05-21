@@ -3136,21 +3136,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .update();
     }
 
-	@Override
-	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(
-			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params , Integer pageSize) {
-		if("0".equals(params.getId())) {
-			this.getParams(params);
-		}
-		return baseMapper.getDataCompareByCondition(params , pageSize);
-	}
-
-	@Override
-	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
-		this.getParams(params);
-		return baseMapper.getDataCompareByConditionCount(params);
-	}
-
 	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
 		if(StringUtils.isBlank(params.getDictPlatform())) {
 			throw new ServiceException("销售出库单的系统数据范围【销售平台】不能为空");
