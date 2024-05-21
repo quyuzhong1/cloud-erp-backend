@@ -6,12 +6,14 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import cn.wangdian.erp.sdk.Client;
 import cn.wangdian.erp.sdk.Pager;
-import cn.wangdian.erp.sdk.api.sales.TradeAPI;
-import cn.wangdian.erp.sdk.api.sales.dto.TradeQueryRequest;
-import cn.wangdian.erp.sdk.api.sales.dto.TradeQueryResponse;
+import cn.wangdian.erp.sdk.WdtErpException;
+import cn.wangdian.erp.sdk.api.wms.stockout.StockoutAPI;
+import cn.wangdian.erp.sdk.api.wms.stockout.dto.SalesStockoutRequest;
+import cn.wangdian.erp.sdk.api.wms.stockout.dto.SalesStockoutResponse;
 import cn.wangdian.erp.sdk.impl.ApiFactory;
 import cn.wangdian.erp.sdk.impl.DefaultClient;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.RequestDTO;
@@ -68,6 +70,7 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
 
     @Resource
     private MQProducerService mqProducerService;
+
     @Override
     public void pullDataSave(RequestDTO dto) {
         List<OrderEntity> entityList = pullData(dto);
@@ -84,7 +87,7 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setCleanToDelivery(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
-            if(CollectionUtils.isEmpty(mongoData)){
+            if (CollectionUtils.isEmpty(mongoData)) {
                 insertList.add(entity);
                 pushToMqList.add(entity);
                 continue;
@@ -99,10 +102,10 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.WANGDIAN_TRADE, OrderEntity.class);
         }
-        if(!CollectionUtils.isEmpty(insertList)){
+        if (!CollectionUtils.isEmpty(insertList)) {
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.WANGDIAN_TRADE);
         }
-        if (CollectionUtils.isEmpty(pushToMqList)){
+        if (CollectionUtils.isEmpty(pushToMqList)) {
             log.warn("旺店通销售订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
@@ -113,10 +116,10 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
         // 异步推送到MQ
-        entityToMqlist.forEach(msg ->{
+        entityToMqlist.forEach(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
-                    msg,  msg.getPlatformOrderId());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+                    msg, msg.getPlatformOrderId());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new ServiceException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         });
@@ -205,7 +208,7 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
 
     private List<DmpDeliveryDetailItemEntity> initOrderItem(OrderEntity orderEntity) {
         List<OrderEntity.DetailItem> detailsList = orderEntity.getDetailsList();
-        if(CollectionUtils.isEmpty(detailsList)){
+        if (CollectionUtils.isEmpty(detailsList)) {
             log.warn("WangDianOrderInfoServiceImpl>>>initOrderItem>>>orderEntity 详情列表为空 {}", JSONUtil.toJsonStr(detailsList));
             return null;
         }
@@ -255,11 +258,11 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
     }
 
     private List<OrderEntity> pullData(RequestDTO dto) {
-        List<TradeQueryResponse.OrderItem> result = new ArrayList<>();
-        TradeAPI tradeAPI = ApiFactory.get(defaultClient, TradeAPI.class);
-        TradeQueryRequest request = new TradeQueryRequest();
-        request.setStatus(TradeQueryRequest.STATUS_COMPLETE);
-        request.setStatusType(3);
+        List<SalesStockoutResponse.OrderInfoDto> result = new ArrayList<>();
+        StockoutAPI stockoutAPI = ApiFactory.get(DefaultClient.get("wdtapi3", "http://47.92.239.46/", "wjkj03-test", "b6412a9b6:806828718719806966febbfe948893e8"), StockoutAPI.class);
+        SalesStockoutRequest request = new SalesStockoutRequest();
+        request.setStatusType(SalesStockoutRequest.STATUS_TYPE_CONSIGNED);
+        request.setStatus("110");
         request.setStartTime(dto.getJobTaskDTO().getLastTime().minusMinutes(15).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         request.setEndTime(dto.getJobTaskDTO().getNextTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         Pager pager = new Pager();
@@ -268,35 +271,37 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
         pager.setPageNo(0);
         boolean hasNext = true;
         while (hasNext) {
-            TradeQueryResponse response = tradeAPI.query(request, pager);
-            if (ObjectUtil.isEmpty(response) || ObjectUtil.isEmpty(response.getOrders())){
+            SalesStockoutResponse response = null;
+            try {
+                response = stockoutAPI.querySales(request, pager);
+            } catch (WdtErpException e) {
+                log.error("拉取旺店通销售出库单失败，原因【{}】", e.getMessage(), e);
                 return BeanMapperUtils.copyList(OrderEntity.class, result);
             }
-            result.addAll(response.getOrders());
-            Integer totalCount = response.getTotalCount();
+            if (ObjectUtil.isEmpty(response) || ObjectUtil.isEmpty(response.getOrderList())) {
+                return BeanMapperUtils.copyList(OrderEntity.class, result);
+            }
+            result.addAll(response.getOrderList());
+            Integer totalCount = response.getTotal();
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
             pager.setPageNo(pager.getPageNo() + 1);
         }
-        return BeanMapperUtils.copyList(OrderEntity.class, result);
+        return JSON.parseObject(JSON.toJSONString(result), new TypeReference<List<OrderEntity>>() {
+        });
     }
 
     public static void main(String[] args) {
-        TradeAPI tradeAPI = ApiFactory.get(DefaultClient.get("wdtapi3","http://47.92.239.46/","wjkj03-test","b6412a9b6:806828718719806966febbfe948893e8"), TradeAPI.class);
-        TradeQueryRequest request = new TradeQueryRequest();
-        request.setStatus(TradeQueryRequest.STATUS_COMPLETE);
-        request.setStatusType(3);
-        request.setStartTime("2024-04-29 11:00:00");
-        request.setEndTime("2024-04-29 12:00:00");
-        Pager pager = new Pager();
-        int pageSize = 200;
-        pager.setPageSize(pageSize);
-        pager.setPageNo(0);
-        Object query = tradeAPI.query(request, pager);
-        System.out.println(query);
-
+//        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+//        jobTaskDTO.setLastTime(LocalDateTime.of(2024, 5, 21, 9, 15, 0));
+//        jobTaskDTO.setNextTime(LocalDateTime.of(2024, 5, 21, 10, 0, 0));
+//        RequestDTO dto = new RequestDTO();
+//        dto.setJobTaskDTO(jobTaskDTO);
+//        List<OrderEntity> entityList = pullData(dto);
+//        System.out.println(entityList);
     }
+
 
     @Override
     public void cleanDataSave(String tableName, int size) {

@@ -1,7 +1,5 @@
 package cn.wangdian.erp.sdk.api.wms.stockout.dto;
 
-import com.google.gson.annotations.SerializedName;
-
 public class SalesStockoutRequest {
 
     public static final Byte STATUS_TYPE_CANCEL = 1;
@@ -11,6 +9,7 @@ public class SalesStockoutRequest {
     private String startTime ;
     private String endTime ;
     private Byte statusType ;
+    private String status;
     private String warehouseNo ;
     private String stockoutNo ;
     private String srcOrderNo ;
@@ -63,4 +62,11 @@ public class SalesStockoutRequest {
         this.srcOrderNo = srcOrderNo;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }
