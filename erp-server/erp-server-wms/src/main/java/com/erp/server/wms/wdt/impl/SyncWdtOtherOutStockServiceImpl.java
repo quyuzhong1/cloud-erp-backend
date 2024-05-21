@@ -1,10 +1,10 @@
 package com.erp.server.wms.wdt.impl;
 
-import cn.wangdian.erp.sdk.Client;
 import cn.wangdian.erp.sdk.api.wms.stockout.StockoutAPI;
 import cn.wangdian.erp.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import cn.wangdian.erp.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
 import cn.wangdian.erp.sdk.impl.ApiFactory;
+import cn.wangdian.erp.server.WangDianClientService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -34,7 +34,7 @@ import java.util.List;
 public class SyncWdtOtherOutStockServiceImpl implements SyncWdtOtherOutStockService {
 
     @Resource
-    private Client wdtClient;
+    private WangDianClientService wangDianClientService;
 
     @Resource
     private OtherOutstockDetailMapper outDetailMapper;
@@ -82,7 +82,7 @@ public class SyncWdtOtherOutStockServiceImpl implements SyncWdtOtherOutStockServ
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
 
-        StockoutAPI stockoutAPI = ApiFactory.get(wdtClient, StockoutAPI.class);
+        StockoutAPI stockoutAPI = wangDianClientService.get(StockoutAPI.class);
         CreateOtherStockoutResponse response = null;
         try {
             response = stockoutAPI.createOtherOutOrder(request);
