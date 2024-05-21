@@ -34,12 +34,8 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.*;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -58,9 +54,7 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
@@ -663,7 +657,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (!isB2c) {
                 // B2B物流单发货时间=销售出库单审核时间
                 entity.setActualDeliveryDate(LocalDateTime.now());
-                syncKingdeeSoOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 handleData(entity);
             } else {
                 handleSoB2cData(entity);
