@@ -152,14 +152,21 @@ public class PurchasePriceDetailDTO implements Serializable {
          * skuid集合
          */
         private List<String> skuIdList;
+
         /**
          * 供应商id集合
          */
         private List<String> supplierIdList;
+
         /**
          * 数量集合
          */
         private List<Integer> purchaseQtyList;
+
+        /**
+         * 采购组织id集合
+         */
+        private List<String> purchaseOrgIdList;
 
     }
 

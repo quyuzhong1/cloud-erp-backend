@@ -158,26 +158,32 @@
         inner join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
         inner join supplier s on pp.supplier_id = s.id and s.is_deleted = false
         <where>
-        pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
-        ppd.effective_date and ppd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
-        <if test="params.skuIdList != null and params.skuIdList.size > 0">
-            and ppd.sku_id in
-            <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.purchaseQtyList != null and params.purchaseQtyList.size > 0">
-            and
-            <foreach collection="params.purchaseQtyList" item="item" open="(" separator="or" close=")">
-                (ppd.max_qty > #{item} and #{item} >= ppd.min_qty)
-            </foreach>
-        </if>
-        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-            and pp.supplier_id in
-            <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
+            pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
+            ppd.effective_date and ppd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
+            <if test="params.skuIdList != null and params.skuIdList.size > 0">
+                and ppd.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseQtyList != null and params.purchaseQtyList.size > 0">
+                and
+                <foreach collection="params.purchaseQtyList" item="item" open="(" separator="or" close=")">
+                    (ppd.max_qty > #{item} and #{item} >= ppd.min_qty)
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and pp.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseOrgIdList != null and params.purchaseOrgIdList.size > 0">
+                and pp.purchase_org_id in
+                <foreach collection="params.purchaseOrgIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
         </where>
     </select>
 

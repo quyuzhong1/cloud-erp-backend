@@ -19,7 +19,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -33,7 +32,6 @@ import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysDepartmentEntity;
@@ -66,6 +64,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1461,10 +1460,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
          * 2、基于1条件下，相同sku、库位则可合并明细
          */
 
-        //获取报价信息
-        List<String> supplierIdList = list.stream().map(obj -> JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId()).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listAllSupplierSkuPrice(supplierIdList);
-
         Map<String, List<MachineSubComponentsEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getWarehouseId().concat(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId())));
         for (Map.Entry<String, List<MachineSubComponentsEntity>> entry : map.entrySet()) {
             List<MachineSubComponentsEntity> value = entry.getValue();
@@ -1496,15 +1491,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 String sourceIds = childValue.stream().map(MachineSubComponentsEntity::getId).collect(Collectors.joining(","));
                 addDetailDTO.setSourceDetailId(sourceIds);
 
-                //报价单价
-                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(obj -> obj.getSupplierId().equals(handleDetailDTO.getChildSupplierId()) && qty > obj.getMinQty() && obj.getMaxQty() >= qty ).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(supplierSkuPrice)) {
-                    String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", subComponentsEntity.getSkuNo(), qty);
-                    throw new ServiceException(new ApiResult(1,error));
-                }
-                addDetailDTO.setReturnPrice(supplierSkuPrice.getTaxPrice());
-                addDetailDTO.setCurrency(supplierSkuPrice.getCurrency());
-                addDetailDTO.setCurrencySymbol(supplierSkuPrice.getCurrencySymbol());
+                //由于下推的采购退货单无采购组织，现退货单价给0，编辑的时候取报价信息
+                addDetailDTO.setReturnPrice(BigDecimal.ZERO);
                 addDetailList.add(addDetailDTO);
 
             }

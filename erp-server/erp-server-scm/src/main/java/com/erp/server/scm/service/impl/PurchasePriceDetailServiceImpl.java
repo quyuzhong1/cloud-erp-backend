@@ -730,14 +730,21 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
+        //skuId
         List<String> skuIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
+        //供应商Id
         List<String> supplierIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSupplierId).distinct().collect(Collectors.toList());
+        //采购数量
         List<Integer> purchaseQtyList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseQty).distinct().collect(Collectors.toList());
+        //采购组织Id
+        List<String> purchaseOrgIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
+
 
         PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
         dto.setSkuIdList(skuIdList);
         dto.setSupplierIdList(supplierIdList);
         dto.setPurchaseQtyList(purchaseQtyList);
+        dto.setPurchaseOrgIdList(purchaseOrgIdList);
         //报价信息
         List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = baseMapper.batchGetTaxPrice(dto);
         //币种信息
@@ -751,6 +758,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             if (CollectionUtils.isNotEmpty(viewList)) {
                 PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(searchDTO.getSkuId())
                                 && obj.getSupplierId().equals(searchDTO.getSupplierId())
+                                && StrUtil.equals(obj.getPurchaseOrgId(),searchDTO.getPurchaseOrgId())
                                 && (searchDTO.getPurchaseQty() >= obj.getMinQty() && obj.getMaxQty() > searchDTO.getPurchaseQty()))
                         .findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(viewDTO)) {
