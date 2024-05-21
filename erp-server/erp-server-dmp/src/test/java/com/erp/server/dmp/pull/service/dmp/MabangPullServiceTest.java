@@ -5,33 +5,29 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.security.HmacSHA256Utils;
-import com.common.core.utils.HttpCommonUtil;
-import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.business.constant.UrlContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
+import com.common.business.enums.PlatformApiEnum;
+import com.common.core.security.HmacSHA256Utils;
+import com.common.core.utils.HttpCommonUtil;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.common.business.enums.PlatformApiEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
-import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
-import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -73,7 +69,7 @@ public class MabangPullServiceTest {
         map.put("id", "379804");
         map.put("Ids", "");
 
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }

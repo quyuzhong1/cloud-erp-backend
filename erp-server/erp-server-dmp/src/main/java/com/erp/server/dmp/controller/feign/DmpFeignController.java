@@ -212,7 +212,7 @@ public class DmpFeignController extends BaseController {
      * @return
      */
     @PostMapping("/send/mq/save/task")
-    public Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto) {
+    public Boolean saveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto) {
         return dmpPullTaskService.sendMqAndSaveTask(dto);
     }
 

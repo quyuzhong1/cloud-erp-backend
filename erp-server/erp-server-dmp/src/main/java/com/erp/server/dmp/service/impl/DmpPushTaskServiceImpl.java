@@ -97,24 +97,33 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void sendMqAndSaveTask(DmpPushTaskFeignDTO dto) {
+    public DmpPushTaskEntity saveTask(DmpPushTaskFeignDTO dto) {
         // 保存任务表
         DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
+        saveOrUpdateDmpSyncTask(entity);
+        return entity;
+    }
 
-        //查询来源上级单据
-        Boolean isSend = isSendParentBillTask(entity);
-        String entityId = saveOrUpdateDmpSyncTask(entity);
-        //判断是否存在上级单据，并且推送成功
-        if (Boolean.FALSE.equals(isSend)) {
+    @Override
+    public void sendTask(List<DmpPushTaskEntity> dmpPushTaskEntityList) {
+        if (CollectionUtils.isEmpty(dmpPushTaskEntityList)) {
             return;
         }
-        // 发送MQ消息
-        String mqData = dto.getMqData();
-        JSONObject jsonObject = JSONUtil.parseObj(mqData);
-        jsonObject.set("dmpSyncTaskId",entityId);
-        SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), JSONUtil.toJsonStr(jsonObject), entity.getSourceId());
-        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        for (DmpPushTaskEntity entity :dmpPushTaskEntityList) {
+            //查询来源上级单据
+            Boolean isSend = isSendParentBillTask(entity);
+            //判断是否存在上级单据，并且推送成功
+            if (Boolean.FALSE.equals(isSend)) {
+                return;
+            }
+            // 发送MQ消息
+            String mqData = entity.getMqData();
+            JSONObject jsonObject = JSONUtil.parseObj(mqData);
+            jsonObject.set("dmpSyncTaskId",entity.getId());
+            SendResult result = mqProducerService.syncClassMsg(entity.getMqTopic(), entity.getMqTag(), JSONUtil.toJsonStr(jsonObject), entity.getSourceId());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
         }
     }
 
@@ -312,7 +321,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean batchNoNeedSync(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -322,12 +330,13 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
         }
-        //判断数据状态-只有同步失败的才可以变更为无需同步
-        List<String> noNeedSyncIds = list.stream().filter(obj -> SyncStatusEnum.FAILED_SYNC.getCode().equals(obj.getStatus())).map(DmpPushTaskEntity::getId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(noNeedSyncIds)) {
-            throw new ServiceException(ApiError.ERROR_STATUS_NO_NEED_SYNC);
+        List<DmpPushTaskEntity> noNeedSyncIds = list.stream().filter(obj ->
+                        (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))
+                .collect(Collectors.toList());
+        noNeedSyncIds.forEach(dmpPushTaskEntity -> dmpPushTaskEntity.setStatus(SyncStatusEnum.NO_NEED_SYNC.getCode()));
+        if (CollectionUtils.isNotEmpty(noNeedSyncIds)) {
+            updateBatchById(noNeedSyncIds, 500);
         }
-        this.baseMapper.updateStatus(noNeedSyncIds);
         return Boolean.TRUE;
     }
 

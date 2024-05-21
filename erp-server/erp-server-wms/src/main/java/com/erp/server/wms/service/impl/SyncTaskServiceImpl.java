@@ -4,9 +4,10 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.kingdee.*;
 import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
@@ -14,8 +15,12 @@ import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -103,48 +108,63 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private SyncMabangTransferService syncMabangTransferService;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
+
     @Override
     public void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
         SourceTypeEnum sourceType = syncParamDTO.getSourceType();
-
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         switch (sourceType) {
             case MACHINE_INFO:
-                syncMachineInfo(sourceDetailList);
-                return;
+                resultList = syncMachineInfo(sourceDetailList);
+                break;
             case OTHER_OUTSTOCK:
-                syncOtherOutstock(sourceDetailList);
-                return;
+                resultList = syncOtherOutstock(sourceDetailList);
+                break;
             case OTHER_INSTOCK:
-                syncOtherInstock(sourceDetailList);
-                return;
+                resultList = syncOtherInstock(sourceDetailList);
+                break;
             case PO_INSTOCK:
-                syncPoInstock(sourceDetailList);
-                return;
+                resultList = syncPoInstock(sourceDetailList);
+                break;
             case PO_RECEIVE:
-                syncPoReceive(sourceDetailList);
-                return;
+                resultList = syncPoReceive(sourceDetailList);
+                break;
             case PO_RETURN:
-                syncPoReturn(sourceDetailList);
-                return;
+                resultList = syncPoReturn(sourceDetailList);
+                break;
             case SO_OUTSTOCK:
-                syncSoOutstock(sourceDetailList);
-                return;
+                resultList = syncSoOutstock(sourceDetailList);
+                break;
             case SO_RETURN_INSTOCK:
-                syncSoReturnInstock(sourceDetailList);
-                return;
+                resultList = syncSoReturnInstock(sourceDetailList);
+                break;
             case STOCKTAKING_PROFIT_LOSS:
-                syncStocktakingTaskProfitLoss(sourceDetailList);
-                return;
+                resultList = syncStocktakingTaskProfitLoss(sourceDetailList);
+                break;
             case TRANSFER_INFO:
-                syncTransferInfo(sourceDetailList);
-                return;
+                resultList = syncTransferInfo(sourceDetailList);
+                break;
             case WAREHOUSE:
-                syncWarehouse(sourceDetailList);
+                resultList = syncWarehouse(sourceDetailList);
+                break;
             case SUBCONTRACT_ISSUE:
-                syncSubcontractIssue(sourceDetailList);
-                return;
+                resultList = syncSubcontractIssue(sourceDetailList);
+                break;
+            default:
+                break;
         }
+        //推送金蝶
+        List<DmpPushTaskEntity> finalResultList = resultList;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(finalResultList);
+            }
+        });
     }
 
     @Override
@@ -204,117 +224,134 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * 仓库
      * @param sourceDetailList
      */
-    private void syncSubcontractIssue(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncSubcontractIssue(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<SubcontractIssueEntity> list = subcontractIssueService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncWarehouse >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             SubcontractIssueEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractIssueService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
      * 仓库
      * @param sourceDetailList
      */
-    private void syncWarehouse(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncWarehouse(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<WarehouseEntity> list = warehouseService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncWarehouse >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             WarehouseEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeWarehouseService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeWarehouseService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
      * 调拨单
      * @param sourceDetailList
      */
-    private void syncTransferInfo(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncTransferInfo(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<TransferInfoEntity> list = transferInfoService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncTransferInfo >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             TransferInfoEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeTransferInfoService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeTransferInfoService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
      * 盘赢盘亏单
      * @param sourceDetailList
      */
-    private void syncStocktakingTaskProfitLoss(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncStocktakingTaskProfitLoss(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<StocktakingProfitLossEntity> list = stocktakingProfitLossService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncStocktakingTaskProfitLoss >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             StocktakingProfitLossEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
             if (entity.getBillType().equals(BillTypeEnum.LOSS)) {
-                syncKingdeeStocktakingLossService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeStocktakingLossService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+                resultList.add(pushTaskEntity);
             } else {
-                syncKingdeeStocktakingProfitService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+                resultList.add(pushTaskEntity);
             }
         }
+        return resultList;
     }
 
     /**
      * 销售退货入库单
      * @param sourceDetailList
      */
-    private void syncSoReturnInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncSoReturnInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<SoReturnInstockEntity> list = soReturnInstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncSoReturnInstock >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             SoReturnInstockEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeSoReturnService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSoReturnService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
      * 销售出库单
      * @param sourceDetailList
      */
-    private void syncSoOutstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncSoOutstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<SoOutstockEntity> list = soOutstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncSoOutstock >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             SoOutstockEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
@@ -322,92 +359,107 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             }
             //审核通过发送金蝶
             if (!OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
-                syncKingdeeSoOutstockService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeSoOutstockService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+                resultList.add(pushTaskEntity);
             } else {
-                syncKingdeeSoOutstockService.syncB2cDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeSoOutstockService.syncB2cDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+                resultList.add(pushTaskEntity);
             }
             syncKingdeeSoOutstockService.syncOrderToDmp(entity,syncParamDetailDTO.getSyncOperate());
         }
+        return resultList;
     }
 
     /**
      * 采购退货
      * @param sourceDetailList
      */
-    private void syncPoReturn(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncPoReturn(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<PoReturnEntity> list = poReturnService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoReturn >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             PoReturnEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeReturnOrderService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeReturnOrderService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
      * 采购收货单
      * @param sourceDetailList
      */
-    private void syncPoReceive(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncPoReceive(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<WarehouseReceiveEntity> list = warehouseReceiveService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoReceive >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             WarehouseReceiveEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeePoReceiveService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeePoReceiveService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
      * 采购入库单
      * @param sourceDetailList
      */
-    private void syncPoInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncPoInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<PoInstockEntity> list = poInstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoInstock >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             PoInstockEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeStockInService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeStockInService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
      * 其他入库
      * @param sourceDetailList
      */
-    private void syncOtherInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncOtherInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<OtherInstockEntity> list = otherInstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncOtherInstock >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             OtherInstockEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeOtherInstockService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeOtherInstockService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
 
@@ -415,40 +467,46 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * 其他出库单
      * @param sourceDetailList
      */
-    private void syncOtherOutstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncOtherOutstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<OtherOutstockEntity> list = otherOutstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncOtherOutstock >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             OtherOutstockEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeOtherOutstockService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeOtherOutstockService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
     /**
      * 加工单
      * @param sourceDetailList
      */
-    private void syncMachineInfo(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private List<DmpPushTaskEntity> syncMachineInfo(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<MachineInfoEntity> list = machineInfoService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncMachineInfo >>>> 未找到数据！");
-            return;
+            return Collections.EMPTY_LIST;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             MachineInfoEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeMachineInfoService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeMachineInfoService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
+        return resultList;
     }
 
 

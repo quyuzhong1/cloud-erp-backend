@@ -17,6 +17,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
@@ -28,12 +29,16 @@ import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
-import com.erp.server.scm.service.*;
+import com.erp.server.scm.service.ModuleOperateLogService;
+import com.erp.server.scm.service.PurchasePriceDetailService;
+import com.erp.server.scm.service.PurchasePriceService;
+import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +48,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -80,16 +87,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     private PurchasePriceService priceService;
 
     @Resource
-    private PurchasePriceChangeService purchasePriceChangeService;
-
-    @Resource
-    private PurchasePriceHistoryService purchasePriceHistoryService;
-
-    @Resource
     private SyncKingdeePurchasePriceService syncKingdeePurchasePriceService;
 
     @Resource
-    private AttachmentService attachmentService;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private SupplierService supplierService;
@@ -458,8 +459,14 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         this.updateBatchById(detailList);
 
         //金蝶更新分录禁用
-        syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList, disabled);
-
+        DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList, disabled);
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
         return Boolean.TRUE;
     }
 

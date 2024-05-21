@@ -10,13 +10,13 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeCountryService;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
 import com.erp.server.sys.service.DictGlobalAreaService;
 import com.erp.server.sys.service.ThirdpartyRefBusinessService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -50,7 +50,7 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(DictCountryEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(DictCountryEntity entity, String operate) {
 
         Map<String, Object> resultMap = new HashMap<>();
         Boolean isExistParent = true;
@@ -76,8 +76,7 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
         String fNumber = AssistantDataEnum.COUNTRY.getCode();
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
         if(isExistParent){
             DictGlobalAreaEntity areaEntity = dictGlobalAreaService.getById(entity.getRegionCode());
@@ -96,10 +95,10 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
         }
         resultMap.put("moduleType",moduleType);
         resultMap.put("fNumber", fNumber);
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
-    private void sendMqAndSaveTask(DictCountryEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask(DictCountryEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -111,7 +110,6 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
-
+       return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }
