@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 public class WangDianProductDetailServiceImpl implements WangDianProductDetailService {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
-    @Resource
-    private Client wangdianClient;
+//    @Resource
+//    private Client wangdianClient;
 
     @Override
     public void executeConsumer(List<GoodsBatchPushDTO> pushDTOS) {
@@ -33,8 +33,9 @@ public class WangDianProductDetailServiceImpl implements WangDianProductDetailSe
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
-        GoodsAPI api = ApiFactory.get(wangdianClient, GoodsAPI.class);
-        Result result = api.batchPush(pushDTOS);
+//        GoodsAPI api = ApiFactory.get(wangdianClient, GoodsAPI.class);
+//        Result result = api.batchPush(pushDTOS);
+        Result result = new Result();
         String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
                 .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))
                 .collect(Collectors.joining(","));
