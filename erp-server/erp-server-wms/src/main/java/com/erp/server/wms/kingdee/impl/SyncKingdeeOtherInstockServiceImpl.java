@@ -11,8 +11,11 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
@@ -61,7 +64,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(OtherInstockEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(OtherInstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //金蝶id
@@ -74,8 +77,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         //其他出库类型
@@ -129,7 +131,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
 
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_99060);
         }
 
         List<JSONObject> list = new ArrayList<>();
@@ -165,7 +167,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         resultMap.put("list", list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -176,7 +178,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (OtherInstockEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (OtherInstockEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -188,6 +190,6 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

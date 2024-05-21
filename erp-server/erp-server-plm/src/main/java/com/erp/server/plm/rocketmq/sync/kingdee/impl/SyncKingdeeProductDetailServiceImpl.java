@@ -13,6 +13,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -80,7 +81,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(ProductDetailEntity entity,String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
 
         Map<String, Object> resultMap = new HashMap<>();
         //sku
@@ -96,8 +97,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         //产品信息
@@ -241,7 +241,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         }
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+       return saveTask(entity,operate,resultMap);
     }
 
 
@@ -253,7 +253,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -265,6 +265,6 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

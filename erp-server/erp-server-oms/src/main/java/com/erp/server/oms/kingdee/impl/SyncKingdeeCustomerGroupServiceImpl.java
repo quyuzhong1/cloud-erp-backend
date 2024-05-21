@@ -6,6 +6,7 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.CustomerGroupEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -34,7 +35,7 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(CustomerGroupEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(CustomerGroupEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //金蝶id
@@ -48,7 +49,7 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+       return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -59,7 +60,7 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (CustomerGroupEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (CustomerGroupEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -71,6 +72,6 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

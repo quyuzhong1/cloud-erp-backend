@@ -20,7 +20,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.PlatformSaveHandler;
-import com.common.business.service.IPlatformService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
@@ -87,7 +86,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sun.misc.BASE64Decoder;
@@ -440,11 +438,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> resultList = printPickingViewList.stream()
                 .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName)
                         .thenComparing((s1, s2) -> {
-                            if (StringUtils.isBlank(s1.getWarehouseLocation())) {
+                            if (StringUtils.isBlank(s1.getWarehouseLocation()) && !StringUtils.isBlank(s2.getWarehouseLocation())) {
                                 return 1;
-                            } else if (StringUtils.isBlank(s2.getWarehouseLocation())) {
-                                return -1;
-                            } else if (StringUtils.equals(s1.getWarehouseLocation(), s2.getWarehouseLocation())) {
+                            } else if (!StringUtils.isBlank(s1.getWarehouseLocation()) && StringUtils.isBlank(s2.getWarehouseLocation())) {
                                 return -1;
                             } else {
                                 return s1.getWarehouseLocation().compareTo(s2.getWarehouseLocation());
@@ -1536,6 +1532,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
         taskFeignDTO.setSyncOperate(view.getStatus());
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

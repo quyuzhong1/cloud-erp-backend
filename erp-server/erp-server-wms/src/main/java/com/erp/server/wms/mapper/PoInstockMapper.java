@@ -41,6 +41,8 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      * @return Integer
      */
     Integer listCount(@Param("params") PoInstockDTO.SearchParamDTO searchParamDTO);
+
+    Integer pdaListCount(@Param("params") PoInstockDTO.SearchParamDTO searchParamDTO);
     /**
      * @description: 导出数据查询
      * @author Will

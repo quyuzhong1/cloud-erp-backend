@@ -29,7 +29,15 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      *
      * @param dto
      */
-    void sendMqAndSaveTask(DmpPushTaskFeignDTO dto);
+    DmpPushTaskEntity saveTask(DmpPushTaskFeignDTO dto);
+
+    /**
+     * 根据id推送任务
+     * @author Will
+     * @date: 2024/5/14 9:35
+     * @param list
+     */
+    void sendTask(List<DmpPushTaskEntity> list);
 
     /**
      * 更新同步

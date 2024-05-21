@@ -6,41 +6,41 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.sys.dto.KingdeeDepartmentDTO;
-import com.erp.model.sys.entity.*;
+import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.KingdeePostEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.entity.SysPostEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeePostMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeePostService;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
-import com.erp.server.sys.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import com.erp.server.sys.service.KingdeeDepartmentService;
+import com.erp.server.sys.service.KingdeePostService;
+import com.erp.server.sys.service.SysAccountingCompanyService;
+import com.erp.server.sys.service.SysPostService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.K;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.KingdeePostDTO;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -69,6 +69,10 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
     @Autowired
     private SyncKingdeePostService syncKingdeePostService;
 
+    @Autowired
+    private DmpMqFeign dmpMqFeign;
+
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(KingdeePostDTO.AddDTO addDTO) {
@@ -80,7 +84,14 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         if (!save) {
             throw new ServiceException("金蝶岗位单保存失败");
         }
-        syncKingdeePostService.syncDataToKingdee(kingdeePostEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+        DmpPushTaskEntity pushTaskEntity = syncKingdeePostService.syncDataToKingdee(kingdeePostEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
         return save;
 
     }
@@ -109,7 +120,14 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
             throw new ServiceException("金蝶岗位单保存失败");
         }
         //金蝶推送
-        syncKingdeePostService.syncDataToKingdee(kingdeePostEntity, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        DmpPushTaskEntity pushTaskEntity = syncKingdeePostService.syncDataToKingdee(kingdeePostEntity, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
         return save;
 
     }
@@ -231,7 +249,14 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
 
         if (result && StringUtils.isNotBlank(entity.getKingdeeId())) {
             //金蝶推送
-            syncKingdeePostService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeePostService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
         }
         return BatchResultDTO.success(entity.getId(), entity.getKingdeeDeptCode(), OperationTypeEnum.DELETE);
 
