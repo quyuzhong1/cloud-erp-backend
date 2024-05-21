@@ -1,16 +1,16 @@
 package com.erp.server.dmp.service.mq;
 
-import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.CleanBaseDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.*;
@@ -19,6 +19,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
+import com.erp.model.dmp.wangdian.WangDianOrderEntity;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
@@ -90,7 +91,7 @@ public class MQConsumerService {
      */
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
-            selectorExpression = "gyy_sales_order_tag||gyy_sales_history_order_tag||kingdee_sales_order_tag||mabang_sales_order_tag",
+            selectorExpression = "gyy_sales_order_tag||gyy_sales_history_order_tag||kingdee_sales_order_tag||mabang_sales_order_tag||wangdian_sales_order_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_order_consumer")
     public class ConsumerErpSalesOrder implements RocketMQListener<DmpOrderInfoEntity> {
         @Override
@@ -113,6 +114,10 @@ public class MQConsumerService {
                 if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
                     OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
                     finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
+                }
+                if(PlatformEnum.WANGDIAN.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
                 }
             }catch (Exception e){
                 log.error("rocketmq 监听到销售订单消息异常：entity={}", JSONUtil.toJsonStr(ext), e);
