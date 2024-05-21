@@ -289,7 +289,6 @@ public class SoB2cDetailDTO implements Serializable {
         */
         private String sourceDetailId;
 
- }
         /**
          * 拆分的明细id
          */
