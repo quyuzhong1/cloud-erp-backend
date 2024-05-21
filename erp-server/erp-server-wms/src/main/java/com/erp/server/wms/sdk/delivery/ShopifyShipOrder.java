@@ -18,6 +18,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
@@ -202,6 +203,12 @@ public class ShopifyShipOrder implements IPlatformService {
                 payload.setTrackingInfo(trackingInfo);
                 ShopifyFulfillmentPayloadRoot request = new ShopifyFulfillmentPayloadRoot();
                 request.setFulfillment(payload);
+                // 查询订单发货状态
+                ShopifyOrder shopifyOrder = shopifyRestClient.getOrder(platformOrderId);
+                if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(shopifyOrder.convertBillStatus())){
+                    log.warn("[Shopify标记发货] platformCode={},平台订单已发货跳过：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
+                    continue;
+                }
 
                 // 在非正式环境
                 if (!BusinessCommonConstants.hasProfile("prod")){

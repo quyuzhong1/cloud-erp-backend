@@ -1,11 +1,15 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOutboundDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.*;
+import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
@@ -15,7 +19,10 @@ import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -25,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,17 +105,53 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
-        log.error("第三方出库单参数>>>>>>>{}",JSONUtil.toJsonStr(dto));
+        log.warn("第三方出库单参数>>>>>>>{}",JSONUtil.toJsonStr(dto));
         //这个是B2c销售订单code
         String soB2cCode = dto.getReferenceNo();
         String billStatus = dto.getOrderStatus();
+        // 查询已有订单
+        SoB2cEntity mainEntity = soB2cFeign.getSoCode(soB2cCode);
+        if(null == mainEntity){
+            if (StringUtils.isBlank(soB2cCode)){
+                return ApiResult.success();
+            }
+            // 非ERP单号前缀
+            if (!soB2cCode.startsWith(BusinessNoConstant.XSDS) && !soB2cCode.startsWith(BusinessNoConstant.XSDD)){
+                return ApiResult.success();
+            }
+            log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+            return ApiResult.success();
+        }
+
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
         updateStatus.setSoCode(soB2cCode);
+        updateStatus.setSoId(mainEntity.getId());
         updateStatus.setBillStatus(billStatus);
+        updateStatus.setTrackNo(dto.getTrackNo());
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
+            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
+
+            // 调用第三方平台SDK标记发货(无事务)
+            PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+            platformShipOrderDTO.setSoB2cId(mainEntity.getId());
+            platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
             try {
-                SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
+                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+            } catch (Exception e) {
+                // 独立异常信息
+                String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(type);
+                addError.setParamJson(JSONUtil.toJsonStr(dto));
+                addError.setReturnJson(ext.toString());
+                addError.setMainId(mainEntity.getId());
+                addError.setMessage(e.getMessage());
+                soB2cFeign.addSoB2cError(addError);
+                log.error("【第三方出库单】销售单【{}】标记发货失败 >>>错误信息{}", mainEntity.getCode(), ExceptionUtil.stacktraceToString(e));
+            }
+
+            try {
                 LocalDateTime outBoundTime = dto.getOutBoundTime();
                 if(Objects.nonNull(outBoundTime)){
                     generateB2cDTO.setBillDate(outBoundTime.toLocalDate());

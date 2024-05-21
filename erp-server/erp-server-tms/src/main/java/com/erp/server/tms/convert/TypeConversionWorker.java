@@ -64,6 +64,25 @@ public class TypeConversionWorker {
      * @param obj
      * @return
      */
+    @Named("booleanToYOrN")
+    public String booleanToYOrN(Object obj) {
+        if (Objects.isNull(obj)) {
+            return "N";
+        }
+        if (Objects.equals(Boolean.TRUE, obj)){
+            return "Y";
+        }else if (Objects.equals(Boolean.FALSE, obj)){
+            return "N";
+        }else {
+            return "N";
+        }
+    }
+    /**
+     * 递四方费用模式转换
+     *
+     * @param obj
+     * @return
+     */
     @Named("gTokg")
     public Double gTokg(Object obj) {
         if (Objects.isNull(obj)) {
