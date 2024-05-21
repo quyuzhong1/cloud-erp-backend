@@ -13,6 +13,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -931,4 +932,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     SoB2cEntity getByCode(String soCode);
 
     SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id,String warehouseId);
+    /**
+     * 获取目的国申报信息
+     * @param country
+     * @param skuId
+     * @param productCustomsList
+     * @return
+     */
+    ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
 }
