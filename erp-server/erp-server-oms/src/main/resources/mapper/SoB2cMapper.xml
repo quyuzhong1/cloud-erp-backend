@@ -79,7 +79,8 @@
         sb2cr.country as country,
         sb2c.create_time as createTime,
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
-        sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId
+        sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
+        sb2cl.weight
     </sql>
 
     <!-- 通用查询结果列 -->

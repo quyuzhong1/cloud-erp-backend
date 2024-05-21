@@ -524,13 +524,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             item.setProductGrade(sku.getProductGrade());
             item.setSaleMethod(productDetailEntity.getSaleMethod());
             item.setVariantProperty(sku.getVariantProperty());
-            item.setBoxHeight(LengthConverterUtil.mmToCm(sku.getBoxHeight()));
-            item.setBoxLength(LengthConverterUtil.mmToCm(sku.getBoxLength()));
-            item.setBoxWeight(LengthConverterUtil.mmToCm(sku.getBoxWeight()));
-            item.setBoxWidth(LengthConverterUtil.mmToCm(sku.getBoxWidth()));
-            item.setProductHeight(LengthConverterUtil.mmToCm(sku.getProductHeight()));
-            item.setProductLength(LengthConverterUtil.mmToCm(sku.getProductLength()));
-            item.setProductWidth(LengthConverterUtil.mmToCm(sku.getProductWidth()));
+            item.setBoxHeight(sku.getBoxHeight());
+            item.setBoxLength(sku.getBoxLength());
+            item.setBoxWeight(sku.getBoxWeight());
+            item.setBoxWidth(sku.getBoxWidth());
+            item.setProductHeight(sku.getProductHeight());
+            item.setProductLength(sku.getProductLength());
+            item.setProductWidth(sku.getProductWidth());
             item.setProductNetWeight(sku.getProductNetWeight());
 
         }

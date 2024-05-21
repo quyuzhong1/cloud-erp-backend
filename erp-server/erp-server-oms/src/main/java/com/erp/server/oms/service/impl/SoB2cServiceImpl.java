@@ -3213,6 +3213,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String countryName = countryNameMap.getOrDefault(data.getCountry(), "");
             data.setCountryName(countryName);
 
+            //重量单位,默认g
+            data.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
+
             //中转信息
             TransferLogisticsChannelDTO.ListSelectDTO transferInfo = transferInfoList.stream().filter(v -> v.getId().equals(data.getTransferLogisticsChannelId())).findFirst().orElse(null);
             if (Objects.nonNull(transferInfo)) {
