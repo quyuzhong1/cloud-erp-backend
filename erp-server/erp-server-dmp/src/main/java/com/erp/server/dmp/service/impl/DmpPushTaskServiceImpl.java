@@ -110,6 +110,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             return;
         }
         for (DmpPushTaskEntity entity :dmpPushTaskEntityList) {
+            if (ObjectUtil.isEmpty(entity)) {
+                continue;
+            }
             //查询来源上级单据
             Boolean isSend = isSendParentBillTask(entity);
             //判断是否存在上级单据，并且推送成功
