@@ -1,17 +1,15 @@
-package com.erp.server.dmp.pull.service.wangdian;
+package com.erp.server.dmp.pull.service.wdt;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import cn.wangdian.erp.sdk.Client;
 import cn.wangdian.erp.sdk.Pager;
 import cn.wangdian.erp.sdk.WdtErpException;
 import cn.wangdian.erp.sdk.api.wms.stockout.StockoutAPI;
 import cn.wangdian.erp.sdk.api.wms.stockout.dto.SalesStockoutRequest;
 import cn.wangdian.erp.sdk.api.wms.stockout.dto.SalesStockoutResponse;
-import cn.wangdian.erp.sdk.impl.ApiFactory;
-import cn.wangdian.erp.sdk.impl.DefaultClient;
+import cn.wangdian.erp.server.WangDianClientService;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.annotation.SaveData;
@@ -34,7 +32,7 @@ import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
-import com.erp.model.dmp.wangdian.WangDianOrderEntity;
+import com.erp.model.dmp.wdt.WangDianOrderEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +59,7 @@ import java.util.stream.Collectors;
 public class WangDianOrderInfoServiceImpl  implements IReportSaveService<WangDianOrderEntity> {
 
     @Resource
-    private Client defaultClient;
+    private WangDianClientService wangDianClientService;
 
     @Resource
     private MongoService mongoService;
@@ -259,7 +257,7 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<WangDia
 
     private List<WangDianOrderEntity> pullData(RequestDTO dto) {
         List<SalesStockoutResponse.OrderInfoDto> result = new ArrayList<>();
-        StockoutAPI stockoutAPI = ApiFactory.get(DefaultClient.get("wdtapi3", "http://47.92.239.46/", "wjkj03-test", "b6412a9b6:806828718719806966febbfe948893e8"), StockoutAPI.class);
+        StockoutAPI stockoutAPI = wangDianClientService.get(StockoutAPI.class);
         SalesStockoutRequest request = new SalesStockoutRequest();
         request.setStatusType(SalesStockoutRequest.STATUS_TYPE_CONSIGNED);
         request.setStatus("110");

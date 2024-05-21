@@ -19,7 +19,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
-import com.erp.model.dmp.wangdian.WangDianOrderEntity;
+import com.erp.model.dmp.wdt.WangDianOrderEntity;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
