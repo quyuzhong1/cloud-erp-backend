@@ -20,6 +20,8 @@ public class TradeQueryRequest
 	private String logisticsNo;
 	@SerializedName("src_tid")
 	private String srcTid;
+	@SerializedName("status_type")
+	private Integer statusType;
 
 	public static final byte STATUS_OFFLINE_REFUND = 4; // 线下退款
 	public static final byte STATUS_CANCEL = 5; // 已取消
@@ -42,7 +44,7 @@ public class TradeQueryRequest
 	public static final byte STATUS_CONSIGNED = 95; // 已发货
 	public static final byte STATUS_NO_PLANNED_COST = 96;// 待录入计划成本，订单结算时有货品无计划成本
 	public static final byte STATUS_POSTED = 101;// 已过账
-	public static final byte STATUS_COMPLETE = 110; // 已完成
+	public static final String STATUS_COMPLETE = "110"; // 已完成
 
 	public String getStartTime()
 	{
@@ -122,5 +124,13 @@ public class TradeQueryRequest
 	public void setSrcTid(String srcTid)
 	{
 		this.srcTid = srcTid;
+	}
+
+	public Integer getStatusType() {
+		return statusType;
+	}
+
+	public void setStatusType(Integer statusType) {
+		this.statusType = statusType;
 	}
 }

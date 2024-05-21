@@ -688,5 +688,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
 
-    void initProductSizeAndBoxSize();
+    void initProductToWangDian(List<String> ids);
+
 }

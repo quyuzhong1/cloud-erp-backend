@@ -9,6 +9,9 @@ public class Pager
 	// 是否返回总页数
 	private boolean calcTotal = false;
 
+	public Pager() {
+
+	}
 	public Pager(int pageSize, int pageNo, boolean calcTotal)
 	{
 		this.pageSize = pageSize;

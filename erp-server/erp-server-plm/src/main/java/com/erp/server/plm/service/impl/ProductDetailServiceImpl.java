@@ -1,10 +1,16 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import cn.wangdian.erp.sdk.Client;
+import cn.wangdian.erp.sdk.api.Result;
+import cn.wangdian.erp.sdk.api.goods.GoodsAPI;
+import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
+import cn.wangdian.erp.sdk.impl.ApiFactory;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
@@ -12,6 +18,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
@@ -67,6 +74,7 @@ import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -74,6 +82,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -91,8 +100,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
+import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
 
 /**
  * @Description: 产品明细信息服务类
@@ -229,6 +242,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private NoticeMessageService noticeMessageService;
+
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
+    @Resource
+    private Client defaultClient;
 
 
     //变更财务人员审核
@@ -2088,9 +2106,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //workflowFeign.taskPass(approveProcess);
         //发送通知
         noticeMessageService.approveProductNotice(userName, entity);
-
         //审核通过后发送到金蝶系统
         syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        syncWangDianProductDetailService.syncDataToWangDian(entity);
         return true;
     }
 
@@ -2158,6 +2176,80 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productLogisticsService.updateBatchById(updateList);
         }
         log.info("recalDestDeclarePrice end======");
+    }
+
+    @Override
+    public void initProductToWangDian(List<String> ids) {
+        int count = productInfoService.count();
+        int pageSize = 50;
+        int pageCount = count / pageSize + 1;
+        RateLimiter limiter = RateLimiter.create(60, 1, TimeUnit.MINUTES);
+        for (int i = 0; i < pageCount; i++) {
+            if (limiter.tryAcquire()) {
+                Page<ProductInfoEntity> page = productInfoService.page(new Page<>(i, pageSize), Wrappers.<ProductInfoEntity>lambdaQuery().in(CollectionUtil.isNotEmpty(ids), ProductInfoEntity::getId, ids));
+                List<ProductInfoEntity> records = page.getRecords();
+                if (CollectionUtils.isEmpty(records)){
+                    return;
+                }
+                List<String> infoIds = records.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+                List<ProductDetailEntity> detailEntities = listSkuByProductIds(infoIds);
+                Map<String, List<ProductDetailEntity>> productDetailMap = detailEntities.stream()
+                        .collect(Collectors.groupingBy(ProductDetailEntity::getProductId));
+                List<String> detailIds = detailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+                List<ProductPackEntity> productPacks = productPackService.listBySkuIdList(detailIds);
+                List<ProductPurchaseEntity> productPurchaseEntities = productPurchaseService.listBySkuIds(detailIds);
+                List<GoodsBatchPushDTO> batchPushDTOS = new ArrayList<>();
+                for (ProductInfoEntity info : records) {
+                    GoodsBatchPushDTO dto = new GoodsBatchPushDTO();
+                    dto.setGoodsNo(info.getSpuNo());
+                    dto.setGoodsName(info.getName());
+                    dto.setGoodsType(getGoodsType(info.getSaleMethod(),info.getProperty()));
+                    List<ProductDetailEntity> details = productDetailMap.get(info.getId());
+                    List<GoodsBatchPushDTO.SpecList> specList = details.stream()
+                            .map(detail -> {
+                                ProductPackEntity productPack = productPacks.stream()
+                                        .filter(pack -> pack.getSkuId().equals(detail.getId()))
+                                        .findFirst().orElse(new ProductPackEntity());
+                                ProductPurchaseEntity productPurchase = productPurchaseEntities.stream()
+                                        .filter(pack -> pack.getSkuId().equals(detail.getId()))
+                                        .findFirst().orElse(new ProductPurchaseEntity());
+                                GoodsBatchPushDTO.SpecList spec = new GoodsBatchPushDTO.SpecList();
+                                spec.setSpecNo(detail.getSkuNo());
+                                spec.setBarcode(productPurchase.getEan());
+                                spec.setWeight(LengthConverterUtil.mmToCm(productPack.getProductLength()));
+                                spec.setLength(LengthConverterUtil.mmToCm(productPack.getProductLength()));
+                                spec.setWidth(LengthConverterUtil.mmToCm(productPack.getProductLength()));
+                                spec.setHeight(LengthConverterUtil.mmToCm(productPack.getProductLength()));
+                                spec.setImgUrl(detail.getImagesUrl());
+//                                spec.setUnitName(detail.getUnitName().toUpperCase());
+                                return spec;
+                            }).collect(Collectors.toList());
+                    dto.setSpecList(specList);
+                    batchPushDTOS.add(dto);
+                }
+                GoodsAPI api = ApiFactory.get(defaultClient, GoodsAPI.class);
+                Result result = api.batchPush(batchPushDTOS);
+                String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
+                        .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))
+                        .collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(msg)){
+                    log.info("{}", msg);
+                }
+            }
+        }
+    }
+
+    private int getGoodsType(String saleMethod, String property){
+        SaleMethodEnum saleMethodEnum = SaleMethodEnum.getEnumByType(saleMethod);
+        if (org.springframework.util.ObjectUtils.isEmpty(saleMethodEnum)){
+            return 0;
+        }
+        switch (saleMethodEnum){
+            case GOODS:return (PRODUCT_PROPERTY_COST.equals(property) || PRODUCT_PROPERTY_SERVICE.equals(property)) ? 5 : 1;
+            case PACKAGING_MATERIALS: return 3;
+            case SEMI_FINISHED:return 2;
+            default: return 0;
+        }
     }
 
     @Override
@@ -4869,44 +4961,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
     }
 
-    @Override
-    public void initProductSizeAndBoxSize() {
-        // 查询出所有需要进行初始化的产品尺寸或箱规
-        List<ProductPackEntity> productPacks = productPackService.list();
-        List<List<ProductPackEntity>> partition = Lists.partition(productPacks, 500);
-        partition.parallelStream()
-                .forEach(packs ->{
-                    try {
-                        packs.forEach(this::convertSize);
-                    } catch (Exception e) {
-                        log.error("数据异常{}", e.getMessage(), e);
-                    }
-                    productPackService.updateBatchById(packs);
-                });
-    }
 
-    private void convertSize(ProductPackEntity pack) {
-        List<BigDecimal> productSizeList = Arrays.stream(Optional.ofNullable(pack.getProductSize()).orElse("").split("X"))
-                .filter(StrUtil::isNotBlank)
-                .map(BigDecimal::new)
-                .collect(Collectors.toList());
-        //产品尺寸-长
-        pack.setProductLength(LengthConverterUtil.cmToMm(productSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
-        //产品尺寸-宽
-        pack.setProductWidth(LengthConverterUtil.cmToMm(productSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
-        //产品尺寸-高
-        pack.setProductHeight(LengthConverterUtil.cmToMm(productSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
-        List<BigDecimal> boxSizeList = Arrays.stream(Optional.ofNullable(pack.getBoxSize()).orElse("").split("X"))
-                .filter(StrUtil::isNotBlank)
-                .map(BigDecimal::new)
-                .collect(Collectors.toList());
-        //箱规-长
-        pack.setBoxLength(LengthConverterUtil.cmToMm(boxSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
-        //箱规-宽
-        pack.setBoxWidth(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
-        //箱规-高
-        pack.setBoxHeight(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
-    }
 
     @Override
     public List<SkuVO> accessoriesSku(String searchKeyword) {

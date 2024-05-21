@@ -30,7 +30,10 @@ public class RocketMqTopic {
      * 推送数据到金蝶
      */
     public static final String SYNC_KINGDEE_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_erp_topic";
-
+    /**
+     * 推送数据到金蝶
+     */
+    public static final String SYNC_WANGDIAN_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_wangdian_erp_topic";
     /**
      * 推送Plm产品信息到dmp
      */
