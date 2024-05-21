@@ -16,15 +16,21 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.DeclareLabelTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.plm.dto.ProductCustomsSkuDTO;
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cDeclareProductMapper;
+import com.erp.server.oms.service.*;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
@@ -37,9 +43,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -63,9 +74,16 @@ import javax.servlet.http.HttpServletResponse;
 public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclareProductMapper, SoB2cDeclareProductEntity> implements SoB2cDeclareProductService {
     @Autowired
     private OperateLogService operateLogService;
+    @Autowired
+    @Lazy
+    private SoB2cReceiverService soB2cReceiverService;
 
     @Autowired
+    @Lazy
     private SoB2cService soB2cService;
+    @Autowired
+    @Lazy
+    private PlmTaskFeign plmTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -191,6 +209,30 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     * 新增修改处理数据
     */
     private void handleData(SoB2cDeclareProductEntity soB2cDeclareProductEntity) {
-    // TODO 验证数据 & 数据赋值
+        if (StringUtils.isEmpty(soB2cDeclareProductEntity.getSoId()) || StringUtils.isEmpty(soB2cDeclareProductEntity.getSkuId())){
+            return;
+        }
+        // 重置申报标识
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cDeclareProductEntity.getSoId());
+        String country = Objects.nonNull(receiverEntity)?Objects.nonNull(receiverEntity.getCountry())?receiverEntity.getCountry():"":"";
+
+        List<ProductCustomsEntity> productCustomsList = plmTaskFeign.listProductCustomsBySkuIds(ProductCustomsSkuDTO.builder()
+                .skuIds(Collections.singletonList(soB2cDeclareProductEntity.getSkuId())).country(country).build());
+
+        ProductCustomsEntity customs = soB2cService.getCustomsByCountry(country,soB2cDeclareProductEntity.getSkuId(),productCustomsList);
+
+        //申报标签
+        BigDecimal toDeclarePrice = customs.getToDeclarePrice();
+        int compare = MathUtil.compareTo(soB2cDeclareProductEntity.getToDeclarePrice(), toDeclarePrice );
+        if (compare > 0){
+            //高申报
+            soB2cDeclareProductEntity.setDeclareLabel(DeclareLabelTypeEnum.HIGH.getCode());
+        }else if (compare < 0){
+            //低申报
+            soB2cDeclareProductEntity.setDeclareLabel(DeclareLabelTypeEnum.LOW.getCode());
+        }else {
+            //正常申报
+            soB2cDeclareProductEntity.setDeclareLabel(DeclareLabelTypeEnum.NORMAL.getCode());
+        }
     }
 }
