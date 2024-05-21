@@ -31,6 +31,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductCustomsEntity;
+import com.erp.model.sys.entity.DictCountryOrgEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -45,6 +46,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsBillConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
@@ -131,6 +133,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Autowired
     private CfgRuleFeign cfgRuleFeign;
+    @Autowired
+    private SysDictFeign sysDictFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -419,7 +423,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 //        String salesPlatform = dto.getSalesPlatform();
 //        Boolean isAliExpress = aliExpress.equals(salesPlatform);
 //
-//        String country = Objects.nonNull(dto.getReceiver())?Objects.nonNull(dto.getReceiver().getCountry())?dto.getReceiver().getCountry():"":"";
+        String country = Objects.nonNull(dto.getReceiver())?Objects.nonNull(dto.getReceiver().getCountry())?dto.getReceiver().getCountry():"":"";
 //        LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO = logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
 //        //最高报关金额
 //        BigDecimal maxCustomsAmount = channelConstraintDTO.getMaxCustomsAmount();
@@ -520,7 +524,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 sourceId(dto.getOrderId()).
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
-                iossCode(logisticsChannel.getIsIossPrepay()? dto.getIossTaxNo(): "").
+                iossCode(getIossCodeByCountry(country,logisticsChannel.getIsIossPrepay(),dto.getIossTaxNo())).
                 senderInfo(senderInfo).
                 returnInfo(returnInfo).
                 receiverInfoVO(receiverInfo).
@@ -546,6 +550,27 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
 
 
+    }
+
+    /**
+     * 根据国家是否归属欧盟进行判断是否填写ioss号
+     * @param country
+     * @param isIossPrepay
+     * @param iossTaxNo
+     * @return
+     */
+    private String getIossCodeByCountry(String country, Boolean isIossPrepay, String iossTaxNo) {
+        if (StringUtils.isEmpty(country) || Objects.isNull(isIossPrepay) || !isIossPrepay || StringUtils.isEmpty(iossTaxNo)){
+            return StringUtils.EMPTY;
+        }
+        //判断国家是否是欧盟
+        List<DictCountryOrgEntity> dictList = sysDictFeign.listCountryOrgByOrgCode("EU");
+        DictCountryOrgEntity countryOrg = dictList.stream().filter(e -> e.getCountryId().equals(country)).findFirst().orElse(null);
+        if (Objects.isNull(countryOrg)){
+            return StringUtils.EMPTY;
+        }else {
+            return iossTaxNo;
+        }
     }
 
     /**
