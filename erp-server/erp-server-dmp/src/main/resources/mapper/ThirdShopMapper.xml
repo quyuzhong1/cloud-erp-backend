@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.ThirdShopMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.ThirdShopEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="disabled" property="disabled" />
+       <result column="sys_type" property="sysType" />
+       <result column="shop_id" property="shopId" />
+       <result column="platform_id" property="platformId" />
+       <result column="sub_platform_id" property="subPlatformId" />
+       <result column="group_id" property="groupId" />
+       <result column="account_id" property="accountId" />
+       <result column="auth_state" property="authState" />
+       <result column="auth_time" property="authTime" />
+       <result column="code" property="code" />
+       <result column="name" property="name" />
+       <result column="address" property="address" />
+       <result column="contacts" property="contacts" />
+       <result column="tel_number" property="telNumber" />
+       <result column="telno" property="telno" />
+       <result column="email" property="email" />
+       <result column="zip" property="zip" />
+       <result column="website" property="website" />
+       <result column="province" property="province" />
+       <result column="city" property="city" />
+       <result column="district" property="district" />
+       <result column="remark" property="remark" />
+       <result column="created" property="created" />
+       <result column="modified" property="modified" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        is_deleted,
+        sys_type, shop_id, code, name, address, created, modified
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.dmp.dto.ThirdShopDTO$PageDTO">
+        select
+        id,shop_id, code, name
+        from third_shop
+        where ${params.sqlMap.default}
+        and is_deleted = FALSE
+        and disabled=false
+        and auth_state=1
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time desc
+    </select>
+
+
+    <select id="pagingSelect" resultType="com.erp.model.dmp.dto.ThirdShopDTO$PageSelectDTO">
+        select id,shop_id, code, name from (
+        select
+        ts.id,
+        ts.shop_id,
+        ts.code,
+        ts.name
+        from third_shop ts
+        where  ts.is_deleted = FALSE
+        and ts.disabled=false
+        and ts.auth_state=1
+        <!--权限-->
+        <if test="params.sysType!=null and params.sysType!=''">
+           and ts.sys_type = #{params.sysType}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((ts.code = #{params.searchKeyword}) or ts.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when ts.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when ts.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when ts.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , ts.name,
+        </if>
+        code desc
+        ) shop
+    </select>
+
+
+</mapper>

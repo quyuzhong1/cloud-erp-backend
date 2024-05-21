@@ -73,6 +73,12 @@
                 #{createUserId}
             </foreach>
         </if>
+        <if test="params.salesOrgIdList!=null and params.salesOrgIdList.size>0 ">
+            AND si.sales_org_id IN
+            <foreach collection="params.salesOrgIdList" item="salesOrgId" open="(" separator="," close=")">
+                #{salesOrgId}
+            </foreach>
+        </if>
         <if test="params.updateUserIdList!=null and params.updateUserIdList.size>0 ">
             AND si.update_user_id IN
             <foreach collection="params.updateUserIdList" item="updateUserId" open="(" separator="," close=")">
