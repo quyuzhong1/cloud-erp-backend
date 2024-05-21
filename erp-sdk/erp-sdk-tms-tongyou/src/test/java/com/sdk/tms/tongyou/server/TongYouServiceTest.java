@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class TongYouServiceTest {
                 .material("string")
                 .note("note")
                 .orderNo("WJ20231102001")
-                .weight(1.1)
+                .weight(BigDecimal.valueOf(1.1))
                 .declareInfos(Arrays.asList(TongYouCreateOrderRequest.DeclareInfo.builder()
                                 .currency("USD")
                                 .des("goods")

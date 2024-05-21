@@ -159,16 +159,6 @@ public class AmazonShipOrder implements IPlatformService {
             AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
             OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
-            //平台已发货 跳过
-            try {
-                GetOrderResponse response = api.getOrder(mainEntity.getPlatformCode());
-                if(Objects.nonNull(response.getPayload()) && "shipped".equals(response.getPayload().convertBillStatus())){
-                    continue;
-                }
-            } catch (Exception e) {
-                log.warn("查询亚马逊订单【{}】信息响应结果: error={}", mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
-                throw new ServiceException("查询亚马逊订单最新信息失败:" + e.getMessage());
-            }
             //取消则需要自动发起订单拦截
             PlatformDeliveryInterceptDTO interceptDTO = PlatformDeliveryInterceptDTO.builder()
                     .soB2cId(mainEntity.getId())
@@ -240,8 +230,24 @@ public class AmazonShipOrder implements IPlatformService {
                 log.warn("【{}】亚马逊标记发货:响应结果={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(voidApiResponse));
             } catch (ApiException e){
                 if (e.getMessage().contains("ErrorCode: NonexistentOrderItem Description: Failed to find order item list by order ID:")){
+                    // 判断响应异常信息是取消订单
                     throw new ServiceException("平台取消发货，不允许出库，请处理订单发货拦截后，取消发货");
+                } else if (e.getMessage().contains("Failed to create package due to not finding a matching package or order already fulfilled")){
+                    // 判断响应异常信息是后台可能已标记发货
+                    try {
+                        GetOrderResponse response = api.getOrder(mainEntity.getPlatformCode());
+                        if (null == response.getPayload()){
+                            throw new ServiceException("查询亚马逊订单最新信息为空:" + e.getMessage());
+                        } else if (!"shipped".equals(response.getPayload().convertBillStatus())){
+                            throw new ServiceException("亚马逊非已发货-标记发货失败:" + e.getMessage());
+                        }
+                        //平台已发货 跳过
+                    } catch (Exception apiError) {
+                        log.warn("查询亚马逊订单【{}】信息响应结果: error={}", mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+                        throw new ServiceException("查询亚马逊订单最新信息失败:" + e.getMessage());
+                    }
                 } else {
+                    // 其他异常信息
                     throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
                 }
             } catch (Exception e) {

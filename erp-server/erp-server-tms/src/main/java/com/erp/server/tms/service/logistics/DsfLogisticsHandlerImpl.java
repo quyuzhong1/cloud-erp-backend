@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,6 +57,9 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         Parcel parcel = new Parcel();
         ParceInfoVO parceInfoVO = logisticsOrderVO.getParceInfoVO();
+        parcel.setLength(BigDecimal.valueOf(parceInfoVO.getLength()));
+        parcel.setWidth(BigDecimal.valueOf(parceInfoVO.getWidth()));
+        parcel.setHeight(BigDecimal.valueOf(parceInfoVO.getHeight()));
         parcel.setWeight(parceInfoVO.getTotalWeight());
         parcel.setParcel_value(parceInfoVO.getTotalPrice());
         parcel.setCurrency(parceInfoVO.getCurrency());

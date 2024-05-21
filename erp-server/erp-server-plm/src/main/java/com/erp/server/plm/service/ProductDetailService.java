@@ -12,6 +12,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -84,6 +85,16 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      **/
     Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO);
 
+    /**
+     * 比较尺寸
+     *
+     * @param larger   大尺寸
+     * @param smaller  小尺寸
+     * @param apiError 报错信息
+     * @author hyj
+     * @date 2024/5/10 9:05
+     */
+    void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError);
     /**
      * @Description 新增多规格sku信息
      * @Author Luo_WG
@@ -690,4 +701,16 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     void initProductToWangDian(List<String> ids);
 
+    /**
+     * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
+     * @param skuIds
+     */
+    void initProductCustom(List<String> skuIds);
+
+    /**
+     * 获取sku 采购信息
+     * @param skuIds
+     * @return
+     */
+    List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds);
 }

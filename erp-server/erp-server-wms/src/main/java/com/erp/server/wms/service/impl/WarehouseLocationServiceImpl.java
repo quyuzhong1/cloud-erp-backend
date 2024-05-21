@@ -371,7 +371,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         for (WarehouseLocationDTO.LocationListDTO locationListDTO: records) {
             locationListDTO.setStatusName(WarehouseLocationStatusEnum.getName(locationListDTO.getStatus()));
             locationListDTO.setCanCheck(Boolean.TRUE);
-            if(Objects.equals(locationListDTO.getDisabled(), Boolean.TRUE) || Objects.equals(locationListDTO.getStatus(), WarehouseLocationStatusEnum.STOP)) {
+            if(Objects.equals(locationListDTO.getDisabled(), Boolean.TRUE) || Objects.equals(locationListDTO.getStatus(), WarehouseLocationStatusEnum.STOP.getCode())) {
                 locationListDTO.setCanCheck(Boolean.FALSE);
             }
         }
