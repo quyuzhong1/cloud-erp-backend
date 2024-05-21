@@ -1114,8 +1114,8 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/getBomSplitInfo")
-    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomSplitInfo(@RequestBody @Validated BaseIdDTO idDTO) {
-        return success(soB2cService.getBomSplitInfo(idDTO.getId()));
+    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomSplitInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        return success(soB2cService.getBomSplitInfo(idDTO.getIds()));
     }
 
     /**
@@ -1123,7 +1123,7 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/getBomRestoreInfo")
-    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomRestoreInfo(@RequestBody @Validated BaseIdDTO idDTO) {
-        return success(soB2cService.getBomRestoreInfo(idDTO.getId()));
+    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomRestoreInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        return success(soB2cService.getBomRestoreInfo(idDTO.getIds()));
     }
 }

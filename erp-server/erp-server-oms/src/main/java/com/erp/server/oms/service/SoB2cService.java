@@ -935,7 +935,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
 
-    List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(String id);
+    List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> id);
 
-    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(String id);
+    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> id);
 }

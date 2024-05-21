@@ -400,8 +400,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public SoB2cDetailEntity getContainDeleted(String id) {
-        return baseMapper.getContainDeleted(id);
+    public List<SoB2cDetailEntity> listContainDeleted(List<String> ids) {
+        return baseMapper.listContainDeleted(ids);
     }
 
     /**
