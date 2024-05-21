@@ -925,4 +925,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     SoB2cEntity getByCode(String soCode);
 
     List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(String id);
+
+    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(String id);
 }

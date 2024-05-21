@@ -5663,6 +5663,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultList;
     }
 
+    @Override
+    public List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(String id) {
+        SoB2cDetailEntity restoreEntity = soB2cDetailService.getContainDeleted(id);
+        if(Objects.isNull(restoreEntity)){
+            throw new ServiceException("原明细为空");
+        }
+        List<SoB2cDetailDTO.ViewDTO> viewDTOList = new ArrayList<>();
+        SoB2cDetailDTO.ViewDTO viewDTO = BeanUtil.copyProperties(restoreEntity,SoB2cDetailDTO.ViewDTO.class);
+        viewDTOList.add(viewDTO);
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(viewDTO.getSkuId()));
+        if(CollectionUtils.isNotEmpty(skuList)){
+            SkuVO skuVO = skuList.get(0);
+            viewDTO.setProductName(skuVO.getSkuName());
+        }
+        return viewDTOList;
+    }
+
     /**
      * 运费测算 更改渠道
      *

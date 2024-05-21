@@ -398,6 +398,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 .orElse(null);
     }
 
+    @Override
+    public SoB2cDetailEntity getContainDeleted(String id) {
+        return baseMapper.getContainDeleted(id);
+    }
+
     /**
      * 消费明细处理
      */
@@ -601,11 +606,16 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setCurrency(soB2cEntity.getCurrency());
             detailEntity.setExchangeRate(soB2cEntity.getExchangeRate());
             detailEntity.setImageUrl(skuVO.getSkuImagesUrl());
-            //建议售价
-            detailEntity.setAdvicePrice(skuVO.getRetailPrice());
             //含税单价
             BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
             detailEntity.setTaxCost(costPrice);
+
+            //如果是拆分的情况，使用前端传的
+            if(StringUtils.isBlank(detailEntity.getSplitDetailId())){
+                //建议售价
+                detailEntity.setAdvicePrice(skuVO.getRetailPrice());
+                detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
+            }
 
             //仓库名称
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream()
@@ -631,7 +641,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 detailEntity.setWarehouseSkuNo("");
             }
 
-            detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
             //平台SKU
             SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
