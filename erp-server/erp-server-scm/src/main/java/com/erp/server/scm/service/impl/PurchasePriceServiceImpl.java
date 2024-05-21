@@ -150,7 +150,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
         //生成单号
-//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGJM);
         purchasePrice.setCode(code);
         purchasePrice.setId(id);
