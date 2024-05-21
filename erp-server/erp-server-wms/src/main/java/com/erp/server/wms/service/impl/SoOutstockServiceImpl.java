@@ -132,7 +132,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService , WmsDataCompareDbService<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> {
+public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService  {
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -3125,21 +3125,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .eq(SoOutstockEntity::getId, id)
                 .update();
     }
-
-	@Override
-	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(
-			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params , Integer pageSize) {
-		if("0".equals(params.getId())) {
-			this.getParams(params);
-		}
-		return baseMapper.getDataCompareByCondition(params , pageSize);
-	}
-
-	@Override
-	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
-		this.getParams(params);
-		return baseMapper.getDataCompareByConditionCount(params);
-	}
 
 	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
 		if(StringUtils.isBlank(params.getDictPlatform())) {

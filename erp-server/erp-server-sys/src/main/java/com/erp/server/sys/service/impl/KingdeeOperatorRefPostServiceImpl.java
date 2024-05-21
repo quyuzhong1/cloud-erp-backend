@@ -11,6 +11,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -292,7 +293,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     public List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
         List<UserInfoDTO.BusinessOperationUserDTO> resultList = new ArrayList<>(10);
         List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listInfo(dto);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         UserInfoDTO.BusinessOperationUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
         if (findUser != null) {
             findUser.setIsMyState(1);
