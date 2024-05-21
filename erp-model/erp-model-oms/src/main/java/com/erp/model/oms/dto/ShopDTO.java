@@ -214,6 +214,10 @@ public class ShopDTO implements Serializable {
          * 修改时间
          */
         private List<LocalDateTime> updateTimeList;
+        /**
+         * 销售组织id
+         */
+        private List<String> salesOrgIdList;
 
 
     }
