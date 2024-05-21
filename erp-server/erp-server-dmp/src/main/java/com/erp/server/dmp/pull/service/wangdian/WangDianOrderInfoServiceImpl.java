@@ -4,7 +4,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import cn.wangdian.erp.sdk.Client;
 import cn.wangdian.erp.sdk.Pager;
 import cn.wangdian.erp.sdk.api.sales.TradeAPI;
 import cn.wangdian.erp.sdk.api.sales.dto.TradeQueryRequest;
@@ -58,8 +57,8 @@ import java.util.stream.Collectors;
 @SaveData(method = PlatformApiEnum.WANGDIAN_TRADE)
 public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEntity> {
 
-    @Resource
-    private Client defaultClient;
+//    @Resource
+//    private Client defaultClient;
 
     @Resource
     private MongoService mongoService;
@@ -256,7 +255,7 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
 
     private List<OrderEntity> pullData(RequestDTO dto) {
         List<TradeQueryResponse.OrderItem> result = new ArrayList<>();
-        TradeAPI tradeAPI = ApiFactory.get(defaultClient, TradeAPI.class);
+//        TradeAPI tradeAPI = ApiFactory.get(defaultClient, TradeAPI.class);
         TradeQueryRequest request = new TradeQueryRequest();
         request.setStatus(TradeQueryRequest.STATUS_COMPLETE);
         request.setStatusType(3);
@@ -268,7 +267,8 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
         pager.setPageNo(0);
         boolean hasNext = true;
         while (hasNext) {
-            TradeQueryResponse response = tradeAPI.query(request, pager);
+//            TradeQueryResponse response = tradeAPI.query(request, pager);
+            TradeQueryResponse response = new TradeQueryResponse();
             if (ObjectUtil.isEmpty(response) || ObjectUtil.isEmpty(response.getOrders())){
                 return BeanMapperUtils.copyList(OrderEntity.class, result);
             }
