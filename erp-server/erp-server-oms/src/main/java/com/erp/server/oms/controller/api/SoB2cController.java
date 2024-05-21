@@ -16,6 +16,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -1106,5 +1107,14 @@ public class SoB2cController extends BaseController {
     public ApiResult<List<BatchResultDTO>> initCostPrice(@RequestBody SoB2cDTO.CostPriceDTO dto) {
         soB2cService.initCostPrice(dto);
         return success();
+    }
+
+    /**
+     * 捆绑拆分信息
+     * @return
+     */
+    @PostMapping("/getBomSplitInfo")
+    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomSplitInfo(@RequestBody @Validated BaseIdDTO idDTO) {
+        return success(soB2cService.getBomSplitInfo(idDTO.getId()));
     }
 }

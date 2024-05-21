@@ -2914,6 +2914,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         data.setFinancialInfoDTO(financialInfo);
 
         List<SoB2cDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ViewDTO.class, soB2cDetailList);
+
+        List<String> skuIdList = detailList.stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        detailList.forEach(v->{
+            //子级BOM
+            List<BomChildrenSkuDTO> childList = bomChildrenList.stream()
+                    .filter(req -> req.getParentSkuId().equals(v.getSkuId())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(childList)){
+                v.setIsCombination(true);
+            }
+        });
         data.setDetailList(detailList);
         List<SoB2cDeclareProductEntity> declareProductList = soB2cDeclareProductService.listBySoId(id);
         List<SoB2cDeclareProductDTO.ViewDTO> declareProductViewList = BeanMapperUtils.copyList(SoB2cDeclareProductDTO.ViewDTO.class, declareProductList);
@@ -5749,6 +5763,74 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public SoB2cEntity getByCode(String soCode) {
         return this.lambdaQuery().eq(SoB2cEntity::getCode, soCode).last("LIMIT 1").one();
+    }
+
+    @Override
+    public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(String id) {
+        SoB2cDetailEntity detailEntity = soB2cDetailService.getById(id);
+        if(Objects.isNull(detailEntity)){
+            throw new ServiceException("明细为空");
+        }
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(detailEntity.getSkuId()));
+        String combination = BomTypeEnum.COMBINATION.getType();
+        bomChildrenList = bomChildrenList.stream().filter(b -> combination.equals(b.getType())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(bomChildrenList)){
+            throw new ServiceException("不是销售套装组合品，无法拆分");
+        }
+        List<String> childSkuList = bomChildrenList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
+        List<SkuInfoSimpleVO> skuInfoSimpleVOList = plmTaskFeign.getSimpleSkuInfoByIds(childSkuList);
+        List<SoB2cDetailDTO.ViewDTO> resultList = new ArrayList<>();
+        BigDecimal totalCostPrice = BigDecimal.ZERO;
+        BigDecimal remainAmount = detailEntity.getAmount();
+        BigDecimal remainAdvicePrice = detailEntity.getAdvicePrice();
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenList) {
+            SoB2cDetailDTO.ViewDTO viewDTO = new SoB2cDetailDTO.ViewDTO();
+            viewDTO.setMainId(detailEntity.getMainId());
+            viewDTO.setSplitDetailId(detailEntity.getId());
+            viewDTO.setImageUrl(bomChildrenSkuDTO.getImageUrl());
+            viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+            viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+            viewDTO.setProductName(bomChildrenSkuDTO.getSkuName());
+            viewDTO.setQty(detailEntity.getQty() * bomChildrenSkuDTO.getQuantity());
+            viewDTO.setWarehouseId(detailEntity.getWarehouseId());
+            viewDTO.setWarehouseName(detailEntity.getWarehouseName());
+            viewDTO.setExchangeRate(detailEntity.getExchangeRate());
+            SkuInfoSimpleVO skuInfoSimpleVO = skuInfoSimpleVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuInfoSimpleVO());
+            //含税单价
+            BigDecimal costPrice = ObjectUtils.isEmpty(skuInfoSimpleVO.getActualTaxCost()) ? skuInfoSimpleVO.getTargetTaxCost() : skuInfoSimpleVO.getActualTaxCost();
+            if(Objects.isNull(costPrice)){
+                costPrice = BigDecimal.ZERO;
+            }
+            viewDTO.setTaxCost(costPrice);
+            totalCostPrice = totalCostPrice.add(costPrice);
+            resultList.add(viewDTO);
+        }
+        for (int i = 0; i < resultList.size(); i++) {
+            SoB2cDetailDTO.ViewDTO viewDTO = resultList.get(i);
+            //如果是最后一行 赋值剩余的金额
+            if(i == bomChildrenList.size() - 1){
+                viewDTO.setAmount(remainAmount);
+                viewDTO.setAdvicePrice(remainAdvicePrice);
+            }else if (viewDTO.getTaxCost().compareTo(BigDecimal.ZERO) == 0){
+                viewDTO.setAmount(BigDecimal.ZERO);
+                viewDTO.setAdvicePrice(BigDecimal.ZERO);
+            }else if (totalCostPrice.compareTo(BigDecimal.ZERO) == 0){
+                viewDTO.setAmount(BigDecimal.ZERO);
+                viewDTO.setAdvicePrice(BigDecimal.ZERO);
+            }else{
+                //原捆绑商品真实售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的真实售价金额
+                BigDecimal amount = viewDTO.getTaxCost().divide(totalCostPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAmount());
+                viewDTO.setAmount(amount);
+                remainAmount = remainAmount.subtract(amount);
+                //原捆绑商品建议售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的建议售价金额
+                BigDecimal advancePrice = viewDTO.getTaxCost().divide(totalCostPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
+                viewDTO.setAdvicePrice(advancePrice);
+                remainAdvicePrice = remainAdvicePrice.subtract(advancePrice);
+            }
+            viewDTO.setPrice(viewDTO.getAmount().divide(new BigDecimal(viewDTO.getQty()),4, RoundingMode.HALF_UP));
+        }
+        return resultList;
     }
 
     /**
