@@ -2,6 +2,8 @@ package com.erp.server.sys.controller.feign;
 
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCountryOrgEntity;
+import com.erp.server.sys.service.DictCountryOrgService;
 import com.erp.server.sys.service.DictCountryService;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,8 @@ public class DictCountryFeignController {
 
     @Resource
     private DictCountryService dictCountryService;
+    @Resource
+    private DictCountryOrgService dictCountryOrgService;
 
     /**
      * 根据id获取国家信息
@@ -68,4 +72,13 @@ public class DictCountryFeignController {
         return list;
     }
 
+    /**
+     * 根据国家组织获取国家列表
+     * @param
+     * @return
+     */
+    @PostMapping("/listCountryOrgByOrgCode")
+    public List<DictCountryOrgEntity> listCountryOrgByOrgCode(@RequestBody String orgCode) {
+        return dictCountryOrgService.listCountryByOrgCode(orgCode);
+    }
 }
