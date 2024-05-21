@@ -7,11 +7,10 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import cn.wangdian.erp.sdk.Client;
 import cn.wangdian.erp.sdk.api.Result;
 import cn.wangdian.erp.sdk.api.goods.GoodsAPI;
 import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
-import cn.wangdian.erp.sdk.impl.ApiFactory;
+import cn.wangdian.erp.server.WangDianClientService;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
@@ -250,7 +249,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
     @Resource
-    private Client defaultClient;
+    private WangDianClientService wangDianClientService;
 
 
     //变更财务人员审核
@@ -2410,7 +2409,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     dto.setSpecList(specList);
                     batchPushDTOS.add(dto);
                 }
-                GoodsAPI api = ApiFactory.get(defaultClient, GoodsAPI.class);
+                GoodsAPI api = wangDianClientService.get(GoodsAPI.class);
                 Result result = api.batchPush(batchPushDTOS);
                 String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
                         .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))

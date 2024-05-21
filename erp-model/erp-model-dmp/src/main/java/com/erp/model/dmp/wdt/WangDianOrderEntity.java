@@ -1,4 +1,4 @@
-package com.erp.model.dmp.wangdian;
+package com.erp.model.dmp.wdt;
 
 import com.common.business.dto.CleanBaseDTO;
 import com.google.gson.annotations.SerializedName;
