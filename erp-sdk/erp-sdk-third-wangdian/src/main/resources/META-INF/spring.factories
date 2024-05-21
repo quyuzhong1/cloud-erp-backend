@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+   cn.wangdian.erp.sdk.WdtAutoConfiguration

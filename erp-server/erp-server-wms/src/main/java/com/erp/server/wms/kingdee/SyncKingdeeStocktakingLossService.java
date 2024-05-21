@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 
 /**
@@ -10,5 +11,5 @@ import com.erp.model.wms.entity.StocktakingProfitLossEntity;
  * @Created by yl
  */
 public interface SyncKingdeeStocktakingLossService {
-    void syncDataToKingdee(StocktakingProfitLossEntity entity, String code);
+    DmpPushTaskEntity syncDataToKingdee(StocktakingProfitLossEntity entity, String code);
 }

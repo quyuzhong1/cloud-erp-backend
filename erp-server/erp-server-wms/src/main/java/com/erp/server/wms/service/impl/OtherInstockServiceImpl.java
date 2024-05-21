@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import cn.wangdian.erp.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -27,6 +28,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -47,6 +49,7 @@ import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -57,6 +60,8 @@ import com.erp.server.wms.listener.OtherInStockExcelListener;
 import com.erp.server.wms.mapper.OtherInstockMapper;
 import com.erp.server.wms.query.OtherInstockQueryHandler;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -67,6 +72,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -74,6 +81,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -128,6 +136,14 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+    @Resource
+    private SyncWdtOtherInStockService syncWdtOtherInstockService;
+
+    @Resource
+    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
 
 
     @Override
@@ -320,7 +336,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.OTHER_INSTOCK.getCode(), pairList, "删除操作");
         //发送金蝶
-        list.forEach(obj -> syncKingdeeOtherInstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表数据
         return this.removeByIds(ids);
     }
@@ -348,9 +364,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 .set(OtherInstockEntity::getInvalidRemark, reason)
                 .update();
 
-        //发送金蝶
-        list.forEach(obj -> syncKingdeeOtherInstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
-
+        //作废发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个其他入库单【%s】，作废原因：".concat(reason), ModuleTypeEnum.OTHER_INSTOCK.getCode(), pairList, "作废操作");
@@ -360,7 +375,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(String id, String type, String comment) {
+    public BatchResultDTO approve(String id, String type, String comment){
         //根据ids查询
         OtherInstockEntity entity = this.getById(id);
         //审核中允许审核
@@ -379,8 +394,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
             updateInventoryTransCore(entity);
-            //推送金蝶
-            syncKingdeeOtherInstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            //审核发送金蝶
+            sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //推送旺店通
+            syncWdtOtherInstockService.syncDataToWdt(entity);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他入库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
@@ -415,12 +433,38 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.OTHER_INSTOCK, Arrays.asList(id));
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
-        //发送金蝶
-        syncKingdeeOtherInstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        //反审核发送金蝶
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
+        //发送旺店通
+        syncDisApproveInfoToWdt(entity);
         //操作日志
         operateLogService.addModuleOperateLog(StrUtil.format("反审核了一个其他入库单【{}】", entity.getCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单反审核");
+    }
+
+    /**
+     * 将其他入库单的反审核操作转换为其他出库单同步给旺店通
+     * @param entity 其他入库单
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncDisApproveInfoToWdt(OtherInstockEntity entity) {
+        List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
+
+        //填充SKU明细
+        List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
+        detailList.forEach(item -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            goods.setSpecNo(item.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(item.getActualQty()));
+            goods.setPositionNo(item.getWarehouseLocation());
+            goodsList.add(goods);
+        });
+
+        //推送数据
+        syncWdtOtherOutStockService.syncDataToWdt(goodsList, entity.getWarehouseId(), null);
     }
 
     @Override
@@ -1084,5 +1128,27 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         if (!otherInstockDetailService.saveBatch(detailEntityList)){
             throw new ServiceException("明细信息批量保存失败");
         }
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<OtherInstockEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeOtherInstockService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 }

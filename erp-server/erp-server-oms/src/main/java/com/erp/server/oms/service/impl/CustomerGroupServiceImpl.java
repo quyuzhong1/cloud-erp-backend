@@ -6,8 +6,10 @@ import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.CustomerGroupDTO;
 import com.erp.model.oms.entity.CustomerGroupEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerGroupService;
 import com.erp.server.oms.mapper.CustomerGroupMapper;
 import com.erp.server.oms.service.CustomerGroupService;
@@ -17,8 +19,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,6 +44,9 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
 
     @Resource
     private SyncKingdeeCustomerGroupService syncKingdeeCustomerGroupService;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     /**
      * 保存或者修改分组
@@ -77,10 +85,24 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
             groupEntity.setSyncKingdeeId(entity.getSyncKingdeeId());
         }
         boolean flag = this.saveOrUpdateBatch(batchGroupList);
+        List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
         //审核通过发送金蝶
-        batchGroupList.forEach(obj -> syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+        batchGroupList.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            pushTaskList.add(pushTaskEntity);
+        });
         //删除
-        removeList.forEach(obj -> syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        removeList.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
+            pushTaskList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(pushTaskList);
+            }
+        });
         return flag;
 
     }

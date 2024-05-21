@@ -11,6 +11,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -84,7 +85,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(CustomerInfoEntity entity, String operate) {
+    public List<DmpPushTaskEntity> syncDataToKingdee(CustomerInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //金蝶id
@@ -97,8 +98,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            DmpPushTaskEntity pushTaskEntity = saveTask(entity, operate, resultMap);
+            return Arrays.asList(pushTaskEntity);
         }
 
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getUseOrgId()));
@@ -228,11 +229,16 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         //同步好客户信息后再同步客户联系人
         List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(entity.getId());
         resultMap.put("customerList", contactEntities);
-
+        List<DmpPushTaskEntity> contractPushEnityLsit = new ArrayList<>();
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        DmpPushTaskEntity pushTaskEntity = saveTask(entity, operate, resultMap);
+        contractPushEnityLsit.add(pushTaskEntity);
         //审核通过联系人发送金蝶
-        contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+        contactEntities.forEach(obj -> {
+            DmpPushTaskEntity taskEntity = syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            contractPushEnityLsit.add(taskEntity);
+        });
+        return contractPushEnityLsit;
     }
 
 
@@ -244,7 +250,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (CustomerInfoEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (CustomerInfoEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -256,6 +262,6 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

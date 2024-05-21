@@ -1,5 +1,6 @@
 package com.erp.server.plm.rocketmq.sync.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 
 /**
@@ -15,5 +16,5 @@ public interface SyncKingdeeProductDetailService {
      * @date: 2023/3/8 18:22
      * @param entity
      */
-    void syncDataToKingdee(ProductDetailEntity entity,String operate);
+    DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate);
 }

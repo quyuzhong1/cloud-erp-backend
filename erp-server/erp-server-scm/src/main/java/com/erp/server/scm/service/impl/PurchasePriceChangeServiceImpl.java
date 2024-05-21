@@ -26,6 +26,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
@@ -34,6 +35,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchasePriceChangeTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -48,6 +50,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -109,7 +113,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
-
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     /**
      * 添加采购价目变更
@@ -521,7 +526,18 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //更新价目表数据
             purchasePriceChangeDetailService.updatePurchasePriceDetail(list);
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeePurchasePriceChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            List<DmpPushTaskEntity> resultList = new ArrayList<>();
+            list.forEach(obj -> {
+                DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                resultList.add(pushTaskEntity);
+            });
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(resultList);
+                }
+            });
         }
         return Boolean.TRUE;
     }

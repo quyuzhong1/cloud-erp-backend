@@ -20,12 +20,23 @@ import java.util.List;
 public interface DmpMqFeign {
 
     /**
-     * 发送MQ消息并保存任务
+     * 保存任务
      * @param dto
      * @return
      */
-    @PostMapping("send/mq/save/task")
-    Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto);
+    @PostMapping("save/pushTask")
+    DmpPushTaskEntity saveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto);
+
+
+    /**
+     * @description: 发送MQ消息
+     * @author Will
+     * @date: 2024/5/14 14:22
+     * @param list
+     * @return String
+     */
+    @PostMapping("send/sendTask")
+    Boolean sendTask(@RequestBody List<DmpPushTaskEntity> list);
 
     /**
      * 根据单个id查询推送任务

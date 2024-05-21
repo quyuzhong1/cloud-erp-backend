@@ -18,7 +18,8 @@ public enum PlatformEnum {
     ERP_TMS(7, "erp-tms", "自研ERP数据物流系统"),
     ERP_SYS(8, "erp-sys", "自研ERP基础数据系统"),
     ERP_WMS(9, "erp-wms", "自研ERP仓储系统"),
-    LINGXING(10, "lingxing", "领星")
+    LINGXING(10, "lingxing", "领星"),
+    WANGDIAN(11,"wangdian","旺店通")
     ;
 
     private Integer code;

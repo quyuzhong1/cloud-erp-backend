@@ -164,13 +164,18 @@ public interface KingdeeCommonService {
 
     /**
      * @param map
-     * @param type
+     * @param typeName
      * @return PlatformEntity
      * @description: 查询平台
      * @author Will
      * @date: 2023/4/7 11:39
      */
-    PlatformEntity getPlatformEntity(Map<String, Object> map, Integer type);
+    PlatformEntity getPlatformEntity(Map<String, Object> map, String typeName);
+
+    /**
+     * @param platformName 平台名称
+     */
+    PlatformEntity getPlatformEntity(String platformName);
 
     /**
      * @param apiUtils

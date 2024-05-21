@@ -25,6 +25,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
@@ -42,6 +43,7 @@ import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -58,6 +60,8 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -107,7 +111,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     private InventoryFeign inventoryFeign;
 
     @Autowired
-    private MQProducerService mQProducerService;
+    private DmpMqFeign dmpMqFeign;
 
     @Autowired
     private SyncKingdeePurchaseChangeService syncKingdeePurchaseChangeService;
@@ -315,7 +319,18 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             updateInventoryTransCore(purchaseChangeDetailList, originPurchaseOrderDetailEntityList);
 
             //推送金蝶
-            list.forEach(obj -> syncKingdeePurchaseChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            List<DmpPushTaskEntity> resultList = new ArrayList<>();
+            list.forEach(obj -> {
+                DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                resultList.add(pushTaskEntity);
+            });
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(resultList);
+                }
+            });
         }
         //审核不通过
         if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {

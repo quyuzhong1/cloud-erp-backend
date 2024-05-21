@@ -1228,11 +1228,11 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
-     * 初始化尺寸历史数据
+     * 首次推送sku到旺店通
      */
-    @GetMapping("/initProductSizeAndBoxSize")
-    public ApiResult<String> initProductSizeAndBoxSize(){
-        productDetailService.initProductSizeAndBoxSize();
+    @GetMapping("/initProductToWangDian")
+    public ApiResult<String> initProductToWangDian(@RequestParam List<String> ids){
+        productDetailService.initProductToWangDian(ids);
         return success();
     }
 

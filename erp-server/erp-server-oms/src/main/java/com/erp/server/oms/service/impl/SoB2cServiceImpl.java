@@ -6845,7 +6845,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
         taskFeignDTO.setSyncOperate(view.getApproveStatus().getCode());
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        dmpMqFeign.saveTask(taskFeignDTO);
     }
 
 

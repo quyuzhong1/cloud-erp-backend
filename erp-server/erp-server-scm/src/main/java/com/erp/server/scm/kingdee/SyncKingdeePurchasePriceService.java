@@ -1,5 +1,6 @@
 package com.erp.server.scm.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 
@@ -20,7 +21,7 @@ public interface SyncKingdeePurchasePriceService {
      * @param entity
      * @param operate
      */
-    void syncDataToKingdee(PurchasePriceEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(PurchasePriceEntity entity, String operate);
     /**
      * @description: 金蝶更新分录禁用
      * @author Will
@@ -28,5 +29,5 @@ public interface SyncKingdeePurchasePriceService {
      * @param detailList
      * @param disabled
      */
-    void syncDataDetailToKingdee(List<PurchasePriceDetailEntity> detailList, Boolean disabled);
+    DmpPushTaskEntity syncDataDetailToKingdee(List<PurchasePriceDetailEntity> detailList, Boolean disabled);
 }

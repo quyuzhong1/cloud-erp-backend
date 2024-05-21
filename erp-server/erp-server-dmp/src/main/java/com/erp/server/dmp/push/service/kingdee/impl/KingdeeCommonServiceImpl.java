@@ -136,14 +136,19 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     @Override
-    public PlatformEntity getPlatformEntity(Map<String, Object> map, Integer type) {
+    public PlatformEntity getPlatformEntity(Map<String, Object> map, String typeName) {
         //传入map数据不能为空
         if (CollectionUtils.isEmpty(map)) {
             log.error("同步数据不存在！");
             return null;
         }
-        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
+        PlatformEntity platformEntity = platformService.getByName(typeName);
         return platformEntity;
+    }
+
+    @Override
+    public PlatformEntity getPlatformEntity(String platformName) {
+        return platformService.getByName(platformName);
     }
 
 

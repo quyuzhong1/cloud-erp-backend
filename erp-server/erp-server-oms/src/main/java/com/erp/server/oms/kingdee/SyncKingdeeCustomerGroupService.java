@@ -1,11 +1,11 @@
 package com.erp.server.oms.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.CustomerGroupEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
 
 public interface SyncKingdeeCustomerGroupService {
     /**
      * 推送金蝶
      */
-    void syncDataToKingdee(CustomerGroupEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(CustomerGroupEntity entity, String operate);
 }
