@@ -132,7 +132,7 @@
         inner join purchase_price pp on pp.id = ppd.purchase_price_id
         WHERE
         ppd.is_deleted=FALSE AND pp.is_deleted=FALSE
-        and pp.supplier_id = #{supplierId}
+        and pp.supplier_id = #{supplierId} and pp.purchase_org_id = #{purchaseOrgId}
         <if test="statusList!=null and statusList.size>0">
             AND pp.approve_status IN
             <foreach collection="statusList" item="status" open="(" separator="," close=")">

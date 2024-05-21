@@ -659,8 +659,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId, List<String> statusList) {
-        return this.baseMapper.getBySupplierAndStatus(supplierId, statusList);
+    public List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId,String purchaseOrgId, List<String> statusList) {
+        return this.baseMapper.getBySupplierAndStatus(supplierId,purchaseOrgId, statusList);
     }
 
     @Override

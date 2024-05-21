@@ -47,7 +47,7 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
      **/
     List<PurchasePriceDetailDTO.AddDTO> listBySupplierId(@Param("supplierIds") List<String> supplierIds,@Param("statusList") List<String> statusList,@Param("detailIds") List<String> detailIds,@Param("skuIdList") List<String> skuIdList);
 
-    List<PurchasePriceDetailEntity> getBySupplierAndStatus(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList);
+    List<PurchasePriceDetailEntity> getBySupplierAndStatus(@Param("supplierId") String supplierId,@Param("purchaseOrgId") String purchaseOrgId,@Param("statusList") List<String> statusList);
     /**
      * 批量修改
      */
