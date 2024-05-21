@@ -134,6 +134,11 @@ public class PurchasePriceDetailDTO implements Serializable {
          * 供应商id
          */
         private String supplierId;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
     }
 
 
@@ -236,6 +241,16 @@ public class PurchasePriceDetailDTO implements Serializable {
          * 采购交期（天）
          */
         private Integer deliveryDay;
+
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名
+         */
+        private String purchaseOrgName;
     }
 
 

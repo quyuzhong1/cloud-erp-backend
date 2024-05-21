@@ -30,13 +30,13 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
 
     
     /**
-     * 根据供应商id 获取到对应明细
+     * 根据供应商、组织、SKU查询
      * @author yl
      * @date 2023-04-06 9:52
      * @param supplierId
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
      */
-    List<PurchasePriceDetailDTO.ViewDTO> getBySupplierId(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList,@Param("detailIds") List<String> detailIds,@Param("skuIdList") List<String> skuIdList);
+    List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList,@Param("purchaseOrgId") String purchaseOrgId,@Param("skuIdList") List<String> skuIdList);
 
     /**
      * 根据供应商id 获取到对应明细
