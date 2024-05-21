@@ -3,7 +3,6 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
@@ -14,6 +13,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
@@ -57,7 +57,7 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
         Integer type = ApiModuleTypeEnum.SO_INFO.getCode();
         //操作项
         String operate = (String) map.get("operate");
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }

@@ -3,7 +3,10 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import cn.wangdian.erp.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -30,6 +33,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -50,13 +54,17 @@ import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
+import com.erp.server.wms.mapper.TransferInfoDetailMapper;
 import com.erp.server.wms.mapper.TransferInfoMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -68,10 +76,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -132,6 +143,17 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
+    @Autowired
+    private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private SyncWdtOtherInStockService wdtOtherInStockService;
+
+    @Resource
+    private SyncWdtOtherOutStockService wdtOtherOutStockService;
+
+    @Resource
+    private TransferInfoDetailMapper transferInfoDetailMapper;
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -423,8 +445,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
-        //发送金蝶
-        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        //删除发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表数据
         return this.removeByIds(ids);
     }
@@ -452,9 +474,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .set(TransferInfoEntity::getInvalidRemark, reason)
                 .update();
 
-        //发送金蝶
-        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
 
+        //作废发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个直接调拨单【%s】，作废原因：".concat(reason), ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "作废操作");
@@ -488,8 +510,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //更新库存
             updateInventoryTransCore(list);
             if (isSyncKingDee) {
-                //发送金蝶
-                list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+                //审核发送金蝶
+                sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+                //同时发送旺店通
+                syncApproveInfoToWdt(obj);
             }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
@@ -516,6 +540,79 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个直接调拨单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "审核操作");
     }
 
+    /**
+     * 直接调拨单审核通过时将数据同步给旺店通
+     * @param entity 直接调拨单主数据
+     * @date: 2024-05-17
+     * @author: tanmujin
+     */
+    private void syncApproveInfoToWdt(TransferInfoEntity entity) {
+        //查询直接调拨单明细数据
+        QueryWrapper<TransferInfoDetailEntity> queryWrapper = new QueryWrapper<TransferInfoDetailEntity>()
+                .eq("main_id", entity.getId())
+                .eq("is_deleted", false);
+        List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailMapper.selectList(queryWrapper);
+
+        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
+        for (TransferInfoDetailEntity item : transferDetailList) {
+            //转换为调出仓库的其他出库单
+            CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+            outGoods.setSpecNo(item.getSkuNo());
+            outGoods.setNum(BigDecimal.valueOf(item.getQty()));
+            outGoods.setPositionNo(item.getOutWarehouseLocation());
+            outGoodsList.add(outGoods);
+
+            //转换为调入仓库的其他入库单
+            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+            inGoods.setSpecNo(item.getSkuNo());
+            inGoods.setNum(BigDecimal.valueOf(item.getQty()));
+            inGoods.setPositionNo(item.getInWarehouseLocation());
+            inGoodsList.add(inGoods);
+        }
+
+        //推送给旺店通
+        wdtOtherOutStockService.syncDataToWdt(outGoodsList, transferDetailList.get(0).getOutWarehouseId(), null);
+        wdtOtherInStockService.syncDataToWdt(inGoodsList,  transferDetailList.get(0).getInWarehouseId(), null);
+    }
+
+    /**
+     * 反审核的调拨单转换成调出仓的其他入库单、调入仓的其他出库单同步至旺店通
+     * @param entity 直接调拨单主数据
+     * @date: 2024-05-17
+     * @author: tanmujin
+     */
+    private void syncDisApproveInfoToWdt(TransferInfoEntity entity) {
+        //查询直接调拨单明细数据
+        QueryWrapper<TransferInfoDetailEntity> queryWrapper = new QueryWrapper<TransferInfoDetailEntity>()
+                .eq("main_id", entity.getId())
+                .eq("is_deleted", false);
+        List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailMapper.selectList(queryWrapper);
+
+        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
+        for (TransferInfoDetailEntity item : transferDetailList) {
+            //转换为调出仓库的其他入库单
+            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+            inGoods.setSpecNo(item.getSkuNo());
+            inGoods.setNum(BigDecimal.valueOf(item.getQty()));
+            inGoods.setPositionNo(item.getOutWarehouseLocation());
+            inGoodsList.add(inGoods);
+
+            //转换为调入仓库的其他出库单
+            CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+            outGoods.setSpecNo(item.getSkuNo());
+            outGoods.setNum(BigDecimal.valueOf(item.getQty()));
+            outGoods.setPositionNo(item.getInWarehouseLocation());
+            outGoodsList.add(outGoods);
+        }
+
+        //推送其他出库单给旺店通
+        wdtOtherOutStockService.syncDataToWdt(outGoodsList, transferDetailList.get(0).getInWarehouseId(), null);
+        //推送其他入库单给旺店通
+        wdtOtherInStockService.syncDataToWdt(inGoodsList, transferDetailList.get(0).getOutWarehouseId(), null);
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -538,8 +635,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_INFO,ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         if(isPushKingDee){
-            //发送金蝶
-            list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            //反审核发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            list.forEach(obj -> {
+                //同时发送旺店通
+                syncDisApproveInfoToWdt(obj);
+            });
         }
 
         //发送马帮（非马帮平台的才需要推送）
@@ -1082,8 +1183,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
-        //发送金蝶
-        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        //删除发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表数据
         return this.removeByIds(ids);
     }
@@ -1122,4 +1223,27 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         delete(delIds);
         return true;
     }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<TransferInfoEntity> list,String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeTransferInfoService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
+
 }

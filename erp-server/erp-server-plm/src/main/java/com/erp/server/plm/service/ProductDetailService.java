@@ -716,4 +716,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds);
+    void initProductToWangDian(List<String> ids);
+
 }
