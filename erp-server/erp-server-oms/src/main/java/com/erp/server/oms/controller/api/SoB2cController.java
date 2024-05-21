@@ -1117,4 +1117,13 @@ public class SoB2cController extends BaseController {
     public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomSplitInfo(@RequestBody @Validated BaseIdDTO idDTO) {
         return success(soB2cService.getBomSplitInfo(idDTO.getId()));
     }
+
+    /**
+     * 还原拆分信息
+     * @return
+     */
+    @PostMapping("/getBomRestoreInfo")
+    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomRestoreInfo(@RequestBody @Validated BaseIdDTO idDTO) {
+        return success(soB2cService.getBomRestoreInfo(idDTO.getId()));
+    }
 }
