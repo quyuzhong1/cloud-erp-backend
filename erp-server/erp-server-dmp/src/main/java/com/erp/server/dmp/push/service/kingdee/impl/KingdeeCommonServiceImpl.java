@@ -146,6 +146,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return platformEntity;
     }
 
+    @Override
+    public PlatformEntity getPlatformEntity(String platformName) {
+        return platformService.getByName(platformName);
+    }
+
 
     @Override
     public JSONObject view(KingdeeApiUtils apiUtils, String apiPlatformId, Map<String, Object> map) {

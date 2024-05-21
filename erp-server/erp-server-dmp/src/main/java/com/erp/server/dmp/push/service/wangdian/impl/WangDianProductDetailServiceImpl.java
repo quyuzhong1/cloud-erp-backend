@@ -8,6 +8,7 @@ import cn.wangdian.erp.sdk.impl.ApiFactory;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.PlatformEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wangdian.WangDianProductDetailService;
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,7 +29,7 @@ public class WangDianProductDetailServiceImpl implements WangDianProductDetailSe
 
     @Override
     public void executeConsumer(List<GoodsBatchPushDTO> pushDTOS) {
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(new HashMap<>(), null);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getName());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
