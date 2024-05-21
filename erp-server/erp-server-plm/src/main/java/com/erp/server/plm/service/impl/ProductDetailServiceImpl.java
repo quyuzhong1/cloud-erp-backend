@@ -3,16 +3,12 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import cn.wangdian.erp.sdk.Client;
 import cn.wangdian.erp.sdk.api.Result;
-import cn.wangdian.erp.sdk.api.goods.GoodsAPI;
 import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
-import cn.wangdian.erp.sdk.impl.ApiFactory;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
@@ -90,7 +86,6 @@ import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -108,7 +103,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
@@ -252,9 +246,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
-    @Resource
-    @Lazy
-    private Client defaultClient;
+//    @Resource
+//    @Lazy
+//    private Client defaultClient;
 
 
     //变更财务人员审核
@@ -2399,8 +2393,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     dto.setSpecList(specList);
                     batchPushDTOS.add(dto);
                 }
-                GoodsAPI api = ApiFactory.get(defaultClient, GoodsAPI.class);
-                Result result = api.batchPush(batchPushDTOS);
+//                GoodsAPI api = ApiFactory.get(defaultClient, GoodsAPI.class);
+//                Result result = api.batchPush(batchPushDTOS);
+                Result result = new Result();
                 String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
                         .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))
                         .collect(Collectors.joining(","));

@@ -1,11 +1,7 @@
 package com.erp.server.wms.wdt.impl;
 
-import cn.wangdian.erp.sdk.Client;
-import cn.wangdian.erp.sdk.WdtErpException;
-import cn.wangdian.erp.sdk.api.wms.stockin.StockinAPI;
 import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinResponse;
-import cn.wangdian.erp.sdk.impl.ApiFactory;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -14,7 +10,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.server.wms.mapper.OtherInstockDetailMapper;
-import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,8 +28,8 @@ import java.util.List;
 @Service
 public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockService {
 
-    @Resource
-    private Client wdtClient;
+//    @Resource
+//    private Client wdtClient;
 
     @Resource
     private OtherInstockDetailMapper otherInstockDetailMapper;
@@ -68,14 +63,10 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
 
-        StockinAPI stockinAPI = ApiFactory.get(wdtClient, StockinAPI.class);
+//        StockinAPI stockinAPI = ApiFactory.get(wdtClient, StockinAPI.class);
         CreateOtherStockinResponse response = null;
-        try {
-            response = stockinAPI.createOtherOrder(request);
-        } catch (WdtErpException e) {
-            e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_3000.code, e.getMessage());
-        }
+        //            response = stockinAPI.createOtherOrder(request);
+        response = new CreateOtherStockinResponse();
 
         if(response.getStatus() != 0){
             log.error(response.toString());

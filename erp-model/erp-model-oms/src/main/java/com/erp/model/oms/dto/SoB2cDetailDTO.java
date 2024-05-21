@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -234,6 +235,11 @@ public class SoB2cDetailDTO implements Serializable {
         private String platformSpuNo;
 
         /**
+         * 产品skuId
+         */
+        private String skuId;
+
+        /**
         * 产品sku编号
         */
         private String skuNo;
@@ -283,7 +289,16 @@ public class SoB2cDetailDTO implements Serializable {
         */
         private String sourceDetailId;
 
- }
+        /**
+         * 拆分的明细id
+         */
+        private String splitDetailId;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination = false;
+    }
 
     /**
     * 新增
@@ -314,6 +329,25 @@ public class SoB2cDetailDTO implements Serializable {
         */
         private String id;
 
+        /**
+         * 拆分的Id 如果用户拆分BOM套装则这个值为原本的明细id
+         */
+        private String splitDetailId;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 建议售价（本位币）
+         */
+        private BigDecimal advicePrice;
     }
 
     @Data
