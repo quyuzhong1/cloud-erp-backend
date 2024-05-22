@@ -5597,7 +5597,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
-        List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listByIds(ids);
+        List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listContainDeleted(ids);
         if(CollectionUtils.isEmpty(detailEntityList)){
             throw new ServiceException("明细为空");
         }
