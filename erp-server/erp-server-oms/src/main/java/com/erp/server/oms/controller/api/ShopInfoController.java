@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
@@ -13,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.server.oms.query.ShopQueryHandler;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -63,6 +65,7 @@ public class ShopInfoController extends BaseController {
             menuCode = "oms:shop:paging",
             tableAlias = "si"
     )
+    @WebAdvanceQuery(handler = ShopQueryHandler.class)
     public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
         PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
         return success(pagingVO);

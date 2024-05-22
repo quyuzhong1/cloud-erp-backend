@@ -42,7 +42,8 @@
         update_user_name,
         update_time
         FROM shop_info si
-        WHERE si.is_deleted=FALSE
+        WHERE ${params.sqlMap.default}
+        and si.is_deleted=FALSE
         <if test="params.name!=null and params.name!='' ">
             AND si.name ILIKE concat('%',#{params.name}::text,'%')
         </if>

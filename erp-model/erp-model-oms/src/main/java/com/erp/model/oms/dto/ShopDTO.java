@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,7 +14,9 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -218,7 +221,14 @@ public class ShopDTO implements Serializable {
          * 销售组织id
          */
         private List<String> salesOrgIdList;
-
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
 
     }
 

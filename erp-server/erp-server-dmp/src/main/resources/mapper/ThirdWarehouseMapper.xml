@@ -20,7 +20,7 @@
         <result column="code" property="code" />
         <result column="name" property="name" />
         <result column="address" property="address" />
-        <result column="contactw" property="contactw" />
+        <result column="contacts" property="contacts" />
         <result column="tel_number" property="telNumber" />
         <result column="telno" property="telno" />
         <result column="email" property="email" />
@@ -45,10 +45,10 @@
         update_time,
         version,
         is_deleted,
-        disabled, sys_type, warehouse_id, type, sub_type, code, name, address, contactw, tel_number, telno, email, zip, website, province, city, district, created, modified, remark
+        disabled, sys_type, warehouse_id, type, sub_type, code, name, address, contacts, tel_number, telno, email, zip, website, province, city, district, created, modified, remark
     </sql>
     <select id="pagingSelect" resultType="com.erp.model.dmp.dto.ThirdWarehouseDTO$PageSelectDTO">
-        select id,shop_id, code, name from (
+        select id,warehouse_id, code, name from (
         select
         tw.id,
         tw.warehouse_id,
