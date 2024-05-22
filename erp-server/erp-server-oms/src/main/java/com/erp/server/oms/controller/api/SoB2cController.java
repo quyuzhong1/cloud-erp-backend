@@ -1097,4 +1097,14 @@ public class SoB2cController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 修复历史sku销售成本价
+     * @param dto
+     * @return
+     */
+    @PostMapping("/initCostPrice")
+    public ApiResult<List<BatchResultDTO>> initCostPrice(@RequestBody SoB2cDTO.CostPriceDTO dto) {
+        soB2cService.initCostPrice(dto);
+        return success();
+    }
 }
