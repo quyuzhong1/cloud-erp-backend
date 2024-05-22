@@ -5002,6 +5002,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             financialInfoDTO.setShippingCost(MathUtil.multiply(financialInfoDTO.getShippingCost(),soB2cEntity.getExchangeRate()));
             //物流成本
             financialInfoDTO.setLogisticsCost(MathUtil.multiply(financialInfoDTO.getLogisticsCost(),soB2cEntity.getExchangeRate()));
+            //平台费
+            financialInfoDTO.setPlatformCost(MathUtil.multiply(financialInfoDTO.getPlatformCost(),soB2cEntity.getExchangeRate()));
         } else {
             financialInfoDTO.setCurrency(soB2cEntity.getCurrency());
             financialInfoDTO.setAmount(totalAmount);
