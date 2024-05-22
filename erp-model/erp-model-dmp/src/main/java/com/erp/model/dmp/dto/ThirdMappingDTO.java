@@ -136,7 +136,7 @@ public class ThirdMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+        private List<ViewDTO> thirdList;
 
     }
 
@@ -183,14 +183,14 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 第三方id
          */
-        @NotBlank(message = "第三方id不能为空")
+//        @NotBlank(message = "第三方id不能为空")
         @Size(max = 19,message = "第三方id最大长度不能超过19位")
         private String thirdId;
 
         /**
          * 第三方编码
          */
-        @NotBlank(message = "第三方编码不能为空")
+//        @NotBlank(message = "第三方编码不能为空")
         @Size(max = 19,message = "第三方编码最大长度不能超过19位")
         private String thirdCode;
 
@@ -204,7 +204,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 第三方系统类型：lingxing领星，wangdian旺店通
          */
-        @NotBlank(message = "第三方系统类型：lingxing领星，wangdian旺店通不能为空")
+//        @NotBlank(message = "第三方系统类型：lingxing领星，wangdian旺店通不能为空")
         @Size(max = 16,message = "第三方系统类型：lingxing领星，wangdian旺店通最大长度不能超过16位")
         private String thirdSysType;
 
