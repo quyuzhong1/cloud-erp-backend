@@ -2,6 +2,7 @@ package com.erp.server.tms.convert;
 
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -23,6 +24,7 @@ import com.sdk.tms.yanwen.dto.response.YanWenChannel;
 import com.sdk.tms.yuntu.dto.response.YunTuChannel;
 import com.sdk.wms.goodcang.dto.response.GoodCangLogisticsProductsResp;
 import com.sdk.wms.iml.dto.response.ImlInventoryLogisticsProductsResp;
+import org.apache.ibatis.annotations.Param;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -262,4 +264,21 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity serviceConvertByAliExpress(ServiceResult serviceResult);
     List<LogisticsSaleChannelEntity> serviceConvertByAliExpress(List<ServiceResult> serviceResults);
+
+    /**
+     * 查询数据转换
+     * @param item
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "isPrintPlatform", ignore = true),
+            @Mapping(target = "effectiveTimeStr", ignore = true),
+            @Mapping(target = "logisticsPlatform", ignore = true),
+            @Mapping(target = "logisticsSupplierId", ignore = true),
+            @Mapping(target = "logisticsSupplierName", ignore = true),
+            @Mapping(target = "logisticsSupplierShortName", ignore = true),
+            @Mapping(target = "shippingTemplateName", ignore = true),
+            @Mapping(target = "supplierId", ignore = true)
+    })
+    LogisticsChannelDTO.BaseDTO convertToChannelDTO(@Param("item") LogisticsChannelEntity item);
 }
