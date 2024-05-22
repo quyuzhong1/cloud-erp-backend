@@ -168,8 +168,7 @@ public class ShopifyLogisticsHandlerImpl extends AbstractLogisticsHandler {
         entityList.add(new LogisticsSaleChannelEntity().setCode("YunExpress").setPlatformChannelId("YunExpress").setCnName("YunExpress").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
         entityList.add(new LogisticsSaleChannelEntity().setCode("Australia Post").setPlatformChannelId("Australia Post").setCnName("Australia Post").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
         entityList.add(new LogisticsSaleChannelEntity().setCode("Sendle").setPlatformChannelId("Sendle").setCnName("Sendle").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("Aramex").setPlatformChannelId("Aramex").setCnName("Aramex").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("Australia").setPlatformChannelId("Australia").setCnName("Australia").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("Aramex Australia").setPlatformChannelId("Aramex Australia").setCnName("Aramex Australia").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
         entityList.add(new LogisticsSaleChannelEntity().setCode("TNT Australia").setPlatformChannelId("TNT Australia").setCnName("TNT Australia").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
         entityList.add(new LogisticsSaleChannelEntity().setCode("Hunter Express").setPlatformChannelId("Hunter Express").setCnName("Hunter Express").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
         entityList.add(new LogisticsSaleChannelEntity().setCode("Couriers Please").setPlatformChannelId("Couriers Please").setCnName("Couriers Please").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
