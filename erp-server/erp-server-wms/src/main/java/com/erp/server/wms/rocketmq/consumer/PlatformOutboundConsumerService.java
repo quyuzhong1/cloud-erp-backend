@@ -32,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -158,19 +157,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 return ApiResult.success();
             }
 
-            try {
-                LocalDateTime outBoundTime = dto.getOutBoundTime();
-                if(Objects.nonNull(outBoundTime)){
-                    generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
-                }
-                //跟踪号
-                generateB2cDTO.setTrackNo(dto.getTrackNo());
-                //运单号
-                generateB2cDTO.setTransportNo(dto.getTrackNo());
-                soOutstockService.generateB2cSoOutstock(generateB2cDTO);
-            } catch (Exception e) {
-                log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
-            }
+            // // 第三方仓出库生成销售出库单
+            soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
         }
         return ApiResult.success();
     }
