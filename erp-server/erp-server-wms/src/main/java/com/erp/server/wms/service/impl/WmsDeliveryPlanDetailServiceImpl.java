@@ -131,10 +131,6 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
-        //获取库存sku信息
-        List<SkuMappingDTO.ListSkuParamDTO> paramDTOS = new ArrayList<>();
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIds);
-        List<OverseasProviderWarehouseDTO.ViewDTO> providerWarehouseList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(toWarehouseId));
         //设置详情字段
         for (WmsDeliveryPlanDetailEntity detailEntity : list) {
             detailEntity.setMainId(mainId);
@@ -148,31 +144,6 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
             //设置产品编号
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             detailEntity.setSkuNo(skuVO.getSkuNo());
-
-            //获取库存sku
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
-                    .filter(req -> StringUtils.isNotBlank(req.getProductSkuId())
-                            && req.getProductSkuId().equals(detailEntity.getSkuId())
-                            && (req.getHasMappingAll() || req.getWarehouseId().equals(toWarehouseId)))
-                    .distinct().findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(listStockSkuNoByProductSkuIdView)) {
-
-                OverseasProviderWarehouseDTO.ViewDTO viewDTO = providerWarehouseList.stream().filter(req -> req.getWarehouseId().equals(toWarehouseId)).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(viewDTO)) {
-                    throw new ServiceException(ApiError.SKU_NOT_MAPPING_PLATFORM_SKU, detailEntity.getSkuNo());
-                } else {
-                    //查询库存sku映射
-                    listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
-                            .filter(req -> StringUtils.isNotBlank(req.getProductSkuId())
-                                    && req.getProductSkuId().equals(detailEntity.getSkuId())
-                                    && req.getDictPlatform().equals(viewDTO.getProviderCode()))
-
-                    .findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(listStockSkuNoByProductSkuIdView)) {
-                        throw new ServiceException(ApiError.SKU_NOT_MAPPING_PLATFORM_SKU, detailEntity.getSkuNo());
-                    }
-                }
-            }
 
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(detailEntity.getId())) {
