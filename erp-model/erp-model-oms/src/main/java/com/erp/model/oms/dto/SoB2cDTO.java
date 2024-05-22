@@ -220,6 +220,11 @@ public class SoB2cDTO implements Serializable {
         private String countryName;
 
         /**
+         * 国家代号
+         */
+        private String country;
+
+        /**
          * 是否对接了第三方海外仓
          * true 是
          */
@@ -389,6 +394,25 @@ public class SoB2cDTO implements Serializable {
          * b2c销售订单明细信息
          */
         private List<SoB2cDetailDTO.ListDTO> detailList;
+        /**
+         * 运输状态
+         */
+        private String  trackStatus;
+
+        /**
+         * 运输状态
+         */
+        private String  trackStatusName;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 包装重量单位
+         */
+        private String weightUnit;
     }
 
     @Data
@@ -551,6 +575,10 @@ public class SoB2cDTO implements Serializable {
         @NotNull(message = "明细信息不能为空")
         @Valid
         private List<SoB2cDetailDTO.ViewDTO> detailList;
+        /**
+         * 申报信息
+         */
+        private List<SoB2cDeclareProductDTO.ViewDTO> declareProductList;
     }
 
     /**
@@ -1751,6 +1779,15 @@ public class SoB2cDTO implements Serializable {
 
         private String billStatus;
 
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 销售单号ID
+         */
+        private String soId;
 
 
     }
@@ -1870,6 +1907,12 @@ public class SoB2cDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+
+        /**
+         * 是否平台订单
+         */
+        private Boolean hasPlatformWarehouseOrder;
+
     }
 
     /**
@@ -2390,5 +2433,17 @@ public class SoB2cDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CostPriceDTO {
+        /**
+         * 修复开始时间
+         */
+        private LocalDate startTime;
+
+        private List<String> ids;
     }
 }

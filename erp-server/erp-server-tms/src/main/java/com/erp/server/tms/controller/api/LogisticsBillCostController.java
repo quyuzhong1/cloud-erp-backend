@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -16,6 +17,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,8 +54,13 @@ public class LogisticsBillCostController extends BaseController {
      * @return ApiResult<List<TabListDTO>>
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsBillCost:paging",
+            tableAlias = "lbc"
+    )
     public ApiResult<List<LogisticsBillCostDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsBillCostService.tabList(dto);
+        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsBillCostService.tabList(dto, DictCostAttributionEnum.SELF_DELIVER);
         return success(tabList);
     }
 
@@ -69,6 +77,7 @@ public class LogisticsBillCostController extends BaseController {
             menuCode = "tms:logisticsBillCost:paging",
             tableAlias = "lbc"
     )
+    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
     public ApiResult<PagingVO<LogisticsBillCostDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsBillCostDTO.ListDTO> pagingVO = logisticsBillCostService.paging(dto);
         return success(pagingVO);
@@ -134,7 +143,7 @@ public class LogisticsBillCostController extends BaseController {
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -165,7 +174,7 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入自发货费用模板")
     @PostMapping("/import")
-    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = logisticsBillCostService.importFile(excelFile, response);
         return result ? success() : failure();
     }
@@ -185,7 +194,8 @@ public class LogisticsBillCostController extends BaseController {
             menuCode = "tms:logisticsBillCost:paging",
             tableAlias = "lbc"
     )
-    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.ExportExcelParamDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
+    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = logisticsBillCostService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

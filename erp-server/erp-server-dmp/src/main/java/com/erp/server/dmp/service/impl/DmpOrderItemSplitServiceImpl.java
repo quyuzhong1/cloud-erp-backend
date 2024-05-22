@@ -24,7 +24,6 @@ import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.dmp.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemSplitMapper;
 import com.erp.server.dmp.service.*;
 import com.google.common.collect.Lists;
@@ -64,7 +63,7 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private DmpOrderItemMapper dmpOrderItemMapper;
+    private DmpOrderItemService dmpOrderItemService;
 
     @Resource
     private DmpSkuCostService dmpSkuCostService;
@@ -382,7 +381,7 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
             originalItem.setOriginalQuantity(splitSku.getOriginalQuantity());
             originalItem.setOriginalCostPrice(splitSku.getOriginalCostPrice());
             originalItem.setOriginalAmountAfter(splitSku.getOriginalAmountAfter());
-            dmpOrderItemMapper.insert(originalItem);
+            dmpOrderItemService.saveOrUpdate(originalItem);
             for (SplitSkuDTO skuDTO : splitSkuDTOS) {
                 DmpOrderItemSplitEntity entity = new DmpOrderItemSplitEntity();
                 BeanMapper.copy(dmpOrderItemSplitEntity, entity);

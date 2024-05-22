@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -33,10 +34,12 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.DictBasicValueEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
@@ -111,7 +114,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private ShopAuthService shopAuthService;
 
     @Resource
-    private CustomerB2cService customerB2cService;
+    private LogisticsBillCostFeign logisticsBillCostFeign;
 
     @Resource
     private CustomerInfoService customerInfoService;
@@ -457,6 +460,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        //旧负责人
+        String oldChargeId = shopInfo.getChargeId();
         shopInfo.setName(dto.getName());
         String salesOrgId = dto.getSalesOrgId();
         //负责人
@@ -494,6 +499,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
+        }
+
+        //负责人变更则更新物流单店铺负责人
+        if (!StrUtil.equals(oldChargeId,dto.getChargeId())) {
+            logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(),dto.getChargeId()));
         }
         return shopInfo;
     }

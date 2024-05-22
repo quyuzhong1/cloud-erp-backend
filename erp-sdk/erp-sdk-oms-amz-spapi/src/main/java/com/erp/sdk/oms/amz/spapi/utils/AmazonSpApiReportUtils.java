@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.utils;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.erp.sdk.oms.amz.spapi.documents.*;
@@ -84,7 +85,8 @@ public class AmazonSpApiReportUtils {
            return obj.downloadAndUploadFastDFS(url, compressionAlgorithm, fileName, reportDocumentId, recordType);
         } catch (Exception e) {
             //Handle exception here.
-            throw new RuntimeException("下载亚马逊报告到FastDFS异常：url=" + url + " error="+ e.getMessage());
+            String msg = StrUtil.format("下载亚马逊报告到FastDFS异常：url={}, error={}", url, JSONUtil.toJsonStr(e));
+            throw new RuntimeException(msg);
         }
     }
 

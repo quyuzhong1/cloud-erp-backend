@@ -135,8 +135,9 @@ public class SoB2cController extends BaseController {
                 if(isRuleMatch){
                     //检查是否备案并修改状态
                     soB2cService.checkProductRegistrationAndUpdate(id, "");
+                    //申报信息规则
+                    soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE);
                 }
-
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
                 }
@@ -144,6 +145,34 @@ public class SoB2cController extends BaseController {
 
         }
         return success(add.getId());
+    }
+
+    /**
+     * 批量更新报关
+     * @param ids
+     * @return
+     */
+    @PostMapping("/batchUpdateDeclare")
+    public ApiResult<List<BatchResultDTO>> batchUpdateDeclare(@RequestBody List<String> ids){
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BatchResultDTO submit;
+            try {
+                submit = soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
+            } catch (Exception e) {
+                log.error("B2C销售订单 批量更新报关异常", e);
+
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 批量更新报关失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -547,6 +576,10 @@ public class SoB2cController extends BaseController {
             BatchResultDTO result;
             try {
                 result = soB2cService.saveSoB2cDistribution(id, dto);
+                //申报信息匹配
+                if (result.getSuccess()){
+                    soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
+                }
             } catch (Exception e) {
                 log.error("B2C销售订单配货失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -914,7 +947,6 @@ public class SoB2cController extends BaseController {
 
     }
 
-
     /**
      * 虚假发货
      *
@@ -1053,4 +1085,26 @@ public class SoB2cController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 不出库发货
+     * @param dto
+     * @return
+     */
+    @PostMapping("/deliveryWithNotOutbound")
+    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 修复历史sku销售成本价
+     * @param dto
+     * @return
+     */
+    @PostMapping("/initCostPrice")
+    public ApiResult<List<BatchResultDTO>> initCostPrice(@RequestBody SoB2cDTO.CostPriceDTO dto) {
+        soB2cService.initCostPrice(dto);
+        return success();
+    }
 }

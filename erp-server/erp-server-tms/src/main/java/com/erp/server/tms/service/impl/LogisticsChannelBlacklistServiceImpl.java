@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -104,12 +105,12 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
     public void copy(String channelId, String addChannelId) {
         List<LogisticsChannelBlacklistEntity> list = listDbByChannelId(channelId);
         if (CollectionUtils.isNotEmpty(list)) {
-            List<LogisticsChannelBlacklistEntity> addList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
-            addList.forEach(obj -> {
+//            List<LogisticsChannelBlacklistEntity> addList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
+            list.forEach(obj -> {
                 obj.setLogisticsChannelId(addChannelId);
-                obj.setId("");
+                obj.setId(IdWorker.getIdStr());
             });
-            this.saveBatch(addList);
+            this.saveBatch(list);
         }
     }
 

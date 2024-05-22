@@ -357,5 +357,13 @@ public class WarehouseReceiveController extends BaseController {
         Boolean flag = warehouseReceiveService.generateReceive(dto);
         return flag == true ? success() : failure();
     }
-
+    /***
+     * 清洗入库状态
+     * @return
+     */
+    @PostMapping("/instockStatusCleanJob")
+    public ApiResult instockStatusCleanJob(){
+        warehouseReceiveService.instockStatusCleanJob();
+        return success();
+    }
 }

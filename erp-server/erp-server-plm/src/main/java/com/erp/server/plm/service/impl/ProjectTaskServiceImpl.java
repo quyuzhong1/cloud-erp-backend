@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.service.impl.RedisService;
@@ -162,7 +163,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectInfoService projectInfoService;
 
-
+    /**
+     * 固定任务修改
+     */
+    public static final String PLM_TASK_UPDATE_FIXED = "plm:task:update:fixed";
+    /**
+     * 固定任务删除
+     */
+    public static final String PLM_TASK_REMOVETASK_FIXED = "plm:task:removeTask:fixed";
     /**
      * 添加系统的产品任务
      * 只添加立项模板的任务
@@ -702,18 +710,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
 
-        String scheduleStatus = entity.getScheduleStatus();
-        if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)) {
-            if (!"admin".equals(loginUser.getUserAccount())) {
-                throw new ServiceException(ApiError.ERROR_95137);
-            }
-        }
-        Integer IsFixed = entity.getIsFixed();
-
-        //如果是固定任务
-        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(loginUser.getUserAccount())) {
-            throw new ServiceException(ApiError.ERROR_95014);
-        }
+//        String scheduleStatus = entity.getScheduleStatus();
+//        if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)) {
+//            if (!"admin".equals(loginUser.getUserAccount())) {
+//                throw new ServiceException(ApiError.ERROR_95137);
+//            }
+//        }
+        //如果是删除固定任务，需要数据权限
+        getFixedUpdateOrRemovePermission(entity.getIsFixed(),PLM_TASK_REMOVETASK_FIXED);
         //检查是否是子任务
         checkTaskIfExistPid(taskId);
         Boolean flag = this.removeById(entity);
@@ -1040,6 +1044,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateTask(ProjectTaskDTO dto) {
+        ProjectTaskEntity taskEntity = this.getById(dto.getId());
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        //如果是修改固定任务，需要数据权限
+        getFixedUpdateOrRemovePermission(taskEntity.getIsFixed(),PLM_TASK_UPDATE_FIXED);
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         //sku不关联
         String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
@@ -1047,7 +1057,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean isNotRelated = notRelated.equalsIgnoreCase(dto.getRelatedSkuType());
         //验证表单数据
         checkFieldConfig(dto);
-        ProjectTaskEntity taskEntity = this.getById(dto.getId());
+
         String dbBusinessProcessId = taskEntity.getBusinessProcessId();
         String parameterBusinessProcessId = dto.getBusinessProcessId();
 
@@ -1055,9 +1065,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean ifUpdateProcess = !dbBusinessProcessId.equals(parameterBusinessProcessId);
 
         ProjectTaskEntity oldEntity = new ProjectTaskEntity();
-        if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
-        }
         BeanMapper.copy(taskEntity, oldEntity);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
@@ -1186,6 +1193,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         }
         return flag;
+    }
+
+    private void getFixedUpdateOrRemovePermission(Integer IsFixed,String menuPermission) {
+        if (IsConstant.YES.equals(IsFixed)) {
+            //获取固定任务按钮权限
+            Boolean userDatePermissionByMenuCode = sysUserFeign.getUserDatePermissionByMenuCode(menuPermission);
+            if (!userDatePermissionByMenuCode) {
+                throw new ServiceException(ApiError.NO_PERMISSION);
+            }
+        }
     }
 
 
@@ -2870,10 +2887,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer IsFixed = taskEntity.getIsFixed();
         LoginUser userInfo = UserContext.getLoginUser();
 
-        //如果是固定任务
-        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(userInfo.getUserAccount())) {
-            deleteTaskShow = false;
-        }
+//        //如果是固定任务
+//        if (IsConstant.YES.equals(IsFixed)) {
+//            deleteTaskShow = false;
+//        }
         //删除任务
         Map<String, Object> deleteTaskMap = new HashMap<>();
         deleteTaskMap.put("name", "删除任务");
@@ -5047,16 +5064,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = UserContext.getDefaultLoginUser();
 
         for (ProjectTaskEntity req : entity) {
-
-            if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(req.getScheduleStatus())) {
-                if (!"admin".equals(loginUser.getUserAccount())) {
-                    throw new ServiceException(ApiError.ERROR_95137);
-                }
-            }
-            //如果是固定任务
-            if (IsConstant.YES.equals(req.getIsFixed()) && !"admin".equals(loginUser.getUserAccount())) {
-                throw new ServiceException(ApiError.ERROR_95014);
-            }
+            //如果是删除固定任务，需要数据权限
+            getFixedUpdateOrRemovePermission(req.getIsFixed(),PLM_TASK_REMOVETASK_FIXED);
+//            if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(req.getScheduleStatus())) {
+//                if (!"admin".equals(loginUser.getUserAccount())) {
+//                    throw new ServiceException(ApiError.ERROR_95137);
+//                }
+//            }
+//            //如果是固定任务
+//            if (IsConstant.YES.equals(req.getIsFixed()) && !"admin".equals(loginUser.getUserAccount())) {
+//                throw new ServiceException(ApiError.ERROR_95014);
+//            }
 
             //检查是否是子任务
             checkTaskIfExistPid(req.getId());

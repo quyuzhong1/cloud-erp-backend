@@ -126,7 +126,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         // 平台仓订单不走任何规则
         // 取消订单不走规则
-        if (!mainEntity.hasPlatformWarehouseOrder() || mainEntity.getIsCancel() ) {
+        if (!mainEntity.hasPlatformWarehouseOrder()
+                && !mainEntity.getIsCancel()
+                && !ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())
+        ) {
             // 已审核过的订单不走规则
             Integer count = operateLogService.lambdaQuery()
                     .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
@@ -169,8 +172,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
     public void handleRule(SoB2cEntity mainEntity) {
         //订单状态
         String billStatus = mainEntity.getBillStatus();

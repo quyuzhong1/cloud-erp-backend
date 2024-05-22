@@ -12,7 +12,8 @@ public enum DictCostAttributionEnum implements EnumMessage {
 
     FIRST_MILE("firstMile", "头程"),
     SELF_DELIVER("selfDeliver", "自发货"),
-    DECLARE("declare", "报关")
+    DECLARE("declare", "报关"),
+    LAST_MILE("lastMile", "尾程")
     ;
 
     /**

@@ -3,6 +3,7 @@ package com.sdk.tms.track123.model.response;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @description: 海运返回参数
@@ -45,5 +46,9 @@ public class OceanTrackInfo implements Serializable {
     /**
      *  承运人信息
      */
-    private OceanContainerInfo carrierInfo;
+    private OceanCarrierInfo carrierInfo;
+    /**
+     *箱信息
+     */
+    private List<OceanContainerInfo> containerInfo;
 }

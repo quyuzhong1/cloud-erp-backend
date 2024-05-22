@@ -69,7 +69,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         String expression = splElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
         BeanMapperUtils.copy(addDTO, ruleOrderApprovalEntity);
         List<String> categoryDetailIdList = addDTO.getCategoryDetailIdList();
@@ -110,7 +110,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         String expression = spElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
 
         RuleOrderApprovalEntity ruleOrderApprovalEntity = BeanMapperUtils.map(RuleOrderApprovalEntity.class, updateDTO);

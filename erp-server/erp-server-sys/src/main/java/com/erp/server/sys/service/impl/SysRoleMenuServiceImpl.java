@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
@@ -117,13 +118,14 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * @date 2022-07-20 9:55
      */
     @Override
-    public List<SysMenuVO> findMenuByRoleIds(List<String> roleIds) {
+    public List<SysMenuVO> findMenuByRoleIds(List<String> roleIds, String userType) {
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
         List<SysMenuEntity> allList = sysMenuService
                 .lambdaQuery()
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
+                .eq(StringUtils.isNotBlank(userType), SysMenuEntity::getSystem, userType)
                 .list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds;
@@ -290,7 +292,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * @date 2022-09-26 9:44
      */
     @Override
-    public List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds) {
+    public List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds, String userType) {
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
@@ -317,7 +319,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     }
 
     @Override
-    public List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds, Integer type) {
+    public List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds, Integer type, String userType) {
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
@@ -325,6 +327,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                 .lambdaQuery()
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
                 .eq(SysMenuEntity::getType,type)
+                .eq(SysMenuEntity::getSystem, userType)
                 .list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds;

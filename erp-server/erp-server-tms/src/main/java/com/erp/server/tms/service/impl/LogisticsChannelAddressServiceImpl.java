@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsChannelAddressDTO;
@@ -87,12 +88,12 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
     public void copy(String channelId, String addChannelId) {
         List<LogisticsChannelAddressEntity> list = listDbByChannelId(channelId);
         if (CollectionUtils.isNotEmpty(list)) {
-            List<LogisticsChannelAddressEntity> addList = BeanMapperUtils.copyList(LogisticsChannelAddressEntity.class, list);
-            addList.forEach(obj ->{
+//            List<LogisticsChannelAddressEntity> addList = BeanMapperUtils.copyList(LogisticsChannelAddressEntity.class, list);
+            list.forEach(obj ->{
                 obj.setLogisticsChannelId(addChannelId);
-                obj.setId("");
+                obj.setId(IdWorker.getIdStr());
             });
-            this.saveBatch(addList);
+            this.saveBatch(list);
         }
     }
 

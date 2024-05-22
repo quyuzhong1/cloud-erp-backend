@@ -130,12 +130,28 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         map.put("exchangeRate",exchangeRate);
         map.put("payConditionId",payConditionId);
 
+
+
+        /**
+         * 采购订单下推付款申请后，变更单无法审核通过，提示以下推付款申请单不能删除
+         * 考虑将付款计划查出来推到变更单，但是这个清空会导致变更后采购订单的付款计划被删除，只传传付款计划id会被删，传了明细id也会被删
+         * 现暂时不用，代码先存储，表配置删除。
+         */
         List<JSONObject> fIinstallmentList = new ArrayList<>();
-        for (Map<String , Object> queryMap : queryList) {
+        Map<Object, List<Map<String, Object>>> resultMap = queryList.stream().collect(Collectors.groupingBy(obj -> obj.get("FIinstallment_FENTRYID")));
+        for (Map.Entry<Object, List<Map<String, Object>>> entry : resultMap.entrySet()) {
             JSONObject actualPayJson = new JSONObject();
             //付款计划id
-            Object finstallmentId = queryMap.get("FIinstallment_FENTRYID");
-            actualPayJson.set("finstallmentId",finstallmentId);
+            actualPayJson.set("finstallmentId",entry.getKey());
+            //付款计划明细id
+            List<JSONObject> fDetailIdList = new ArrayList<>();
+            for (Map<String, Object> detailMap : entry.getValue()) {
+                JSONObject detailJson = new JSONObject();
+                Object fDetailId = detailMap.get("FOrderActualPaySubEntity_FDetailID");
+                detailJson.set("fDetailId",fDetailId);
+                fDetailIdList.add(detailJson);
+            }
+            actualPayJson.set("fDetailIdList",fDetailIdList);
             fIinstallmentList.add(actualPayJson);
         }
         map.put("fIinstallmentList",fIinstallmentList);

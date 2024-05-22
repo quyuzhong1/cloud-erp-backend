@@ -443,6 +443,9 @@
             sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
             sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
             sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+            <if test="params.warehouseLocations != null and params.warehouseLocations.size > 0">
+                ,MAX(it.warehouse_location) warehouseLocation
+            </if>
         FROM "inventory" it
         WHERE it.is_deleted = FALSE
         <if test="params.skuIds != null and params.skuIds.size > 0">

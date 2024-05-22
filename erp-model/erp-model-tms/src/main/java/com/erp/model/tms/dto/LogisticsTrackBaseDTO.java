@@ -98,6 +98,10 @@ public class LogisticsTrackBaseDTO implements Serializable {
          */
         @NotBlank(message = "跟踪单号不能为空")
         private String trackNo;
+        /**
+         * 承运人对应的唯一简码
+         */
+        private String carrierCode;
 
         /**
          * 单号类型（1.订舱号 2.提单号 3.箱号）

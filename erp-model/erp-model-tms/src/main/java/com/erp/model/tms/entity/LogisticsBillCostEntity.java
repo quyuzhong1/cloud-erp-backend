@@ -34,6 +34,12 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     private String reconciliationStatus;
 
     /**
+     * 类型，枚举DictCostAttributionEnum，firstMile头程， selfDeliver自发货，lastMile尾程
+     */
+    @TableField("type")
+    private String type;
+
+    /**
     * 物流渠道id
     */
     @TableField("channel_id")
@@ -116,6 +122,18 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
      */
     @TableField("weight_logistics")
     private BigDecimal weightLogistics;
+
+    /**
+     * 店铺负责人id
+     */
+    @TableField(value = "shop_charge_id")
+    private String shopChargeId;
+
+    /**
+     * 店铺负责人名称
+     */
+    @TableField(value = "shop_charge_name")
+    private String shopChargeName;
 
     /**
      * 费用编辑（导入数据返回）

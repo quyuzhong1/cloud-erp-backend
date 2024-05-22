@@ -2,6 +2,8 @@ package com.erp.server.wms.service;
 
 import java.util.List;
 
+import com.common.business.vo.LoginUser;
+
 /**
  * @author yl
  * @Classname CommonService
@@ -11,6 +13,15 @@ import java.util.List;
  */
 public interface CommonService {
 
+	
+    /**
+     * 获取用户信息
+     * @author yl
+     * @date 2023-03-15 11:58
+     * @param
+     * @return com.common.business.vo.LoginUser
+     */
+    public LoginUser getUserInfo();
 
     /**
      * @description: 获取当前审核人
