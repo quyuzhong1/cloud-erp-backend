@@ -172,7 +172,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 viewDTOList.add(viewDTO);
             });
             mappingViewDTO.setOrgId(listDTOS.get(0).getOrgId());
-            mappingViewDTO.setOrgName(listDTOS.get(0).getOrgId());
+            mappingViewDTO.setOrgName(listDTOS.get(0).getName());
             mappingViewDTO.setSysName(listDTOS.get(0).getName());
             mappingViewDTO.setSysId(listDTOS.get(0).getId());
             mappingViewDTO.setThirdList(viewDTOList);

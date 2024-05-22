@@ -153,7 +153,9 @@
             ppd.tax_rate * 100 as taxRate,
             ppd.min_qty as minQty,
             ppd.max_qty as maxQty,
-            ppd.delivery_day as deliveryDay
+            ppd.delivery_day as deliveryDay,
+            pp.purchase_org_id as purchaseOrgId,
+            pp.purchase_org_name as purchaseOrgName
         from purchase_price pp
         inner join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
         inner join supplier s on pp.supplier_id = s.id and s.is_deleted = false
