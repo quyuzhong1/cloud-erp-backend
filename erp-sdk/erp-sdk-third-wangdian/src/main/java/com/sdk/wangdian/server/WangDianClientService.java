@@ -18,8 +18,8 @@ public class WangDianClientService {
 
     private Client defaultClient;
 
-    WangDianClientService(WdtProperties wdtProperties){
-        this.defaultClient = DefaultClient.get(wdtProperties.getSid(), wdtProperties.getUrl(), wdtProperties.getAppKey(), wdtProperties.getAppSecret());
+    WangDianClientService(){
+        this.defaultClient = DefaultClient.get("wdtapi3", "http://47.92.239.46/", "wjkj03-test", "b6412a9b6:806828718719806966febbfe948893e8");
     }
 
     public <T> T get(Class<T> clazz){
