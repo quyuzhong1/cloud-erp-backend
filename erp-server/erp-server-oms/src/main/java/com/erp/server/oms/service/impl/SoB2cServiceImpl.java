@@ -5061,7 +5061,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         financialInfoDTO.setVatRate(vatRate);
 
         //平台费,店铺计算
-        financialInfoDTO.setPlatformCost(platformCost);
+        if (MathUtil.compareTo(financialInfoDTO.getPlatformCost(), BigDecimal.ZERO) == 0) {
+            financialInfoDTO.setPlatformCost(platformCost);
+        }
 
         //转账费,店铺计算
         financialInfoDTO.setPaypalCost(paypalCost);
