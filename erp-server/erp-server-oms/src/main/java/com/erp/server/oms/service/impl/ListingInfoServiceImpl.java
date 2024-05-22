@@ -24,8 +24,11 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.service.ListingInfoService;
@@ -73,6 +76,9 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     @Autowired
     private ShopInfoService shopInfoService;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     /**
      * 添加库存sku
@@ -283,6 +289,10 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         if (ObjectUtil.isEmpty(listingInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
+        if(CollectionUtils.isEmpty(warehouseList)){
+            throw new ServiceException("仓库不存在");
+        }
         List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
         String provideCode;
         if(CollectionUtils.isEmpty(viewDTOList)){
@@ -305,7 +315,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
         skuMappingEntity.setWarehouseId(dto.getWarehouseId());
-        skuMappingEntity.setWarehouseName(viewDTOList.get(0).getWarehouseName());
+        skuMappingEntity.setWarehouseName(warehouseList.get(0).getName());
         skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
         skuMappingEntity.setProductSkuId(skuVO.getSkuId());
         skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
