@@ -10,10 +10,12 @@ import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.dmp.mapper.ThirdMappingMapper;
+import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.common.business.service.impl.SuperServiceImpl;
 //import com.erp.server.dmp.service.OperateLogService;
@@ -44,8 +46,8 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper, ThirdMappingEntity> implements ThirdMappingService {
-//    @Resource
-//    private OperateLogService operateLogService;
+    @Resource
+    private OperateLogService operateLogService;
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
@@ -69,6 +71,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             BeanMapperUtils.copy(addDTO, thirdMappingEntity);
             thirdMappingEntity.setThirdId(item.getThirdId());
             thirdMappingEntity.setThirdSysType(item.getSysType());
+            //获取当前系统绑定的数据
+            ThirdMappingEntity existMapping = lambdaQuery().eq(ThirdMappingEntity::getType, addDTO.getType()).eq(ThirdMappingEntity::getSysId, addDTO.getSysId())
+                    .eq(ThirdMappingEntity::getThirdSysType, thirdMappingEntity.getThirdSysType())
+                    .eq(ThirdMappingEntity::getIsDeleted, false).eq(ThirdMappingEntity::getIsExpire, false).last("limit 1").one();
             // 数据处理
             handleData(thirdMappingEntity);
             log.info("开始新增第三方系统映射关系单");
@@ -77,9 +83,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 throw new ServiceException("第三方系统映射关系单保存失败");
             }
             // 操作日志
-            String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "第三方系统映射关系单", thirdMappingEntity.getId());
+            String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】",  ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getThirdSysType()),
+                    Objects.isNull(existMapping)?"":existMapping.getThirdName(), thirdMappingEntity.getThirdName());
             // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLog(msg, null, thirdMappingEntity.getId(), "新增操作");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), thirdMappingEntity.getSysId(), "新增操作");
             // TODO 新增明细（如果有明细的话）
         });
         return new BaseResultDTO.AddDTO();
@@ -108,7 +115,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         log.info("编辑 开始记录第三方系统映射关系单日志数据，id：【{}】", thirdMappingEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), thirdMappingEntity.getId(), "第三方系统映射关系单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLogByObj(old, thirdMappingEntity, null, thirdMappingEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, thirdMappingEntity, null, thirdMappingEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -202,15 +209,18 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             thirdName = thirdWarehouseEntity.getName();
             sysName = listDTOS.get(0).getName();
         }
+        thirdMappingEntity.setThirdName(thirdName);
+        thirdMappingEntity.setSysName(sysName);
+
         //校验仓库和第三方信息一对一关系
         ThirdMappingEntity existSysMapping = baseMapper.selectOne(new LambdaQueryWrapper<ThirdMappingEntity>().eq(ThirdMappingEntity::getType, thirdMappingEntity.getType())
                 .eq(ThirdMappingEntity::getSysId, thirdMappingEntity.getSysId()));
-        if (Objects.nonNull(existSysMapping)) {
+        if (Objects.nonNull(existSysMapping) && !Objects.equals(thirdMappingEntity.getSysId(),existSysMapping.getSysId())) {
             throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, sysName);
         }
         ThirdMappingEntity existThirdMapping = baseMapper.selectOne(new LambdaQueryWrapper<ThirdMappingEntity>().eq(ThirdMappingEntity::getType, thirdMappingEntity.getType())
                 .eq(ThirdMappingEntity::getThirdId, thirdMappingEntity.getThirdId()).eq(ThirdMappingEntity::getThirdCode, thirdMappingEntity.getThirdCode()));
-        if (Objects.nonNull(existThirdMapping)) {
+        if (Objects.nonNull(existThirdMapping) && !Objects.equals(thirdMappingEntity.getThirdId(),existSysMapping.getThirdId())) {
             throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), sysName, thirdName);
         }
     }

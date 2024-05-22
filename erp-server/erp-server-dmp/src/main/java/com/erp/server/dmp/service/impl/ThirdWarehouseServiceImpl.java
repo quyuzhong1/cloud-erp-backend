@@ -38,8 +38,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMapper, ThirdWarehouseEntity> implements ThirdWarehouseService {
-    //    @Autowired
-//    private OperateLogService operateLogService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
