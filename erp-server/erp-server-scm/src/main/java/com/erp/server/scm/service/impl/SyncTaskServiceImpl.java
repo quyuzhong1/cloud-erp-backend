@@ -8,9 +8,11 @@ import com.erp.model.scm.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.scm.kingdee.*;
 import com.erp.server.scm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -76,6 +78,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     private DmpMqFeign dmpMqFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
         SourceTypeEnum sourceType = syncParamDTO.getSourceType();

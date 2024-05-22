@@ -186,4 +186,5 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      */
     Boolean updatePlatformPackageIdByMainId(String platformPackageId, String mainId);
 
+    List<SoB2cDetailEntity> listContainDeleted(List<String> ids);
 }

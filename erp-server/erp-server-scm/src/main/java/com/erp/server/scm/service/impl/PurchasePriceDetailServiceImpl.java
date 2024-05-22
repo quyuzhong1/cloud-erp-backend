@@ -119,7 +119,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_98024);
         }
         //验证时间
-        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),addList);
+        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),purchasePriceEntity.getPurchaseOrgId(),addList);
         for (PurchasePriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
@@ -149,13 +149,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @param list
      */
     @Override
-    public void checkPurchasePriceDetail (String supplierId,List<PurchasePriceDetailEntity> list) {
+    public void checkPurchasePriceDetail (String supplierId,String purchaseOrgId,List<PurchasePriceDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         //查询供应商信息
         List<String> skuIdList = list.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
-        List<PurchasePriceDetailDTO.ViewDTO> purchaseDetailList = getBySupplierId(supplierId, null, skuIdList);
+        List<PurchasePriceDetailDTO.ViewDTO> purchaseDetailList = listCheckPurchasePriceDetail(supplierId, purchaseOrgId, skuIdList);
         if (CollectionUtils.isNotEmpty(purchaseDetailList)) {
             List<String> oldIdList = list.stream().map(PurchasePriceDetailEntity::getId).collect(Collectors.toList());
             purchaseDetailList = purchaseDetailList.stream().filter(obj -> !oldIdList.contains(obj.getId())).collect(Collectors.toList());
@@ -333,7 +333,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
 
         //验证时间
-        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),saveOrUpdateList);
+        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),purchasePriceEntity.getPurchaseOrgId(),saveOrUpdateList);
 
         //这是要添加的
         List<PurchasePriceDetailEntity> addList = saveOrUpdateList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
@@ -480,13 +480,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.ViewDTO> getBySupplierId(String supplierId, List<String> detailIds, List<String> skuIdList) {
+    public List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(String supplierId, String purchaseOrgId, List<String> skuIdList) {
         List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
         statusList.add(ApproveStatusEnum.REJECT.getStatus());
-        List<PurchasePriceDetailDTO.ViewDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds, skuIdList);
+        List<PurchasePriceDetailDTO.ViewDTO> list = baseMapper.listCheckPurchasePriceDetail(supplierId, statusList, purchaseOrgId, skuIdList);
         return list;
     }
 
@@ -666,8 +666,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId, List<String> statusList) {
-        return this.baseMapper.getBySupplierAndStatus(supplierId, statusList);
+    public List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId,String purchaseOrgId, List<String> statusList) {
+        return this.baseMapper.getBySupplierAndStatus(supplierId,purchaseOrgId, statusList);
     }
 
     @Override
@@ -737,14 +737,21 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
+        //skuId
         List<String> skuIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
+        //供应商Id
         List<String> supplierIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSupplierId).distinct().collect(Collectors.toList());
+        //采购数量
         List<Integer> purchaseQtyList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseQty).distinct().collect(Collectors.toList());
+        //采购组织Id
+        List<String> purchaseOrgIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
+
 
         PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
         dto.setSkuIdList(skuIdList);
         dto.setSupplierIdList(supplierIdList);
         dto.setPurchaseQtyList(purchaseQtyList);
+        dto.setPurchaseOrgIdList(purchaseOrgIdList);
         //报价信息
         List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = baseMapper.batchGetTaxPrice(dto);
         //币种信息
@@ -758,6 +765,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             if (CollectionUtils.isNotEmpty(viewList)) {
                 PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(searchDTO.getSkuId())
                                 && obj.getSupplierId().equals(searchDTO.getSupplierId())
+                                && StrUtil.equals(obj.getPurchaseOrgId(),searchDTO.getPurchaseOrgId())
                                 && (searchDTO.getPurchaseQty() >= obj.getMinQty() && obj.getMaxQty() > searchDTO.getPurchaseQty()))
                         .findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(viewDTO)) {

@@ -7,6 +7,8 @@
         select
         pp.supplier_id,
         s.name as supplierName,
+        pp.purchase_org_id as purchaseOrgId,
+        pp.purchase_org_name as purchaseOrgName,
         ppd.currency,
         ppd.tax_price as taxPrice,
         ppd.tax_rate * 100 as taxRate,
@@ -28,10 +30,13 @@
             <if test="params.supplierId != null and params.supplierId != ''">
                 and pp.supplier_id = #{params.supplierId}
             </if>
+            <if test="params.purchaseOrgId != null and params.purchaseOrgId != ''">
+                and pp.purchase_org_id = #{params.purchaseOrgId}
+            </if>
         </where>
     </select>
 
-    <select id="getBySupplierId" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$ViewDTO">
+    <select id="listCheckPurchasePriceDetail" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$ViewDTO">
         SELECT
         id,
         sku_id,
@@ -48,7 +53,7 @@
         is_deleted=FALSE AND
         purchase_price_id IN (
         SELECT id FROM purchase_price
-        WHERE supplier_id=#{supplierId} AND is_deleted=FALSE
+        WHERE supplier_id = #{supplierId} AND purchase_org_id = #{purchaseOrgId} AND is_deleted=FALSE
         <if test="statusList!=null and statusList.size>0">
             AND approve_status IN
             <foreach collection="statusList" item="status" open="(" separator="," close=")">
@@ -56,12 +61,6 @@
             </foreach>
         </if>
         )
-        <if test="detailIds!=null and detailIds.size>0">
-            AND id NOT IN
-            <foreach collection="detailIds" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
         <if test="skuIdList!=null and skuIdList.size>0">
             AND sku_id  IN
             <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
@@ -133,7 +132,7 @@
         inner join purchase_price pp on pp.id = ppd.purchase_price_id
         WHERE
         ppd.is_deleted=FALSE AND pp.is_deleted=FALSE
-        and pp.supplier_id = #{supplierId}
+        and pp.supplier_id = #{supplierId} and pp.purchase_org_id = #{purchaseOrgId}
         <if test="statusList!=null and statusList.size>0">
             AND pp.approve_status IN
             <foreach collection="statusList" item="status" open="(" separator="," close=")">
@@ -159,26 +158,32 @@
         inner join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
         inner join supplier s on pp.supplier_id = s.id and s.is_deleted = false
         <where>
-        pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
-        ppd.effective_date and ppd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
-        <if test="params.skuIdList != null and params.skuIdList.size > 0">
-            and ppd.sku_id in
-            <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.purchaseQtyList != null and params.purchaseQtyList.size > 0">
-            and
-            <foreach collection="params.purchaseQtyList" item="item" open="(" separator="or" close=")">
-                (ppd.max_qty > #{item} and #{item} >= ppd.min_qty)
-            </foreach>
-        </if>
-        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-            and pp.supplier_id in
-            <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
+            pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
+            ppd.effective_date and ppd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
+            <if test="params.skuIdList != null and params.skuIdList.size > 0">
+                and ppd.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseQtyList != null and params.purchaseQtyList.size > 0">
+                and
+                <foreach collection="params.purchaseQtyList" item="item" open="(" separator="or" close=")">
+                    (ppd.max_qty > #{item} and #{item} >= ppd.min_qty)
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and pp.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseOrgIdList != null and params.purchaseOrgIdList.size > 0">
+                and pp.purchase_org_id in
+                <foreach collection="params.purchaseOrgIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
         </where>
     </select>
 

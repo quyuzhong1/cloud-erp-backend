@@ -41,7 +41,6 @@ public class ShopifySoB2cHandle implements ISoB2cHandleService {
     private SoB2cService soB2cService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean handleRule(SoB2cEntity mainEntity) {
         //平台仓订单不走任何规则
         if (mainEntity.hasPlatformWarehouseOrder()) {
