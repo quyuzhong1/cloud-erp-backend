@@ -970,7 +970,8 @@
         pc.target_tax_cost,
         pc.retail_price,
         ppk.product_size,
-        ppk.net_weight
+        ppk.net_weight,
+        pp.ean
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
