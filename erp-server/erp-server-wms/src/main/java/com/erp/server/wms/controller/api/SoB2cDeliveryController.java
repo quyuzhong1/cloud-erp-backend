@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -12,6 +13,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -256,6 +258,8 @@ public class SoB2cDeliveryController extends BaseController {
                 resultDTOS.addAll(resultList);
             } catch (Exception e) {
                 log.error("发货单 虚假发货失败", e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, StrUtil.format("标记发货失败：{}", e.getMessage())));
+                continue;
             }
 
             SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();

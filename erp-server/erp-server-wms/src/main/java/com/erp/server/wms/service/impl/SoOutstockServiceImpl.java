@@ -10,7 +10,6 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.exception.ExcelAnalysisException;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -26,7 +25,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -3081,7 +3079,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
-
     /**
      * 修改装箱状态
      * @Author Luo_WG
@@ -3095,5 +3092,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .eq(SoOutstockEntity::getId, id)
                 .update();
     }
+
+
+    @Override
+    public void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto) {
+        try {
+            LocalDateTime outBoundTime = dto.getOutBoundTime();
+            if(Objects.nonNull(outBoundTime)){
+                generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
+            }
+            //跟踪号
+            generateB2cDTO.setTrackNo(dto.getTrackNo());
+            //运单号
+            generateB2cDTO.setTransportNo(dto.getTrackNo());
+            this.generateB2cSoOutstock(generateB2cDTO);
+        } catch (Exception e) {
+            log.error("销售订单{} 生成销售出库单失败>>>>>>{}", generateB2cDTO.getSoCode(), e.getMessage());
+        }
+    }
+
 
 }

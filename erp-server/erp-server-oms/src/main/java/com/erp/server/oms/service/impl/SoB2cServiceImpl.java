@@ -1467,7 +1467,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cErrorService.removeErrorOrder(id,type);
             }else{
                 //添加异常信息
-                soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
+                soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson, "");
             }
             //获取物流单号失败销售订单自动反审核
             this.disApprove(id);
@@ -1998,7 +1998,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
             //生成异常订单信息
-            soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult));
+            soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), "");
             throw new ServiceException(ApiError.Default.code, message);
         } else {
             String shippingOrderNo = apiResult.getData();
@@ -4070,7 +4070,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY, deliveryEntity.getCode());
             }
         }
+        // 前端显示的异常类型
         String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
+        // 具体异常类型
+        String errorType = SoB2cErrorErrorTypeEnum.FALSEHOOD_SIGN_DELIVERY.getCode();
         String message = "";
         String paramJson = "";
         String returnJson = "";
@@ -4086,6 +4089,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             message = e.getMessage();
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(type);
+            addError.setErrorType(errorType);
             addError.setParamJson(paramJson);
             addError.setReturnJson(returnJson);
             addError.setMainId(entity.getSourceId());

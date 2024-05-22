@@ -164,13 +164,18 @@ public class SoB2cErrorDTO implements Serializable {
         private String mainId;
 
         /**
-         * 异常类型
-         * submitDelivery 提交发货异常
-         * signDelivery 标记发货异常
-          * getLogisticsCode 获取物流单异常
-        */
+         * 前端显示的异常类型
+         * {@link com.erp.model.oms.enums.SoB2cErrorTypeEnum}
+         */
         @NotBlank(message = "异常类型 异常不能为空")
         private String type;
+
+        /**
+         * 异常类型:对应枚举:
+         * {@link com.erp.model.oms.enums.SoB2cErrorErrorTypeEnum}
+         * 细化具体类型供具体业务处理
+         */
+        private String errorType;
 
         /**
         * 传的json 字符串

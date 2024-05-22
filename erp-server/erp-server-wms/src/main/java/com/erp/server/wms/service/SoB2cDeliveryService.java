@@ -252,4 +252,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     SoB2cDeliveryEntity getNotCancelBySoId(String soId);
 
     Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO);
+
+
+    /**
+     * 第三方仓出库 对 销售平台 标记发货
+     * @param soB2cId 销售订单ID
+     * @return 响应列表
+     */
+    BatchResultDTO thirdWarehouseDelivery(String soB2cId);
 }

@@ -55,7 +55,7 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * @param paramJson 参数
      *
      */
-    void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson);
+    void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson, String errorType);
 
     /**  删除异常订单
      * @description
