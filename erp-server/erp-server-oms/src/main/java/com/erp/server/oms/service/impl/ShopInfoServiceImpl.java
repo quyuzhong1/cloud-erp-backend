@@ -1281,6 +1281,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public List<ShopInfoEntity> getRelatedShopById(String platformShopCode) {
         return lambdaQuery()
                 .eq(ShopInfoEntity::getPlatformShopCode, platformShopCode)
+                .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .eq(ShopInfoEntity::getDisabled, false)
                 .list();
     }
 

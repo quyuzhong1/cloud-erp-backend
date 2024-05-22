@@ -6,7 +6,7 @@ import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
-import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import lombok.Data;
@@ -38,8 +38,19 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
     @Panno(findType = PannoEnum.EQ,field = "shopId")
     private String shopId;
 
+    @Panno(findType = PannoEnum.EQ,field = "shopName")
+    private String shopName;
+
+    /**
+     * 平台店铺编码/卖家编码
+     * 亚马逊平台=卖家ID
+     */
+    @Panno(findType = PannoEnum.EQ,field = "platformShopCode")
+    private String platformShopCode;
+
     /**
      * 数据下载状态
+     * -1 异常数据无法更新
      * 0 详情数据需要更新
      * 1 详情数据已更新
      */
@@ -64,12 +75,21 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
      */
     private String redissonKey;
 
-    public PlatformAmazonOrderDTO(Order order, String shopId) {
+    public PlatformAmazonOrderDTO(Order order, AmazonShopInfoDTO shopInfoDTO) {
         this.order = order;
-        this.shopId = shopId;
-        this.setUniqueId(combineUnique(order.getAmazonOrderId(), shopId));
+        // 根据站点判断店铺ID
+        AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(order.getMarketplaceId());
+        this.shopId = null == shopNameDTO ? "" : shopNameDTO.getShopId();
+        this.shopName = null == shopNameDTO ? "" : shopNameDTO.getShopName();
+        this.platformShopCode = shopInfoDTO.getPlatformShopCode();
+        this.setUniqueId(combineUnique(order.getAmazonOrderId(), this.shopId));
         this.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        this.setDownloadStatus(0);
+        if (StringUtils.isBlank(this.shopId)){
+            // 店铺为空异常
+            this.setDownloadStatus(-1);
+        } else {
+            this.setDownloadStatus(0);
+        }
         this.setDownloadAddressStatus(0);
         this.setIsClean(CleanStatusEnum.NONE.getCode());
     }

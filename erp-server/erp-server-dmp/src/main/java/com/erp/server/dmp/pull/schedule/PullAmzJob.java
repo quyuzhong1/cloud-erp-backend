@@ -14,6 +14,7 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
@@ -177,6 +178,12 @@ public class PullAmzJob {
             XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
+        // 根据状态查询
+        ShopInfoDTO.ListParamDTO conditionDTO = new ShopInfoDTO.ListParamDTO();
+        conditionDTO.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        conditionDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+        List<ShopInfoEntity> list = shopInfoFeign.listByParams(conditionDTO);
+
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 开始,预计分组线程数量={}", taskGroupMap.size());
@@ -191,7 +198,7 @@ public class PullAmzJob {
 //                    List<PlatformApiTaskEntity> value = entry.getValue();
         taskGroupMap.forEach((key, value) -> threadPoolTaskExecutor.execute(() -> {
             // 处理下载详情
-            handlerDetailDownload(key, value, size, platform, category, business);
+            handlerDetailDownload(key, value, size, platform, category, business, list);
             latch.countDown();
             log.info("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 当前线程执行完毕");
             XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 当前线程执行完毕");
@@ -217,13 +224,16 @@ public class PullAmzJob {
      * @param platform
      * @param category
      * @param business
+     * @param list
      */
-    private void handlerDetailDownload(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
-        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+    private void handlerDetailDownload(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business, List<ShopInfoEntity> list) {
+        // 需要查询的店铺
+        List<String> queryShopIds = convertQueryShopIds(value, list);
+
         // 查询当前分组未下载的mongo订单
-        List<PlatformAmazonOrderDTO> orderEntityList = this.findDownloadStatusAnShopId(0, shopIds, 1, size);
+        List<PlatformAmazonOrderDTO> orderEntityList = this.findDownloadStatusAnShopId(0, queryShopIds, 1, size);
         if (CollectionUtil.isEmpty(orderEntityList)) {
-            XxlJobHelper.log("[拉取亚马逊订单详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(shopIds));
+            XxlJobHelper.log("[拉取亚马逊订单详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(queryShopIds));
             return;
         }
         for (PlatformAmazonOrderDTO dto : orderEntityList) {
@@ -285,6 +295,9 @@ public class PullAmzJob {
             XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
+        // 根据状态查询
+        List<ShopInfoEntity> list = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
+
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
         XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 开始,预计分组线程数量={}", taskGroupMap.size());
@@ -297,7 +310,7 @@ public class PullAmzJob {
                     // 异步任务的逻辑
                     String key = entry.getKey();
                     List<PlatformApiTaskEntity> value = entry.getValue();
-                    handlerAddressDetail(key, value, size, platform, category, business);
+                    handlerAddressDetail(key, value, size, platform, category, business, list);
                     log.info("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 当前线程执行完毕");
                     XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 当前线程执行完毕");
                 })).toArray(CompletableFuture[]::new));
@@ -317,17 +330,19 @@ public class PullAmzJob {
      * @param platform
      * @param category
      * @param business
+     * @param list
      */
-    private void handlerAddressDetail(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
-        // 店铺IDS
-        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+    private void handlerAddressDetail(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business, List<ShopInfoEntity> list) {
+        // 需要查询的店铺
+        List<String> queryShopIds = convertQueryShopIds(value, list);
+
         // 查出下MFN订单
-        List<PlatformAmazonOrderDTO> orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.MFN.getValue(), shopIds, 1, size);
+        List<PlatformAmazonOrderDTO> orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.MFN.getValue(), queryShopIds, 1, size);
         if (CollectionUtil.isEmpty(orderEntityList)) {
             // 查询AFN订单
-            orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.AFN.getValue(), shopIds, 1, size);
+            orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.AFN.getValue(), queryShopIds, 1, size);
             if (CollectionUtil.isEmpty(orderEntityList)) {
-                XxlJobHelper.log("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(shopIds));
+                XxlJobHelper.log("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(queryShopIds));
                 return;
             }
         }
@@ -352,7 +367,7 @@ public class PullAmzJob {
                 List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
                 // 保存和发送mq
                 businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
-                log.info("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(shopIds));
+                log.info("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(queryShopIds));
                 XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载成功, groupId={}, uniqueId={}", key, dto.getUniqueId());
 
                 // 缓存移除结果
@@ -383,6 +398,20 @@ public class PullAmzJob {
                 dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
             }
         }
+    }
+
+    private List<String> convertQueryShopIds(List<PlatformApiTaskEntity> value, List<ShopInfoEntity> list) {
+        // 店铺IDS
+        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+        // 所有关联的店铺
+        List<String> platformCodeList = list.stream().filter(e -> shopIds.contains(e.getId())).map(ShopInfoEntity::getPlatformShopCode).distinct().collect(Collectors.toList());
+        // 需要查询的店铺
+        return list.stream()
+                .filter(e -> platformCodeList.contains(e.getPlatformShopCode()))
+                .map(BaseEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+
     }
 
     private List<PlatformAmazonOrderDTO> findGroupByFulfillmentChannel(String value,
