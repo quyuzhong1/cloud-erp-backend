@@ -328,12 +328,6 @@ public class SoB2cDetailDTO implements Serializable {
          * 拆分的Id 如果用户拆分BOM套装则这个值为原本的明细id
          */
         private String splitDetailId;
-
-        /**
-         * 单价
-         */
-        private BigDecimal price;
-
         /**
          * 金额
          */
