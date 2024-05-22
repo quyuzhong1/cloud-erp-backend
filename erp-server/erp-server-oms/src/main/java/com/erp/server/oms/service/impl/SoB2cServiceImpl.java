@@ -2035,9 +2035,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT);
         }
         //销售订单状态只有待发货、已发货的订单可以发起拦截
-        if (!SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())) {
-            throw new ServiceException(ApiError.NOT_DELIVERY_NOT_INTERCEPT);
-        }
+//        if (!SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())) {
+//            throw new ServiceException(ApiError.NOT_DELIVERY_NOT_INTERCEPT);
+//        }
 
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (ObjectUtils.isEmpty(logisticsEntity)) {
@@ -3121,6 +3121,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 国家=买家信息国家
             String countryName = countryNameMap.getOrDefault(data.getCountry(), "");
             data.setCountryName(countryName);
+
+            //重量单位,默认g
+            data.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
 
             //中转信息
             TransferLogisticsChannelDTO.ListSelectDTO transferInfo = transferInfoList.stream().filter(v->v.getId().equals(data.getTransferLogisticsChannelId())).findFirst().orElse(null);
@@ -5080,7 +5083,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto, ShopInfoEntity shopInfo) {
         SoB2cDTO.PullOrderResultDTO resultDTO = new SoB2cDTO.PullOrderResultDTO();
         if (dto.getInvalidStatus()) {
-            dto.setRemark("平台作废");
+            dto.setRemark("平台取消");
         }
         // 平台来源币种为空取默认币种
         if (StringUtils.isBlank(dto.getCurrency())){
@@ -5127,6 +5130,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             resultDTO.setNewInsertOrder(true);
             return resultDTO;
         } else {
+            // 是否是状态变更为取消状态：是=从非取消变更为取消
+            resultDTO.setUpdateCancel(!oldEntity.getIsCancel() && null != dto.getIsCancel() && dto.getIsCancel());
             // 历史异常记录修复
             if (StringUtils.isBlank(oldEntity.getCode()) && !BusinessCommonConstants.hasProfile("prod")) {
                 String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
@@ -5206,7 +5211,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ){
                 // 查询是否是本平台发货
                 dto.setInvalidStatus(false);
-                dto.setInvalidRemark("平台作废");
+                dto.setInvalidRemark("平台取消");
             }
 
             // 只替换更新信息
