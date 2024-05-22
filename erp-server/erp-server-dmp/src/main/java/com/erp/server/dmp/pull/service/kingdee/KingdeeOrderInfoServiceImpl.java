@@ -124,6 +124,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
+            //过滤无效数据
+            if (!mongoDatum.getIsValid()) {
+                continue;
+            }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
