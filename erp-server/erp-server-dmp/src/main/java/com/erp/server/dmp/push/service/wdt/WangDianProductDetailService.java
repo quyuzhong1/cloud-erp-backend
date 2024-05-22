@@ -1,4 +1,4 @@
-package com.erp.server.dmp.push.service.wangdian;
+package com.erp.server.dmp.push.service.wdt;
 
 import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
 

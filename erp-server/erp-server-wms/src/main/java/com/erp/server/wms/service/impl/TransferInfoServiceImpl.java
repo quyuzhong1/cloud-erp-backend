@@ -512,10 +512,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (isSyncKingDee) {
                 //审核发送金蝶
                 sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
-                list.forEach(obj -> {
-                    //同时发送旺店通
-                    syncApproveInfoToWdt(obj);
-                });
+                //同时发送旺店通
+                list.forEach(this::syncApproveInfoToWdt);
             }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉

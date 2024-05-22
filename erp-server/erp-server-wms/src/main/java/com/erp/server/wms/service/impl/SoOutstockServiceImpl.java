@@ -215,6 +215,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
 
+
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 

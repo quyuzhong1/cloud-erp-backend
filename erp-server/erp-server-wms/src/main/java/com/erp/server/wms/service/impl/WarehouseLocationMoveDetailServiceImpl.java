@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -173,14 +174,14 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
             paramDTO.setOrgId(warehouseEntity.getOrgId());
             paramDTO.setWarehouseId(warehouseId);
-            paramDTO.setSkuIds(Arrays.asList(detailEntity.getSkuId()));
+            paramDTO.setSkuIds(Collections.singletonList(detailEntity.getSkuId()));
             if (pcShow) {
                 if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
                         || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
                     throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
                 }
             }
-            paramDTO.setWarehouseLocations(Arrays.asList(detailEntity.getOutWarehouseLocation()));
+            paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
             InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
                     && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
@@ -190,7 +191,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             }
             detailEntity.setMainId(mainId);
             if (pcShow) {
-                List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(detailEntity.getWarehouseId()));
+                List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(detailEntity.getWarehouseId()));
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
                 detailEntity.setWarehouseName(updateDTO.getName());
                 detailEntity.setInventoryOrgId(updateDTO.getOrgId());

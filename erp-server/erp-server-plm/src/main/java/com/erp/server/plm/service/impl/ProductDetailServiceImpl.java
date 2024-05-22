@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.wangdian.erp.sdk.api.Result;
 import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
+import cn.wangdian.erp.server.WangDianClientService;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
@@ -246,9 +247,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
-//    @Resource
-//    @Lazy
-//    private Client defaultClient;
+    @Resource
+    private WangDianClientService wangDianClientService;
 
 
     //变更财务人员审核
@@ -2343,7 +2343,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productCustomsService.updateBatchById(updateCustomsList);
         }
     }
-
     @Override
     public void initProductToWangDian(List<String> ids) {
         int count = productInfoService.count();
@@ -2393,9 +2392,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     dto.setSpecList(specList);
                     batchPushDTOS.add(dto);
                 }
-//                GoodsAPI api = ApiFactory.get(defaultClient, GoodsAPI.class);
-//                Result result = api.batchPush(batchPushDTOS);
-                Result result = new Result();
+                GoodsAPI api = wangDianClientService.get(GoodsAPI.class);
+                Result result = api.batchPush(batchPushDTOS);
                 String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
                         .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))
                         .collect(Collectors.joining(","));
@@ -2418,7 +2416,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             default: return 0;
         }
     }
-
     @Override
     @Transactional
     public Boolean approvalReject(ProductDetailOperateDTO dto) {

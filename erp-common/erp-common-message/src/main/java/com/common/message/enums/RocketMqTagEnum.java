@@ -553,6 +553,7 @@ public enum RocketMqTagEnum {
      * 同步产品资料到旺店通
      */
     WANGDIAN_PRODUCT_DETAIL_TAG(11001, RocketMqTagEnum.SYNC_WANGDIAN,"wangdian_product_detail_tag"),
+    WANGDIAN_SALE_ORDER_TAG(11002, RocketMqTagEnum.SALES_ORDER,"wangdian_sales_order_tag")
 
     ;
     public static final String SALES_ORDER = "sales";

@@ -16,21 +16,21 @@ import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 public interface ThirdWarehouseService extends SuperService<ThirdWarehouseEntity> {
 
     /**
-     * 新增
-     * @author hyj
-     * @date: 2024-05-17
-     * @param dto
-     * @return
-     */
+    * 新增
+    * @author hyj
+    * @date: 2024-05-17
+    * @param dto
+    * @return
+    */
     BaseResultDTO.AddDTO add(ThirdWarehouseDTO.AddDTO dto);
 
     /**
-     * 修改
-     * @author hyj
-     * @date: 2024-05-17
-     * @param dto
-     * @return
-     */
+    * 修改
+    * @author hyj
+    * @date: 2024-05-17
+    * @param dto
+    * @return
+    */
     Boolean update(ThirdWarehouseDTO.UpdateDTO dto);
 
 

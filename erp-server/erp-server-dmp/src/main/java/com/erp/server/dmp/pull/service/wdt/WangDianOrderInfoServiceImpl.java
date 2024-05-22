@@ -1,16 +1,17 @@
-package com.erp.server.dmp.pull.service.wangdian;
+package com.erp.server.dmp.pull.service.wdt;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import cn.wangdian.erp.sdk.Pager;
-import cn.wangdian.erp.sdk.api.sales.TradeAPI;
-import cn.wangdian.erp.sdk.api.sales.dto.TradeQueryRequest;
-import cn.wangdian.erp.sdk.api.sales.dto.TradeQueryResponse;
-import cn.wangdian.erp.sdk.impl.ApiFactory;
-import cn.wangdian.erp.sdk.impl.DefaultClient;
+import cn.wangdian.erp.sdk.WdtErpException;
+import cn.wangdian.erp.sdk.api.wms.stockout.StockoutAPI;
+import cn.wangdian.erp.sdk.api.wms.stockout.dto.SalesStockoutRequest;
+import cn.wangdian.erp.sdk.api.wms.stockout.dto.SalesStockoutResponse;
+import cn.wangdian.erp.server.WangDianClientService;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.RequestDTO;
@@ -31,7 +32,7 @@ import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
-import com.erp.model.dmp.wangdian.OrderEntity;
+import com.erp.model.dmp.wdt.WangDianOrderEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import lombok.extern.slf4j.Slf4j;
@@ -55,10 +56,10 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 @SaveData(method = PlatformApiEnum.WANGDIAN_TRADE)
-public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEntity> {
+public class WangDianOrderInfoServiceImpl  implements IReportSaveService<WangDianOrderEntity> {
 
-//    @Resource
-//    private Client defaultClient;
+    @Resource
+    private WangDianClientService wangDianClientService;
 
     @Resource
     private MongoService mongoService;
@@ -67,28 +68,29 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
 
     @Resource
     private MQProducerService mqProducerService;
+
     @Override
     public void pullDataSave(RequestDTO dto) {
-        List<OrderEntity> entityList = pullData(dto);
+        List<WangDianOrderEntity> entityList = pullData(dto);
         if (CollectionUtils.isEmpty(entityList)) {
             log.info("拉取旺店通销售订单列表数据为空 entityList.size = 0 ");
             return;
         }
         log.info("拉取旺店通销售订单列表数据 entityList.size = {} ", entityList.size());
-        List<OrderEntity> insertList = new ArrayList<>();
-        List<OrderEntity> pushToMqList = new ArrayList<>();
-        for (OrderEntity entity : entityList) {
+        List<WangDianOrderEntity> insertList = new ArrayList<>();
+        List<WangDianOrderEntity> pushToMqList = new ArrayList<>();
+        for (WangDianOrderEntity entity : entityList) {
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByPlatformOrderId(entity.getStockoutId());
-            List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.WANGDIAN_TRADE, OrderEntity.class);
+            List<WangDianOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setCleanToDelivery(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
-            if(CollectionUtils.isEmpty(mongoData)){
+            if (CollectionUtils.isEmpty(mongoData)) {
                 insertList.add(entity);
                 pushToMqList.add(entity);
                 continue;
             }
-            OrderEntity mongoDatum = mongoData.get(0);
+            WangDianOrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
@@ -96,12 +98,12 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
             pushToMqList.add(entity);
             MapUtil mapUtil = JSON.parseObject(JSON.toJSONString(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
-            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.WANGDIAN_TRADE, OrderEntity.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
         }
-        if(!CollectionUtils.isEmpty(insertList)){
-            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.WANGDIAN_TRADE);
+        if (!CollectionUtils.isEmpty(insertList)) {
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER);
         }
-        if (CollectionUtils.isEmpty(pushToMqList)){
+        if (CollectionUtils.isEmpty(pushToMqList)) {
             log.warn("旺店通销售订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
@@ -112,61 +114,61 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
         // 异步推送到MQ
-        entityToMqlist.forEach(msg ->{
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
-                    msg,  msg.getPlatformOrderId());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+        entityToMqlist.forEach(msg -> {
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.WANGDIAN_SALE_ORDER_TAG.getName(),
+                    msg, msg.getPlatformOrderId());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new ServiceException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         });
     }
 
-    private DmpDeliveryDetailInfoEntity initOrderInfoEntity(OrderEntity orderEntity) {
+    private DmpDeliveryDetailInfoEntity initOrderInfoEntity(WangDianOrderEntity wangDianOrderEntity) {
         DmpDeliveryDetailInfoEntity entity = new DmpDeliveryDetailInfoEntity();
         //出库单ID
-        entity.setId(orderEntity.getStockoutId());
+        entity.setId(wangDianOrderEntity.getStockoutId());
         //出库单号
-        entity.setBillNo(orderEntity.getOrderNo());
+        entity.setBillNo(wangDianOrderEntity.getOrderNo());
         //旺店通订单编号
-        entity.setOrderNo(orderEntity.getSrcOrderNo());
+        entity.setOrderNo(wangDianOrderEntity.getSrcOrderNo());
         //订单编号
-        entity.setPlatformOrderId(orderEntity.getTradeNo());
+        entity.setPlatformOrderId(wangDianOrderEntity.getTradeNo());
         //物流单号
-        entity.setLogisticsNo(orderEntity.getLogisticsNo());
+        entity.setLogisticsNo(wangDianOrderEntity.getLogisticsNo());
         //客户名称
-        entity.setCustomerName(orderEntity.getCustomerName());
+        entity.setCustomerName(wangDianOrderEntity.getCustomerName());
         //平台名称
-        entity.setPlatformName(orderEntity.getPlatformId());
+        entity.setPlatformName(wangDianOrderEntity.getPlatformId());
         //店铺编号
-        entity.setShopNo(orderEntity.getShopId());
+        entity.setShopNo(wangDianOrderEntity.getShopId());
         //店铺名称
-        entity.setShopName(orderEntity.getShopName());
+        entity.setShopName(wangDianOrderEntity.getShopName());
         //出库成本价
-        entity.setItemTotalCost(orderEntity.getGoodsTotalCost());
+        entity.setItemTotalCost(wangDianOrderEntity.getGoodsTotalCost());
         //出库总价
-        entity.setOrderTotalCost(orderEntity.getGoodsTotalAmount());
+        entity.setOrderTotalCost(wangDianOrderEntity.getGoodsTotalAmount());
         //国家英文名称
         entity.setCountryNameEn("");
         //国家中文名称
-        entity.setCountryNameCn(orderEntity.getReceiverCountry());
+        entity.setCountryNameCn(wangDianOrderEntity.getReceiverCountry());
         //买家城市
-        entity.setCity(orderEntity.getReceiverCity());
+        entity.setCity(wangDianOrderEntity.getReceiverCity());
         //买家省份
-        entity.setProvince(orderEntity.getReceiverProvince());
+        entity.setProvince(wangDianOrderEntity.getReceiverProvince());
         //买家地址1
-        entity.setManStreet(orderEntity.getReceiverAddress());
+        entity.setManStreet(wangDianOrderEntity.getReceiverAddress());
         //买家地址2
         entity.setSecondStreet("");
         //所属区域
-        entity.setDistrict(orderEntity.getReceiverDistrict());
+        entity.setDistrict(wangDianOrderEntity.getReceiverDistrict());
         //币种
-        entity.setCurrencyCode(orderEntity.getCurrency());
+        entity.setCurrencyCode(wangDianOrderEntity.getCurrency());
         //汇率
         entity.setCurrencyRate(new BigDecimal(1));
         //运费
-        entity.setShippingFee(orderEntity.getPostAmount());
+        entity.setShippingFee(wangDianOrderEntity.getPostAmount());
         //补贴金额
-        entity.setSubsidyAmount(orderEntity.getDiscount());
+        entity.setSubsidyAmount(wangDianOrderEntity.getDiscount());
         //销售部门
         entity.setSaleDeptName("");
         //销售员编号
@@ -176,40 +178,40 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
         //状态 1.已发货 2.已作废
         entity.setStatus(1);
         //平台单据创建时间
-        if (!StringUtils.isEmpty(orderEntity)) {
-            entity.setPlatformCreateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreatedDate()));
+        if (!StringUtils.isEmpty(wangDianOrderEntity)) {
+            entity.setPlatformCreateTime(LocalDateUtil.strToLocalDateTime(wangDianOrderEntity.getCreatedDate()));
         }
         //平台单据修改时间
-        if (!StringUtils.isEmpty(orderEntity.getModified())) {
-            entity.setPlatformUpdateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getModified()));
+        if (!StringUtils.isEmpty(wangDianOrderEntity.getModified())) {
+            entity.setPlatformUpdateTime(LocalDateUtil.strToLocalDateTime(wangDianOrderEntity.getModified()));
         }
         //发货时间
-        if (!StringUtils.isEmpty(orderEntity.getConsignTime())) {
-            entity.setDeliveryDate(LocalDateUtil.strToLocalDateTime(orderEntity.getConsignTime()));
+        if (!StringUtils.isEmpty(wangDianOrderEntity.getConsignTime())) {
+            entity.setDeliveryDate(LocalDateUtil.strToLocalDateTime(wangDianOrderEntity.getConsignTime()));
         }
         //备注
-        entity.setRemark(orderEntity.getRemark());
+        entity.setRemark(wangDianOrderEntity.getRemark());
         //平台标识
         entity.setPlatformSign(PlatformEnum.WANGDIAN.getDesc());
         //企业Id
         entity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
         //企业名称
         entity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
-        entity.setPlatformApproveTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreatedDate()));
+        entity.setPlatformApproveTime(LocalDateUtil.strToLocalDateTime(wangDianOrderEntity.getCreatedDate()));
         //创建时间
         entity.setCreateTime(LocalDateTime.now());
-        entity.setDetails(initOrderItem(orderEntity));
+        entity.setDetails(initOrderItem(wangDianOrderEntity));
         return entity;
     }
 
-    private List<DmpDeliveryDetailItemEntity> initOrderItem(OrderEntity orderEntity) {
-        List<OrderEntity.DetailItem> detailsList = orderEntity.getDetailsList();
-        if(CollectionUtils.isEmpty(detailsList)){
+    private List<DmpDeliveryDetailItemEntity> initOrderItem(WangDianOrderEntity wangDianOrderEntity) {
+        List<WangDianOrderEntity.DetailItem> detailsList = wangDianOrderEntity.getDetailsList();
+        if (CollectionUtils.isEmpty(detailsList)) {
             log.warn("WangDianOrderInfoServiceImpl>>>initOrderItem>>>orderEntity 详情列表为空 {}", JSONUtil.toJsonStr(detailsList));
             return null;
         }
         List<DmpDeliveryDetailItemEntity> items = new ArrayList<>();
-        for (OrderEntity.DetailItem itemEntity : detailsList) {
+        for (WangDianOrderEntity.DetailItem itemEntity : detailsList) {
             DmpDeliveryDetailItemEntity delivery = new DmpDeliveryDetailItemEntity();
             //商品id
             delivery.setItemId(itemEntity.getSaleOrderId());
@@ -240,25 +242,25 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
             //出库商品备注
             delivery.setItemRemark(itemEntity.getRemark());
             //仓库
-            delivery.setStockName(orderEntity.getWarehouseName());
+            delivery.setStockName(wangDianOrderEntity.getWarehouseName());
             //库位
             String warehouseLocation = Optional.ofNullable(itemEntity.getPositionDetailsList()).orElse(Collections.emptyList())
-                    .stream().map(OrderEntity.PositionDetailsList::getPositionNo)
+                    .stream().map(WangDianOrderEntity.PositionDetailsList::getPositionNo)
                     .collect(Collectors.joining(","));
             delivery.setWarehouseLocation(warehouseLocation);
-            delivery.setPlatformOrderId(orderEntity.getTradeNo());
-            delivery.setSaleOrderNo(orderEntity.getSrcOrderNo());
+            delivery.setPlatformOrderId(wangDianOrderEntity.getTradeNo());
+            delivery.setSaleOrderNo(wangDianOrderEntity.getSrcOrderNo());
             items.add(delivery);
         }
         return items;
     }
 
-    private List<OrderEntity> pullData(RequestDTO dto) {
-        List<TradeQueryResponse.OrderItem> result = new ArrayList<>();
-//        TradeAPI tradeAPI = ApiFactory.get(defaultClient, TradeAPI.class);
-        TradeQueryRequest request = new TradeQueryRequest();
-        request.setStatus(TradeQueryRequest.STATUS_COMPLETE);
-        request.setStatusType(3);
+    private List<WangDianOrderEntity> pullData(RequestDTO dto) {
+        List<SalesStockoutResponse.OrderInfoDto> result = new ArrayList<>();
+        StockoutAPI stockoutAPI = wangDianClientService.get(StockoutAPI.class);
+        SalesStockoutRequest request = new SalesStockoutRequest();
+        request.setStatusType(SalesStockoutRequest.STATUS_TYPE_CONSIGNED);
+        request.setStatus("110");
         request.setStartTime(dto.getJobTaskDTO().getLastTime().minusMinutes(15).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         request.setEndTime(dto.getJobTaskDTO().getNextTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         Pager pager = new Pager();
@@ -267,36 +269,37 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
         pager.setPageNo(0);
         boolean hasNext = true;
         while (hasNext) {
-//            TradeQueryResponse response = tradeAPI.query(request, pager);
-            TradeQueryResponse response = new TradeQueryResponse();
-            if (ObjectUtil.isEmpty(response) || ObjectUtil.isEmpty(response.getOrders())){
-                return BeanMapperUtils.copyList(OrderEntity.class, result);
+            SalesStockoutResponse response = null;
+            try {
+                response = stockoutAPI.querySales(request, pager);
+            } catch (WdtErpException e) {
+                log.error("拉取旺店通销售出库单失败，原因【{}】", e.getMessage(), e);
+                return BeanMapperUtils.copyList(WangDianOrderEntity.class, result);
             }
-            result.addAll(response.getOrders());
-            Integer totalCount = response.getTotalCount();
+            if (ObjectUtil.isEmpty(response) || ObjectUtil.isEmpty(response.getOrderList())) {
+                return BeanMapperUtils.copyList(WangDianOrderEntity.class, result);
+            }
+            result.addAll(response.getOrderList());
+            Integer totalCount = response.getTotal();
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
             pager.setPageNo(pager.getPageNo() + 1);
         }
-        return BeanMapperUtils.copyList(OrderEntity.class, result);
+        return JSON.parseObject(JSON.toJSONString(result), new TypeReference<List<WangDianOrderEntity>>() {
+        });
     }
 
     public static void main(String[] args) {
-        TradeAPI tradeAPI = ApiFactory.get(DefaultClient.get("wdtapi3","http://47.92.239.46/","wjkj03-test","b6412a9b6:806828718719806966febbfe948893e8"), TradeAPI.class);
-        TradeQueryRequest request = new TradeQueryRequest();
-        request.setStatus(TradeQueryRequest.STATUS_COMPLETE);
-        request.setStatusType(3);
-        request.setStartTime("2024-04-29 11:00:00");
-        request.setEndTime("2024-04-29 12:00:00");
-        Pager pager = new Pager();
-        int pageSize = 200;
-        pager.setPageSize(pageSize);
-        pager.setPageNo(0);
-        Object query = tradeAPI.query(request, pager);
-        System.out.println(query);
-
+//        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+//        jobTaskDTO.setLastTime(LocalDateTime.of(2024, 5, 21, 9, 15, 0));
+//        jobTaskDTO.setNextTime(LocalDateTime.of(2024, 5, 21, 10, 0, 0));
+//        RequestDTO dto = new RequestDTO();
+//        dto.setJobTaskDTO(jobTaskDTO);
+//        List<OrderEntity> entityList = pullData(dto);
+//        System.out.println(entityList);
     }
+
 
     @Override
     public void cleanDataSave(String tableName, int size) {
@@ -304,12 +307,12 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
         OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
-        List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.WANGDIAN_TRADE, OrderEntity.class);
+        List<WangDianOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
         if (CollectionUtils.isEmpty(mongoData)) {
             log.warn("旺店通需要清洗销售单为空 tableName ={} size = {}",tableName,size);
             return;
         }
-        for (OrderEntity mongoDatum : mongoData) {
+        for (WangDianOrderEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
             mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             updateAndSaveDb(mongoDatum);
@@ -318,17 +321,17 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<OrderEn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateAndSaveDb(OrderEntity mongoDatum) {
+    public void updateAndSaveDb(WangDianOrderEntity mongoDatum) {
         DmpDeliveryDetailInfoEntity orderInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
         if(ObjectUtil.isEmpty(orderInfo)){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
             MapUtil mapUtil = JSON.parseObject(JSON.toJSONString(mongoDatum), MapUtil.class);
-            mongoService.updateMongoData(updateDto, mapUtil,  MongoTableNameContant.WANGDIAN_TRADE, OrderEntity.class);
+            mongoService.updateMongoData(updateDto, mapUtil,  MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
             return;
         }
         MapUtil mapUtil = JSON.parseObject(JSON.toJSONString(mongoDatum), MapUtil.class);
-        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.WANGDIAN_TRADE, OrderEntity.class);
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
                 orderInfo, CharSequenceUtil.format("{}_{}", orderInfo.getPlatformOrderId(), orderInfo.getBillNo()));
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())){

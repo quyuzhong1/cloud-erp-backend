@@ -1,4 +1,4 @@
-package com.erp.model.dmp.wangdian;
+package com.erp.model.dmp.wdt;
 
 import com.common.business.dto.CleanBaseDTO;
 import com.google.gson.annotations.SerializedName;
@@ -11,7 +11,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class OrderEntity extends CleanBaseDTO {
+public class WangDianOrderEntity extends CleanBaseDTO {
 
     private String _id;
 
@@ -112,11 +112,11 @@ public class OrderEntity extends CleanBaseDTO {
      * 128更换货品
      * 256取消退款
      */
-    private Integer blockReason;
+    private String blockReason;
     /**
      * 物流方式
      */
-    private Integer logisticsType;
+    private String logisticsType;
     /**
      * 物流编号
      */
@@ -149,7 +149,7 @@ public class OrderEntity extends CleanBaseDTO {
      * 32平台更换货品
      * 64退款
      */
-    private Integer badReason;
+    private String badReason;
     /**
      * 大头笔
      */
@@ -161,7 +161,7 @@ public class OrderEntity extends CleanBaseDTO {
      * 2部分退款
      * 3全部退款
      */
-    private Integer refundStatus;
+    private String refundStatus;
 
     /**
      * 销售类型
@@ -182,35 +182,35 @@ public class OrderEntity extends CleanBaseDTO {
      * 109 订单自定义属性9
      * 110 订单自定义属性10
      */
-    private Integer tradeType;
+    private String tradeType;
     /**
      * 业务员编号
      */
-    private Integer salesmanNo;
+    private String salesmanNo;
     /**
      * 业务员姓名
      */
-    private Integer fullname;
+    private String fullname;
     /**
      * 拣货员
      */
-    private Integer pickerName;
+    private String pickerName;
     /**
      * 验货员
      */
-    private Integer examinerName;
+    private String examinerName;
     /**
      * 验货员
      */
-    private Integer consignerName;
+    private String consignerName;
     /**
      * 发货员
      */
-    private Integer printerName;
+    private String printerName;
     /**
      * 打包员
      */
-    private Integer packagerName;
+    private String packagerName;
     /**
      * 订单状态
      * 4 线下退款
@@ -236,7 +236,7 @@ public class OrderEntity extends CleanBaseDTO {
      * 101 已过账
      * 110已完成
      */
-    private Integer tradeStatus;
+    private String tradeStatus;
     /**
      * 订单编号
      */
@@ -277,11 +277,11 @@ public class OrderEntity extends CleanBaseDTO {
     /**
      * 证件类别
      */
-    private Integer idCardType;
+    private String idCardType;
     /**
      * 证件号码
      */
-    private Integer idCard;
+    private String idCard;
     /**
      * 店铺名称
      */
@@ -323,13 +323,13 @@ public class OrderEntity extends CleanBaseDTO {
      * 4：纸质普通发票
      * 5：纸质增值税专用发票
      */
-    private Integer invoiceType;
+    private String invoiceType;
     /**
      * 发票id:
      * 目前只设0-1，
      * 1表示已开发票
      */
-    private Integer invoiceId;
+    private String invoiceId;
     /**
      * 货到付款金额
      */
@@ -341,7 +341,7 @@ public class OrderEntity extends CleanBaseDTO {
      * 3分期付款
      * 4挂账
      */
-    private Integer deliveryTerm;
+    private String deliveryTerm;
     /**
      * 平台ID
      */
@@ -441,7 +441,7 @@ public class OrderEntity extends CleanBaseDTO {
      * 7、PDA选货开单
      * 8、分销补发订单
      */
-    private Integer tradeFrom;
+    private String tradeFrom;
     /**
      * 分拣波次
      */
@@ -449,7 +449,7 @@ public class OrderEntity extends CleanBaseDTO {
     /**
      * 分拣序号
      */
-    private Integer picklistSeq;
+    private String picklistSeq;
     /**
      * 物流单打印状态
      * 0：未打印
@@ -457,7 +457,7 @@ public class OrderEntity extends CleanBaseDTO {
      * 2：已打印
      * 3：无需打印
      */
-    private Integer logisticsPrintStatus;
+    private String logisticsPrintStatus;
     /**
      * 已付
      */
@@ -465,11 +465,11 @@ public class OrderEntity extends CleanBaseDTO {
     /**
      * 店铺平台id
      */
-    private Integer shopPlatformId;
+    private String shopPlatformId;
     /**
      * 子平台id
      */
-    private Integer subPlatformId;
+    private String subPlatformId;
     /**
      * 接口处理错误信息
      */
@@ -478,15 +478,15 @@ public class OrderEntity extends CleanBaseDTO {
     /**
      * 其他出库自定义子类别0,1,2,3,4
      */
-    private Integer customType;
+    private String customType;
     /**
      * 发货单模板id
      */
-    private Integer sendbillTemplateId;
+    private String sendbillTemplateId;
     /**
      * 客户id
      */
-    private Integer customerId;
+    private String customerId;
     /**
      * 仓库类别
      * 0：不限
@@ -498,11 +498,11 @@ public class OrderEntity extends CleanBaseDTO {
      * 125：代发仓
      * 126：分销委外仓
      */
-    private Integer warehouseType;
+    private String warehouseType;
     /**
      * 制单人id（操作员）
      */
-    private Integer operatorId;
+    private String operatorId;
     /**
      * 外部单号
      */
@@ -518,7 +518,7 @@ public class OrderEntity extends CleanBaseDTO {
      * 128：配送清单打印状态
      * 4096：订单回告（订单生成出库单中间量，暂时只有订单合并回告使用）
      */
-    private Integer consignStatus;
+    private String consignStatus;
     /**
      * 货品种类
      */
@@ -735,7 +735,7 @@ public class OrderEntity extends CleanBaseDTO {
         /**
          * 平台id
          */
-        private Integer platformId;
+        private String platformId;
         /**
          * 退款状态
          * 0无退款
@@ -743,7 +743,7 @@ public class OrderEntity extends CleanBaseDTO {
          * 2部分退款
          * 3全部退款
          */
-        private Integer refundStatus;
+        private String refundStatus;
         /**
          * 单价/货品原单价
          */
@@ -798,7 +798,7 @@ public class OrderEntity extends CleanBaseDTO {
          * 1手机
          * 2聚划算
          */
-        private Integer fromMask;
+        private String fromMask;
         /**
          * 货品类型:
          * 0：其它
@@ -810,7 +810,7 @@ public class OrderEntity extends CleanBaseDTO {
          * 6：固定资产
          * 8：分装箱
          */
-        private Integer goodsType;
+        private String goodsType;
         /**
          * 货品自定义属性1
          */
@@ -865,15 +865,15 @@ public class OrderEntity extends CleanBaseDTO {
          * 源单据类别
          * 1：销售订单
          */
-        private Integer srcOrderType;
+        private String srcOrderType;
         /**
          * 基本单位
          */
-        private Integer baseUnitId;
+        private String baseUnitId;
         /**
          * 辅助单位
          */
-        private Integer unitId;
+        private String unitId;
         /**
          * 单位换算
          */
@@ -912,7 +912,7 @@ public class OrderEntity extends CleanBaseDTO {
          * 3：快速验货
          * 4：无需验货
          */
-        private Integer scanType;
+        private String scanType;
         /**
          * 最后修改时间，时间格式：yyyy-MM-dd HH:mm:ss
          */

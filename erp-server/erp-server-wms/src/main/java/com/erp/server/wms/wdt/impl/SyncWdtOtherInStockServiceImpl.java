@@ -1,7 +1,10 @@
 package com.erp.server.wms.wdt.impl;
 
+import cn.wangdian.erp.sdk.WdtErpException;
+import cn.wangdian.erp.sdk.api.wms.stockin.StockinAPI;
 import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinResponse;
+import cn.wangdian.erp.server.WangDianClientService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -28,8 +31,8 @@ import java.util.List;
 @Service
 public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockService {
 
-//    @Resource
-//    private Client wdtClient;
+    @Resource
+    private WangDianClientService wangDianClientService;
 
     @Resource
     private OtherInstockDetailMapper otherInstockDetailMapper;
@@ -63,10 +66,14 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
 
-//        StockinAPI stockinAPI = ApiFactory.get(wdtClient, StockinAPI.class);
+        StockinAPI stockinAPI = wangDianClientService.get(StockinAPI.class);
         CreateOtherStockinResponse response = null;
-        //            response = stockinAPI.createOtherOrder(request);
-        response = new CreateOtherStockinResponse();
+        try {
+            response = stockinAPI.createOtherOrder(request);
+        } catch (WdtErpException e) {
+            e.printStackTrace();
+            throw new ServiceException(ApiError.ERROR_3000.code, e.getMessage());
+        }
 
         if(response.getStatus() != 0){
             log.error(response.toString());
