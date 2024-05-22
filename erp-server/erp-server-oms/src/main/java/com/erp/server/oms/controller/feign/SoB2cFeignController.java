@@ -59,6 +59,9 @@ public class SoB2cFeignController extends BaseController {
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private SoB2cSplitService soB2cSplitService;
+
 
     /**
      * 根据b2c订单id获取物流信息
@@ -114,6 +117,10 @@ public class SoB2cFeignController extends BaseController {
         return list;
     }
 
+    @GetMapping("/listRefBomSplit")
+    public List<SoB2cEntity> listRefBomSplit(@RequestParam("detailId") String detailId){
+        return soB2cSplitService.listRefBomSplit(detailId);
+    }
     /**
      * 根据主表id查询B2C订单主表信息
      *

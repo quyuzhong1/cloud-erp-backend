@@ -169,4 +169,6 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
     List<SoB2cDetailEntity> listContainDeleted(List<String> ids);
 
     void updateContainDeleted(List<String> revertDetailIds);
+
+    List<SoB2cDetailEntity> listBySplitId(String detailId);
 }

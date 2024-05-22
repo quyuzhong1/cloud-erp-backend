@@ -27,7 +27,7 @@ import java.util.List;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.WALMART)
-public class WalmartShipOrder implements IPlatformService {
+public class WalmartShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;

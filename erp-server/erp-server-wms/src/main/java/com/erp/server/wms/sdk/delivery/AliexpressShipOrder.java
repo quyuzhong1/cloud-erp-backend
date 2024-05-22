@@ -30,7 +30,7 @@ import java.util.List;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.ALI_EXPRESS)
-public class AliexpressShipOrder implements IPlatformService {
+public class AliexpressShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;

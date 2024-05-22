@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.AMAZON)
-public class AmazonShipOrder implements IPlatformService {
+public class AmazonShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -123,6 +123,7 @@ public class AmazonShipOrder implements IPlatformService {
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
+            // 校验捆绑商品拆分
             // 来源明细ID为空代表是手工添加的明细忽略
             detailEntityList =  detailEntityList.stream()
                     .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
@@ -130,6 +131,7 @@ public class AmazonShipOrder implements IPlatformService {
 //            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
 //                throw new ServiceException("平台来源详情ID为空");
 //            }
+            detailEntityList = super.handleBomSplit(detailEntityList);
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
                 return;

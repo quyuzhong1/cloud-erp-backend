@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.SHOPIFY)
-public class ShopifyShipOrder implements IPlatformService {
+public class ShopifyShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -125,6 +125,7 @@ public class ShopifyShipOrder implements IPlatformService {
             if (soB2cDetailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
                 throw new ServiceException("平台来源详情ID为空");
             }
+            soB2cDetailEntityList = super.handleBomSplit(soB2cDetailEntityList);
             Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
 
             String shopId = mainEntity.getShopId();

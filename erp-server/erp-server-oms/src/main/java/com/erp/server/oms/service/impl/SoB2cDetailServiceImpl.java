@@ -414,6 +414,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         baseMapper.updateContainDeleted(revertDetailIds);
     }
 
+    @Override
+    public List<SoB2cDetailEntity> listBySplitId(String detailId) {
+        return lambdaQuery().eq(SoB2cDetailEntity::getSplitDetailId, detailId).list();
+    }
+
     /**
      * 消费明细处理
      */

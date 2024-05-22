@@ -549,4 +549,7 @@ public interface SoB2cFeign {
      */
     @GetMapping("/feign/soB2c/getSoCode")
     SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode);
+
+    @GetMapping("/feign/soB2c/listRefBomSplit")
+    List<SoB2cEntity> listRefBomSplit(@RequestParam("detailId") String detailId);
 }

@@ -215,6 +215,16 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         return batchResultDTOList;
     }
 
+    @Override
+    public List<SoB2cEntity> listRefBomSplit(String detailId) {
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listBySplitId(detailId);
+        List<String> mainIds = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getMainId).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(mainIds)){
+            return new ArrayList<>();
+        }
+        return listByIds(mainIds);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void batchHandleTransaction(List<String> removeDetailIds, List<SoB2cDetailEntity> addDetailList, List<String> revertDetailIds){
         if(CollectionUtils.isNotEmpty(removeDetailIds)){
