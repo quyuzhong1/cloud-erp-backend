@@ -68,9 +68,6 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
     @Resource
     private DmpSkuCostService dmpSkuCostService;
 
-    @Resource
-    private DmpOrderItemService dmpOrderItemService;
-
     /**
      * 添加订单商品详细信息
      *
