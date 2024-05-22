@@ -18,7 +18,7 @@ public class ItemTaxBean {
     @JsonProperty("tax_amount")
     private BigDecimal taxAmount;
     @JsonProperty("tax_rate")
-    private String taxRate;
+    private BigDecimal taxRate;
     @JsonProperty("tax_type")
     private String taxType;
 }

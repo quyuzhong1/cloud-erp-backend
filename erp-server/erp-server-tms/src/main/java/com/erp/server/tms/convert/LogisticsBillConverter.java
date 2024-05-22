@@ -101,6 +101,7 @@ public interface LogisticsBillConverter {
             @Mapping(target = "zipCode", source = "zipCode"),
     })
     ReceiverInfoVO LogisticsAddressEntityToReceiverInfoVO(LogisticsAddressEntity logisticsAddressEntity);
+
     @Mappings({
             @Mapping(target = "id", source = "addressId"),
             @Mapping(target = "name", source = "contact"),

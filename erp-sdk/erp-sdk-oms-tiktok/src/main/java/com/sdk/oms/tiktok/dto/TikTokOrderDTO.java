@@ -228,7 +228,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         detailDTO.setPlatformSkuNo(itemsBean.getSellerSku());
 
         //平台产品id
-        detailDTO.setPlatformSpuNo(itemsBean.getSkuId());
+        detailDTO.setPlatformSpuNo(itemsBean.getProductId());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
@@ -363,22 +363,28 @@ public class TikTokOrderDTO extends CleanBaseDTO {
      * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
      **/
     private static PlatformOrderFinanceDTO parseFinances(OrdersBean ordersBean) {
-        BigDecimal tax = BigDecimal.ZERO;
+        BigDecimal taxAmount = BigDecimal.ZERO;
+        BigDecimal taxRate = BigDecimal.ZERO;
         for (LineItemsBean lineItem : ordersBean.getLineItems()) {
             if (CollectionUtil.isEmpty(lineItem.getItemTax())) {
                 continue;
             }
-            BigDecimal bigDecimal = lineItem.getItemTax().stream()
+            BigDecimal amount = lineItem.getItemTax().stream()
                     .filter(req -> StringUtils.isNotBlank(req.getTaxType()) && "SALES_TAX".equalsIgnoreCase(req.getTaxType()))
                     .map(req -> req.getTaxAmount())
                     .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            BigDecimal rate = lineItem.getItemTax().stream()
+                    .map(req -> req.getTaxRate())
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
-            tax = tax.add(bigDecimal);
+            taxAmount = taxAmount.add(amount);
+            taxRate = taxRate.add(rate);
         }
         return PlatformOrderFinanceDTO.builder()
                 .currency(ordersBean.getPayment().getCurrency())
                 .shippingCost(NumberUtil.toBigDecimal(ordersBean.getPayment().getShippingFee()))
-                .platformRate(tax)
+                .platformRate(taxRate)
+                .platformCost(taxAmount)
                 .build();
     }
 }
