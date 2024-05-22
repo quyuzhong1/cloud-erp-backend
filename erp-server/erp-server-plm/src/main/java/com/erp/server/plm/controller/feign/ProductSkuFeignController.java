@@ -160,6 +160,20 @@ public class ProductSkuFeignController {
     }
 
     /**
+     * 根据skuid 集合获取到sku 信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuPurchaseBySkuIds")
+    public List<SkuVO> listSkuPurchaseBySkuIds(@RequestBody List<String> skuIds) {
+        List<SkuVO> skuList = productDetailService.listSkuPurchaseBySkuIds(skuIds);
+        return skuList;
+    }
+
+    /**
      * 根据sku no 获取sku 信息
      *
      * @param skuNoList
