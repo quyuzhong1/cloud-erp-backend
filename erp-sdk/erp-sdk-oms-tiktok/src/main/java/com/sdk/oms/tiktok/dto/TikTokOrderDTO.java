@@ -366,19 +366,18 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         BigDecimal taxAmount = BigDecimal.ZERO;
         BigDecimal taxRate = BigDecimal.ZERO;
         for (LineItemsBean lineItem : ordersBean.getLineItems()) {
-            if (CollectionUtil.isEmpty(lineItem.getItemTax())) {
-                continue;
-            }
-            BigDecimal amount = lineItem.getItemTax().stream()
-                    .filter(req -> StringUtils.isNotBlank(req.getTaxType()) && "SALES_TAX".equalsIgnoreCase(req.getTaxType()))
-                    .map(req -> req.getTaxAmount())
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            BigDecimal rate = lineItem.getItemTax().stream()
-                    .map(req -> req.getTaxRate())
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            if (CollectionUtil.isNotEmpty(lineItem.getItemTax())) {
+                BigDecimal amount = lineItem.getItemTax().stream()
+                        .filter(req -> StringUtils.isNotBlank(req.getTaxType()) && "SALES_TAX".equalsIgnoreCase(req.getTaxType()))
+                        .map(req -> req.getTaxAmount())
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal rate = lineItem.getItemTax().stream()
+                        .map(req -> req.getTaxRate())
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
-            taxAmount = taxAmount.add(amount);
-            taxRate = taxRate.add(rate);
+                taxAmount = taxAmount.add(amount);
+                taxRate = taxRate.add(rate);
+            }
         }
         return PlatformOrderFinanceDTO.builder()
                 .currency(ordersBean.getPayment().getCurrency())
