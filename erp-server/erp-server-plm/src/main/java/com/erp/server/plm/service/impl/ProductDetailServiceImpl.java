@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.wangdian.erp.sdk.api.Result;
+import cn.wangdian.erp.sdk.api.goods.GoodsAPI;
 import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
 import cn.wangdian.erp.server.WangDianClientService;
 import com.alibaba.excel.EasyExcel;
