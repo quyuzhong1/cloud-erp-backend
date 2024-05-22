@@ -209,13 +209,17 @@ public class SpElServerImpl implements SpElServer {
                     switch (contentsEnum) {
                         case CONTAINS:
                             String addField = getAddField(field, addFieldList);
-                            content = getContent(addField,compare,conversionValue,isStr);
-                            content = convertToContainsExpression(content);
+                            content = getContentList(field,addField,compare,conversionValue,spElDTO, new HashMap<>());
+//                            String addField = getAddField(field, addFieldList);
+//                            content = getContent(addField,compare,conversionValue,isStr);
+//                            content = convertToContainsExpression(content);
                             break;
                         case NOT_CONTAINS:
                             String addField1 = getAddField(field, addFieldList);
-                            content = getContent(addField1,compare,conversionValue,isStr);
-                            content = convertToNotContainsExpression(content);
+                            content = getContentList(field,addField1,compare,conversionValue,spElDTO, new HashMap<>());
+//                            String addField1 = getAddField(field, addFieldList);
+//                            content = getContent(addField1,compare,conversionValue,isStr);
+//                            content = convertToNotContainsExpression(content);
                             break;
                         case IS_NULL:
                             content = convertToIsNullMapExpression(field);
@@ -259,17 +263,60 @@ public class SpElServerImpl implements SpElServer {
     private String getContentList(String field, String addField, String compare, Object targetValue, SpElExpressionDTO spElDTO, Map<String, Object> detailMap) {
         String[] split = targetValue.toString().split(",");
         StringBuilder sb=new StringBuilder();
-        if (RuleCompareEnum.CONTAINS.getCode().equals(compare)){
-            sb.append("#").append(addField);
-            sb.append(".").append(compare);
-        }else if (RuleCompareEnum.NOT_CONTAINS.getCode().equals(compare)){
-            sb.append("!#").append(addField);
-            sb.append(".").append(RuleCompareEnum.CONTAINS.getCode());
+        //要对比的值  变量.contains
+        Object o = detailMap.get(field);
+        String fieldStr;
+        if (Objects.nonNull(o)){
+            fieldStr = o.toString();
+        }else {
+            fieldStr = "";
         }
-        sb.append("(#").append(field).append(")");
+        String[] split1 = fieldStr.split(",");
+        if (RuleCompareEnum.CONTAINS.getCode().equals(compare)){
+            //包含存在多个用or 并用()包括
+            if (split1.length > 1){
+                sb.append("(");
+                for (int i = 0; i < split1.length; i++) {
+                    sb.append("#").append(addField);
+                    sb.append(".").append(compare);
+                    sb.append("('").append(split1[i]).append("')");
+                    if (i + 1 < split1.length){
+                        sb.append(" or ");
+                    }
+                }
+                sb.append(")");
+            }else {
+                sb.append("#").append(addField);
+                sb.append(".").append(compare);
+                sb.append("('").append(fieldStr).append("')");
+            }
+
+        }else if (RuleCompareEnum.NOT_CONTAINS.getCode().equals(compare)){
+            //不包含存在多个用and 并用()包括
+            if (split1.length > 1){
+                sb.append("(");
+                for (int i = 0; i < split1.length; i++) {
+                    sb.append("!#").append(addField);
+                    sb.append(".").append(RuleCompareEnum.CONTAINS.getCode());
+                    sb.append("('").append(split1[i]).append("')");
+                    if (i + 1 < split1.length){
+                        sb.append(" and ");
+                    }
+                }
+                sb.append(")");
+            }else {
+                sb.append("!#").append(addField);
+                sb.append(".").append(RuleCompareEnum.CONTAINS.getCode());
+                sb.append("('").append(fieldStr).append("')");
+            }
+        }
         Map<String, Object> variables = spElDTO.getVariables();
-        variables.put(addField, Arrays.asList(split));
-        variables.put(field, detailMap.get(field));
+        //对于非数组 就传递字符串
+        if (split.length > 1){
+            variables.put(addField, Arrays.asList(split));
+        }else {
+            variables.put(addField, targetValue);
+        }
         spElDTO.setVariables(variables);
         return sb.toString();
     }
@@ -365,13 +412,17 @@ public class SpElServerImpl implements SpElServer {
                     switch (contentsEnum) {
                         case CONTAINS:
                             String addField = getAddField(field, addFieldList);
-                            content = new StringBuilder("['").append(addField).append("'] ").append(compare).append(" '").append(value).append("'").toString();
-                            content = convertToContainsExpression(content);
+                            content = getContentList(field,addField,compare,value,spElDTO, new HashMap<>());
+//                            String addField = getAddField(field, addFieldList);
+//                            content = new StringBuilder("['").append(addField).append("'] ").append(compare).append(" '").append(value).append("'").toString();
+//                            content = convertToContainsExpression(content);
                             break;
                         case NOT_CONTAINS:
                             String addField1 = getAddField(field, addFieldList);
-                            content = new StringBuilder("['").append(addField1).append("'] ").append(compare).append(" '").append(value).append("'").toString();
-                            content = convertToNotContainsExpression(content);
+                            content = getContentList(field,addField1,compare,value,spElDTO, new HashMap<>());
+//                            String addField1 = getAddField(field, addFieldList);
+//                            content = new StringBuilder("['").append(addField1).append("'] ").append(compare).append(" '").append(value).append("'").toString();
+//                            content = convertToNotContainsExpression(content);
                             break;
                         case IS_NULL:
                             content = convertToIsNullObjExpression(field);
@@ -431,6 +482,12 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     private String convertToIsNullMapExpression(String field) {
+//        StringBuilder sb=new StringBuilder();
+//        sb.append("#").append(field);
+//        sb.append(" == null || ");
+//        sb.append("#").append(field);
+//        sb.append(" == ''");
+//        return sb.toString();
         StringBuilder expression = new StringBuilder();
         expression.append("['").append(field).append("']");
         expression.append(" == null || ");
@@ -461,6 +518,13 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     private String convertToNotNullMapExpression(String field) {
+//        StringBuilder sb=new StringBuilder();
+//        sb.append("#").append(field);
+//        sb.append(" != null and ");
+//        sb.append("#").append(field);
+//        sb.append(" == ''");
+//        return sb.toString();
+
         StringBuilder expression = new StringBuilder();
         expression.append("['").append(field).append("']");
         expression.append(" != null  && ");
@@ -526,8 +590,7 @@ public class SpElServerImpl implements SpElServer {
             //值的类型
             String valueType = element.getValueType();
             Object conversionValue = conversionValue(value, valueType);
-            Boolean isStr="String".equals(valueType);
-
+            Boolean isStr = "String".equals(valueType);
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
                 String content = getContent(field,compare,conversionValue,isStr);
                 RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
@@ -569,7 +632,6 @@ public class SpElServerImpl implements SpElServer {
         spElDTO.setSpElAddFieldList(addFieldList);
         return spElDTO;
     }
-
     public static void main(String[] args) {
         SpElServerImpl spElServer=new SpElServerImpl();
         ExpressionParser parser = new SpelExpressionParser();
