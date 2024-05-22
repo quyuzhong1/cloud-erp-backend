@@ -1,6 +1,7 @@
 package com.erp.server.wms.rocketmq.sync;
 
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
+import com.erp.model.dmp.wdt.WangDianOrderEntity;
 
 /**
  * @author Lambda
@@ -18,4 +19,6 @@ public interface SyncB2CSoOutstockService {
      * @return void
      */
     void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity);
+
+    void syncWdtSoOutStock(WangDianOrderEntity entity);
 }

@@ -22,8 +22,8 @@ import java.util.List;
 @Component
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC,
-        selectorExpression = "wangdian_product_detail_tag",
-        consumerGroup = RocketMqConsumerGroup.SYNC_WANGDIAN_PRODUCT_DETAIL,
+        selectorExpression = "wdt_product_detail_tag",
+        consumerGroup = RocketMqConsumerGroup.SYNC_WDT_PRODUCT_DETAIL,
         consumeMode = ConsumeMode.ORDERLY)
 public class WangDianProductDetailConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
     @Resource

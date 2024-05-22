@@ -17,6 +17,7 @@ import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
+import com.erp.model.dmp.wdt.WangDianOrderEntity;
 import com.erp.server.dmp.pull.mapper.DmpDeliveryDetailInfoMapper;
 import com.erp.server.dmp.service.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.service.DmpDeliveryDetailItemService;
@@ -199,6 +200,31 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
                 dmpDeliveryDetailItemService.removeByIds(itemEntities.stream().map(DmpDeliveryDetailItemEntity::getId).collect(Collectors.toList()));
                 this.removeById(dmpDeliveryDetailInfoEntity.getId());
             });
+        }
+    }
+
+    @Override
+    public void syncTask(WangDianOrderEntity ext) {
+        //新增发送任务
+        DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
+        dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.WANGDIAN.getDesc());
+        dmpPullTaskEntity.setSourceType(SourceTypeEnum.WDT_OUT_STOCK.getCode());
+        dmpPullTaskEntity.setSourceId(ext.getStockoutId());
+        dmpPullTaskEntity.setSourceCode(ext.getOrderNo());
+        dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
+        dmpPullTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+        dmpPullTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
+        dmpPullTaskEntity.setMqTag(RocketMqTagEnum.SYNC_WDT_SO_OUT_STOCK_TAG.getName());
+        String mqData = JSONUtil.toJsonStr(ext);
+        dmpPullTaskEntity.setMqData(mqData);
+        dmpPullTaskService.saveOrUpdateDmpSyncTask(dmpPullTaskEntity);
+        // 发送推送同步任务消息
+        JSONObject jsonObject = JSONUtil.parseObj(dmpPullTaskEntity.getMqData());
+        jsonObject.set("dmpSyncTaskId",dmpPullTaskEntity.getId());
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_WDT_SO_OUT_STOCK_TAG.getName(),
+                jsonObject, StrUtil.uuid().toLowerCase());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
 }

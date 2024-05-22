@@ -314,7 +314,9 @@ public class RocketMqConsumerGroup {
     /**
      * 旺店通推送货品资料
      */
-    public static final String SYNC_WANGDIAN_PRODUCT_DETAIL = "${spring.cloud.nacos.discovery.namespace}-sync_wangdian_product_detail";
+    public static final String SYNC_WDT_PRODUCT_DETAIL = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_product_detail";
+
+    public static final String SYNC_WDT_OUT_STOCK_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_out_stock_to_wms";
 
 
 }

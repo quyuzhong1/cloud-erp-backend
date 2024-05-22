@@ -474,6 +474,10 @@ public enum RocketMqTagEnum {
      * 异步合并组包发货
      */
     ASYNC_MERGE_PACKAGE_DELIVERY_TAG(6006,RocketMqTagEnum.SYNC_WMS,"async_merge_package_delivery_tag"),
+    /**
+     * 金蝶同步销售出库单到WMS
+     */
+    SYNC_WDT_SO_OUT_STOCK_TAG(6007,RocketMqTagEnum.SYNC_WMS,"sync_wdt_so_out_stock_tag"),
     //---------------------------------马帮数据同步code从7001开始------------------------------------------------------------------------------------------
 
     /**
@@ -552,8 +556,9 @@ public enum RocketMqTagEnum {
     /**
      * 同步产品资料到旺店通
      */
-    WANGDIAN_PRODUCT_DETAIL_TAG(11001, RocketMqTagEnum.SYNC_WANGDIAN,"wangdian_product_detail_tag"),
-    WANGDIAN_SALE_ORDER_TAG(11002, RocketMqTagEnum.SALES_ORDER,"wangdian_sales_order_tag")
+    WDT_PRODUCT_DETAIL_TAG(11001, RocketMqTagEnum.SYNC_WANGDIAN,"wdt_product_detail_tag"),
+    WDT_DELIVERY_ORDER_TAG(11002, RocketMqTagEnum.DELIVERY_ORDER,"wdt_delivery_order_tag"),
+    WDT_DELIVERY_ORDER_WMS_TAG(11002, RocketMqTagEnum.SYNC_WMS,"wdt_delivery_order_wms_tag"),
 
     ;
     public static final String SALES_ORDER = "sales";

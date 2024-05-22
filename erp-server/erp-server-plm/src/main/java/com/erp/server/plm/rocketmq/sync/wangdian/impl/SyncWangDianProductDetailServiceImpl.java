@@ -89,7 +89,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         taskEntity.setSourceCode(entity.getSkuNo());
         taskEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
         taskEntity.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-        taskEntity.setMqTag(RocketMqTagEnum.WANGDIAN_PRODUCT_DETAIL_TAG.getName());
+        taskEntity.setMqTag(RocketMqTagEnum.WDT_PRODUCT_DETAIL_TAG.getName());
         taskEntity.setMqData(JSONUtil.toJsonStr(dto));
         taskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskEntity.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());

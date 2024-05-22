@@ -3,6 +3,7 @@ package com.erp.server.dmp.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
+import com.erp.model.dmp.wdt.WangDianOrderEntity;
 
 import java.util.List;
 
@@ -75,4 +76,10 @@ public interface DmpDeliveryDetailInfoService extends IService<DmpDeliveryDetail
      * @param codes
      */
     void removeDeliveryByCodes(List<String> codes);
+
+    /**
+     * 同步旺店通销售出库单
+     * @param ext 参数
+     */
+    void syncTask(WangDianOrderEntity ext);
 }

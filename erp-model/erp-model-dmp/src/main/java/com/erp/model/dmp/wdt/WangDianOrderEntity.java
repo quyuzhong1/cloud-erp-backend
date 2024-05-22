@@ -126,7 +126,7 @@ public class WangDianOrderEntity extends CleanBaseDTO {
      */
     private String logisticsName;
     /**
-     * 出库单ID
+     * 店铺id
      */
     private String shopId;
     /**

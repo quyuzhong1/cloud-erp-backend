@@ -113,10 +113,18 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<WangDia
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
-        // 异步推送到MQ
+        // 异步推送到MQ  dmp
         entityToMqlist.forEach(msg -> {
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.WANGDIAN_SALE_ORDER_TAG.getName(),
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.WDT_DELIVERY_ORDER_TAG.getName(),
                     msg, msg.getPlatformOrderId());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                throw new ServiceException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        });
+        // 异步推送到MQ wms
+        pushToMqList.forEach(msg -> {
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.WDT_DELIVERY_ORDER_WMS_TAG.getName(),
+                    msg, msg.getOrderNo());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new ServiceException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -290,17 +298,6 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<WangDia
         });
     }
 
-    public static void main(String[] args) {
-//        JobTaskDTO jobTaskDTO = new JobTaskDTO();
-//        jobTaskDTO.setLastTime(LocalDateTime.of(2024, 5, 21, 9, 15, 0));
-//        jobTaskDTO.setNextTime(LocalDateTime.of(2024, 5, 21, 10, 0, 0));
-//        RequestDTO dto = new RequestDTO();
-//        dto.setJobTaskDTO(jobTaskDTO);
-//        List<OrderEntity> entityList = pullData(dto);
-//        System.out.println(entityList);
-    }
-
-
     @Override
     public void cleanDataSave(String tableName, int size) {
         // 查询mongo待推送数据
@@ -332,7 +329,7 @@ public class WangDianOrderInfoServiceImpl  implements IReportSaveService<WangDia
         }
         MapUtil mapUtil = JSON.parseObject(JSON.toJSONString(mongoDatum), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
-        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.WDT_DELIVERY_ORDER_TAG.getName(),
                 orderInfo, CharSequenceUtil.format("{}_{}", orderInfo.getPlatformOrderId(), orderInfo.getBillNo()));
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
             throw new ServiceException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));

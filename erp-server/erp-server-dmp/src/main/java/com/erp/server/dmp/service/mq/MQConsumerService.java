@@ -91,7 +91,7 @@ public class MQConsumerService {
      */
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
-            selectorExpression = "gyy_sales_order_tag||gyy_sales_history_order_tag||kingdee_sales_order_tag||mabang_sales_order_tag||wangdian_sales_order_tag",
+            selectorExpression = "gyy_sales_order_tag||gyy_sales_history_order_tag||kingdee_sales_order_tag||mabang_sales_order_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_order_consumer")
     public class ConsumerErpSalesOrder implements RocketMQListener<DmpOrderInfoEntity> {
         @Override
@@ -115,10 +115,6 @@ public class MQConsumerService {
                     OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
                     finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
                 }
-                if(PlatformEnum.WANGDIAN.getDesc().equals(ext.getPlatformSign())){
-                    OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
-                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
-                }
             }catch (Exception e){
                 log.error("rocketmq 监听到销售订单消息异常：entity={}", JSONUtil.toJsonStr(ext), e);
                 log.error("rocketmq 监听到销售订单消息异常：", e);
@@ -131,7 +127,7 @@ public class MQConsumerService {
      */
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
-            selectorExpression = "gyy_delivery_order_tag||kingdee_delivery_order_tag||mabang_delivery_order_tag",
+            selectorExpression = "gyy_delivery_order_tag||kingdee_delivery_order_tag||mabang_delivery_order_tag||wdt_delivery_order_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_delivery_consumer")
     public class ConsumerErpDeliveryOrder implements RocketMQListener<DmpDeliveryDetailInfoEntity> {
         @Override
@@ -155,6 +151,10 @@ public class MQConsumerService {
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
                 OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getBillNo());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
+            }
+            if(PlatformEnum.WANGDIAN.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
             }
         }
     }
@@ -446,6 +446,21 @@ public class MQConsumerService {
         public void onMessage(DmpSyncMqDTO.ParamDTO paramDTO) {
             log.info("监听到DMP同步任务回调：entity={}", JSONUtil.toJsonStr(paramDTO));
             dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+        }
+    }
+
+    /**
+     * 金蝶同步b2c销售出库单保存任务
+     */
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "wdt_delivery_order_wms_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_so_outstock_consumer")
+    public class ConsumerWdtSoOutstockInfo implements RocketMQListener<WangDianOrderEntity> {
+        @Override
+        public void onMessage(WangDianOrderEntity ext) {
+            log.info("监听旺店通B2C销售出库单信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            deliveryDetailInfoService.syncTask(ext);
         }
     }
 

@@ -170,6 +170,10 @@ public enum SourceTypeEnum {
 
     // 亚马逊相关
     AMZ_REPORT_CONSUMER("amzReportConsumer", "亚马逊报告消费处理","amz_report_task"),
+
+
+    // 旺店通相关
+    WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单",""),
     ;
 
     /**
