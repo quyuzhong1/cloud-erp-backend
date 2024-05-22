@@ -1,7 +1,6 @@
 package com.sdk.wangdian.sdk.api.sales;
 
 import com.sdk.wangdian.sdk.Pager;
-import cn.wangdian.erp.sdk.api.sales.dto.*;
 import com.sdk.wangdian.sdk.impl.Api;
 import com.sdk.wangdian.sdk.api.sales.dto.*;
 
