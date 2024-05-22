@@ -5625,6 +5625,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                 viewDTO.setProductName(bomChildrenSkuDTO.getSkuName());
                 viewDTO.setQty(detailEntity.getQty() * bomChildrenSkuDTO.getQuantity());
+                viewDTO.setSourcePlatform(detailEntity.getSourcePlatform());
                 viewDTO.setWarehouseId(detailEntity.getWarehouseId());
                 viewDTO.setWarehouseName(detailEntity.getWarehouseName());
                 viewDTO.setExchangeRate(detailEntity.getExchangeRate());
@@ -5641,7 +5642,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             for (int i = 0; i < resultList.size(); i++) {
                 SoB2cDetailDTO.ViewDTO viewDTO = resultList.get(i);
                 //如果是最后一行 赋值剩余的金额
-                if(i == bomChildrenList.size() - 1){
+                if(i == resultList.size() - 1){
                     viewDTO.setAmount(remainAmount);
                     viewDTO.setAdvicePrice(remainAdvicePrice);
                 }else if (viewDTO.getTaxCost().compareTo(BigDecimal.ZERO) == 0){

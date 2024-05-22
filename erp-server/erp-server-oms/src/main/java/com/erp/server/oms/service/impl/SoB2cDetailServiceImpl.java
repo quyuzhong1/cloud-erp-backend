@@ -400,7 +400,18 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Override
     public List<SoB2cDetailEntity> listContainDeleted(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
         return baseMapper.listContainDeleted(ids);
+    }
+
+    @Override
+    public void updateContainDeleted(List<String> revertDetailIds) {
+        if(CollectionUtils.isEmpty(revertDetailIds)){
+            return ;
+        }
+        baseMapper.updateContainDeleted(revertDetailIds);
     }
 
     /**

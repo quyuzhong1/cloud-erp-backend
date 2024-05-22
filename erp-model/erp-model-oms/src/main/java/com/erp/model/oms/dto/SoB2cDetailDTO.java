@@ -375,7 +375,6 @@ public class SoB2cDetailDTO implements Serializable {
         */
         @NotNull(message = "单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "单价整数位不能超过12位，小数位不能超过4位")
-        @DecimalMin(value = "0", message = "单价最小值必须大于0")
         private BigDecimal price;
 
         /**

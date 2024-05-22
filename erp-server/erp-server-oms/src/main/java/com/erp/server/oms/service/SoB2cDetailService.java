@@ -167,4 +167,6 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
     ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform);
 
     List<SoB2cDetailEntity> listContainDeleted(List<String> ids);
+
+    void updateContainDeleted(List<String> revertDetailIds);
 }
