@@ -122,6 +122,17 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
+            // 来源明细ID为空代表是手工添加的明细忽略
+            soB2cDetailEntityList =  soB2cDetailEntityList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                    .collect(Collectors.toList());
+//            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
+//                throw new ServiceException("平台来源详情ID为空");
+//            }
+            if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
+                log.warn("订单【{}】所有明细来源ID为空,不请求接口", mainEntity.getCode());
+                return;
+            }
             if (soB2cDetailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
                 throw new ServiceException("平台来源详情ID为空");
             }
