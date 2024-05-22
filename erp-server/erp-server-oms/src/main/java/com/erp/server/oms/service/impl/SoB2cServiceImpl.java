@@ -5676,6 +5676,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> skuIds = viewDTOList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         viewDTOList.forEach(v->{
+            v.setIsCombination(true);
             SkuVO skuVO = skuList.stream().filter(t->v.getSkuId().equals(t.getSkuId())).findFirst().orElse(null);
             if(Objects.nonNull(skuVO)){
                 v.setProductName(skuVO.getSkuName());
