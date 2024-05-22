@@ -44,7 +44,7 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper, ThirdMappingEntity> implements ThirdMappingService {
-//    @Autowired
+//    @Resource
 //    private OperateLogService operateLogService;
 
     @Resource
@@ -59,23 +59,30 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
-        ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
-        BeanMapperUtils.copy(addDTO, thirdMappingEntity);
-        // 数据处理
-        handleData(thirdMappingEntity);
-        log.info("开始新增第三方系统映射关系单");
-        boolean save = super.save(thirdMappingEntity);
-        if (!save) {
-            throw new ServiceException("第三方系统映射关系单保存失败");
+
+        List<ThirdMappingDTO.ViewDTO> thirdList = addDTO.getThirdList();
+        if (CollectionUtils.isEmpty(thirdList)){
+            throw new ServiceException(ApiError.ERROR_600);
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "第三方系统映射关系单", thirdMappingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        thirdList.forEach(item->{
+            ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
+            BeanMapperUtils.copy(addDTO, thirdMappingEntity);
+            thirdMappingEntity.setThirdId(item.getThirdId());
+            thirdMappingEntity.setThirdSysType(item.getSysType());
+            // 数据处理
+            handleData(thirdMappingEntity);
+            log.info("开始新增第三方系统映射关系单");
+            boolean save = super.save(thirdMappingEntity);
+            if (!save) {
+                throw new ServiceException("第三方系统映射关系单保存失败");
+            }
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "第三方系统映射关系单", thirdMappingEntity.getId());
+            // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
 //        operateLogService.addModuleOperateLog(msg, null, thirdMappingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(thirdMappingEntity.getId(), thirdMappingEntity.getId());
+            // TODO 新增明细（如果有明细的话）
+        });
+        return new BaseResultDTO.AddDTO();
     }
 
     /**
