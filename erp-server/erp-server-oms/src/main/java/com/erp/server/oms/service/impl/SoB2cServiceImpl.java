@@ -5628,6 +5628,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 viewDTO.setSourcePlatform(detailEntity.getSourcePlatform());
                 viewDTO.setWarehouseId(detailEntity.getWarehouseId());
                 viewDTO.setWarehouseName(detailEntity.getWarehouseName());
+                viewDTO.setSourceDetailId(detailEntity.getSourceDetailId());
                 viewDTO.setExchangeRate(detailEntity.getExchangeRate());
                 SkuInfoSimpleVO skuInfoSimpleVO = skuInfoSimpleVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuInfoSimpleVO());
                 //含税单价

@@ -288,6 +288,10 @@ public class SoB2cDetailDTO implements Serializable {
          * 拆分的明细id
          */
         private String splitDetailId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
 
         /**
          * 是否组合品
@@ -328,6 +332,8 @@ public class SoB2cDetailDTO implements Serializable {
          * 拆分的Id 如果用户拆分BOM套装则这个值为原本的明细id
          */
         private String splitDetailId;
+
+        private String sourceDetailId;
         /**
          * 金额
          */
