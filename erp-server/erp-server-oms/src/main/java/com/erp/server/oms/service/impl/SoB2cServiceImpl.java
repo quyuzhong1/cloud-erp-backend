@@ -2438,19 +2438,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    public SoB2cDTO.ViewSplitDTO viewSplit(String id) {
-        //B2C销售订单主表信息
-        SoB2cEntity entity = this.getById(id);
-        if (ObjectUtils.isEmpty(entity)) {
+    public List<SoB2cDTO.ViewSplitDTO> viewSplit(List<String> ids) {
+        //查询销售订单信息
+        List<SoB2cEntity> soB2cList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soB2cList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        //验证拆分数据
-        checkSplitData(id, entity);
-
-        SoB2cDTO.ViewSplitDTO viewSplitDTO = new SoB2cDTO.ViewSplitDTO();
-        viewSplitDTO.setId(id);
-        //查询明细
-        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
+        //查询明细信息
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(ids);
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
@@ -2460,25 +2455,40 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        List<SoB2cDTO.ViewSplitDetailDTO> viewSplitDetailList = new ArrayList<>();
-        for (SoB2cDetailEntity detailEntity : soB2cDetailList) {
-            SoB2cDTO.ViewSplitDetailDTO viewSplitDetailDTO = new SoB2cDTO.ViewSplitDetailDTO();
-            BeanMapperUtils.copy(detailEntity, viewSplitDetailDTO);
-            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+
+        //查询订单是否是合并订单或拆分子订单
+        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listByTargetIds(ids, null);
+
+        List<SoB2cDTO.ViewSplitDTO> resultList = new ArrayList<>();
+        for (SoB2cEntity entity : soB2cList) {
+            //验证拆分数据
+            checkSplitData(entity,soB2cRefList);
+            SoB2cDTO.ViewSplitDTO viewSplitDTO = new SoB2cDTO.ViewSplitDTO();
+            viewSplitDTO.setId(entity.getId());
+
+            //销售订单下对应明细
+            List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), entity.getId())).collect(Collectors.toList());
+            List<SoB2cDTO.ViewSplitDetailDTO> viewSplitDetailList = new ArrayList<>();
+            for (SoB2cDetailEntity detailEntity : detailList) {
+                SoB2cDTO.ViewSplitDetailDTO viewSplitDetailDTO = new SoB2cDTO.ViewSplitDetailDTO();
+                BeanMapperUtils.copy(detailEntity, viewSplitDetailDTO);
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(skuVO)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
+                viewSplitDetailDTO.setProductName(skuVO.getSkuName());
+                viewSplitDetailDTO.setSourceAmount(detailEntity.getAmount());
+                viewSplitDetailDTO.setSourceCurrency(detailEntity.getCurrency());
+                viewSplitDetailDTO.setAmount(MathUtil.multiply(detailEntity.getAmount(), detailEntity.getExchangeRate()));
+                viewSplitDetailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                //产品包装重量 = SKU毛重 * 数量
+                viewSplitDetailDTO.setWeight(MathUtil.multiply(skuVO.getGrossWeight(), detailEntity.getQty()));
+                viewSplitDetailList.add(viewSplitDetailDTO);
             }
-            viewSplitDetailDTO.setProductName(skuVO.getSkuName());
-            viewSplitDetailDTO.setSourceAmount(detailEntity.getAmount());
-            viewSplitDetailDTO.setSourceCurrency(detailEntity.getCurrency());
-            viewSplitDetailDTO.setAmount(MathUtil.multiply(detailEntity.getAmount(), detailEntity.getExchangeRate()));
-            viewSplitDetailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            //产品包装重量 = SKU毛重 * 数量
-            viewSplitDetailDTO.setWeight(MathUtil.multiply(skuVO.getGrossWeight(), detailEntity.getQty()));
-            viewSplitDetailList.add(viewSplitDetailDTO);
+            viewSplitDTO.setDetailList(viewSplitDetailList);
+            resultList.add(viewSplitDTO);
         }
-        viewSplitDTO.setDetailList(viewSplitDetailList);
-        return viewSplitDTO;
+        return resultList;
     }
 
 
@@ -2502,7 +2512,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          */
 
         //验证拆分数据
-        checkSplitData(dto.getId(), entity);
+        checkSplitData(entity,soB2cRefList);
         //原单据明细
         List<SoB2cDetailEntity> oldDetailList = soB2cDetailService.listByMainId(dto.getId());
         if (CollectionUtils.isEmpty(oldDetailList)) {
@@ -3645,13 +3655,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * @param id
      * @param entity
+     * @param soB2cRefList
      * @description: 验证拆分数据
      * @author Will
      * @date: 2023/8/23 15:12
      */
-    private void checkSplitData(String id, SoB2cEntity entity) {
+    private void checkSplitData(SoB2cEntity entity,List<SoB2cRefEntity> soB2cRefList) {
 
         if (!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_STATE_NOT_SPLIT, entity.getCode());
@@ -3668,15 +3678,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //查询订单是否是合并订单或拆分子订单
-        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listByTargetId(id, null);
-        if (CollectionUtils.isEmpty(soB2cRefList)) {
+        List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> StrUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(thisRefList)) {
             return;
         }
-        long mergeCount = soB2cRefList.stream().filter(obj -> SoB2cOptionTypeEnum.ENUM_MERGE.getCode().equals(obj.getType())).count();
+        long mergeCount = thisRefList.stream().filter(obj -> SoB2cOptionTypeEnum.ENUM_MERGE.getCode().equals(obj.getType())).count();
         if (mergeCount > 0) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_NOT_SPLIT, entity.getCode());
         }
-        long splitCount = soB2cRefList.stream().filter(obj -> SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())).count();
+        long splitCount = thisRefList.stream().filter(obj -> SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())).count();
         if (splitCount > 0) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_CHILD_SPLIT_NOT_SPLIT, entity.getCode());
         }
