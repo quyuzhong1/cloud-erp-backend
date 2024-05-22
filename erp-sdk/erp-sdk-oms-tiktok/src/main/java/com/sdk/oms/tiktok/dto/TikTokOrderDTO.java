@@ -228,7 +228,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         detailDTO.setPlatformSkuNo(itemsBean.getSellerSku());
 
         //平台产品id
-        detailDTO.setPlatformSpuNo(itemsBean.getFid());
+        detailDTO.setPlatformSpuNo(itemsBean.getProductId());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
