@@ -577,6 +577,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
      * @param isAdd
      */
     private void handleDetailList (List<SoB2cDetailEntity> list,SoB2cEntity soB2cEntity,Boolean isAdd) {
+        //如果是还原捆绑商品，需要将删除的明细还原
         List<String> detailIds = list.stream().map(SoB2cDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         this.updateContainDeleted(detailIds);
 
