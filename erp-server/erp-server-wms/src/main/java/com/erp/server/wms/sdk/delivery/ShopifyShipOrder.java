@@ -153,6 +153,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             ShopifyRestClient shopifyRestClient = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken);
             // Retrieves a list of fulfillment orders for a specific order
             List<ShopifyFulfillmentOrder> fulfillmentOrdersFromOrderList = shopifyRestClient.getFulfillmentOrdersFromOrder(platformOrderId);
+            log.warn("[Shopify标记发货] 订单ID={}, 获取的配送明细参数 fulfillmentOrdersFromOrderList={}",platformOrderId, JSONUtil.toJsonStr(fulfillmentOrdersFromOrderList));
             if (CollectionUtils.isEmpty(fulfillmentOrdersFromOrderList)) {
                 throw new ServiceException("找不到Shopify发货单");
             }
