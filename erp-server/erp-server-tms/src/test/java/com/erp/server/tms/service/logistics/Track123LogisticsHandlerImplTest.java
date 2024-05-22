@@ -102,7 +102,7 @@ public class Track123LogisticsHandlerImplTest {
     public void getTrack(){
         LogisticsTrackVO logisticsQueryVO = new LogisticsTrackVO();
         List<String> trackNos = new ArrayList<>();
-        trackNos.add("SF1694930851235");
+        trackNos.add("MP0039098709");
 //        trackNos.add("00369744292706509832");
         logisticsQueryVO.setTrackNos(trackNos);
         logisticsQueryVO.setAuthMap(authMap);
