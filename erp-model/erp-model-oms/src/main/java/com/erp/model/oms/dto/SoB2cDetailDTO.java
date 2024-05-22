@@ -314,6 +314,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 操作明细集合id
          */
         private String operateDetailId;
+
+        /**
+         * 拆分的Id 如果用户拆分BOM套装则这个值为原本的明细id
+         */
+        private String splitDetailId;
     }
 
     /**
