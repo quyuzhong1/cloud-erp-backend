@@ -1,9 +1,9 @@
 package com.erp.server.dmp.push.service.wdt.impl;
 
-import cn.wangdian.erp.sdk.api.Result;
-import cn.wangdian.erp.sdk.api.goods.GoodsAPI;
-import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
-import cn.wangdian.erp.server.WangDianClientService;
+import com.sdk.wangdian.sdk.api.Result;
+import com.sdk.wangdian.sdk.api.goods.GoodsAPI;
+import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
+import com.sdk.wangdian.server.WangDianClientService;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.PlatformEntity;

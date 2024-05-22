@@ -1,6 +1,6 @@
 package com.erp.server.dmp.push.service.wdt;
 
-import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
+import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 
 import java.util.List;
 

@@ -1,10 +1,9 @@
 package com.erp.server.wms.wdt.impl;
 
-import cn.wangdian.erp.sdk.api.wms.stockout.StockoutAPI;
-import cn.wangdian.erp.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
-import cn.wangdian.erp.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
-import cn.wangdian.erp.sdk.impl.ApiFactory;
-import cn.wangdian.erp.server.WangDianClientService;
+import com.sdk.wangdian.sdk.api.wms.stockout.StockoutAPI;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
+import com.sdk.wangdian.server.WangDianClientService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;

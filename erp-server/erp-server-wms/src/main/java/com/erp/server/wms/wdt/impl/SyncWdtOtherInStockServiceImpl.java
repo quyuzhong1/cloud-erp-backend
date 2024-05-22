@@ -1,10 +1,10 @@
 package com.erp.server.wms.wdt.impl;
 
-import cn.wangdian.erp.sdk.WdtErpException;
-import cn.wangdian.erp.sdk.api.wms.stockin.StockinAPI;
-import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
-import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinResponse;
-import cn.wangdian.erp.server.WangDianClientService;
+import com.sdk.wangdian.sdk.WdtErpException;
+import com.sdk.wangdian.sdk.api.wms.stockin.StockinAPI;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinResponse;
+import com.sdk.wangdian.server.WangDianClientService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;

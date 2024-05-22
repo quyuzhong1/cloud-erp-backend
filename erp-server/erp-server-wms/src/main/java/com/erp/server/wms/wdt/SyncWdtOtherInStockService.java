@@ -1,6 +1,6 @@
 package com.erp.server.wms.wdt;
 
-import cn.wangdian.erp.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.erp.model.wms.entity.OtherInstockEntity;
 
 import javax.annotation.Nullable;

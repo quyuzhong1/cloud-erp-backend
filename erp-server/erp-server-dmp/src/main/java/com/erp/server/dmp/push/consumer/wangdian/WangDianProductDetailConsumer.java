@@ -1,6 +1,6 @@
 package com.erp.server.dmp.push.consumer.wangdian;
 
-import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
+import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;

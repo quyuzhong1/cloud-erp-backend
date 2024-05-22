@@ -1,7 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.wangdian.impl;
 
 import cn.hutool.json.JSONUtil;
-import cn.wangdian.erp.sdk.api.goods.dto.GoodsBatchPushDTO;
+import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.LengthConverterUtil;
