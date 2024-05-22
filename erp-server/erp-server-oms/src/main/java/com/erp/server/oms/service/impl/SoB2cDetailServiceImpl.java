@@ -643,16 +643,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
                     detailEntity.setWarehouseOrgName(companyDTO.getName());
                 }
-
-                //库存SKU
-                SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
-                    detailEntity.setWarehouseSkuNo(StrUtil.isBlank(warehouseListSkuDTO.getWarehouseSkuNo()) ? "" : warehouseListSkuDTO.getWarehouseSkuNo());
-                } else {
-                    detailEntity.setWarehouseSkuNo("");
-                }
-            } else {
-                detailEntity.setWarehouseSkuNo("");
             }
 
             //平台SKU
