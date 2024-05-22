@@ -35,7 +35,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
         splitDetailMap.forEach((key,value)->{
             //查询关联的捆绑商品对应明细
             List<SoB2cEntity> refDetailList = soB2cFeign.listRefBomSplit(key);
-            refDetailList = refDetailList.stream().filter(v->!mainId.equals(v.getId()) && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())).collect(Collectors.toList());
+            refDetailList = refDetailList.stream().filter(v->!mainId.equals(v.getId()) && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())&& !v.getInvalidStatus()).collect(Collectors.toList());
             //不为空，说明别的订单未发货，过滤掉对应明细
             if(CollectionUtils.isNotEmpty(refDetailList)){
                 filterDetailList.addAll(value.stream().map(v->v.getId()).collect(Collectors.toList()));
