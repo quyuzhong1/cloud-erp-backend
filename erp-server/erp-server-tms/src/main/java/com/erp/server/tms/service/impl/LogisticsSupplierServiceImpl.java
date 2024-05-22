@@ -174,7 +174,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                 LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
                 channelView.setWarehouseId(item.getOverseasWarehouseId());
                 channelView.setWarehouseName(item.getOverseasWarehouseName());
-                List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> c.getSourceId().equals(item.getId())).collect(Collectors.toList());
+                List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getSourceId())
+                        && c.getSourceId().equals(item.getId())).collect(Collectors.toList());
                 channelView.setChannelList(channelList);
                 viewList.add(channelView);
             }
