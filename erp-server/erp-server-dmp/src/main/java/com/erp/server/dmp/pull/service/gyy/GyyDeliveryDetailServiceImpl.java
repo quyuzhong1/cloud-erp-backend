@@ -28,6 +28,7 @@ import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -83,7 +84,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             }
             GyyDeliveryDetailEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(deliveryEntity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , deliveryEntity)) {
                 log.warn("管易发货订单 mongo数据无变化无需更新 deliveryEntity={}", JSONUtil.toJsonStr(deliveryEntity));
                 continue;
             }
