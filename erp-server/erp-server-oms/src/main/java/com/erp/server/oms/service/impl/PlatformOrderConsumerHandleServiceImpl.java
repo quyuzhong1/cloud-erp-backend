@@ -149,11 +149,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
 
         // 非平台
-        if (!mainEntity.hasPlatformWarehouseOrder()
-                && resultDTO.isUpdateCancel()
-                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())){
-            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
-        }
+//        if (!mainEntity.hasPlatformWarehouseOrder()
+//                && resultDTO.isUpdateCancel()
+//                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())){
+//            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+//        }
     }
 
 
