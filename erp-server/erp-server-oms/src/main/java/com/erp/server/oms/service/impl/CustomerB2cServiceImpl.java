@@ -27,6 +27,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -1412,10 +1413,10 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CustomerB2cEntity saveOrUpdateEntity(CustomerB2cEntity entity, PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
+    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
         // 当前国家
         DictCountryEntity dictCountryEntity = countryList.stream().findFirst().orElse(null);
-
+        CustomerB2cEntity entity = this.getBySourceId(mainEntity.getSourceId());
         if (null == entity){
             CustomerB2cEntity customerB2cEntity = new CustomerB2cEntity();
             //生成单号
@@ -1423,7 +1424,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             customerB2cEntity.setCode(code);
             customerB2cEntity.setSourceId(mainEntity.getId());
             customerB2cEntity.setSourceType(SourceTypeEnum.SO_B2C.getCode());
-            customerB2cEntity.setName(receiverEntity.getName());
+            customerB2cEntity.setName(dto.getReceiver().getName());
             customerB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
             customerB2cEntity.setPlatformType(dto.getDictPlatform());
             customerB2cEntity.setCountryId(dictCountryCode);
@@ -1458,7 +1459,9 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             if (StringUtils.isBlank(entity.getCurrency())){
                 entity.setCurrency(dto.getCurrency());
             }
-            entity.setName(receiverEntity.getName());
+            if (StringUtils.isBlank(entity.getName())){
+                entity.setName(dto.getReceiver().getName());
+            }
             entity.setApproveStatus(ApproveStatusEnum.APPROVE);
             entity.setDisabled(false);
             updateById(entity);

@@ -202,6 +202,9 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         }
 
         if (null != shippingAddress){
+            if (StringUtils.isBlank(receiverDTO.getName())){
+                receiverDTO.setName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
+            }
             receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getProvince()) ? "" : shippingAddress.getProvince());
             receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
             receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2());
