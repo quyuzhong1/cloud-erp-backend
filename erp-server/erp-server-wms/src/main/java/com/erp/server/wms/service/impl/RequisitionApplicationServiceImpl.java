@@ -616,6 +616,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationEntity> existBinds = lambdaQuery().in(RequisitionApplicationEntity::getFbaShipmentCode, shipmentCode).list();
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<RequisitionApplicationEntity> updateList = new ArrayList<>();
+        //判断dto里面的shipmentId有没有重复
+        if(dto.stream().map(RequisitionApplicationDTO.BindShipment::getShipmentId).distinct().count() != dto.size()){
+            throw new ServiceException("货件单号重复");
+        }
         for (RequisitionApplicationDTO.BindShipment bindShipment : dto) {
             RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationEntities.stream().filter(req -> req.getId().equals(bindShipment.getId())).findFirst().orElse(null);
             if(Objects.isNull(requisitionApplicationEntity)){
