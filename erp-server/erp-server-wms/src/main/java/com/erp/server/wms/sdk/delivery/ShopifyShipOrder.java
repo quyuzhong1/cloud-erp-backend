@@ -137,6 +137,10 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 throw new ServiceException("平台来源详情ID为空");
             }
             soB2cDetailEntityList = super.handleBomSplit(soB2cDetailEntityList);
+            if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
+                log.warn("订单【{}】所有明细来源ID为空,不请求shopify接口", mainEntity.getCode());
+                return;
+            }
             Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
 
             String shopId = mainEntity.getShopId();
