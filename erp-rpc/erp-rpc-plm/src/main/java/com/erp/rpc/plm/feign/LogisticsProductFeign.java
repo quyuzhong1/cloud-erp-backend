@@ -38,10 +38,4 @@ public interface LogisticsProductFeign {
 
     @PostMapping("feign/logistics/product/listBySkuNoList")
     List<LogisticsProductDTO.ProductDTO> listBySkuNoList(@RequestBody List<String> skuNoList);
-    /**
-     * 重算物流产品 目的国申报价
-     * @return
-     */
-    @PostMapping("feign/logistics/product/recalDestDeclarePrice")
-    void recalDestDeclarePrice(@RequestBody List<DmpSkuCostEntity> dmpSkuCostEntityList);
 }

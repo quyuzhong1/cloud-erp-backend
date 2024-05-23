@@ -135,13 +135,28 @@ public class CfgSettingValueDTO implements Serializable {
         private Boolean isAutoLogistics;
 
         /**
+         * 物流单生成时机，/tms/drop/down/dict/list?key=billGenerateTiming
+         */
+        private String logisticsGenerateTiming;
+
+        /**
          * 头程报关自动生成
          */
         private Boolean isAutoFirstMileDeclare;
 
         /**
-         * 头程报关自动生成
+         * 头程报关生成时机，/tms/drop/down/dict/list?key=billGenerateTiming
+         */
+        private String firstMileDeclareGenerateTiming;
+
+        /**
+         * B2B报关自动生成
          */
         private Boolean isAutoB2BDeclare;
+
+        /**
+         * B2B报关生成时机，/tms/drop/down/dict/list?key=billGenerateTiming
+         */
+        private String b2BDeclareGenerateTiming;
     }
 }

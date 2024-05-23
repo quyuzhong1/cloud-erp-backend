@@ -1,5 +1,6 @@
 package com.erp.server.oms.controller.api;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.Idempotent;
@@ -9,17 +10,22 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.SoB2cSplitService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +53,8 @@ public class SoB2cController extends BaseController {
     @Resource
     private SoB2cErrorService soB2cErrorService;
 
+    @Resource
+    private SoB2cSplitService soB2cSplitService;
 
     /**
      * 获取状态统计
@@ -131,8 +139,9 @@ public class SoB2cController extends BaseController {
                 if(isRuleMatch){
                     //检查是否备案并修改状态
                     soB2cService.checkProductRegistrationAndUpdate(id, "");
+                    //申报信息规则
+                    soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE);
                 }
-
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
                 }
@@ -140,6 +149,34 @@ public class SoB2cController extends BaseController {
 
         }
         return success(add.getId());
+    }
+
+    /**
+     * 批量更新报关
+     * @param ids
+     * @return
+     */
+    @PostMapping("/batchUpdateDeclare")
+    public ApiResult<List<BatchResultDTO>> batchUpdateDeclare(@RequestBody List<String> ids){
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BatchResultDTO submit;
+            try {
+                submit = soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
+            } catch (Exception e) {
+                log.error("B2C销售订单 批量更新报关异常", e);
+
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 批量更新报关失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -233,6 +270,9 @@ public class SoB2cController extends BaseController {
                             }
                         }
 
+                        //清除预报异常
+                        soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+                        soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
                     }
                 }
             } catch (Exception e) {
@@ -540,6 +580,10 @@ public class SoB2cController extends BaseController {
             BatchResultDTO result;
             try {
                 result = soB2cService.saveSoB2cDistribution(id, dto);
+                //申报信息匹配
+                if (result.getSuccess()){
+                    soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
+                }
             } catch (Exception e) {
                 log.error("B2C销售订单配货失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -597,12 +641,21 @@ public class SoB2cController extends BaseController {
     @Idempotent
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        if(dto.getIds().size()>100){
+            throw new ServiceException("批量提交发货数量不能超过100");
+        }
+        //订单自动预报 不影响提交发货流程
+        try {
+            soB2cService.autoOrderForecast(dto.getIds());
+        }catch (Exception e){
+            log.error("订单自动预报",e);
+        }
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.submitDelivery(id);
             } catch (Exception e) {
-                log.error("B2C销售订单提交发货失败", e);
+                log.error("B2C销售订单提交发货失败", ExceptionUtil.stacktraceToString(e));
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交发货失败");
@@ -898,7 +951,6 @@ public class SoB2cController extends BaseController {
 
     }
 
-
     /**
      * 虚假发货
      *
@@ -929,6 +981,36 @@ public class SoB2cController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 订单预报
+     */
+    @PostMapping("/orderForecast")
+    public ApiResult<List<BatchResultDTO>> orderForecast(@RequestBody @Validated SoB2cDTO.TransferDeclareDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.orderForecast(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消订单预报
+     */
+    @PostMapping("/cancelOrderForecast")
+    public ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.cancelOrderForecast(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 重试订单预报
+     * @Author Luo_WG
+     * @Date 2024/1/25 9:54
+     * @param dto  这里的id是 so_id列表
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogViewService
+    @PostMapping(value = "/retryOrderForecast")
+    public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
     /**
      * 中转报关
@@ -940,10 +1022,10 @@ public class SoB2cController extends BaseController {
      * @create 2024-01-20 15:27
      */
     @PostMapping("/transferDeclare")
-    public ApiResult  transferDeclare(@RequestBody SoB2cDTO.TransferDeclareDTO dto) {
+    public ApiResult<List<BatchResultDTO>>  transferDeclare(@RequestBody BaseIdsDTO.IdsDTO dto) {
 
-       Boolean result= soB2cService.transferDeclare(dto.getIds(), dto.getTransferLogisticsSupplierId(), dto.getTransferLogisticsChannelId());
-       return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS= soB2cService.transferDeclare(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
 
     }
 
@@ -1002,9 +1084,69 @@ public class SoB2cController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2C销售订单信息")
     @PostMapping(value = "/exportExcel")
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoB2cDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto, HttpServletResponse response) {
         Boolean flag = soB2cService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 不出库发货
+     * @param dto
+     * @return
+     */
+    @PostMapping("/deliveryWithNotOutbound")
+    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 修复历史sku销售成本价
+     * @param dto
+     * @return
+     */
+    @PostMapping("/initCostPrice")
+    public ApiResult<List<BatchResultDTO>> initCostPrice(@RequestBody SoB2cDTO.CostPriceDTO dto) {
+        soB2cService.initCostPrice(dto);
+        return success();
+    }
+
+    /**
+     * 捆绑拆分信息
+     * @return
+     */
+    @PostMapping("/getBomSplitInfo")
+    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomSplitInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        return success(soB2cService.getBomSplitInfo(idDTO.getIds()));
+    }
+
+    /**
+     * 还原拆分信息
+     * @return
+     */
+    @PostMapping("/getBomRestoreInfo")
+    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomRestoreInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        return success(soB2cService.getBomRestoreInfo(idDTO.getIds()));
+    }
+
+    /**
+     * 捆绑拆分 并保存
+     * @return
+     */
+    @PostMapping("/bomSplitAndSave")
+    public ApiResult<List<BatchResultDTO>> bomSplitAndSave(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<BatchResultDTO> batchResultDTOList = soB2cSplitService.bomSplitAndSave(idDTO.getIds());
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
+
+    /**
+     * 还原拆分信息 并保存
+     * @return
+     */
+    @PostMapping("/bomRestoreAndSave")
+    public ApiResult<List<BatchResultDTO>> bomRestoreAndSave(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<BatchResultDTO> batchResultDTOList = soB2cSplitService.bomRestoreAndSave(idDTO.getIds());
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
 }

@@ -6,7 +6,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.SoB2cLabelEntity;
 import com.erp.server.oms.mapper.SoB2cLabelMapper;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cLabelService;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +31,6 @@ import java.util.stream.Collectors;
 public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, SoB2cLabelEntity> implements SoB2cLabelService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

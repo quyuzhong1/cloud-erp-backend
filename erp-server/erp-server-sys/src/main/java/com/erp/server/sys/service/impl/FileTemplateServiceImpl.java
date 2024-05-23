@@ -3,29 +3,22 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.core.file.FileUpload;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
-import com.erp.model.wms.dto.excel.QcReportDetailImportExcelDTO;
 import com.erp.server.sys.mapper.FileTemplateMapper;
 import com.erp.server.sys.service.FileTemplateService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.sys.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.FileTemplateDTO;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.servlet.http.HttpServletResponse;
+import java.util.Optional;
 
 /**
  * <p>
@@ -39,8 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 @Service
 public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper, FileTemplateEntity> implements FileTemplateService {
 
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

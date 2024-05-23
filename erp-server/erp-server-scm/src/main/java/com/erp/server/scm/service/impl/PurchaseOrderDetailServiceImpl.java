@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -88,9 +89,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
@@ -325,22 +323,26 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
      */
     private void checkPurchasePrice (List<PurchaseOrderDetailDTO.AddDTO> details,String purchaseOrderId) {
 
-        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
-        if (ObjectUtils.isEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98036);
-        }
-        //验证录入的SKU明细报价信息是否正确
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !Boolean.TRUE.equals(obj.getIsGift())).map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(priceList)) {
-            return;
-        }
         PurchaseOrderEntity entity = purchaseOrderService.getById(purchaseOrderId);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
 
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        //验证录入的SKU明细报价信息是否正确
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !Boolean.TRUE.equals(obj.getIsGift()))
+                .map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId(),entity.getPurchaseOrgId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(priceList)) {
+            return;
+        }
+
         for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = priceList.stream().filter(obj -> obj.getSkuId().equals(addDTO.getSkuId()) && MathUtil.compareTo(addDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO).findFirst().orElse(null);
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = priceList.stream().filter(obj -> obj.getSkuId().equals(addDTO.getSkuId()) && MathUtil.compareTo(addDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO)
+                    .findFirst().orElse(null);
             if (ObjectUtils.isEmpty(priceDTO)) {
                 continue;
             }
@@ -598,7 +600,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (CollectionUtils.isEmpty(detailIdList)) {
             return;
         }
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         lambdaUpdate().in(PurchaseOrderDetailEntity::getId,detailIdList)
                 .set(PurchaseOrderDetailEntity::getExecutionStatus, typeEnum.getCode())
                 .set(PurchaseOrderDetailEntity::getConfirmRemark,remark)

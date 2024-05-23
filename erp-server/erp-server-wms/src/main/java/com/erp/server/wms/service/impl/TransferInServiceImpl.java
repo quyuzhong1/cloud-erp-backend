@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -14,6 +13,7 @@ import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -24,7 +24,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -82,9 +81,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private WarehouseService warehouseService;
@@ -319,7 +315,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         //意见
         String comment = dto.getComment();
         String content = "";
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
         if (dto.getType().equals(ApproveType.PASS)) {
             handleData(ids);

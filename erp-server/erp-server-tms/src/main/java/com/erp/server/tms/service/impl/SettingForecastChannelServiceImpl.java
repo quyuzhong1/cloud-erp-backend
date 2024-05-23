@@ -41,10 +41,6 @@ import java.util.stream.Stream;
 @Service
 public class SettingForecastChannelServiceImpl extends SuperServiceImpl<SettingForecastChannelMapper, SettingForecastChannelEntity> implements SettingForecastChannelService {
     @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
-    @Autowired
     private LogisticsChannelService logisticsChannelService;
 
 

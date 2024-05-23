@@ -6,32 +6,30 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
 import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.sys.entity.KingdeeOperatorRefPostEntity;
-import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeOperatorRefPostMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
-import com.erp.server.sys.service.*;
+import com.erp.server.sys.service.KingdeeOperatorRefPostService;
+import com.erp.server.sys.service.KingdeeUserRefPostService;
+import com.erp.server.sys.service.SysAccountingCompanyService;
+import com.erp.server.sys.service.SysUserInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -40,7 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,10 +66,6 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
 
     @Autowired
     private SysUserInfoService sysUserInfoService;
-
-
-    @Resource
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -275,7 +268,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     public List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
         List<UserInfoDTO.BusinessOperationUserDTO> resultList = new ArrayList<>(10);
         List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listInfo(dto);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         UserInfoDTO.BusinessOperationUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
         if (findUser != null) {
             findUser.setIsMyState(1);

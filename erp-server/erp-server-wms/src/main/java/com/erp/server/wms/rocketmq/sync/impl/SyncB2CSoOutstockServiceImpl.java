@@ -1,7 +1,10 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -20,6 +23,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.InventoryTransCoreService;
 import com.erp.server.wms.service.SoOutstockService;
@@ -36,6 +40,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -63,6 +68,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private CustomerFeign customerFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 同步金蝶的销售出库单
@@ -131,6 +139,13 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
         //金蝶的仓库code
         List<String> kingdeeWarehouseCodeList = kingdeeDetailList.stream().map(KingdeeDeliveryDetailItemEntity::getFStockNumber).distinct().collect(Collectors.toList());
+        //仓库的
+        List<WarehouseEntity> warehouseList = warehouseService.listByKingdeeCodeList(kingdeeWarehouseCodeList);
+        //组织信息
+        List<String> warehouseOrgIdList = warehouseList.stream().map(req -> req.getOrgId()).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(warehouseOrgIdList);
+
+
         /**
          * sku no list
          */
@@ -159,8 +174,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setWarehouseKeeperName(warehouseKeeperName);
         soOutstock.setApproveStatus(statusEnum);
         soOutstock.setSourceType(sourceType);
-        String warehouseOrgId = "";
-        soOutstock.setWarehouseOrgId(warehouseOrgId);
+        soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
         LocalDate billDate = null;
         String billDateStr = entity.getFDate();
         if (StringUtils.isNotBlank(billDateStr)) {
@@ -203,10 +217,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
             String warehouseId = "";
             String warehouseName = "";
-            //表示要
+            String warehouseOrgId = "";
+            String warehouseOrgName = "";
+            //表示要扣除库存
             if (isDeduction) {
-                //仓库的
-                List<WarehouseEntity> warehouseList = warehouseService.listByKingdeeCodeList(kingdeeWarehouseCodeList);
                 WarehouseEntity warehouse = warehouseList.stream().filter(w -> w.getKingdeeWarehouseCode().
                         equals(fStockNumber)).findFirst().orElse(null);
                 //并且扣库存 才执行
@@ -215,13 +229,20 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 } else {
                     warehouseId = warehouse.getId();
                     warehouseName = warehouse.getName();
+                    warehouseOrgId = warehouse.getOrgId();
+
+                    BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(req -> req.getId().equals(warehouse.getOrgId())).findFirst().orElse(null);
+                    if (ObjectUtil.isNotEmpty(codeDTO)) {
+                        warehouseOrgName = codeDTO.getName();
+                    }
+
+                    //设置主表仓库和组织
+                    soOutstock.setWarehouseId(warehouseId);
+                    soOutstock.setWarehouseName(warehouseName);
+                    soOutstock.setWarehouseOrgId(warehouseOrgId);
+                    soOutstock.setWarehouseOrgName(warehouseOrgName);
                 }
-            }
-            detailEntity.setWarehouseId(warehouseId);
-            detailEntity.setWarehouseName(warehouseName);
-            addDetailList.add(detailEntity);
-            //要扣除库存
-            if (isDeduction) {
+
                 InOutStockDTO inOutStock = new InOutStockDTO();
                 inOutStock.setSourceId(id);
                 inOutStock.setSourceDetailId(detailId);
@@ -234,7 +255,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 inOutStock.setWarehouseId(warehouseId);
                 inOutStockList.add(inOutStock);
             }
-
+            detailEntity.setWarehouseId(warehouseId);
+            detailEntity.setWarehouseName(warehouseName);
+            addDetailList.add(detailEntity);
         }
 
         soOutstock.setDetailList(addDetailList);

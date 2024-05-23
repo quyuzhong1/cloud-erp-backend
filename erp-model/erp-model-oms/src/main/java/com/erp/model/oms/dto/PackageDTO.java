@@ -1,12 +1,12 @@
 package com.erp.model.oms.dto;
 
-import com.alibaba.fastjson.JSONObject;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -83,6 +83,10 @@ public class PackageDTO implements Serializable {
          * 渠道物流商名
          */
         private String logisticsSupplierName;
+        /**
+         * 物流商简称
+         */
+        private String logisticsSupplierShortName;
 
         /**
          * 组包状态
@@ -98,6 +102,41 @@ public class PackageDTO implements Serializable {
          * 称重状态
          */
         private String weightStatus;
+
+        /**
+         * 中转物流商Id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转物流商中文名
+         */
+        private String transferLogisticsSupplierName;
+
+        /**
+         * 是否自动出库
+         */
+        private Boolean isAutoOut;
+
+        /**
+         * 预报状态
+         */
+        private String forcastStatus;
+
+        /**
+         * 中转商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转商渠道名
+         */
+        private String transferLogisticsChannelName;
+
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
     }
 
     /**
@@ -115,12 +154,18 @@ public class PackageDTO implements Serializable {
         /**
          * 重量
          */
+        @Digits(integer = 16,fraction = 4,message = "重量最大16位数，小数位不能大于4位数")
         private BigDecimal weight;
 
         /**
          * 重量单位
          */
         private String weightUnit;
+
+        /**
+         * 是否自动出库
+         */
+        private Boolean isAutoOut;
     }
 
     /**
@@ -211,6 +256,11 @@ public class PackageDTO implements Serializable {
         private String logisticsSupplierName;
 
         /**
+         * 物流商简称
+         */
+        private String logisticsSupplierShortName;
+
+        /**
          * 收件人
          */
         private String receiverName;
@@ -224,5 +274,43 @@ public class PackageDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+
+        /**
+         * 中转物流商Id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转物流商中文名
+         */
+        private String transferLogisticsSupplierName;
+
+        /**
+         * 中转商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转商渠道名
+         */
+        private String transferLogisticsChannelName;
+    }
+
+
+    /**
+     * 组包预报
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergePackageDTO{
+        /**
+         * 单据id
+         */
+        private List<String> ids;
+
+        /**
+         * 是否自动出库
+         */
+        private Boolean isAutoOut;
     }
 }

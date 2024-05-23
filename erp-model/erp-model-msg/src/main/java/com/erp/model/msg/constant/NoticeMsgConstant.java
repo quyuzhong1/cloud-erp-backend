@@ -30,5 +30,13 @@ public interface NoticeMsgConstant {
      */
     String QC_BACK_FILL_PACK_CONTENT = "**所属SKU：{}\n**更新数据：产品尺寸{}；箱规{}；净重{}；单箱数量{}\n发生时间：{}";
 
+    /**
+     * 质检通知消息头
+     */
+    String FS_QC_SETTING_HEAD="总计质检单{}，已质检{}【{}】，未质检{}；累计未质检{}，累计超时质检{}";
 
+    /**
+     * 质检通知消息体
+     */
+    String FS_QC_SETTING_CONTENT="**通知类型：{}\n**推送时间：{}";
 }

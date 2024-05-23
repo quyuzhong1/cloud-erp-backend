@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,6 +49,8 @@ public class DropDownListController extends BaseController {
     @GetMapping("/dict/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("key") String key) {
         List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
+        //list 根据sort排序
+        list = list.stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
         List<BaseDropDownDTO.CommonDTO> result = list.stream()
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
                 .collect(Collectors.toList());

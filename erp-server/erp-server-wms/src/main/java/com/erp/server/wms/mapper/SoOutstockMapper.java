@@ -5,17 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
-import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -64,6 +61,9 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     Integer listCount(@Param("params") SoOutstockDTO.PagingParamDTO params);
 
 
+    Integer pdaListCount(@Param("params") SoOutstockDTO.PagingParamDTO params);
+
+
     /**
      * 临时接口批量更新
      * @param soOutstockList
@@ -85,7 +85,7 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @param params
      * @return
      */
-    List<WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params , @Param("pageSize") Integer pageSize);
+    List<Map<String, String>> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params);
 
     Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.SoOutstockDTO params);
 
@@ -110,4 +110,10 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics( FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
+    /**
+     * @description: 查询需要生成物流单的数据
+     * @author Will
+     * @date: 2024/5/20 18:22
+     */
+    List<SoOutstockEntity>  listRecoveryLogisticsBill();
 }

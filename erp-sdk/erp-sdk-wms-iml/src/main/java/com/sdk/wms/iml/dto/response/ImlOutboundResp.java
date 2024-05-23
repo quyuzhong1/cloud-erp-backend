@@ -6,8 +6,6 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -31,4 +29,8 @@ public class ImlOutboundResp extends CleanBaseDTO implements Serializable {
     //出库时间
     @JSONField(name = "date_shipping")
     private LocalDateTime outBoundTime;
+
+    //跟踪号
+    @JSONField(name = "tracking_no")
+    private String trackNo;
 }

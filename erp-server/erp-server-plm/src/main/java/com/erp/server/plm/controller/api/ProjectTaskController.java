@@ -139,6 +139,12 @@ public class ProjectTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "项目任务-编辑任务")
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:task:update",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "id"
+    )
     public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = projectTaskService.updateTask(dto);
         return flag == true ? success() : failure();

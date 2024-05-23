@@ -1,17 +1,20 @@
 package com.erp.server.bi.controller.api;
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.bi.dto.*;
+import com.erp.model.bi.dto.CopySubjectDTO;
+import com.erp.model.bi.dto.MyDashboardDTO;
+import com.erp.model.bi.dto.SubjectDTO;
+import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
 import com.erp.server.bi.service.BiSubjectDefaultService;
 import com.erp.server.bi.service.BiSubjectService;
-import com.erp.server.bi.service.CommonService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,10 +39,6 @@ public class BiDashboardController extends BaseController {
 
     @Resource
     private BiSubjectDefaultService subjectDefaultService;
-
-
-    @Resource
-    private CommonService commonService;
 
 
     /**
@@ -91,7 +90,7 @@ public class BiDashboardController extends BaseController {
      */
     @GetMapping("/my/list")
     public ApiResult<MyDashboardDTO> setShare(String searchKeyword) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         MyDashboardDTO myDashboard = subjectService.myDashboard(userId, searchKeyword);
         return success(myDashboard);
     }

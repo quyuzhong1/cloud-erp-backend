@@ -49,11 +49,6 @@ public class ProductDetailShowDTO implements Serializable {
     private String name;
 
     /**
-     * 产品名称(英文)
-     */
-    private String nameEN;
-
-    /**
      * 首批到货量
      */
     private String actualArrivalQty;
@@ -314,9 +309,13 @@ public class ProductDetailShowDTO implements Serializable {
     private Boolean isCombination;
 
     /**
-     * 仓位
+     * 仓位-推荐仓位(小货区)
      */
     private String warehouseLocation;
+    /**
+     * 推荐仓位(大货区)
+     */
+    private String warehouseLocationLarge;
 
     /**
      * 产品类型，ProductTypeEnum枚举，/plm/dict/list?type=productType

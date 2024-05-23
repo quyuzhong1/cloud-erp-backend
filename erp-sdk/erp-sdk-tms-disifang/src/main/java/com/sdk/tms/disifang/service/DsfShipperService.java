@@ -146,9 +146,8 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String result = ApiHttpClientUtils.apiJsonPostUrl(param, JSONUtil.toJsonStr(orderRequest), url);
-        ResponseMsg responseMsg = JSONObject.parseObject(result, ResponseMsg.class);
-        //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
-        return responseMsg;
+        log.info("下单完成：{}",JSONObject.toJSONString(result));
+        return JSONObject.parseObject(result, ResponseMsg.class);
     }
 
     /**

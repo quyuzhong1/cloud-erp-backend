@@ -14,17 +14,17 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
-import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -33,7 +33,6 @@ import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.ShippingTemplateCityExcelListener;
@@ -41,19 +40,20 @@ import com.erp.server.tms.listener.ShippingTemplateExcelListener;
 import com.erp.server.tms.mapper.ShippingTemplateMapper;
 import com.erp.server.tms.mapper.ShippingTemplateRuleMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -61,15 +61,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -85,9 +76,6 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
     @Autowired
     private OperateLogService operateLogService;
-
-    @Autowired
-    private CommonService commonService;
 
     @Resource
     private ShippingTemplateRefChannelService shippingTemplateRefChannelService;
@@ -166,7 +154,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         shippingTemplateOtherCostService.add(addDTO.getOtherCostList(),shippingTemplateEntity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", commonService.getUserInfo().getUserName(), "运费模板" , shippingTemplateEntity.getName());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", UserContext.getDefaultLoginUser().getUserName(), "运费模板" , shippingTemplateEntity.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), shippingTemplateEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(shippingTemplateEntity.getId(), shippingTemplateEntity.getId());
@@ -196,7 +184,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         // 记录主单操作日志
         log.info("编辑 开始记录运费模板日志数据，id：【{}】", shippingTemplateEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), shippingTemplateEntity.getName(), "运费模板");
+        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), shippingTemplateEntity.getName(), "运费模板");
 
         operateLogService.addModuleOperateLogByObj(old, shippingTemplateEntity, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), shippingTemplateEntity.getId(), msg);
         return Boolean.TRUE;
@@ -268,7 +256,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             channelNames = channelList.stream().map(LogisticsChannelEntity::getName).collect(Collectors.joining(","));
         }
         //添加日志
-        String msg = StrUtil.format("用户【{}】应用渠道【{}】", commonService.getUserInfo().getUserName(),  channelNames);
+        String msg = StrUtil.format("用户【{}】应用渠道【{}】", UserContext.getDefaultLoginUser().getUserName(),  channelNames);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "应用渠道操作");
         return Boolean.TRUE;
     }
@@ -290,7 +278,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         // 启用/停用日志数据
         log.info("启用/停用 开始启用/停用运费模板单日志数据，id集合：【{}】", id);
-        String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "运费模板",disabled ? "停用" : "启用");
+        String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "运费模板",disabled ? "停用" : "启用");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "启用/停用");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
     }
@@ -314,7 +302,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         removeById(id);
         // 删除日志数据
         log.info("删除 开始删除运费模板单日志数据，id集合：【{}】", id);
-        String msg = StrUtil.format("用户【{}】名称【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "运费模板");
+        String msg = StrUtil.format("用户【{}】名称【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "运费模板");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "删除运费模板单数据");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
     }

@@ -74,6 +74,7 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<String> createOrder(CreateOrderInfo createOrderInfo){
+        createOrderInfo.getOrderProduct().forEach(v->v.setCurrencyCode("USD"));
         log.info("==========BaoHongService.createOrder==========start");
         log.info("createOrderInfo:{}",createOrderInfo);
         TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(createOrderInfo));
@@ -86,6 +87,20 @@ public class BaoHongService {
         Holder<List<String>> skuHolder  = new Holder<>();
         service.createOrder(headerRequest,createOrderInfo,askHolder,messageHolder,orderCodeHolder,error,skuHolder);
         return BaoHongUtils.buildBaseResponse(askHolder,messageHolder,error,orderCodeHolder.value);
+    }
+
+    /**
+     * 取消订单
+     * @return
+     */
+    public BaoHongResponse<String> cancelOrder(String orderCode,String reason){
+        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(orderCode));
+        HeaderRequest headerRequest = BaoHongUtils.getOrderHeader();
+        ServiceForOrder service = BaoHongUtils.getOrderService();
+        Holder<String> askHolder = new Holder<>();
+        Holder<String> messageHolder = new Holder<>();
+        service.intercept(headerRequest,orderCode,reason,askHolder,messageHolder);
+        return BaoHongUtils.buildBaseResponse(askHolder,messageHolder,"");
     }
 
     /**

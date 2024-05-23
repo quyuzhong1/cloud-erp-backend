@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -74,4 +75,15 @@ public class ProjectInfoEntity extends BaseEntity implements Serializable {
     @TableField("describe")
     private String describe;
 
+    /**
+     * 项目启动日期
+     */
+    @TableField("project_launch_date")
+    private LocalDate projectLaunchDate;
+
+    /**
+     * 项目结项日期
+     */
+    @TableField("project_finish_date")
+    private LocalDateTime projectFinishDate;
 }

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -70,4 +71,8 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     TmsDeclareBillDTO.StatisticsVO statisticsBySoOut(PermissionsDTO permissionsDTO);
 
     Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO dto);
+
+    Boolean autoGenerateFirstMileDeclare(AutoGenerateBillDTO autoGenerateBillDTO);
+
+    Boolean autoGenerateB2bDeclare(AutoGenerateBillDTO autoGenerateBillDTO);
 }

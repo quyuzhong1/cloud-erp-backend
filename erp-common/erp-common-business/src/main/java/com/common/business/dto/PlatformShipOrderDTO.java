@@ -2,15 +2,15 @@ package com.common.business.dto;
 
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PlatformShipOrderDTO {
     /**
      * b2c销售单id

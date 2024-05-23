@@ -230,7 +230,7 @@ public class DmpPushTaskDTO implements Serializable {
     @AllArgsConstructor
     public static class TabListDTO {
         /**
-         * 类型，all全部、2同步中、3同步成功、4同步失败
+         * 类型，all全部、0无需同步、同步中、2同步中、3同步成功、4同步失败
          */
         private String tabFlag;
 

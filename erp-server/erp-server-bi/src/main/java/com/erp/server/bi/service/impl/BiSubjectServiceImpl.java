@@ -8,24 +8,27 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.core.constant.BaseStateConstants;
-import com.common.core.utils.BeanMapper;
-import com.erp.model.bi.entity.*;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.entity.BiDictEntity;
+import com.erp.model.bi.entity.BiSubjectDefaultEntity;
+import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.model.bi.entity.BiSubjectShareEntity;
 import com.erp.model.bi.vo.CategorySubjectVO;
 import com.erp.model.bi.vo.SubjectVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiSubjectMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,9 +64,6 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
     @Resource
     private BiLayoutService layoutService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -111,7 +111,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String name = dto.getName();
         String subjectId = dto.getId();
         String categoryId = dto.getCategoryId();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         //检查名字是否重复
         checkName(subjectId, name);
         BiDictEntity dict = dictService.getById(categoryId);
@@ -151,7 +151,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     @Override
     public Boolean deleteById(String subjectId) {
 
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
 
         BiSubjectEntity subject = this.getById(subjectId);
         if (Objects.isNull(subject)) {
@@ -314,7 +314,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (Objects.isNull(subject)) {
             throw new ServiceException(ApiError.ERROR_97000);
         }
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         checkCanHandle(subject, userId);
         Boolean stateFlag = dto.getState();
         if (stateFlag) {
@@ -359,7 +359,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     @Override
     public List<CategorySubjectVO> homePage(String searchKeyword) {
         List<CategorySubjectVO> resultList = new ArrayList<>(10);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
 
         List<BiDictEntity> dictList = dictService.listEntityByType(DictEnum.DASHBOARD.getType());
         // 查询用户当前角色
@@ -431,8 +431,8 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     public String copy(CopySubjectDTO dto) {
-        String userId = commonService.getUserInfo().getUid();
-        String userName = commonService.getUserInfo().getUserName();
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        String userName = UserContext.getDefaultLoginUser().getUserName();
         LocalDateTime nowDate = LocalDateTime.now();
         String subjectId = dto.getSubjectId();
         BiSubjectEntity subject = this.getById(subjectId);
@@ -526,7 +526,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     @Override
     public List<CategorySubjectDTO> categoryList(String searchKeyword) {
         List<CategorySubjectDTO> resultList = new ArrayList<>(10);
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         String type = DictEnum.DASHBOARD.getType();
         List<BiDictEntity> dictList = dictService.getByType(type);
         //查询到用户可见的专题
@@ -583,7 +583,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     public SubjectLayoutDetailsDTO dashboardInfo() {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         String type = DictEnum.DASHBOARD.getType();
         String dashboardFlag = DictEnum.DASHBOARD.getValue();
         String subjectId = "";
@@ -689,7 +689,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             if (Objects.isNull(subject)) {
                 throw new ServiceException(ApiError.ERROR_97000);
             }
-            String userId = commonService.getUserInfo().getUid();
+            String userId = UserContext.getDefaultLoginUser().getUid();
             checkCanHandle(subject, userId);
         }
 

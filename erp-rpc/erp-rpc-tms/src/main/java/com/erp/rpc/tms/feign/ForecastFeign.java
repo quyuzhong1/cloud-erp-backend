@@ -63,6 +63,9 @@ public interface ForecastFeign {
     @GetMapping("/feign/settingForecast/getSettingForecastByLogisticsSupplierId")
     SettingForecastEntity getSettingForecastByLogisticsSupplierId(@RequestParam("logisticsSupplierId") String logisticsSupplierId);
 
+    @PostMapping("/feign/settingForecast/getSettingForecastByLogisticsSupplierIdList")
+    List<SettingForecastEntity> getSettingForecastByLogisticsSupplierIdList(@RequestBody List<String> logisticsSupplierId);
+
     /**
      * @description: 根据skuId查询备案
      * @author Will

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
@@ -78,6 +79,7 @@ public class PlatformDataThread {
     }
 
     @Async("pullErpOpenApi")
+    @DataIdempotent
     public void cleanOrder(JobTaskDTO jobTaskDTO) {
         try {
             log.info("发起异步调用平台【{}】", jobTaskDTO.getDictPlatform());

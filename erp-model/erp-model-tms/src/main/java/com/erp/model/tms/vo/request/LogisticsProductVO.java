@@ -17,13 +17,17 @@ import java.math.BigDecimal;
 public class LogisticsProductVO  implements Serializable {
 
     //申报单价
-    private BigDecimal price;
+//    private BigDecimal price;
 
     //数量
     private Integer quantity;
 
     //单件重量(单位:g)
     private Integer weight;
+    /**
+     * 毛重
+     */
+    private BigDecimal grossWeight;
 
     //商品链接
     private String url;
@@ -158,7 +162,7 @@ public class LogisticsProductVO  implements Serializable {
      * 交易子单号
      * 速卖通必填
      */
-    private String childOrderId;
+    private Long childOrderId;
     /**
      * 仓库发货属性名称
      */
@@ -171,10 +175,6 @@ public class LogisticsProductVO  implements Serializable {
      * 仓库发货属性名称
      */
     private String scItemName;
-    /**
-     * skuCode
-     */
-    private String skuCode;
     /**
      * sku名称
      */

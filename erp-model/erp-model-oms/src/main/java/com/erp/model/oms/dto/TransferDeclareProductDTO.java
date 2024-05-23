@@ -73,7 +73,7 @@ public class TransferDeclareProductDTO implements Serializable {
     /**
      * 目的国申报币种
      */
-    private String currency;
+//    private String currency;
     /**
      *出口申报价币种符号
      */

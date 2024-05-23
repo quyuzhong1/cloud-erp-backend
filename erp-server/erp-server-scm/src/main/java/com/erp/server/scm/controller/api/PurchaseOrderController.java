@@ -7,8 +7,6 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -25,7 +23,10 @@ import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.server.scm.query.OrderConfirmQueryHandler;
 import com.erp.server.scm.query.PurchaseOrderQueryHandler;
-import com.erp.server.scm.service.*;
+import com.erp.server.scm.service.PurchaseOrderDetailService;
+import com.erp.server.scm.service.PurchaseOrderService;
+import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.erp.server.scm.service.SupplierUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
@@ -43,9 +44,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
-import static com.rtfparserkit.rtf.Command.info;
 
 /**
  * 采购订单管理
@@ -403,13 +401,8 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/viewGenerateReceive")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:viewGenerateReceive",
-            serviceClass = PurchaseOrderService.class,
-            keyIdName = "ids")
-    public ApiResult<List<PurchaseOrderDTO.ViewGenerateReceiveDTO>> viewGenerateReceive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<PurchaseOrderDTO.ViewGenerateReceiveDTO> list = purchaseOrderService.viewGenerateReceive(dto.getIds());
+    public ApiResult<List<PurchaseOrderDTO.ViewGenerateReceiveDTO>> viewGenerateReceive(@RequestBody @Validated PurchaseOrderDTO.PushIdDTO dto) {
+        List<PurchaseOrderDTO.ViewGenerateReceiveDTO> list = purchaseOrderService.viewGenerateReceive(dto.getPurchaseDetailIdList());
         return success(list);
     }
 
@@ -421,13 +414,8 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<List<ViewGenerateReceiveDTO>>
      */
     @PostMapping("/viewGenerateStockIn")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:viewGenerateStockIn",
-            serviceClass = PurchaseOrderService.class,
-            keyIdName = "ids")
-    public ApiResult<List<PurchaseOrderDTO.ViewGenerateStockInDTO>> viewGenerateStockIn(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<PurchaseOrderDTO.ViewGenerateStockInDTO> list = purchaseOrderService.viewGenerateStockIn(dto.getIds());
+    public ApiResult<List<PurchaseOrderDTO.ViewGenerateStockInDTO>> viewGenerateStockIn(@RequestBody @Validated PurchaseOrderDTO.PushIdDTO dto) {
+        List<PurchaseOrderDTO.ViewGenerateStockInDTO> list = purchaseOrderService.viewGenerateStockIn(dto.getPurchaseDetailIdList());
         return success(list);
     }
 
@@ -480,7 +468,7 @@ public class PurchaseOrderController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入采购订单")
     @PostMapping("/importFile")
     public ApiResult<PurchaseOrderDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.purchaseOrderExcelImportDTO excelImportDTO, HttpServletResponse response) {
-        PurchaseOrderDetailDTO.ImportDTO importDTO = purchaseOrderService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(),excelImportDTO.getSupplierId(), response);
+        PurchaseOrderDetailDTO.ImportDTO importDTO = purchaseOrderService.importFile(excelImportDTO, response);
         return success(importDTO);
     }
 
@@ -585,13 +573,8 @@ public class PurchaseOrderController extends BaseController {
      * @return
      */
     @PostMapping("/viewGeneratePurchaseReturnOrder")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:viewGeneratePurchaseReturnOrder",
-            serviceClass = PurchaseOrderService.class,
-            keyIdName = "ids")
-    public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseOrderService.viewGeneratePurchaseReturnOrder(dto.getIds());
+    public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated PurchaseOrderDTO.PushIdDTO dto) {
+        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseOrderService.viewGeneratePurchaseReturnOrder(dto.getPurchaseDetailIdList());
         return success(list);
     }
 

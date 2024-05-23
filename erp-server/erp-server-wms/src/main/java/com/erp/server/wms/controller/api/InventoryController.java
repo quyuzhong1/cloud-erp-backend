@@ -73,6 +73,16 @@ public class InventoryController extends BaseController {
         return success(transactionFlowService.pagingForInv(dto));
     }
 
+    /**
+     * 即时库存详情导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportTransFlow")
+    public void exportTransFlow(@RequestBody InventoryDTO.ExportInvFlowSearchParamDTO dto, HttpServletResponse response) {
+        transactionFlowService.exportTransFlow(dto,response);
+    }
+
 
     /**
      * 出入库流水分页列表

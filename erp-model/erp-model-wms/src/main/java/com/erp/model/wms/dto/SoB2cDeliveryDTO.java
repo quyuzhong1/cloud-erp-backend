@@ -16,7 +16,6 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -267,9 +266,8 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class TabListDTO {
         /**
          * 标识：wms/common/enumDropDown?type=SoB2cDeliveryStatus
-         * 描述：waitHandle:待处理, picking:拣货中, falseShipment:虚假发货, shipped:已发货, cancelDelivery:取消发货
+         * 描述：waitHandle:待处理, picking:拣货中, falseShipment:虚假发货, shipped:已发货, cancelDelivery:取消发货,intercepting ：拦截中
          */
-        @StateEnumValue(clazz = SoB2cDeliveryStatusEnum.class, message = "tab类型有误")
         @NotBlank(message = "tab不能为空")
         private String tabFlag;
 
@@ -370,9 +368,17 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Boolean isPrintPicking;
         /**
+         * 是否打印物流单【可排序】
+         */
+        private Boolean isPrintLogistic;
+        /**
          * 拣货单状态 中文
          */
         private String printPickingName;
+        /**
+         * 打印物流单状态 中文
+         */
+        private String printLogisticName;
         /**
          * 是否验货【可排序】
          */
@@ -443,6 +449,25 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private LocalDateTime finishPrintTime;
 
+        /**
+         * 验货时间【可排序】
+         */
+        private LocalDateTime inspectionTime;
+
+        /**
+         * 称重时间【可排序】
+         */
+        private LocalDateTime weighingTime;
+
+        /**
+         * 平台订单号【可排序】
+         */
+        private String platformCode;
+
+        /**
+         * 订单备注
+         */
+        private String orderRemark;
 
         /**
          * 组包状态  not 不需要  wait 待组包   already 已经组包
@@ -555,6 +580,15 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Integer isTransportNoNum;
         /**
+         * 是否禁用 true 禁用
+         */
+        private Boolean disabled;
+        /**
+         * 错误原因
+         */
+        private String errorMsg;
+
+        /**
          * 详情
          */
         private List<PrintLogisticsWaybillDetailDTO> detailList;
@@ -599,6 +633,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
+        /**
+         * 物流类型
+         */
+        private String logisticType;
     }
 
     /**
@@ -684,6 +722,22 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 详情
          */
         private List<PrintLogisticsWaybillDetailDTO> detailList;
+    }
+
+    /**
+     * 打印物流面单确认
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintLogisticsBillConfirmParam {
+        /**
+         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
+         * logisticsBill: 物流面单，allocateCargoBill：配货单
+         */
+        private String printType;
+
+        private List<String> ids;
     }
 
 

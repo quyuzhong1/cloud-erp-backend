@@ -79,19 +79,15 @@ public class BomChildrenSkuDTO  implements Serializable {
     private String productId;
 
     /**
-     * 产品尺寸
-     */
-    private String productSize;
-    /**
-     * 长度
+     * 产品尺寸长
      */
     private BigDecimal length;
     /**
-     * 宽度
+     * 产品尺寸宽
      */
     private BigDecimal width;
     /**
-     * 高度
+     * 产品尺寸高
      */
     private BigDecimal height;
     /**
@@ -114,6 +110,10 @@ public class BomChildrenSkuDTO  implements Serializable {
     private Integer level;
 
 
+    /**
+     * 图片路径
+     */
+    private String imageUrl;
     /**
      * 数量
      */

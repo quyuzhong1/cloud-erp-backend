@@ -32,6 +32,7 @@ import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.MapCountUtils;
 import com.xxl.job.core.util.GsonTool;
 
@@ -88,7 +89,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             }
             KingdeeReturnOrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -188,7 +189,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
 //        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'C'"));
         queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID," +
                 "FBillTypeID," +

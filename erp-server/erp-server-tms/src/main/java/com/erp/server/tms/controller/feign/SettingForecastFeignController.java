@@ -5,9 +5,12 @@ import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.server.tms.service.SettingForecastService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -46,7 +49,13 @@ public class SettingForecastFeignController {
         return settingForecastService.getSettingForecastByLogisticsSupplierId(logisticsSupplierId);
     }
 
-
+    @PostMapping("/getSettingForecastByLogisticsSupplierIdList")
+    public List<SettingForecastEntity> getSettingForecastByLogisticsSupplierIdList(@RequestBody List<String> logisticsSupplierId){
+        if(CollectionUtils.isEmpty(logisticsSupplierId)){
+            return new ArrayList<>();
+        }
+        return settingForecastService.getSettingForecastByLogisticsSupplierIdList(logisticsSupplierId);
+    }
     /**
      * 根据物流商 有效的设置
      * @description

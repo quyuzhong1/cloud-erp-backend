@@ -57,4 +57,6 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
      * @return void
      */
     void removeTaskRefSkuByTaskId(String taskId);
+
+    void initTaskRefSkuConfig(Boolean deleteOld);
 }

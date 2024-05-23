@@ -123,23 +123,42 @@ public class AliExpressProductService {
         return null;
     }
 
-    public static void main(String[] args) {
-        AliExpressProductService service=new AliExpressProductService();
-        ProductRequest productRequest =ProductRequest.builder().
-                startTime("2023-11-01 00:00:00").
-                endTime("2023-11-03 00:00:00").
-                clientId("502978").
-                clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY").
-                token("500002000383xXYuTpfDpvgviHHR2uUB9yHxEIwiRSF7Dgx9Mz12af849325O8FaLsaz").
-                apiName("aliexpress.postproduct.redefining.findproductinfolistquery").
-                baseUrl("https://api-sg.aliexpress.com")
-                .build();
+//    public static void main(String[] args) {
+//        AliExpressProductService service=new AliExpressProductService();
+//        ProductRequest productRequest =ProductRequest.builder().
+//                startTime("2022-11-23 00:00:00").
+//                endTime("2022-11-25 00:00:00").
+//                clientId("502978").
+//                clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY").
+//                token("50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj").
+//                apiName("aliexpress.postproduct.redefining.findproductinfolistquery").
+//                baseUrl("https://api-sg.aliexpress.com")
+//                .build();
+//
+//        try {
+//            service.listProduct(productRequest,new ArrayList<>());
+//        } catch (ApiException e) {
+//            e.printStackTrace();
+//        }
+//
+//    }
+public static void main(String[] args) {
+    AliExpressProductService service=new AliExpressProductService();
+    ProductRequest productRequest =ProductRequest.builder().
+            startTime("2022-11-23 00:00:00").
+            endTime("2022-11-25 00:00:00").
+            clientId("502978").
+            clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY").
+            token("50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj").
+            apiName("aliexpress.postproduct.redefining.findproductinfolistquery").
+            baseUrl("https://api-sg.aliexpress.com")
+            .build();
 
-        try {
-            service.listProduct(productRequest,new ArrayList<>());
-        } catch (ApiException e) {
-            e.printStackTrace();
-        }
-
+    try {
+        service.getProductInfo(1005004988974205l,productRequest);
+    } catch (ApiException e) {
+        e.printStackTrace();
     }
+
+}
 }

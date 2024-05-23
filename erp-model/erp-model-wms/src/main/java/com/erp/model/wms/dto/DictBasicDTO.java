@@ -42,6 +42,11 @@ public class DictBasicDTO implements Serializable {
         private String type;
 
         /**
+         * type 属性名称
+         */
+        private String typeName;
+
+        /**
          * 名称
          */
         private String name;

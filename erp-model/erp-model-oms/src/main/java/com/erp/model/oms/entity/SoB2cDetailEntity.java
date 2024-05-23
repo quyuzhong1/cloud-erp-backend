@@ -155,6 +155,12 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
 
 
     /**
+     * 拆分的明细id
+     */
+    @TableField("split_detail_id")
+    private String splitDetailId;
+
+    /**
      * 当前净重
      */
     @TableField(exist = false)

@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.tms.aliexpress.model.handover.UserInfo;
 import lombok.Data;
@@ -339,57 +340,14 @@ public class PackageForecastDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * 组包单号
+         * 页面高级查询
          */
-        private String code;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * tabflag
+         * sqlMap 默认key default
          */
-        private String tabFlag;
-
-        /**
-         *  物流商id集合 来源 http://172.16.100.11:3002/project/128/interface/api/26440
-         */
-        private List<String> logisticsSupplierIdList;
-
-        /**
-         * 大包运单号
-         */
-        private String transportNo;
-
-        /**
-         * 交接单号/组包号
-         */
-        private String platformNo;
-
-        /**
-         * 大包交接状态
-         */
-        private List<String> handoverStatusList;
-
-
-        /**
-         * 小包交接状态
-         */
-        private List<String> minHandoverStatusList;
-
-
-        /**
-         * 上传状态 集合  来源 http://172.16.100.11:3002/project/92/interface/api/13147   type=packageForecastUploadStatus
-         */
-        private List<String> uploadStatusList;
-
-        /**
-         * 创建人id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间 集合
-         */
-        private List<LocalDate> createTimeList;
-
+        private Map<String,String> sqlMap;
 
     }
 

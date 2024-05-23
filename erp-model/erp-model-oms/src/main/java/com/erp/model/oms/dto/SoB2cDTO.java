@@ -10,6 +10,7 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -34,6 +35,36 @@ import java.util.Map;
 @NoArgsConstructor
 public class SoB2cDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class MergeTransferDTO {
+
+        /**
+         * 物流商id
+         */
+        private String logisticSupplierId;
+        /**
+         * 物流商id
+         */
+        private String logisticSupplierName;
+
+        /**
+         * 中转物流商id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转渠道id
+         */
+        private String transferChannelId;
+
+        /**
+         * 销售订单
+         */
+        private List<SoB2cEntity> soB2cEntityList;
+    }
 
     /**
      * 状态统计
@@ -100,6 +131,19 @@ public class SoB2cDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportParamDTO extends  PagingParamDTO{
+
+        /**
+         * 导出类型,parentExport(销售套装BOM按父件SKU导出),childExport(销售套装BOM按子件SKU导出)
+         * 字典，/wms/dict/drop/down?type=soB2cExportType
+         */
+        @NotBlank(message = "导出类型不能为空")
+        private String exportType;
+
     }
 
     /**
@@ -176,6 +220,11 @@ public class SoB2cDTO implements Serializable {
         private String countryName;
 
         /**
+         * 国家代号
+         */
+        private String country;
+
+        /**
          * 是否对接了第三方海外仓
          * true 是
          */
@@ -190,6 +239,25 @@ public class SoB2cDTO implements Serializable {
          * 物流渠道名
          */
         private String logisticsChannelName;
+
+        /**
+         * 中转物流商id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转物流商名
+         */
+        private String transferLogisticsSupplierName;
+        /**
+         * 中转物流商渠道id
+         */
+        private String transferLogisticsChannelId;
+
+        /**
+         * 中转物流商渠道名
+         */
+        private String transferLogisticsChannelName;
 
         /**
          * 实际运费(优先实际、没有取预估)
@@ -326,6 +394,25 @@ public class SoB2cDTO implements Serializable {
          * b2c销售订单明细信息
          */
         private List<SoB2cDetailDTO.ListDTO> detailList;
+        /**
+         * 运输状态
+         */
+        private String  trackStatus;
+
+        /**
+         * 运输状态
+         */
+        private String  trackStatusName;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 包装重量单位
+         */
+        private String weightUnit;
     }
 
     @Data
@@ -488,6 +575,10 @@ public class SoB2cDTO implements Serializable {
         @NotNull(message = "明细信息不能为空")
         @Valid
         private List<SoB2cDetailDTO.ViewDTO> detailList;
+        /**
+         * 申报信息
+         */
+        private List<SoB2cDeclareProductDTO.ViewDTO> declareProductList;
     }
 
     /**
@@ -1674,6 +1765,11 @@ public class SoB2cDTO implements Serializable {
          * 是否是系统新增的订单
          */
         private boolean isNewInsertOrder = false;
+
+        /**
+         * 是否是状态变更为取消状态
+         */
+        private boolean isUpdateCancel = false;
     }
 
     /**
@@ -1688,6 +1784,15 @@ public class SoB2cDTO implements Serializable {
 
         private String billStatus;
 
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 销售单号ID
+         */
+        private String soId;
 
 
     }
@@ -1807,6 +1912,12 @@ public class SoB2cDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+
+        /**
+         * 是否平台订单
+         */
+        private Boolean hasPlatformWarehouseOrder;
+
     }
 
     /**
@@ -1843,6 +1954,11 @@ public class SoB2cDTO implements Serializable {
          * 取值：SoB2cAbnormalTypeEnum
          */
         private String abnormalType;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 
@@ -2018,6 +2134,12 @@ public class SoB2cDTO implements Serializable {
          */
         private Integer qty;
 
+
+        /**
+         * SKU数量
+         */
+        private Integer skuQty;
+
         /**
          * 产品skuId
          */
@@ -2093,6 +2215,15 @@ public class SoB2cDTO implements Serializable {
          */
         private String countryName;
 
+        /**
+         * 可用数量
+         */
+        private Integer useableQty;
+
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
 
         /**
          * 订单分类名称
@@ -2290,5 +2421,34 @@ public class SoB2cDTO implements Serializable {
         private String getHeightStr () {
             return this.height.stripTrailingZeros().toPlainString();
         }
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RemarkDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CostPriceDTO {
+        /**
+         * 修复开始时间
+         */
+        private LocalDate startTime;
+
+        private List<String> ids;
     }
 }

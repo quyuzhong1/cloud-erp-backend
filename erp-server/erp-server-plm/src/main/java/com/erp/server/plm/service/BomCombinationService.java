@@ -61,7 +61,14 @@ public interface BomCombinationService {
      * @author Will
      * @date: 2023/8/17 14:08
      * @param response
-
      */
     void downloadTemplate(HttpServletResponse response);
+    /**
+     * @description: 验证BOM是否重复
+     * @author Will
+     * @date: 2024/4/12 16:15
+     * @param dto
+     * @return String
+     */
+    String checkBomChildSku(BomCombinationDTO.CheckBomParentSkuDTO dto);
 }

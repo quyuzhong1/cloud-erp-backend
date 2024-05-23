@@ -14,7 +14,7 @@
             round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
             round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
-        INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
+        INNER JOIN dmp_order_item_split doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -118,7 +118,7 @@
             round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
             round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
-        INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
+        INNER JOIN dmp_order_item_split doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -223,7 +223,7 @@
             round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
             round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
-        INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
+        INNER JOIN dmp_order_item_split doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -328,7 +328,7 @@
             round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
             round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
-        INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
+        INNER JOIN dmp_order_item_split doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -426,7 +426,7 @@
             round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
             round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
-        INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
+        INNER JOIN dmp_order_item_split doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -525,7 +525,7 @@
         round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
         round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
-        INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
+        INNER JOIN dmp_order_item_split doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -624,7 +624,7 @@
         round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
         round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
-        INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
+        INNER JOIN dmp_order_item_split doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -724,7 +724,7 @@
         round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
         round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
-        INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
+        INNER JOIN dmp_order_item_split doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -823,7 +823,7 @@
         round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
         round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
-        INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
+        INNER JOIN dmp_order_item_split doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id

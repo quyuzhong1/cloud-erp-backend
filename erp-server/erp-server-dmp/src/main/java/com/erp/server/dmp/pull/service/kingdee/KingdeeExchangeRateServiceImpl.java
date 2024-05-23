@@ -27,6 +27,8 @@ import com.erp.model.dmp.kingdee.KingdeeExchangeRateEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -85,7 +87,7 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
             }
             KingdeeExchangeRateEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -171,7 +173,7 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
         queryFilters.add(StrUtil.format("FUseOrgId.FNumber = '100'"));
         //现在只查固定汇率
         queryFilters.add(StrUtil.format("FRATETYPEID.FNumber = 'HLTX01_SYS'"));
-        queryFilters.add(StrUtil.format("((FForbidDate >= '{}' and FForbidDate < '{}') or (FAuditDate >= '{}' and FAuditDate < '{}') or FAuditDate is null)",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format("((FForbidDate >= '{}' and FForbidDate < '{}') or (FAuditDate >= '{}' and FAuditDate < '{}') or FAuditDate is null)",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
 
         String filterStr = String.join(" and ",  queryFilters );
 

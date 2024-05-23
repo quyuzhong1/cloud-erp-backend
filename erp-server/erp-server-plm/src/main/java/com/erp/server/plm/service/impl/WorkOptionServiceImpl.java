@@ -8,7 +8,6 @@ import com.erp.model.plm.dto.ProductSkuDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.dto.TaskSearchParamDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.plm.mapper.WorkOptionMapper;
 import com.erp.server.plm.service.*;
@@ -31,12 +30,6 @@ public class WorkOptionServiceImpl implements WorkOptionService {
 
     @Resource
     private ProjectTaskService projectTaskService;
-
-    @Resource
-    private CommonService commonService;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
 
     @Resource
     private ProductChangeService productChangeService;

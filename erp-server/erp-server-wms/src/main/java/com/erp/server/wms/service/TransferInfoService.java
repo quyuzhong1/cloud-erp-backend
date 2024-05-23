@@ -11,6 +11,7 @@ import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -202,4 +203,16 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return java.lang.Boolean
      **/
     void requisitionApplicationCancelProcess(String code, String sourceType);
+
+
+    /**
+     * 检查并反审核和删除对应调拨单
+     * @Author Jim
+     * @Date 2024/4/30 15:15
+     * @param sourceCode 来源号
+     * @param sourceType 来源类型
+     * @param billDate 单据日期
+     * @return java.lang.Boolean 处理结果
+     **/
+    Boolean checkHistoryAndDel(String sourceCode,String sourceType, LocalDate billDate);
 }

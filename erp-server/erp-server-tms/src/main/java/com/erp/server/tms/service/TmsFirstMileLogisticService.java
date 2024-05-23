@@ -7,6 +7,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.*;
@@ -139,4 +140,6 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      */
 
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> listAutoGenerateFirstMileReconciliation(LocalDate startDate, LocalDate endDate);
+
+    Boolean autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO);
 }

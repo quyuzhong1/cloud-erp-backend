@@ -13,7 +13,9 @@
         pbs.sku_no as skuNo,
         pbi.type AS type,
         pbs.quantity as quantity,
-        pp.product_size as productSize,
+        pp.product_length as productLength,
+        pp.product_width as productWidth,
+        pp.product_height as productHeight,
         pd.name as skuName,
         pd.unit_name as unitName
         from product_bom_history pbh

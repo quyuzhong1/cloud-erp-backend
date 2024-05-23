@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 //测试 url : https://uat-oms.eminxing.com appToken:  7013991264f611e98ea200e01b680258 appKey 6ff50abf64f611e98ea200e01b680258
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes={GoodCangService.class, GoodCangUtils.class})
-@TestPropertySource(properties = {"warehouse.goodcang.url=uat-oms.eminxing.com"})
+@TestPropertySource(properties = {"warehouse.goodcang.url=https://uat-oms.eminxing.com"})
 public class GoodCangServiceTest {
     @Resource
     private GoodCangService goodCangService;
@@ -44,8 +44,10 @@ public class GoodCangServiceTest {
         GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
                 .page(1)
                 .pageSize(100)
-                .productUpdateTimeFrom("2023-09-26 15:00:00")
-                .productUpdateTimeTo("2023-09-26 16:00:00")
+//                .productUpdateTimeFrom("2023-09-26 15:00:00")
+//                .productUpdateTimeTo("2023-09-26 16:00:00")
+//                .productSku("YDXN5C-001300UK")
+                .productSkuArr(Arrays.asList("M032GBB1","L055GBA1"))
                 .build();
         List<GoodCangSkuResp> respList = new ArrayList<>();
         int page = 1;

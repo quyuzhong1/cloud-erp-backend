@@ -1,5 +1,6 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -42,6 +43,12 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     @TableField("so_code")
     private String soCode;
     /**
+     * 平台订单号
+     */
+    @TableField("platform_code")
+    private String platformCode;
+
+    /**
     * 来源id
     */
     @TableField("source_id")
@@ -83,15 +90,26 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     private Boolean isPrintPicking;
 
     /**
+     * 是否打印物流单
+     */
+    @TableField("is_print_logistic")
+    private Boolean isPrintLogistic;
+
+    /**
      * 完成打印时间
      */
-    @TableField("finish_print_time")
+    @TableField(value = "finish_print_time",updateStrategy = FieldStrategy.IGNORED)
     private LocalDateTime finishPrintTime;
     /**
     * 是否验货
     */
     @TableField("is_inspection")
     private Boolean isInspection;
+    /**
+     * 验货时间
+     */
+    @TableField(value = "inspection_time",updateStrategy = FieldStrategy.IGNORED)
+    private LocalDateTime inspectionTime;
     /**
     * 是否称重
     */
@@ -117,6 +135,12 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     */
     @TableField("weight")
     private BigDecimal weight;
+    /**
+     * 称重时间
+     */
+    @TableField(value = "weighing_time",updateStrategy = FieldStrategy.IGNORED)
+    private LocalDateTime weighingTime;
+
     /**
     * 单位
     */

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
@@ -25,12 +26,10 @@ import com.erp.server.wms.mapper.WarehouseLocationMapper;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -79,6 +78,52 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         return dataList;
     }
 
+    @Override
+    public List<WarehouseLocationDTO.WarehouseLocationListDTO> selectByWarehouseIds(List<String> warehouseIds) {
+        if (CollUtil.isEmpty(warehouseIds)) {
+            return Lists.newArrayList();
+        }
+        List<WarehouseLocationEntity> list = lambdaQuery().in(WarehouseLocationEntity::getWarehouseId, warehouseIds).list();
+        if (CollUtil.isEmpty(list)) {
+            return Lists.newArrayList();
+        }
+        Map<String, List<WarehouseLocationEntity>> warehouseLocationMap = list.stream().collect(Collectors.groupingBy(WarehouseLocationEntity::getWarehouseId));
+        List<WarehouseLocationDTO.WarehouseLocationListDTO> resultList = Lists.newArrayListWithExpectedSize(warehouseLocationMap.size());
+        List<String> warehouseList = warehouseIds.stream().distinct().collect(Collectors.toList());
+        //填充仓库及仓位
+        for (String warehouseId : warehouseList) {
+            WarehouseLocationDTO.WarehouseLocationListDTO warehouseLocationListDTO = new WarehouseLocationDTO.WarehouseLocationListDTO();
+            warehouseLocationListDTO.setWarehouseId(warehouseId);
+            List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationMap.get(warehouseId);
+            List<WarehouseLocationDTO.LocationListDTO> dataList;
+
+            if (CollectionUtils.isNotEmpty(warehouseLocationList)) {
+                dataList = Lists.newArrayListWithExpectedSize(warehouseLocationList.size());
+                // 让空仓位排前面
+                warehouseLocationList = warehouseLocationList.stream().sorted(Comparator.comparing(WarehouseLocationEntity::getCode)).collect(Collectors.toList());
+                warehouseLocationList.stream().forEach(warehouseLocation -> {
+                    WarehouseLocationDTO.LocationListDTO data = new WarehouseLocationDTO.LocationListDTO();
+                    data.setId(warehouseLocation.getId());
+                    data.setCode(warehouseLocation.getCode());
+                    data.setName(warehouseLocation.getName());
+                    data.setStatus(warehouseLocation.getStatus());
+                    WarehouseLocationStatusEnum warehouseLocationStatus = WarehouseLocationStatusEnum.getByCode(data.getStatus());
+                    data.setStatusName(WarehouseLocationStatusEnum.getName(data.getStatus()));
+                    data.setCanCheck(Boolean.TRUE);
+                    if (Objects.equals(warehouseLocation.getDisabled(), Boolean.TRUE) || Objects.equals(warehouseLocationStatus, WarehouseLocationStatusEnum.STOP)) {
+                        data.setCanCheck(Boolean.FALSE);
+                    }
+                    dataList.add(data);
+                });
+            } else {
+                dataList = new ArrayList<>();
+            }
+            warehouseLocationListDTO.setLocationList(dataList);
+            resultList.add(warehouseLocationListDTO);
+        }
+        return resultList;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void quoteLocation(List<String> ids) {
@@ -121,6 +166,13 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public WarehouseLocationEntity findByWarehouseIdAndCode(String warehouseId, String code) {
         LambdaQueryWrapper<WarehouseLocationEntity> lambdaQuery = new LambdaQueryWrapper<WarehouseLocationEntity>().eq(WarehouseLocationEntity::getWarehouseId, warehouseId).eq(WarehouseLocationEntity::getCode, code)
+                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).last("limit 1");
+        return baseMapper.selectOne(lambdaQuery);
+    }
+    @Override
+    public WarehouseLocationEntity findLocationById(String id) {
+        LambdaQueryWrapper<WarehouseLocationEntity> lambdaQuery = new LambdaQueryWrapper<WarehouseLocationEntity>()
+                .eq(WarehouseLocationEntity::getId, id)
                 .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).last("limit 1");
         return baseMapper.selectOne(lambdaQuery);
     }
@@ -293,5 +345,35 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode())
                 .last("limit 1")
                 .one();
+    }
+
+    @Override
+    public PagingVO<WarehouseLocationDTO.LocationListDTO> pagingSelect(PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO) {
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        WarehouseLocationDTO.SelectDTO params = searchDTO.getParams();
+        IPage<WarehouseLocationDTO.LocationListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<WarehouseLocationDTO.LocationListDTO> records = pagResult.getRecords();
+        handleSelect(records);
+        return new PagingVO<>(pagResult);
+    }
+
+
+    /**
+     * @description: 下拉数据处理
+     * @author Will
+     * @date: 2024/5/16 15:49
+     * @param records
+     */
+    private void handleSelect (List<WarehouseLocationDTO.LocationListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        for (WarehouseLocationDTO.LocationListDTO locationListDTO: records) {
+            locationListDTO.setStatusName(WarehouseLocationStatusEnum.getName(locationListDTO.getStatus()));
+            locationListDTO.setCanCheck(Boolean.TRUE);
+            if(Objects.equals(locationListDTO.getDisabled(), Boolean.TRUE) || Objects.equals(locationListDTO.getStatus(), WarehouseLocationStatusEnum.STOP.getCode())) {
+                locationListDTO.setCanCheck(Boolean.FALSE);
+            }
+        }
     }
 }

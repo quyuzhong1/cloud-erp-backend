@@ -12,6 +12,7 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.server.tms.service.LogisticsBillCostService;
@@ -85,6 +86,18 @@ public class LogisticsBillFeignController {
     public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@RequestBody List<String> sourceIdList) {
         List<LogisticsBillDTO.LogisticsBillVo> flag = logisticsBillService.listLogisticsBillVoBySourceIds(sourceIdList);
         return flag;
+    }
+    /**
+     * 根据来源信息获取最大的运输状态
+     *
+     * @param billVoList 来源信息
+     * @return List<LogisticsBillDTO.LogisticsBillVo>
+     * @author hyj
+     * @date 2024/5/11 10:39
+     */
+    @PostMapping("/getTrackStatusByTrackNo")
+    public List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTransportNo(@RequestBody List<LogisticsBillDTO.LogisticsBillVo> billVoList) {
+        return logisticsBillService.getTrackStatusByTrackNo(billVoList);
     }
 
     /**
@@ -247,5 +260,17 @@ public class LogisticsBillFeignController {
     @PostMapping("/removeLogisticsBillBySourceId")
     public Boolean removeLogisticsBillBySourceId(@RequestBody List<String> sourceId) {
         return logisticsBillService.removeLogisticsBillBySourceId(sourceId);
+    }
+
+    /**
+     * @description: 根据销售出库单id集合查询
+     * @author Will
+     * @date: 2024/5/20 16:05
+     * @param outstockIdList
+     * @return List<LogisticsBillEntity>
+     */
+    @PostMapping("/listBySoOutStockIdList")
+    public List<LogisticsBillEntity> listBySoOutStockIdList(@RequestBody List<String> outstockIdList) {
+        return logisticsBillService.listBySoOutStockIdList(outstockIdList);
     }
 }

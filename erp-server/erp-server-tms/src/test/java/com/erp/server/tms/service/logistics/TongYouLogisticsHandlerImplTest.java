@@ -68,7 +68,7 @@ public class TongYouLogisticsHandlerImplTest {
         logisticsProductVO.setEnglishUsage("materi");
         logisticsProductVO.setDeclareChineseName("物流");
         logisticsProductVO.setDeclareEnglishName("mta");
-        logisticsProductVO.setPrice(new BigDecimal("12"));
+        logisticsProductVO.setDestDeclarePrice(new BigDecimal("12"));
         logisticsProductVO.setWeight(1999);
         logisticsProductVO.setQuantity(1);
         logisticsProductVO.setDeclareCurrency("USD");

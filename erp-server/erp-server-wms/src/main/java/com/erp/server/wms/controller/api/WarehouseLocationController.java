@@ -1,9 +1,10 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -14,8 +15,6 @@ import com.erp.server.wms.service.WarehouseLocationService;
 import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 
 import java.util.List;
 
@@ -31,6 +30,20 @@ import java.util.List;
 public class WarehouseLocationController extends BaseController {
 
     private final WarehouseLocationService warehouseLocationService;
+
+
+    /**
+     * 仓位远程查询（分页型）
+     * @author Will
+     * @date: 2024/5/16 15:17
+     * @param dto
+     * @return ApiResult<PagingVO<LocationListDTO>>
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<WarehouseLocationDTO.LocationListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.SelectDTO> dto) {
+        PagingVO<WarehouseLocationDTO.LocationListDTO> pagingVO = warehouseLocationService.pagingSelect(dto);
+        return success(pagingVO);
+    }
 
     /**
      * 获取仓位下拉列表
@@ -48,6 +61,14 @@ public class WarehouseLocationController extends BaseController {
     @PostMapping(value = "/all")
     public ApiResult<List<WarehouseLocationDTO.LocationSelectDTO>> all() {
         return success(warehouseLocationService.all( ));
+    }
+    /**
+     * 批量根据仓库获取仓位
+     * @return
+     */
+    @PostMapping(value = "/selectByWarehouseIds")
+    public ApiResult<List<WarehouseLocationDTO.WarehouseLocationListDTO>> selectByWarehouseIds(@RequestBody ValidList<String> warehouseIds) {
+        return success(warehouseLocationService.selectByWarehouseIds(warehouseIds.getList()));
     }
 
     /**

@@ -31,6 +31,7 @@ public enum LogActionEnum {
     INVALID("invalid", "作废",true),
     ADD_AND_SUBMIT("addAndSubmit", "新增并提交",false),
     UPDATE_AND_SUBMIT("updateAndSubmit", "更新并提交",false),
+    UPDATE_STATUS("updateStatus", "变更状态",true),
     LOGIN("login", "登录",false),
     LOGOUT("logout", "登出",false),
     CUSTOM_UPDATE("customUpdate", "自定义更新",false),

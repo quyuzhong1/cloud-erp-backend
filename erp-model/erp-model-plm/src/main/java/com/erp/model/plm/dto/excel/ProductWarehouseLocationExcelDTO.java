@@ -19,8 +19,14 @@ public class ProductWarehouseLocationExcelDTO implements Serializable {
     /**
      * 仓位
      */
-    @FieldValid(fieldName = "仓位", isNotBlank = true, index = 1)
+    @FieldValid(fieldName = "推荐仓位(小货区)", index = 1)
     private String warehouseLocation;
+
+    /**
+     * 仓位
+     */
+    @FieldValid(fieldName = "推荐仓位(大货区)", index = 2)
+    private String warehouseLocationLarge;
 
     /**
      * 错误信息

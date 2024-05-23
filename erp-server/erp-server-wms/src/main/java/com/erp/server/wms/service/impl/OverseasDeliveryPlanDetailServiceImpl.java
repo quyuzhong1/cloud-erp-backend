@@ -51,8 +51,6 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private OmsListingInfoFeign omsListingInfoFeign;

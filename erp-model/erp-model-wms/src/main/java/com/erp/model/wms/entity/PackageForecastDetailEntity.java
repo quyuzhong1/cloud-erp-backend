@@ -84,7 +84,6 @@ public class PackageForecastDetailEntity extends BaseEntity<PackageForecastDetai
     private String sourceCode;
 
 
-
     public static final String MAIN_ID = "main_id";
 
     public static final String SO_CODE = "so_code";

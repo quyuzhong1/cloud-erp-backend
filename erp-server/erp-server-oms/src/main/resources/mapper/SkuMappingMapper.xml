@@ -269,7 +269,7 @@
         product_sku_no AS skuNo,
         platform_sku_no,
         platform_sku_name
-        FROM sku_maping sm
+        FROM sku_mapping sm
         INNER JOIN
         shop_info si ON sm.shop_id=si.id and si.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE AND sm.is_expire=FALSE

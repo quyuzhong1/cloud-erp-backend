@@ -1,12 +1,12 @@
 package com.erp.rpc.sys.feign.aspect;
 
-import com.common.core.utils.ObjectUtils;
 import com.common.business.annotation.RequestPermissions;
 import com.common.business.dto.UserRequestPermissionsDTO;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
+import com.common.core.utils.ObjectUtils;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -45,17 +45,10 @@ public class RequestPermissionsAspect {
         String permissionsCode = inject.value();
         //当权限code 不为空的时候
         if (StringUtils.isNotBlank(permissionsCode)) {
-            String userId = "";
-            String userName = "";
-            LoginUser userInfo = CommonInterceptor.threadLocal.get();
-            if (Objects.isNull(userInfo)) {
-                userInfo = new LoginUser();
-                userInfo.setUid(userId);
-                userInfo.setUserName(userName);
-            }
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //当用户id 不为空的时候
-            if (StringUtils.isNotBlank(userId)) {
-                List<UserRequestPermissionsDTO> permissionsList = sysUserFeign.getRequestPermissionsList(userId);
+            if (StringUtils.isNotBlank(userInfo.getUid())) {
+                List<UserRequestPermissionsDTO> permissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
                 UserRequestPermissionsDTO permissions = permissionsList.stream().
                         filter(r -> permissionsCode.equals(r.getPermissionsCode())).findFirst().orElse(null);
                 if (Objects.isNull(permissions)) {

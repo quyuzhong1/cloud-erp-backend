@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -93,7 +95,7 @@ public class AliexpressDeliveryDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        private List<AliexpressDeliveryDetailDTO.AddDTO> detailList;
     }
 
     @Data
@@ -170,6 +172,11 @@ public class AliexpressDeliveryDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
         /**
          * 平台订单号
          */
@@ -206,6 +213,26 @@ public class AliexpressDeliveryDTO implements Serializable {
          * 平台发货仓库
          */
         private String warehouseName;
+
+        /**
+         * 平台SKU
+         */
+        private String platformSku;
+
+        /**
+         * 系统SKU
+         */
+        private String skuNo;
+
+        /**
+         * 数量
+         */
+        private String qty;
+
+        /**
+         * 系统已出库
+         */
+        private Boolean isSystemOut;
     }
 
     /**
@@ -215,36 +242,13 @@ public class AliexpressDeliveryDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
         /**
-         * ids
+         * 页面高级查询
          */
-        private List<String> ids;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
         /**
-         * 平台订单号
+         * sqlMap 默认key default
          */
-        private String platformCode;
-        /**
-         * 销售单编号
-         */
-        private String soCode;
-        /**
-         * 店铺id
-         */
-        private List<String> shopIdList;
-        /**
-         * 物流跟踪号
-         */
-        private String trackNo;
-        /**
-         * 订单创建时间
-         */
-        private List<LocalDate> tradeCreateTimeList;
-        /**
-         * 订单出库时间
-         */
-        private List<LocalDate> outBoundTimeList;
-        /**
-         * 平台发货仓库
-         */
-        private String warehouseName;
+        private Map<String, String> sqlMap;
     }
 }

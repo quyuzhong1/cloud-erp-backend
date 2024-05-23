@@ -2,10 +2,14 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.server.wms.kingdee.*;
+import com.erp.server.wms.mabang.SyncMabangMachineService;
+import com.erp.server.wms.mabang.SyncMabangTransferService;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -93,6 +97,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private SyncKingdeeSubcontractIssueService syncKingdeeSubcontractIssueService;
 
+    @Resource
+    private SyncMabangMachineService syncMabangMachineService;
+
+    @Resource
+    private SyncMabangTransferService syncMabangTransferService;
+
     @Override
     public void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
@@ -136,6 +146,59 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 return;
         }
     }
+
+    @Override
+    public void findMaBangDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
+        List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
+        SourceTypeEnum sourceType = syncParamDTO.getSourceType();
+        switch (sourceType) {
+            case MACHINE_INFO:
+                syncMaBangMachineInfo(sourceDetailList);
+                return;
+            case TRANSFER_INFO:
+                syncMaBangTransferInfo(sourceDetailList);
+                return;
+        }
+    }
+
+    /**
+     * 直接调拨单推送马帮
+     */
+    private void syncMaBangTransferInfo(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<TransferInfoEntity> list = transferInfoService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncTransferInfo >>>> 未找到数据！");
+            return;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            TransferInfoEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            syncMabangTransferService.syncDataToMabang(entity,syncParamDetailDTO.getSyncOperate());
+        }
+    }
+
+    /**
+     * 加个单推送马版
+     */
+    private void syncMaBangMachineInfo(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<MachineInfoEntity> list = machineInfoService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncMachineInfo >>>> 未找到数据！");
+            return;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            MachineInfoEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            syncMabangMachineService.syncDataToMabang(entity,syncParamDetailDTO.getSyncOperate());
+        }
+    }
+
 
     /**
      * 仓库
@@ -257,7 +320,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            syncKingdeeSoOutstockService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            //审核通过发送金蝶
+            if (!OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+                syncKingdeeSoOutstockService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            } else {
+                syncKingdeeSoOutstockService.syncB2cDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            }
             syncKingdeeSoOutstockService.syncOrderToDmp(entity,syncParamDetailDTO.getSyncOperate());
         }
     }

@@ -29,6 +29,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.kingdee.KingdeeShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +83,7 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
             }
             KingdeeShopEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -205,7 +206,7 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
         //读取配置，初始化SDK
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
         // 客户类型为店铺
 //        queryFilters.add(String.format("FCustTypeId.FNumber = '%s'", "KHLB004_SYS"));
         String filterStr = String.join(" and ", queryFilters);

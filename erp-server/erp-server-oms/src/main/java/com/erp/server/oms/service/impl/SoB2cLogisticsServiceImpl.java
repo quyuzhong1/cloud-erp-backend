@@ -5,9 +5,11 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.exception.ServiceException;
@@ -28,7 +30,10 @@ import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoB2cLogisticsService;
+import com.erp.server.oms.service.SoB2cReceiverService;
+import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -52,8 +57,6 @@ import java.util.*;
 @Service
 public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMapper, SoB2cLogisticsEntity> implements SoB2cLogisticsService {
 
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -98,7 +101,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         SoB2cEntity soB2cEntity = soB2cService.getById(old.getMainId());
         // 记录主单操作日志
         log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
         return update;
     }
@@ -144,7 +147,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public SoB2cLogisticsEntity getByMainId(String mainId) {
-        return lambdaQuery().eq(SoB2cLogisticsEntity::getMainId, mainId).one();
+        return lambdaQuery().eq(SoB2cLogisticsEntity::getMainId, mainId).last(" limit 1 ").one();
     }
 
     private List<SoB2cLogisticsEntity> getListByMainId(String mainId) {
@@ -196,6 +199,19 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 }
                 return entity;
             } else {
+                // 保留历史
+                if (null != oldEntity.getWeight() && oldEntity.getWeight().compareTo(BigDecimal.ZERO) > 0){
+                    allNetWeight = oldEntity.getWeight();
+                }
+                if (null != oldEntity.getLength() && oldEntity.getLength().compareTo(BigDecimal.ZERO) > 0){
+                    maxLength = oldEntity.getLength();
+                }
+                if (null != oldEntity.getWidth() && oldEntity.getWidth().compareTo(BigDecimal.ZERO) > 0){
+                    maxWidth = oldEntity.getWidth();
+                }
+                if (null != oldEntity.getHeight() && oldEntity.getHeight().compareTo(BigDecimal.ZERO) > 0){
+                    totalHeight  = oldEntity.getHeight();
+                }
                 oldEntity.setWeight(allNetWeight);
                 oldEntity.setLength(maxLength);
                 oldEntity.setWidth(maxWidth);
@@ -249,18 +265,18 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                     }
                 }
                 // 保留历史
-//                if (null != entity.getWeight() && entity.getWeight().compareTo(BigDecimal.ZERO) > 0){
-//                    allNetWeight = entity.getWeight();
-//                }
-//                if (null != entity.getLength() && entity.getLength().compareTo(BigDecimal.ZERO) > 0){
-//                    maxLength = entity.getLength();
-//                }
-//                if (null != entity.getWidth() && entity.getWidth().compareTo(BigDecimal.ZERO) > 0){
-//                    maxWidth = entity.getWidth();
-//                }
-//                if (null != entity.getHeight() && entity.getHeight().compareTo(BigDecimal.ZERO) > 0){
-//                    totalHeight  = entity.getHeight();
-//                }
+                if (null != entity.getWeight() && entity.getWeight().compareTo(BigDecimal.ZERO) > 0){
+                    allNetWeight = entity.getWeight();
+                }
+                if (null != entity.getLength() && entity.getLength().compareTo(BigDecimal.ZERO) > 0){
+                    maxLength = entity.getLength();
+                }
+                if (null != entity.getWidth() && entity.getWidth().compareTo(BigDecimal.ZERO) > 0){
+                    maxWidth = entity.getWidth();
+                }
+                if (null != entity.getHeight() && entity.getHeight().compareTo(BigDecimal.ZERO) > 0){
+                    totalHeight  = entity.getHeight();
+                }
                 entity2.setWeight(allNetWeight);
                 entity2.setLength(maxLength);
                 entity2.setWidth(maxWidth);
@@ -356,8 +372,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
-        String msg = StrUtil.format("用户【{}】更新重量为{} ", commonService.getUserInfo().getUserName(),weightByG+"g");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, msg);
+        if(!MathUtil.isValidNumber(weightByG,12)){
+            throw new ServiceException("重量过大，整数最大值不能超过12位");
+        }
+        String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "【组包称重】");
         return lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)
                 .eq(SoB2cLogisticsEntity::getId, id)
@@ -375,10 +394,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         addDTO.setDetailList(buildDetailList(entity));
         addDTO.setSourceId(mainEntity.getId());
         addDTO.setSourceCode(mainEntity.getPlatformCode());
-        addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+        addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         addDTO.setOutstockId("");
         addDTO.setOutstockCode("");
         addDTO.setChannelId(entity.getLogisticsChannelId());
+        addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
         return addDTO;
     }
 

@@ -6,6 +6,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 
 import java.util.List;
 
@@ -126,4 +127,17 @@ public interface TransferLogisticsChannelService extends SuperService<TransferLo
      * @return java.lang.Boolean
      **/
     Boolean saveOrUpdateChannel(TransferLogisticsChannelEntity transferLogisticsChannelEntity);
+
+    /**
+     * 查询平台单据状态
+     * @Author Luo_WG
+     * @Date 2024/4/24 11:51
+     * @param shippingOrderNo
+     * @param transferLogisticsSupplierId
+     * @return com.erp.model.tms.enums.TransferLogisticsStatusEnum
+     **/
+    TransferLogisticsStatusEnum getPlatformTransferStatus(String shippingOrderNo, String transferLogisticsSupplierId);
+
+
+    List<TransferLogisticsChannelDTO.ListSelectDTO> listByTransferChannelIds(List<String> channelIds);
 }

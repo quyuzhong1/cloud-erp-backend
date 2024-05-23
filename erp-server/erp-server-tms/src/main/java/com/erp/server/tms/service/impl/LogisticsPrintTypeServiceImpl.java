@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
@@ -10,15 +11,11 @@ import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.server.tms.mapper.LogisticsPrintTypeMapper;
 import com.erp.server.tms.service.LogisticsPrintTypeService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 
@@ -100,12 +97,12 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
     public void copy(String channelId, String addChannelId) {
         List<LogisticsPrintTypeEntity> list = listDbByChannelId(channelId);
         if (CollectionUtils.isNotEmpty(list)) {
-            List<LogisticsPrintTypeEntity> addList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
-            addList.forEach(obj ->{
+//            List<LogisticsPrintTypeEntity> addList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
+            list.forEach(obj ->{
                 obj.setLogisticsChannelId(addChannelId);
-                obj.setId("");
+                obj.setId(IdWorker.getIdStr());
             });
-            this.saveBatch(addList);
+            this.saveBatch(list);
         }
     }
 

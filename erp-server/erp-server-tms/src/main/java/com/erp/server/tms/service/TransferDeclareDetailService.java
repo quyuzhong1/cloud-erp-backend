@@ -3,6 +3,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -122,4 +123,11 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @return List<TransferDeclareDetailEntity>
      */
     List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(List<String> logisticsChannelIdList);
+
+    /**
+     * 修改详情上传状态
+     * @param list
+     * @return
+     */
+    Boolean updateTransferStatusByBatch(List<TransferDeclareDTO.UpdateForcastStatusDTO> list);
 }

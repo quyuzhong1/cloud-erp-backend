@@ -4,8 +4,8 @@ import com.common.business.mapper.DateMapperWork;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
@@ -15,7 +15,6 @@ import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
-import com.sdk.wms.iml.enums.ImlEnums;
 import io.seata.common.util.StringUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -73,9 +72,8 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "updateTime", ignore = true),
             @Mapping(target = "updateUserId", ignore = true),
             @Mapping(target = "updateUserName", ignore = true),
-
-            @Mapping(target = "platformProductName",  expression = "java(null == skuMappingView ? \"\" : skuMappingView.getStockSkuName())"),
-            @Mapping(target = "platformSkuNo",  expression = "java(null == skuMappingView ? \"\" : skuMappingView.getStockSku())"),
+            @Mapping(target = "platformProductName",  source = "platformProductName"),
+            @Mapping(target = "platformSkuNo",  source = "detailEntity.platformSkuNo"),
             @Mapping(target = "productName",  source = "detailEntity.productName"),
             @Mapping(target = "skuNo",  source = "detailEntity.skuNo"),
             @Mapping(target = "skuId",  source = "detailEntity.skuId"),
@@ -89,7 +87,7 @@ public interface OverseasWarehouseInboundConverter {
     })
     OverseasWarehouseInboundDetailEntity deliveryDetailToDetail(FirstMileDeliveryDetailEntity detailEntity,
                                                                 OverseasWarehouseInboundEntity mainEntity,
-                                                                SkuMappingDTO.ListStockSkuNoByProductSkuIdView skuMappingView,
+                                                                String platformProductName,
                                                                 String createUserId, String createUserName, LocalDateTime createTime);
 
     @Mappings({
@@ -149,6 +147,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "regionIdLevel0",  source = "collect.collectStateId"),
             @Mapping(target = "regionIdLevel1",  source = "collect.collectCityId"),
             @Mapping(target = "regionIdLevel2",  source = "collect.collectAreaId"),
+            @Mapping(target = "customerType",  source = "declareType"),
             @Mapping(target = "street",  source = "collect.collectStreet"),
             @Mapping(target = "items",  source = "items"),
     })

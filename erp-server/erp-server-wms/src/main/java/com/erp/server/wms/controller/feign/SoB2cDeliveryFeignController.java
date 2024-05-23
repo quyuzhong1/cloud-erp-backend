@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -10,6 +11,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -108,5 +110,39 @@ public class SoB2cDeliveryFeignController extends BaseController {
     public Boolean falseDeliveryBatch(@RequestBody List<String> ids) {
         Boolean flag = soB2cDeliveryService.falseDeliveryBatch(ids);
         return flag;
+    }
+
+
+    /**
+     * 标记发货
+     * @author Will
+     * @date: 2024/4/28 9:35
+     * @param id
+     * @return List<BatchResultDTO>
+     */
+    @PostMapping("/retryFalseDelivery")
+    public List<BatchResultDTO> retryFalseDelivery(@RequestBody String id) {
+        List<BatchResultDTO> list = soB2cDeliveryService.retryFalseDelivery(id);
+        return list;
+    }
+
+    /**
+     * 合并组包发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param soIdList
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/mergePackageDelivery")
+    public Boolean mergePackageDelivery(@RequestBody List<String> soIdList) {
+        return soB2cDeliveryService.mergePackageDelivery(soIdList);
+    }
+
+    /**
+     * 平台标记发货
+     **/
+    @PostMapping("/shipOrder")
+    public Boolean shipOrder(@RequestBody @Validated PlatformShipOrderDTO platformShipOrderDTO) {
+        return soB2cDeliveryService.shipOrder(platformShipOrderDTO);
     }
 }

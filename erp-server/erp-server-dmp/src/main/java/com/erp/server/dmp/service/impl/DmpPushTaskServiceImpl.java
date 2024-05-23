@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -33,7 +34,9 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
@@ -198,6 +201,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         //已归档
         DmpPushTaskDTO.TabListDTO archived = dmpPushTaskHistoryMapper.getStatusCount(dto.getPermissionSql());
         result.add(archived);
+
+        //无需同步
+        DmpPushTaskDTO.TabListDTO noNeedSync = new DmpPushTaskDTO.TabListDTO();
+        noNeedSync.setTabFlag(SyncStatusEnum.NO_NEED_SYNC.getCode());
+        int noNeedSyncCount = countList.stream().filter(a -> a.getTabFlag().equals(noNeedSync.getTabFlag())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        noNeedSync.setCount(noNeedSyncCount);
+        result.add(noNeedSync);
         return result;
     }
 
@@ -267,22 +278,56 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
         }
-        long count = list.stream().filter(obj -> !PlatformEnum.ERP.getDesc().equals(obj.getSourcePlatformName()) || !PlatformEnum.KINGDEE.getDesc().equals(obj.getTargetPlatformName())).count();
+        long count = list.stream().filter(obj -> !PlatformEnum.ERP.getDesc().equals(obj.getSourcePlatformName())
+                || (!PlatformEnum.KINGDEE.getDesc().equals(obj.getTargetPlatformName())
+                && !PlatformEnum.MABANG.getDesc().equals(obj.getTargetPlatformName()))).count();
         if (count > 0) {
-            throw new ServiceException(new ApiResult(10000,"只允许推送自研ERP>>>>金蝶的数据"));
+            throw new ServiceException(new ApiResult(10000,"只允许推送自研ERP>>>>(金蝶、马帮)的数据"));
         }
-        Map<String, List<DmpPushTaskEntity>> map = list.stream().collect(Collectors.groupingBy(DmpPushTaskEntity::getSourceType));
+        Map<String, List<DmpPushTaskEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getTargetPlatformName().concat(obj.getTargetPlatformName())));
         for (Map.Entry<String, List<DmpPushTaskEntity>> entry : map.entrySet()) {
-            String sourceType = entry.getKey();
             List<DmpPushTaskEntity> value = entry.getValue();
+            //来源类型
+            String sourceType = value.get(0).getSourceType();
+            //目的平台
+            String targetPlatformName = value.get(0).getTargetPlatformName();
+
             List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList = value.stream().map(obj -> new DmpSyncMqDTO.SyncParamDetailDTO(obj.getSourceId(), obj.getSyncOperate())).collect(Collectors.toList());
             try {
-                // 发送MQ消息
-                findDataAndSendMq(paramDetailList,sourceType);
+                //金蝶
+                if (PlatformEnum.KINGDEE.getDesc().equals(targetPlatformName)) {
+                    // 发送MQ消息
+                    findKingdeeDataAndSendMq(paramDetailList,sourceType);
+                }
+                //马帮
+                if (PlatformEnum.MABANG.getDesc().equals(targetPlatformName)) {
+                    // 发送MQ消息
+                    findMaBangDataAndSendMq(paramDetailList,sourceType);
+                }
             }catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(sourceType);
                 log.error("从{}推送{}到{}发送消息异常", PlatformEnum.ERP.getDesc(), sourceTypeName, PlatformEnum.KINGDEE.getDesc(), e);
             }
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean batchNoNeedSync(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //获取数据
+        List<DmpPushTaskEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        }
+        List<DmpPushTaskEntity> noNeedSyncIds = list.stream().filter(obj ->
+                        (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))
+                .collect(Collectors.toList());
+        noNeedSyncIds.forEach(dmpPushTaskEntity -> dmpPushTaskEntity.setStatus(SyncStatusEnum.NO_NEED_SYNC.getCode()));
+        if (CollectionUtils.isNotEmpty(noNeedSyncIds)) {
+            updateBatchById(noNeedSyncIds, 500);
         }
         return Boolean.TRUE;
     }
@@ -320,15 +365,16 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             return Boolean.TRUE;
         }
         List<String> parentIdList = Arrays.stream(entity.getParentId().split(",")).collect(Collectors.toList());
-
-        DmpPushTaskEntity dmpPushTaskEntity = this.lambdaQuery().in(DmpPushTaskEntity::getSourceId,parentIdList).last("limit 1").one();
-
-        if (ObjectUtil.isEmpty(dmpPushTaskEntity)) {
+        List<DmpPushTaskEntity> dmpPushTaskEntities = list(Wrappers.<DmpPushTaskEntity>lambdaQuery().in(DmpPushTaskEntity::getSourceId, parentIdList));
+        Integer historyCount = dmpPushTaskHistoryMapper.selectCount(Wrappers.<DmpPushTaskHistoryEntity>lambdaQuery().in(DmpPushTaskHistoryEntity::getSourceId, parentIdList));
+        if (CollectionUtil.isEmpty(dmpPushTaskEntities) && historyCount == 0) {
             entity.setReturnMsg("未找到上级单据推送任务");
             entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
             return Boolean.FALSE;
         }
-        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(dmpPushTaskEntity.getStatus())) {
+        boolean match = dmpPushTaskEntities.stream()
+                .anyMatch(e -> !SyncStatusEnum.SUCCESS_SYNC.getCode().equals(e.getStatus()));
+        if (match) {
             entity.setReturnMsg("上级单据未推送成功，不支持推送下级单据");
             entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
             return Boolean.FALSE;
@@ -338,11 +384,11 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
 
     /**
-     * @description: 重新查询数据发送MQ
+     * @description: 重新查询数据发送金蝶MQ
      * @author Will
      * @date: 2023/10/30 10:03
      */
-    private void findDataAndSendMq (List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList,String sourceType) {
+    private void findKingdeeDataAndSendMq (List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList,String sourceType) {
         SourceTypeEnum sourceTypeEnum = SourceTypeEnum.getEnum(sourceType);
         DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO(paramDetailList,sourceTypeEnum);
         switch (SourceTypeEnum.getEnum(sourceType)) {
@@ -388,6 +434,25 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 return;
         }
     }
+    /**
+     * @description: 重新查询数据发送马帮MQ
+     * @author Will
+     * @date: 2023/10/30 10:03
+     */
+    private void findMaBangDataAndSendMq (List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList,String sourceType) {
+        SourceTypeEnum sourceTypeEnum = SourceTypeEnum.getEnum(sourceType);
+        DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO(paramDetailList,sourceTypeEnum);
+        switch (SourceTypeEnum.getEnum(sourceType)) {
+            case MACHINE_INFO:
+            case TRANSFER_INFO:
+                wmsTaskFeign.findMaBangDataSendSyncTask(syncParamDTO);
+                return;
+            default:
+                return;
+        }
+    }
+
+
 
     /**
      * @description: 列表查询数据格式话

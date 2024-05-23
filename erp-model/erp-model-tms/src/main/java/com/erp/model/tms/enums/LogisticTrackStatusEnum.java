@@ -14,6 +14,9 @@ import org.apache.commons.lang3.StringUtils;
  * @Created by yl
  */
 public enum LogisticTrackStatusEnum implements EnumMessage {
+    /**
+     * 小包
+     */
     WAIT_ORDER("waitOrder","待下单","waitOrder","待下单"),
     ORDERED("ordered","已下单","ordered","已下单"),
     NOT_FIND("notFind","查询不到","notFind","查询不到"),
@@ -25,7 +28,12 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
     SIGN("sign","成功签收","received","已签收"),
     MAYBE_EXCEPTION("maybeException","可能异常","trackException","运输异常"),
     TRANSPORT_LONG("transportLong","运输过久","trackException","运输异常"),
-
+    /**
+     * 海运
+     */
+    OCEAN_TRACK_ING("oceanTrackIng","运输中","trackIng","运输中"),
+    OCEAN_ARRIVE("oceanArrive","已到港","arrive","已到港"),
+    OCEAN_HOLD("oceanHold","查验中","hold","查验中")
     ;
 
 

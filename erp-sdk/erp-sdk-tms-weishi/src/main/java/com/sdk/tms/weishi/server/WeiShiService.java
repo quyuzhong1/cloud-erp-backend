@@ -36,6 +36,7 @@ public class WeiShiService {
         log.info("==========WeiShiService.createOrder==========start");
         log.info("authMap:{}, orderRequest:{}",authMap, request);
         String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.METHOD_CREATE_ORDER,JSONObject.toJSONString(request),authMap.get("clientId"),authMap.get("clientSecret"));
+        log.info("下单完成：{}",JSONObject.toJSONString(response));
         return JSONObject.parseObject(response,WeiShiCreateOrder.class);
     }
     /**

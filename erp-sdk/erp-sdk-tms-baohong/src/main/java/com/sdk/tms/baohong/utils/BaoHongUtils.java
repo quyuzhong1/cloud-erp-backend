@@ -92,6 +92,7 @@ public class BaoHongUtils {
         response.setData(data);
         return response;
     }
+
     public static <T> BaoHongResponse<T> buildBaseResponse(Holder<String> askHolder, Holder<String> messageHolder,T data){
         BaoHongResponse<T> response = new BaoHongResponse<>();
         response.setAsk(askHolder.value);

@@ -1,24 +1,26 @@
 package com.erp.server.dmp.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.DmpSkuCostCustomService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.DmpSkuCostCustomDTO;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.server.dmp.service.DmpOrderItemSplitService;
+import com.erp.server.dmp.service.DmpSkuCostCustomService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * sku自定义成本表
@@ -34,6 +36,8 @@ public class DmpSkuCostCustomController extends BaseController {
 
     @Resource
     private DmpSkuCostCustomService dmpSkuCostCustomService;
+    @Resource
+    private DmpOrderItemSplitService dmpOrderItemSplitService;
 
     /**
     * 新增
@@ -68,5 +72,11 @@ public class DmpSkuCostCustomController extends BaseController {
     }
 
 
+    @GetMapping("/test")
+    public void test(@RequestParam String id){
+        List<DmpOrderItemSplitEntity> itemEntityList = dmpOrderItemSplitService.listByIds(Arrays.asList(id));
+        List<DmpOrderItemSplitEntity> itemEntityList1 = dmpOrderItemSplitService.splitOrderItem(itemEntityList, PlatformEnum.MABANG.getDesc());
+        System.out.println(itemEntityList1);
+    }
 
 }

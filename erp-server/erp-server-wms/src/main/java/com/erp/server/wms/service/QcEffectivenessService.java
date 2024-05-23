@@ -5,6 +5,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * @author Will
@@ -54,4 +55,13 @@ public interface QcEffectivenessService {
      * @return Boolean
      */
     Boolean exportExcel(QcEffectivenessDTO.ExportExcelSearchParamDTO dto, HttpServletResponse response);
+
+    /**
+     * @description: 查询各个状态的质检单数量
+     * @author Will
+     * @date: 2024/5/6 18:12
+     * @param dto
+     * @return List<ViewQcOverviewDetailDTO>
+     */
+    List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> listQcBillGroupQcStatus(QcEffectivenessDTO.CommonSearchParamDTO dto);
 }

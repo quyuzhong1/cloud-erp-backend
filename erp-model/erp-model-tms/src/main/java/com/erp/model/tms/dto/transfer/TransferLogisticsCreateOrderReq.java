@@ -64,6 +64,11 @@ public class TransferLogisticsCreateOrderReq {
     private String streetAddress;
 
     /**
+     * 收件人地址2
+     */
+    private String streetAddress2;
+
+    /**
      * 收件人州/区域
      */
     private String state;

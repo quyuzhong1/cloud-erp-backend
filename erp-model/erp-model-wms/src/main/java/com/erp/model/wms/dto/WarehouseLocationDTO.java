@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.List;
 
@@ -84,6 +85,12 @@ public class WarehouseLocationDTO implements Serializable {
         private String remark;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseLocationListDTO {
+        private String warehouseId;
+        private List<LocationListDTO> locationList;
+    }
 
     /**
      * 仓位列表
@@ -111,6 +118,11 @@ public class WarehouseLocationDTO implements Serializable {
          * 状态
          */
         private String status;
+
+        /**
+         * 是否禁用（true是，false否）
+         */
+        private Boolean disabled;
 
         /**
          * 状态名称
@@ -247,5 +259,22 @@ public class WarehouseLocationDTO implements Serializable {
          * 仓位编码
          */
         private String warehouseLocation;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 仓库Id
+         */
+        @NotBlank(message = "仓库ID不能为空")
+        private String warehouseId;
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+
     }
 }

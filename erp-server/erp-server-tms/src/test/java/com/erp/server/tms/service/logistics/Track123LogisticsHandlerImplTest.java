@@ -2,6 +2,9 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
@@ -37,10 +40,10 @@ public class Track123LogisticsHandlerImplTest {
 
     public Track123LogisticsHandlerImplTest(){
         //test
-//        authMap.put("clientSecret","9fa500686633410a84ff0b00daed555e");
+        authMap.put("clientSecret","9fa500686633410a84ff0b00daed555e");
         //pro
-        authMap.put("clientId","Yg4Zf06w_sxZs3A5D");
-        authMap.put("clientSecret","579cf53f55694d89aef0887d81886aec");
+//        authMap.put("clientId","Yg4Zf06w_sxZs3A5D");
+//        authMap.put("clientSecret","579cf53f55694d89aef0887d81886aec");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -56,7 +59,8 @@ public class Track123LogisticsHandlerImplTest {
     public void registerLogisticsNumber(){
         List<LogisticsRegisterVO> registerVOS = new ArrayList<>();
         LogisticsRegisterVO vo = LogisticsRegisterVO.builder()
-                .trackNo("DPK212369350956")
+                .trackNo("SL1694930851235")
+                .phoneSuffix("18855193495")
                 .build();
         registerVOS.add(vo);
 //        LogisticsRegisterVO vo1 = LogisticsRegisterVO.builder()
@@ -69,17 +73,54 @@ public class Track123LogisticsHandlerImplTest {
                 .build();
         ApiResult<List<RegisterResponseVO>> listApiResult = track123LogisticsHandler.registerLogisticsNumber(registerTrackVO);
         System.out.println(listApiResult);
+        /**
+         * {"code":"00000","data":{"accepted":[],"rejected":[{"index":0,"trackNo":"SF1694930851235","courierCode":"sfb2c",
+         * "error":{"code":"A0400","msg":"The order number has been imported"}}]},
+         * "msg":"Success","traceId":"1bd02e6204f94aec92e0c7066a86506e.2971.17161982770923801"}
+         */
+    }
+
+    /**
+     * 航运注册
+     */
+    @Test
+    public void oceanRegisterLogisticsNumber(){
+        List<LogisticsTrackBaseDTO.OceanRegisterRequestDTO> requestList = new ArrayList<>();
+        LogisticsTrackBaseDTO.OceanRegisterRequestDTO oceanRegisterRequestDTO = LogisticsTrackBaseDTO.OceanRegisterRequestDTO.builder()
+                .trackNo("FSCU8892622")
+                .carrierCode("cosco")
+                .id("1789113371434422274")
+                .type(MathUtil.THREE)
+                .authMap(authMap)
+                .build();
+        requestList.add(oceanRegisterRequestDTO);
+        ApiResult<List<RegisterResponseVO>> listApiResult = track123LogisticsHandler.oceanRegisterLogisticsNumber(requestList);
+        System.out.println(listApiResult);
     }
 
     @Test
     public void getTrack(){
         LogisticsTrackVO logisticsQueryVO = new LogisticsTrackVO();
         List<String> trackNos = new ArrayList<>();
-        trackNos.add("UJ076562757YP");
+        trackNos.add("MP0039098709");
 //        trackNos.add("00369744292706509832");
         logisticsQueryVO.setTrackNos(trackNos);
         logisticsQueryVO.setAuthMap(authMap);
         ApiResult<List<LogisticsTrackEntity>> track = track123LogisticsHandler.getTrack(logisticsQueryVO);
+        System.out.println(track);
+    }
+
+    @Test
+    public void getOceanTrack(){
+        List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> list = new ArrayList<>();
+        LogisticsTrackBaseDTO.OceanTrackRequestDTO oceanTrackRequestDTO = LogisticsTrackBaseDTO.OceanTrackRequestDTO.builder()
+                .trackingNo("FSCU8892622")
+                .orderNo("577170392674754560")
+                .type(MathUtil.THREE)
+                .authMap(authMap)
+                .build();
+        list.add(oceanTrackRequestDTO);
+        ApiResult<List<LogisticsTrackEntity>> track = track123LogisticsHandler.getOceanTrack(list);
         System.out.println(track);
     }
 

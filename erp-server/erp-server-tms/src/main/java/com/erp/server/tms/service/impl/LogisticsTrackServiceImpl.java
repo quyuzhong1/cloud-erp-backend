@@ -3,29 +3,31 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsTrackDTO;
-
-import java.time.LocalDateTime;
-import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
+import io.seata.common.util.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * <p>
@@ -40,8 +42,6 @@ import javax.annotation.Resource;
 public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMapper, LogisticsTrackEntity> implements LogisticsTrackService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
     @Resource
@@ -66,7 +66,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流轨迹单", logisticsTrackEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流轨迹单", logisticsTrackEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsTrackEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -95,7 +95,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
 
         // 记录主单操作日志
         log.info("编辑 开始记录物流轨迹单日志数据，id：【{}】", logisticsTrackEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsTrackEntity.getId(), "物流轨迹单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsTrackEntity.getId(), "物流轨迹单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, logisticsTrackEntity, null, logisticsTrackEntity.getId(), msg);
         return Boolean.TRUE;
@@ -120,6 +120,9 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
 
     @Override
     public LogisticsTrackDTO.ViewDTO listByTrackNo(String trackNo) {
+        if(StringUtils.isBlank(trackNo)){
+            return new LogisticsTrackDTO.ViewDTO();
+        }
         LogisticsTrackDTO.ViewDTO viewDTO = new LogisticsTrackDTO.ViewDTO();
         viewDTO.setTrackNo(trackNo);
 
@@ -164,20 +167,24 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     @Override
     public void checkTrackStatus(LogisticsTrackEntity logisticsTrackEntity) {
         if (Objects.isNull(logisticsTrackEntity)) return;
-        LogisticsBillDetailEntity detailByTrackNo = logisticsBillDetailService.getDetailByTrackNo(logisticsTrackEntity.getTrackNo());
-        if (Objects.isNull(detailByTrackNo)) return;
+        List<LogisticsBillDetailEntity> detailList = logisticsBillDetailService.getDetailByTrackNo(logisticsTrackEntity.getTrackNo());
+        if (CollectionUtils.isEmpty(detailList)) return;
         //状态更新同步
-        if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
-            detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
-            detailByTrackNo.setTrackTime(LocalDateTime.now());
-            detailByTrackNo.setIsApiUpdate(Boolean.TRUE);
-            if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
-                //TODO 同步订单状态
-                detailByTrackNo.setSignTime(logisticsTrackEntity.getTrackTime());
-            } else {
-                detailByTrackNo.setSignTime(null);
+        detailList.forEach(detailByTrackNo -> {
+            if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
+                detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
+                detailByTrackNo.setTrackTime(LocalDateTime.now());
+                detailByTrackNo.setIsApiUpdate(Boolean.TRUE);
+                if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
+                    //TODO 同步订单状态
+                    detailByTrackNo.setSignTime(logisticsTrackEntity.getTrackTime());
+                } else {
+                    detailByTrackNo.setSignTime(null);
+                }
             }
-            logisticsBillDetailService.saveOrUpdate(detailByTrackNo);
+        });
+        if (CollectionUtils.isNotEmpty(detailList)){
+            logisticsBillDetailService.updateBatchById(detailList);
         }
     }
 

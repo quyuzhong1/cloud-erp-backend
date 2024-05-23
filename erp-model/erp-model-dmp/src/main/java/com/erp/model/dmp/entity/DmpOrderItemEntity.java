@@ -4,20 +4,22 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
- * 
- * @TableName dmp_order_item
+ * <p>
+ * 订单商品信息拆分前表
+ * </p>
  */
-@TableName(value ="dmp_order_item")
-@Data
-public class DmpOrderItemEntity implements Serializable {
+@Getter
+@Setter
+@TableName("dmp_order_item")
+public class DmpOrderItemEntity {
     /**
-     * 主键id
+     * 主键
      */
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
@@ -25,31 +27,31 @@ public class DmpOrderItemEntity implements Serializable {
     /**
      * 订单表id
      */
-    @TableField(value = "order_id")
+    @TableField("order_id")
     private String orderId;
 
     /**
      * 商品id
      */
-    @TableField(value = "item_id")
+    @TableField("item_id")
     private String itemId;
 
     /**
      * 平台sku
      */
-    @TableField(value = "platform_sku")
+    @TableField("platform_sku")
     private String platformSku;
 
     /**
      * 平台原始sku数量
      */
-    @TableField(value = "platform_quantity")
+    @TableField("platform_quantity")
     private Integer platformQuantity;
 
     /**
      * 商品名称
      */
-    @TableField(value = "item_name")
+    @TableField("item_name")
     private String itemName;
 
     /**
@@ -59,57 +61,51 @@ public class DmpOrderItemEntity implements Serializable {
     private String pictureUrl;
 
     /**
-     * 商品成本价
-     */
-    @TableField(value = "cost_price")
-    private BigDecimal costPrice;
-
-    /**
      * 商品原始售价
      */
-    @TableField(value = "sell_price_origin")
+    @TableField("sell_price_origin")
     private BigDecimal sellPriceOrigin;
 
     /**
      * 商品售价
      */
-    @TableField(value = "sell_price")
+    @TableField("sell_price")
     private BigDecimal sellPrice;
 
     /**
      * 商品数量
      */
-    @TableField(value = "quantity")
+    @TableField("quantity")
     private Integer quantity;
 
     /**
      * 商品单位
      */
-    @TableField(value = "product_unit")
+    @TableField("product_unit")
     private String productUnit;
 
     /**
      * 是否是赠品 1. 是 2. 否
      */
-    @TableField(value = "is_gift")
+    @TableField("is_gift")
     private Integer isGift;
 
     /**
      * 缺货订单 0.正在计算是否缺货 1.有货 2.缺货 3.已补货
      */
-    @TableField(value = "has_goods")
+    @TableField("has_goods")
     private Integer hasGoods;
 
     /**
      * 是否是组合商品 1.组合 2非组合
      */
-    @TableField(value = "is_combo")
+    @TableField("is_combo")
     private Integer isCombo;
 
     /**
      * 订单商品备注
      */
-    @TableField(value = "item_remark")
+    @TableField("item_remark")
     private String itemRemark;
 
     /**
@@ -121,47 +117,47 @@ public class DmpOrderItemEntity implements Serializable {
     /**
      * 商品状态 1：未付款 2：未发货 3：已发货 4：已作废
      */
-    @TableField(value = "status")
+    @TableField("status")
     private String status;
 
     /**
      * 商品仓位
      */
-    @TableField(value = "stock_grid")
+    @TableField("stock_grid")
     private String stockGrid;
 
     /**
      * sku
      */
-    @TableField(value = "sku_no")
+    @TableField("sku_no")
     private String skuNo;
 
     /**
      * 库存状态：1.自动创建 2.待开发 3.正常 4.清仓 5.停止销售
      */
-    @TableField(value = "stock_status")
+    @TableField("stock_status")
     private Integer stockStatus;
 
     /**
      * 商品仓库编号
      */
-    @TableField(value = "stock_warehouse_id")
+    @TableField("stock_warehouse_id")
     private String stockWarehouseId;
 
     /**
      * erp平台商品id
      */
-    @TableField(value = "erp_order_item_id")
+    @TableField("erp_order_item_id")
     private String erpOrderItemId;
 
     /**
      * 品类id
      */
-    @TableField(value = "category_id")
+    @TableField("category_id")
     private String categoryId;
 
     /**
-     * 品类
+     * 品类名称
      */
     @TableField(value = "category_name")
     private String categoryName;
@@ -169,56 +165,56 @@ public class DmpOrderItemEntity implements Serializable {
     /**
      * 品牌id
      */
-    @TableField(value = "brand_id")
+    @TableField("brand_id")
     private String brandId;
 
     /**
-     * 品牌
+     * 品牌名称
      */
-    @TableField(value = "brand_name")
+    @TableField("brand_name")
     private String brandName;
 
     /**
      * 汇率
      */
-    @TableField(value = "currency_rate")
+    @TableField("currency_rate")
     private BigDecimal currencyRate;
 
     /**
-     * cny-结算汇率
+     * 新品标记 1 为新品 0 为非新品
      */
-    @TableField(value = "cny_settle_rate")
-    private BigDecimal cnySettleRate;
-
-    /**
-     * 新品标识 1为新品 0 为非新品
-     */
-    @TableField(value = "new_sign")
+    @TableField("new_sign")
     private Integer newSign;
 
     /**
-     * 折扣后订单总金额
+     * 折扣后的原币种金额 对应管易amount_after 马帮sell_price*quantity 金蝶fAllAmount
      */
-    @TableField(value = "amount_after")
+    @TableField("amount_after")
     private BigDecimal amountAfter;
 
-    @TableField(value = "shipping_fee")
-    private BigDecimal shippingFee;
-
-    @TableField(value = "refresh_status")
+    /**
+     * 刷新数据使用
+     */
+    @TableField("refresh_status")
     private Boolean refreshStatus;
+
+    /**
+     * 计算汇率
+     */
+    @TableField("cny_settle_rate")
+    private BigDecimal cnySettleRate;
+
+    /**
+     * 成本价
+     */
+    @TableField("cost_price")
+    private BigDecimal costPrice;
 
     /**
      * 原始sku
      */
     @TableField(value = "original_sku_no")
     private String originalSkuNo;
-
-    /**
-     * 清洗后成本价
-     */
-    @TableField(value = "clean_cost_price")
-    private BigDecimal cleanCostPrice;
 
     /**
      * 清洗前成本价
@@ -239,48 +235,10 @@ public class DmpOrderItemEntity implements Serializable {
     private Integer originalQuantity;
 
     /**
-     * 是否拆分订单 1.拆分 2.非拆分
-     */
-    @TableField(value = "is_split_sku")
-    private Integer isSplitSku;
-
-    /**
      * 来源明细id
      */
     @TableField(value = "source_item_id")
     private String sourceItemId;
 
 
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public String toString() {
-        return "DmpOrderItemEntity{" +
-                "orderId='" + orderId + '\'' +
-                ", itemId='" + itemId + '\'' +
-                ", platformSku='" + platformSku + '\'' +
-                ", platformQuantity=" + platformQuantity +
-                ", itemName='" + itemName + '\'' +
-                ", pictureUrl='" + pictureUrl + '\'' +
-                ", costPrice=" + costPrice +
-                ", sellPriceOrigin=" + sellPriceOrigin +
-                ", sellPrice=" + sellPrice +
-                ", quantity=" + quantity +
-                ", productUnit='" + productUnit + '\'' +
-                ", isGift=" + isGift +
-                ", hasGoods=" + hasGoods +
-                ", isCombo=" + isCombo +
-                ", itemRemark='" + itemRemark + '\'' +
-                ", specifics='" + specifics + '\'' +
-                ", status=" + status +
-                ", stockGrid='" + stockGrid + '\'' +
-                ", skuNo='" + skuNo + '\'' +
-                ", stockStatus=" + stockStatus +
-                ", stockWarehouseId='" + stockWarehouseId + '\'' +
-                ", erpOrderItemId='" + erpOrderItemId + '\'' +
-                ", amountAfter='" + amountAfter + '\'' +
-                ", shippingFee='" + shippingFee + '\'' +
-                '}';
-    }
 }

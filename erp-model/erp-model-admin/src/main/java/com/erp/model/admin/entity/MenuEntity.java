@@ -3,6 +3,7 @@ package com.erp.model.admin.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -74,5 +75,6 @@ public class MenuEntity implements Serializable {
 	/**
 	 * 所属系统,/api/sys/dictBasic/list?type=menuSystem
 	 */
+	@NotBlank(message = "所属系统不能为空")
 	private String system;
 }

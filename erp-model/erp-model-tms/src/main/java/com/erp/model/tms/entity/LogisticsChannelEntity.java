@@ -179,6 +179,11 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("sync_source_id")
     private String syncSourceId;
 
+    /**
+     * 报关单号类型（transportNo运单号、trackNo跟踪号）
+     */
+    @TableField("declare_code_type")
+    private String declareCodeType;
 
     public static final String MAIN_ID = "main_id";
 
@@ -197,8 +202,6 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     public static final String PAPER_WIDTH = "paper_width";
 
     public static final String SORTING_CODE = "sorting_code";
-
-    public static final String SHIPPING_TEMPLATE_ID = "shipping_template_id";
 
     public static final String FEE_RULE = "fee_rule";
 

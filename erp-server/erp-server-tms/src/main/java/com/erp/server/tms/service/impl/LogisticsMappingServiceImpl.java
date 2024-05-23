@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -51,6 +52,7 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
 
     }
 
+
     /**
      * 修改
      */
@@ -90,12 +92,12 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
     public void copy(String channelId, String addChannelId) {
         List<LogisticsMappingEntity> list = listDbByChannelId(channelId);
         if (CollectionUtils.isNotEmpty(list)) {
-            List<LogisticsMappingEntity> addList = BeanMapperUtils.copyList(LogisticsMappingEntity.class, list);
-            addList.forEach(obj -> {
+//            List<LogisticsMappingEntity> addList = BeanMapperUtils.copyList(LogisticsMappingEntity.class, list);
+            list.forEach(obj -> {
                 obj.setLogisticsChannelId(addChannelId);
-                obj.setId("");
+                obj.setId(IdWorker.getIdStr());
             });
-            this.saveBatch(addList);
+            this.saveBatch(list);
         }
 
 
@@ -104,6 +106,15 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
     @Override
     public LogisticsSaleChannelEntity getBySalesPlatform(String salesPlatform, String channelId) {
         return baseMapper.getBySalesPlatform(salesPlatform,channelId);
+    }
+
+    @Override
+    public LogisticsMappingEntity getByLogisticsMappingParam(LogisticsMappingDTO.SearchParamDTO paramDTO) {
+        return lambdaQuery().eq(LogisticsMappingEntity::getSalesPlatform,paramDTO.getSalesPlatform())
+                .eq(LogisticsMappingEntity::getLogisticsChannelId,paramDTO.getLogisticsChannelId())
+                .eq(LogisticsMappingEntity::getLogisticsSaleChannelId,paramDTO.getLogisticsSaleChannelId())
+                .last("limit 1")
+                .one();
     }
 
     public List<LogisticsMappingEntity> listDbByChannelId(String channelId) {

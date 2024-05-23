@@ -1,40 +1,43 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.PlatformAnnotate;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
+import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.WalmartShipDTO;
-import com.common.business.dto.WalmartShipOrderDetailDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.convert.WalmartShipOrderConverter;
+import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.ss.formula.functions.T;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.WALMART)
-public class WalmartShipOrder implements IPlatformService {
+public class WalmartShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private LogisticsMappingFeign logisticsMappingFeign;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
+
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
@@ -45,14 +48,40 @@ public class WalmartShipOrder implements IPlatformService {
         for (WalmartShipDTO walmartShipDTO : walmartShipOrderParam) {
             WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
 
+            //获取销售渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                    walmartShipDTO.getLogisticsChannelId(),
+                    PlatformDictEnum.WALMART.getCode()
+            );
+            if (null == tmsScaleChannelShipDTO){
+                throw new ServiceException("找不到渠道信息");
+            }
+
             if (LogisticsPlatformEnum.YAN_WEN.getCode().equals(walmartShipDTO.getLogisticsPlatformCode())) {
                 walmartShipDTO.setLogisticsPlatformCode("Yanwen");
             } else if (LogisticsPlatformEnum.SF_EXPRESS.getCode().equals(walmartShipDTO.getLogisticsPlatformCode())) {
                 walmartShipDTO.setLogisticsPlatformCode("SF Express");
             }
+            //标发订单类型
+            String standardOrderType = walmartShipDTO.getOrderDeliveryMarkType();
+            walmartShipDTO.setOrderDeliveryMarkType(standardOrderType);
+
             walmartSdkClientService.shipOrder(walmartShipDTO);
         }
     }
 
+    @Override
+    public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
 
+    @Override
+    public Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList){
+        return null;
+    }
 }

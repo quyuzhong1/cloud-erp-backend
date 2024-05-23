@@ -1,29 +1,20 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.utils.RedisUtil;
-import com.common.core.enums.CurrencyEnum;
-import com.common.core.utils.BeanMapper;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.ProductCostDTO;
 import com.erp.model.plm.dto.ProductCostShowDTO;
-import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.entity.ProductCostEntity;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.mapper.ProductCostMapper;
 import com.erp.server.plm.service.ProductCostService;
-import com.erp.server.plm.service.ProductPurchaseService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -131,7 +122,7 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     public Boolean saveOrUpdate(ProductCostDTO productCostDTO) {
         ProductCostEntity costEntity = new ProductCostEntity();
         BeanMapper.copy(productCostDTO, costEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             if (StringUtils.isBlank(productCostDTO.getId())) {
                 costEntity.setCreateUserId(loginUser.getUid());

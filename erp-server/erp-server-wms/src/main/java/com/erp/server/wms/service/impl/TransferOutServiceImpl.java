@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
@@ -16,6 +15,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -27,7 +27,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ExportTransferOutExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -110,9 +109,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Autowired
     private TransferInDetailService transferInDetailService;
-
-    @Autowired
-    private CommonService commonService;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -333,7 +329,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         });
         // 删除日志数据
         log.info("删除 开始删除分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的分步式调出单", commonService.getUserInfo().getUserName(), list.stream().map(TransferOutEntity::getCode).collect(Collectors.joining(",")));
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的分步式调出单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferOutEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "删除操作");
         // 删除明细数据
@@ -550,7 +546,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void updateForApprove(List<String> ids, String approveStatus) {
         // 当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().in(TransferOutEntity::getId, ids)
                 .set(TransferOutEntity::getApproveUserId, userInfo.getUid())
                 .set(TransferOutEntity::getApproveUserName, userInfo.getUserName())

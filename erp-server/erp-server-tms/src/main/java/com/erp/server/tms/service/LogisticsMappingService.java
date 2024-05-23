@@ -1,8 +1,7 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 
 import java.util.List;
@@ -73,4 +72,12 @@ public interface LogisticsMappingService extends SuperService<LogisticsMappingEn
      *@date 2023-11-27
      */
     LogisticsSaleChannelEntity getBySalesPlatform(String salesPlatform, String channelId);
+    /**
+     * @description: 根据物流映射参数获取物流映射表
+     * @author Will
+     * @date: 2024/4/23 16:14
+     * @param paramDTO
+     * @return LogisticsMappingEntity
+     */
+    LogisticsMappingEntity getByLogisticsMappingParam(LogisticsMappingDTO.SearchParamDTO paramDTO);
 }

@@ -50,12 +50,16 @@ public interface LogisticsOrderConverter {
     LogisticsOrderConverter INSTANCE = Mappers.getMapper(LogisticsOrderConverter.class);
 
     @Mappings({
+            @Mapping(target = "cargoType", constant = "3"),
             @Mapping(target = "refNo", source = "deliveryNo"),
+            @Mapping(target = "iossNo", source = "iossCode"),
             @Mapping(target = "businessType", constant = "BDS"),
             //费用模式转换
             @Mapping(target = "dutyType", source = "logisticsChannelEntity.taxModel", qualifiedByName = "taxModelToDSF"),
             //TODO 渠道产品代码
             @Mapping(target = "logisticsServiceInfo.logisticsProductCode", source = "logisticsSaleChannel.code"),
+            @Mapping(target = "logisticsServiceInfo.customsService", constant = "N"),
+            @Mapping(target = "logisticsServiceInfo.signatureService", source = "logisticsChannelEntity.isApiSign", qualifiedByName = "booleanToYOrN"),
             //收货人
             @Mapping(target = "recipientInfo.first_name", source = "receiverInfoVO.name"),
             @Mapping(target = "recipientInfo.phone", source = "receiverInfoVO.telNumber"),
@@ -66,7 +70,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "recipientInfo.district", source = "receiverInfoVO.district"),
             @Mapping(target = "recipientInfo.street", source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "recipientInfo.post_code", source = "receiverInfoVO.zipCode"),
-//            @Mapping(target = "recipientInfo.house_number", source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "recipientInfo.house_number", source = "receiverInfoVO.streetAddress"),
             //发货人
             @Mapping(target = "sender.first_name", source = "senderInfo.name"),
             @Mapping(target = "sender.phone", source = "senderInfo.telNumber"),
@@ -77,29 +81,31 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "sender.district", source = "senderInfo.districtName"),
             @Mapping(target = "sender.street", source = "senderInfo.addressFirst"),
             @Mapping(target = "sender.post_code", source = "senderInfo.zipCode"),
+//            @Mapping(target = "sender.house_number", source = "senderInfo.streetAddress"),
             @Mapping(target = "returnInfo.isReturnOnDomestic", constant = "U"),
-            @Mapping(target = "returnInfo.domesticReturnAddr.first_name", source = "senderInfo.name"),
-            @Mapping(target = "returnInfo.domesticReturnAddr.phone", source = "senderInfo.telNumber"),
-            @Mapping(target = "returnInfo.domesticReturnAddr.email", source = "senderInfo.email"),
-            @Mapping(target = "returnInfo.domesticReturnAddr.country", source = "senderInfo.country"),
-            @Mapping(target = "returnInfo.domesticReturnAddr.state", source = "senderInfo.provinceName"),
-            @Mapping(target = "returnInfo.domesticReturnAddr.city", source = "senderInfo.cityName"),
-            @Mapping(target = "returnInfo.domesticReturnAddr.district", source = "senderInfo.districtName"),
-            @Mapping(target = "returnInfo.domesticReturnAddr.street", source = "senderInfo.addressFirst"),
-            @Mapping(target = "returnInfo.domesticReturnAddr.post_code", source = "senderInfo.zipCode"),
+//            @Mapping(target = "returnInfo.domesticReturnAddr.first_name", source = "senderInfo.name"),
+//            @Mapping(target = "returnInfo.domesticReturnAddr.phone", source = "senderInfo.telNumber"),
+//            @Mapping(target = "returnInfo.domesticReturnAddr.email", source = "senderInfo.email"),
+//            @Mapping(target = "returnInfo.domesticReturnAddr.country", source = "senderInfo.country"),
+//            @Mapping(target = "returnInfo.domesticReturnAddr.state", source = "senderInfo.provinceName"),
+//            @Mapping(target = "returnInfo.domesticReturnAddr.city", source = "senderInfo.cityName"),
+//            @Mapping(target = "returnInfo.domesticReturnAddr.district", source = "senderInfo.districtName"),
+//            @Mapping(target = "returnInfo.domesticReturnAddr.street", source = "senderInfo.addressFirst"),
+//            @Mapping(target = "returnInfo.domesticReturnAddr.post_code", source = "senderInfo.zipCode"),
             @Mapping(target = "returnInfo.isReturnOnOversea", constant = "U"),
-            @Mapping(target = "returnInfo.overseaReturnAddr.first_name", source = "senderInfo.name"),
-            @Mapping(target = "returnInfo.overseaReturnAddr.phone", source = "senderInfo.telNumber"),
-            @Mapping(target = "returnInfo.overseaReturnAddr.email", source = "senderInfo.email"),
-            @Mapping(target = "returnInfo.overseaReturnAddr.country", source = "senderInfo.country"),
-            @Mapping(target = "returnInfo.overseaReturnAddr.state", source = "senderInfo.provinceName"),
-            @Mapping(target = "returnInfo.overseaReturnAddr.city", source = "senderInfo.cityName"),
-            @Mapping(target = "returnInfo.overseaReturnAddr.district", source = "senderInfo.districtName"),
-            @Mapping(target = "returnInfo.overseaReturnAddr.street", source = "senderInfo.addressFirst"),
-            @Mapping(target = "returnInfo.overseaReturnAddr.post_code", source = "senderInfo.zipCode"),
+//            @Mapping(target = "returnInfo.overseaReturnAddr.first_name", source = "senderInfo.name"),
+//            @Mapping(target = "returnInfo.overseaReturnAddr.phone", source = "senderInfo.telNumber"),
+//            @Mapping(target = "returnInfo.overseaReturnAddr.email", source = "senderInfo.email"),
+//            @Mapping(target = "returnInfo.overseaReturnAddr.country", source = "senderInfo.country"),
+//            @Mapping(target = "returnInfo.overseaReturnAddr.state", source = "senderInfo.provinceName"),
+//            @Mapping(target = "returnInfo.overseaReturnAddr.city", source = "senderInfo.cityName"),
+//            @Mapping(target = "returnInfo.overseaReturnAddr.district", source = "senderInfo.districtName"),
+//            @Mapping(target = "returnInfo.overseaReturnAddr.street", source = "senderInfo.addressFirst"),
+//            @Mapping(target = "returnInfo.overseaReturnAddr.post_code", source = "senderInfo.zipCode"),
             ////保险信息封装 暂时不做 默认为N
             @Mapping(target = "is_insure", constant = "N"),
-            @Mapping(target = "deliverTypeInfo.deliver_type", constant = "1")
+            @Mapping(target = "deliverTypeInfo.deliver_type", constant = "1"),
+            @Mapping(target = "deliverToRecipientInfo.deliver_type", constant = "HOME_DELIVERY")
     })
     OrderRequest orderRequestToDsf(LogisticsOrderVO logisticsOrderVO);
 
@@ -117,9 +123,9 @@ public interface LogisticsOrderConverter {
             //出口国/起始国/发件人国家_申报单价（按对应币别的法定单位，最多4位小数点）
             @Mapping(target = "declare_unit_price_export", source = "declarePrice"),
             //USD
-            @Mapping(target = "currency_export", source = "declareCurrencySymbol"),
+            @Mapping(target = "currency_export", source = "declareCurrency"),
             @Mapping(target = "declare_unit_price_import", source = "destDeclarePrice"),
-            @Mapping(target = "currency_import", source = "destCurrencySymbol")
+            @Mapping(target = "currency_import", source = "destCurrency")
     })
     DeclareProductInfo dsfProductMapping(LogisticsProductVO logisticsProductVO);
 
@@ -160,7 +166,7 @@ public interface LogisticsOrderConverter {
 
     @Mapping(target = "goodsNameCh", source = "declareChineseName")
     @Mapping(target = "goodsNameEn", source = "declareEnglishName")
-    @Mapping(target = "price", source = "price")
+    @Mapping(target = "price", source = "destDeclarePrice")
     @Mapping(target = "quantity", source = "quantity")
     @Mapping(target = "weight", source = "weight")
     @Mapping(target = "hscode", source = "customsCode")
@@ -214,8 +220,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "invoiceWeight", source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
             @Mapping(target = "invoiceQuantity", source = "quantity"),
             @Mapping(target = "unitCode", source = "declareUnit"),
-            @Mapping(target = "invoiceUnitcharge", source = "price"),
-            @Mapping(target = "invoiceCurrencycode", source = "declareCurrency"),
+            @Mapping(target = "invoiceUnitcharge", source = "destDeclarePrice"),
+            @Mapping(target = "invoiceCurrencycode", source = "destCurrency"),
             @Mapping(target = "hsCode", source = "customsCode"),
             @Mapping(target = "sku", source = "skuNo")
     })
@@ -271,7 +277,7 @@ public interface LogisticsOrderConverter {
     @Mapping(target = "hsCode",source = "customsCode")
     @Mapping(target = "originCountry",source = "sourceCountry")
     @Mapping(target = "itemCount",source = "quantity")
-    @Mapping(target = "unitValue",source = "price")
+    @Mapping(target = "unitValue",source = "destDeclarePrice")
     //TODO Item重量，转换成KG
     @Mapping(target = "weight",source = "weight",qualifiedByName = "gTokg")
     OrderItem orderItemRequestByUBI(LogisticsProductVO logisticsProductVO);
@@ -343,7 +349,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "productUrl" ,source = "url"),
             @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "invoiceRemark" ,source = "distributionInfo"),
-            @Mapping(target = "currencyCode" ,source = "declareCurrency"),
+            @Mapping(target = "currencyCode" ,source = "destCurrency"),
             @Mapping(target = "invoicePart" ,source = "englishMaterial"),
             @Mapping(target = "invoiceUsage" ,source = "englishUsage")
     })
@@ -396,8 +402,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "count" ,source = "quantity"),
             @Mapping(target = "unit",source = "declareUnit"),
             @Mapping(target = "weight",source = "weight", qualifiedByName = "gTokg"),
-            @Mapping(target = "amount",source = "price"),
-            @Mapping(target = "currency",source = "declareCurrency"),
+            @Mapping(target = "amount",source = "destDeclarePrice"),
+            @Mapping(target = "currency",source = "destCurrency"),
             @Mapping(target = "sourceArea",source = "sourceCountry"),
             @Mapping(target = "hsCode",source = "customsCode"),
             @Mapping(target = "goodsCode",source = "customsCode"),
@@ -415,57 +421,61 @@ public interface LogisticsOrderConverter {
     CustomsInfo orderRequestCustomsInfoByExpress(ParceInfoVO parceInfoVO);
 
     @Mappings({
-            @Mapping(target = "BNo" ,source = "deliveryNo"),
-            @Mapping(target = "charged" ,source = "parceInfoVO.hasBattery",qualifiedByName = "boolToInteger"),
-            @Mapping(target = "insuranceValue" ,source = "parceInfoVO.insuranceValue"),
-            @Mapping(target = "insureValue" ,source = "parceInfoVO.insureValue"),
-            @Mapping(target = "itemType" ,source = "parceInfoVO.itemType",defaultValue = "4"),
-            @Mapping(target = "logisticsId" ,source = "logisticsSaleChannel.code"),
-            @Mapping(target = "note" ,source = "remark"),
-            @Mapping(target = "material" ,source = "material"),
-            @Mapping(target = "orderNo" ,source = "deliveryNo"),
-            @Mapping(target = "passportNumber" ,source = "passportNumber"),
-            @Mapping(target = "source" ,source = "orderSource"),
-            @Mapping(target = "taxId" ,source = "taxId"),
-            @Mapping(target = "iossVatId" ,source = "iossCode"),
-            @Mapping(target = "isTaxed",source = "isTaxed",qualifiedByName = "boolToInteger"),
-            @Mapping(target = "transportCost",source = "transportCost"),
-            @Mapping(target = "weight",source = "parceInfoVO.totalWeight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
-            @Mapping(target = "recipient.actId",source = "receiverInfoVO.actId"),
-            @Mapping(target = "recipient.address",source = "receiverInfoVO.addressFirst"),
-            @Mapping(target = "recipient.address2",source = "receiverInfoVO.addressSecond"),
-            @Mapping(target = "recipient.address3",constant = ""),
-            @Mapping(target = "recipient.CName",source = "receiverInfoVO.companyName"),
-            @Mapping(target = "recipient.city",source = "receiverInfoVO.city"),
-            @Mapping(target = "recipient.contactPerson",source = "receiverInfoVO.name"),
-            @Mapping(target = "recipient.email",source = "receiverInfoVO.email"),
-            @Mapping(target = "recipient.countryCode",source = "receiverInfoVO.country"),
-            @Mapping(target = "recipient.mobileNo",source = "receiverInfoVO.telNumber"),
-            @Mapping(target = "recipient.province",source = "receiverInfoVO.province"),
-            @Mapping(target = "recipient.telNo",source = "receiverInfoVO.telNumber"),
-            @Mapping(target = "recipient.zip",source = "receiverInfoVO.zipCode"),
-            @Mapping(target = "sender.actId",source = "senderInfo.actId"),
-            @Mapping(target = "sender.address1",source = "senderInfo.addressFirst"),
-            @Mapping(target = "sender.address2",source = "senderInfo.addressSecond"),
-            @Mapping(target = "sender.CName",source = "senderInfo.companyName"),
-            @Mapping(target = "sender.city",source = "senderInfo.cityName"),
-            @Mapping(target = "sender.country",source = "senderInfo.country"),
-            @Mapping(target = "sender.emai",source = "senderInfo.email"),
-            @Mapping(target = "sender.mobile",source = "senderInfo.telNumber"),
-            @Mapping(target = "sender.name",source = "senderInfo.name"),
-            @Mapping(target = "sender.postcode",source = "senderInfo.zipCode"),
-            @Mapping(target = "sender.province",source = "senderInfo.provinceName"),
-            @Mapping(target = "sender.tel",source = "senderInfo.telNumber"),
-            @Mapping(target = "declareInfos",source = "logisticsProductVOList")
+            @Mapping(target = "BNo", source = "deliveryNo"),
+            @Mapping(target = "charged", source = "parceInfoVO.hasBattery", qualifiedByName = "boolToInteger"),
+            @Mapping(target = "insuranceValue", source = "parceInfoVO.insuranceValue"),
+            @Mapping(target = "insureValue", source = "parceInfoVO.insureValue"),
+            @Mapping(target = "itemType", constant = "2"),
+            @Mapping(target = "pracelType", constant = "1"),
+            @Mapping(target = "cod", constant = "0"),
+            @Mapping(target = "logisticsId", source = "logisticsSaleChannel.code"),
+            @Mapping(target = "note", source = "remark"),
+            @Mapping(target = "material", source = "material"),
+            @Mapping(target = "orderNo", source = "deliveryNo"),
+            @Mapping(target = "passportNumber", source = "passportNumber"),
+            @Mapping(target = "source", constant = "BCDC77BDC117750AC882462407E47D92"),
+            @Mapping(target = "taxId", source = "taxId"),
+            @Mapping(target = "iossVatId", source = "iossCode"),
+            @Mapping(target = "isTaxed", constant = "0"),
+            @Mapping(target = "transportCost", source = "transportCost"),
+            @Mapping(target = "weight", source = "parceInfoVO.totalWeight", qualifiedByName = "divideByOneThousandWithThreeDecimal"),
+            @Mapping(target = "recipient.actId", source = "receiverInfoVO.actId"),
+            @Mapping(target = "recipient.address", source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "recipient.address2", source = "receiverInfoVO.addressSecond"),
+            @Mapping(target = "recipient.address3", constant = ""),
+            @Mapping(target = "recipient.CName", source = "receiverInfoVO.companyName"),
+            @Mapping(target = "recipient.city", source = "receiverInfoVO.city"),
+            @Mapping(target = "recipient.contactPerson", source = "receiverInfoVO.name"),
+            @Mapping(target = "recipient.email", source = "receiverInfoVO.email"),
+            @Mapping(target = "recipient.countryCode", source = "receiverInfoVO.country"),
+            @Mapping(target = "recipient.mobileNo", source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "recipient.province", source = "receiverInfoVO.province"),
+            @Mapping(target = "recipient.telNo", source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "recipient.zip", source = "receiverInfoVO.zipCode"),
+            @Mapping(target = "sender.actId", source = "senderInfo.actId"),
+            @Mapping(target = "sender.address1", source = "senderInfo.addressFirst"),
+            @Mapping(target = "sender.address2", source = "senderInfo.addressSecond"),
+            @Mapping(target = "sender.CName", source = "senderInfo.companyName"),
+            @Mapping(target = "sender.city", source = "senderInfo.cityName"),
+            @Mapping(target = "sender.country", source = "senderInfo.country"),
+            @Mapping(target = "sender.emai", source = "senderInfo.email"),
+            @Mapping(target = "sender.mobile", source = "senderInfo.telNumber"),
+            @Mapping(target = "sender.name", source = "senderInfo.name"),
+            @Mapping(target = "sender.postcode", source = "senderInfo.zipCode"),
+            @Mapping(target = "sender.province", source = "senderInfo.provinceName"),
+            @Mapping(target = "sender.tel", source = "senderInfo.telNumber"),
+            @Mapping(target = "declareInfos", source = "logisticsProductVOList"),
+            @Mapping(target = "codAmount", ignore = true),
+            @Mapping(target = "codCurrency", ignore = true)
     })
     TongYouCreateOrderRequest orderRequestByTongYou(LogisticsOrderVO logisticsOrderVO);
     @Mappings({
-            @Mapping(target = "currency" ,source = "declareCurrency"),
-            @Mapping(target = "des" ,source = "productProperty"),
+            @Mapping(target = "currency" ,source = "destCurrency"),
+            @Mapping(target = "des" ,constant = ""),
             @Mapping(target = "hs" ,source = "customsCode"),
             @Mapping(target = "nameCN" ,source = "declareChineseName"),
             @Mapping(target = "nameEN" ,source = "declareEnglishName"),
-            @Mapping(target = "price" ,source = "price"),
+            @Mapping(target = "price" ,source = "destDeclarePrice"),
             @Mapping(target = "qty" ,source = "quantity"),
             @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "weight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
@@ -492,12 +502,12 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "product_declare_amount" ,source = "destDeclarePrice"),
             @Mapping(target = "product_id" ,source = "skuId"),
             @Mapping(target = "product_num" ,source = "quantity"),
-            @Mapping(target = "product_weight" ,source = "weight", qualifiedByName = "gTokgStr"),
+            @Mapping(target = "product_weight" ,source = "grossWeight", qualifiedByName = "gTokg"),
             @Mapping(target = "child_order_id" ,source = "childOrderId"),
             @Mapping(target = "sc_item_code" ,source = "scItemCode"),
             @Mapping(target = "sc_item_id" ,source = "scItemId"),
             @Mapping(target = "sc_item_name" ,source = "scItemName"),
-            @Mapping(target = "sku_code" ,source = "skuCode"),
+            @Mapping(target = "sku_code" ,source = "skuNo"),
             @Mapping(target = "sku_value" ,source = "skuName")
     })
     DeclareProduct orderRequestProductByAliExpress(LogisticsProductVO logisticsProductVO);

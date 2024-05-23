@@ -73,8 +73,6 @@ import java.util.stream.Collectors;
 public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceImpl<TmsB2cDeclareReconciliationDetailMapper, TmsB2cDeclareReconciliationDetailEntity> implements TmsB2cDeclareReconciliationDetailService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private TmsB2cDeclareReconciliationService tmsB2cDeclareReconciliationService;

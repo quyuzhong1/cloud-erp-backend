@@ -37,6 +37,11 @@ public class LogisticsSupplierEntity extends BaseEntity<LogisticsSupplierEntity>
     @TableField("supplier_name")
     private String supplierName;
     /**
+     * 简称
+     */
+    @TableField("short_name")
+    private String shortName;
+    /**
     * 类型
     */
     @TableField("type")

@@ -118,7 +118,7 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
         Map<String, List<TransferInfoDetailEntity>> outTransferInfoMap = transferDetailList.stream().collect(Collectors.groupingBy(TransferInfoDetailEntity::getOutWarehouseCode));
 
 
-        List<MabangInOutStockDTO> mabangInOutStockDTOList = Lists.newArrayList();
+        List<MabangInOutStockDTO>  mabangInOutStockDTOList = Lists.newArrayList();
 
         String operateName = SyncOperateEnum.getNameByCode(operate);
         for(Map.Entry<String, List<TransferInfoDetailEntity>> inEntry : inTransferInfoMap.entrySet()){

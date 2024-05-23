@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -16,10 +15,10 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -32,12 +31,9 @@ import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -68,6 +64,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -117,9 +114,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private OperateLogService operateLogService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private QcInfoService qcInfoService;
@@ -554,7 +548,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
-            LoginUser userInfo = commonService.getUserInfo();
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnInstockEntity::getApproveUserId, userInfo.getUid())
@@ -1113,8 +1107,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> skuIds = viewList.stream().map(SoReturnInstockDetailEntity::getSkuId).collect(Collectors.toList());
         //bom信息
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        String combinationType= BomTypeEnum.COMBINATION.getType();
-        bomList = bomList.stream().filter(obj -> combinationType.equals(obj.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(bomList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -1225,10 +1217,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //bom信息
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
-
-        String combinationType= BomTypeEnum.COMBINATION.getType();
-        bomList = bomList.stream().filter(obj -> combinationType.equals(obj.getType())).collect(Collectors.toList());
-
         if (CollectionUtils.isEmpty(bomList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -1466,15 +1454,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         /**
          * 1、同一加工单下，相同仓库、供应商数据生成同一个采购退货单
          * 2、基于1条件下，相同sku、库位则可合并明细
          */
-
-        //获取报价信息
-        List<String> supplierIdList = list.stream().map(obj -> JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId()).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listAllSupplierSkuPrice(supplierIdList);
 
         Map<String, List<MachineSubComponentsEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getWarehouseId().concat(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId())));
         for (Map.Entry<String, List<MachineSubComponentsEntity>> entry : map.entrySet()) {
@@ -1507,15 +1491,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 String sourceIds = childValue.stream().map(MachineSubComponentsEntity::getId).collect(Collectors.joining(","));
                 addDetailDTO.setSourceDetailId(sourceIds);
 
-                //报价单价
-                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(obj -> obj.getSupplierId().equals(handleDetailDTO.getChildSupplierId()) && qty > obj.getMinQty() && obj.getMaxQty() >= qty ).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(supplierSkuPrice)) {
-                    String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", subComponentsEntity.getSkuNo(), qty);
-                    throw new ServiceException(new ApiResult(1,error));
-                }
-                addDetailDTO.setReturnPrice(supplierSkuPrice.getTaxPrice());
-                addDetailDTO.setCurrency(supplierSkuPrice.getCurrency());
-                addDetailDTO.setCurrencySymbol(supplierSkuPrice.getCurrencySymbol());
+                //由于下推的采购退货单无采购组织，现退货单价给0，编辑的时候取报价信息
+                addDetailDTO.setReturnPrice(BigDecimal.ZERO);
                 addDetailList.add(addDetailDTO);
 
             }

@@ -1225,6 +1225,8 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotBlank(message = "来源类型：头程,B2B不能为空")
         private String sourceId;
+
+        private Boolean isAuto = false;
     }
     /**
     * 修改

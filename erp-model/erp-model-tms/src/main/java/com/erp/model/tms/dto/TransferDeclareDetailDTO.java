@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -118,7 +119,7 @@ public class TransferDeclareDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        private String orderUploadStatus;
     }
 
     /**
@@ -175,6 +176,11 @@ public class TransferDeclareDetailDTO implements Serializable {
         * 包裹重量单位
         */
         private String weightUnit;
+
+        /**
+        * 第三方中转服务商的发货单号
+        */
+        private String shippingOrderNo;
 
     }
 

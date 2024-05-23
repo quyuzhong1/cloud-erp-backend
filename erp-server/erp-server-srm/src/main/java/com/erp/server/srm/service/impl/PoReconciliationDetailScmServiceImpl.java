@@ -39,16 +39,19 @@ import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmDictFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
-import com.erp.server.srm.service.*;
+import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.PoReconciliationDetailScmService;
+import com.erp.server.srm.service.PoReconciliationScmService;
+import com.erp.server.srm.service.UserService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -79,9 +82,6 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     private OperateLogService operateLogService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private PoReconciliationScmService poReconciliationScmService;
 
     @Autowired
@@ -91,7 +91,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     private ScmDictFeign scmDictFeign;
 
     @Autowired
-    private SysDictFeign sysDictFeign;
+    private WmsTaskFeign wmsTaskFeign;
 
     @Autowired
     private ScmTaskFeign scmTaskFeign;
@@ -500,6 +500,11 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         List<String> supplierIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSupplierId).collect(Collectors.toList());
         List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listAllSupplierSkuPrice(supplierIdList);
 
+        //采购退货信息
+        List<String> poReturnIdList = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.PO_RETURN.getCode()))
+                .map(PoReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<PoReturnEntity> poReturnList = wmsTaskFeign.listPoReturnByIdList(poReturnIdList);
+
         //供应商信息
         List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
 
@@ -539,11 +544,16 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             detailEntity.setSettleOrgName(orgName);
             if (SourceTypeEnum.PO_RETURN.getCode().equals(detailEntity.getSourceType())) {
+                //采购组织
+                String purchaseOrgId = poReturnList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceId()))
+                        .map(PoReturnEntity::getPurchaseOrgId).findFirst().orElse("");
+
                 //报价信息单价
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = purchasePriceList.stream().filter(obj ->
                         StrUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
                                 && StrUtil.equals(obj.getSupplierId(), detailEntity.getSupplierId())
                                 && Math.abs(detailEntity.getReceiveQty())  > obj.getMinQty()
+                                && StrUtil.equals(obj.getPurchaseOrgId(), purchaseOrgId)
                                 && obj.getMaxQty() >= Math.abs(detailEntity.getReceiveQty())
                 ).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {

@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -20,15 +20,14 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.plm.enums.DistributionTypeEnum;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
 import com.erp.model.plm.enums.TaskTypeEnum;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.TemplateTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
 import com.erp.server.plm.service.*;
@@ -388,7 +387,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         List<TemplateTaskFollowerEntity> templateTaskFollowerList = templateTaskFollowerService.listTemplateFollower(templateId, templateTaskIds);
         List<ProjectTaskEntity> byProductId = projectTaskService.getByProductId(productId);
 
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //来源信息
         List<CopySourceDTO> sourceList = new ArrayList<>();
         List<ProjectTaskEntity> copyList = new ArrayList<>(list.size());
@@ -492,7 +491,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         checkTemplateTaskName(dto);
         TemplateTaskEntity entity = new TemplateTaskEntity();
         BeanMapperUtils.copy(dto, entity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
@@ -892,7 +891,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         List<TemplateTaskFollowerEntity> templateTaskFollowerList = templateTaskFollowerService.listTemplateFollower(templateId, taskIdList);
         List<ProjectTaskEntity> byProductId = projectTaskService.getByProductId(productId);
 
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //来源信息
         List<CopySourceDTO> sourceList = new ArrayList<>();
         List<ProjectTaskEntity> copyList = new ArrayList<>(list.size());

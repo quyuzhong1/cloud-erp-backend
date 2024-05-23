@@ -68,4 +68,10 @@ public interface TransferLogisticsService {
      * @return
      */
     ApiResult<String> createProduct(@Valid TransferLogisticsCreateProductReq createProductReq, String authId);
+
+    /**
+     * 取消订单
+     * @return
+     */
+    ApiResult<String> cancelOrder(TransferCancelOrderReq cancelOrderReq, String authId);
 }

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -21,7 +22,6 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.tongyou.dto.request.TongYouCreateOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouGetOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouPrintLabelRequest;
@@ -79,23 +79,23 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             TongYouCreateOrder tongYouCreateOrder = tongYouService.createOrder(request, logisticsOrderVO.getAuthMap());
             if (!tongYouCreateOrder.getSuccess()) {
-                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(tongYouCreateOrder));
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(tongYouCreateOrder), false);
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + tongYouCreateOrder.getMsg());
             }
-            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
-                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(tongYouCreateOrder));
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(tongYouCreateOrder), false);
             return success(LogisticsOrderResponseVO.builder()
                     .transportNo(tongYouCreateOrder.getLogisticsNo())
                     .trackNo(tongYouCreateOrder.getLogisticsNo())
                     .deliveryNo(logisticsOrderVO.getDeliveryNo())
                     .build());
         } catch (Exception e) {
-            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e), true);
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }
     }
@@ -109,7 +109,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
         for (LogisticsGetLabelVO logisticsGetLabelVO : labelVO) {
             TongYouPrintLabelRequest request = TongYouPrintLabelRequest.builder()
                     .orderNo(logisticsGetLabelVO.getDeliveryNo())
-                    .trackNo(logisticsGetLabelVO.getTrackNo())
+                    .trackNo(StringUtils.isBlank(logisticsGetLabelVO.getTrackNo())? logisticsGetLabelVO.getTransportNo() : logisticsGetLabelVO.getTrackNo())
                     .logisticsId(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
                     .isPaoc(logisticsGetLabelVO.getIsPdn())
                     .isPcd(logisticsGetLabelVO.getIsPcd())
@@ -180,7 +180,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 if (!tongYouOrderInfo.getSuccess()) {
                     response.failure(getPlatForm().getName(), logisticsQueryBaseVO.getDeliveryNo(), tongYouOrderInfo.getMsg());
                     responseList.add(response);
-                    logisticsOperateService.pushOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+                    logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                             logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(tongYouOrderInfo));
 
@@ -189,13 +189,13 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 }
                 response = LogisticsOrderConverter.INSTANCE.orderQueryByTongYou(tongYouOrderInfo);
                 responseList.add(response);
-                logisticsOperateService.pushOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                         logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(tongYouOrderInfo));
             } catch (Exception e) {
                 response.failure(getPlatForm().getName(), logisticsQueryBaseVO.getDeliveryNo(), e.getMessage());
                 responseList.add(response);
-                logisticsOperateService.pushOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                         logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(e));
                 isSuccess = false;

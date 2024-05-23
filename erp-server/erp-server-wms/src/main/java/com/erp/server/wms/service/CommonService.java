@@ -1,8 +1,8 @@
 package com.erp.server.wms.service;
 
-import com.common.business.vo.LoginUser;
-
 import java.util.List;
+
+import com.common.business.vo.LoginUser;
 
 /**
  * @author yl
@@ -13,7 +13,7 @@ import java.util.List;
  */
 public interface CommonService {
 
-    
+	
     /**
      * 获取用户信息
      * @author yl

@@ -45,6 +45,12 @@ public class PoReturnDetailEntity extends BaseEntity<PoReturnDetailEntity> {
     private String skuNo;
 
     /**
+     * 是否组合品 true 是
+     */
+    @TableField("is_combination")
+    private Boolean isCombination;
+
+    /**
      * 实退数量
      */
     @TableField("return_qty")

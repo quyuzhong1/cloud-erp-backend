@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -119,11 +120,41 @@ public class SoB2cDetailDTO implements Serializable {
          * 是否匹配仓库规则
          */
         private Boolean isMatchWarehouseRule;
-        
-       /**
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
+        /**
         * 明细标签对象
         */
        private DetailLabelDTO detailLabelDTO;
+
+
+        /**
+         * 目的国申报价
+         */
+        private BigDecimal toDeclarePrice;
+
+        /**
+         * 目的国申报币种
+         */
+        private String toCurrency;
+
+        /**
+         * 目的国申报币种符号
+         */
+        private String toCurrencySymbol;
+
+        /**
+         * 申报标签(正常申报normal，高申报high，低申报low)
+         */
+        private String declareLabel;
+        /**
+         * 申报标签名称
+         */
+        private String declareLabelName;
 
     }
 
@@ -204,6 +235,11 @@ public class SoB2cDetailDTO implements Serializable {
         private String platformSpuNo;
 
         /**
+         * 产品skuId
+         */
+        private String skuId;
+
+        /**
         * 产品sku编号
         */
         private String skuNo;
@@ -248,6 +284,19 @@ public class SoB2cDetailDTO implements Serializable {
         */
         private BigDecimal exchangeRate;
 
+        /**
+         * 拆分的明细id
+         */
+        private String splitDetailId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination = false;
     }
 
     /**
@@ -265,6 +314,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 操作明细集合id
          */
         private String operateDetailId;
+
+        /**
+         * 拆分的Id 如果用户拆分BOM套装则这个值为原本的明细id
+         */
+        private String splitDetailId;
     }
 
     /**
@@ -279,6 +333,21 @@ public class SoB2cDetailDTO implements Serializable {
         */
         private String id;
 
+        /**
+         * 拆分的Id 如果用户拆分BOM套装则这个值为原本的明细id
+         */
+        private String splitDetailId;
+
+        private String sourceDetailId;
+        /**
+         * 金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 建议售价（本位币）
+         */
+        private BigDecimal advicePrice;
     }
 
     @Data
@@ -311,13 +380,14 @@ public class SoB2cDetailDTO implements Serializable {
         */
         @NotNull(message = "单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "单价整数位不能超过12位，小数位不能超过4位")
-        @DecimalMin(value = "0", message = "单价最小值必须大于0")
         private BigDecimal price;
 
         /**
          * 来源平台
          */
         private String sourcePlatform;
+
+        private String warehouseSkuNo;
     }
 
 

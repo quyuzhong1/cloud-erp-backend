@@ -87,7 +87,7 @@ public class UbiShipperService {
         List<UbiOrder> orders = new ArrayList<>();
         orders.add(ubiOrder);
         String res = OkHttpUtils.doPostJsonObject(serviceUrl, orders, headers);
-        log.info("创建订单：{}", res);
+        log.info("下单完成：{}",JSONObject.toJSONString(res));
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
             return JSONUtil.toList((JSONArray) result.getData(), OrderResponse.class);

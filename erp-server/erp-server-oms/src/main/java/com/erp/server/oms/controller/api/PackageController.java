@@ -1,15 +1,11 @@
 package com.erp.server.oms.controller.api;
 
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.PackageDTO;
-import com.erp.model.wms.dto.WeightingOutboundDTO;
 import com.erp.server.oms.service.PackageService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
@@ -74,9 +70,10 @@ public class PackageController extends BaseController {
      * @return
      */
     @PostMapping("/merge")
-    public ApiResult<List<BatchResultDTO>> merge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> result = packageService.mergePackage(dto.getIds());
+    public ApiResult<List<BatchResultDTO>> merge(@RequestBody @Validated PackageDTO.MergePackageDTO dto) {
+        List<BatchResultDTO> result = packageService.mergePackage(dto);
         return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
     }
+
 
 }

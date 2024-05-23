@@ -423,8 +423,8 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "确认立项:ids={ids}")
     @PostMapping("/batchEstablish")
-    public ApiResult batchArchive(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        boolean flag = productInfoService.batchEstablish(dto.getIds());
+    public ApiResult batchArchive(@RequestBody @Valid ProductInfoDTO.IdsDateDto dto) {
+        boolean flag = productInfoService.batchEstablish(dto);
         return flag ? success() : failure();
     }
 

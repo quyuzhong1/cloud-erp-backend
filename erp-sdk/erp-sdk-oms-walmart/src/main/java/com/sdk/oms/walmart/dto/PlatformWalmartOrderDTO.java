@@ -269,6 +269,8 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         }
+        // 平台订单原始取消状态
+        orderDTO.setIsCancel(orderDTO.getInvalidStatus());
 
         BigDecimal amount = new BigDecimal(BigInteger.ZERO);
         String currency = "";
