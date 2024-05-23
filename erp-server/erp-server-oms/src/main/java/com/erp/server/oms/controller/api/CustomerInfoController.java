@@ -17,7 +17,6 @@ import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerB2bSellerChangeService;
@@ -293,6 +292,16 @@ public class CustomerInfoController extends BaseController {
         List<CustomerInfoEntity> list = customerInfoService.list();
         List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
         return success(resultList);
+    }
+
+    /**
+     * 远程搜索
+     * @param dto
+     */
+    @PostMapping("/pageSelect")
+    public ApiResult<PagingVO<CustomerDTO.PageSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<CustomerDTO.SelectDTO> dto) {
+        PagingVO<CustomerDTO.PageSelectDTO> pagingVO = customerInfoService.pageSelect(dto);
+        return success(pagingVO);
     }
 
     /**

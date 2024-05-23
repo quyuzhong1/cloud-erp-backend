@@ -90,10 +90,8 @@ public class ThirdWarehouseController extends BaseController {
 
     /**
      * 远程搜索
-     * @author Luo_WG
-     * @date: 2023-08-24
      * @param dto
-     * @return ApiResult<PagingVO<WarehouseLocationMoveDTO.ListDTO>>
+     * @return PagingVO<ThirdWarehouseDTO.PageSelectDTO>
      */
     @PostMapping("/pagingSelect")
     public ApiResult<PagingVO<ThirdWarehouseDTO.PageSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ThirdWarehouseDTO.SelectDTO> dto) {
