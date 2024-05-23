@@ -4596,6 +4596,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 detailAddDTO.setLogisticsChannelId(logisticsEntity.getLogisticsChannelId());
                 detailAddDTO.setPackageWeight(logisticsEntity.getWeight());
                 detailAddDTO.setTrackNo(logisticsEntity.getCode());
+                detailAddDTO.setShippingOrderNo(soB2cEntity.getShippingOrderNo());
                 addDetailList.add(detailAddDTO);
             }
             addDTO.setDetailList(addDetailList);
