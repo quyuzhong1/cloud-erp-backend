@@ -578,7 +578,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //采购组织不能为空
         String codes = purchaseReturnOrderEntities.stream().filter(obj -> StrUtil.isBlank(obj.getPurchaseOrderId())).map(PoReturnEntity::getCode).collect(Collectors.joining(","));
-        if (StrUtil.isNotBlank(codes)) {
+        if (StrUtil.isBlank(codes)) {
             throw new ServiceException(StrUtil.format("采购退货单【{}】采购组织不能为空",codes));
         }
 
