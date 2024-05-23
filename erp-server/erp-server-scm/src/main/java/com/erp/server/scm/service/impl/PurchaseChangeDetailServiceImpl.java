@@ -298,7 +298,8 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                 continue;
             }
 
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(purchaseChangeDetailEntity.getQty(),purchaseChangeDetailEntity.getSkuId(),purchaseChangeDetailEntity.getSkuNo(),purchaseChangeEntity.getSupplierId());
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(purchaseChangeDetailEntity.getQty(),purchaseChangeDetailEntity.getSkuId(),
+                    purchaseChangeDetailEntity.getSkuNo(),purchaseChangeEntity.getSupplierId(),purchaseChangeEntity.getPurchaseOrgId());
             List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(dto);
             PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
             //单价
