@@ -411,6 +411,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         // 检查仓库发货配置
         skuMappingExtendService.checkAndSave(addSkuMaping, dto.getExtendList());
+        //速卖通相同店铺，skuNo,平台产品ID 有多个listingInfo, 需要同步映射关系
+        if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(skuMaping.getDictPlatform())){
+            listingInfoService.handleAliExpress(addSkuMaping,skuVOList.get(0),listing);
+        }
 
 
         // 操作日志
