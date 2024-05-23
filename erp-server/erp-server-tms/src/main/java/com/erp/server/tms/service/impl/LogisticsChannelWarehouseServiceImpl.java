@@ -80,7 +80,7 @@ public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<Logis
 
         List<LogisticsChannelWarehouseEntity> list = listByChannelIdList(Arrays.asList(id));
         if (CollectionUtils.isEmpty(list)) {
-            return null;
+            return new LogisticsChannelWarehouseDTO.ViewDTO();
         }
         LogisticsChannelWarehouseDTO.ViewDTO viewDTO = new LogisticsChannelWarehouseDTO.ViewDTO();
         viewDTO.setLogisticsChannelId(id);
