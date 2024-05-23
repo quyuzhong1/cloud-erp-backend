@@ -122,9 +122,6 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     private String receiverTaxNo;
 
 
-    private BigDecimal testNumber;
-    private BigDecimal testNumber1;
-
     public static final String MAIN_ID = "main_id";
 
     public static final String LOGIN_ID = "login_id";
