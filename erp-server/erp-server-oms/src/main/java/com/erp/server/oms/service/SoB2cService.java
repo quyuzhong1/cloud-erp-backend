@@ -929,4 +929,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 根据单号查询销售订单
      */
     SoB2cEntity getByCode(String soCode);
+
+    /**
+     * 同步订单到DMP
+     */
+    void syncOrderToDmp(String id);
 }

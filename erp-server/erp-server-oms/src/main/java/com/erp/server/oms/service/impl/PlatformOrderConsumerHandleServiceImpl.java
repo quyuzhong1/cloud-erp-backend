@@ -148,6 +148,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);
         }
+
+        //推送到DMP
+        soB2cService.syncOrderToDmp(mainEntity.getId());
     }
 
 
