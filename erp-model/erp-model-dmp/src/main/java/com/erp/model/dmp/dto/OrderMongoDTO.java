@@ -219,7 +219,7 @@ public class  OrderMongoDTO {
      */
     public static OrderMongoDTO getByFinancial(String financial) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
-        orderMongoDTO.setStockSku(financial);
+        orderMongoDTO.setFinancial(financial);
         return orderMongoDTO;
     }
     public static OrderMongoDTO getUniqId(String uniqueId) {

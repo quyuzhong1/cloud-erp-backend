@@ -45,7 +45,10 @@
         update_time,
         version,
         is_deleted,
-        main_id, name, code, effective_time, effective_time_unit, track_query_mode, paper_length, paper_width, sorting_code, shipping_template_id, fee_rule, max_customs_amount, max_customs_currency, min_customs_amount, min_customs_currency, max_weight, weight_unit, tax_model, is_ioss_prepay, is_api_sign, is_api_insurance
+        main_id, name, code, effective_time, effective_time_unit, track_query_mode, paper_length, paper_width, sorting_code, fee_rule,
+        max_customs_amount, max_customs_currency, min_customs_amount, min_customs_currency, max_weight, weight_unit, tax_model,
+        is_ioss_prepay, is_api_sign, is_api_insurance,disabled,paper_size,source_id,source_type,sync_source_id,max_length,size_unit,
+        max_width,max_height,declare_code_type
     </sql>
 
     <select id="listLogisticsChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ListSelectDTO">
@@ -144,6 +147,21 @@
             <foreach collection="provideNameList" open="(" close=")" item="item" separator=",">
                 #{item}
             </foreach>
+        </if>
+    </select>
+    <select id="listByMainIdsAndName" resultType="com.erp.model.tms.entity.LogisticsChannelEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from  logistics_channel lc
+        where lc.is_deleted = false
+        <if test="mainIdList != null and mainIdList.size > 0">
+            and lc.main_id in
+            <foreach collection="mainIdList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="name != null and name != ''">
+            and lc.name ILIKE concat('%',#{name}::text,'%')
         </if>
     </select>
 
