@@ -144,7 +144,7 @@ public class SoB2cController extends BaseController {
             }
 
         }
-        return success(add.getId());
+        return success(add.getCode());
     }
 
     /**
