@@ -48,8 +48,8 @@ public abstract class AbstractShipOrder implements IPlatformService {
             }
         });
         allDetailList = allDetailList.stream().filter(v->!filterDetailList.contains(v.getId())).collect(Collectors.toList());
-        //将allDetailList 相同的splitDetailId去重
-        allDetailList = allDetailList.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(SoB2cDetailEntity::getSplitDetailId))), ArrayList::new));
+        //将allDetailList 相同的来源明细id去重
+        allDetailList = allDetailList.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(SoB2cDetailEntity::getSourceDetailId))), ArrayList::new));
         return allDetailList;
     }
 }
