@@ -71,7 +71,7 @@ public class YanWenCreateWayBillRequest {
         private String phone;
 
         //收件人州(省)
-        @NotBlank(message = "收件人州(省)不能为空")
+//        @NotBlank(message = "收件人州(省)不能为空")
         private String state;
 
         //收件人城市

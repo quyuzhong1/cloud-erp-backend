@@ -148,7 +148,7 @@ public class WeiShiCreateOrderRequest {
 
         //发件人省
         @JSONField(name = "shipper_province")
-        @NotNull(message = "发件人省不能为空")
+//        @NotNull(message = "发件人省不能为空")
         private String shipperProvince;
 
         //发件人城市
