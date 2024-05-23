@@ -247,6 +247,7 @@ public class ShopifyLogisticsHandlerImpl extends AbstractLogisticsHandler {
         entityList.add(new LogisticsSaleChannelEntity().setCode("Southwest Air Cargo").setPlatformChannelId("Southwest Air Cargo").setCnName("Southwest Air Cargo").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
         entityList.add(new LogisticsSaleChannelEntity().setCode("Fastway").setPlatformChannelId("Fastway").setCnName("Fastway").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
         entityList.add(new LogisticsSaleChannelEntity().setCode("Skynet").setPlatformChannelId("Skynet").setCnName("Skynet").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("YANWEN").setPlatformChannelId("YANWEN").setCnName("YANWEN").setLogisticsPlatform(LogisticsPlatformEnum.SHOPIFY.getCode()));
         return success(entityList);
     }
 
