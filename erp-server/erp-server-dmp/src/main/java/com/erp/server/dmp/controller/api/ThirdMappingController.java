@@ -49,25 +49,6 @@ public class ThirdMappingController extends BaseController {
         return success(thirdMappingService.add(dto));
     }
 
-    /**
-     * 修改
-     *
-     * @param dto
-     * @return ApiResult
-     * @author hyj
-     * @date: 2024-05-17
-     */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "第三方系统映射关系表修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "dmp:thirdMapping:update",
-            serviceClass = ThirdMappingService.class,
-            keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated ThirdMappingDTO.UpdateDTO dto) {
-        thirdMappingService.update(dto);
-        return success();
-    }
 
     /**
      * 修改
