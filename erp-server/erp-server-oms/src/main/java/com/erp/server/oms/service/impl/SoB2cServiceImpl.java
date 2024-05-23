@@ -1582,16 +1582,47 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             productVOS.add(productVO);
         });
-
-//        //整合sku基础信息
-//        List<LogisticsProductVO> productVOS = B2cOrderConverter.INSTANCE.convertDeclareProductVOByEntity(declareList);
-//        List<LogisticsBillDTO.SkuDTO> skuList = B2cOrderConverter.INSTANCE.convertSku(detailList);
-//        result.setSkuList(skuList);
+        //TODO 申报信息校验 测试现在没时间，后面使用再放开
+//        checkDeclareInfo(productVOS,entity);
         result.setProductVOS(productVOS);
         LogisticsBillDTO.PackageDTO packageDTO = B2cOrderConverter.INSTANCE.convertPackage(soB2cLogisticsEntity);
         packageDTO.setCurrency(productVOS.get(0).getDestCurrency());
         result.setPackageInfo(packageDTO);
         return result;
+    }
+
+    /**
+     * 校验字段必填
+     * @param productVOS
+     * @param entity
+     */
+    private void checkDeclareInfo(List<LogisticsProductVO> productVOS, SoB2cEntity entity) {
+        if (CollectionUtils.isEmpty(productVOS)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST, entity.getCode());
+        }
+        productVOS.forEach(logisticsProductVO -> {
+            if (StrUtil.isEmpty(logisticsProductVO.getSkuNo())){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_SKU_NO_NOT_EXIST, entity.getCode());
+            }
+            if (StrUtil.isEmpty(logisticsProductVO.getDeclareChineseName())){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_CN_NAME_NOT_EXIST, logisticsProductVO.getSkuNo());
+            }
+            if (StrUtil.isEmpty(logisticsProductVO.getDeclareEnglishName())){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_EN_NAME_NOT_EXIST, logisticsProductVO.getSkuNo());
+            }
+            if (Objects.isNull(logisticsProductVO.getDestDeclarePrice()) || logisticsProductVO.getDestDeclarePrice().compareTo(BigDecimal.ZERO)<1){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_PRICE_NOT_EXIST, logisticsProductVO.getSkuNo());
+            }
+            if (StrUtil.isEmpty(logisticsProductVO.getDestCurrency())){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_NOT_EXIST, logisticsProductVO.getSkuNo());
+            }
+            if (StrUtil.isEmpty(logisticsProductVO.getDestCurrencySymbol())){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_SYM_NOT_EXIST, logisticsProductVO.getSkuNo());
+            }
+            if (Objects.isNull(logisticsProductVO.getWeight()) || logisticsProductVO.getWeight() <= 0){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_WEIGHT_NOT_EXIST, logisticsProductVO.getSkuNo());
+            }
+        });
     }
 
     @Override
