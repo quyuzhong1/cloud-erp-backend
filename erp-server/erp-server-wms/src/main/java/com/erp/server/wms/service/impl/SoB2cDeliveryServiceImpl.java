@@ -837,11 +837,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.FALSE;
         }
-        return lambdaUpdate()
+
+        Boolean flag = lambdaUpdate()
                 .set(SoB2cDeliveryEntity::getStatus, status)
                 .in(SoB2cDeliveryEntity::getId, ids)
                 .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
                 .update();
+
+        //推送到DMP
+        for (String id : ids) {
+            this.syncDeliveryToDmp(id);
+        }
+        return flag;
     }
 
     /**
