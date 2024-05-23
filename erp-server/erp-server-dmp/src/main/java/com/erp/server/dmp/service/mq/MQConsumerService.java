@@ -127,7 +127,7 @@ public class MQConsumerService {
      */
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
-            selectorExpression = "gyy_delivery_order_tag||kingdee_delivery_order_tag||mabang_delivery_order_tag||wdt_delivery_order_tag",
+            selectorExpression = "gyy_delivery_order_tag||kingdee_delivery_order_tag||mabang_delivery_order_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_delivery_consumer")
     public class ConsumerErpDeliveryOrder implements RocketMQListener<DmpDeliveryDetailInfoEntity> {
         @Override
@@ -151,10 +151,6 @@ public class MQConsumerService {
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
                 OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getBillNo());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
-            }
-            if(PlatformEnum.WANGDIAN.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, WangDianOrderEntity.class);
             }
         }
     }

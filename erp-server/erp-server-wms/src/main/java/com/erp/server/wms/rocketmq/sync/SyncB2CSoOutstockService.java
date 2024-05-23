@@ -20,5 +20,9 @@ public interface SyncB2CSoOutstockService {
      */
     void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity);
 
+    /**
+     * 同步旺店通的销售出库单
+     * @param entity 旺店通参数
+     */
     void syncWdtSoOutStock(WangDianOrderEntity entity);
 }

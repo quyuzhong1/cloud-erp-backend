@@ -4,12 +4,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.sdk.wangdian.sdk.Pager;
-import com.sdk.wangdian.sdk.WdtErpException;
-import com.sdk.wangdian.sdk.api.wms.stockout.StockoutAPI;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutResponse;
-import com.sdk.wangdian.server.WangDianClientService;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.annotation.SaveData;
@@ -35,10 +29,15 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.wdt.WangDianOrderEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.sdk.wangdian.sdk.Pager;
+import com.sdk.wangdian.sdk.WdtErpException;
+import com.sdk.wangdian.sdk.api.wms.stockout.StockoutAPI;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutResponse;
+import com.sdk.wangdian.server.WangDianClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -53,10 +52,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Component
 @Slf4j
 @SaveData(method = PlatformApiEnum.WANGDIAN_TRADE)
-public class WangDianOrderInfoServiceImpl  implements IReportSaveService<WangDianOrderEntity> {
+@Deprecated
+public class WdtOrderInfoServiceImpl implements IReportSaveService<WangDianOrderEntity> {
 
     @Resource
     private WangDianClientService wangDianClientService;

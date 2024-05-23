@@ -7,6 +7,8 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.sdk.wangdian.sdk.api.Result;
 import com.sdk.wangdian.sdk.api.goods.GoodsAPI;
 import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
@@ -2394,7 +2396,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     batchPushDTOS.add(dto);
                 }
                 GoodsAPI api = wangDianClientService.get(GoodsAPI.class);
-                Result result = api.batchPush(batchPushDTOS);
+                List<Map<String, Object>> list = JSON.parseObject(JSON.toJSONString(batchPushDTOS), new TypeReference<List<Map<String, Object>>>() {
+                });
+                Result result = api.batchPush(list);
                 String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
                         .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))
                         .collect(Collectors.joining(","));

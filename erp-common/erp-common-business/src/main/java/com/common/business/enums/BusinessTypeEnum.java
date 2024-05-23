@@ -34,6 +34,7 @@ public enum BusinessTypeEnum implements EnumMessage {
     FBA_SHIPMENT_DETAIL("fba_shipment_detail","亚马逊FBA货件明细", SourceTypeEnum.FBA_SHIPMENT_DETAIL),
     FBA_INVENTORY("fba_inventory","亚马逊FBA仓库", SourceTypeEnum.FBA_INVENTORY),
     SO_OUT_STOCK("so_out_stock","销售出库单", SourceTypeEnum.PLATFORM_SO_OUT_STOCK),
+    WDT_SO_OUT_STOCK("wdt_so_out_stock","旺店通销售出库单", SourceTypeEnum.WDT_OUT_STOCK),
 
     WAREHOUSE("warehouse","仓库", SourceTypeEnum.THIRD_WAREHOUSE_GET_WAREHOUSE),
     CITY_DICT("city_dict","区域数据", SourceTypeEnum.THIRD_WAREHOUSE_GET_BASE_ADDRESS),
