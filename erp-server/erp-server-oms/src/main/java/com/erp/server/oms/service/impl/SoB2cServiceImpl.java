@@ -5224,6 +5224,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
+            if(StringUtils.isNotBlank(dto.getSellerOrderCode())){
+                entity.setSellerOrderCode(dto.getSellerOrderCode());
+            }
             if (!oldEntity.toString().equals(entity.toString())) {
                 if (!this.updateById(entity)) {
                     throw new ServiceException("soB2c订单更新失败");

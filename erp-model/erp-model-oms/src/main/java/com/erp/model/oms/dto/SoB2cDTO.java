@@ -169,6 +169,11 @@ public class SoB2cDTO implements Serializable {
         private String dictPlatform;
 
         /**
+         * 卖家订单编号
+         */
+        private String sellerOrderCode;
+
+        /**
          * 平台订单号
          */
         private String platformCode;
@@ -529,6 +534,10 @@ public class SoB2cDTO implements Serializable {
          * 订单状态
          */
         private String billStatus;
+        /**
+         * 卖家订单编号
+         */
+        private String sellerOrderCode;
         /**
          * 订单状态名称
          */
@@ -934,6 +943,11 @@ public class SoB2cDTO implements Serializable {
          * 订单分类
          */
         private List<String> categoryIdList;
+
+        /**
+         * 卖家订单编号
+         */
+        private String sellerOrderCode;
     }
 
     @Data
