@@ -1472,7 +1472,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
             }
             //获取物流单号失败销售订单自动反审核
-            this.disApprove(id);
+            //1.26.2 去掉该功能
+//            this.disApprove(id);
             log.error("销售订单【{}】 获取物流单失败，异常信息{}", entity.getCode(), message);
         }
         return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
