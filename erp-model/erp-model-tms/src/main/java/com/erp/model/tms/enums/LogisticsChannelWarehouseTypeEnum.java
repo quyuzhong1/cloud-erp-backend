@@ -1,6 +1,7 @@
-package com.erp.model.oms.enums;
+package com.erp.model.tms.enums;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 
 /**
  * @description: 仓库类型
