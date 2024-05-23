@@ -158,23 +158,18 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        List<LogisticsChannelEntity> list = this.lambdaQuery().
-                in(LogisticsChannelEntity::getMainId, mainIdList).
-                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
-                orderByAsc(LogisticsChannelEntity::getDisabled).
-                orderByDesc(LogisticsChannelEntity::getCreateTime).
-                list();
+        List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, name);
+//        List<LogisticsChannelEntity> list = this.lambdaQuery().
+//                in(LogisticsChannelEntity::getMainId, mainIdList).
+//                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
+//                orderByAsc(LogisticsChannelEntity::getDisabled).
+//                orderByDesc(LogisticsChannelEntity::getCreateTime).
+//                list();
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
         List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
         List<ShippingTemplateRefChannelEntity> shippingTemplateList = shippingTemplateRefChannelService.listChannelIdList(channelIdList);
         for (LogisticsChannelEntity item : list) {
-            LogisticsChannelDTO.BaseDTO base = new LogisticsChannelDTO.BaseDTO();
-            base.setCode(item.getCode());
-            base.setDisabled(item.getDisabled());
-            base.setId(item.getId());
-            base.setName(item.getName());
-            base.setMainId(item.getMainId());
-            base.setSortingCode(item.getSortingCode());
+            LogisticsChannelDTO.BaseDTO base = LogisticsChannelConverter.INSTANCE.convertToChannelDTO(item);
             String effectiveTime = item.getEffectiveTime();
             String timeUnit = item.getEffectiveTimeUnit();
             String timeUnitName = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class, timeUnit);
@@ -183,8 +178,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
                     map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
             base.setShippingTemplateName(ShippingTemplateName);
-            base.setSourceId(item.getSourceId());
-
             //获取服务商编号
             LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getMainId());
             if (ObjectUtil.isNotEmpty(authEntity)) {

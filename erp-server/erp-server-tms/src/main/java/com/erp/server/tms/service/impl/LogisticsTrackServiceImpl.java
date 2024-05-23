@@ -167,20 +167,24 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     @Override
     public void checkTrackStatus(LogisticsTrackEntity logisticsTrackEntity) {
         if (Objects.isNull(logisticsTrackEntity)) return;
-        LogisticsBillDetailEntity detailByTrackNo = logisticsBillDetailService.getDetailByTrackNo(logisticsTrackEntity.getTrackNo());
-        if (Objects.isNull(detailByTrackNo)) return;
+        List<LogisticsBillDetailEntity> detailList = logisticsBillDetailService.getDetailByTrackNo(logisticsTrackEntity.getTrackNo());
+        if (CollectionUtils.isEmpty(detailList)) return;
         //状态更新同步
-        if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
-            detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
-            detailByTrackNo.setTrackTime(LocalDateTime.now());
-            detailByTrackNo.setIsApiUpdate(Boolean.TRUE);
-            if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
-                //TODO 同步订单状态
-                detailByTrackNo.setSignTime(logisticsTrackEntity.getTrackTime());
-            } else {
-                detailByTrackNo.setSignTime(null);
+        detailList.forEach(detailByTrackNo -> {
+            if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
+                detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
+                detailByTrackNo.setTrackTime(LocalDateTime.now());
+                detailByTrackNo.setIsApiUpdate(Boolean.TRUE);
+                if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
+                    //TODO 同步订单状态
+                    detailByTrackNo.setSignTime(logisticsTrackEntity.getTrackTime());
+                } else {
+                    detailByTrackNo.setSignTime(null);
+                }
             }
-            logisticsBillDetailService.saveOrUpdate(detailByTrackNo);
+        });
+        if (CollectionUtils.isNotEmpty(detailList)){
+            logisticsBillDetailService.updateBatchById(detailList);
         }
     }
 
