@@ -247,10 +247,11 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         registerRequests.forEach(registerRequest -> {
             String trackNo = registerRequest.getTrackNo();
             if (StringUtils.isEmpty(trackNo) || !trackNo.startsWith("SF")){
-                ExtendField extendFieldMap = registerRequest.getExtendFieldMap();
-                if (Objects.nonNull(extendFieldMap)){
-                    extendFieldMap.setPhoneSuffix(null);
-                }
+                registerRequest.setExtendFieldMap(null);
+//                ExtendField extendFieldMap = registerRequest.getExtendFieldMap();
+//                if (Objects.nonNull(extendFieldMap)){
+//                    extendFieldMap.setPhoneSuffix(null);
+//                }
             }
         });
         ValidatorUtil.validateEntity(registerRequests);
