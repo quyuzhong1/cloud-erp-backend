@@ -22,7 +22,7 @@ import java.util.List;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.SHOPEE)
-public class ShopeeShipOrder implements IPlatformService {
+public class ShopeeShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
