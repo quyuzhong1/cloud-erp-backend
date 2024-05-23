@@ -6,6 +6,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.enums.LogisticsChannelWarehouseTypeEnum;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.tms.dto.LogisticsChannelWarehouseDTO;
 import com.erp.model.tms.entity.LogisticsChannelWarehouseEntity;
@@ -53,10 +54,10 @@ public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<Logis
         String type = addDTO.getType();
         List<String> warehouseIdList = addDTO.getWarehouseIdList();
         List<LogisticsChannelWarehouseDTO.AddDTO> addList = new ArrayList<>();
-        if (ShopAuthTypeEnum.ENUM_ALL.getCode().equals(type)) {
+        if (LogisticsChannelWarehouseTypeEnum.ENUM_ALL.getCode().equals(type)) {
             addList.add(new LogisticsChannelWarehouseDTO.AddDTO("", channelId, type));
         }
-        if (ShopAuthTypeEnum.ENUM_PART.getCode().equals(type)) {
+        if (LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode().equals(type)) {
             if (CollectionUtils.isEmpty(warehouseIdList)) {
                 throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_WAREHOUSE_NOT_NULL);
             }

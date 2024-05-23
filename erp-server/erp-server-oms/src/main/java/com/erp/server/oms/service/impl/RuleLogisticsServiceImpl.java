@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,6 +10,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
@@ -21,9 +23,11 @@ import com.erp.model.oms.dto.RuleLogisticsDTO;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.LogisticsChannelWarehouseTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.entity.LogisticsChannelWarehouseEntity;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.mapper.RuleLogisticsMapper;
 import com.erp.server.oms.service.OperateLogService;
@@ -229,11 +233,32 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             //获取到表达式,判断表达式是否匹配
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             if (matchResult) {
-
                 //验证渠道下是否设置了仓库
-
-
-
+                List<LogisticsChannelWarehouseEntity> list = FeignQuery.create(LogisticsChannelWarehouseEntity.class)
+                        .eq(LogisticsChannelWarehouseEntity::getLogisticsChannelId, item.getLogisticsChannelId())
+                        .list();
+                if (CollectionUtils.isEmpty(list)) {
+                    throw new ServiceException(StrUtil.format("渠道【{}】未设置仓库，请先设置仓库",item.getLogisticsChannelName()));
+                }
+                //全部指定直接过，部分指定校验仓库是否一致
+                if (StrUtil.equals(list.get(0).getType(),LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
+                    List<String> warehouseIdList = mapList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get("deliveryWarehouseId")) && StrUtil.isNotBlank(obj.get("deliveryWarehouseId").toString())).map(obj -> obj.get("deliveryWarehouseId").toString()).collect(Collectors.toList());
+                    if (CollectionUtils.isEmpty(warehouseIdList)) {
+                        throw new ServiceException("B2C销售订单仓库不能为空");
+                    }
+                    List<String> channelWarehouseIdList = list.stream().map(LogisticsChannelWarehouseEntity::getWarehouseId).collect(Collectors.toList());
+                   Boolean isMatch =  Boolean.TRUE;
+                    for (String warehouseId : warehouseIdList) {
+                       if (!channelWarehouseIdList.contains(warehouseId)) {
+                           isMatch = Boolean.FALSE;
+                           break;
+                       }
+                   }
+                    //如果仓库没匹配上则进行下一条规则的匹配
+                   if (isMatch) {
+                       continue;
+                   }
+                }
                 RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
                 ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                 ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
