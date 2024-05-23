@@ -5152,6 +5152,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (StringUtils.isBlank(oldEntity.getShopId()) && !BusinessCommonConstants.hasProfile("prod")) {
                 oldEntity.setShopId(dto.getShopId());
             }
+            //
+
             if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)) {
                 handleData(oldEntity, false, false);
             }
@@ -5224,6 +5226,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 // 查询是否是本平台发货
                 dto.setInvalidStatus(false);
                 dto.setInvalidRemark("平台作废");
+            }
+            // 保留历史作废状态
+            if (oldEntity.getInvalidStatus()){
+                dto.setInvalidStatus(true);
             }
 
             // 只替换更新信息
