@@ -16,6 +16,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -24,6 +25,7 @@ import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.SoB2cSplitService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +53,8 @@ public class SoB2cController extends BaseController {
     @Resource
     private SoB2cErrorService soB2cErrorService;
 
+    @Resource
+    private SoB2cSplitService soB2cSplitService;
 
     /**
      * 获取状态统计
@@ -1127,5 +1131,43 @@ public class SoB2cController extends BaseController {
     public ApiResult<List<BatchResultDTO>> initCostPrice(@RequestBody SoB2cDTO.CostPriceDTO dto) {
         soB2cService.initCostPrice(dto);
         return success();
+    }
+
+    /**
+     * 捆绑拆分信息
+     * @return
+     */
+    @PostMapping("/getBomSplitInfo")
+    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomSplitInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        return success(soB2cService.getBomSplitInfo(idDTO.getIds()));
+    }
+
+    /**
+     * 还原拆分信息
+     * @return
+     */
+    @PostMapping("/getBomRestoreInfo")
+    public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomRestoreInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        return success(soB2cService.getBomRestoreInfo(idDTO.getIds()));
+    }
+
+    /**
+     * 捆绑拆分 并保存
+     * @return
+     */
+    @PostMapping("/bomSplitAndSave")
+    public ApiResult<List<BatchResultDTO>> bomSplitAndSave(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<BatchResultDTO> batchResultDTOList = soB2cSplitService.bomSplitAndSave(idDTO.getIds());
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
+
+    /**
+     * 还原拆分信息 并保存
+     * @return
+     */
+    @PostMapping("/bomRestoreAndSave")
+    public ApiResult<List<BatchResultDTO>> bomRestoreAndSave(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<BatchResultDTO> batchResultDTOList = soB2cSplitService.bomRestoreAndSave(idDTO.getIds());
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
 }

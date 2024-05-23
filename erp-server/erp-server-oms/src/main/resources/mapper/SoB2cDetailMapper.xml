@@ -48,6 +48,12 @@
         is_deleted,
         main_id, image_url, sku_id, sku_no, seller_sku_no, platform_sku_no, stock_sku_no, qty, warehouse_id, warehouse_name, price, amount, currency, exchange_rate, advice_price, cost, source_detail_id, label_json, kingdee_detail_id, warehouse_org_id, warehouse_org_name
     </sql>
+    <update id="updateContainDeleted">
+        UPDATE so_b2c_detail SET is_deleted=false WHERE  id in
+        <foreach collection="ids" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </update>
     <!--查詢需要出库单要的数据-->
     <select id="listOutstockByMainId" resultType="com.erp.model.oms.dto.SoB2cDetailDTO$OutstockDTO">
            SELECT
@@ -100,6 +106,12 @@
             </if>
         </where>
         group by sbd.sku_id,sbd.warehouse_id,sbd.warehouse_location
+    </select>
+    <select id="listContainDeleted" resultType="com.erp.model.oms.entity.SoB2cDetailEntity">
+        select * from so_b2c_detail where id in
+        <foreach collection="ids" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
     </select>
 
 

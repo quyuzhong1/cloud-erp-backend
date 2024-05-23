@@ -148,6 +148,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);
         }
+
+        // 非平台
+//        if (!mainEntity.hasPlatformWarehouseOrder()
+//                && resultDTO.isUpdateCancel()
+//                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())){
+//            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+//        }
     }
 
 
