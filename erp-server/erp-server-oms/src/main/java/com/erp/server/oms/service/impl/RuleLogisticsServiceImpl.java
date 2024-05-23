@@ -226,10 +226,14 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                     sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
-            //获取到表达式
-
+            //获取到表达式,判断表达式是否匹配
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             if (matchResult) {
+
+                //验证渠道下是否设置了仓库
+
+
+
                 RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
                 ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                 ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
