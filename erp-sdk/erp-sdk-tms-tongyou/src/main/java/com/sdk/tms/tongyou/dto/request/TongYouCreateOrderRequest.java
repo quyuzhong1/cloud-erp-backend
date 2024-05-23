@@ -153,7 +153,7 @@ public class TongYouCreateOrderRequest {
         private String mobileNo;
 
         //收件人州省
-//        @NotNull(message = "收件人州省不能为空")
+        @NotNull(message = "收件人州省不能为空")
         private String province;
 
         //电话[必传]（电话、手机其中一个可传空字符）
@@ -219,7 +219,7 @@ public class TongYouCreateOrderRequest {
         private String postcode;
 
         //发件人州省
-//        @NotNull(message = "发件人州省不能为空")
+        @NotNull(message = "发件人州省不能为空")
         private String province;
 
         //电话（可与手机号一致）
