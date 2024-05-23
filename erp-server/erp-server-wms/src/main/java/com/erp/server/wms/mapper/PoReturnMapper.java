@@ -33,6 +33,8 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
 
     Integer listCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
+    Integer pdaListCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
+
     /**
      * 根据供应商id集合、单据日期查询退货数量
      * @param params

@@ -18,6 +18,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
@@ -26,7 +27,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -47,14 +47,14 @@ import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.PoReceiveSourceTypeEnum;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
-import com.erp.rpc.wms.feign.PurchaseOrderFeign;
-import com.erp.model.wms.entity.PoReturnDetailEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -63,10 +63,10 @@ import com.erp.server.srm.listener.DeliveryExcelListener;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
 import com.erp.server.srm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import org.apache.commons.math3.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,8 +92,6 @@ import java.util.stream.Collectors;
 public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapper, DeliveryOrderEntity> implements DeliveryOrderService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
@@ -253,6 +251,10 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                     detailList.forEach(detail -> detail.setCode(v.getSourceCode()));
                     v.setDetailPrintList(detailList);
                 }));
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(entityList.stream().map(DeliveryOrderEntity::getSupplierId).distinct().collect(Collectors.toList()));
+        for (DeliveryOrderDTO.PrintDTO printDTO : printDTOList) {
+            printDTO.setSupplierName(supplierSimpleDTOMap.containsKey(printDTO.getSupplierId())?supplierSimpleDTOMap.get(printDTO.getSupplierId()).getName():"");
+        }
         return printDTOList;
     }
 
@@ -312,7 +314,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             v.setIsPrint(true);
             v.setPrintDate(LocalDate.now());
             // 操作日志
-            String msg = StrUtil.format("用户【{}】打印【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "送货单", v.getCode());
+            String msg = StrUtil.format("用户【{}】打印【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "送货单", v.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), v.getId(), "打印操作");
         });
 
@@ -504,7 +506,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         DeliveryOrderDetailEntity deliveryOrderDetailEntity = DeliveryOrderConverter.INSTANCE
                 .purchaseOrderDetailToDeliveryOrderDetail(mainId,addDeliveryDTO, detailEntity);
         detailService.save(deliveryOrderDetailEntity);
-        String msg = StrUtil.format("用户【{}】新增sku为【{}】的送货单明细 ", commonService.getUserInfo().getUserName(),deliveryOrderDetailEntity.getSkuNo());
+        String msg = StrUtil.format("用户【{}】新增sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(),deliveryOrderDetailEntity.getSkuNo());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderDetailEntity.getId(), "新增操作");
     }
 
@@ -611,7 +613,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         deliveryOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHD));
         this.handleData(deliveryOrderEntity,false);
         this.save(deliveryOrderEntity);
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "送货单", deliveryOrderEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "送货单", deliveryOrderEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderEntity.getId(), "新增操作");
         return deliveryOrderEntity;
     }
@@ -794,7 +796,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         //保存明细
         detailService.add(addDTO.getDetailList(),deliveryOrderEntity.getId());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "送货单", deliveryOrderEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "送货单", deliveryOrderEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(deliveryOrderEntity.getId(), code);
@@ -822,7 +824,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         // 记录主单操作日志
         log.info("编辑 开始记录送货单日志数据，单号：【{}】", deliveryOrderEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getCode(), "送货单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "送货单");
         operateLogService.addModuleOperateLogByObj(old, deliveryOrderEntity, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderEntity.getId(), msg);
         return Boolean.TRUE;
     }

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -7,6 +8,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -236,5 +238,18 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * true=无已发货的发货单
      * false=有已发货的发货单
      */
-    boolean hasNotShippedDeliveryAndLog(SoB2cEntity currentEntity);
+    boolean hasNotGenB2cSoOutStockAndLog(SoB2cEntity currentEntity);
+
+    List<BatchResultDTO> logisticsIntercept(List<String> ids);
+
+    List<BatchResultDTO> interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto);
+
+    /**
+     * 查询不是取消发货的发货单
+     * @param soId
+     * @return
+     */
+    SoB2cDeliveryEntity getNotCancelBySoId(String soId);
+
+    Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO);
 }

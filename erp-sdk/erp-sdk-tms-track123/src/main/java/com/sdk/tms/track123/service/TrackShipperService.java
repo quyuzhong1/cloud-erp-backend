@@ -1,6 +1,8 @@
 package com.sdk.tms.track123.service;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.track123.constant.PathConstants;
 import com.sdk.tms.track123.model.request.RegisterRequest;
@@ -31,7 +33,7 @@ import java.util.Map;
 @Component
 public class TrackShipperService {
     static String url = "https://api.track123.com/gateway/open-api/tk/v2/track/query";
-    static String token = "9fa500686633410a84ff0b00daed555e";
+    static String token = "579cf53f55694d89aef0887d81886aec";
 
     public static void main(String[] args) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
         TrackShipperService trackShipperService = new TrackShipperService();
@@ -49,17 +51,18 @@ public class TrackShipperService {
 //        }
 
         List<String> trackNos = new ArrayList<>();
-        trackNos.add("304071414818");
-        trackNos.add("620372231752");
+        trackNos.add("WSHBR1064163742YQ");
+        trackNos.add("WSHBR1064205439YQ");
 
         TrackRequest orderRequest = TrackRequest.builder()
                 .trackNos(trackNos)
-                .createTimeStart("2021-08-01 00:00:00")
-                .createTimeEnd("2021-09-28 00:00:00")
+//                .createTimeStart("2021-08-01 00:00:00")
+//                .createTimeEnd("2021-09-28 00:00:00")
                 .cursor("")
                 .queryPageSize(100)
                 .build();
-        trackShipperService.getTrack(token, orderRequest);
+        TrackResponse track = trackShipperService.getTrack(token, orderRequest);
+        System.out.println(JSONObject.toJSONString(track));
     }
 
     /**
@@ -83,7 +86,13 @@ public class TrackShipperService {
         headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.GET_TRACK_URL, trackRequest, headers);
-        return JSONUtil.toBean(result, TrackResponse.class);
+        TrackResponse response = null;
+        try {
+            response = JSONUtil.toBean(result, TrackResponse.class);
+        }catch (Exception e){
+            throw new ServiceException("解析返回数据异常："+ result);
+        }
+        return response;
     }
 
     public RegisterResult registerLogisticsNumber(String token, List<RegisterRequest> registerRequests){

@@ -26,20 +26,4 @@ import java.util.stream.Collectors;
 public class CommonServiceImpl implements CommonService {
 
 
-
-    @Override
-    public LoginUser getUserInfo() {
-        String userId = "";
-        String userName = "";
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (Objects.isNull(loginUser)) {
-            loginUser = new LoginUser();
-            loginUser.setUid(userId);
-            loginUser.setUserName(userName);
-            loginUser.setUserAccount("");
-        }
-        return loginUser;
-    }
-
-
 }

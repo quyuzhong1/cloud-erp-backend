@@ -119,11 +119,41 @@ public class SoB2cDetailDTO implements Serializable {
          * 是否匹配仓库规则
          */
         private Boolean isMatchWarehouseRule;
-        
-       /**
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
+        /**
         * 明细标签对象
         */
        private DetailLabelDTO detailLabelDTO;
+
+
+        /**
+         * 目的国申报价
+         */
+        private BigDecimal toDeclarePrice;
+
+        /**
+         * 目的国申报币种
+         */
+        private String toCurrency;
+
+        /**
+         * 目的国申报币种符号
+         */
+        private String toCurrencySymbol;
+
+        /**
+         * 申报标签(正常申报normal，高申报high，低申报low)
+         */
+        private String declareLabel;
+        /**
+         * 申报标签名称
+         */
+        private String declareLabelName;
 
     }
 

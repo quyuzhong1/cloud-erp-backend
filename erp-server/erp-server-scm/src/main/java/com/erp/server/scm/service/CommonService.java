@@ -1,7 +1,5 @@
 package com.erp.server.scm.service;
 
-import com.common.business.vo.LoginUser;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -15,15 +13,6 @@ import java.util.List;
  */
 public interface CommonService {
 
-    
-    /**
-     * 获取用户信息
-     * @author yl
-     * @date 2023-03-15 11:58
-     * @param
-     * @return com.common.business.vo.LoginUser
-     */
-    public LoginUser getUserInfo();
 
     
     /**

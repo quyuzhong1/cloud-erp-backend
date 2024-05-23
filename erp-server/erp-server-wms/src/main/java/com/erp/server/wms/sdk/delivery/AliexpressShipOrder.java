@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
+import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -49,8 +51,16 @@ public class AliexpressShipOrder implements IPlatformService {
             SoB2cDTO.SignShipOrderDTO signShipOrderDTO = soB2cFeign.getSignShipParam(soB2cId);
             //渠道
             String channelId=signShipOrderDTO.getLogisticsChannelId();
-            //获取渠道信息
-            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getSignShipInfoByChannelById(channelId);
+
+            //获取销售渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                    channelId,
+                    PlatformDictEnum.ALI_EXPRESS.getCode()
+            );
+            if (null == tmsSignShipDTO){
+                throw new ServiceException("找不到渠道信息");
+            }
+
 
             //获取渠道标发单号
             String standardOrderType = tmsSignShipDTO.checkAndGetOrderDeliveryMarkType();
@@ -77,6 +87,17 @@ public class AliexpressShipOrder implements IPlatformService {
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+
+    @Override
+    public Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList){
         return null;
     }
 }

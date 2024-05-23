@@ -1,19 +1,16 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
-
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.time.LocalDate;
-import java.util.List;
-
-import com.baomidou.mybatisplus.annotation.TableField;
-
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
 
 /**
@@ -96,15 +93,15 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("receive_date")
     private LocalDate receiveDate;
     /**
-     * 计费方式
+     * 计费规则
      */
-    @TableField("billing_method")
-    private String billingMethod;
+    @TableField("fee_rule")
+    private String feeRule;
     /**
-     * 计费方式名称
+     * 计费规则名称
      */
-    @TableField("billing_method_name")
-    private String billingMethodName;
+    @TableField("fee_rule_name")
+    private String feeRuleName;
     /**
      * 物流渠道id
      */
@@ -225,9 +222,9 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
     public static final String RECEIVE_DATE = "receive_date";
 
-    public static final String BILLING_METHOD = "billing_method";
+    public static final String FEE_RULE = "fee_rule";
 
-    public static final String BILLING_METHOD_NAME = "billing_method_name";
+    public static final String FEE_RULE_NAME = "fee_rule_name";
 
     public static final String TYPE = "type";
 

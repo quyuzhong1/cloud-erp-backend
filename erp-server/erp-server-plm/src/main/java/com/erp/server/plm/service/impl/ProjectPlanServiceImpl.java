@@ -16,6 +16,7 @@ import com.common.business.enums.BaseStatusEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.enums.WorkflowBusinessEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -75,9 +76,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
     @Resource
     private SysUserFeign sysUserFeign;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -174,7 +172,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
         String productId = dto.getProductId();
-        String userName = commonService.getUserInfo().getUserName();
+        String userName = UserContext.getDefaultLoginUser().getUserName();
         String id = saveSchedule(dto);
 
         String nowTime = DateUtil.conversionDate(new Date(), DateUtil.fmt);
@@ -279,7 +277,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (!statusList.contains(waitAudit)) {
             throw new ServiceException(ApiError.ERROR_95121);
         }
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         //变更
         String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
         //初次
@@ -530,7 +528,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         List<String> statusList = new ArrayList<>();
         //待审核
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = commonService.getUserInfo().getUid();
+            String userId = UserContext.getDefaultLoginUser().getUid();
             //获取我的待办信息
             List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
             idList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
@@ -652,7 +650,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             //发起流程
             startScheduleTaskProcess(id);
 
-            String userName = commonService.getUserInfo().getUserName();
+            String userName = UserContext.getDefaultLoginUser().getUserName();
             //给第一个人发信息
             noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
             //更改任务状态
@@ -676,7 +674,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Override
     public void startScheduleTaskProcess(String id) {
         FindProcessDTO findProcess = new FindProcessDTO();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         String businessType = WorkflowBusinessEnum.SCHEDULE_TASK.getBusinessType();
         String platform = WorkflowBusinessEnum.SCHEDULE_TASK.getPlatform();
         findProcess.setBusinessType(businessType);
@@ -736,7 +734,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (Objects.isNull(plan)) {
             throw new ServiceException(ApiError.ERROR_95122);
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         String userName = loginUser.getUserName();
         //是不是第一次审核
@@ -829,7 +827,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (Objects.isNull(plan)) {
             throw new ServiceException(ApiError.ERROR_95122);
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         String userName = loginUser.getUserName();
         //意见
@@ -889,7 +887,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public void processPass(ProcessPassDTO dto) {
         String id = dto.getBusinessTableId();
         ProjectPlanEntity plan = this.getById(id);
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         if (plan != null) {
             String status = BaseStatusEnum.AUDIT_PASS.getStatus();

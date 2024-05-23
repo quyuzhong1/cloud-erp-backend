@@ -167,7 +167,7 @@
         GROUP BY instock_status
     </select>
     
-    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$OverseasInboundDTO">
+    <select id="getDataCompareByCondition" resultType="java.util.Map">
 		SELECT h.id,T.code source_code,
 			G.sku_no,
 			G.platform_sku_no,

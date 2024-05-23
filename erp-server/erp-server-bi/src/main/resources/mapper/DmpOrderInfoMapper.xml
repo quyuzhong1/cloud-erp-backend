@@ -20,7 +20,7 @@
         <result column="delivery_time" property="deliveryTime" />
         <result column="dept_id" property="deptId" />
         <result column="charge_id" property="chargeId" />
-        <collection property="itemList" ofType="com.erp.model.dmp.entity.DmpOrderItemEntity">
+        <collection property="itemList" ofType="com.erp.model.dmp.entity.DmpOrderItemSplitEntity">
             <id column="detailId" property="id"/>
             <result column="order_id" property="orderId"/>
             <result column="item_id" property="itemId"/>
@@ -189,7 +189,7 @@
         doi2.quantity,
         round(doi2.sell_price_origin * doi2.quantity,2) as sellAmountOrigin
         from dmp_order_info doi
-        left join dmp_order_item doi2 on doi.id = doi2.order_id
+        left join dmp_order_item_split doi2 on doi.id = doi2.order_id
         <where>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
                 and doi.platform_order_id ILIKE concat('%',#{params.platformOrderId}::text,'%')
@@ -225,7 +225,7 @@
         SELECT ${groupName} AS dimension,
         SUM(doit.afer_amount) AS salesAmount
         FROM dmp_order_info AS doi
-        left join  dmp_order_item AS doit on doi.id = doit.order_id
+        left join  dmp_order_item_split AS doit on doi.id = doit.order_id
         WHERE doi.${groupName} IS NOT NULL
         <if test="params.startTime != null">
             AND doi.platform_create_time >= #{params.startTime}

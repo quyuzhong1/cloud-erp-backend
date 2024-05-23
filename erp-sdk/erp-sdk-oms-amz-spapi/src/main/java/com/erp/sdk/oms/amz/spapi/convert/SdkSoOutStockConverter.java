@@ -4,7 +4,6 @@ import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
-import jnr.ffi.annotations.In;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -55,9 +54,10 @@ public interface SdkSoOutStockConverter {
 
 
     @Mappings({
-            @Mapping(target = "platformDetailUniqueId", source = "shipmentItemId"),
+            @Mapping(target = "platformDetailId", source = "shipmentItemId"),
             @Mapping(target = "platformCode", source = "amazonOrderId"),
             @Mapping(target = "platformOrderDetailId", source = "amazonOrderItemId"),
+            @Mapping(target = "trackNo", source = "trackingNumber"),
             @Mapping(target = "platformOrderCreateTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPurchaseDateLocale()))"),
             @Mapping(target = "platformPayTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPaymentsDateLocale()))"),
             @Mapping(target = "platformDeliveryTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getShipmentDateLocale()))"),

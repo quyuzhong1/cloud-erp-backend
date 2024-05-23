@@ -60,7 +60,7 @@ public class AmazonPlatformRetry implements IPlatformRetryService {
         if(!currentEntity.hasPlatformWarehouseOrder()){
             return soOutstockService.defaultHandleRetry(currentEntity, list);
         }else{
-            return dmpMongoDbFeign.checkAndSendSoOutStock(new DmpPullSoOutStockDTO(currentEntity.getShopId(), currentEntity.getPlatformCode()));
+            return dmpMongoDbFeign.checkAndSendSoOutStock(new DmpPullSoOutStockDTO(currentEntity.getShopId(), currentEntity.getPlatformCode(), currentEntity.getId()));
         }
     }
 }

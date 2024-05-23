@@ -624,5 +624,20 @@ public class MathUtil {
 
     }
 
+    /**
+     * 校验 BigDecimal位数
+     * @param number
+     * @param integerNum 整数位数
+     * @return
+     */
+    public static boolean isValidNumber(BigDecimal number,int integerNum) {
+        String numberStr = number.toPlainString();
+        int dotIndex = numberStr.indexOf('.');
+        if (dotIndex == -1) {
+            return numberStr.length() <= integerNum;
+        } else {
+            return dotIndex <= integerNum;
+        }
+    }
 
 }

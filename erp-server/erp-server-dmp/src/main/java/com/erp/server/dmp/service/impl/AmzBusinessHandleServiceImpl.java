@@ -14,6 +14,9 @@ import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
@@ -30,8 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 亚马逊处理 服务类
@@ -57,10 +63,21 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
     private WmsAmazonFeign wmsAmazonFeign;
     @Resource
     private AmazonFulfilledShipmentsHandler amazonFulfilledShipmentsHandler;
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     @Override
 //    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public Boolean checkAndSendSoOutStock(DmpPullSoOutStockDTO dto) {
+        // 查询来源明细ID
+        List<SoB2cDetailEntity> detailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            throw new ServiceException("检查生成亚马逊FBA销售出库单失败,为找到明细:id=" + dto.getSoB2cId());
+        }
+        List<String> sourceDetailIds = detailEntityList.stream()
+                .map(SoB2cDetailEntity::getSourceDetailId)
+                .collect(Collectors.toList());
+
         String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
         String platform = PlatformDictEnum.AMAZON.getCode();
         String business = BusinessTypeEnum.SO_OUT_STOCK.getCode();
@@ -69,7 +86,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
         Query query = new Query();
         query.addCriteria(
                 Criteria.where("amazonOrderId").is(dto.getPlatformCode())
-//                        .and("shopId").is(dto.getShopId())
+                        .and("amazonOrderItemId").in(sourceDetailIds)
         );
         List<PlatformAmazonFulfilledShipmentsDTO> list = mongoTemplate.find(query, PlatformAmazonFulfilledShipmentsDTO.class, tableName);
         if (CollectionUtils.isEmpty(list)) {

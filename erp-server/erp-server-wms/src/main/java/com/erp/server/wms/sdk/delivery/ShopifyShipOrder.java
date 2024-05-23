@@ -4,7 +4,9 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
+import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -16,6 +18,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
@@ -200,6 +203,25 @@ public class ShopifyShipOrder implements IPlatformService {
                 payload.setTrackingInfo(trackingInfo);
                 ShopifyFulfillmentPayloadRoot request = new ShopifyFulfillmentPayloadRoot();
                 request.setFulfillment(payload);
+                // 查询订单发货状态
+                ShopifyOrder shopifyOrder = shopifyRestClient.getOrder(platformOrderId);
+                if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(shopifyOrder.convertBillStatus())){
+                    log.warn("[Shopify标记发货] platformCode={},平台订单已发货跳过：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
+                    continue;
+                }
+
+                // 在非正式环境
+                if (!BusinessCommonConstants.hasProfile("prod")){
+                    // 在非正式环境，店铺域名带test允许触发平台标记发货
+                    if (shopifyShopDomain.contains("test")){
+                        log.warn("[Shopify测试账号触发标记发货] platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
+                        final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);
+                        log.warn("[Shopify测试账号触发标记发货] platformCode={},创建Fulfillment结果：{}", platformOrderId, JSONUtil.toJsonStr(actualShopifyFulfillment));
+                    } else {
+                        log.warn("【{}】非正式环境不带test域名的店铺：不请求Shopify接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(request));
+                    }
+                    return;
+                }
                 log.warn("[Shopify标记发货]platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
                 // Creates a fulfillment for one or many fulfillment orders
                 final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);
@@ -215,6 +237,17 @@ public class ShopifyShipOrder implements IPlatformService {
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+
+    @Override
+    public Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList){
         return null;
     }
 }

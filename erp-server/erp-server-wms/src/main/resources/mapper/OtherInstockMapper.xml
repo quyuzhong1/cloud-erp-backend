@@ -82,6 +82,28 @@
         </where>
     </select>
 
+    <select id="pdaListCount" resultType="java.lang.Integer">
+        select
+        count(distinct oi.id)
+        from other_instock oi
+        left join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
+        <where>
+            oi.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and oi.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.invalidStatus != null ">
+                and oi.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
+            </if>
+        </where>
+    </select>
+
     <select id="listExportExcel" resultType="com.erp.model.wms.dto.OtherInstockDTO$ListDTO">
         select
             oi.id,

@@ -3,10 +3,9 @@ package com.erp.server.wms.service;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.*;
+
+import java.util.List;
 
 /**
  * 第三方海外仓接口
@@ -24,10 +23,16 @@ public interface ThirdWarehouseService {
     Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 
     /**
+     * 查询产品数据
+     * @return 入库单号
+     */
+    ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq, String authId);
+
+    /**
      * 入库单创建接口
      * @return 入库单号
      */
-    ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq,String authId);
+    ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq, String authId);
 
     /**
      * 入库单编辑接口
@@ -38,17 +43,17 @@ public interface ThirdWarehouseService {
     /**
      * 入库单取消接口
      */
-    ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq,String authId);
+    ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq, String authId);
 
     /**
      * 订单发货对接海外仓出库创建接口
      * @return 出库单号
      */
-    ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq,String authId);
+    ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId);
 
 
     /**
      * 出库取消接口 ThirdWarehouseCancelResultEnum
      */
-    ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq,String authId);
+    ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq, String authId);
 }

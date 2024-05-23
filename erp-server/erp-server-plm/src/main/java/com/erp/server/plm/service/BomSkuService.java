@@ -1,15 +1,10 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.dto.BomSkuDTO;
-import com.erp.model.plm.dto.ProductBomInfoDTO;
-import com.erp.model.plm.dto.BomSkuPageDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -97,6 +92,16 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @return List<BomInfoEntity>
      */
     List<BomInfoEntity> listAllBomByParentSkuNos(List<String> parentSkuNos);
+
+    /**
+     * @description: 根据子级skuId集合查询未作废BOM
+     * @author Will
+     * @date: 2024/4/12 17:05
+     * @param childSkuIdList
+     * @return List<BomDTO.BomSku>
+     */
+    List<BomDTO.BomSku> listAllBomByChildSkuIdList(List<String> childSkuIdList);
+
 
     /**
      * 根据sku查询bom

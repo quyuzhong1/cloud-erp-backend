@@ -11,6 +11,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.WorkflowBusinessEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -75,8 +76,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Resource
     private ProductDetailService productDetailService;
 
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -266,7 +265,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             String type = entity.getType();
             String changeBom = BomConstant.CHANGE_BOM;
             String changeSku = BomConstant.CHANGE_SKU;
-            String userId = commonService.getUserInfo().getUid();
+            String userId = UserContext.getDefaultLoginUser().getUid();
 
             //如果是Bom 就要启动bom变更流程
             if (changeBom.equals(type)) {
@@ -487,7 +486,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
         //待审核
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = commonService.getUserInfo().getUid();
+            String userId = UserContext.getDefaultLoginUser().getUid();
             //获取我的待办信息
             List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
             changeIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
@@ -704,7 +703,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             changeEntity.setRemark(dto.getComment());
         }
 
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(id);
         tableDTO.setUserId(userId);
@@ -756,7 +755,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(id);
         tableDTO.setUserId(userId);

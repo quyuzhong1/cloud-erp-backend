@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -71,9 +72,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Autowired
     private TemplateRoleRefMembersService templateRoleRefMembersService;
-
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
@@ -156,7 +154,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Override
     @Transactional
     public Boolean saveOrUpdateMember(SaveOrUpdateProjectMemberDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         List<String> userIdList = dto.getUserIdList();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();

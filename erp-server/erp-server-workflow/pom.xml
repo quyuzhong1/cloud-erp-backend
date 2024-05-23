@@ -81,11 +81,6 @@
             <version>7.17.0</version>
         </dependency>
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
-            <version>${alibaba.druid.verison}</version>
-        </dependency>
-        <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-rpc-sys</artifactId>
             <version>0.0.1-SNAPSHOT</version>

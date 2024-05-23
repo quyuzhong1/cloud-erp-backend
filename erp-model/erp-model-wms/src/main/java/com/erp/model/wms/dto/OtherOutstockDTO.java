@@ -247,6 +247,7 @@ public class OtherOutstockDTO implements Serializable {
         /**
          * 领料组织id
          */
+        @NotBlank(message = "领料组织不能为空")
         private String receiveOrgId;
 
         /**

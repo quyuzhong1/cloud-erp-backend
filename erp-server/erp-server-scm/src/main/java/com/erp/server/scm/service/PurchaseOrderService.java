@@ -174,10 +174,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 下推签收单弹框数据显示
      * @author Will
      * @date: 2023/3/29 15:55
-     * @param ids
+     * @param purchaseDetailIdList
      * @return List<ViewGenerateReceiveDTO>
      */
-    List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(List<String> ids);
+    List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(List<String> purchaseDetailIdList);
 
     /**
      * @description: 采购变更数据显示
@@ -191,10 +191,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 下推采购入库单显示
      * @author Will
      * @date: 2023/4/13 11:38
-     * @param ids
+     * @param purchaseDetailIdList
      * @return List<ViewGenerateStockInDTO>
      */
-    List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(List<String> ids);
+    List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(List<String> purchaseDetailIdList);
     /**
      * @description: 根据id查询采购订单
      * @author Will
@@ -235,10 +235,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * 采购订单 下推 退货数据显示
      * @author yl
      * @date 2023-04-25 9:39
-     * @param ids
+     * @param purchaseDetailIdList
      * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>
      */
-    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> purchaseDetailIdList);
 
     /**
      * @description: 根据来源明细ids查询

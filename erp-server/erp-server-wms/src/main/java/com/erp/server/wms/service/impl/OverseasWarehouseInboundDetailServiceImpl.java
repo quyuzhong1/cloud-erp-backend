@@ -7,33 +7,32 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OverseasInstockStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
 import com.erp.server.wms.convert.WmsOverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundDetailMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import org.springframework.util.CollectionUtils;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -48,8 +47,6 @@ import javax.annotation.Resource;
 public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundDetailMapper, OverseasWarehouseInboundDetailEntity> implements OverseasWarehouseInboundDetailService {
     @Resource
     private OperateLogService operateLogService;
-    @Resource
-    private CommonService commonService;
     @Resource
     private OverseasWarehouseInboundReceivedService overseasWarehouseInboundReceivedService;
     @Resource
@@ -74,7 +71,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "海外仓入库单详情", overseasWarehouseInboundDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓入库单详情", overseasWarehouseInboundDetailEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, overseasWarehouseInboundDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -103,7 +100,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
         // 记录主单操作日志
         log.info("编辑 开始记录海外仓入库单详情日志数据，id：【{}】", overseasWarehouseInboundDetailEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasWarehouseInboundDetailEntity.getId(), "海外仓入库单详情");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasWarehouseInboundDetailEntity.getId(), "海外仓入库单详情");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasWarehouseInboundDetailEntity, null, overseasWarehouseInboundDetailEntity.getId(), msg);
         return Boolean.TRUE;
@@ -180,7 +177,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 //        if (!overseasWarehouseInboundService.updateById(mainEntity)){
 //            throw new ServiceException("更新入库状态失败");
 //        }
-//        LoginUser userInfo = commonService.getUserInfo();
+//        LoginUser userInfo = UserContext.getDefaultLoginUser();
 //        // 添加签收记录
 //        OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity(entity.getId(),
 //                userInfo.getUserName(),
@@ -233,7 +230,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
     public List<BatchResultDTO> allManualReceived(List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         // 主表ID， 详情
         Map<String, List<OverseasWarehouseInboundDetailEntity>> detailResultMap = new HashMap<>();
         // 主表ID， 主实体

@@ -1,6 +1,8 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -23,11 +25,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.RedisService;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.CommonConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -36,8 +39,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
@@ -72,7 +73,6 @@ import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -255,7 +255,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //待审核查询分配给自己的数据
         if (MathUtil.ONE.toString().equals(pagingDTO.getParams().getType())) {
             //TODO 2023-03-30 暂时取消审核流程 只改状态
-/*             LoginUser loginUser = CommonInterceptor.threadLocal.get();
+/*             LoginUser loginUser = UserContext.getLoginUser();
             List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(loginUser.getUid());
             //无待办则直接返回
             if (CollectionUtils.isEmpty(workflowList)) {
@@ -481,6 +481,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
             }
+            if(StringUtils.isEmpty(req.getToCurrency())){
+                req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+            }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
         return productNoSpecDetailAllDTO;
@@ -594,6 +598,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
+            }
+            if(StringUtils.isEmpty(req.getToCurrency())){
+                req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
             }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
@@ -829,6 +837,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
             }
+            if(StringUtils.isEmpty(req.getToCurrency())){
+                req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+            }
         });
 
         productManyDetail.setProductCustomsList(productCustomsEntityList);
@@ -952,6 +964,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (this.checkSkuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95015);
         }
+        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+        ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
+        checkSizeAndWeight(productPackDTO);
 
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
@@ -1063,7 +1078,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //7.修改/新增 包装信息
-        ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
+
         if (ObjectUtils.isNotEmpty(productPackDTO)) {
             productPackDTO.setSkuId(skuId);
             //SKU操作日志
@@ -1109,12 +1124,49 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 ProductCustomsEntity customsEntity = new ProductCustomsEntity();
                 BeanMapper.copy(customsDTO, customsEntity);
                 customsEntity.setSkuId(skuId);
+                if (StringUtils.isNotEmpty(customsEntity.getToCurrency())){
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(customsDTO.getToCurrency()));
+                }else {
+                    customsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
                 customsEntityList.add(customsEntity);
             }
             addProductCustomsLog(productCustomsDTO, id);
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
+        //增加默认记录
+        productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
         return true;
+    }
+
+    private void checkSizeAndWeight(ProductPackDTO productPackDTO) {
+        if (ObjectUtils.isNotEmpty(productPackDTO)) {
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            //毛重大于等于净重
+            compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
+        }
+    }
+
+    /**
+     * 比较尺寸
+     *
+     * @author hyj
+     * @date 2024/5/10 9:05
+     * @param larger   大尺寸
+     * @param smaller  小尺寸
+     * @param apiError 报错信息
+     */
+    @Override
+    public void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
+        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
+                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0) {
+            if (larger.compareTo(smaller) < 0) {
+                throw new ServiceException(apiError);
+            }
+        }
     }
 
 
@@ -1188,6 +1240,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(ApiError.ERROR_95015.code, ApiError.ERROR_95015.msg + " 第" + (i + 1) + "行");
             }
         }
+
+        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+        productManySpecDTO.getProductPackList().stream().forEach(productPackDTO->{
+            checkSizeAndWeight(productPackDTO);
+        });
+
         //1.修改产品表 主表信息
         ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
         productInfoDTO.setSpecType(2);
@@ -1299,11 +1357,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             for (ProductCustomsDTO customsDTO : productCustomsDTO) {
                 ProductCustomsEntity customsEntity = new ProductCustomsEntity();
                 BeanMapper.copy(customsDTO, customsEntity);
+                if (StringUtils.isNotEmpty(customsEntity.getToCurrency())){
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(customsDTO.getToCurrency()));
+                }else {
+                    customsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
                 customsEntityList.add(customsEntity);
             }
             addProductCustomsLog(productCustomsDTO, productInfoDTO.getId());
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
+        //增加默认记录
+        productCustomsService.addDefaultCustoms(productDetailLists.stream().map(ProductDetailDTO::getId).collect(Collectors.toList()));
         return true;
     }
 
@@ -2057,12 +2123,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        if (isCheck) {
-            //校验字段是否必填
-            checkApproveField(Arrays.asList(entity));
-        }
-
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
 
@@ -2102,18 +2163,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return true;
     }
 
+    /**
+     * 重算目的国申报价
+     * @param details
+     */
     @Override
     public void recalDestDeclarePrice(List<ProductDetailEntity> details) {
         log.info("recalDestDeclarePrice start======{}",details.size());
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
-        List<String> skuIds = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getId).collect(Collectors.toList());
-        List<String> skuNoList = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIds);
-        if (Objects.isNull(productLogisticsList)) {
+        List<String> skuIds = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<String> skuNoList = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(skuIds)) {
             return;
         }
+        //目的国申报信息
+        List<ProductCustomsEntity> customsEntityList = productCustomsService.listBySkuIds(skuIds, CommonConstants.DEFAULT);
         //系统配置
         CfgSettingEntity setting = cfgSettingFeign.getByKey(CfgSettingEnum.LOGISTICS_PRODUCT_DEST_DECLARE_PRICE.getCode());
         if (Objects.isNull(setting) || Objects.isNull(setting.getDataJson()) || CollectionUtils.isEmpty(setting.getDataJson().getJSONArray("data"))) {
@@ -2127,13 +2193,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (Objects.isNull(usdRate)) {
             return;
         }
-        List<ProductLogisticsEntity> updateList = new ArrayList<>();
-        for(ProductLogisticsEntity productLogistics : productLogisticsList){
-            log.info("recalDestDeclarePrice : skuId:{},destDeclarePrice:{}", productLogistics.getSkuId(),productLogistics.getDestDeclarePrice());
+        List<ProductCustomsEntity> addList = new ArrayList<>();
+        List<ProductCustomsEntity> updateList = new ArrayList<>();
+        for(String skuId : skuIds){
+            //目的国申报信息 默认
+            ProductCustomsEntity customs = customsEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(skuId)).findFirst().orElse(new ProductCustomsEntity());
+
+            log.info("recalDestDeclarePrice : skuId:{},destDeclarePrice:{}", skuId,customs.getToDeclarePrice());
             //是否重算目的国申报价
-            BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
-            if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
-                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(productLogistics.getSkuId())).findFirst().orElse(null);
+            BigDecimal destDeclarePrice = Objects.isNull(customs.getToDeclarePrice()) ? BigDecimal.ZERO: customs.getToDeclarePrice();
+            if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
                 log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
                 if (Objects.isNull(skuCostDTO)) {
                     continue;
@@ -2154,18 +2224,124 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
                 log.info("resultDestDeclarePrice: {}", resultDestDeclarePrice);
-                productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
-                productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
-                productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                updateList.add(productLogistics);
+                customs.setToDeclarePrice(resultDestDeclarePrice);
+                customs.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                customs.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                if (Objects.isNull(customs.getId())){
+                    customs.setCountry(CommonConstants.DEFAULT);
+                    addList.add(customs);
+                }else {
+                    updateList.add(customs);
+                }
+
                 log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)){
             log.info("updateList: {}", JSONUtil.toJsonStr(updateList));
-            productLogisticsService.updateBatchById(updateList);
+            productCustomsService.updateBatchById(updateList);
+        }
+        if (CollectionUtils.isNotEmpty(addList)){
+            log.info("addList: {}", JSONUtil.toJsonStr(addList));
+            productCustomsService.saveBatch(addList);
         }
         log.info("recalDestDeclarePrice end======");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void initProductCustom(List<String> skuIds) {
+        //有传值 按照传值进行sku同步 没有则同步全量
+        List<ProductDetailEntity> list = null;
+        if (CollectionUtil.isEmpty(skuIds)){
+            list = lambdaQuery().select(ProductDetailEntity::getId).list();
+        }else {
+            list = lambdaQuery().select(ProductDetailEntity::getId).in(ProductDetailEntity::getId, skuIds).list();
+        }
+        if (CollectionUtil.isEmpty(list)){
+            log.info("需要同步的sku列表为空：{}", skuIds);
+            return;
+        }
+        log.info("同步的sku列表数量：{}", list.size());
+        //当list过大时 切割处理
+        if (list.size() > 100){
+            List<List<ProductDetailEntity>> partition = ListUtil.partition(list, 100);
+            for (List<ProductDetailEntity> list1 : partition){
+                customDataProcess(list1);
+            }
+        }else {
+            customDataProcess(list);
+        }
+
+    }
+
+    @Override
+    public List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPurchaseBySkuIds(skuIds);
+        if (CollUtil.isNotEmpty(skuList)) {
+            //供应商信息
+            List<String> supplierIdList = skuList.stream().map(SkuVO::getSupplierId).collect(Collectors.toList());
+            List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+            for (SkuVO skuVO : skuList) {
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
+                    //含税价
+                    skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+                }
+            }
+        }
+        return skuList;
+
+    }
+
+    private void customDataProcess(List<ProductDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        List<String> skuIds = list.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)){
+            return;
+        }
+        //根据sku获取sku物流信息
+        List<ProductLogisticsEntity> logisticsList = productLogisticsService.listBySkuIdList(skuIds);
+        //根据sku获取默认目的国申报信息
+        List<ProductCustomsEntity> customsList = productCustomsService.listBySkuIds(skuIds, CommonConstants.DEFAULT);
+        List<ProductCustomsEntity> addCustomsList = new ArrayList<>();
+        List<ProductCustomsEntity> updateCustomsList = new ArrayList<>();
+        //查询
+        list.forEach(productDetailEntity -> {
+            //查询sku product_logistics 目的国申报价不为o 时同步
+            ProductLogisticsEntity logistics = logisticsList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(e.getSkuId())
+                                    && e.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(new ProductLogisticsEntity());
+            //查询是否存在默认 product_customs 不存在则赋值 新增，存在则更新
+            ProductCustomsEntity customs = customsList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(e.getSkuId())
+                    && e.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(new ProductCustomsEntity());
+            if (StringUtils.isEmpty(customs.getId())){
+                //新增默认
+                addCustomsList.add(new ProductCustomsEntity()
+                        .setSkuId(productDetailEntity.getId())
+                        .setCountry(CommonConstants.DEFAULT)
+                        .setToDeclarePrice(logistics.getDestDeclarePrice())
+                        .setToCurrency(logistics.getDestCurrency())
+                        .setToCurrencySymbol(logistics.getDestCurrencySymbol()));
+            }else if (Objects.nonNull(logistics.getDestDeclarePrice()) && logistics.getDestDeclarePrice().compareTo(BigDecimal.ZERO) != 0){
+                customs.setToCurrency(logistics.getDestCurrency());
+                customs.setToDeclarePrice(logistics.getDestDeclarePrice());
+                customs.setToCurrencySymbol(logistics.getDestCurrencySymbol());
+                customs.setCountry(CommonConstants.DEFAULT);
+                updateCustomsList.add(customs);
+            }
+        });
+        //批量操作
+        if (CollectionUtil.isNotEmpty(addCustomsList)){
+            productCustomsService.saveBatch(addCustomsList);
+        }
+        if (CollectionUtil.isNotEmpty(updateCustomsList)){
+            productCustomsService.updateBatchById(updateCustomsList);
+        }
     }
 
     @Override
@@ -2181,7 +2357,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95046);
         }
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         //TODO 2023-03-30 暂时取消审核流程 只改状态
@@ -2222,7 +2398,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean updateApprover(ProductDetailApproveParamDTO dto) {
         ProductDetailApproverEntity entity = new ProductDetailApproverEntity();
         BeanMapperUtils.copy(dto, entity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         entity.setCreateUserId(userId);
@@ -2233,7 +2409,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean productDetailProcessPass(String processId) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductDetailEntity::getProcessId, processId);
         queryWrapper.last("LIMIT 1");
@@ -2271,7 +2447,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95086);
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper();
         updateWrapper.set(ProductDetailEntity::getIsChange, IsConstant.YES);
         updateWrapper.set(ProductDetailEntity::getUpdateUserId, loginUser.getUid());
@@ -2429,6 +2605,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return;
         }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
+
+        //校验字段是否必填
+        checkApproveField(detailEntityList);
+
         for (ProductDetailEntity entity : detailEntityList) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
             /*if (StringUtils.isBlank(productInfoEntity.getSpuNo())) {
@@ -2737,106 +2917,32 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(skuIds)) {
             return Collections.emptyList();
         }
-        List<SkuVO> skuList = baseMapper.getSkuBaseBySkuIds(skuIds);
+        List<SkuVO> skuList = baseMapper.getSkuInfoBySkuIds(skuIds);
         if (CollUtil.isNotEmpty(skuList)) {
             List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIds);
             Map<String, List<ProductPackEntity>> productPackMap = Maps.newHashMap();
             if (CollUtil.isNotEmpty(productPackList)) {
                 productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
             }
-            //产品信息
-            List<String> productIds = skuList.stream().map(SkuVO::getProductId).distinct().collect(Collectors.toList());
-            Map<String, ProductInfoEntity> productMap = Maps.newHashMap();
-            if (CollectionUtils.isNotEmpty(productIds)){
-                List<ProductInfoEntity> productInfos = productInfoService.listByIds(productIds);
-                if (CollectionUtils.isNotEmpty(productInfos)){
-                    productMap = productInfos.stream().collect(Collectors.toMap(ProductInfoEntity::getId, Function.identity()));
-                }
-            }
-
-            //产品销售状态
-            List<ProductSaleEntity> productSales = productSaleService.listBySkuIds(skuIds);
-            Map<String, List<ProductSaleEntity>> productSaleMap = Maps.newHashMap();
-            if (CollUtil.isNotEmpty(productSales)) {
-                productSaleMap = productSales.stream().collect(Collectors.groupingBy(ProductSaleEntity::getSkuId));
-            }
-            //产品物流信息
-            List<ProductLogisticsEntity> productLogistics = productLogisticsService.listBySkuIdList(skuIds);
-            Map<String, List<ProductLogisticsEntity>> logisticsMap = Maps.newHashMap();
-            if (CollectionUtils.isNotEmpty(productLogistics)){
-                logisticsMap = productLogistics.stream().collect(Collectors.groupingBy(ProductLogisticsEntity::getSkuId));
-            }
-            //产品采购信息表
-            List<ProductPurchaseEntity> productPurchaseEntities = productPurchaseService.listBySkuIds(skuIds);
-            Map<String, List<ProductPurchaseEntity>> productPurchaseMap = Maps.newHashMap();
-            if (CollectionUtils.isNotEmpty(productPurchaseEntities)){
-                productPurchaseMap = productPurchaseEntities.stream().collect(Collectors.groupingBy(ProductPurchaseEntity::getSkuId));
-            }
-            //产品成本
-            List<ProductCostEntity> productCosts = productCostService.listBySkuIds(skuIds);
-            Map<String, List<ProductCostEntity>> productCostMap = Maps.newHashMap();
-            if (CollectionUtils.isNotEmpty(productCosts)){
-                productCostMap = productCosts.stream().collect(Collectors.groupingBy(ProductCostEntity::getSkuId));
-            }
             //供应商信息
             List<String> supplierIdList = skuList.stream().map(SkuVO::getSupplierId).collect(Collectors.toList());
             List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+
             //产品分类
             List<String> categoryIdList = skuList.stream().map(SkuVO::getCategoryId).distinct().collect(Collectors.toList());
             List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listByIds(categoryIdList);
 
             for (SkuVO skuVO : skuList) {
-                //产品信息
-                if (productMap.containsKey(skuVO.getProductId())&& Objects.nonNull(productMap.get(skuVO.getProductId()))){
-                    ProductInfoEntity productInfo = productMap.get(skuVO.getProductId());
-                    skuVO.setSpuNo(productInfo.getSpuNo());
-                    skuVO.setSpuName(productInfo.getName());
-                    skuVO.setMaterials(productInfo.getMaterials());
-                    skuVO.setFunctionDesc(productInfo.getFunctionDesc());
-                    skuVO.setProductGrade(productInfo.getGrade());
-                    skuVO.setBrandName(productInfo.getBrandName());
-                    skuVO.setCategoryId(productInfo.getCategoryId());
-                    skuVO.setSaleMethod(productInfo.getSaleMethod());
-                    skuVO.setSpecType(productInfo.getSpecType());
-                }
                 if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
-                    skuVO.setGrossWeight(packEntity.getGrossWeight());
-                    skuVO.setProductSize(packEntity.getProductSize());
-                    skuVO.setNetWeight(packEntity.getNetWeight());
                 }
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
                     //含税价
                     skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
                 }
-                //物流报关信息
-                if (logisticsMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(logisticsMap.get(skuVO.getSkuId()))){
-                    ProductLogisticsEntity logisticsEntity = logisticsMap.get(skuVO.getSkuId()).get(0);
-                    skuVO.setDeclareName(logisticsEntity.getDeclareChineseName());
-                    skuVO.setDeclareModel(logisticsEntity.getDeclareModel());
-                    skuVO.setProductPropertyId(logisticsEntity.getProductPropertyId());
-                }
-                //产品销售信息
-                if (productSaleMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productSaleMap.get(skuVO.getSkuId()))){
-                    ProductSaleEntity saleEntity = productSaleMap.get(skuVO.getSkuId()).get(0);
-                    skuVO.setSaleState(saleEntity.getSaleState());
-                }
-                //产品采购信息表
-                if (productPurchaseMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPurchaseMap.get(skuVO.getSkuId()))){
-                    ProductPurchaseEntity productPurchase = productPurchaseMap.get(skuVO.getSkuId()).get(0);
-                    skuVO.setMoq(productPurchase.getMoq());
-                    skuVO.setSupplierId(productPurchase.getMainSupplier());
-                    skuVO.setEan(productPurchase.getEan());
-                }
-                //产品成本
-                if (productCostMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productCostMap.get(skuVO.getSkuId()))){
-                    ProductCostEntity productCost = productCostMap.get(skuVO.getSkuId()).get(0);
-                    skuVO.setActualTaxCost(productCost.getActualTaxCost());
-                    skuVO.setTargetTaxCost(productCost.getTargetTaxCost());
-                    skuVO.setRetailPrice(productCost.getRetailPrice());
-                }
+
                 //产品分类
                 String categoryName = basicCategoryList.stream().filter(obj -> obj.getId().equals(skuVO.getCategoryId())).map(BasicCategoryEntity::getName).findFirst().orElse("");
                 skuVO.setCategoryName(categoryName);
@@ -3020,7 +3126,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
-        productCustomsEntityList.forEach(req -> {
+        List<ProductCustomsEntity> productCUstomsList = productCustomsEntityList.stream().filter(e -> e.getSkuId().equals(skuId))
+                .collect(Collectors.toList());
+        productCUstomsList.forEach(req -> {
             if (StringUtils.isNotBlank(req.getCountry())) {
                 String[] split = req.getCountry().split(",");
                 List<String> countryIdList = Arrays.asList(split);
@@ -3029,7 +3137,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 req.setCountryName(countryName);
             }
         });
-        result.setProductCustomsList(productCustomsEntityList);
+        result.setProductCustomsList(productCUstomsList);
 
         //产品包装辅料
         List<ProductAccessoriesDTO> accessoriesList = productAccessoriesService.getByProductId(productId);
@@ -3314,7 +3422,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
         if (!Objects.isNull(processEntity)) {
             StartProcessDTO startProcess = new StartProcessDTO();
-            LoginUser loginUser = commonService.getUserInfo();
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
             startProcess.setBusinessKey(processEntity.getBusinessKey());
             startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
             startProcess.setUserId(loginUser.getUid());
@@ -3561,15 +3669,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-/*        for (String id : ids) {
-            ProductCostEntity costEntity = productCostService.getBySkuId(id);
-            if (costEntity.getActualTaxCost() == null) {
-                throw new ServiceException(ApiError.ERROR_95237);
-            }
-            if (costEntity.getActualNoTaxCost() == null) {
-                throw new ServiceException(ApiError.ERROR_95238);
-            }
-        }*/
+
 
         //待提交、审核不通过才可以提交
         long count = entityList.stream().filter(entity ->
@@ -3638,10 +3738,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        //校验字段是否必填
-        checkApproveField(entityList);
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
 
         Integer approveStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
@@ -3651,7 +3749,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //workflowFeign.taskPass(approveProcess);
             entityList.forEach(obj -> {
                 //发送通知
-                noticeMessageService.approveProductNotice(CommonInterceptor.threadLocal.get().getUserName(), obj);
+                noticeMessageService.approveProductNotice(UserContext.getLoginUser().getUserName(), obj);
                 //新增操作日志
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                         .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));
@@ -4103,10 +4201,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateWarehouseLocationById(String id, String warehouseLocation) {
+    public Boolean updateWarehouseLocationById(String id, String warehouseLocation, String warehouseLocationLarge) {
         boolean flag = lambdaUpdate()
                 .eq(ProductDetailEntity::getId, id)
                 .set(ProductDetailEntity::getWarehouseLocation, warehouseLocation)
+                .set(ProductDetailEntity::getWarehouseLocationLarge, warehouseLocationLarge)
                 .update();
 
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, id).list();
@@ -4144,7 +4243,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isEmpty(productInfo)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
-            if (ObjectUtil.isEmpty(productInfo.getSaleMethod()) || !productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName())) {
+            if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| (!productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName()) && !productInfo.getSaleMethod().contains(SaleMethodEnum.GIFT.getName()))) {
                 continue;
             }
             /**
@@ -4152,27 +4251,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              */
             ProductPackEntity productPackEntity = productPackList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailEntity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(productPackEntity)) {
-                errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
+                errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.msg,detailEntity.getSkuNo())).append("</br>");
+                continue;
             }
             //包装尺寸
-            if (StrUtil.isBlank(productPackEntity.getProductSize())) {
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductHeight()) >= 0) {
                 errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
             }
-            if (StrUtil.isNotBlank(productPackEntity.getProductSize())) {
-                List<String> productSizeList = Arrays.stream(productPackEntity.getProductSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(productSizeList) || productSizeList.size() != 3) {
-                    errMsg.append(StrUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
-                }
-            }
-            if (StrUtil.isBlank(productPackEntity.getBoxSize())) {
-                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
-            }
             //箱规
-            if (StrUtil.isNotBlank(productPackEntity.getBoxSize())) {
-                List<String> boxSizeList = Arrays.stream(productPackEntity.getBoxSize().split("X")).filter(obj -> StrUtil.isNotBlank(obj)).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(boxSizeList) || boxSizeList.size() != 3) {
-                    errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
-                }
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxHeight()) >= 0) {
+                errMsg.append(StrUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append("</br>");
             }
             //毛重
             if (MathUtil.compareTo(productPackEntity.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
@@ -4299,7 +4387,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 productSkuBaseInfoDTO.setId(productBy.getId());
                 productInfoDTO.setId(productBy.getProductId());
-
+                //设置推荐仓位（大货区/小货区）
+                if (StringUtils.isEmpty(dto.getWarehouseLocationLarge())) {
+                    dto.setWarehouseLocationLarge(productBy.getWarehouseLocationLarge());
+                }
+                if (StringUtils.isEmpty(dto.getWarehouseLocation())) {
+                    dto.setWarehouseLocation(productBy.getWarehouseLocation());
+                }
             } else {
                 //sku重复
                 if (ObjectUtil.isNotEmpty(productBy)) {
@@ -4806,52 +4900,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品包装信息
             ProductPackDTO productPackDTO = new ProductPackDTO();
             BeanMapper.copy(dto, productPackDTO);
-            String productSize = "";
-            String boxSize = "";
-            String productSizeLength = dto.getProductSizeLength();
-            String productSizeWide = dto.getProductSizeWide();
-            String productSizeHigh = dto.getProductSizeHigh();
-            String boxSizeLength = dto.getBoxSizeLength();
-            String boxSizeWide = dto.getBoxSizeWide();
-            String boxSizeHigh = dto.getBoxSizeHigh();
-            /**
-             * 产品尺寸(长)
-             */
-            if (StringUtils.isNotBlank(productSizeLength)) {
-                productSize = productSizeLength;
-            }
-            /**
-             * 产品尺寸(宽)
-             */
-            if (StringUtils.isNotBlank(productSizeWide)) {
-                productSize = productSize.concat("X").concat(productSizeWide);
-            }
-            /**
-             * 产品尺寸(高)
-             */
-            if (StringUtils.isNotBlank(productSizeHigh)) {
-                productSize = productSize.concat("X").concat(productSizeHigh);
-            }
-            productPackDTO.setProductSize(productSize);
-            /**
-             * 箱规(长)
-             */
-            if (StringUtils.isNotBlank(boxSizeLength)) {
-                boxSize = boxSizeLength;
-            }
-            /**
-             * 箱规(宽)
-             */
-            if (StringUtils.isNotBlank(boxSizeWide)) {
-                boxSize = boxSize.concat("X").concat(boxSizeWide);
-            }
-            /**
-             * 箱规(高)
-             */
-            if (StringUtils.isNotBlank(boxSizeHigh)) {
-                boxSize = boxSize.concat("X").concat(boxSizeHigh);
-            }
-            productPackDTO.setBoxSize(boxSize);
+            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductLength())));
+            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductWidth())));
+            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductHeight())));
+            productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxLength())));
+            productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxWidth())));
+            productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxHeight())));
             /**
              * 毛重
              */
@@ -4923,6 +4977,45 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         return skuList;
+    }
+
+    @Override
+    public void initProductSizeAndBoxSize() {
+        // 查询出所有需要进行初始化的产品尺寸或箱规
+        List<ProductPackEntity> productPacks = productPackService.list();
+        List<List<ProductPackEntity>> partition = Lists.partition(productPacks, 500);
+        partition.parallelStream()
+                .forEach(packs ->{
+                    try {
+                        packs.forEach(this::convertSize);
+                    } catch (Exception e) {
+                        log.error("数据异常{}", e.getMessage(), e);
+                    }
+                    productPackService.updateBatchById(packs);
+                });
+    }
+
+    private void convertSize(ProductPackEntity pack) {
+        List<BigDecimal> productSizeList = Arrays.stream(Optional.ofNullable(pack.getProductSize()).orElse("").split("X"))
+                .filter(StrUtil::isNotBlank)
+                .map(BigDecimal::new)
+                .collect(Collectors.toList());
+        //产品尺寸-长
+        pack.setProductLength(LengthConverterUtil.cmToMm(productSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
+        //产品尺寸-宽
+        pack.setProductWidth(LengthConverterUtil.cmToMm(productSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
+        //产品尺寸-高
+        pack.setProductHeight(LengthConverterUtil.cmToMm(productSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
+        List<BigDecimal> boxSizeList = Arrays.stream(Optional.ofNullable(pack.getBoxSize()).orElse("").split("X"))
+                .filter(StrUtil::isNotBlank)
+                .map(BigDecimal::new)
+                .collect(Collectors.toList());
+        //箱规-长
+        pack.setBoxLength(LengthConverterUtil.cmToMm(boxSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
+        //箱规-宽
+        pack.setBoxWidth(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
+        //箱规-高
+        pack.setBoxHeight(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
     }
 
     @Override

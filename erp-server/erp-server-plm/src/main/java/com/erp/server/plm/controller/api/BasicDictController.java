@@ -73,7 +73,7 @@ public class BasicDictController extends BaseController {
     /**
      * 字典下拉框
      * @mock productBrand
-     * @param type productProperty 产品属性, productGrade 产品等级, productBrand 产品品牌, declareProperty 报关属性, country 国家
+     * @param type productProperty 产品属性, productGrade 产品等级, productBrand 产品品牌, declareProperty 报关属性, country 国家, projectState 项目状态, approvalStatus 立项状态
      */
     @GetMapping("/drop/down")
     public ApiResult<List<DictControllerDTO.DictDropDownDTO>> listDictDropDown(@RequestParam(name = "type") String type){

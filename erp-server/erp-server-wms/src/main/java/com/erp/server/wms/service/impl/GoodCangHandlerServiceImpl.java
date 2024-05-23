@@ -1,21 +1,20 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetOutBoundReq;
-import com.sdk.wms.goodcang.dto.response.GoodCangOutboundResp;
+import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
+import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
+import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +39,32 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public OmsPlatformEnum getPlatForm() {
         return OmsPlatformEnum.OMS_GOOD_CANG;
+    }
+
+    @Override
+    protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq) {
+        GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
+                .page(1)
+                .pageSize(100)
+                .productSkuArr(productReq.getSkuNoList())
+                .build();
+        List<GoodCangSkuResp> respList = new ArrayList<>();
+        int page = 1;
+        while (true) {
+            goodCangGetSkuReq.setPage(page);
+            GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
+            if (!isSuccess(goodCangResponse.getAsk())) {
+                log.error("谷仓查询产品信息异常" + goodCangResponse);
+                return failure(goodCangResponse.getMessage());
+            }
+            respList.addAll(goodCangResponse.getData());
+            if (goodCangResponse.getCount() <= page * 100) {
+                break;
+            }
+            page++;
+        }
+        List<ThirdWarehouseSkuResp> thirdWarehouseSkuRespList = BeanUtil.copyToList(respList,ThirdWarehouseSkuResp.class);
+        return success(thirdWarehouseSkuRespList);
     }
 
     @Override

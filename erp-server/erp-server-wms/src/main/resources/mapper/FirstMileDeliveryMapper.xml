@@ -220,10 +220,6 @@
             </foreach>
         </if>
         and fd.is_deleted = FALSE
-        <!--数据权限-->
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
         ORDER BY fd.code,
         CAST(fmcb.box_no AS INTEGER)
     </select>

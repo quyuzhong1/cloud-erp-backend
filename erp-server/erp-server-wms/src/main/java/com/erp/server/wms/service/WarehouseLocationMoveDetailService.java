@@ -1,11 +1,7 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
-import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,7 +23,7 @@ public interface WarehouseLocationMoveDetailService extends SuperService<Warehou
     * @param mainId
     * @return
     */
-    void add(WarehouseLocationMoveInfoDTO.AddDTO dto, String mainId);
+    void add(WarehouseLocationMoveDTO.AddDTO dto, String mainId);
 
     /**
     * 修改
@@ -37,7 +33,7 @@ public interface WarehouseLocationMoveDetailService extends SuperService<Warehou
     * @param mainId
     * @return
     */
-    Boolean update(WarehouseLocationMoveInfoDTO.UpdateDTO dto, String mainId);
+    Boolean update(WarehouseLocationMoveDTO.UpdateDTO dto, String mainId);
 
     /**
      * 根据主表id查询详情

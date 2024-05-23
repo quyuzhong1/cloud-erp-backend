@@ -61,11 +61,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
-            <version>${alibaba.druid.verison}</version>
-        </dependency>
+        
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-rpc-sys</artifactId>

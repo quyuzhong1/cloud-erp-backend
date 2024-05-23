@@ -295,4 +295,20 @@ public class QcEffectivenessDTO implements Serializable {
         private Boolean isTimeOut;
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class CountQcParamDTO {
+        /**
+         * 质检状态
+         */
+        private List<String> qcStatusList;
+
+        /**
+         * 是否超时
+         */
+        private Boolean isTimeOut;
+
+    }
 }

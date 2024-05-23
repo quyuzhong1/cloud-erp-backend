@@ -30,6 +30,7 @@ import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -108,7 +109,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
             }
             KingdeeEccShopEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -228,7 +229,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
         //读取配置，初始化SDK
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FId,FNumber,FName,FSaleOrgId,FSaleOrgId.FNumber,FSaleOrgId.FName," +
                 "FCreateOrgId,FCreateOrgId.FNumber,FCreateOrgId.FName,FShopType,FShopName,FStartDate,FSettlementCurrency," +

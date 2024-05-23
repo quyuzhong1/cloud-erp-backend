@@ -11,6 +11,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -24,7 +25,9 @@ import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.*;
+import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
@@ -59,9 +62,6 @@ import java.util.stream.Collectors;
 public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupplierMapper, LogisticsSupplierEntity> implements LogisticsSupplierService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private ScmTaskFeign scmTaskFeign;
@@ -104,7 +104,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             throw new ServiceException("物流商保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物理商单", logisticsSupplierEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物理商单", logisticsSupplierEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(logisticsSupplierEntity.getId(), logisticsSupplierEntity.getId());
     }
@@ -126,7 +126,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         if (!save) {
             throw new ServiceException("物流商单保存失败");
         }
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
         operateLogService.addModuleOperateLogByObj(old, logisticsSupplierEntity, ModuleTypeEnum.LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -394,19 +394,18 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     }
 
     @Override
-    public List<BaseChildDTO.ListChildTreeDTO> tree() {
-        List<LogisticsSupplierEntity> dbList = this.list();
-        List<BaseChildDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> tree() {
+        List<LogisticsSupplierEntity> dbList = list();
+        List<LogisticsSupplierDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
         List<LogisticsChannelEntity> allChannelList = logisticsChannelService.list();
-        for (BaseChildDTO.ListChildTreeDTO item : list) {
+        for (LogisticsSupplierDTO.ListChildTreeDTO item : list) {
             String id = item.getId();
             List<LogisticsChannelEntity> channelList = allChannelList.stream().
                     filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(LogisticsChannelEntity::getDisabled)).
                     collect(Collectors.toList());
-            List<BaseChildDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
+            List<LogisticsSupplierDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
             item.setChildren(childrenList);
         }
-
         return list;
     }
 
@@ -429,6 +428,11 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             resultList.add(resultDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public LogisticsSupplierDTO.ViewDTO detail(String id) {
+        return baseMapper.detail(id);
     }
 
     @Override

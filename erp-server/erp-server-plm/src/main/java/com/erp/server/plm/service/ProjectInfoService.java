@@ -111,10 +111,10 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
      * 完成项目 ids 是产品ids
      * @author yl
      * @date 2023-06-14 11:58
-     * @param ids
+     * @param idsDateDto
      * @return java.lang.Boolean
      */
-    Boolean finish(List<String> ids);
+    Boolean finish(ProductInfoDTO.IdsDateDto idsDateDto);
 
     Boolean batchArchive(List<String> productIdList);
 

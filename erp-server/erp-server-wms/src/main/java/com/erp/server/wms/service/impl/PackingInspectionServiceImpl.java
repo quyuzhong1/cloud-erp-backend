@@ -5,8 +5,10 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.handler.PlatformSaveHandler;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
@@ -28,7 +30,10 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.convert.PackingInspectConverter;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.PackingInspectionService;
+import com.erp.server.wms.service.SoB2cDeliveryDetailService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -70,9 +75,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     private OperateLogService operateLogService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
 
@@ -101,6 +103,30 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //订单拦截
             soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
             return null;
+        }
+        //请求接口过慢，暂时取消 TODO
+        /*else {
+            if (soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
+                //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
+                PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
+                deliveryInterceptDTO.setSoB2cId(soB2cEntity.getId());
+                deliveryInterceptDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+                deliveryInterceptDTO.setOldIsCancel(soB2cEntity.getIsCancel());
+                deliveryInterceptDTO.setPlatformCode(soB2cEntity.getPlatformCode());
+                deliveryInterceptDTO.setShopId(soB2cEntity.getShopId());
+                Boolean flag = PlatformSaveHandler.deliveryIntercept(deliveryInterceptDTO);
+                if (flag) {
+                    soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+                    return null;
+                }
+            }
+        }*/
+
+        if (soB2cEntity.getIsIntercept()) {
+            throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
+        }
+        if (soB2cEntity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
         }
 
         //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库
@@ -223,7 +249,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if(!soB2cDeliveryDetailService.updateBatchById(detailEntityList)){
                 throw new ServiceException("发货单明细更新失败");
             }
-            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
+            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
         //数据存redis
@@ -274,7 +300,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //出库
             soB2cDeliveryService.generateB2cSoOutstock(entity);
 
-            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "包装验货", entity.getCode());
+            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "包装验货", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
         return viewDTO;

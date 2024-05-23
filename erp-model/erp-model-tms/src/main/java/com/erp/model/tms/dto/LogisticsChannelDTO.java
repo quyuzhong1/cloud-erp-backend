@@ -29,34 +29,6 @@ public class LogisticsChannelDTO implements Serializable {
 
 
     /**
-     * 渠道计费信息
-     */
-    @Data
-    @NoArgsConstructor
-    public static class LogisticsShippingDTO {
-
-        /**
-         * 渠道id
-         */
-        private String logisticsChannelId;
-
-        /**
-         * 计费方式
-         */
-        private String billingMethod;
-
-        /**
-         * 计费方式名称
-         */
-        private String billingMethodName;
-
-        /**
-         * 预计时效
-         */
-        private String estimatedTime;
-
-    }
-    /**
      * 基础信息
      */
     @Data
@@ -76,7 +48,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 渠道名
          */
         private String name;
-
+        /**
+         * 物流商简称
+         */
+        private String logisticsSupplierShortName;
         /**
          * 物流商名
          */
@@ -419,6 +394,11 @@ public class LogisticsChannelDTO implements Serializable {
         private Boolean isApiInsurance;
 
         /**
+         * 保宏单号（报关单号类型）
+         */
+        private String declareCodeType;
+
+        /**
          * 物流映射列表
          */
         private List<LogisticsMappingDTO.ViewDTO> mappingList;
@@ -654,7 +634,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private Boolean isApiInsurance;
 
-
+        /**
+         * 保宏单号（报关单号类型） /tms/drop/down/dict/list?key=declareCodeType
+         */
+        private String declareCodeType;
     }
 
     @Data

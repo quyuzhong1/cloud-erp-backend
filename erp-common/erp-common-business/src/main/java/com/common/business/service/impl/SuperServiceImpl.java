@@ -5,8 +5,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.SortParamDTO;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.SuperService;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.entity.BaseEntity;
 import org.apache.commons.collections4.CollectionUtils;
@@ -70,11 +70,11 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
     @Override
     public boolean removeByIds(Collection<? extends Serializable> ids) {
         if (CollectionUtils.isNotEmpty(ids)) {
-            LoginUser loginUser = CommonInterceptor.threadLocal.get();
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
             return update().set(T.IS_DELETED, true)
                     .set(T.UPDATE_TIME, LocalDateTime.now())
-                    .set(T.UPDATE_USER_ID, loginUser != null ? loginUser.getUid() : "")
-                    .set(T.UPDATE_USER_NAME, loginUser != null ? loginUser.getUserName() : "")
+                    .set(T.UPDATE_USER_ID, loginUser.getUid())
+                    .set(T.UPDATE_USER_NAME, loginUser.getUserName())
                     .in(T.ID, ids)
                     .update();
         }
@@ -85,11 +85,11 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean removeById(Serializable id, Long version) {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         return update().set(T.IS_DELETED, true)
                 .set(T.UPDATE_TIME, LocalDateTime.now())
-                .set(T.UPDATE_USER_ID, loginUser != null ? loginUser.getUid() : "")
-                .set(T.UPDATE_USER_NAME, loginUser != null ? loginUser.getUserName() : "")
+                .set(T.UPDATE_USER_ID, loginUser.getUid())
+                .set(T.UPDATE_USER_NAME, loginUser.getUserName())
                 .setSql(version != null, StrUtil.format("{}={}+1", T.VERSION, T.VERSION))
                 .eq(T.ID, id)
                 .eq(version != null, T.VERSION, version)

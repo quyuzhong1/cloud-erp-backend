@@ -5,10 +5,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -42,5 +39,14 @@ public class TaskRefSkuConfigController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 初始化任务配置和任务配置模板的尺寸转换
+     * @param deleteOld 是否删除原字段
+     */
+    @GetMapping("/initTaskRefSkuConfig")
+    public ApiResult<String> initTaskRefSkuConfig(@RequestParam(required = false, defaultValue = "false") Boolean deleteOld){
+        taskRefSkuConfigService.initTaskRefSkuConfig(deleteOld);
+        return success();
+    }
 }
 

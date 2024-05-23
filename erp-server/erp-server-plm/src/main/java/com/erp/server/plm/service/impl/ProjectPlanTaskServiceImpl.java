@@ -8,6 +8,7 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BaseStatusEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -87,9 +88,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Resource
     private ProductDetailService productDetailService;
 
-
-    @Resource
-    private CommonService commonService;
 
     @Autowired
     private SysLogService sysLogService;
@@ -629,7 +627,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     public void saveChangePlanTask(String projectPlanId, String productId, List<ProjectTaskEntity> taskList, List<ChangeTaskScheduleDTO> list) {
         List<ProjectPlanTaskEntity> addList = new ArrayList<>(list.size());
         String nowTime = DateUtil.conversionDate(new Date(), DateUtil.fmt);
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
 

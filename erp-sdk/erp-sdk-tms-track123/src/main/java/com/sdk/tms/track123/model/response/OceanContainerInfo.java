@@ -25,6 +25,14 @@ public class OceanContainerInfo {
      */
     private String containerType;
     /**
+     *
+     */
+    private String containerDetails;
+    /**
+     * 最近一条轨迹的时间
+     */
+    private String lastTrackingTime;
+    /**
      * 当前运输状态
      */
     private OceanCurrentStatus currentStatus;

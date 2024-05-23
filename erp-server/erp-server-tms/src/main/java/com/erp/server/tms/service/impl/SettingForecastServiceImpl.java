@@ -58,7 +58,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     @Override
     public List<SettingForecastDTO.ListDTO> listAll() {
-        List<SettingForecastEntity> list = this.list();
+        List<SettingForecastEntity> list = this.lambdaQuery().orderByAsc(SettingForecastEntity::getId).list();
         List<SettingForecastDTO.ListDTO> resultList = BeanMapperUtils.copyList(SettingForecastDTO.ListDTO.class, list);
         //数据处理
         handleListData(resultList);

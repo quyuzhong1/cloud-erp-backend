@@ -10,6 +10,7 @@ import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.*;
 import lombok.Data;
@@ -42,6 +43,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
     private AliExpressShopInfoDTO aliExpressShopInfoDTO;
 
+    private List<AliExpressDeliveryDetail> aliExpressDeliveryDetailList;
 
     /**
      * 地址详情下载状态
@@ -254,6 +256,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         List<PlatformOrderDetailDTO> details = parseDetailList(detailNotNull ? detail.getChildOrderList() : Collections.emptyList(), warehouseName);
         orderDTO.setDetails(details);
 
+        orderDTO.setDeliveryDetailDTOList(parseDeliveryDetailList(dto.getAliExpressDeliveryDetailList()));
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (detailNotNull) {
             //收货信息
@@ -305,6 +308,27 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         financeDTO.setLogisticsCost(logisticsCost);
         orderDTO.setFinances(financeDTO);
         return orderDTO;
+    }
+
+    /**
+     * 批量转发货明细
+     *
+     * @return
+     */
+    private static List<PlatformDeliveryDetailDTO> parseDeliveryDetailList(List<AliExpressDeliveryDetail> deliveryDetailList) {
+        if (CollectionUtils.isEmpty(deliveryDetailList)) {
+            return Collections.emptyList();
+        }
+        List<PlatformDeliveryDetailDTO> result = new ArrayList<>();
+        deliveryDetailList.forEach(v->{
+            PlatformDeliveryDetailDTO deliveryDetailDTO = new PlatformDeliveryDetailDTO();
+            deliveryDetailDTO.setPlatformSkuNo(v.getPlatformSku());
+            deliveryDetailDTO.setQty(Integer.valueOf(v.getDeliveryQty()));
+            deliveryDetailDTO.setPlatformWarehouseName(v.getWarehouseName());
+            deliveryDetailDTO.setPlatformSpuNo(v.getItemId());
+            result.add(deliveryDetailDTO);
+        });
+        return result;
     }
 
     /**

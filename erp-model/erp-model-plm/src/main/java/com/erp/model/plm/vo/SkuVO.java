@@ -162,9 +162,13 @@ public class SkuVO implements Serializable {
     private String supplierId;
 
     /**
-     * 仓位
+     * 仓位-推荐仓位(小货区)
      */
     private String warehouseLocation;
+    /**
+     * 推荐仓位(大货区)
+     */
+    private String warehouseLocationLarge;
 
     /**
      * 毛重
@@ -207,9 +211,19 @@ public class SkuVO implements Serializable {
     private String secondSupplierName;
 
     /**
-     * 尺寸
+     * 产品尺寸（长）
      */
-    private String productSize;
+    private BigDecimal productLength;
+
+    /**
+     * 产品尺寸（宽）
+     */
+    private BigDecimal productWidth;
+
+    /**
+     * 产品尺寸（高）
+     */
+    private BigDecimal productHeight;
 
     /**
      * 净重

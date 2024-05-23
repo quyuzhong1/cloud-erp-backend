@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
+import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -34,6 +35,10 @@ public class WalmartShipOrder implements IPlatformService {
     @Resource
     private LogisticsMappingFeign logisticsMappingFeign;
 
+    @Resource
+    private LogisticsFeign logisticsFeign;
+
+
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
         //映射发货需要的字段，如果合并的订单拆分返回
@@ -42,6 +47,15 @@ public class WalmartShipOrder implements IPlatformService {
         //调用sdk发货
         for (WalmartShipDTO walmartShipDTO : walmartShipOrderParam) {
             WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
+
+            //获取销售渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                    walmartShipDTO.getLogisticsChannelId(),
+                    PlatformDictEnum.WALMART.getCode()
+            );
+            if (null == tmsScaleChannelShipDTO){
+                throw new ServiceException("找不到渠道信息");
+            }
 
             if (LogisticsPlatformEnum.YAN_WEN.getCode().equals(walmartShipDTO.getLogisticsPlatformCode())) {
                 walmartShipDTO.setLogisticsPlatformCode("Yanwen");
@@ -58,6 +72,16 @@ public class WalmartShipOrder implements IPlatformService {
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList){
         return null;
     }
 }

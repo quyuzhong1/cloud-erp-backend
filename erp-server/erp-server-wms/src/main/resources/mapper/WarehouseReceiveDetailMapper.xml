@@ -33,5 +33,14 @@
         </where>
         order by wr.create_time asc
     </select>
+
+
+    <update id="updateInfo">
+        UPDATE po_receive_detail
+        SET in_stock_status=#{inStockStatus}
+        WHERE id = #{id}
+          AND is_deleted = false
+    </update>
+
 </mapper>
         

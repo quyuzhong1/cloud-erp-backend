@@ -1,8 +1,6 @@
 package com.erp.model.oms.dto;
 
-import com.alibaba.fastjson.JSONObject;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -85,6 +83,10 @@ public class PackageDTO implements Serializable {
          * 渠道物流商名
          */
         private String logisticsSupplierName;
+        /**
+         * 物流商简称
+         */
+        private String logisticsSupplierShortName;
 
         /**
          * 组包状态
@@ -252,6 +254,11 @@ public class PackageDTO implements Serializable {
          * 渠道物流商名
          */
         private String logisticsSupplierName;
+
+        /**
+         * 物流商简称
+         */
+        private String logisticsSupplierShortName;
 
         /**
          * 收件人

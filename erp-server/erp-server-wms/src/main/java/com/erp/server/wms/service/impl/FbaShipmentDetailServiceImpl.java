@@ -29,10 +29,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDetailMapper, FbaShipmentDetailEntity> implements FbaShipmentDetailService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

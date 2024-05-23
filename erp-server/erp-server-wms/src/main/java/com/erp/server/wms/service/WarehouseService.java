@@ -250,6 +250,15 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @date 2023-11-29
      */
     List<WarehouseDTO.ListDTO> listOverseasWarehouse();
+
+    /**
+     * 根据名称获取仓库id
+     *
+     * @param nameList
+     * @author hyj
+     * @date 2024/4/18 10:26
+     */
+    List<WarehouseDTO.ListDTO> getByNames(List<String> nameList);
     /**
      * @description: 根据仓库名称集合查询
      * @author Will

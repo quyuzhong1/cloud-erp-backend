@@ -86,6 +86,31 @@
             </if>
         </where>
     </select>
+
+    <select id="pdaListCount" resultType="java.lang.Integer">
+        select
+        count(distinct oo.id)
+        from other_outstock oo
+        left join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
+        <where>
+            oo.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and oo.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.invalidStatus != null ">
+                and oo.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.billDateList != null and params.billDateList.size > 0">
+                and oo.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oo.bill_date
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
     
     <select id="listExportExcel" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
         select

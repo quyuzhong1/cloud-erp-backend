@@ -16,10 +16,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateProductReq;
-import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
+import com.erp.model.tms.dto.transfer.*;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
@@ -111,6 +108,13 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
     public ApiResult<String> printLabel(String orderCode, String authId) {
         return handleAndRemoveContext(() -> printLabel(orderCode), authId, SourceTypeEnum.TRANSFER_LOGISTICS_PRINT_LABEL,orderCode);
     }
+
+    @Override
+    public ApiResult<String> cancelOrder(TransferCancelOrderReq cancelOrderReq, String authId)  {
+        return handleAndRemoveContext(() -> cancelOrder(cancelOrderReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CANCEL_ORDER,cancelOrderReq.getThirdPlatformCode());
+    }
+
+    protected abstract ApiResult<String> cancelOrder(@Valid TransferCancelOrderReq cancelOrderReq);
 
     protected abstract ApiResult<List<TransferLogisticsChannelEntity>> getShippingMethodList();
 

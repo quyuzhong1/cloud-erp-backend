@@ -12,6 +12,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -29,6 +30,8 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
+import com.erp.model.wms.dto.third.ThirdWarehouseProductReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseSkuResp;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
@@ -40,6 +43,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.OverseasDeliveryPlanConverter;
+import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.listener.DeliveryPlanDetailExcelListener;
 import com.erp.server.wms.mapper.OverseasDeliveryPlanMapper;
 import com.erp.server.wms.service.*;
@@ -52,11 +56,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,8 +77,6 @@ import java.util.stream.Collectors;
 public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDeliveryPlanMapper, OverseasDeliveryPlanEntity> implements OverseasDeliveryPlanService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
@@ -99,6 +100,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Autowired
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
+    @Resource
+    private ThirdWarehouseRegistry thirdWarehouseRegistry;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -109,7 +112,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         BeanMapperUtils.copy(addDTO, overseasDeliveryPlanEntity);
 
         // 数据处理
-        handleData(overseasDeliveryPlanEntity);
+        handleData(overseasDeliveryPlanEntity,addDTO.getDetailList());
 
         log.info("开始新增发货计划");
         // 生成单号
@@ -121,7 +124,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "发货计划" , overseasDeliveryPlanEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货计划" , overseasDeliveryPlanEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), overseasDeliveryPlanEntity.getId(), "新增操作");
         // 新增明细
         overseasDeliveryPlanDetailService.add(addDTO, overseasDeliveryPlanEntity.getId());
@@ -143,7 +146,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         OverseasDeliveryPlanEntity overseasDeliveryPlanEntity =  BeanMapperUtils.map(OverseasDeliveryPlanEntity.class, updateDTO);
 
         // 数据处理
-        handleData(overseasDeliveryPlanEntity);
+        handleData(overseasDeliveryPlanEntity,updateDTO.getDetailList());
         log.info("编辑 开始修改发货计划数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(overseasDeliveryPlanEntity);
         if(!save) {
@@ -153,7 +156,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         overseasDeliveryPlanDetailService.update(updateDTO, overseasDeliveryPlanEntity.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录发货计划日志数据，单号：【{}】", overseasDeliveryPlanEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasDeliveryPlanEntity.getCode(), "发货计划");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasDeliveryPlanEntity.getCode(), "发货计划");
         operateLogService.addModuleOperateLogByObj(old, overseasDeliveryPlanEntity, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), overseasDeliveryPlanEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -229,7 +232,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录发货计划日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "发货计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -271,7 +274,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "发货计划", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -283,7 +286,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     * @param dto
     */
     private void approveProcess(OverseasDeliveryPlanEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode());
@@ -325,7 +328,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "发货计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -354,7 +357,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除发货计划日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "发货计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), entity.getCode(), "删除发货计划数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -376,7 +379,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "发货计划", remark);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
@@ -401,12 +404,12 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "发货计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode());
-        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -448,7 +451,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         startDTO.setBusinessCode(entity.getCode());
         startDTO.setBusinessKey(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode());
         startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
@@ -526,7 +529,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     */
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(OverseasDeliveryPlanEntity::getId, id)
             .set(OverseasDeliveryPlanEntity::getApproveUserId, userInfo.getUid())
             .set(OverseasDeliveryPlanEntity::getApproveUserName, userInfo.getUserName())
@@ -815,9 +818,9 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                 if (ObjectUtil.isNotEmpty(skuVO)) {
                     detailAddDto.setSkuNo(skuVO.getSkuNo());
                     detailAddDto.setNetWeight(skuVO.getNetWeight());
-                    //拆分产品尺寸
-                    String productSize = skuVO.getProductSize();
-                    splitProductSize(detailAddDto, productSize);
+                    detailAddDto.setProductSizeLength(skuVO.getProductLength());
+                    detailAddDto.setProductSizeWidth(skuVO.getProductWidth());
+                    detailAddDto.setProductSizeHeight(skuVO.getProductHeight());
                 }
                 //暂无仓位
                 detailAddDto.setWarehouseLocation("");
@@ -831,45 +834,6 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             }
         }
         return Boolean.TRUE;
-    }
-
-    /**
-     * 拆分产品尺寸长宽高存入数据集
-     *
-     * @param detailAdd   数据集
-     * @param productSize 需要拆分的尺寸
-     * @return void
-     * @Author Luo_WG
-     * @Date 2023/11/2 17:28
-     **/
-    private void splitProductSize(FirstMileDeliveryDetailDTO.AddDTO detailAdd, String productSize) {
-        if (StringUtils.isNotBlank(productSize)) {
-            String[] productSizes = productSize.split("X");
-            //长
-            if (productSizes.length > 0) {
-                if (StringUtils.isNotBlank(productSizes[0])) {
-                    detailAdd.setProductSizeLength(new BigDecimal(productSizes[0]));
-                } else {
-                    detailAdd.setProductSizeLength(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-            //宽
-            if (productSizes.length > 1) {
-                if (StringUtils.isNotBlank(productSizes[1])) {
-                    detailAdd.setProductSizeWidth(new BigDecimal(productSizes[1]));
-                } else {
-                    detailAdd.setProductSizeWidth(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-            //高
-            if (productSizes.length > 2) {
-                if (StringUtils.isNotBlank(productSizes[2])) {
-                    detailAdd.setProductSizeHeight(new BigDecimal(productSizes[2]));
-                } else {
-                    detailAdd.setProductSizeHeight(new BigDecimal(BigInteger.ZERO));
-                }
-            }
-        }
     }
 
     /**
@@ -957,7 +921,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     /**
      * 新增修改处理数据
      */
-    private void handleData(OverseasDeliveryPlanEntity overseasDeliveryPlanEntity) {
+    private void handleData(OverseasDeliveryPlanEntity overseasDeliveryPlanEntity, List<? extends OverseasDeliveryPlanDetailDTO.CommonDTO> detailList) {
         //根据仓库id查询和第三方仓绑定关系，并设置国家字段值
         OverseasProviderWarehouseEntity warehouseEntity = overseasProviderWarehouseService.getByWarehouseId(overseasDeliveryPlanEntity.getToWarehouseId());
         if (ObjectUtil.isNotEmpty(warehouseEntity)) {
@@ -972,6 +936,33 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             overseasDeliveryPlanEntity.setToWarehouseName(updateDTO.getName());
         }
 
+        //如果是谷仓，校验商品能不能发该仓库
+        OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(overseasDeliveryPlanEntity.getToWarehouseId());
+        if(Objects.nonNull(overseasProviderEntity) && overseasProviderEntity.getCode().equals(OmsPlatformEnum.OMS_GOOD_CANG.getCode())){
+            List<String> platformSkuList = detailList.stream().map(OverseasDeliveryPlanDetailDTO.CommonDTO::getPlatformSku).distinct().collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(platformSkuList)){
+                return;
+            }
+            ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(overseasProviderEntity.getId());
+            ApiResult<List<ThirdWarehouseSkuResp>> skuResult = handlerService.getSkuList(ThirdWarehouseProductReq.builder().skuNoList(platformSkuList).build(),overseasProviderEntity.getId());
+            if(!skuResult.isSuccess()){
+                throw new ServiceException("查询谷仓商品失败:"+skuResult.getMsg());
+            }
+            String country = warehouseEntity.getCountry();
+            List<ThirdWarehouseSkuResp> thirdWarehouseSkuList = skuResult.getData();
+            List<String> errorSkuList = new ArrayList<>();
+            for(String platformSku : platformSkuList){
+                ThirdWarehouseSkuResp thirdWarehouseSku = thirdWarehouseSkuList.stream().filter(v->v.getProductSku().equals(platformSku)).findFirst().orElse(null);
+                if(Objects.nonNull(thirdWarehouseSku)){
+                    if(thirdWarehouseSku.getImportCountryList().stream().noneMatch(v->v.getCountryCode().equals(country))){
+                        errorSkuList.add(platformSku);
+                    }
+                }
+            }
+            if(CollectionUtils.isNotEmpty(errorSkuList)){
+                throw new ServiceException(StrUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息",errorSkuList,Objects.isNull(updateDTO)?"":updateDTO.getName()));
+            }
+        }
     }
     private void fillData(List<ListingInfoDTO.PageDTO> records) {
         List<String> skuNo = records.stream().map(ListingInfoDTO.PageDTO::getSkuNo).collect(Collectors.toList());

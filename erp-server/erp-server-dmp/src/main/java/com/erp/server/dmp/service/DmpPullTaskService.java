@@ -97,7 +97,17 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @return Boolean
      */
     Boolean batchSync(List<String> ids);
-     /* 处理oms推送订单审核消息
+
+    /**
+     * @param ids
+     * @return Boolean
+     * @description: 批量修改无需同步
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    Boolean batchNoNeedSync(List<String> ids);
+
+    /* 处理oms推送订单审核消息
      *
      * @param resultMap
      */

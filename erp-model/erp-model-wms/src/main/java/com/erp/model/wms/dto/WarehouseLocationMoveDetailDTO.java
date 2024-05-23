@@ -2,10 +2,9 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-import java.io.Serializable;
 import javax.validation.constraints.*;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -86,7 +85,87 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          * 移动数量
          */
         private Integer qty;
+        /**
+         * 取货仓位
+         */
+        private String WarehouseId;
+    }
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewQtyDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * sku表id
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * sku图片
+         */
+        private String skuImg;
+
+        /**
+         * 单位
+         */
+        private String unitName;
+
+        /**
+         * 取货仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
+         * 取货仓位名称
+         */
+        private String outWarehouseLocationName;
+
+        /**
+         * 上架仓位
+         */
+        private String inWarehouseLocation;
+
+        /**
+         * 上架仓位名称
+         */
+        private String inWarehouseLocationName;
+
+        /**
+         * 移动数量
+         */
+        private Integer qty;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
 
     }
 
@@ -96,8 +175,10 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
@@ -112,6 +193,10 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+        /**
+         * 备注
+         */
+        private String remark;
 
     }
 
@@ -162,7 +247,10 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         @Max(value = 999999999, message = "移动数量最大值为999999999")
         private Integer qty;
 
-
+        /**
+         * 取货仓位
+         */
+        private String WarehouseId;
     }
 
 

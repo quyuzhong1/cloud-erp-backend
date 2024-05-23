@@ -42,6 +42,13 @@ public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
     @TableField("type")
     private String type;
 
+
+    /**
+     * typeName
+     */
+    @TableField("type_name")
+    private String typeName;
+
     /**
      * 名称
      */

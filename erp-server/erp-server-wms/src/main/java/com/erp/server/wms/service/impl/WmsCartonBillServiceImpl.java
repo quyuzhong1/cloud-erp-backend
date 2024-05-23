@@ -32,10 +32,6 @@ import java.util.List;
 @Slf4j
 @Service
 public class WmsCartonBillServiceImpl extends SuperServiceImpl<WmsCartonBillMapper, WmsCartonBillEntity> implements WmsCartonBillService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

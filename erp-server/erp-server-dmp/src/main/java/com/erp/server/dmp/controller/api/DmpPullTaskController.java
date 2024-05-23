@@ -4,8 +4,11 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.server.dmp.service.DmpPullTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,7 @@ import java.util.List;
  * @author zhangchunlin
  * @since 2023-06-29
  */
+@LogSystemModule("系统监控->单据同步拉取查询")
 @RestController
 @RequestMapping("/dmpPullTask")
 public class DmpPullTaskController extends BaseController {
@@ -85,6 +89,20 @@ public class DmpPullTaskController extends BaseController {
     @PostMapping(value = "/batchSync")
     public ApiResult batchSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
         Boolean flag = dmpPullTaskService.batchSync(dto.getIds());
+        return flag == true ? success() : failure();
+    }
+    /**
+     * 批量修改无需同步
+     *
+     * @param dto
+     * @return ApiResult
+     * @author hyj
+     * @date 2024/4/30 10:51
+     */
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "批量修改为无需同步")
+    @PostMapping(value = "/batchNoNeedSync")
+    public ApiResult batchNoNeedSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = dmpPullTaskService.batchNoNeedSync(dto.getIds());
         return flag == true ? success() : failure();
     }
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -36,9 +37,6 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
         implements TaskCommentService {
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     @Lazy
     private NoticeMessageService noticeMessageService;
 
@@ -68,7 +66,7 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
     public Boolean saveTaskComment(TaskCommentDTO.AddDTO dto) {
         String taskId = dto.getTaskId();
         TaskCommentEntity entity = new TaskCommentEntity();
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         entity.setTaskId(taskId);
         entity.setComment(dto.getComment());
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);

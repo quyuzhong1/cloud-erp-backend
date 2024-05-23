@@ -251,10 +251,10 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     /**
      * 批量立项
-     * @param productIdList
+     * @param idsTimeDto
      * @return
      */
-    Boolean batchEstablish(List<String> productIdList);
+    Boolean batchEstablish(ProductInfoDTO.IdsDateDto idsTimeDto);
 
     /**
      * 产品概览

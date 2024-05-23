@@ -4,10 +4,7 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
@@ -18,7 +15,6 @@ import com.sdk.wms.iml.dto.response.ImlResponse;
 import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
 import com.sdk.wms.iml.service.ImlService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -45,6 +41,11 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public OmsPlatformEnum getPlatForm() {
         return OmsPlatformEnum.OMS_IML;
+    }
+
+    @Override
+    protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq) {
+        return success();
     }
 
     @Override

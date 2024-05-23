@@ -6,15 +6,18 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +87,16 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      **/
     Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO);
 
+    /**
+     * 比较尺寸
+     *
+     * @param larger   大尺寸
+     * @param smaller  小尺寸
+     * @param apiError 报错信息
+     * @author hyj
+     * @date 2024/5/10 9:05
+     */
+    void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError);
     /**
      * @Description 新增多规格sku信息
      * @Author Luo_WG
@@ -619,7 +632,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param warehouseLocation 仓位信息
      * @return void
      **/
-    Boolean updateWarehouseLocationById(String id, String warehouseLocation);
+    Boolean updateWarehouseLocationById(String id, String warehouseLocation, String warehouseLocationLarge);
 
     /**
      * 根据skuNo查询
@@ -687,4 +700,19 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param details
      */
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
+
+    void initProductSizeAndBoxSize();
+
+    /**
+     * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
+     * @param skuIds
+     */
+    void initProductCustom(List<String> skuIds);
+
+    /**
+     * 获取sku 采购信息
+     * @param skuIds
+     * @return
+     */
+    List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds);
 }

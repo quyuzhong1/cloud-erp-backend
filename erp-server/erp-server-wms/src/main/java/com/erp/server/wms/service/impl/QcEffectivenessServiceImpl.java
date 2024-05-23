@@ -227,6 +227,13 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> listQcBillGroupQcStatus(QcEffectivenessDTO.CommonSearchParamDTO dto) {
+        //质检总览
+        List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> list = qcInfoMapper.listQcBillGroupQcStatus(dto);
+        return list;
+    }
+
     /**
      * @description: 按单据查询格式化数据
      * @author Will
@@ -267,7 +274,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
                 documentDTO.setQcUseTime(MathUtil.divide(BigDecimal.valueOf(userMinutes),new BigDecimal(60),2).stripTrailingZeros().toPlainString()+ "H");
 
                 //质检预警
-                if (QcBillStatusEnum.WAIT_QC.getCode().equals(documentDTO.getQcStatus())) {
+                if (QcBillStatusEnum.WAIT_QC.getCode().equals(documentDTO.getQcStatus()) || QcBillStatusEnum.DRAFT.getCode().equals(documentDTO.getQcStatus()) || QcBillStatusEnum.WAIT_RE_QC.getCode().equals(documentDTO.getQcStatus())) {
                     Duration between = Duration.between(approveTime,nowTime);
                     long hours = between.toHours();
                     if (hours >= 24L) {

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -13,12 +14,12 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
-import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
-import com.erp.server.dmp.service.DmpPullTaskService;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -48,35 +49,36 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
     private MQProducerService mqProducerService;
 
     @Autowired
-    private DmpPullTaskService dmpPullTaskService;
+    private DmpPushTaskService dmpPushTaskService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void inOutStock(MabangInOutStockDTO mabangInOutStock, String sourceId, String sourceCode,
                         String sourceType, String approveType) {
         // 保存任务数据
-        DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
-        dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpPullTaskEntity.setSourceType(sourceType);
-        dmpPullTaskEntity.setSourceId(sourceId);
-        dmpPullTaskEntity.setSourceCode(sourceCode);
-        dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.MABANG.getDesc());
-        dmpPullTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
-        dmpPullTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-        dmpPullTaskEntity.setMqTag(RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName());
+        DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
+        dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpPushTaskEntity.setSourceType(sourceType);
+        dmpPushTaskEntity.setSourceId(sourceId);
+        dmpPushTaskEntity.setSourceCode(sourceCode);
+        dmpPushTaskEntity.setSyncOperate(approveType);
+        dmpPushTaskEntity.setTargetPlatformName(PlatformEnum.MABANG.getDesc());
+        dmpPushTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+        dmpPushTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
+        dmpPushTaskEntity.setMqTag(RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName());
         String mqData = JSONUtil.toJsonStr(mabangInOutStock);
-        dmpPullTaskEntity.setMqData(mqData);
+        dmpPushTaskEntity.setMqData(mqData);
 
-        dmpPullTaskService.save(dmpPullTaskEntity);
+        dmpPushTaskService.saveOrUpdateDmpSyncTask(dmpPushTaskEntity);
 
         // 此处防止数据库还未保存成功，MQ先消费
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                log.info("保存同步任务成功，待同步的内容为：{}", JSONUtil.toJsonStr(dmpPullTaskEntity));
+                log.info("保存同步任务成功，待同步的内容为：{}", JSONUtil.toJsonStr(dmpPushTaskEntity));
                 // 发送推送同步任务消息
-                JSONObject jsonObject = JSONUtil.parseObj(dmpPullTaskEntity.getMqData());
-                jsonObject.set("dmpSyncTaskId",dmpPullTaskEntity.getId());
+                JSONObject jsonObject = JSONUtil.parseObj(dmpPushTaskEntity.getMqData());
+                jsonObject.set("dmpSyncTaskId",dmpPushTaskEntity.getId());
                 SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName(),
                         jsonObject, StrUtil.uuid().toLowerCase());
                 if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
@@ -94,35 +96,36 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             return;
         }
 
-        List<DmpPullTaskEntity> dmpSyncTaskList = Lists.newArrayList();
+        List<DmpPushTaskEntity> dmpSyncTaskList = Lists.newArrayList();
         for(MabangInOutStockDTO mabangInOutStock : mabangInOutStockDTOList) {
             // 保存任务数据
-            DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
-            dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            dmpPullTaskEntity.setSourceType(sourceType);
-            dmpPullTaskEntity.setSourceId(sourceId);
-            dmpPullTaskEntity.setSourceCode(sourceCode);
-            dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.MABANG.getDesc());
-            dmpPullTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
-            dmpPullTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-            dmpPullTaskEntity.setMqTag(RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName());
+            DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
+            dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpPushTaskEntity.setSourceType(sourceType);
+            dmpPushTaskEntity.setSourceId(sourceId);
+            dmpPushTaskEntity.setSourceCode(sourceCode);
+            dmpPushTaskEntity.setSyncOperate(approveType);
+            dmpPushTaskEntity.setTargetPlatformName(PlatformEnum.MABANG.getDesc());
+            dmpPushTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+            dmpPushTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
+            dmpPushTaskEntity.setMqTag(RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName());
             String mqData = JSONUtil.toJsonStr(mabangInOutStock);
-            dmpPullTaskEntity.setMqData(mqData);
+            dmpPushTaskEntity.setMqData(mqData);
 
-            dmpPullTaskService.save(dmpPullTaskEntity);
-            dmpSyncTaskList.add(dmpPullTaskEntity);
+            dmpPushTaskService.saveOrUpdateDmpSyncTask(dmpPushTaskEntity);
+            dmpSyncTaskList.add(dmpPushTaskEntity);
         }
 
         // 此处防止数据库还未保存成功，MQ先消费
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                for(DmpPullTaskEntity dmpPullTaskEntity : dmpSyncTaskList) {
-                    log.warn("保存同步任务成功，目标平台：{}, 待同步的单据类型：{}，单据编号：{}", dmpPullTaskEntity.getTargetPlatformName(), dmpPullTaskEntity.getSourceType(), dmpPullTaskEntity.getSourceCode());
+                for(DmpPushTaskEntity dmpPushTaskEntity : dmpSyncTaskList) {
+                    log.warn("保存同步任务成功，目标平台：{}, 待同步的单据类型：{}，单据编号：{}", dmpPushTaskEntity.getTargetPlatformName(), dmpPushTaskEntity.getSourceType(), dmpPushTaskEntity.getSourceCode());
 
                     // 发送推送同步任务消息
-                    JSONObject jsonObject = JSONUtil.parseObj(dmpPullTaskEntity.getMqData());
-                    jsonObject.set("dmpSyncTaskId",dmpPullTaskEntity.getId());
+                    JSONObject jsonObject = JSONUtil.parseObj(dmpPushTaskEntity.getMqData());
+                    jsonObject.set("dmpSyncTaskId",dmpPushTaskEntity.getId());
                     SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName(),
                             jsonObject, StrUtil.uuid().toLowerCase());
                     if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
@@ -137,7 +140,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void sendToMabangInOutStock(DmpPullTaskEntity dmpPullTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum) {
+    public void sendToMabangInOutStock(DmpPushTaskEntity dmpPushTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum) {
         String taskName = "";
         if(Objects.equals(inventoryInOutEnum, InventoryInOutEnum.IN_STOCK)) {
             taskName = PlatformApiEnum.MABANG_IN_STORAGE.getTaskName();
@@ -149,21 +152,21 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         boolean isSuccess = (boolean)resultMap.get("success");
         if(isSuccess) {
             // 更新出入库同步信息
-            dmpPullTaskService.updateSyncInfo(dmpPullTaskEntity.getId(), SyncStatusEnum.SUCCESS_SYNC.getCode(),resultMap.get("result").toString());
+            dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(dmpPushTaskEntity.getId(), SyncStatusEnum.SUCCESS_SYNC.getCode(), resultMap.get("result").toString()));
         } else {
             String msg = StrUtils.null2EmptyWithTrim(resultMap.get("msg"));
             // 更新出入库同步信息
-            dmpPullTaskService.updateSyncInfo(dmpPullTaskEntity.getId(), SyncStatusEnum.FAILED_SYNC.getCode(), msg);
+            dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(dmpPushTaskEntity.getId(), SyncStatusEnum.FAILED_SYNC.getCode(), msg));
 
-            String sourceType = dmpPullTaskEntity.getSourceType();
+            String sourceType = dmpPushTaskEntity.getSourceType();
             String sourceTypeName = StrUtils.null2EmptyWithTrim(SourceTypeEnum.getName(sourceType));
 
             WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
             warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮手工{}异常", sourceTypeName, inventoryInOutEnum.getName()));
             warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
             warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工{}", sourceTypeName, inventoryInOutEnum.getName()));
-            warnMsgInfoDTO.setTableName("dmp_sync_task");
-            warnMsgInfoDTO.setTableId(dmpPullTaskEntity.getId());
+            warnMsgInfoDTO.setTableName("dmp_push_task");
+            warnMsgInfoDTO.setTableId(dmpPushTaskEntity.getId());
             warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}，失败原因：{}",sourceTypeName, mabangInOutStock.getErpSourceCode(), msg));
             mqProducerService.sendWarnMsg(warnMsgInfoDTO);
         }
@@ -190,7 +193,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         warnMsgInfoDTO.setTitle("ERP推送马帮手工出入库异常");
         warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
         warnMsgInfoDTO.setBizName("ERP推送马帮手工出入库");
-        warnMsgInfoDTO.setTableName("dmp_sync_task");
+        warnMsgInfoDTO.setTableName("dmp_push_task");
         warnMsgInfoDTO.setTableId(syncTaskId);
         warnMsgInfoDTO.setKeyInfo(errMsg);
         mqProducerService.sendWarnMsg(warnMsgInfoDTO);

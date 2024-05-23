@@ -5,6 +5,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
@@ -18,7 +19,6 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
@@ -27,7 +27,10 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -91,8 +94,6 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
     private List<ListingInfoEntity> updateListingInfoList = new ArrayList<>(10);
     private final OperateLogService operateLogService;
 
-    private final CommonService commonService;
-
     private final List<String> removeIds = new ArrayList<>();
     private final List<Pair<String, String>> addLogPairList = new ArrayList<>();
 
@@ -102,8 +103,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                                    List<DictBasicDTO.ViewDTO> dictBasicList,
                                    List<ListingInfoEntity> listingInfoEntityList,
                                    ListingInfoService listingInfoService,
-                                   OperateLogService operateLogService,
-                                   CommonService commonService) {
+                                   OperateLogService operateLogService) {
         this.skuMappingService = skuMappingService;
         this.skuList = skuList;
         this.shopList = shopList;
@@ -112,8 +112,6 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         this.listingInfoEntityList = listingInfoEntityList;
         this.listingInfoService = listingInfoService;
         this.operateLogService = operateLogService;
-        this.commonService = commonService;
-
     }
 
     /**
@@ -362,10 +360,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             skuMappingService.removeByIds(removeIds);
         }
         if (CollectionUtils.isNotEmpty(addLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",commonService.getUserInfo().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表", UserContext.getDefaultLoginUser().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
         }
         if (CollectionUtils.isNotEmpty(updateLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
         }
     }
 

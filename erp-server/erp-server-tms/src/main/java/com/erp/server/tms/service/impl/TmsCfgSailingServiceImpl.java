@@ -56,9 +56,6 @@ import java.util.stream.Collectors;
 public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapper, TmsCfgSailingEntity> implements TmsCfgSailingService {
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private LogisticsChannelService logisticsChannelService;
 
     @Autowired

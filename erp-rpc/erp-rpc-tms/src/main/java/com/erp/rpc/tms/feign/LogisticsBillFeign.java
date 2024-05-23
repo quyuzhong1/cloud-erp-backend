@@ -10,6 +10,7 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -45,6 +46,16 @@ public interface LogisticsBillFeign {
     @PostMapping("feign/logisticsBill/listLogisticsBillVoBySourceIds")
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@RequestBody List<String> sourceIdList);
 
+    /**
+     * 根据来源获取运输状态
+     *
+     * @param billVoList 来源
+     * @return LogisticsBillDTO.LogisticsBillVo
+     * @author hyj
+     * @date 2024/5/11 10:39
+     */
+    @PostMapping("feign/logisticsBill/getTrackStatusByTrackNo")
+    List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTrackNo(@RequestBody List<LogisticsBillDTO.LogisticsBillVo> billVoList);
 
     /**
      * 添加物流单
@@ -177,4 +188,13 @@ public interface LogisticsBillFeign {
     @PostMapping("/feign/logisticsBill/removeLogisticsBillBySourceId")
     Boolean removeLogisticsBillBySourceId(@RequestBody List<String> sourceId);
 
+    /**
+     * @description: 根据销售出库单id集合查询
+     * @author Will
+     * @date: 2024/5/20 16:04
+     * @param outstockIdList
+     * @return List<LogisticsBillEntity>
+     */
+    @PostMapping("/feign/logisticsBill/listBySoOutStockIdList")
+    List<LogisticsBillEntity> listBySoOutStockIdList(@RequestBody List<String> outstockIdList);
 }

@@ -677,4 +677,21 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.listMergePackageBySoIds(ids);
     }
 
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @PostMapping("/batchUpdateCancelAndLog")
+    public Boolean batchUpdateCancelAndLog(@RequestBody List<String> soB2cIdList){
+        return b2cStatusService.batchUpdateCancelAndLog(soB2cIdList);
+    }
+
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @GetMapping("/getSoCode")
+    public SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode) {
+        return soB2cService.getByCode(soB2cCode);
+    }
 }

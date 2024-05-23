@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -15,12 +16,16 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.query.SoB2cDeliveryQueryHandler;
+import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.signature.qual.Identifier;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -296,7 +301,7 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 取消打印拣货单
-     *
+     * 1.24。2版本调整为取消打印（拣货单，物流单）
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
@@ -360,6 +365,7 @@ public class SoB2cDeliveryController extends BaseController {
      **/
 
     @PostMapping("/printLogisticsBillConfirm")
+    @Idempotent
     public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
         soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
     }
@@ -392,6 +398,39 @@ public class SoB2cDeliveryController extends BaseController {
             }
             resultDTOS.add(resultDTO);
         }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 物流拦截
+     */
+    @PostMapping("/logisticsIntercept")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soB2cDelivery:logisticsIntercept",
+            serviceClass = SoB2cDeliveryService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> logisticsIntercept(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOS = soB2cDeliveryService.logisticsIntercept(idsDTO.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 拦截结果确认
+     * @Author Luo_WG
+     * @Date 2023/12/14 11:45
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
+     **/
+    @PostMapping("/interceptResultConfirm")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soB2cDelivery:interceptResultConfirm",
+            serviceClass = SoB2cDeliveryService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> interceptResultConfirm(@RequestBody SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cDeliveryService.interceptResultConfirm(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

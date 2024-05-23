@@ -2,6 +2,7 @@ package com.erp.rpc.dmp.feign;
 
 
 import com.common.business.dto.PlatformOrderDTO;
+import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,5 +45,5 @@ public interface DmpMongoDbFeign {
      * @since 2024-02-14
      **/
     @PostMapping("/checkSoOutStock")
-    Boolean checkSoOutStock(@RequestBody PlatformOrderDTO resultDTO);
+    Boolean checkSoOutStock(@RequestBody DmpPullSoOutStockDTO resultDTO);
 }

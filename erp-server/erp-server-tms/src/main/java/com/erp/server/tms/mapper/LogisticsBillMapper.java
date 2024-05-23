@@ -36,6 +36,15 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@Param("sourceIdList") List<String> sourceIdList);
 
     /**
+     * 根据来源查询物流信息及跟踪号
+     * @Author hyj
+     * @Date 2024/05/11 14:58
+     * @param trackNoList
+     * @return java.util.List<com.erp.model.tms.dto.LogisticsBillDTO.LogisticsBillVo>
+     **/
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByTrackNo(@Param("trackNoList") List<String> trackNoList);
+
+    /**
      * 统计tab
      *@parms permissionSql
      *@return 
@@ -51,8 +60,7 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@author yl
      *@date 2023-11-16
      */
-    IPage<LogisticsBillDTO.PagingVO> paging(Page query, @Param("params")LogisticsBillDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
-
+    IPage<LogisticsBillDTO.PagingVO> paging(Page query,@Param("params")LogisticsBillDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
     /**
      * 导出
      *@parms dto

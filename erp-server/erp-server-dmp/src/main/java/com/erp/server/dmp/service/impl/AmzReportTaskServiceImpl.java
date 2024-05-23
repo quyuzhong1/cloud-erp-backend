@@ -841,7 +841,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(sourceTypeEnum.getName());
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-        String title = StrUtil.format("亚马逊报告消费异常:【{}_{}】从{}推送至{}失败", entity.getId(), entity.getStatus(), PlatformDictEnum.AMAZON.getName(), "自研ERP");
+        String title = StrUtil.format("亚马逊报告消费异常:【{}_{}】从{}拉取至{}失败", entity.getId(), entity.getStatus(), PlatformDictEnum.AMAZON.getName(), "自研ERP");
         warnMsgInfo.setTitle(title);
         warnMsgInfo.setTableName(sourceTypeEnum.getTableName());
         warnMsgInfo.setTableId(entity.getId());

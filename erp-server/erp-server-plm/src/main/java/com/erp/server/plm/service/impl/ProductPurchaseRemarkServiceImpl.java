@@ -3,18 +3,16 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductPurchaseRemarkDTO;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.server.plm.mapper.ProductPurchaseRemarkMapper;
-import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductPurchaseRemarkService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -23,9 +21,6 @@ import java.util.List;
 @Service
 public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchaseRemarkMapper, ProductPurchaseRemarkEntity>
     implements ProductPurchaseRemarkService {
-
-    @Resource
-    private CommonService commonService;
 
     /**
      * @Description 产品采购备注信息查询列表
@@ -53,7 +48,7 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
         ProductPurchaseRemarkEntity remarkEntity = new ProductPurchaseRemarkEntity();
         BeanMapper.copy(dto, remarkEntity);
 
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             if (StringUtils.isBlank(dto.getId())) {
                 remarkEntity.setCreateUserId(loginUser.getUid());
@@ -75,7 +70,7 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductPurchaseRemarkDTO> dto) {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         List<ProductPurchaseRemarkEntity> productPurchaseRemarkEntities = BeanMapper.copyList(dto, ProductPurchaseRemarkEntity.class);
         if (ObjectUtils.isNotEmpty(loginUser)) {
             for (ProductPurchaseRemarkEntity productPurchaseRemarkEntity : productPurchaseRemarkEntities) {

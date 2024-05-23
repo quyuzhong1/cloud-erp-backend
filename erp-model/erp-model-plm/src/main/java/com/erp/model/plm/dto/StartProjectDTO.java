@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -102,6 +103,11 @@ public class StartProjectDTO implements Serializable {
          * 描述
          */
         private String describe;
+
+        /**
+         * 项目启动日期
+         */
+        private LocalDate projectLaunchDate;
 
     }
 

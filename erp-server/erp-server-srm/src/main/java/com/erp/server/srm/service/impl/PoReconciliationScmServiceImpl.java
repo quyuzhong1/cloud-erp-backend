@@ -18,6 +18,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -74,9 +75,6 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     private OperateLogService operateLogService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private DocNoGenHelper docNoGenHelper;
 
     @Autowired
@@ -118,7 +116,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         poReconciliationDetailScmService.updateMainIdByIdList(addDTO.getDetailIdList(),poReconciliationEntity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "采购对账单" , poReconciliationEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "采购对账单" , poReconciliationEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), poReconciliationEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(poReconciliationEntity.getId(), code);
     }
@@ -311,7 +309,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_CANCEL_CONFIRM);
         }
         log.info("开始采购方确认，id = {}",id);
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         lambdaUpdate().eq(PoReconciliationEntity::getId, id)
                 .set(PoReconciliationEntity::getStatus, PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode())
                 .set(PoReconciliationEntity::getPurchaseConfirmDate, LocalDate.now())
@@ -319,7 +317,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName, userInfo.getUserName())
                 .update();
         log.info("确认 开始记录对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", commonService.getUserInfo().getUserName(), entity.getCode(), "对账单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "确认操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
     }
@@ -347,7 +345,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .update();
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", commonService.getUserInfo().getUserName(), entity.getCode(), "对账单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "取消确认操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
     }
@@ -389,7 +387,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .update();
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据签收 ", commonService.getUserInfo().getUserName(), entity.getCode(), "对账单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据签收 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "签收操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.RECEIVE);
     }

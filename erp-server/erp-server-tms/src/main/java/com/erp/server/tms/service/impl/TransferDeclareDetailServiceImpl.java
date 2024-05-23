@@ -54,8 +54,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private LogisticsChannelService logisticsChannelService;
     @Autowired
     private SoB2cFeign soB2cFeign;

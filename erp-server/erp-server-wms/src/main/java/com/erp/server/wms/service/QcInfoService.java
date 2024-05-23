@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -166,7 +167,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param
      * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.TabListDTO>
      */
-    List<QcInfoDTO.TabListDTO> tabList();
+    List<QcInfoDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     
     /**
@@ -298,4 +299,11 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
     void repairQcInfoSourceCode();
 
     List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(List<String> purchaseDetailIds);
+    /**
+     * @description: 统计未质检数量
+     * @author Will
+     * @date: 2024/4/11 9:10
+     * @return Integer
+     */
+    Integer countTotalNotQc(QcEffectivenessDTO.CountQcParamDTO qcParamDTO);
 }

@@ -2,10 +2,8 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
@@ -13,13 +11,12 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.anno.StateEnumValue;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.enums.QcReCheckResultEnum;
+import com.erp.server.wms.query.QcInfoQueryHandler;
 import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.QcResultService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +26,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -66,6 +60,7 @@ public class QcInfoController extends BaseController {
             tableField = "qc_user_id",
             menuCode = "wms:qcBill:paging",
             tableAlias = "qb")
+    @WebAdvanceQuery(handler = QcInfoQueryHandler.class)
     public ApiResult<PagingVO<QcInfoDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<QcInfoDTO.PagingParamDTO> dto) {
         PagingVO<QcInfoDTO.PagingViewDTO> pagingVO = qcInfoService.paging(dto);
         return success(pagingVO);
@@ -76,9 +71,13 @@ public class QcInfoController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<QcInfoDTO.TabListDTO>> tabList() {
-        List<QcInfoDTO.TabListDTO> list = qcInfoService.tabList();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:paging",
+            tableAlias = "qb")
+    public ApiResult<List<QcInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<QcInfoDTO.TabListDTO> list = qcInfoService.tabList(dto);
         return success(list);
     }
 
@@ -264,6 +263,7 @@ public class QcInfoController extends BaseController {
             tableField = "qc_user_id",
             menuCode = "wms:qcBill:exportQcBill",
             tableAlias = "qb")
+    @WebAdvanceQuery(handler = QcInfoQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
         qcInfoService.exportQcBill(dto, response);
         return success();
@@ -389,6 +389,7 @@ public class QcInfoController extends BaseController {
             tableField = "qc_user_id",
             menuCode = "wms:qcBill:exportQcBill",
             tableAlias = "qb")
+    @WebAdvanceQuery(handler = QcInfoQueryHandler.class)
     public ApiResult exportDailyExcel(@RequestBody @Valid QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
         qcInfoService.exportDailyExcel(dto, response);
         return success();

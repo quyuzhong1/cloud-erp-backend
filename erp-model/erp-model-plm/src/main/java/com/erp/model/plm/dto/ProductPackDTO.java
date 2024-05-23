@@ -29,9 +29,17 @@ public class ProductPackDTO implements Serializable {
     private String skuNo;
 
     /**
-     * 产品尺寸
+     * 产品尺寸长
      */
-    private String productSize;
+    private BigDecimal productLength;
+    /**
+     * 产品尺寸宽
+     */
+    private BigDecimal productWidth;
+    /**
+     * 产品尺寸高
+     */
+    private BigDecimal productHeight;
 
     /**
      * 毛重
@@ -44,9 +52,17 @@ public class ProductPackDTO implements Serializable {
     private BigDecimal netWeight;
 
     /**
-     * 箱规
+     * 箱规长
      */
-    private String boxSize;
+    private BigDecimal boxLength;
+    /**
+     * 箱规宽
+     */
+    private BigDecimal boxWidth;
+    /**
+     * 箱规高
+     */
+    private BigDecimal boxHeight;
 
     /**
      * 单箱重量

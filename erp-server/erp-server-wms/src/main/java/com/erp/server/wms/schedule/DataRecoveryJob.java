@@ -51,6 +51,7 @@ public class DataRecoveryJob {
         JSONObject param = JSONUtil.parseObj(jobParam);
         List<String> ids = param.getBeanList("ids", String.class);
         String type = param.get("type", String.class);
+        Boolean isPushKingdee = param.getBool("isPushKingdee", Boolean.FALSE);
         if(CollectionUtil.isEmpty(ids)){
             if("soReturnInstockService".equals(type)){
                 ids = soOutstockService.getIdsByTemp("so_return_instock");
@@ -71,11 +72,11 @@ public class DataRecoveryJob {
             idsDTO.setIds(Arrays.asList(item));
             try {
                 if(StrUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
-                    soReturnInstockService.disApprove(idsDTO.getIds(), Boolean.FALSE);
+                    soReturnInstockService.disApprove(idsDTO.getIds(), isPushKingdee);
                 }else if(StrUtil.isNotBlank(type) && "transferInfoService".equals(type)){
-                    transferInfoService.disApprove(idsDTO.getIds(), Boolean.FALSE);
+                    transferInfoService.disApprove(idsDTO.getIds(), isPushKingdee);
                 }else if(StrUtil.isNotBlank(type) && "soOutstockService".equals(type)){
-                    soOutstockService.disApprove(idsDTO, Boolean.FALSE);
+                    soOutstockService.disApprove(idsDTO, isPushKingdee);
                 }
             } catch (Exception e) {
                 XxlJobHelper.log("数据修复失败，id={} e ={}", item, e);
@@ -85,6 +86,25 @@ public class DataRecoveryJob {
 
 
     }
+
+    /**
+     * @description: 根据销售出库单生成物流单
+     * @author Will
+     * @date: 2024/5/20 15:21
+     */
+    @XxlJob("recoveryLogisticsBill")
+    public void recoveryLogisticsBill() {
+        String jobParam = XxlJobHelper.getJobParam();
+
+        List<String> codeList = new ArrayList<>();
+        if (StrUtil.isNotBlank(jobParam)) {
+            JSONObject param = JSONUtil.parseObj(jobParam);
+            codeList = param.get("codeList", List.class);
+        }
+        List<String> errorCodeList = soOutstockService.recoveryLogisticsBill(codeList);
+        XxlJobHelper.log("修复失败的单号，code = {}", errorCodeList);
+    }
+
 
     private List<String> getInnerSoOutStockIds() {
         List<String> result= new ArrayList<>();

@@ -45,6 +45,10 @@ public class ApproveOneDTO extends PermissionsDTO {
     private Boolean isNeedProcess;
 
 
+    /**
+     * 是否是pc端访问
+     */
+    private Boolean pcShow = false;
 
 
 
@@ -53,5 +57,12 @@ public class ApproveOneDTO extends PermissionsDTO {
         this.type = type;
         this.comment = comment;
 
+    }
+
+    public ApproveOneDTO (String id,String type,String comment,Boolean isNeedProcess) {
+        this.id = id;
+        this.type = type;
+        this.comment = comment;
+        this.isNeedProcess = isNeedProcess;
     }
 }

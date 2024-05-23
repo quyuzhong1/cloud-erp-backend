@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.feign;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
@@ -77,7 +78,6 @@ public class TransferDeclareFeignController {
         return list;
     }
 
-
     /**
      * b2c订单预报
      * 成功返回第三方code
@@ -86,6 +86,15 @@ public class TransferDeclareFeignController {
     @PostMapping("/b2cOrderForecast")
     public TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(@RequestBody @Validated TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO) {
         return transferDeclareService.b2cOrderForecast(b2cOrderForecastDTO);
+    }
+
+    /**
+     * 取消订单预报
+     * 失败返回原因
+     */
+    @PostMapping("/cancelOrderForecast")
+    public ApiResult<String> cancelOrderForecast(@RequestBody TransferDeclareDTO.CancelOrderForecastDTO cancelOrderForecastDTO) {
+        return transferDeclareService.cancelOrderForecast(cancelOrderForecastDTO);
     }
 
     /**

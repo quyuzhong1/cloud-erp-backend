@@ -100,4 +100,14 @@ public class ProductSkuBaseInfoDTO {
      * 流程表id
      */
     private String businessProcessId;
+
+    /**
+     * 推荐仓位(小货区)
+     */
+    private String warehouseLocation;
+
+    /**
+     * 推荐仓位(大货区)
+     */
+    private String warehouseLocationLarge;
 }

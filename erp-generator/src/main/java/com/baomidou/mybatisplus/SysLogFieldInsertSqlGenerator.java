@@ -124,7 +124,7 @@ public class SysLogFieldInsertSqlGenerator {
                 SoReturnInstockDTO.View.class,
                 SoReturnReceiveDTO.View.class,
                 TransferInfoDTO.ViewDTO.class,
-                WarehouseLocationMoveInfoDTO.ViewDTO.class,
+                WarehouseLocationMoveDTO.ViewDTO.class,
                 OtherOutstockDTO.ViewDTO.class
                 );
     }

@@ -133,6 +133,19 @@ public class SoB2cDTO implements Serializable {
         private Map<String, String> sqlMap;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExportParamDTO extends  PagingParamDTO{
+
+        /**
+         * 导出类型,parentExport(销售套装BOM按父件SKU导出),childExport(销售套装BOM按子件SKU导出)
+         * 字典，/wms/dict/drop/down?type=soB2cExportType
+         */
+        @NotBlank(message = "导出类型不能为空")
+        private String exportType;
+
+    }
+
     /**
      * 分页列表
      */
@@ -205,6 +218,11 @@ public class SoB2cDTO implements Serializable {
          * 国家
          */
         private String countryName;
+
+        /**
+         * 国家代号
+         */
+        private String country;
 
         /**
          * 是否对接了第三方海外仓
@@ -376,6 +394,25 @@ public class SoB2cDTO implements Serializable {
          * b2c销售订单明细信息
          */
         private List<SoB2cDetailDTO.ListDTO> detailList;
+        /**
+         * 运输状态
+         */
+        private String  trackStatus;
+
+        /**
+         * 运输状态
+         */
+        private String  trackStatusName;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 包装重量单位
+         */
+        private String weightUnit;
     }
 
     @Data
@@ -538,6 +575,10 @@ public class SoB2cDTO implements Serializable {
         @NotNull(message = "明细信息不能为空")
         @Valid
         private List<SoB2cDetailDTO.ViewDTO> detailList;
+        /**
+         * 申报信息
+         */
+        private List<SoB2cDeclareProductDTO.ViewDTO> declareProductList;
     }
 
     /**
@@ -1724,6 +1765,11 @@ public class SoB2cDTO implements Serializable {
          * 是否是系统新增的订单
          */
         private boolean isNewInsertOrder = false;
+
+        /**
+         * 是否是状态变更为取消状态
+         */
+        private boolean isUpdateCancel = false;
     }
 
     /**
@@ -1738,6 +1784,15 @@ public class SoB2cDTO implements Serializable {
 
         private String billStatus;
 
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 销售单号ID
+         */
+        private String soId;
 
 
     }
@@ -1857,6 +1912,12 @@ public class SoB2cDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+
+        /**
+         * 是否平台订单
+         */
+        private Boolean hasPlatformWarehouseOrder;
+
     }
 
     /**
@@ -2073,6 +2134,12 @@ public class SoB2cDTO implements Serializable {
          */
         private Integer qty;
 
+
+        /**
+         * SKU数量
+         */
+        private Integer skuQty;
+
         /**
          * 产品skuId
          */
@@ -2148,6 +2215,15 @@ public class SoB2cDTO implements Serializable {
          */
         private String countryName;
 
+        /**
+         * 可用数量
+         */
+        private Integer useableQty;
+
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
 
         /**
          * 订单分类名称
@@ -2362,5 +2438,17 @@ public class SoB2cDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CostPriceDTO {
+        /**
+         * 修复开始时间
+         */
+        private LocalDate startTime;
+
+        private List<String> ids;
     }
 }

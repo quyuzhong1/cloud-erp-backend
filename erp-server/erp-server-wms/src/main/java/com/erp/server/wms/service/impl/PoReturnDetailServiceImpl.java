@@ -17,6 +17,8 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -199,30 +201,10 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         }
         //仓位必填验证
         checkWarehouseLocation(warehouse,listDetail);
+        //更新是否组合品标识
+        updateIsCombination(listDetail);
         //保存详情信息
         return this.saveBatch(listDetail);
-    }
-
-    /**
-     * @description: 仓位必填验证
-     * @author Will
-     * @date: 2023/12/19 15:20
-     * @param warehouseEntity
-     * @param list
-     */
-    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<PoReturnDetailEntity> list) {
-        //仓库配置
-        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
-        List<String> warehouseIdList = new ArrayList<>();
-        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
-            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
-            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
-        }
-        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
-        //判断仓位是否需要必填
-        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
-        }
     }
 
     /**
@@ -379,6 +361,9 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         //仓位必填验证
         checkWarehouseLocation(warehouse,listDetail);
 
+        //更新是否组合品标识
+        updateIsCombination(listDetail);
+
         boolean flag = this.saveOrUpdateBatch(listDetail);
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList)) {
@@ -509,5 +494,53 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
             return Collections.EMPTY_LIST;
         }
         return baseMapper.listReturnOrderDetailByReceiveIds(receiveIds);
+    }
+
+    /**
+     * 更新组合产品标识
+     * @author Will
+     * @date: 2024/4/29 11:11
+     * @param listDetail
+     */
+    private void updateIsCombination (List<PoReturnDetailEntity> listDetail) {
+        if (CollectionUtils.isEmpty(listDetail)) {
+            return;
+        }
+        //SKUId集合
+        List<String> skuIdList = listDetail.stream().map(PoReturnDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
+        for (PoReturnDetailEntity detailEntity : listDetail) {
+            //是否是组合SKU
+            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailEntity.getSkuId())&& BomTypeEnum.SINGLE.getType().equals(e.getType())).count();
+                if (count > 0) {
+                    detailEntity.setIsCombination(Boolean.TRUE);
+                }
+            }
+        }
+    }
+
+    /**
+     * @description: 仓位必填验证
+     * @author Will
+     * @date: 2023/12/19 15:20
+     * @param warehouseEntity
+     * @param list
+     */
+    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<PoReturnDetailEntity> list) {
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        //判断仓位是否需要必填
+        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
+        }
     }
 }

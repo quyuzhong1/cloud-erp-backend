@@ -1465,7 +1465,7 @@
     </select>
 
     <select id="getSkuItemName" resultType="com.erp.model.bi.vo.SkuItemVO">
-        select sku_no,min(item_name) AS itemName from dmp_order_item  GROUP BY sku_no
+        select sku_no,min(item_name) AS itemName from dmp_order_item_split  GROUP BY sku_no
     </select>
 
 

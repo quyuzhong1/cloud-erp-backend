@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.constant.BaseStateConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -15,7 +16,6 @@ import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.mapper.BiSubjectShareMapper;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
-import com.erp.server.bi.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -35,9 +35,6 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
     @Resource
     private BiSubjectService subjectService;
 
-    @Resource
-    private CommonService commonService;
-
 
     /**
      * 专题设置权限
@@ -55,7 +52,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         if (Objects.isNull(subject)) {
             throw new ServiceException(ApiError.ERROR_97000);
         }
-        String loginUserId = commonService.getUserInfo().getUid();
+        String loginUserId = UserContext.getDefaultLoginUser().getUid();
         if (!loginUserId.equals(subject.getCreateUserId())) {
             throw new ServiceException(ApiError.ERROR_97002);
         }

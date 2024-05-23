@@ -2,6 +2,7 @@ package com.common.business.interceptor;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.AuthPassPath;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -16,8 +17,6 @@ import java.util.List;
 
 public class CommonInterceptor implements HandlerInterceptor {
 
-    public static ThreadLocal<LoginUser> threadLocal = new ThreadLocal<>();
-
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String tokenUserStr = request.getHeader("tokenUserInfo");
@@ -25,7 +24,7 @@ public class CommonInterceptor implements HandlerInterceptor {
             if (StringUtils.isNotBlank(tokenUserStr)) {
                 tokenUserStr = URLDecoder.decode(tokenUserStr, "UTF-8");
                 LoginUser user = JSONObject.parseObject(tokenUserStr, LoginUser.class);
-                threadLocal.set(user);
+                UserContext.setLoginUser(user);
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -45,7 +44,7 @@ public class CommonInterceptor implements HandlerInterceptor {
         String uri = request.getServletPath();
         List<String> pathList = Arrays.asList(AuthPassPath.PASS_PATH_LIST.split(";"));
         if (!pathList.contains(uri)) {
-            threadLocal.remove();
+            UserContext.clear();
         }
         HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
     }

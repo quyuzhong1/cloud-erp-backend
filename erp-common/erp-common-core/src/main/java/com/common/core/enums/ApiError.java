@@ -110,6 +110,10 @@ public enum ApiError implements Serializable {
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
     LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
     LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
+    ERROR_NAME_EXIST(1060,"名称【{}】已存在"),
+    ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
+    ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
+
 
     /**
      * 警告信息 从800 开始
@@ -182,6 +186,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_EXIST_ADDRESS_OR_CONTRACT(80005,"地址编码或联系人编号是空，同步金蝶失败，请手动维护数据"),
     ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA(80006,"未找到上级辅助资料"),
     ERROR_NOT_EXIST_DMP_PUSH_TASK(80007,"未找到中台推送任务"),
+    ERROR_STATUS_NO_NEED_SYNC(80008,"只有同步失败状态才可更新为无需同步"),
 
 
     /**
@@ -403,7 +408,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
 
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
-    ERROR_95163(95163, "未找到选择的销售套装BOM信息"),
+    ERROR_95163(95163, "未找到选择的BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
     ERROR_DOCS_NO(95165,"文档不存在"),
 	ERROR_95166(95166, "未找到BOM子件"),
@@ -513,6 +518,9 @@ public enum ApiError implements Serializable {
     ERROR_BOX_QTY_NOT_EXIST(95266,"SKU【{}】单箱数量不能为空"),
     ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST(95267,"迭代产品不能为空"),
     ERROR_PRODUCT_CERTIFICATE_EXIST(95268,"SKU【{}】下已存在证书项目【{}】的证书"),
+    ERROR_95269(95269, "启动日期应当晚于立项日期"),
+    ERROR_95270(95270, "结项日期应当晚于启动日期"),
+    ERROR_95271(95271, "SKU为空，不允许进行此操作"),
 
 
     /**
@@ -1110,7 +1118,7 @@ public enum ApiError implements Serializable {
     ERROR_SHOP_EXIST(92094 , "【{}】平台下【{}】账号已存在店铺"),
     ERROR_SHOP_COUNTRY_EXIST(92095 , "【{}】平台下【{}】账号下【{}】已存在店铺"),
     ERROR_B2C_CUSTOMER_NOT_EXIST(92061,"未找到B2C销售客户"),
-    ERROR_RULE_EXPRESSION_ERROR(92096,"条件表达式【{}】有误"),
+    ERROR_RULE_EXPRESSION_ERROR(92096,"执行条件不完整,请检查填写"),
     ERROR_SO_B2C_FINANCE_NOT_EXIST(92097,"财务信息不存在"),
     ERROR_SO_B2C_IS_NOT_NEED_MERGE_EXIST(92098,"销售订单【{}】无需合并"),
     ERROR_SHOP_AUTHORIZE(92099,"授权的平台编码错误"),
@@ -1147,6 +1155,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_PAYMENT_NOT_OPERATE(92125,"B2C销售订单【{}】未付款不支持任何操作"),
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
+    ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL(92114,"原物流订单取消失败，请联系物流商取消原物流订单后重新获取"),
     ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE(92114,"销售订单发货仓库不存在不支持提交发货"),
     ERROR_SO_B2C_NOT_EXIST_WAREHOUSE(92114,"B2C销售订单发货仓库不存在"),
     ERROR_SO_B2C_DISTRIBUTION_NOT_NULL(92115,"手动配货仓库和渠道不能全部为空"),
@@ -1178,7 +1187,12 @@ public enum ApiError implements Serializable {
 
     SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
     SO_B2C_IS_MATCH_WAREHOUSE_RULE(92136,"仓库匹配规则更新失败"),
+    ERROR_SO_B2C_NOT_DISTRIBUTION_DECLARE(92137,"B2C销售订单【{}】仅支持已审核-配货中的订单可操作"),
+    ERROR_SO_B2C_HAS_DECLARE(92138,"B2C销售订单【{}】已存在申报信息不进行规则匹配"),
+    ERROR_SO_B2C_DECLARE_NOT_EXIST(92139,"申报信息【{}】记录不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST(92140,"销售订单【{}】申报信息不存在"),
 
+    ERROR_DECLARE_NOT_EXIST(92141,"申报信息不存在"),
 
     /**
      * TMS 错误
@@ -1228,7 +1242,7 @@ public enum ApiError implements Serializable {
     INVALID_NOT_PACKAGE(94038,"订单已作废，不可组包"),
     TRANSFER_FAILURE_NOT_PACKAGE(94039,"中转报关订单待中转/上传失败不可操作组包发货"),
     ORDER_CANCEL_NOT_PACKAGE(94040,"单据对应的物流商单号被拦截/取消/异常，不可组包操作"),
-    LOGISTICS_INTERCEPT_NOT_PACKAGE(94041,"订单被拦截，不可组包操作"),
+    LOGISTICS_INTERCEPT_NOT_PACKAGE(94041,"订单被拦截，不可操作"),
 
     ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST(94031,"物流渠道未匹配到授权信息"),
     DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),
@@ -1246,6 +1260,11 @@ public enum ApiError implements Serializable {
     LOGISTICS_NOT_PRINT_LOGISTICS_BILL(94042,"物流商【{}】不支持打印物流面单"),
     LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持分开单独打印官方配货单"),
     LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
+    ERROR_CFG_COST_EMPTY(94045,"未发现【{}】费用配置信息"),
+
+
+
+
     /**
      * SRM 错误
      * 从96000 开始
@@ -1271,8 +1290,14 @@ public enum ApiError implements Serializable {
     ERROR_DELIVERY_ORDER_DETAIL_NOT_EXIST(96015,"送货单明细不存在"),
     ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE(96016,"单据单号【{}】已生成对账明细"),
     ERROR_PO_RECEIVE_DISAPPROVE_FAILURE(96017,"单据单号【{}】已关联对账，无法反审核"),
+    ERROR_CANNOT_SAME_POSITION(94100,"取货和上架仓位不能是同一个仓位"),
+    ERROR_OUT_WAREHOUSELOCATION_NOT_FOUND(94101,"取货仓位不存在"),
+    ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
 
-
+    ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于包装长度"),
+    ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于包装宽度"),
+    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
+    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
 
 
 

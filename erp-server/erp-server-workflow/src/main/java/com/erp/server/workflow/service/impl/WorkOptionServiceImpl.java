@@ -13,6 +13,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -74,9 +75,6 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     private ProcessTaskService workflowFeign;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private WorkMenuService workMenuService;
 
     @Resource
@@ -122,7 +120,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(String sysClassify) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<String> roleIds = sysUserFeign.getRoleIdList(userInfo.getUid());
         List<SysRoleMenuEntity> menuRefRoleByRoleIds = sysUserFeign.getMenuRefRoleByRoleIds(roleIds);
         List<String> collect = new ArrayList<>();
@@ -160,7 +158,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Override
     public List<WorkOptionDTO.WaitDoMenu> listOftenMenu(String sysClassify) {
         List<String> collect = new ArrayList<>();
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
         if (ObjectUtil.isNotEmpty(frequentlyViewDTOS)) {
             collect = frequentlyViewDTOS.stream().map(WorkOptionDTO.FrequentlyViewDTO::getModuleStatusId).collect(Collectors.toList());
@@ -189,7 +187,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public Boolean addWaitDo(WorkOptionDTO.AddDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (dto.getType().equals("1")) {
             List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
             List<WorkOptionDTO.MyWorkOptionDTO> collect = myWorkOptionDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
@@ -222,7 +220,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public Boolean addOften(WorkOptionDTO.AddOftenDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         WorkOptionEntity workOptionEntity = new WorkOptionEntity();
         workOptionEntity.setOptionUserId(userInfo.getUid());
         workOptionEntity.setOptionUserMame(userInfo.getUserName());
@@ -242,7 +240,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public Boolean updateWaitDo(WorkOptionDTO.UpdateDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         WorkOptionEntity byId = this.getById(dto.getId());
         if (byId.getType().equals("1")) {
             List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
@@ -277,7 +275,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
    /* @Override
     public List<WorkOptionDTO.PendingViewDTO> listPendingViewTest() {
         List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
         List<SysClassifyEnum> sysClassifyEnums = SysClassifyEnum.getAll();
         for (SysClassifyEnum searchOptionEnum : sysClassifyEnums) {
@@ -322,7 +320,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public List<WorkOptionDTO.FrequentlyViewDTO> listFrequentlyView() {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
         frequentlyViewDTOS.forEach(req -> {
             req.setPathUrl(req.getModuleUrl());
@@ -359,7 +357,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public List<WorkOptionDTO.StageViewDTO> stageView() {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<WorkOptionDTO.StageViewDTO> stageViewDTOS = plmTaskFeign.stageView(userInfo.getUid());
         return stageViewDTOS;
     }
@@ -403,7 +401,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Override
     public List<WorkOptionDTO.PendingViewDTO> listPendingView() {
         List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
         List<SysClassifyEnum> sysClassifyEnums = SysClassifyEnum.getAll();
         for (SysClassifyEnum searchOptionEnum : sysClassifyEnums) {
@@ -454,7 +452,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Override
     public List<WorkOptionDTO.ApproveSearchOptionDTO> approveSearchOption() {
         List<WorkOptionDTO.ApproveSearchOptionDTO> list = new ArrayList<>();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         List<ApproveSearchOptionEnum> all = ApproveSearchOptionEnum.getAll();
         WorkOptionDTO.ApproveViewParamDTO paramDTO = new WorkOptionDTO.ApproveViewParamDTO();
         for (ApproveSearchOptionEnum optionEnum : all) {
@@ -487,7 +485,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     public PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveView(PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         dto.getParams().setUserId(userInfo.getUid());
         IPage<WorkOptionDTO.ApproveViewDTO> pageData = this.baseMapper.approveView(query, dto.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
@@ -579,7 +577,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 }
                 break;
             case PROJECT_TASK:
-                LoginUser userInfo = commonService.getUserInfo();
+                LoginUser userInfo = UserContext.getDefaultLoginUser();
                 ProjectTaskEntity taskEntity = plmTaskFeign.getProductIdByTaskId(dto.getId());
                 List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userInfo.getUid());
                 TaskOperateDTO taskOperateDTO = new TaskOperateDTO();

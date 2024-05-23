@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -20,13 +21,15 @@ import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
-import com.erp.server.plm.service.*;
+import com.erp.server.plm.service.PreTaskService;
+import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.TaskDeliveryService;
+import com.erp.server.plm.service.TaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,9 +46,6 @@ import java.util.stream.Collectors;
 @Service
 public class TaskServiceImpl extends ServiceImpl<ProjectTaskMapper, ProjectTaskEntity> implements TaskService {
 
-
-    @Resource
-    private CommonService commonService;
 
     @Autowired
     private WorkflowFeign workflowFeign;
@@ -71,7 +71,7 @@ public class TaskServiceImpl extends ServiceImpl<ProjectTaskMapper, ProjectTaskE
     @Override
     public PagingVO<List<TaskPagingShowDTO>> allExecutablePaging(PagingDTO<TaskDTO.TaskPagingParamDTO> searchParamDTO) {
         //当前登录的用户id
-        String loginUserId = commonService.getUserInfo().getUid();
+        String loginUserId = UserContext.getDefaultLoginUser().getUid();
         TaskDTO.TaskPagingParamDTO params = searchParamDTO.getParams();
         params.setPermissionSql(searchParamDTO.getPermissionSql());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
@@ -99,7 +99,7 @@ public class TaskServiceImpl extends ServiceImpl<ProjectTaskMapper, ProjectTaskE
      */
     @Override
     public Boolean exportTask(TaskPagingDTO.ExportDTO params, HttpServletResponse response) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
         Integer taskFlag = params.getTaskFlag();
         List<Integer> statusList = params.getStatusList();

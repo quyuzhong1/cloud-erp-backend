@@ -102,6 +102,8 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
         //发货单明细
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(firstMileDeliveryId);
         Map<String,List<FirstMileDeliveryDetailEntity>> firstMileDeliveryDetailEntityMap = firstMileDeliveryDetailEntityList.stream().collect(Collectors.groupingBy(FirstMileDeliveryDetailEntity::getMainId));
+
+        Map<String,Integer> skuSummaryMap = firstMileDeliveryDetailEntityList.stream().collect(Collectors.toMap(v->v.getMainId()+v.getSkuNo(),FirstMileDeliveryDetailEntity::getDeliveryQty, Integer::sum));
         //记录遍历时最大箱号
         Map<String,Integer> boxMap = new HashMap<>();
         while (it.hasNext()) {
@@ -168,11 +170,13 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = currentDetailList.stream().filter(v->v.getSkuNo().equals(packingExcelDTO.getSku())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
             packingExcelDTO.setSkuId(firstMileDeliveryDetailEntity.getSkuId());
             firstMileDeliveryDetailEntity.setDeliveryQty(firstMileDeliveryDetailEntity.getDeliveryQty() - packingExcelDTO.getSingleBoxQuantity());
-            if(firstMileDeliveryDetailEntity.getDeliveryQty() < 0){
+            Integer skuNum = skuSummaryMap.get(firstMileDeliveryEntity.getId()+packingExcelDTO.getSku());
+            if(skuNum < packingExcelDTO.getSingleBoxQuantity()){
                 packingExcelDTO.setErrorMsg("发货单SKU装箱数量超过待装箱数量");
                 errorList.add(packingExcelDTO);
                 it.remove();
             }
+            skuSummaryMap.put(firstMileDeliveryEntity.getId()+packingExcelDTO.getSku(),skuNum-packingExcelDTO.getSingleBoxQuantity());
         }
     }
 }
