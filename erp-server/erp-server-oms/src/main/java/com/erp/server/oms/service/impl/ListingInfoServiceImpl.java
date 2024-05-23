@@ -26,6 +26,7 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
+import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
@@ -162,6 +163,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         SkuMappingEntity lastestSkuMapping  = skuMapping;
         if (StringUtils.isBlank(skuMapping.getProductSkuId()) && StringUtils.isBlank(skuMapping.getProductSkuNo())){
+            SkuMappingEntity oldSkuMapping = SkuMappingConverter.INSTANCE.copySkuMappingEntity(skuMapping);
             // 历史无映射关系
             skuMapping.setProductSkuId(skuVO.getSkuId());
             skuMapping.setProductSkuNo(skuVO.getSkuNo());
@@ -169,8 +171,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             if (!skuMappingService.updateById(skuMapping)) {
                 throw new ServiceException("[SkuMapping] 首次映射修改失败");
             }
-            // 记录日志
-            operateLogService.addModuleOperateLogByObj(skuMapping, skuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】首次映射sku", UserContext.getDefaultLoginUser().getUserName()));
+            operateLogService.addModuleOperateLogByObj(oldSkuMapping, skuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】首次映射sku", UserContext.getDefaultLoginUser().getUserName()));
         } else {
             LocalDateTime now = LocalDateTime.now();
             skuMapping.setExpireTime(now);
