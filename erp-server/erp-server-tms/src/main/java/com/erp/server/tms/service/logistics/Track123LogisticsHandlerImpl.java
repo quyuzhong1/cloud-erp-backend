@@ -26,6 +26,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.sdk.tms.track123.model.request.ExtendField;
 import com.sdk.tms.track123.model.request.OceanRegisterRequest;
 import com.sdk.tms.track123.model.request.RegisterRequest;
 import com.sdk.tms.track123.model.request.TrackRequest;
@@ -242,6 +243,16 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
             return failure("注册数据不能为空");
         }
         List<RegisterRequest> registerRequests = LogisticsChannelConverter.INSTANCE.registerTrackNoByTrack123(logisticsRegisterVOS);
+        //去掉非顺丰物流单手机号传递
+        registerRequests.forEach(registerRequest -> {
+            String trackNo = registerRequest.getTrackNo();
+            if (StringUtils.isEmpty(trackNo) || !trackNo.startsWith("SF")){
+                ExtendField extendFieldMap = registerRequest.getExtendFieldMap();
+                if (Objects.nonNull(extendFieldMap)){
+                    extendFieldMap.setPhoneSuffix(null);
+                }
+            }
+        });
         ValidatorUtil.validateEntity(registerRequests);
         try {
             RegisterResult registerResult = trackShipperService.registerLogisticsNumber(token, registerRequests);
