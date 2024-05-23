@@ -1,4 +1,4 @@
-package com.erp.server.sys.utils;
+package com.erp.server.auth.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

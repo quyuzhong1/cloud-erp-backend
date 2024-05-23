@@ -1,10 +1,10 @@
-package com.erp.server.sys.controller.openapi;
+package com.erp.server.auth.controller.openapi;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.CollectorPacksDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.ReturnTrackingDTO;
-import com.erp.server.sys.config.OpenApi;
+import com.erp.server.auth.config.OpenApi;
 
 import javax.validation.Valid;
 

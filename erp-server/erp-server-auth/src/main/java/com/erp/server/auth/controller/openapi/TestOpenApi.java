@@ -1,8 +1,10 @@
-package com.erp.server.sys.controller.openapi;
+package com.erp.server.auth.controller.openapi;
+
+import org.springframework.validation.annotation.Validated;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.OpenApiReqDTO;
-import com.erp.server.sys.config.OpenApi;
+import com.erp.server.auth.config.OpenApi;
 
 @OpenApi
 public class TestOpenApi {
@@ -41,7 +43,7 @@ public class TestOpenApi {
 	 * @return
 	 */
 	@OpenApi("test")
-	public OpenApiReqDTO test(OpenApiReqDTO req) {
+	public OpenApiReqDTO test(@Validated OpenApiReqDTO req) {
 		req.setTimestamp(System.currentTimeMillis());
 		return req;
 	}

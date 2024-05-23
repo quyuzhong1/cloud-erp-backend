@@ -1,4 +1,4 @@
-package com.erp.server.sys.utils;
+package com.erp.server.auth.utils;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -14,7 +14,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 
-import com.erp.server.sys.config.OpenApi;
+import com.erp.server.auth.config.OpenApi;
 
 import lombok.Data;
 

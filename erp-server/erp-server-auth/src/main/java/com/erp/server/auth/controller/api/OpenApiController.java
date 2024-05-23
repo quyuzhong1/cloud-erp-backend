@@ -1,4 +1,4 @@
-package com.erp.server.sys.controller.api;
+package com.erp.server.auth.controller.api;
 
 import java.util.HashMap;
 import java.util.List;
@@ -6,12 +6,12 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,11 +23,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.OpenApiInputDTO;
 import com.erp.model.sys.dto.OpenApiReqDTO;
 import com.erp.model.sys.entity.SysRefererConfigEntity;
-import com.erp.server.sys.service.IOpenApiService;
-import com.erp.server.sys.service.SysRefererConfigService;
-import com.erp.server.sys.utils.IPUtils;
-import com.erp.server.sys.utils.SignType;
-import com.erp.server.sys.utils.SignUtil;
+import com.erp.server.auth.server.OpenApiService;
+import com.erp.server.auth.utils.IPUtils;
+import com.erp.server.auth.utils.SignType;
+import com.erp.server.auth.utils.SignUtil;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -43,14 +42,11 @@ public class OpenApiController {
     private final static Map<String, String> secretKeyMap = new HashMap<>();
 
     @Resource
-    private IOpenApiService openApiService;
-    
-    @Resource
-    private SysRefererConfigService sysRefererConfigService;
+    private OpenApiService openApiService;
     
     @PostMapping("/service")
     @ResponseBody
-    public ApiResult<?> service(@Valid @RequestBody OpenApiReqDTO req, HttpServletRequest request){
+    public ApiResult<?> service(@Validated @RequestBody OpenApiReqDTO req, HttpServletRequest request){
     	String referer = request.getHeader("Referer");
     	if(StringUtils.isBlank(referer)) {
     		referer = request.getHeader("referer");

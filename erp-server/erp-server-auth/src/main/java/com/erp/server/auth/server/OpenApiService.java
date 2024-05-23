@@ -1,4 +1,4 @@
-package com.erp.server.sys.service.impl;
+package com.erp.server.auth.server;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -9,27 +9,26 @@ import javax.validation.Valid;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.OpenApiInputDTO;
-import com.erp.server.sys.service.IOpenApiService;
-import com.erp.server.sys.utils.CheckObjectUtil;
-import com.erp.server.sys.utils.InitOpenApiBeanUtil;
-import com.erp.server.sys.utils.SignUtil;
+import com.erp.server.auth.utils.CheckObjectUtil;
+import com.erp.server.auth.utils.InitOpenApiBeanUtil;
+import com.erp.server.auth.utils.SignUtil;
 
 import cn.hutool.core.bean.BeanUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class OpenApiServiceImpl implements IOpenApiService {
+public class OpenApiService {
 
     @Resource
     private InitOpenApiBeanUtil initGateWayBeanUtil;
     
-    @Override
     public ApiResult<?> unitPlatformService(OpenApiInputDTO input) {
     	ApiResult<?> response = null;
     	String method = input.getMethod();
@@ -104,7 +103,7 @@ public class OpenApiServiceImpl implements IOpenApiService {
             Annotation[] annotationArr = annotations[i];
             if (null != annotationArr){
                 for (Annotation annotation : annotationArr) {
-                    if (annotation instanceof Valid){
+                    if (annotation instanceof Valid || annotation instanceof Validated){
                         CheckObjectUtil.checkAnnotation(arg);
                     }
                 }

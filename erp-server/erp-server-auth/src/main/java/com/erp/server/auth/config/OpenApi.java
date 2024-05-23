@@ -1,4 +1,4 @@
-package com.erp.server.sys.config;
+package com.erp.server.auth.config;
 
 import java.lang.annotation.*;
 

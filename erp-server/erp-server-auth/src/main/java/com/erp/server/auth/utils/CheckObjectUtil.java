@@ -1,4 +1,4 @@
-package com.erp.server.sys.utils;
+package com.erp.server.auth.utils;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -39,25 +39,25 @@ public class CheckObjectUtil {
                 if (null != notBlank){
                     String message = notBlank.message();
                     if (null == field.get(object) || StringUtils.isBlank(field.get(object).toString())){
-                        throw new ServiceException(message);
+                        throw new ServiceException("业务参数校验：" + message);
                     }
                 }
                 NotNull notNull = field.getDeclaredAnnotation(NotNull.class);
                 if (notNull != null) {
                     String message = notNull.message();
                     if (null == field.get(object)){
-                        throw new ServiceException(message);
+                        throw new ServiceException("业务参数校验：" + message);
                     }
                 }
                 NotEmpty notEmpty = field.getDeclaredAnnotation(NotEmpty.class);
                 if (notEmpty != null) {
                     String message = notEmpty.message();
                     if (null == field.get(object) ){
-                        throw new ServiceException(message);
+                        throw new ServiceException("业务参数校验：" + message);
                     }
                     if (field.get(object) instanceof Collection){
                         if (CollectionUtils.isEmpty((Collection)field.get(object))){
-                            throw new ServiceException(message);
+                            throw new ServiceException("业务参数校验：" + message);
                         }
                     }else {
                         throw new ServiceException("not Collection Data");

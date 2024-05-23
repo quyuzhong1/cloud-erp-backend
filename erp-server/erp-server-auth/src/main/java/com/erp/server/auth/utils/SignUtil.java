@@ -1,4 +1,4 @@
-package com.erp.server.sys.utils;
+package com.erp.server.auth.utils;
 
 import java.net.URLEncoder;
 import java.security.MessageDigest;
