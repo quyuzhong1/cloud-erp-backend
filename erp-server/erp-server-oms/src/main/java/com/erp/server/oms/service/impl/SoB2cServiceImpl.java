@@ -3906,6 +3906,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Map<String, Object> detailMap = new HashMap<>();
             detailMap.put("detailId", detailEntity.getId());
             detailMap.put("platformSkuNo", detailEntity.getPlatformSkuNo());
+            detailMap.put("platformSpuNo", detailEntity.getPlatformSpuNo());
             detailMap.put("skuQty", detailEntity.getQty());
             detailMap.put("skuId", detailEntity.getSkuId());
             detailMap.put("skuNo", detailEntity.getSkuNo());
@@ -3986,6 +3987,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         String platformSkuNo = getByField("platformSkuNo", mapList);
         map.put("platformSkuNo", platformSkuNo);
+
+        String platformSpuNo = getByField("platformSpuNo", mapList);
+        map.put("platformSpuNo", platformSpuNo);
 
         String skuQty = getByField("skuQty", mapList);
         map.put("skuQty", skuQty);
