@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -17,8 +18,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -32,10 +35,12 @@ import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.DictBasicValueEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -61,9 +66,11 @@ import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
 import com.sdk.oms.shopify.utils.HmacVerificationUtils;
 import io.seata.spring.annotation.GlobalTransactional;
+import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.xpath.operations.Bool;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -74,6 +81,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -551,7 +559,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             String authStatus = item.getAuthStatus();
             String authStatusName = AuthStatusEnum.getName(authStatus);
             item.setAuthStatusName(authStatusName);
-
+            //客户名称
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(item.getCustomerId());
+            if (Objects.nonNull(customerInfoEntity)) {
+                item.setCustomerName(customerInfoEntity.getName());
+            }
         }
 
     }
@@ -1282,6 +1294,70 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return lambdaQuery()
                 .eq(ShopInfoEntity::getPlatformShopCode, platformShopCode)
                 .list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<ShopInfoEntity> shopInfoEntities = listByIds(ids);
+        for (String id : ids) {
+            BatchResultDTO deleteResult = new BatchResultDTO();
+            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(item -> Objects.equals(item.getId(), id)).findFirst().orElse(null);
+            if (Objects.isNull(shopInfoEntity)) {
+                deleteResult = BatchResultDTO.fail(id, id, "店铺不存在, 删除失败");
+                resultDTOS.add(deleteResult);
+                continue;
+            }
+            //只有禁用的店铺允许删除
+            if (Objects.equals(shopInfoEntity.getDisabled(), false)){
+                deleteResult = BatchResultDTO.fail(id, id, ApiError.ERROR_SHOP_UNDISABLED.msg);
+                resultDTOS.add(deleteResult);
+                continue;
+            }
+            try {
+                boolean flag = removeById(id);
+                if (flag) {
+                    deleteResult = BatchResultDTO.success(shopInfoEntity.getId(), shopInfoEntity.getAccount(), OperationTypeEnum.DELETE);
+                }else{
+                    deleteResult = BatchResultDTO.fail(shopInfoEntity.getId(), shopInfoEntity.getAccount(), "店铺删除失败");
+                }
+            }catch (Exception e) {
+                log.error("店铺删除失败",e);
+                deleteResult = BatchResultDTO.fail(shopInfoEntity.getId(), shopInfoEntity.getAccount(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 导出
+     *
+     * @param dto
+     * @param response
+     * @author hyj
+     * @date 2024/5/23 10:54
+     */
+    @Override
+    public void listExport(ShopDTO.ExportDTO dto, HttpServletResponse response) {
+        List<ShopDTO.PagingViewDTO> list = baseMapper.listExport(dto);
+        if (CollectionUtils.isNotEmpty(list)) {
+            //填充数据
+            fillDb(list);
+        }
+        StringBuffer stringBuffer = new StringBuffer();
+        String excelPath = "excel/shopInfo.xlsx";
+        String name = "店铺导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        stringBuffer.append(date);
+        stringBuffer.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, stringBuffer.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     private boolean verifyHmac(String data, String hmacHeader) {

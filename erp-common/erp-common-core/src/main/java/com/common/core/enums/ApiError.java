@@ -1197,6 +1197,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST(92140,"销售订单【{}】申报信息不存在"),
 
     ERROR_DECLARE_NOT_EXIST(92141,"申报信息不存在"),
+    ERROR_SHOP_UNDISABLED(92142,"只有禁用的店铺允许删除"),
 
     /**
      * TMS 错误

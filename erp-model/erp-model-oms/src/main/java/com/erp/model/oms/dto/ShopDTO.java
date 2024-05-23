@@ -154,7 +154,15 @@ public class ShopDTO implements Serializable {
          */
         private LocalDateTime updateTime;
 
+        /**
+         * 客户id
+         */
+        private String customerId;
 
+        /**
+         * 客户名称
+         */
+        private String customerName;
     }
 
 
@@ -759,5 +767,11 @@ public class ShopDTO implements Serializable {
         private String baseUrl;
 
 
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+
+        private List<String> ids;
     }
 }

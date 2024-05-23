@@ -1,6 +1,7 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.core.anno.LogViewService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -58,6 +59,7 @@ public class ThirdMappingController extends BaseController {
      * @author hyj
      * @date: 2024-05-20
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

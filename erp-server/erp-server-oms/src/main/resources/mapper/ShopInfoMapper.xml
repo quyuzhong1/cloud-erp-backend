@@ -20,6 +20,12 @@
 
     <!--店铺分页查询-->
     <select id="paging" resultType="com.erp.model.oms.dto.ShopDTO$PagingViewDTO">
+        <include refid="list"/>
+    </select>
+    <select id="listExport" resultType="com.erp.model.oms.dto.ShopDTO$PagingViewDTO">
+        <include refid="list"/>
+    </select>
+    <sql id="list">
         SELECT
         id,
         account,
@@ -34,6 +40,7 @@
         auth_status,
         disabled,
         auth_time,
+        customer_id,
         domain,
         country_name,
         dict_platform,
@@ -105,6 +112,5 @@
         </if>
         ORDER BY
         si.update_time DESC
-    </select>
-
+    </sql>
 </mapper>

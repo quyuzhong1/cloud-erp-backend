@@ -1,14 +1,16 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
+import org.apache.xpath.operations.Bool;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -285,4 +287,8 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @Date 2024/03/28
      **/
     List<ShopInfoEntity> getRelatedShopById(String platformShopCode);
+
+    List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto);
+
+    void listExport(ShopDTO.ExportDTO dto, HttpServletResponse response);
 }

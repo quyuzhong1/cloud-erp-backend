@@ -946,10 +946,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     @Override
     public void listExport(WarehouseLocationMoveDTO.ExportDTO dto, HttpServletResponse response) {
         List<WarehouseLocationMoveDTO.PdaPcListDTO> pdaPcListDTOS = baseMapper.listExport(dto);
-        List<String> skuList = pdaPcListDTOS.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> skuList = pdaPcListDTOS.stream().map(WarehouseLocationMoveDTO.PdaPcListDTO::getSkuId).distinct().collect(Collectors.toList());
         //feign获取产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuList);
-        List<String> warehouseIds = pdaPcListDTOS.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<String> warehouseIds = pdaPcListDTOS.stream().map(WarehouseLocationMoveDTO.PdaPcListDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
         for (WarehouseLocationMoveDTO.PdaPcListDTO pdaPcListDTO : pdaPcListDTOS) {
             pdaPcListDTO.setApproveStatusName(ApproveStatusEnum.getName(pdaPcListDTO.getApproveStatus()));

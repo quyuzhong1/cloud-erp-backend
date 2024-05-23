@@ -14,7 +14,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.server.oms.query.ShopQueryHandler;
+import com.erp.server.oms.service.CustomerB2cService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -394,4 +396,39 @@ public class ShopInfoController extends BaseController {
         return success(shopInfoService.lambdaQuery().eq(ShopInfoEntity::getDictPlatform, dictPlatform).list());
     }
 
+    /**
+     * 删除
+     *
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除店铺")
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:delete",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = shopInfoService.deleteByIds(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 导出
+     * @author hyj
+     * @date 2024/5/23
+     * @param dto
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出店铺")
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:export",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "id")
+    @WebAdvanceQuery(handler = ShopQueryHandler.class)
+    public void listExport(@RequestBody ShopDTO.ExportDTO dto, HttpServletResponse response) {
+        shopInfoService.listExport(dto,response);
+    }
 }
