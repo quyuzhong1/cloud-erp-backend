@@ -203,8 +203,6 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
 
     public static final String SORTING_CODE = "sorting_code";
 
-    public static final String SHIPPING_TEMPLATE_ID = "shipping_template_id";
-
     public static final String FEE_RULE = "fee_rule";
 
     public static final String MAX_CUSTOMS_AMOUNT = "max_customs_amount";

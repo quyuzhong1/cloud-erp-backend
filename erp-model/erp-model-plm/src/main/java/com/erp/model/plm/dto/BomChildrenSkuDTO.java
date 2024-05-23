@@ -111,6 +111,10 @@ public class BomChildrenSkuDTO  implements Serializable {
 
 
     /**
+     * 图片路径
+     */
+    private String imageUrl;
+    /**
      * 数量
      */
     @NotNull(message = "数量不能为空")

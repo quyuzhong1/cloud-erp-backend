@@ -398,6 +398,27 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 .orElse(null);
     }
 
+    @Override
+    public List<SoB2cDetailEntity> listContainDeleted(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        return baseMapper.listContainDeleted(ids);
+    }
+
+    @Override
+    public void updateContainDeleted(List<String> revertDetailIds) {
+        if(CollectionUtils.isEmpty(revertDetailIds)){
+            return ;
+        }
+        baseMapper.updateContainDeleted(revertDetailIds);
+    }
+
+    @Override
+    public List<SoB2cDetailEntity> listBySplitId(String detailId) {
+        return lambdaQuery().eq(SoB2cDetailEntity::getSplitDetailId, detailId).list();
+    }
+
     /**
      * 消费明细处理
      */
@@ -587,6 +608,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
      * @param isAdd
      */
     private void handleDetailList (List<SoB2cDetailEntity> list,SoB2cEntity soB2cEntity,Boolean isAdd) {
+        //如果是还原捆绑商品，需要将删除的明细还原
+        List<String> detailIds = list.stream().map(SoB2cDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        this.updateContainDeleted(detailIds);
 
         //产品信息
         List<String> skuIds = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
@@ -627,11 +651,16 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setCurrency(soB2cEntity.getCurrency());
             detailEntity.setExchangeRate(soB2cEntity.getExchangeRate());
             detailEntity.setImageUrl(skuVO.getSkuImagesUrl());
-            //建议售价
-            detailEntity.setAdvicePrice(skuVO.getRetailPrice());
             //含税单价
             BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
             detailEntity.setTaxCost(costPrice);
+
+            //如果是拆分的情况，使用前端传的
+            if(StringUtils.isBlank(detailEntity.getSplitDetailId())){
+                //建议售价
+                detailEntity.setAdvicePrice(skuVO.getRetailPrice());
+                detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
+            }
 
             //仓库名称
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream()
@@ -645,19 +674,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
                     detailEntity.setWarehouseOrgName(companyDTO.getName());
                 }
-
-                //库存SKU
-                SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
-                    detailEntity.setWarehouseSkuNo(StrUtil.isBlank(warehouseListSkuDTO.getWarehouseSkuNo()) ? "" : warehouseListSkuDTO.getWarehouseSkuNo());
-                } else {
-                    detailEntity.setWarehouseSkuNo("");
-                }
-            } else {
-                detailEntity.setWarehouseSkuNo("");
             }
 
-            detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
             //平台SKU
             SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {

@@ -59,8 +59,8 @@ public class Track123LogisticsHandlerImplTest {
     public void registerLogisticsNumber(){
         List<LogisticsRegisterVO> registerVOS = new ArrayList<>();
         LogisticsRegisterVO vo = LogisticsRegisterVO.builder()
-                .trackNo("SF1693167040751")
-                .phoneSuffix("18770946068")
+                .trackNo("SL1694930851235")
+                .phoneSuffix("18855193495")
                 .build();
         registerVOS.add(vo);
 //        LogisticsRegisterVO vo1 = LogisticsRegisterVO.builder()
@@ -102,7 +102,7 @@ public class Track123LogisticsHandlerImplTest {
     public void getTrack(){
         LogisticsTrackVO logisticsQueryVO = new LogisticsTrackVO();
         List<String> trackNos = new ArrayList<>();
-        trackNos.add("SF1693167040751");
+        trackNos.add("MP0039098709");
 //        trackNos.add("00369744292706509832");
         logisticsQueryVO.setTrackNos(trackNos);
         logisticsQueryVO.setAuthMap(authMap);
