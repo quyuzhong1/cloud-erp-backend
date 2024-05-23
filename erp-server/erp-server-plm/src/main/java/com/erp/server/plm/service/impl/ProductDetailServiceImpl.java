@@ -2160,6 +2160,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //审核通过后发送到金蝶系统
         syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        //增加缓存清除
+        redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, entity.getId());
         return true;
     }
 

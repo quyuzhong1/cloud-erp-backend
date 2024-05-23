@@ -280,15 +280,50 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @date 2023-03-21 12:06
      */
     List<SkuVO> listSkuProductByIds(@Param("skuIds") List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 + 包裹信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
     List<SkuVO> listSkuPackByIds(@Param("skuIds")List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 +销售信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
     List<SkuVO> listSkuSaleByIds(@Param("skuIds")List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 + 物流信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
     List<SkuVO> listSkuLogisticsByIds(@Param("skuIds")List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 + 品类信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
     List<SkuVO> listSkuCategoryByIds(@Param("skuIds")List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 + 采购信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
     List<SkuVO> listSkuPurchaseByIds(@Param("skuIds")List<String> skuIds);
     /**
      * @description: tab

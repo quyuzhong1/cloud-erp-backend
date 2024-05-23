@@ -715,7 +715,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds);
-    void recalDestDeclarePrice(ProductDetailEntity entity);
     /**
      * 根据skuid 集合获取到sku基础信息 + 费用信息
      *

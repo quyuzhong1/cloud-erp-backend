@@ -5715,8 +5715,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("原明细为空");
         }
         List<SoB2cDetailDTO.ViewDTO> viewDTOList = BeanUtil.copyToList(restoreEntity,SoB2cDetailDTO.ViewDTO.class);
-        List<String> skuIds = viewDTOList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<String> skuIds = viewDTOList.stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         viewDTOList.forEach(v->{
             v.setIsCombination(true);
             SkuVO skuVO = skuList.stream().filter(t->v.getSkuId().equals(t.getSkuId())).findFirst().orElse(null);
