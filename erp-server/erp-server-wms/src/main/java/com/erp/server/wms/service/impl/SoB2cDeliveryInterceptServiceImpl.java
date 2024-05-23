@@ -542,11 +542,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSourceId());
-        if(Objects.isNull(soB2cDelivery)){
-            throw new ServiceException("查询不到发货单");
+        if(Objects.nonNull(soB2cDelivery)){
+            soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
+            soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
         }
-        soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
-        soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
     }
 
     /**
