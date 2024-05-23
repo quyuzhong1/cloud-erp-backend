@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -419,7 +420,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private List<LogisticsChannelBlacklistDTO.ViewDTO> blackList;
 
-
+        /**
+         * 仓库设置
+         */
+        private LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO;
     }
 
     /**
@@ -449,6 +453,12 @@ public class LogisticsChannelDTO implements Serializable {
          * 发货限制列表
          */
         private List<LogisticsChannelBlacklistDTO.AddDTO> blackList;
+
+        /**
+         * 仓库设置
+         */
+        @NotEmpty(message = "仓库设置不能为空")
+        private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
     }
 
     /**
@@ -485,6 +495,12 @@ public class LogisticsChannelDTO implements Serializable {
          * 发货限制列表
          */
         private List<LogisticsChannelBlacklistDTO.AddDTO> blackList;
+
+        /**
+         * 仓库设置
+         */
+        @NotEmpty(message = "仓库设置不能为空")
+        private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
 
     }
 

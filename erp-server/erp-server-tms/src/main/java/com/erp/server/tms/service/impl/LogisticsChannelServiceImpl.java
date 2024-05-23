@@ -84,6 +84,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Resource
     private LogisticsChannelConstraintService logisticsChannelConstraintService;
 
+    @Resource
+    private LogisticsChannelWarehouseService logisticsChannelWarehouseService;
+
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsChannelDTO.AddDTO addDTO) {
@@ -108,6 +112,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelAddressService.add(channelId, addDTO.getAddressList());
         //发货限制 黑名单
         logisticsChannelBlacklistService.add(channelId, addDTO.getBlackList());
+        //仓库设置
+        logisticsChannelWarehouseService.batchUpdate(channelId, addDTO.getWarehouseDTO());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
@@ -141,6 +147,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         String templateId = updateDTO.getShippingTemplateId();
         //保存模板和渠道的关系表
         shippingTemplateRefChannelService.addRef(channelId, templateId);
+        //仓库设置
+        logisticsChannelWarehouseService.batchUpdate(channelId, updateDTO.getWarehouseDTO());
 
         // 记录主单操作日志
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
@@ -243,10 +251,17 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
          * 发货限制列表
          */
         List<LogisticsChannelBlacklistDTO.ViewDTO> blackList = logisticsChannelBlacklistService.listByChannelId(id);
+
+        /**
+         * 仓库设置
+         */
+        LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO = logisticsChannelWarehouseService.getByChannelId(id);
+
         view.setAddressList(addressList);
         view.setBlackList(blackList);
         view.setMappingList(mappingList);
         view.setPrintTypeList(printTypeList);
+        view.setWarehouseDTO(warehouseDTO);
         return view;
     }
 

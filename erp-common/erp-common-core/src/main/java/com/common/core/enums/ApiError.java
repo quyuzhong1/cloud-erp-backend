@@ -1261,7 +1261,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持分开单独打印官方配货单"),
     LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
     ERROR_CFG_COST_EMPTY(94045,"未发现【{}】费用配置信息"),
-
+    ERROR_LOGISTICS_CHANNEL_WAREHOUSE_NOT_NULL(94046,"指定仓库不能为空"),
 
 
 
