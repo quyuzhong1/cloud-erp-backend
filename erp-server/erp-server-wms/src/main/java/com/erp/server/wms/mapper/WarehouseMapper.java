@@ -42,5 +42,12 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
      * @param nameList
      */
     List<WarehouseDTO.ListDTO> getByNames(@Param("nameList") List<String> nameList);
-
+    /**
+     * @description: 根据关键词查询
+     * @author Will
+     * @date: 2024/5/23 19:43
+     * @param searchKeyword
+     * @return List<WarehouseEntity>
+     */
+    List<WarehouseEntity> listWarehouse(@Param("searchKeyword") String searchKeyword);
 }

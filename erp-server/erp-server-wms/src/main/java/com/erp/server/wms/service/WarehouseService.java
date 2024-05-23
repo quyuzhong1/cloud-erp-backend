@@ -40,6 +40,15 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     List<WarehouseDTO.ListDTO> listApproveWarehouse();
 
+    /**
+     * @description:
+     * @author Will
+     * @date: 2024/5/23 18:21
+     * @param dto
+     * @return List<ListInventoryQtyDTO> 
+     */
+    List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto);
+
     
     /**
      * 添加仓库

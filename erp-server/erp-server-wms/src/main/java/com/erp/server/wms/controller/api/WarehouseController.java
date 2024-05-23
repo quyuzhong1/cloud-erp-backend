@@ -8,9 +8,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.lang3.StringUtils;
@@ -285,6 +285,19 @@ public class WarehouseController extends BaseController {
     @GetMapping("/list")
     public ApiResult<List<WarehouseDTO.ListDTO>> list() {
         List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
+        return success(list);
+    }
+
+    /**
+     * 根据sku查询仓库库存
+     * @author Will
+     * @date: 2024/5/23 18:25
+     * @param dto
+     * @return ApiResult<List<ListDTO>>
+     */
+    @PostMapping("/listWarehouseInventoryQty")
+    public ApiResult<List<WarehouseDTO.ListInventoryQtyDTO>> listWarehouseInventoryQty(@RequestBody @Valid WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        List<WarehouseDTO.ListInventoryQtyDTO> list = warehouseService.listWarehouseInventoryQty(dto);
         return success(list);
     }
 

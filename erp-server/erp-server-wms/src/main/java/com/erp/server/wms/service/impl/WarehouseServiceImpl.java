@@ -30,12 +30,14 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -103,6 +105,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     private WarehouseMappingService warehouseMappingService;
 
 
+    @Resource
+    private InventoryService inventoryService;
+
+
     @Override
     public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
@@ -129,6 +135,70 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         this.fillListData(resultList, warehouseBindMap);
 
         return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        List<WarehouseEntity> list = baseMapper.listWarehouse(dto.getSearchKeyword());
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+        // 填充信息
+        this.fillListData(resultList, warehouseBindMap);
+        //添加及时库存数量
+        List<WarehouseDTO.ListInventoryQtyDTO> warehouseList = fillListInventoryQty(dto.getSkuIdList(),resultList);
+
+        return warehouseList;
+    }
+
+
+    /**
+     * @description: 填充库存数量
+     * @author Will
+     * @date: 2024/5/23 19:12
+     * @param skuIdList
+     * @param list
+     * @return List<ListInventoryQtyDTO>
+     */
+    private List<WarehouseDTO.ListInventoryQtyDTO> fillListInventoryQty (List<String> skuIdList,List<WarehouseDTO.ListDTO> list) {
+        //sku去重
+        skuIdList =  skuIdList.stream().distinct().collect(Collectors.toList());
+
+        //仓库id集合
+        List<String> warehouseIdList = list.stream().map(WarehouseDTO.ListDTO::getId).collect(Collectors.toList());
+        //查询SKU、仓库下的及时库存数量
+        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        skuInventoryDTO.setSkuIdList(skuIdList);
+        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
+
+        List<WarehouseDTO.ListInventoryQtyDTO> resultList = new ArrayList<>();
+        for (String skuId : skuIdList) {
+            WarehouseDTO.ListInventoryQtyDTO inventoryQtyDTO = new WarehouseDTO.ListInventoryQtyDTO();
+            inventoryQtyDTO.setSkuId(skuId);
+            List<WarehouseDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList = new ArrayList<>();
+            for (WarehouseDTO.ListDTO listDTO : list) {
+                WarehouseDTO.WarehouseInventoryQtyDTO warehouseInventoryQtyDTO = BeanMapperUtils.map(WarehouseDTO.WarehouseInventoryQtyDTO.class, listDTO);
+                //即时库存
+                Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), skuId)
+                                && Objects.equals(r.getWarehouseId(), listDTO.getId()))
+                        .findFirst()
+                        .flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                        .orElse(MathUtil.ZERO);
+                warehouseInventoryQtyDTO.setInventoryQty(curInventoryQty);
+                warehouseInventoryQtyList.add(warehouseInventoryQtyDTO);
+            }
+            //排序
+            List<WarehouseDTO.WarehouseInventoryQtyDTO> sortedList = warehouseInventoryQtyList.stream().sorted(Comparator.comparing(WarehouseDTO.WarehouseInventoryQtyDTO::getDisabled).thenComparing(WarehouseDTO.WarehouseInventoryQtyDTO::getInventoryQty)).collect(Collectors.toList());
+            inventoryQtyDTO.setWarehouseInventoryQtyList(sortedList);
+            resultList.add(inventoryQtyDTO);
+        }
+        return resultList;
     }
 
     /**
