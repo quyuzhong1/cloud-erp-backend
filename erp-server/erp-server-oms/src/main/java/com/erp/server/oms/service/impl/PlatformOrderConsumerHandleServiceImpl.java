@@ -305,10 +305,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
 
         //客户信息
-        // 根据平台和名称判断
-        CustomerB2cEntity customerB2cEntity = customerB2cService.findByPlatformAndName(dto.getDictPlatform(), receiverEntity.getName(), SourceTypeEnum.SO_B2C.getCode());
-
-        customerB2cEntity = customerB2cService.saveOrUpdateEntity(customerB2cEntity, dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
+        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
 
         customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 

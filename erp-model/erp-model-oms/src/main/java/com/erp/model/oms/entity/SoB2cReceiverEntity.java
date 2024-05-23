@@ -1,13 +1,18 @@
 package com.erp.model.oms.entity;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.ReflectUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -116,6 +121,10 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     @TableField("receiver_tax_no")
     private String receiverTaxNo;
 
+
+    private BigDecimal testNumber;
+    private BigDecimal testNumber1;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String LOGIN_ID = "login_id";
@@ -144,9 +153,29 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
 
     public static final String FULL_ADDRESS = "full_address";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
+    /**
+     * 有值不更新的字段
+     */
+    public static List<String> fieldsExistNotUpdate(){
+        return Arrays.asList(
+                "name",
+                "email",
+                "telNumber",
+                "firstAddress",
+                "secondAddress",
+                "cityName",
+                "countryName",
+                "receiverName",
+                "receiverTelNumber",
+                "postCode",
+                "fullAddress",
+                "country",
+                "provinceName",
+                "districtName",
+                "receiverTaxNo"
+        );
     }
+
+
 
 }
