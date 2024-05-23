@@ -1,5 +1,7 @@
 package com.erp.model.oms.enums;
 
+import cn.hutool.core.util.StrUtil;
+
 /**
  * @description: 仓库类型
  * @author Will
@@ -29,5 +31,14 @@ public enum LogisticsChannelWarehouseTypeEnum {
 
     public String getName() {
         return name;
+    }
+
+    public static String getName(String code) {
+        for (FmDeliveryLogisticsStatusEnum statusEnum : FmDeliveryLogisticsStatusEnum.values()) {
+            if (StrUtil.equals(statusEnum.getCode(),code)) {
+                return statusEnum.getName();
+            }
+        }
+        return "";
     }
 }

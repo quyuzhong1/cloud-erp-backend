@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -8,6 +9,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.enums.LogisticsChannelWarehouseTypeEnum;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsChannelWarehouseDTO;
 import com.erp.model.tms.entity.LogisticsChannelWarehouseEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -50,6 +52,8 @@ public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<Logis
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO batchUpdate(String channelId,LogisticsChannelWarehouseDTO.BatchUpdateDTO addDTO) {
+        //原数据
+        LogisticsChannelWarehouseDTO.ViewDTO oldDTO = getByChannelId(channelId);
 
         String type = addDTO.getType();
         List<String> warehouseIdList = addDTO.getWarehouseIdList();
@@ -71,7 +75,16 @@ public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<Logis
             List<LogisticsChannelWarehouseEntity> resultList = BeanMapperUtils.copyList(LogisticsChannelWarehouseEntity.class, addList);
             this.saveBatch(resultList);
         }
+        //新增数据直接返回
+        if (StrUtil.isNotBlank(oldDTO.getType()) ) {
+            return new BaseResultDTO.AddDTO(channelId, channelId);
+        }
 
+        //日志
+        if (!StrUtil.equals(oldDTO.getType(),addDTO.getType())) {
+            String msg = StrUtil.format("仓库配置类型由【{}】变更为【{}】", LogisticsChannelWarehouseTypeEnum.getName(oldDTO.getType()),LogisticsChannelWarehouseTypeEnum.getName(addDTO.getType()));
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), channelId, "编辑操作");
+        }
         return new BaseResultDTO.AddDTO(channelId, channelId);
     }
 
