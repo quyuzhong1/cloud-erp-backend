@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.alibaba.fastjson.JSON;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.OpenApiInputDTO;
 import com.erp.model.sys.dto.OpenApiReqDTO;
@@ -73,7 +74,7 @@ public class OpenApiController {
     private String getSecretKey(String referer) {
     	String secretKey = secretKeyMap.get(referer);
     	if(secretKey == null) {
-    		List<SysRefererConfigEntity> list = sysRefererConfigService.lambdaQuery().eq(SysRefererConfigEntity::getReferer, referer).select(SysRefererConfigEntity::getSecretKey).list();
+    		List<SysRefererConfigEntity> list = FeignQuery.create(SysRefererConfigEntity.class).eq(SysRefererConfigEntity::getReferer, referer).list();
     		if(CollUtil.isNotEmpty(list)) {
     			secretKey = list.get(0).getSecretKey();
     			secretKeyMap.put(referer, secretKey);
