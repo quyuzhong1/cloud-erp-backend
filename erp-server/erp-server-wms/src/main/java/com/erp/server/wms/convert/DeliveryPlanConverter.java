@@ -1,12 +1,15 @@
 package com.erp.server.wms.convert;
 
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * 海外发货计划实体映射工具
@@ -15,8 +18,8 @@ import org.springframework.stereotype.Component;
  **/
 @Mapper(uses = TypeConversionWorker.class)
 @Component
-public interface deliveryPlanConverter {
-    deliveryPlanConverter INSTANCE = Mappers.getMapper(deliveryPlanConverter.class);
+public interface DeliveryPlanConverter {
+    DeliveryPlanConverter INSTANCE = Mappers.getMapper(DeliveryPlanConverter.class);
 
     @Mappings({
             @Mapping(target = "toWarehouseId", constant = ""),
@@ -49,4 +52,18 @@ public interface deliveryPlanConverter {
             @Mapping(target = "platformSkuNo", source = "platformSku")
     })
     FirstMileDeliveryDetailDTO.AddDTO generateDeliverDetailFDD(WmsDeliveryPlanDTO.GenerateDeliverViewDTO dto);
+
+    @Mappings({
+            @Mapping(target = "platformSpu", source = "asin"),
+            @Mapping(target = "platformFnSku", source = "fnSku"),
+    })
+    WmsDeliveryPlanDetailEntity generateDeliveryDetailAdd(WmsDeliveryPlanDetailDTO.AddDTO dto);
+    List<WmsDeliveryPlanDetailEntity> generateDeliveryDetailAdd(List<WmsDeliveryPlanDetailDTO.AddDTO> list);
+
+    @Mappings({
+            @Mapping(target = "platformSpu", source = "asin"),
+            @Mapping(target = "platformFnSku", source = "fnSku"),
+    })
+    WmsDeliveryPlanDetailEntity generateDeliveryDetailUpdate(WmsDeliveryPlanDetailDTO.UpdateDTO dto);
+    List<WmsDeliveryPlanDetailEntity> generateDeliveryDetailUpdate(List<WmsDeliveryPlanDetailDTO.UpdateDTO> list);
 }

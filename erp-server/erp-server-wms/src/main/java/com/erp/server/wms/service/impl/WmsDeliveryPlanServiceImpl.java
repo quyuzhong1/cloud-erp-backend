@@ -42,7 +42,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.wms.convert.deliveryPlanConverter;
+import com.erp.server.wms.convert.DeliveryPlanConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.listener.DeliveryPlanDetailExcelListener;
 import com.erp.server.wms.mapper.WmsDeliveryPlanMapper;
@@ -643,7 +643,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         for (Map.Entry<String, List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> entry : map.entrySet()) {
             List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> value = entry.getValue();
             //映射主表信息
-            RequisitionApplicationDTO.AddDTO addDTO = deliveryPlanConverter.INSTANCE.DeliveryPlanGRA(value.get(MathUtil.ZERO));
+            RequisitionApplicationDTO.AddDTO addDTO = DeliveryPlanConverter.INSTANCE.DeliveryPlanGRA(value.get(MathUtil.ZERO));
             //要货仓库中文
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(value.get(MathUtil.ZERO).getRequisitionWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             addDTO.setRequisitionWarehouseName(updateDTO.getName());
@@ -652,7 +652,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             List<RequisitionApplicationDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : value) {
 
-                RequisitionApplicationDetailDTO.AddDTO detailAddDto = deliveryPlanConverter.INSTANCE.DeliveryPlanDetailGRA(viewDTO);
+                RequisitionApplicationDetailDTO.AddDTO detailAddDto = DeliveryPlanConverter.INSTANCE.DeliveryPlanDetailGRA(viewDTO);
 
                 detailAddList.add(detailAddDto);
             }
@@ -802,7 +802,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         for (Map.Entry<String, List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
             List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> value = entry.getValue();
             //映射主表信息
-            FirstMileDeliveryDTO.AddDTO addDTO = deliveryPlanConverter.INSTANCE.generateDeliverFDD(value.get(MathUtil.ZERO));
+            FirstMileDeliveryDTO.AddDTO addDTO = DeliveryPlanConverter.INSTANCE.generateDeliverFDD(value.get(MathUtil.ZERO));
 
             //备货类型
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
@@ -820,7 +820,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 addDTO.setDeliveryWarehouseName(updateDTO.getName());
                 addDTO.setInventoryOrgId(updateDTO.getOrgId());
 
-                FirstMileDeliveryDetailDTO.AddDTO detailAddDto = deliveryPlanConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
+                FirstMileDeliveryDetailDTO.AddDTO detailAddDto = DeliveryPlanConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
 
                 //查询sku是否存在子SKU
                 List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());

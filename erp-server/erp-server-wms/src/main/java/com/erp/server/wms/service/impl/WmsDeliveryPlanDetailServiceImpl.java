@@ -14,6 +14,7 @@ import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.convert.DeliveryPlanConverter;
 import com.erp.server.wms.mapper.WmsDeliveryPlanDetailMapper;
 import com.erp.server.wms.service.WmsDeliveryPlanDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -60,8 +61,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(WmsDeliveryPlanDTO.AddDTO addDTO, String mainId) {
-        List<WmsDeliveryPlanDetailEntity> list = BeanMapper.copyList(addDTO.getDetailList(), WmsDeliveryPlanDetailEntity.class);
-
+        List<WmsDeliveryPlanDetailEntity> list = DeliveryPlanConverter.INSTANCE.generateDeliveryDetailAdd(addDTO.getDetailList());
         // 数据处理
         handleData(list, mainId, Boolean.FALSE, addDTO.getToWarehouseId());
 
@@ -92,8 +92,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
         }
 
         //映射字段
-        List<WmsDeliveryPlanDetailEntity> list = BeanMapperUtils.copyList(WmsDeliveryPlanDetailEntity.class, detailList);
-
+        List<WmsDeliveryPlanDetailEntity> list = DeliveryPlanConverter.INSTANCE.generateDeliveryDetailUpdate(updateDTO.getDetailList());
         // 数据处理
         handleData(list, mainId, Boolean.TRUE, updateDTO.getToWarehouseId());
 
