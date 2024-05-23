@@ -134,7 +134,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
             detailEntityList = super.handleBomSplit(detailEntityList);
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
-                return;
+                continue;
             }
 
             //检查销售订单物流信息是否存在
@@ -216,13 +216,13 @@ public class AmazonShipOrder extends AbstractShipOrder {
                 List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
                 if (CollectionUtils.isEmpty(warehouseTypes)){
                     log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
-                    return;
+                    continue;
                 }
                 // 允许通过的ID
                 DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
                 if (null == configAllowPlatformOrderDTO){
                     log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
-                    return;
+                    continue;
                 }
             }
 
