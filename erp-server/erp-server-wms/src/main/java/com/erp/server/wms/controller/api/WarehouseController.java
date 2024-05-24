@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -12,6 +13,8 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
+import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -50,6 +53,7 @@ public class WarehouseController extends BaseController {
             menuCode = "wms:warehouse:paging",
             tableAlias = "warehouse"
     )
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
     public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
         return success(pagingVO);

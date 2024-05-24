@@ -3,35 +3,35 @@
 <mapper namespace="com.erp.server.dmp.mapper.ThirdWarehouseMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.ThirdWarehouseEntity">
-       <result column="id" property="id" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_time" property="createTime" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_time" property="updateTime" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="disabled" property="disabled" />
-       <result column="sys_type" property="sysType" />
-       <result column="warehouse_id" property="warehouseId" />
-       <result column="type" property="type" />
-       <result column="sub_type" property="subType" />
-       <result column="code" property="code" />
-       <result column="name" property="name" />
-       <result column="address" property="address" />
-       <result column="contactw" property="contactw" />
-       <result column="tel_number" property="telNumber" />
-       <result column="telno" property="telno" />
-       <result column="email" property="email" />
-       <result column="zip" property="zip" />
-       <result column="website" property="website" />
-       <result column="province" property="province" />
-       <result column="city" property="city" />
-       <result column="district" property="district" />
-       <result column="created" property="created" />
-       <result column="modified" property="modified" />
-       <result column="remark" property="remark" />
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="disabled" property="disabled" />
+        <result column="sys_type" property="sysType" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="type" property="type" />
+        <result column="sub_type" property="subType" />
+        <result column="code" property="code" />
+        <result column="name" property="name" />
+        <result column="address" property="address" />
+        <result column="contacts" property="contacts" />
+        <result column="tel_number" property="telNumber" />
+        <result column="telno" property="telno" />
+        <result column="email" property="email" />
+        <result column="zip" property="zip" />
+        <result column="website" property="website" />
+        <result column="province" property="province" />
+        <result column="city" property="city" />
+        <result column="district" property="district" />
+        <result column="created" property="created" />
+        <result column="modified" property="modified" />
+        <result column="remark" property="remark" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -45,10 +45,10 @@
         update_time,
         version,
         is_deleted,
-        disabled, sys_type, warehouse_id, type, sub_type, code, name, address, contactw, tel_number, telno, email, zip, website, province, city, district, created, modified, remark
+        disabled, sys_type, warehouse_id, type, sub_type, code, name, address, contacts, tel_number, telno, email, zip, website, province, city, district, created, modified, remark
     </sql>
     <select id="pagingSelect" resultType="com.erp.model.dmp.dto.ThirdWarehouseDTO$PageSelectDTO">
-        select id,shop_id, code, name from (
+        select id,warehouse_id, code, name from (
         select
         tw.id,
         tw.warehouse_id,
@@ -57,7 +57,6 @@
         from third_warehouse tw
         where  tw.is_deleted = FALSE
         and tw.disabled=false
-        and tw.auth_state=1
         <!--权限-->
         <if test="params.sysType!=null and params.sysType!=''">
             and tw.sys_type = #{params.sysType}

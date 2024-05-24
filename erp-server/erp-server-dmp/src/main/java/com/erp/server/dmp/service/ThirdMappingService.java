@@ -24,14 +24,11 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
     BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO dto);
 
     /**
-     * 修改
+     * 预览
      * @author hyj
      * @date: 2024-05-17
-     * @param dto
+     * @param viewParamDTO
      * @return
      */
-    Boolean update(ThirdMappingDTO.UpdateDTO dto);
-
-
     ThirdMappingDTO.MappingViewDTO view(ThirdMappingDTO.ViewParamDTO viewParamDTO);
 }

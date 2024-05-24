@@ -251,6 +251,108 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         return "";
     }
+  /**
+     * 添加客户信息
+     *
+     * @param dto
+     * @return java.lang.String
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public CustomerInfoEntity addOrGetCustom(CustomerDTO.AddDTO dto) {
+        //检查名称
+        CustomerInfoEntity customerInfoEntity = getByName(null, dto.getName());
+        if (Objects.nonNull(customerInfoEntity)){
+            return customerInfoEntity;
+        }
+
+        //客户联系人
+        List<CustomerContactDTO.AddDTO> contactList = dto.getContactList();
+        //检查联系人默认是否多个
+        customerContactService.checkIsDefault(contactList);
+
+        //检查默认地址是否多个
+        List<CustomerAddressDTO.AddDTO> addressList = dto.getAddressList();
+        customerAddressService.checkIsDefault(addressList);
+
+        //检查默认发票 银行账号
+        List<InvoiceDTO.AddDTO> invoiceList = dto.getInvoiceList();
+        customerInvoiceService.checkIsDefault(invoiceList);
+
+
+        //id
+        String id = IdWorker.getIdStr();
+        CustomerInfoEntity addEntity = new CustomerInfoEntity();
+        BeanMapper.copy(dto, addEntity);
+        addEntity.setId(id);
+        //国家id
+        String countryId = dto.getCountryId();
+        List<DictGlobalAreaDTO.InfoDTO> globalAreaList = sysUserFeign.listGlobalAreaByCountryIds(Arrays.asList(countryId));
+        String areaId = globalAreaList.stream().filter(d -> d.getCountryId().equals(countryId)).findFirst().map(DictGlobalAreaDTO.InfoDTO::getId).orElse("");
+        addEntity.setAreaId(areaId);
+        //分组id
+        String groupId = dto.getGroupId();
+        //付款方
+        List<String> payCodeList = dto.getPayCodeList();
+        String payCode = CollectionUtils.isNotEmpty(payCodeList) ? payCodeList.stream().collect(Collectors.joining(",")) : "";
+        addEntity.setPayCode(payCode);
+        //获取客户分组信息
+        List<CustomerGroupEntity> customerGroupList = customerGroupService.listById(groupId);
+        String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        addEntity.setGroupName(groupName);
+        //生成单号
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CUST, BusinessNoTypeEnum.CODE_CUST.getCode()));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUST);
+        addEntity.setCode(code);
+        //销售员
+        String sellerId = dto.getSellerId();
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sellerId);
+        addEntity.setSellerName(findUserDTO.getUserName());
+        //对应组织
+        String innerOrgId = dto.getInnerOrgId();
+
+        //使用组织
+        String useOrgId = dto.getUseOrgId();
+        //组织列表
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
+
+        String innerOrgName = orgList.stream().filter(d -> d.getId().equals(innerOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        addEntity.setInnerOrgName(innerOrgName);
+
+        String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        addEntity.setUseOrgName(useOrgName);
+        //保存客户
+        Boolean addResult = this.save(addEntity);
+        if (addResult) {
+            Class<CustomerInfoEntity> customerClass = CustomerInfoEntity.class;
+            TableName tableName = customerClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            //保存附件
+            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            //添加日志
+            String content = String.format("新增了一个{%s}-客户-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+            addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
+
+            //批量保存地址信息
+            customerAddressService.saveBatchAddress(id, addressList);
+
+            //批量保存联系人信息
+            customerContactService.saveBatchContact(id, contactList);
+
+            //批量保存发票信息
+            customerInvoiceService.saveBatchInvoice(id, invoiceList);
+
+
+            return addEntity;
+
+        }
+
+        return null;
+    }
 
 
     /**
@@ -1103,6 +1205,26 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             throw new ServiceException(ApiError.ERROR_1028);
         }
     }
+    /**
+     * 检查名称
+     *
+     * @param id
+     * @param name
+     * @return void
+     */
+    private CustomerInfoEntity getByName(String id, String name) {
+        LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(CustomerInfoEntity::getId, id);
+        }
+        queryWrapper.eq(CustomerInfoEntity::getName, name);
+        queryWrapper.last("LIMIT 1");
+        CustomerInfoEntity one = this.getOne(queryWrapper);
+        if (Objects.nonNull(one)) {
+            return one;
+        }
+        return null;
+    }
 
 
     /**
@@ -1867,5 +1989,16 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 dmpMqFeign.sendTask(resultList);
             }
         });
+    }
+
+    @Override
+    public PagingVO<CustomerDTO.PageSelectDTO> pageSelect(PagingDTO<CustomerDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<CustomerDTO.PageSelectDTO> pageData = this.baseMapper.pageSelect(query, dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        return new PagingVO<>(pageData);
+
     }
 }

@@ -189,6 +189,8 @@ public enum ApiError implements Serializable {
     ERROR_THIRD_BINDED(80009,"第三方{}【{}】已经被【{}】绑定"),
     ERROR_SYS_BINDED(80009,"{}【{}】已经被第三方【{}】绑定"),
     ERROR_THIRD_SHOP_NOTFOUND(80010,"第三方店铺不存在"),
+    ERROR_THIRD_WAREHOUSE_NOTFOUND(80011,"第三方仓库不存在"),
+    ERROR_THIRD_SYS_TYPE_BINDING(80012,"同一个第三方平台只能绑定一个仓库"),
 
     /**
      * 工作流错误 workflow
@@ -1206,6 +1208,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_WAREHOUSE_MAPPING(92083,"同步旺店通B2C销售出库单未找到对应的仓库映射【{}】"),
     ERROR_NOT_FOUND_SHOP_MAPPING(92084,"同步旺店通B2C销售出库单未找到对应的店铺映射【{}】"),
 
+    ERROR_SHOP_UNDISABLED(92142,"只有禁用的店铺允许删除"),
 
     /**
      * TMS 错误
