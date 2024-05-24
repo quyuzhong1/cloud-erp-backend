@@ -1,6 +1,5 @@
 package com.erp.server.dmp.push.consumer.wangdian;
 
-import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -11,13 +10,13 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.server.dmp.push.service.wdt.WangDianProductDetailService;
 import com.erp.server.dmp.service.DmpPushTaskService;
+import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 @Component
 @Slf4j
@@ -48,7 +47,7 @@ public class WangDianProductDetailConsumer<T extends DmpSyncTaskIdDTO> extends A
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        List<GoodsBatchPushDTO> pushDTOS = JSON.parseArray(JSON.toJSONString(ext), GoodsBatchPushDTO.class);
+        GoodsBatchPushDTO pushDTOS = JSON.parseObject(ext.toString(), GoodsBatchPushDTO.class);
         wangDianProductDetailConsumerService.executeConsumer(pushDTOS);
         return ApiResult.success();
     }

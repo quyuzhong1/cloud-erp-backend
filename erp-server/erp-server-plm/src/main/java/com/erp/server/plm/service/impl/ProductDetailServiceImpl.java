@@ -2125,7 +2125,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        LoginUser loginUser = UserContext.getLoginUser();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
 

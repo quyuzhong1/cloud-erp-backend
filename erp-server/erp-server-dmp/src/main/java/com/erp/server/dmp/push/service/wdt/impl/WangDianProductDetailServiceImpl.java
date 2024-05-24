@@ -18,10 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,16 +32,16 @@ public class WangDianProductDetailServiceImpl implements WangDianProductDetailSe
 
 
     @Override
-    public void executeConsumer(List<GoodsBatchPushDTO> pushDTOS) {
+    public void executeConsumer(GoodsBatchPushDTO pushDTOS) {
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
         GoodsAPI api = wangDianClientService.get(GoodsAPI.class);
-        List<Map<String, Object>> list = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<List<Map<String, Object>>>() {
+        Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {
         });
-        List<Map<String, Object>> request = commonService.makeApiFieldList(list, platformEntity.getId(), ApiModuleTypeEnum.WDT_PRODUCT.getCode());
-        Result result = api.batchPush(request);
+        Map<String, Object> request = commonService.makeApiFieldMap(map, platformEntity.getId(), ApiModuleTypeEnum.WDT_PRODUCT.getCode());
+        Result result = api.batchPush(Collections.singletonList(request));
         String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
                 .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))
                 .collect(Collectors.joining(","));

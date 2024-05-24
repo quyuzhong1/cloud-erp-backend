@@ -1,6 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.wangdian.impl;
 
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -26,6 +27,7 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.Collections;
+import java.util.Map;
 
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
@@ -84,7 +86,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
 
     private void sendMqAndSaveTask(ProductDetailEntity entity, GoodsBatchPushDTO dto) {
         //添加推送任务
-        DmpPushTaskEntity taskEntity = new DmpPushTaskEntity();
+        DmpPushTaskFeignDTO taskEntity = new DmpPushTaskFeignDTO();
         taskEntity.setSourceId(entity.getId());
         taskEntity.setSourceCode(entity.getSkuNo());
         taskEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
@@ -94,11 +96,35 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         taskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskEntity.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
         taskEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+        DmpPushTaskEntity dmpPushTask = dmpMqFeign.saveTask(taskEntity);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(taskEntity));
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTask));
             }
         });
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask(ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(entity.getId());
+        taskFeignDTO.setSourceCode(entity.getSkuNo());
+        taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        taskFeignDTO.setSyncOperate(operate);
+        return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }
