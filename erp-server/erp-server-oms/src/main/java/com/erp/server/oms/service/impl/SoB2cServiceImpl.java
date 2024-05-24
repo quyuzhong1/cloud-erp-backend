@@ -67,6 +67,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.LogisticsChannelWarehouseTypeEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -1162,7 +1163,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
         List<SoB2cDTO.ViewSoB2cDistributionDTO> resultList = new ArrayList<>();
-        for (SoB2cEntity soB2cEntity : list) {
+        for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailList) {
+
+            SoB2cEntity soB2cEntity = list.stream().filter(obj -> StrUtil.equals(obj.getId(), soB2cDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            }
             SoB2cDTO.ViewSoB2cDistributionDTO viewDTO = new SoB2cDTO.ViewSoB2cDistributionDTO();
             viewDTO.setId(soB2cEntity.getId());
             viewDTO.setCode(soB2cEntity.getCode());
@@ -1180,8 +1186,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             viewDTO.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
 
             //明细信息
-            String warehouseNames = soB2cDetailList.stream().filter(obj -> obj.getMainId().equals(soB2cEntity.getId())).map(SoB2cDetailEntity::getWarehouseName).distinct().collect(Collectors.joining(","));
-            viewDTO.setWarehouseNames(warehouseNames);
+            viewDTO.setSkuId(soB2cDetailEntity.getSkuId());
+            viewDTO.setSkuNo(soB2cDetailEntity.getSkuNo());
+            viewDTO.setWarehouseId(soB2cDetailEntity.getWarehouseId());
+            viewDTO.setWarehouseName(soB2cDetailEntity.getWarehouseName());
             viewDTO.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
             resultList.add(viewDTO);
         }
@@ -1294,6 +1302,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //选择了仓库则更新
         if (StrUtil.isNotBlank(dto.getWarehouseId())) {
+            //验证渠道下是否设置了仓库
+            List<LogisticsChannelWarehouseEntity> list = FeignQuery.create(LogisticsChannelWarehouseEntity.class)
+                    .eq(LogisticsChannelWarehouseEntity::getLogisticsChannelId, soB2cLogisticsEntity.getLogisticsChannelId())
+                    .list();
+            if (CollectionUtils.isEmpty(list)) {
+                throw new ServiceException(StrUtil.format("渠道【{}】未设置仓库，请先设置仓库",soB2cLogisticsEntity.getLogisticsChannelName()));
+            }
+            //全部指定直接过，部分指定校验仓库是否一致
+            if (StrUtil.equals(list.get(0).getType(), LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
+                List<String> warehouseIdList = dto.getDetailList().stream().map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getWarehouseId).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(warehouseIdList)) {
+                    throw new ServiceException("B2C销售订单仓库不能为空");
+                }
+                List<String> channelWarehouseIdList = list.stream().map(LogisticsChannelWarehouseEntity::getWarehouseId).collect(Collectors.toList());
+                Boolean isMatch =  Boolean.TRUE;
+                for (String warehouseId : warehouseIdList) {
+                    if (!channelWarehouseIdList.contains(warehouseId)) {
+                        isMatch = Boolean.FALSE;
+                        break;
+                    }
+                }
+                //如果仓库没匹配上则进行下一条规则的匹配
+                if (!isMatch) {
+                   throw new ServiceException(StrUtil.format("订单【{}】仓库和渠道不存在绑定关系，配货失败！",entity.getCode()));
+                }
+            }
             //明细仓库更新
             soB2cDetailService.updateWarehouseId(dto.getDetailList(), isCover);
         }

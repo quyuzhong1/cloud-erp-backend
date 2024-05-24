@@ -979,6 +979,13 @@ public class SoB2cDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
         /**
          * 编码
          */
@@ -1003,10 +1010,16 @@ public class SoB2cDTO implements Serializable {
          * 重量
          */
         private BigDecimal weight;
+
         /**
-         * 仓库（逗号分隔）
+         * 仓库id
          */
-        private String warehouseNames;
+        private String warehouseId;
+
+        /**
+         * 单个仓库名称
+         */
+        private String warehouseName;
         /**
          * 物流渠道id
          */

@@ -255,7 +255,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                        }
                    }
                     //如果仓库没匹配上则进行下一条规则的匹配
-                   if (isMatch) {
+                   if (!isMatch) {
                        continue;
                    }
                 }
