@@ -142,4 +142,10 @@ public interface LogisticsService {
     LogisticsPlatformEnum getPlatForm();
 
     ApiResult<List<LogisticsServiceResponseVO>>  listLogisticsService(Map<String, String> authMap);
+
+    /**
+     * 更新重量
+     * @return
+     */
+    ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO);
 }
