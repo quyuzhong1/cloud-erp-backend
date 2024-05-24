@@ -664,13 +664,15 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             shop.setDisabled(disabled);
             this.updateById(shop);
-            // 禁用启用任务
-            dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shop.getId(),
-                    shop.getName(),
-                    shop.getDictPlatform(),
-                    disabled,
-                    shop.getDictCountryCode(),
-                    shop.getPlatformShopCode()));
+            if (!Objects.equals(ShopTypeEnum.INTERNAL.getCode(), shop.getType())) {
+                // 禁用启用任务
+                dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shop.getId(),
+                        shop.getName(),
+                        shop.getDictPlatform(),
+                        disabled,
+                        shop.getDictCountryCode(),
+                        shop.getPlatformShopCode()));
+            }
             return BatchResultDTO.success(shop.getId(), shop.getName(), OperationTypeEnum.DISABLED);
         }
         return BatchResultDTO.fail(shop.getId(), shop.getName(), "店铺不存在");
