@@ -1750,4 +1750,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .last("limit 1")
                 .one();
     }
+
+    @Override
+    public List<FbaShipmentEntity> listByCodes(List<String> fbaShipmentCodeList) {
+        if(CollectionUtils.isEmpty(fbaShipmentCodeList)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FbaShipmentEntity::getCode,fbaShipmentCodeList)
+                .list();
+    }
 }

@@ -873,7 +873,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<String> detailIds = list.stream().map(req -> req.getDetailId()).distinct().collect(Collectors.toList());
 
         //根据来源id查询发货单
-        List<FirstMileDeliveryEntity> fbaDeliveryEntities = firstMileDeliveryService.listBySourceIds(ids);
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listBySourceIds(ids);
         //根据来源详情id查询发货详情
         List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
 
@@ -889,6 +889,12 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         //根据单据id查询审核流程
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
 
+        //FBA来源的ID
+        List<String> fbaTypeIds = list.stream().filter(v->v.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())).map(v->v.getId()).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationEntity> requisitionApplicationEntityList = requisitionApplicationService.listBySourceIds(fbaTypeIds);
+        List<String> fbaShipmentCodeList = requisitionApplicationEntityList.stream().filter(v->StringUtils.isNotBlank(v.getFbaShipmentCode())).map(v->v.getFbaShipmentCode()).collect(Collectors.toList());
+        List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(fbaShipmentCodeList);
+        firstMileDeliveryEntities.addAll(firstMileDeliveryService.listBySourceIds(fbaShipmentEntityList.stream().map(v->v.getId()).collect(Collectors.toList())));
 
         // 属性赋值
         for(WmsDeliveryPlanDTO.ListDTO data : list) {
@@ -897,10 +903,20 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             data.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(data.getDeliveryStatus()));
 
             //设置发货单号拿最新的一个发货单
-            List<FirstMileDeliveryEntity> deliveryEntities = fbaDeliveryEntities.stream().filter(req -> req.getSourceId().equals(data.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(deliveryEntities)) {
-                data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
+            if(data.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
+                RequisitionApplicationEntity requisitionApplication = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).findFirst().orElse(new RequisitionApplicationEntity());
+                FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntityList.stream().filter(req -> req.getCode().equals(requisitionApplication.getFbaShipmentCode())).findFirst().orElse(new FbaShipmentEntity());
+                List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(req -> req.getSourceId().equals(fbaShipmentEntity.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(deliveryEntities)) {
+                    data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
+                }
+            }else{
+                List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(req -> req.getSourceId().equals(data.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(deliveryEntities)) {
+                    data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
+                }
             }
+
 
             //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
             Integer deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(data.getDetailId())).mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty).sum();
