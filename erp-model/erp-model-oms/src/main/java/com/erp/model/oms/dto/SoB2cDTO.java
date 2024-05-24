@@ -985,6 +985,14 @@ public class SoB2cDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 明细skuId
+         */
         private String skuId;
 
         /**
@@ -1083,7 +1091,7 @@ public class SoB2cDTO implements Serializable {
          * 明细id
          */
         @NotBlank(message = "明细id不能为空")
-        private String id;
+        private String detailId;
 
         /**
          * 仓库id

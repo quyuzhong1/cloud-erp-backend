@@ -187,14 +187,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 //即时库存
                 Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), skuId)
                                 && Objects.equals(r.getWarehouseId(), listDTO.getId()))
-                        .findFirst()
-                        .flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                        .orElse(MathUtil.ZERO);
+                        .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal)
+                        .reduce(MathUtil.ZERO,Integer::sum);
                 warehouseInventoryQtyDTO.setInventoryQty(curInventoryQty);
                 warehouseInventoryQtyList.add(warehouseInventoryQtyDTO);
             }
             //排序
-            List<WarehouseDTO.WarehouseInventoryQtyDTO> sortedList = warehouseInventoryQtyList.stream().sorted(Comparator.comparing(WarehouseDTO.WarehouseInventoryQtyDTO::getDisabled).reversed().thenComparing(WarehouseDTO.WarehouseInventoryQtyDTO::getInventoryQty)).collect(Collectors.toList());
+            List<WarehouseDTO.WarehouseInventoryQtyDTO> sortedList = warehouseInventoryQtyList.stream().sorted(Comparator.comparing(WarehouseDTO.WarehouseInventoryQtyDTO::getDisabled).reversed().thenComparing(WarehouseDTO.WarehouseInventoryQtyDTO::getInventoryQty).reversed()).collect(Collectors.toList());
             inventoryQtyDTO.setWarehouseInventoryQtyList(sortedList);
             resultList.add(inventoryQtyDTO);
         }
