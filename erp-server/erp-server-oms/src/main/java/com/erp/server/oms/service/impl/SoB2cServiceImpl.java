@@ -6152,6 +6152,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(StringUtils.isNotBlank(interceptUpdateOrderDTO.getBillStatus())){
             msgSb.append(StrUtil.format(" 单据状态为{}，", EnumMessage.getNameByCode(SoB2cBillStatusEnum.class,interceptUpdateOrderDTO.getBillStatus())));
         }
+        //msgSb去掉最后一个字符
+        msgSb.deleteCharAt(msgSb.length() -1 );
         List<Pair<String, String>> pairList = new ArrayList<>();
         interceptUpdateOrderDTO.getIds().forEach(v->{
             Pair<String, String> pair = new Pair<>(v,"");
