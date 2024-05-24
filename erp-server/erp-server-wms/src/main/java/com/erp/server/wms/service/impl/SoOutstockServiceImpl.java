@@ -3112,6 +3112,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return existList;
     }
 
+    @Override
+    public boolean checkExist(String soCode, String sourceType, String orderType) {
+        return this.lambdaQuery()
+                .eq(SoOutstockEntity::getSoCode, soCode)
+                .eq(StringUtils.isNotBlank(sourceType), SoOutstockEntity::getSourceType, sourceType)
+                .eq(StringUtils.isNotBlank(orderType), SoOutstockEntity::getOrderType, orderType)
+                .eq(SoOutstockEntity::getInvalidStatus, false)
+                .count() > 0;
+    }
+
 
     /**
      * 修改装箱状态
