@@ -167,6 +167,7 @@ public class TikTokSdkClientService {
         for (ShopsBean shop : tikTokShopAuthDTO.getData().getShops()) {
 //            if (tokenDTO.getSellerBaseRegion().equalsIgnoreCase(shop.getRegion())) {
                 tokenDTO.setShopCipher(shop.getCipher());
+                tokenDTO.setSellerType(shop.getSellerType());
 //            }
         }
         //返回token实体
