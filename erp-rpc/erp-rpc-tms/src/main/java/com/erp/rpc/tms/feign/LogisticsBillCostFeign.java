@@ -15,6 +15,6 @@ public interface LogisticsBillCostFeign {
      * @param dto
      * @return Boolean
      */
-    @PostMapping("/feign/logisticsBillCost/updateShopCharge")
+    @PostMapping("/feign/logisticsBill/updateShopCharge")
     Boolean updateShopCharge(@RequestBody LogisticsBillCostDTO.UpdateShopChargeDTO dto);
 }
