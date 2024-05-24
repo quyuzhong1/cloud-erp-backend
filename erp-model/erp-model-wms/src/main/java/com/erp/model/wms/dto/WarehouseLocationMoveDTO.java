@@ -846,6 +846,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 调拨数量
          */
         private String qty;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
         /**
          * 仓位
          */

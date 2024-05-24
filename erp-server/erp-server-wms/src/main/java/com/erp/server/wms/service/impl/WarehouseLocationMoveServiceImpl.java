@@ -870,17 +870,30 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         //查询详情
         List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(ids);
-        List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
-        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+        List<String> allWarehouseIds=new ArrayList<>();
+        List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> detailWarehouseIds = detailEntityList.stream().map(req -> req.getWarehouseId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        warehouseIds.addAll(detailWarehouseIds);
+        if (CollectionUtils.isNotEmpty(warehouseIds)) {
+            allWarehouseIds.addAll(warehouseIds);
+        }
+        if (CollectionUtils.isNotEmpty(detailWarehouseIds)) {
+            allWarehouseIds.addAll(detailWarehouseIds);
+        }
+        List<WarehouseLocationEntity> warehouseLocationEntities =new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(allWarehouseIds)) {
+            warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(allWarehouseIds);
+        }
         // 属性赋值
         for(WarehouseLocationMoveDTO.PdaListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             List<WarehouseLocationMoveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
             List<WarehouseLocationMoveDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, WarehouseLocationMoveDTO.PdaItemDTO.class);
-            List<String> skuList = itemDTOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+            List<String> skuList = itemDTOList.stream().map(WarehouseLocationMoveDTO.PdaItemDTO::getSkuId).distinct().collect(Collectors.toList());
             data.setDetailCount(skuList.size());
             for (WarehouseLocationMoveDTO.PdaItemDTO pdaItemDTO : itemDTOList) {
-                pdaItemDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, data.getWarehouseId(), pdaItemDTO.getInWarehouseLocation()).getName());
+                pdaItemDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities,
+                        Objects.nonNull(data.getWarehouseId()) ? pdaItemDTO.getWarehouseId() : data.getWarehouseId(), pdaItemDTO.getInWarehouseLocation()).getName());
             }
             data.setItemList(itemDTOList);
         }
