@@ -275,6 +275,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             }
             return oldDetailEntityList;
         }
+        // 存在拆分忽略更新
+        boolean existSplit = oldDetailEntityList.stream().anyMatch(e -> StringUtils.isNotBlank(e.getSplitDetailId()));
+        if (existSplit){
+            return Collections.emptyList();
+        }
 
         // 来源不为空
         // 历史map
