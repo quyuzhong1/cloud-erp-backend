@@ -917,12 +917,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             startProcess(entity);
         }
 
-        //修改拦截打标识、冻结状态
-        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
-        interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
-        interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-        interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
-        this.updateIntercept(interceptUpdateOrderDTO);
+        //如果是已拦截或已冻结修改拦截打标识、冻结状态
+        if(entity.getIsIntercept() || entity.getIsFrozen()){
+            SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+            if(entity.getIsIntercept()){
+                interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+            }
+            if(entity.getIsFrozen()){
+                interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+            }
+            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
+            this.updateIntercept(interceptUpdateOrderDTO);
+        }
+
 
         // 记录操作日志
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
@@ -6145,14 +6152,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(StringUtils.isNotBlank(interceptUpdateOrderDTO.getBillStatus())){
             msgSb.append(StrUtil.format(" 单据状态为{}，", EnumMessage.getNameByCode(SoB2cBillStatusEnum.class,interceptUpdateOrderDTO.getBillStatus())));
         }
+        //msgSb去掉最后一个字符
+        msgSb.deleteCharAt(msgSb.length() -1 );
         List<Pair<String, String>> pairList = new ArrayList<>();
         interceptUpdateOrderDTO.getIds().forEach(v->{
             Pair<String, String> pair = new Pair<>(v,"");
             pairList.add(pair);
         });
         operateLogService.batchAddModuleOperateLog(msgSb.toString(), ModuleTypeEnum.SO_B2C.getCode(), pairList, "状态变更");
-        return lambdaUpdate().set(SoB2cEntity::getIsIntercept, interceptUpdateOrderDTO.getIsIntercept())
-                .set(SoB2cEntity::getIsFrozen, interceptUpdateOrderDTO.getIsFrozen())
+        return lambdaUpdate().set(Objects.nonNull(interceptUpdateOrderDTO.getIsIntercept()),SoB2cEntity::getIsIntercept, interceptUpdateOrderDTO.getIsIntercept())
+                .set(Objects.nonNull(interceptUpdateOrderDTO.getIsFrozen()),SoB2cEntity::getIsFrozen, interceptUpdateOrderDTO.getIsFrozen())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getApproveStatus()), SoB2cEntity::getApproveStatus, interceptUpdateOrderDTO.getApproveStatus())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getBillStatus()), SoB2cEntity::getBillStatus, interceptUpdateOrderDTO.getBillStatus())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getAbnormalType()), SoB2cEntity::getAbnormalType, interceptUpdateOrderDTO.getAbnormalType())
