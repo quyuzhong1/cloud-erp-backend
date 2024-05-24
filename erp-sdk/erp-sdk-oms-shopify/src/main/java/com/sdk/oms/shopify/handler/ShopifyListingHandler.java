@@ -70,7 +70,7 @@ public class ShopifyListingHandler extends AbstractProductHandler<PlatformShopif
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return sourceDataList.stream()
                 // 已发布并售卖中
-//                .filter(e -> e.getShopifyProduct().isPublished() && "active".equalsIgnoreCase(e.getShopifyProduct().getStatus()))
+                .filter(e -> e.getShopifyProduct().isPublished() && "active".equalsIgnoreCase(e.getShopifyProduct().getStatus()))
                 // 组装
                 .map(PlatformShopifyListingDTO::convertDTO)
                 .flatMap(List::stream).collect(Collectors.toList());
