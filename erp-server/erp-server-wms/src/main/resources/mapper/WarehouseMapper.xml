@@ -374,7 +374,7 @@
             where
             wh.is_deleted = false
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
-                and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+                and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or (wh.id = #{params.searchKeyword})  or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
             </if>
             order by
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
