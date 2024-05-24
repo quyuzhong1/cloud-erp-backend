@@ -2052,7 +2052,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
              * 海外仓产品SKU
              */
             String platformSku = platformSkuList.stream().filter(s -> s.getSkuId().equals(soB2cDetailEntity.getSkuId())).
-                    map(SkuMappingDTO.ListSkuResultDTO::getPlatformSkuNo).findFirst().orElseThrow(()-> new ServiceException(StrUtil.format("{}未配置海外仓sku",soB2cDetailEntity.getSkuNo())));
+                    map(SkuMappingDTO.ListSkuResultDTO::getPlatformSkuNo).findFirst().orElseThrow(()-> new ServiceException(StrUtil.format("{}未配置海外仓{}sku",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getWarehouseName())));
 
             ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
             outboundReqItem.setQuantity(baseQty);
