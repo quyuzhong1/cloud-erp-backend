@@ -1757,6 +1757,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          * 下出库单的命令
          */
         if (isApi) {
+            if(list.stream().anyMatch(v->StringUtils.isBlank(v.getWarehouseSkuNo()))){
+                throw new ServiceException("库存sku为空，无法创建海外仓出库单");
+            }
             try {
                 //下出库单命令
                 thirdWarehouseCreateOutStock(entity,warehouseId,warehouseManageType, logisticsChannelId, overseasWarehouseList.get(0), list);
@@ -2014,22 +2017,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @GlobalTransactional(rollbackFor = Exception.class)
     public void thirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId,String warehouseManageType , String logisticsChannelId, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList) {
-        List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SoB2cDeliveryDTO.DeliverySkuDTO> wantSkuList = listDeliverySku(entity.getShopId(), skuIdList, entity.getDictPlatform(), warehouseManageType);
-        List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList = new ArrayList<>(wantSkuList.size());
+//        List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+//        List<SoB2cDeliveryDTO.DeliverySkuDTO> wantSkuList = listDeliverySku(entity.getShopId(), skuIdList, entity.getDictPlatform(), warehouseManageType);
+//        List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList = new ArrayList<>(wantSkuList.size());
         String mainId = entity.getId();
         //平台
-        String dictPlatform = overseasProviderWarehouse.getProviderCode();
-        String warehouseType = RuleTypeEnum.WAREHOUSE.getCode();
-        for (SoB2cDeliveryDTO.DeliverySkuDTO item : wantSkuList) {
-            SkuMappingDTO.ListingSkuParamDTO listingSkuParam = new SkuMappingDTO.ListingSkuParamDTO();
-            listingSkuParam.setDictPlatform(dictPlatform);
-            listingSkuParam.setSkuId(item.getSkuId());
-            listingSkuParam.setSkuNo(item.getSkuNo());
-            listingSkuParam.setWarehouseId(warehouseId);
-            listingSkuParam.setType(warehouseType);
-            listSkuParamList.add(listingSkuParam);
-        }
+//        String dictPlatform = overseasProviderWarehouse.getProviderCode();
+//        String warehouseType = RuleTypeEnum.WAREHOUSE.getCode();
+//        for (SoB2cDeliveryDTO.DeliverySkuDTO item : wantSkuList) {
+//            SkuMappingDTO.ListingSkuParamDTO listingSkuParam = new SkuMappingDTO.ListingSkuParamDTO();
+//            listingSkuParam.setDictPlatform(dictPlatform);
+//            listingSkuParam.setSkuId(item.getSkuId());
+//            listingSkuParam.setSkuNo(item.getSkuNo());
+//            listingSkuParam.setWarehouseId(warehouseId);
+//            listingSkuParam.setType(warehouseType);
+//            listSkuParamList.add(listingSkuParam);
+//        }
 
         ThirdWarehouseCreateOutboundReq createOutboundReq = new ThirdWarehouseCreateOutboundReq();
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(entity.getId());
@@ -2042,21 +2045,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setReceiverInfo(receiverInfo);
 
 
-        List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType);
+//        List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
-        for (SoB2cDeliveryDTO.DeliverySkuDTO item : wantSkuList) {
-            String sourceSkuId = item.getSourceSkuId();
-            Integer baseQty = detailList.stream().filter(d -> d.getSkuId().equals(sourceSkuId)).
-                    findFirst().map(SoB2cDetailEntity::getQty).orElse(1);
+        for (SoB2cDetailEntity soB2cDetailEntity : detailList) {
+//            Integer qty = wantSkuList.stream().filter(v->v.getSourceSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().map(SoB2cDeliveryDTO.DeliverySkuDTO::getQty).orElse(1);
+            Integer baseQty = soB2cDetailEntity.getQty();
 
             ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
-            outboundReqItem.setQuantity(baseQty*item.getQty());
-            /**
-             * 海外仓产品SKU
-             */
-            String platformSku = platformSkuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).
-                    map(SkuMappingDTO.ListSkuResultDTO::getPlatformSkuNo).findFirst().orElse("");
-            outboundReqItem.setProductSku(platformSku);
+            outboundReqItem.setQuantity(baseQty);
+            outboundReqItem.setProductSku(soB2cDetailEntity.getWarehouseSkuNo());
             itemList.add(outboundReqItem);
         }
         String platformWarehouseCode = overseasProviderWarehouse.getPlatformWarehouseCode();
