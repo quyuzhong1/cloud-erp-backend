@@ -100,6 +100,7 @@ public class SpElServerImpl implements SpElServer {
         try {
             ExpressionParser parser = new SpelExpressionParser();
             Expression expression = parser.parseExpression(expressionStr);
+            log.info("校验规则：{}", expressionStr);
             EvaluationContext context = new StandardEvaluationContext(obj);
             if (!variables.isEmpty()){
                 for (String key : variables.keySet()){
@@ -108,6 +109,7 @@ public class SpElServerImpl implements SpElServer {
                 }
             }
             Boolean result = expression.getValue(context, Boolean.class);
+            log.info("校验结果：{}",result);
             return result;
         } catch (Exception e) {
             log.error("匹配spEl 表达式有误{}", e);
@@ -620,11 +622,11 @@ public class SpElServerImpl implements SpElServer {
                             break;
                         case IN_LIST:
                             String addField2 = getAddField(field, addFieldList);
-                            content = getContentList(field,addField2,compare,value,spElDTO, new HashMap<>());
+                            content = getContentList(field,addField2,compare,value,spElDTO, obj);
                             break;
                         case NOT_IN_LIST:
                             String addField3 = getAddField(field, addFieldList);
-                            content = getContentList(field,addField3,compare,value,spElDTO, new HashMap<>());
+                            content = getContentList(field,addField3,compare,value,spElDTO, obj);
                             break;
                         case IS_NULL:
                             content = convertToIsNullMapExpression(field);
