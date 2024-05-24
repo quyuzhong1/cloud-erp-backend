@@ -4,7 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
-import com.common.business.dto.WdtSoOutStockDTO;
+import com.common.business.dto.WdtReturnOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -13,10 +13,9 @@ import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
-import com.erp.model.dmp.wdt.WangDianOrderEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
+import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -29,17 +28,16 @@ import java.util.Objects;
 @Component
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_wdt_so_out_stock_tag",
+        selectorExpression = "third_system_wdt_return_order_tag",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_order_consumer",
         consumeMode = ConsumeMode.ORDERLY)
-public class SyncWdtDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
-    @Resource
-    private SyncB2CSoOutstockService syncB2CSoOutstockService;
+public class WdtRefundOrderConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+
+    private SyncSoReturnService syncSoReturnService;
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
         try {
@@ -69,8 +67,8 @@ public class SyncWdtDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        WdtSoOutStockDTO entity = JSONUtil.toBean(ext.toString(), WdtSoOutStockDTO.class);
-        syncB2CSoOutstockService.syncWdtSoOutStock(entity);
+        WdtReturnOrderDTO dto = JSONUtil.toBean(ext.toString(), WdtReturnOrderDTO.class);
+        syncSoReturnService.syncWdtReturnOrderToSoReturn(dto);
         return ApiResult.success();
     }
 
