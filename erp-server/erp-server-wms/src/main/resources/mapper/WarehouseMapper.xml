@@ -383,7 +383,7 @@
                 when wh.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
                 end , wh.name,
             </if>
-            wh.kingdee_warehouse_code asc
+            wh.disabled asc
         ) wls
     </select>
 </mapper>
