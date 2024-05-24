@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.wangdian.server.WangDianClientService
+  com.sdk.wangdian.server.WangDianClientService,\
+  com.sdk.wangdian.handler.WdtWarehouseHandler

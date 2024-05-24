@@ -1,6 +1,7 @@
 package com.sdk.wangdian.sdk.api.setting.dto;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
 import java.util.Date;
 import java.util.List;
@@ -40,6 +41,7 @@ public class WarehouseQueryResponse
 		this.warehouseList = warehouseList;
 	}
 
+	@Data
 	public static class WarehouseDto
 	{
 
@@ -49,153 +51,16 @@ public class WarehouseQueryResponse
 		private String mobile;
 		private String remark;
 		private Byte type;
-		private Byte subType;
+		private Byte sub_type;
 		private String telno;
 		private String province;
-		private String warehouseNo;
+		private String warehouse_no;
 		private String district;
 		private String contact;
 		private String name;
 		private String modified;
-
-		public String getZip()
-		{
-			return zip;
-		}
-
-		public void setZip(String zip)
-		{
-			this.zip = zip;
-		}
-
-		public String getAddress()
-		{
-			return address;
-		}
-
-		public void setAddress(String address)
-		{
-			this.address = address;
-		}
-
-		public String getCity()
-		{
-			return city;
-		}
-
-		public void setCity(String city)
-		{
-			this.city = city;
-		}
-
-		public String getMobile()
-		{
-			return mobile;
-		}
-
-		public void setMobile(String mobile)
-		{
-			this.mobile = mobile;
-		}
-
-		public String getRemark()
-		{
-			return remark;
-		}
-
-		public void setRemark(String remark)
-		{
-			this.remark = remark;
-		}
-
-		public Byte getType()
-		{
-			return type;
-		}
-
-		public void setType(Byte type)
-		{
-			this.type = type;
-		}
-
-		public Byte getSubType()
-		{
-			return subType;
-		}
-
-		public void setSubType(Byte subType)
-		{
-			this.subType = subType;
-		}
-
-		public String getTelno()
-		{
-			return telno;
-		}
-
-		public void setTelno(String telno)
-		{
-			this.telno = telno;
-		}
-
-		public String getProvince()
-		{
-			return province;
-		}
-
-		public void setProvince(String province)
-		{
-			this.province = province;
-		}
-
-		public String getWarehouseNo()
-		{
-			return warehouseNo;
-		}
-
-		public void setWarehouseNo(String warehouseNo)
-		{
-			this.warehouseNo = warehouseNo;
-		}
-
-		public String getDistrict()
-		{
-			return district;
-		}
-
-		public void setDistrict(String district)
-		{
-			this.district = district;
-		}
-
-		public String getContact()
-		{
-			return contact;
-		}
-
-		public void setContact(String contact)
-		{
-			this.contact = contact;
-		}
-
-		public String getName()
-		{
-			return name;
-		}
-
-		public void setName(String name)
-		{
-			this.name = name;
-		}
-
-		public String getModified()
-		{
-			return new Date(Long.valueOf(modified)).toString();
-		}
-
-		public void setModified(String modified)
-		{
-			this.modified = modified;
-		}
+		private Integer warehouse_id;
+		private Boolean is_disabled;
+		private String created;
 	}
 }

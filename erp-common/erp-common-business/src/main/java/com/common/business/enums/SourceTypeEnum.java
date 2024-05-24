@@ -174,6 +174,9 @@ public enum SourceTypeEnum {
 
     // 旺店通相关
     WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单",""),
+
+    //旺店通
+    WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),
     ;
 
     /**
