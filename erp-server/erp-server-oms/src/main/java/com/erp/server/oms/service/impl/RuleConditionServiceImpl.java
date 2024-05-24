@@ -185,6 +185,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         int i = 1;
         for (RuleConditionDTO.UpdateDTO item : conditionList) {
             item.setIndex(i);
+            item.setName(StrUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
             i++;
         }
         String moduleType = ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode();
@@ -195,7 +196,6 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
             String fieldName = cfgConditionList.stream().filter(c -> c.getConditionField().equals(field)).findFirst().
                     map(CfgConditionEntity::getConditionFieldName).orElse(field);
             obj.setFieldName(fieldName);
-            obj.setName(StrUtil.isBlank(obj.getName()) ? obj.getValue() : obj.getName());
         }
 
         List<RuleConditionEntity> dbList = this.listDbByRuleId(ruleId);
