@@ -39,7 +39,7 @@ public class PackageForecastQueryHandler extends AbstractQueryHandler {
             return super.getSplicingSQL();
         }
         if("platformNo".equals(field)){
-           return "and (pf.handover_no ILIKE concat('%',"+value+"::text,'%') " +
+           return " (pf.handover_no ILIKE concat('%',"+value+"::text,'%') " +
                    "OR pf.platform_package_no ILIKE concat('%',"+value+"::text,'%'))";
         }
         return null;
