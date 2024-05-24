@@ -20,18 +20,22 @@ public class WangDianReturnOrderEntity extends CleanBaseDTO {
     private String refundNo;
     private String tradeNoList;
     private String remark;
+    private String reason;
     private BigDecimal goodsCount;
-    private String shopName;
+    private String warehouseId;
     private String warehouseName;
-    private BigDecimal actualRefundAmount;
     private String warehouseNo;
+    private String shopId;
+    private String shopNo;
+    private String shopName;
+    private String tidList;
+    private BigDecimal actualRefundAmount;
     private String shopRemark;
     private String nickName;
     private String customerName;
     private String stockinTime;
     private Byte status;
     private String checkTime;
-    private String shopNo;
     @SerializedName("details_list")
     private List<OrderDetailInfoDto> detailList;
 
@@ -40,13 +44,17 @@ public class WangDianReturnOrderEntity extends CleanBaseDTO {
     public static class OrderDetailInfoDto {
         private BigDecimal num;
         private BigDecimal srcPrice;
+        private BigDecimal expectNum;
+        private BigDecimal stockinNum;
         private BigDecimal price;
+        private String refundDetailId;
         private BigDecimal totalCost;
         private String remark;
         private BigDecimal rightNum;
-        private Integer recId;
+        private String recId;
         private String goodsName;
         private String goodsNo;
+        private String positionNo;
         private String specNo;
         private String prop2;
         private String specName;
