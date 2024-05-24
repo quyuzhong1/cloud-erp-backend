@@ -224,7 +224,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         for (RuleConditionEntity updateItem : updateRuleConditionList) {
             RuleConditionEntity old = dbList.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
             if (Objects.nonNull(old)) {
-                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, "修改了订单规则");
+                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, StrUtil.format("修改了第【{}】条订单规则",updateItem.getIndex()));
             }
         }
         handleDataList(saveOrUpdateList);
