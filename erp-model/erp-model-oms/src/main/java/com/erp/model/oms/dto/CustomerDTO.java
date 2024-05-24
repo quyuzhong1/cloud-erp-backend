@@ -176,6 +176,10 @@ public class CustomerDTO implements Serializable {
          * 名称
          */
         private String name;
+        /**
+         * 名称
+         */
+        private String code;
     }
     /**
      * 远程搜索
@@ -188,6 +192,10 @@ public class CustomerDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 主键id
+         */
+        private String id;
     }
     /**
      * 新增加
