@@ -194,7 +194,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 warehouseInventoryQtyList.add(warehouseInventoryQtyDTO);
             }
             //排序
-            List<WarehouseDTO.WarehouseInventoryQtyDTO> sortedList = warehouseInventoryQtyList.stream().sorted(Comparator.comparing(WarehouseDTO.WarehouseInventoryQtyDTO::getDisabled).thenComparing(WarehouseDTO.WarehouseInventoryQtyDTO::getInventoryQty)).collect(Collectors.toList());
+            List<WarehouseDTO.WarehouseInventoryQtyDTO> sortedList = warehouseInventoryQtyList.stream().sorted(Comparator.comparing(WarehouseDTO.WarehouseInventoryQtyDTO::getDisabled).reversed().thenComparing(WarehouseDTO.WarehouseInventoryQtyDTO::getInventoryQty)).collect(Collectors.toList());
             inventoryQtyDTO.setWarehouseInventoryQtyList(sortedList);
             resultList.add(inventoryQtyDTO);
         }
