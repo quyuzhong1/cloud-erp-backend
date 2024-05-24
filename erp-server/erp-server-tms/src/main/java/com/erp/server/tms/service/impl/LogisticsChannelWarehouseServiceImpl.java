@@ -7,11 +7,11 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.tms.enums.LogisticsChannelWarehouseTypeEnum;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsChannelWarehouseDTO;
 import com.erp.model.tms.entity.LogisticsChannelWarehouseEntity;
+import com.erp.model.tms.enums.LogisticsChannelWarehouseTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.mapper.LogisticsChannelWarehouseMapper;
@@ -104,7 +104,13 @@ public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<Logis
         }
         List<String> warehouseIdList = list.stream().map(LogisticsChannelWarehouseEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(warehouseIdList);
-        viewDTO.setWarehouseList(warehouseList);
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        List<String> warehouseNameList = warehouseList.stream().map(WarehouseDTO.ListDTO::getName).collect(Collectors.toList());
+
+        viewDTO.setWarehouseIdList(warehouseIdList);
+        viewDTO.setWarehouseNameList(warehouseNameList);
         return viewDTO;
     }
 

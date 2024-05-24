@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.erp.model.wms.dto.WarehouseDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -42,9 +41,14 @@ public class LogisticsChannelWarehouseDTO implements Serializable {
         private String type;
 
         /**
-         * 仓库集合
+         * 仓库id集合
          */
-        private List<WarehouseDTO.ListDTO> warehouseList;
+        private List<String> warehouseIdList;
+
+        /**
+         *  仓库名称集合
+         */
+        private List<String> warehouseNameList;
     }
 
     /**
