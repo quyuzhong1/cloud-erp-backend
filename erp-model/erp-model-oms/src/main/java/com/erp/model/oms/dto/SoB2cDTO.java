@@ -1559,6 +1559,11 @@ public class SoB2cDTO implements Serializable {
          * 主表id
          */
         private String id;
+
+        /**
+         * 销售订单号
+         */
+        private String code;
         /**
          * 明细信息
          */
