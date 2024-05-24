@@ -148,7 +148,7 @@ public class SoB2cController extends BaseController {
             }
 
         }
-        return success(add.getId());
+        return success(add.getCode());
     }
 
     /**
@@ -839,23 +839,44 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/21 9:19
      */
     @PostMapping("/viewSplit")
-    public ApiResult<SoB2cDTO.ViewSplitDTO> viewSplit(@RequestBody @Validated BaseIdDTO dto) {
-        return success(soB2cService.viewSplit(dto.getId()));
+    public ApiResult<List<SoB2cDTO.ViewSplitDTO>> viewSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(soB2cService.viewSplit(dto.getIds()));
     }
 
     /**
      * 拆分保存
      *
-     * @param dto
+     * @param list
      * @return ApiResult<List < BatchResultDTO>>
      * @author Will
      * @date: 2023/8/21 9:20
      */
     @PostMapping("/splitSave")
-    public ApiResult<List<BatchResultDTO>> splitSave(@RequestBody @Validated SoB2cDTO.SplitSaveDTO dto) {
-        List<String> soIdList = soB2cService.splitSave(dto);
-        if (CollectionUtils.isNotEmpty(soIdList)) {
-            for (String soId : soIdList) {
+    public ApiResult<List<BatchResultDTO>> splitSave(@RequestBody @Validated List<SoB2cDTO.SplitSaveDTO> list) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        List<String> allSoIdList = new ArrayList<>();
+        for (SoB2cDTO.SplitSaveDTO dto : list) {
+            BatchResultDTO result;
+            try {
+                List<String> soIdList = soB2cService.splitSave(dto);
+                result = BatchResultDTO.success(dto.getId(),dto.getId(),"订单拆分成功");
+                allSoIdList.addAll(soIdList);
+            } catch (Exception e) {
+                log.error("B2C销售订单取消拆分失败", e);
+                SoB2cEntity entity = soB2cService.getById(dto.getId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(dto.getId(), dto.getId(), "B2C销售订单不存在, 拆分保存失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+
+        //原有逻辑
+        if (CollectionUtils.isNotEmpty(allSoIdList)) {
+            for (String soId : allSoIdList) {
                 try {
                     soB2cService.checkProductRegistrationAndUpdate(soId, "");
                 } catch (Exception e) {
@@ -863,7 +884,7 @@ public class SoB2cController extends BaseController {
                 }
             }
         }
-        return success();
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -1,7 +1,6 @@
 package com.common.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.handler.HttpLogInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -22,7 +21,7 @@ public class OkHttpUtils {
     private static final OkHttpClient client =
             new OkHttpClient.Builder()
                     .readTimeout(30, TimeUnit.SECONDS)// 设置超时时间
-                    .addInterceptor(new HttpLogInterceptor())
+//                    .addInterceptor(new HttpLogInterceptor())
                     .build();
 
     private static final int RETRY_COUNT = 3;

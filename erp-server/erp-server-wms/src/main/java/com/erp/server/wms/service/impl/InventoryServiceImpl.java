@@ -658,20 +658,19 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
-        //物料编码
-        List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
         //仓库
         List<String> warehouseIdList = list.stream().map(InventoryDTO.PagingViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
-        List<String> warehouseCodeList = warehouseList.stream().map(WarehouseEntity::getKingdeeWarehouseCode).collect(Collectors.toList());
         //组织
         List<String> orgIdList = list.stream().map(InventoryDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-        List<String> orgCodeList = orgList.stream().map(BaseIdDTO.CodeDTO::getCode).collect(Collectors.toList());
-        //金蝶库存信息
-        List<Map<String, Object>> mapList = listKingdeeInventory(skuNoList, warehouseCodeList, orgCodeList);
 
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+
+        List<String> warehouseIdIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIdIds);
+
+
         list.stream().parallel().forEach(data -> {
             // 仓库名称赋值
             WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(data.getWarehouseId())).findFirst().orElse(null);
@@ -694,30 +693,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 //规格类型
                 data.setSpecType(skuVO.getSpecType());
             }
+
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
+                    .filter(req -> req.getCode().equals(data.getWarehouseLocation())
+                            && req.getWarehouseId().equals(data.getWarehouseId())
+                    ).findFirst().orElse(new WarehouseLocationEntity());
+            data.setWarehouseLocationName(warehouseLocationEntity.getName());
+
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
-            //未查到金蝶库存
-            if (CollectionUtils.isEmpty(mapList)) {
-                log.info("未查到金蝶库存，skuNoList = {}，warehouseCodeList = {}，orgCodeList = {}",skuNoList,warehouseCodeList,orgCodeList);
-                return;
-            }
-            //仓库编码
-            String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(data.getWarehouseId())).findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse("");
-            //组织编码
-            String orgCode = orgList.stream().filter(obj -> obj.getId().equals(data.getOrgId())).findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
-            List<Map<String, Object>> mapQtyList = mapList.stream().filter(obj -> data.getSkuNo().equals(obj.get("FMaterialId.FNumber")) && warehouseCode.equals(obj.get("FStockId.FNumber")) && orgCode.equals(obj.get("FStockOrgId.FNumber")))
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(mapQtyList)) {
-                //基本单位库存量(需要单位换算)，相同仓库、组织、sku存在多个数据需要合计
-                BigDecimal divide = mapQtyList.stream().map(obj -> MathUtil.divide(MathUtil.multiply(MathUtil.valueOf(obj.get("FBASEQTY")), MathUtil.valueOf(obj.get("FMaterialid.FSTOREURNOM"))), MathUtil.valueOf(obj.get("FMaterialid.FSTOREURNUM")))).reduce(BigDecimal.ZERO,BigDecimal::add);
-
-                //金蝶库存(fBaseQty*fStoreurnom/fStoreurnum)
-                data.setKingdeeQty(divide.stripTrailingZeros().toPlainString());
-                //库存差异
-                data.setDiffQty(MathUtil.subtract(MathUtil.valueOf(data.getUsableQty().toString()),divide).stripTrailingZeros().toPlainString());
-            }
         });
     }
 
