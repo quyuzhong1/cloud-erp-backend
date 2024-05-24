@@ -1179,6 +1179,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             SoB2cDTO.ViewSoB2cDistributionDTO viewDTO = new SoB2cDTO.ViewSoB2cDistributionDTO();
             viewDTO.setId(soB2cEntity.getId());
+            viewDTO.setDetailId(soB2cEntity.getId());
             viewDTO.setCode(soB2cEntity.getCode());
             viewDTO.setSourceAmount(soB2cEntity.getAmount());
             viewDTO.setSourceCurrency(soB2cEntity.getCurrency());
@@ -2540,7 +2541,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             checkSplitData(entity,soB2cRefList);
             SoB2cDTO.ViewSplitDTO viewSplitDTO = new SoB2cDTO.ViewSplitDTO();
             viewSplitDTO.setId(entity.getId());
-
+            viewSplitDTO.setCode(entity.getCode());
             //销售订单下对应明细
             List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), entity.getId())).collect(Collectors.toList());
             List<SoB2cDTO.ViewSplitDetailDTO> viewSplitDetailList = new ArrayList<>();
