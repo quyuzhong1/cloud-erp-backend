@@ -121,7 +121,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         //过滤oms 推送的订单数据
         KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils();
         if (kingdeeApiUtils.notNeedPushMQ(dto.getJobTaskDTO().getLastTime())){
-            pushToMqList = pushToMqList.stream().filter(e ->CommonConstants.SYSTEM.equals(e.getFULZDataSources())).collect(Collectors.toList());
+            pushToMqList = pushToMqList.stream().filter(e -> !CommonConstants.SYSTEM.equals(e.getFULZDataSources())).collect(Collectors.toList());
         }
         // 构造订单结构
         List<DmpReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()

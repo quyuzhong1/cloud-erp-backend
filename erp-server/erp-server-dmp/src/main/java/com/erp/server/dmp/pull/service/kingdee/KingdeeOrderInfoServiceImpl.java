@@ -144,7 +144,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         //判断是否需要推送MQ
         KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils();
         if (kingdeeApiUtils.notNeedPushMQ(dto.getJobTaskDTO().getLastTime())){
-            pushToMqList = pushToMqList.stream().filter(e -> CommonConstants.B2BXSDD.equals(e.getFBillTypeCode())).collect(Collectors.toList());
+            pushToMqList = pushToMqList.stream().filter(e -> !CommonConstants.B2BXSDD.equals(e.getFBillTypeCode())).collect(Collectors.toList());
         }
         // 构造订单结构
         List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()

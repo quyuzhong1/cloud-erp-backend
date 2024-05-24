@@ -304,8 +304,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
 
-        //推送到DMP
-        this.syncDeliveryToDmp(entity.getId());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
 
 
@@ -843,11 +841,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .in(SoB2cDeliveryEntity::getId, ids)
                 .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
                 .update();
-
-        //推送到DMP
-        for (String id : ids) {
-            this.syncDeliveryToDmp(id);
-        }
         return flag;
     }
 
@@ -1560,7 +1553,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     /**
-     * 同步发货单到DMP
+     * 同步发货单到DMP(暂不推送B2C发货单，用销售出库单代替)
      */
     private void syncDeliveryToDmp(String id) {
         SoB2cDeliveryDTO.ViewDTO view = this.view(id);
