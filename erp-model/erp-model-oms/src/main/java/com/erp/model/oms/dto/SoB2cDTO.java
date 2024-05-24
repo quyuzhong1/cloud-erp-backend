@@ -1567,6 +1567,15 @@ public class SoB2cDTO implements Serializable {
          * 明细id
          */
         private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU编码
+         */
+        private String skuNo;
         /**
          * 图片Url
          */
@@ -1599,6 +1608,16 @@ public class SoB2cDTO implements Serializable {
          * 包装重量
          */
         private BigDecimal weight;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
     }
 
     /**
