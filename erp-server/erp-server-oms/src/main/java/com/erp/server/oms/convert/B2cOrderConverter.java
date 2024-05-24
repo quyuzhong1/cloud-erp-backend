@@ -264,4 +264,17 @@ public interface B2cOrderConverter {
     })
     LogisticsProductVO convertDeclareProductVOByEntity(SoB2cDeclareProductEntity soB2cDeclareProductEntity, SoB2cDetailEntity soB2cDetail, LogisticsProductDTO.ProductDTO productDTO);
 
+
+    @Mappings({
+            @Mapping(target = "id",ignore = true),
+            @Mapping(target = "version",ignore = true),
+            @Mapping(target = "createTime",ignore = true),
+            @Mapping(target = "createUserId",ignore = true),
+            @Mapping(target = "createUserName",ignore = true),
+            @Mapping(target = "updateTime",ignore = true),
+            @Mapping(target = "updateUserId",ignore = true),
+            @Mapping(target = "updateUserName",ignore = true),
+    })
+    SoB2cDetailEntity cloneSoB2cDetail(SoB2cDetailEntity soB2cDetailEntity);
+
 }

@@ -79,7 +79,8 @@
         sb2cr.country as country,
         sb2c.create_time as createTime,
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
-        sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId
+        sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
+        sb2cl.weight
     </sql>
 
     <!-- 通用查询结果列 -->
@@ -551,6 +552,7 @@
             si.name AS customerName,
             sb2r.country,
             sb2r.full_address AS receiverAddress,
+            sb2r.tel_number AS telNumber,
             sb2r.receiver_name AS receiverName
          FROM so_b2c sb2c
          LEFT JOIN so_b2c_receiver sb2r

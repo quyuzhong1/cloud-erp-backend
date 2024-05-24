@@ -224,9 +224,9 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     }
 
     @Override
-    public LogisticsBillDetailEntity getDetailByTrackNo(String trackNo) {
+    public List<LogisticsBillDetailEntity> getDetailByTrackNo(String trackNo) {
         return lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, trackNo)
-                .eq(LogisticsBillDetailEntity::getIsDeleted, false).last("limit 1").one();
+                .eq(LogisticsBillDetailEntity::getIsDeleted, false).list();
     }
 
     @Override

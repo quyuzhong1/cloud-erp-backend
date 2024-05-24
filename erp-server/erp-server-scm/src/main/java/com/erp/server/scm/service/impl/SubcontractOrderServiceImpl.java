@@ -687,6 +687,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 searchDTO.setSkuId(dto.getSkuId());
                 searchDTO.setSkuNo(dto.getSkuNo());
                 searchDTO.setSupplierId(dto.getSupplierId());
+                searchDTO.setPurchaseOrgId(dto.getPurchaseOrgId());
                 searchDTO.setPurchaseQty(dto.getQty().intValue() );
                 Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(searchDTO);
                 List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> value = pair.getValue();
@@ -804,11 +805,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
                 if (!addDetailDTO.getIsGift()) {
                     //供应商报价信息
-                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-                    searchDTO.setSkuId(addDetailDTO.getSkuId());
-                    searchDTO.setSupplierId(addDetailDTO.getSupplierId());
-                    searchDTO.setPurchaseQty(addDetailDTO.getQty());
-                    searchDTO.setSkuNo(addDetailDTO.getSkuNo());
+                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(addDetailDTO.getQty(),addDetailDTO.getSkuId(),addDetailDTO.getSkuNo(),addDetailDTO.getSupplierId(),addDetailDTO.getPurchaseOrgId());
                     List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
                     PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
                     poDetailAddDTO.setCurrency(viewDTO.getCurrency());

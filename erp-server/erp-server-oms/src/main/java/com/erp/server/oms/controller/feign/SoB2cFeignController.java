@@ -59,6 +59,9 @@ public class SoB2cFeignController extends BaseController {
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private SoB2cSplitService soB2cSplitService;
+
 
     /**
      * 根据b2c订单id获取物流信息
@@ -114,6 +117,22 @@ public class SoB2cFeignController extends BaseController {
         return list;
     }
 
+    /**
+     * 根据b2c详情id获取详情（包含删除）
+     */
+    @PostMapping("/listDetailContainDeleted")
+    public List<SoB2cDetailEntity> listDetailContainDeleted(@RequestBody List<String> detailIdList) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return Collections.emptyList();
+        }
+        List<SoB2cDetailEntity> list = soB2cDetailService.listContainDeleted(detailIdList);
+        return list;
+    }
+
+    @GetMapping("/listRefBomSplit")
+    public List<SoB2cEntity> listRefBomSplit(@RequestParam("detailId") String detailId){
+        return soB2cSplitService.listRefBomSplit(detailId);
+    }
     /**
      * 根据主表id查询B2C订单主表信息
      *
@@ -687,4 +706,12 @@ public class SoB2cFeignController extends BaseController {
         return b2cStatusService.batchUpdateCancelAndLog(soB2cIdList);
     }
 
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @GetMapping("/getSoCode")
+    public SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode) {
+        return soB2cService.getByCode(soB2cCode);
+    }
 }

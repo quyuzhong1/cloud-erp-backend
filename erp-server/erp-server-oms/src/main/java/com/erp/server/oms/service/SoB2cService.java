@@ -37,12 +37,6 @@ import java.util.Map;
  */
 public interface SoB2cService extends SuperService<SoB2cEntity> {
 
-
-
-
-
-
-
       /**
       * 分页列表查询
       * @author Will
@@ -923,4 +917,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      */
     void initCostPrice(SoB2cDTO.CostPriceDTO dto);
+
+
+    /**
+     * 根据单号查询销售订单
+     */
+    SoB2cEntity getByCode(String soCode);
+
+    List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> id);
+
+    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> id);
 }

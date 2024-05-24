@@ -33,6 +33,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -77,7 +78,8 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         List<SkuInfoEntity> pushToMqList = new ArrayList<>();
         for (SkuInfoEntity entity : entityList) {
             if(StrUtil.isBlank(entity.getFinancial())){
-                sendWarnMsg(StrUtil.format("财务编码为空， 库存sku编码 = {}", entity.getStockSku()), dto.getJobTaskDTO());
+//                sendWarnMsg(StrUtil.format("财务编码为空， 库存sku编码 = {}", entity.getStockSku()), dto.getJobTaskDTO());
+//                log.error(StrUtil.format("财务编码为空， 库存sku编码 = {}", entity.getStockSku()), dto.getJobTaskDTO());
                 continue;
             }
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByFinancial(entity.getFinancial());
@@ -91,7 +93,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
             }
             SkuInfoEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);

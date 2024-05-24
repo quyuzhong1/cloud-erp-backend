@@ -1202,6 +1202,13 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_TIKTOK_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
     ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
     ERROR_TIKTOK_SPLIT(92081,"订单【{}】TikTok拆分订单失败"),
+    ERROR_SO_B2C_ORDER_DECLARE_SKU_NO_NOT_EXIST(92142,"销售订单【{}】申报信息SKU不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_CN_NAME_NOT_EXIST(92143,"申报信息SKU【{}】报关中文名不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_EN_NAME_NOT_EXIST(92144,"申报信息SKU【{}】报关英文名不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_PRICE_NOT_EXIST(92145,"申报信息SKU【{}】目的国申报价不能为0"),
+    ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_NOT_EXIST(92146,"申报信息SKU【{}】目的国申报价币种不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_SYM_NOT_EXIST(92147,"申报信息SKU【{}】目的国申报价币种符号不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_WEIGHT_NOT_EXIST(92148,"申报信息SKU【{}】重量不能为0"),
 
     /**
      * TMS 错误

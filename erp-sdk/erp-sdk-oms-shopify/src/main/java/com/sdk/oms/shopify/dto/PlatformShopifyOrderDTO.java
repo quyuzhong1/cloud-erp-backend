@@ -189,30 +189,32 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 订单买家信息
         ShopifyCustomer customer = dto.getShopifyOrder().getCustomer();
         ShopifyAddress shippingAddress = dto.getShopifyOrder().getShippingAddress();
+        PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (null != customer) {
-            PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
             receiverDTO.setName(
                     (StringUtils.isBlank(customer.getFirstName()) ? "" : customer.getFirstName()) +
                             (StringUtils.isBlank(customer.getFirstName()) ? "" : " " + customer.getLastname())
             );
             receiverDTO.setCustomerId(StringUtils.isBlank(customer.getId())? "" : customer.getId());
-            receiverDTO.setReceiverTelNumber(StringUtils.isBlank(customer.getPhone()) ? "" :customer.getPhone());
             receiverDTO.setTelNumber(StringUtils.isBlank(customer.getPhone())? "" : customer.getPhone());
             receiverDTO.setEmail(StringUtils.isBlank(customer.getEmail()) ? "" : customer.getEmail());
-            if (null != shippingAddress){
-                receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getProvince()) ? "" : shippingAddress.getProvince());
-                receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
-                receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2());
-
-                receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
-//                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
-                receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
-                receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
-                receiverDTO.setFullAddress("");
-                receiverDTO.setPostCode(shippingAddress.getZip());
-            }
             orderDTO.setReceiver(receiverDTO);
         }
+
+        if (null != shippingAddress){
+            receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getProvince()) ? "" : shippingAddress.getProvince());
+            receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
+            receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2());
+
+            receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
+//                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
+            receiverDTO.setReceiverTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" :shippingAddress.getPhone());
+            receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
+            receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
+            receiverDTO.setFullAddress("");
+            receiverDTO.setPostCode(shippingAddress.getZip());
+        }
+        orderDTO.setReceiver(receiverDTO);
 
         // 订单财务信息
 

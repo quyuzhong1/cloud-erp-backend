@@ -14,6 +14,8 @@
 package com.erp.server.dmp.amz;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
@@ -30,6 +32,7 @@ import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.taskdefs.Sleep;
 import org.junit.runner.RunWith;
@@ -885,7 +888,7 @@ public class OrdersV0ApiTest {
     public void confirmShipmentTest() throws ApiException {
         ConfirmShipmentRequest body = new ConfirmShipmentRequest();
         // 沙箱环境参数
-        String shopId = "1736965724917731330";
+        String shopId = "1736695621504471042";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -896,12 +899,12 @@ public class OrdersV0ApiTest {
         PackageDetail packageDetail = new PackageDetail();
         packageDetail.setPackageReferenceId("1");
 
-        packageDetail.setCarrierCode("360lion");
-        packageDetail.setCarrierName("360Lion");
-        packageDetail.setShippingMethod("360Lion");
-        packageDetail.setTrackingNumber("WSHBR1064112511YQ");
+        packageDetail.setCarrierCode("Yun Express");
+        packageDetail.setCarrierName("Yun Express");
+        packageDetail.setShippingMethod("Yun Express");
+        packageDetail.setTrackingNumber("YT2411321901000712");
 //        packageDetail.setShipDate("2023-12-27T09:00:00Z");
-        packageDetail.setShipDate("2024-04-16T12:38:06Z");
+        packageDetail.setShipDate("2024-04-25T10:55:00Z");
 
         //巴西邮政小包-带电[巴通]
         //NC098925025BR
@@ -959,21 +962,23 @@ public class OrdersV0ApiTest {
 //            orderItemList.add(orderItem);
 //        }
         ConfirmShipmentOrderItem orderItem = new ConfirmShipmentOrderItem();
-        orderItem.setOrderItemId("98117332668441");
+        orderItem.setOrderItemId("9579441347245");
         orderItem.setQuantity(1);
         orderItemList.add(orderItem);
-        ConfirmShipmentOrderItem orderItem2 = new ConfirmShipmentOrderItem();
-        orderItem2.setOrderItemId("98117332668401");
-        orderItem2.setQuantity(1);
-        orderItemList.add(orderItem2);
 
         packageDetail.setOrderItems(orderItemList);
         body.setPackageDetail(packageDetail);
         OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
-        String orderId = "702-3434489-6918632";
-//        ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, orderId);
-        System.out.println("标记发货响应结果");
-//        System.out.println(JSONUtil.toJsonStr(voidApiResponse));
+        String orderId = "250-6220485-3709425";
+        try {
+            ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, orderId);
+            System.out.println("标记发货响应结果");
+            System.out.println(JSONUtil.toJsonStr(voidApiResponse));
+        } catch (ApiException e) {
+//            confirmShipmentApiExceptionHandle(e, orderId, api);
+        } catch (Exception e){
+            throw new ServiceException(e.getMessage());
+        }
         // {"statusCode":204,"headers":{"connection":["keep-alive"],"content-type":["application/json"],"date":["Wed, 27 Dec 2023 09:16:14 GMT"],"server":["Server"],"strict-transport-security":["max-age=47474747; includeSubDomains; preload"],"vary":["Content-Type,Accept-Encoding,User-Agent"],"x-amz-apigw-id":["OPF462433fc1fae"],"x-amz-rid":["QMA9Z504GHC8P8PPJT5Y"],"x-amzn-ratelimit-limit":["2.0"],"x-amzn-requestid":["462433fc-1fae-4f62-9797-b57badfc7c23"],"x-amzn-trace-id":["Root=1-658beb5e-462433fc1fae4f62"]}}
         // {"statusCode":204,"headers":{"connection":["keep-alive"],"content-type":["application/json"],"date":["Wed, 17 Apr 2024 07:26:48 GMT"],"server":["Server"],"strict-transport-security":["max-age=47474747; includeSubDomains; preload"],"vary":["Content-Type,Accept-Encoding,User-Agent"],"x-amz-apigw-id":["OPFc791252a2c36"],"x-amz-rid":["QMR5QPCW2WJ3PC5N3XPP"],"x-amzn-ratelimit-limit":["2.0"],"x-amzn-requestid":["c791252a-2c36-42a8-bd40-da67e52255c5"],"x-amzn-trace-id":["Root=1-661f79b8-c791252a2c3642a8"]}}
         // TODO: test validations
@@ -987,7 +992,7 @@ public class OrdersV0ApiTest {
     }
 
     @Test
-    public void testConfirm(){
+    public void testConfirm() {
         ConfirmShipmentRequest body = new ConfirmShipmentRequest();
 //        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         body.setMarketplaceId(AmazonMarketplaceEnum.SA.getMarketplaceId());
@@ -1019,4 +1024,43 @@ public class OrdersV0ApiTest {
         System.out.println("结果");
         System.out.println(JSONUtil.toJsonStr(body));
     }
+
+    /**
+     * 标记发货亚马逊Api异常处理
+     */
+//    public void confirmShipmentApiExceptionHandle(ApiException e, String platformCode, OrdersV0Api api) {
+//        if (!StringUtils.isBlank(e.getMessage())){
+//            // 其他异常信息
+//            throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
+//        }
+//        JSONArray errorJsonArray = new JSONObject(e.getResponseBody()).getJSONArray("errors");
+//        if (CollectionUtils.isEmpty(errorJsonArray)){
+//            // 其他异常信息
+//            throw new ServiceException("亚马逊标记发货失败:" + JSONUtil.toJsonStr(e));
+//        }
+//        JSONObject errorObj = errorJsonArray.getJSONObject(0);
+//        String errorMsg = errorObj.getStr("message");
+//        if (errorMsg.contains("ErrorCode: NonexistentOrderItem Description: Failed to find order item list by order ID:")){
+//            // 判断响应异常信息是取消订单
+//            throw new ServiceException("平台取消发货，不允许出库，请处理订单发货拦截后，取消发货");
+//        } else if (errorMsg.contains("Failed to create package due to not finding a matching package or order already fulfilled")){
+//            // 判断响应异常信息是后台可能已标记发货
+//            try {
+//                GetOrderResponse response = api.getOrder(platformCode);
+//                if (null == response.getPayload()){
+//                    throw new ServiceException("查询亚马逊订单最新信息为空:" + errorMsg);
+//                } else if (!"shipped".equals(response.getPayload().convertBillStatus())){
+//                    throw new ServiceException("亚马逊非已发货-标记发货失败:" + errorMsg);
+//                }
+//                //平台已发货 跳过
+//                log.warn("亚马逊订单【{}】标记发货:亚马逊订单已发货忽略", platformCode);
+//            } catch (Exception apiError) {
+//                log.warn("查询亚马逊订单【{}】信息响应结果: error={}", platformCode, ExceptionUtil.stacktraceToString(e));
+//                throw new ServiceException("查询亚马逊订单最新信息失败:" + errorMsg);
+//            }
+//        } else {
+//            // 其他异常信息
+//            throw new ServiceException("亚马逊标记发货失败:" + errorMsg);
+//        }
+//    }
 }
