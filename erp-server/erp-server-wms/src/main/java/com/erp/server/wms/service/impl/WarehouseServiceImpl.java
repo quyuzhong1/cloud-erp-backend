@@ -340,6 +340,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         IPage<WarehouseDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<WarehouseDTO.ListDTO> records = pagResult.getRecords();
         handleSelect(records);
+        //排序
+        List<WarehouseDTO.ListDTO> list = records.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+        pagResult.setRecords(list);
         return new PagingVO<>(pagResult);
     }
 
