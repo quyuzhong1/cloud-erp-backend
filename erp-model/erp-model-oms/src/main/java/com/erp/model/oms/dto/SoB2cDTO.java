@@ -1047,9 +1047,34 @@ public class SoB2cDTO implements Serializable {
          * 仓库 http://172.16.100.11:3002/project/92/interface/api/22930
          */
         private String warehouseId;
+
+        /**
+         * 明细数据
+         */
+        @NotEmpty(message = "明细数据不能为空")
+        private List<SaveSoB2cDistributionDetailDTO> detailList;
     }
 
+
+
     @Data
+    @NoArgsConstructor
+    public static class SaveSoB2cDistributionDetailDTO {
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String id;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+    }
+
+        @Data
     @NoArgsConstructor
     public static class GetLogisticsCode {
 
