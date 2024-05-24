@@ -84,6 +84,8 @@ public enum ModuleTypeEnum {
     CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
     SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
     DMP_THIRD_MAPPING("75", "第三方映射"),
+    DMP_THIRD_WAREHOUSE("76", "第三方仓库"),
+    DMP_THIRD_SHOP("77", "第三方店铺"),
     ;
 
 

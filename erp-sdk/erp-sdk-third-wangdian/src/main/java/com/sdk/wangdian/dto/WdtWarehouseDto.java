@@ -62,19 +62,10 @@ public class WdtWarehouseDto extends CleanBaseDTO {
     private String remark;
 
     /**
-     * 类别
-     */
-    private Integer type;
-
-    /**
      * 固话
      */
     private String telno;
 
-    /**
-     * 子类别
-     */
-    private Integer sub_type;
 
     /**
      * 联系人

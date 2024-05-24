@@ -7,14 +7,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * 
- * @date 2024-05-23
- * @author tanmujin
+ * @author hyj
+ * @date 2024-05-24
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class ErpWarehouseDto extends UniqueDto {
+public class ErpShopDto extends UniqueDto {
     /**
      * 是否禁用/停用 true 是 false 不是
      */
@@ -24,17 +23,33 @@ public class ErpWarehouseDto extends UniqueDto {
      */
     private String sysType;
     /**
-     * 仓库id
+     * 店铺id
      */
-    private String warehouseId;
+    private String shopId;
     /**
-     * 类型
+     * 平台id
      */
-    private String type;
+    private String platformId;
     /**
-     * 子类型
+     * 子平台id
      */
-    private String subType;
+    private String subPlatformId;
+    /**
+     * 分组id
+     */
+    private String groupId;
+    /**
+     * 平台的主键（平台店铺授权时平台有推送对应值则返回，不推送则返回空字符串）
+     */
+    private String accountId;
+    /**
+     * 授权状态：0未授权 1已授权 2授权失效 3授权停用
+     */
+    private Integer authState;
+    /**
+     * 授权时间
+     */
+    private String authTime;
     /**
      * 编号
      */
@@ -84,6 +99,10 @@ public class ErpWarehouseDto extends UniqueDto {
      */
     private String district;
     /**
+     * 备注
+     */
+    private String remark;
+    /**
      * 第三方创建时间
      */
     private String created;
@@ -91,8 +110,5 @@ public class ErpWarehouseDto extends UniqueDto {
      * 第三方修改时间
      */
     private String modified;
-    /**
-     * 备注
-     */
-    private String remark;
+
 }
