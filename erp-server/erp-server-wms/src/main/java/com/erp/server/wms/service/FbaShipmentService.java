@@ -240,4 +240,6 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     LocalDate getStopGenReceivedDate(FbaShipmentEntity fbaShipmentEntity);
 
     PagingVO<FbaShipmentDTO.SearchResultDTO> search(PagingDTO<FbaShipmentDTO.SearchDTO> dto);
+
+    FbaShipmentEntity getByCode(String fbaShipmentCode);
 }

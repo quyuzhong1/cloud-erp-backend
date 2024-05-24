@@ -1743,4 +1743,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         return new PagingVO(searchData);
     }
+
+    @Override
+    public FbaShipmentEntity getByCode(String fbaShipmentCode) {
+        return lambdaQuery().eq(FbaShipmentEntity::getCode,fbaShipmentCode)
+                .last("limit 1")
+                .one();
+    }
 }

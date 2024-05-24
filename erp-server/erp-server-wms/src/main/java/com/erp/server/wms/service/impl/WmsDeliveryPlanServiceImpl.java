@@ -104,6 +104,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Autowired
     private ShopInfoFeign shopInfoFeign;
 
+    @Resource
+    private FbaShipmentService fbaShipmentService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -561,13 +564,19 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
-        List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id));
         WmsDeliveryPlanEntity entity = this.getById(id);
+        List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews = new ArrayList<>();
         if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
             RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().findFirst().orElse(null);
-            if(Objects.nonNull(requisitionApplication)){
-                deliverRecordViews.forEach(view -> view.setRefCode(requisitionApplication.getFbaShipmentCode()));
+            if(Objects.nonNull(requisitionApplication) && StringUtils.isNotBlank(requisitionApplication.getFbaShipmentCode())){
+                FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getByCode(requisitionApplication.getFbaShipmentCode());
+                if(Objects.nonNull(fbaShipmentEntity)){
+                    deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(fbaShipmentEntity.getId()));
+                    deliverRecordViews.forEach(view -> view.setRefCode(requisitionApplication.getFbaShipmentCode()));
+                }
             }
+        }else{
+            deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id));
         }
         return deliverRecordViews;
     }
