@@ -17,7 +17,10 @@ import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleConditionMapper;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.CfgConditionService;
+import com.erp.server.oms.service.DictRuleConditionService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.RuleConditionService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -119,6 +122,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         int i = 1;
         for (RuleConditionDTO.AddDTO item : conditionList) {
             item.setIndex(i);
+            item.setName(StrUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
             i++;
         }
         List<RuleConditionEntity> ruleConditionList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
@@ -191,6 +195,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
             String fieldName = cfgConditionList.stream().filter(c -> c.getConditionField().equals(field)).findFirst().
                     map(CfgConditionEntity::getConditionFieldName).orElse(field);
             obj.setFieldName(fieldName);
+            obj.setName(StrUtil.isBlank(obj.getName()) ? obj.getValue() : obj.getName());
         }
 
         List<RuleConditionEntity> dbList = this.listDbByRuleId(ruleId);
