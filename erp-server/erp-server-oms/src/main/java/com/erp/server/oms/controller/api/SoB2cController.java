@@ -859,7 +859,7 @@ public class SoB2cController extends BaseController {
             BatchResultDTO result;
             try {
                 List<String> soIdList = soB2cService.splitSave(dto);
-                result = BatchResultDTO.success(dto.getId(),dto.getId(),"订单拆分");
+                result = BatchResultDTO.success(dto.getId(),dto.getId(),"订单拆分成功");
                 allSoIdList.addAll(soIdList);
             } catch (Exception e) {
                 log.error("B2C销售订单取消拆分失败", e);
