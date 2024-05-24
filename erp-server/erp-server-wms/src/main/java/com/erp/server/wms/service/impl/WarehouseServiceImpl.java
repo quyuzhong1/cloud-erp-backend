@@ -334,6 +334,55 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
          return resultList;
     }
 
+    @Override
+    public PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> searchDTO) {
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        WarehouseDTO.SelectDTO params = searchDTO.getParams();
+        IPage<WarehouseDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<WarehouseDTO.ListDTO> records = pagResult.getRecords();
+        handleSelect(records);
+        return new PagingVO<>(pagResult);
+    }
+
+    /**
+     * @description: 分页下拉处理
+     * @author Will
+     * @date: 2024/5/24 13:06
+     * @param records
+     */
+    private void handleSelect (List<WarehouseDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+        // 填充信息
+        this.fillListSelectData(records, warehouseBindMap);
+    }
+
+    /**
+     * 填充列表信息
+     */
+    private void fillListSelectData(List<WarehouseDTO.ListDTO> resultList, Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap) {
+        List<ApproveStatusEnum> statusList = Collections.singletonList(ApproveStatusEnum.APPROVE);
+
+        List<String> orgIds = resultList.stream().map(WarehouseDTO.ListDTO::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+
+        for (WarehouseDTO.ListDTO listDTO : resultList) {
+            // 组织信息
+            String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+            listDTO.setOrgName(orgName);
+            if (!statusList.contains(listDTO.getApproveStatus())) {
+                listDTO.setDisabled(true);
+            }
+            //平台信息
+            OmsPlatformEnum platformEnum = this.checkAndGetPlatformInfo(listDTO, warehouseBindMap);
+            listDTO.setDictPlatform(null == platformEnum ? "" : platformEnum.getCode());
+            listDTO.setPlatformName(null == platformEnum ? "" : platformEnum.getName());
+        }
+    }
+
     /**
      * 检查绑定海外仓库服务商信息
      */

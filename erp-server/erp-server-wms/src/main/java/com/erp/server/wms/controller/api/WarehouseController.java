@@ -288,6 +288,20 @@ public class WarehouseController extends BaseController {
         return success(list);
     }
 
+
+    /**
+     * 远程分页下拉查询
+     * @author Will
+     * @date: 2024/5/24 13:06
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/selectPaging")
+    public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody @Validated PagingDTO<WarehouseDTO.SelectDTO> dto) {
+        PagingVO<WarehouseDTO.ListDTO> pagingVO = warehouseService.selectPaging(dto);
+        return success(pagingVO);
+    }
+
     /**
      * 根据sku查询仓库库存
      * @author Will

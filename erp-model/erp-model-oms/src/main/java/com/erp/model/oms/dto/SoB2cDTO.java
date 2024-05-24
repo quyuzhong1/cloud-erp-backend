@@ -512,6 +512,11 @@ public class SoB2cDTO implements Serializable {
         private String code;
 
         /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
          * 店铺名称
          */
         private String shopName;

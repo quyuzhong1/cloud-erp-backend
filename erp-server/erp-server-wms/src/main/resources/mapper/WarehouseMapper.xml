@@ -346,4 +346,44 @@
         </if>
         wh.kingdee_warehouse_code asc
     </select>
+
+    <select id="pagingSelect" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
+        select id,createUserName,createTime,name,typeId,chargeId,contacts,contactTelNumber,disabled,address,
+            warehouseManageType,geographyLocation,orgId,kingdeeWarehouseCode,isVirtual,approveStatus,isEnableLocation
+        from
+        (
+            select
+                wh.id,
+                wh.create_user_name AS createUserName,
+                wh.create_time AS createTime,
+                wh.name,
+                wh.type_id AS typeId ,
+                wh.charge_id AS chargeId,
+                wh.contacts,
+                wh.contact_tel_number AS contactTelNumber,
+                wh.disabled,
+                wh.address,
+                wh.warehouse_manage_type AS warehouseManageType,
+                wh.geography_location AS geographyLocation,
+                wh.org_id AS orgId,
+                wh.kingdee_warehouse_code AS kingdeeWarehouseCode,
+                wh.is_virtual AS isVirtual,
+                wh.approve_status AS approveStatus,
+                wh.is_enable_location as isEnableLocation
+            from warehouse wh
+            where
+            wh.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            </if>
+            order by
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                case when wh.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when wh.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when wh.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , wh.name,
+            </if>
+            wh.kingdee_warehouse_code asc
+        ) wls
+    </select>
 </mapper>

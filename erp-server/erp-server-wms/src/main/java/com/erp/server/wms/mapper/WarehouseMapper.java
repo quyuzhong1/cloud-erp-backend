@@ -50,4 +50,13 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
      * @return List<WarehouseEntity>
      */
     List<WarehouseEntity> listWarehouse(@Param("searchKeyword") String searchKeyword);
+    /**
+     * @description: 分页远程查询
+     * @author Will
+     * @date: 2024/5/24 12:58
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<WarehouseDTO.ListDTO> pagingSelect(Page query,@Param("params") WarehouseDTO.SelectDTO params);
 }

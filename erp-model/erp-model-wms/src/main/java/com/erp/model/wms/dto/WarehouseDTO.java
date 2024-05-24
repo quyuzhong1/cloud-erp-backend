@@ -621,6 +621,17 @@ public class WarehouseDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+
+    }
+
     /**
      * 分页参数
      */
