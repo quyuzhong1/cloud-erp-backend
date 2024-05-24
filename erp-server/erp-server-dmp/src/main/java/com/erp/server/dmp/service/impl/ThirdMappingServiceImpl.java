@@ -87,7 +87,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             handleData(thirdMappingEntity);
             log.info("开始新增第三方系统映射关系单");
             boolean save;
-            if (Objects.isNull(thirdMappingEntity.getThirdId())) {
+            if (Objects.isNull(thirdMappingEntity.getId())) {
                 save = super.save(thirdMappingEntity);
             } else {
                 save = super.updateById(thirdMappingEntity);
