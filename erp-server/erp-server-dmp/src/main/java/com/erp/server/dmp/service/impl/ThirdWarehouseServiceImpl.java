@@ -69,7 +69,7 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
             operationMsg="新增操作";
         }else{
             log.info("开始修改第三方系统仓库单");
-            save = super.save(thirdWarehouseEntity);
+            save = super.updateById(thirdWarehouseEntity);
             operationMsg="编辑操作";
         }
         if(!save) {

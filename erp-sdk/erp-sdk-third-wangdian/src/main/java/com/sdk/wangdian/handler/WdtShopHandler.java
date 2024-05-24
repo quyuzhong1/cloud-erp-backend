@@ -21,6 +21,8 @@ import com.sdk.wangdian.dto.WdtShopDto;
 import com.sdk.wangdian.dto.WdtShopDto;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.api.setting.SettingAPI;
+import com.sdk.wangdian.sdk.api.setting.dto.ShopQueryRequest;
+import com.sdk.wangdian.sdk.api.setting.dto.ShopQueryResponse;
 import com.sdk.wangdian.sdk.api.setting.dto.WarehouseQueryRequest;
 import com.sdk.wangdian.sdk.api.setting.dto.WarehouseQueryResponse;
 import com.sdk.wangdian.server.WangDianClientService;
@@ -78,13 +80,13 @@ public class WdtShopHandler implements IBusinessHandler<WdtShopDto, ErpShopDto> 
     }
 
     public List<WdtShopDto> download(JobTaskDTO task) {
-        WarehouseQueryRequest query = new WarehouseQueryRequest();
+        ShopQueryRequest query = new ShopQueryRequest();
 //        query.setWarehouseNo("");
 //        query.setWarehouseName("");
-        query.setType(WarehouseQueryRequest.TYPE_INNER);
-        query.setSubType(WarehouseQueryRequest.SUB_TYPE_WDT);
-        query.setStartTime(task.getLastTime().minusMinutes(15).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        query.setEndTime(task.getNextTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//        query.setType(WarehouseQueryRequest.TYPE_INNER);
+//        query.setSubType(WarehouseQueryRequest.SUB_TYPE_WDT);
+//        query.setStartTime(task.getLastTime().minusMinutes(15).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//        query.setEndTime(task.getNextTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 //        queryRequest.setHideDelete();
 
         Pager pager = new Pager();
@@ -93,30 +95,23 @@ public class WdtShopHandler implements IBusinessHandler<WdtShopDto, ErpShopDto> 
         pager.setCalcTotal(true);
 
         SettingAPI settingAPI = clientService.get(SettingAPI.class);
-        List<WarehouseQueryResponse.WarehouseDto> warehouseList = new ArrayList<>();
+        List<ShopQueryResponse.ShopDto> shopList = new ArrayList<>();
         boolean hasNext = true;
         int pageSize = 200;
 
         //分页循环拉取数据
-        while (hasNext) {
-            WarehouseQueryResponse response = null;
-            try {
-                response = settingAPI.queryWarehouse(query, pager);
-            } catch (Exception e) {
-                log.error("拉取旺店通仓库数据失败，原因【{}】", e.getMessage(), e);
-                return BeanMapperUtils.copyList(WdtShopDto.class, warehouseList);
-            }
-            if (response == null || response.getWarehouseList().isEmpty()) {
-                return BeanMapperUtils.copyList(WdtShopDto.class, warehouseList);
-            }
-            warehouseList.addAll(response.getWarehouseList());
-            Integer totalCount = response.getTotal();
-            if (totalCount <= pager.getPageNo() * pageSize) {
-                hasNext = false;
-            }
-            pager.setPageNo(pager.getPageNo() + 1);
+        ShopQueryResponse response = null;
+        try {
+            response = settingAPI.search(query, pager);
+        } catch (Exception e) {
+            log.error("拉取旺店通店铺数据失败，原因【{}】", e.getMessage(), e);
+            return BeanMapperUtils.copyList(WdtShopDto.class, shopList);
         }
-        return JSON.parseObject(JSON.toJSONString(warehouseList), new TypeReference<List<WdtShopDto>>(){});
+        if (response == null || response.getShopDtoList().isEmpty()) {
+            return BeanMapperUtils.copyList(WdtShopDto.class, shopList);
+        }
+        shopList.addAll(response.getShopDtoList());
+        return JSON.parseObject(JSON.toJSONString(shopList), new TypeReference<List<WdtShopDto>>(){});
     }
 
     public List<ErpShopDto> convert(List<WdtShopDto> sourceDataList) {
@@ -125,6 +120,7 @@ public class WdtShopHandler implements IBusinessHandler<WdtShopDto, ErpShopDto> 
             ErpShopDto target = new ErpShopDto();
             BeanUtils.copyProperties(source,target);
 
+            target.setShopId(String.valueOf(source.getShop_id()));
             target.setPlatformId(source.getPlatform_id());
             target.setSubPlatformId(source.getSub_platform_id());
             target.setDisabled(source.getIs_disabled());

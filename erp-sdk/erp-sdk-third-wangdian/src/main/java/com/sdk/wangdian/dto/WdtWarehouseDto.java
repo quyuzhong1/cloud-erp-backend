@@ -15,7 +15,14 @@ public class WdtWarehouseDto extends CleanBaseDTO {
      * 仓库id, 仓库唯一键
      */
     private Integer warehouse_id;
-
+    /**
+     * 子类型
+     */
+    private String sub_type;
+    /**
+     * 类型
+     */
+    private String type;
     /**
      * 仓库编号
      */

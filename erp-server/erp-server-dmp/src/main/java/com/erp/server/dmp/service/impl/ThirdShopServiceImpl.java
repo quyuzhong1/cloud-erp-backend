@@ -68,7 +68,7 @@ public class ThirdShopServiceImpl extends SuperServiceImpl<ThirdShopMapper, Thir
             operationMsg="新增操作";
         }else{
             log.info("开始修改第三方系统店铺单");
-            save = super.save(thirdShopEntity);
+            save = super.updateById(thirdShopEntity);
             operationMsg="编辑操作";
         }
         if (!save) {

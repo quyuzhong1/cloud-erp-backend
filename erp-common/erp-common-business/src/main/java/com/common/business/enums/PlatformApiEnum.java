@@ -132,6 +132,8 @@ public enum PlatformApiEnum {
     //----------------------------------------------------------旺店通----------------------------------------------------------------------------
     WANGDIAN_TRADE(100, "wangdian.trade", MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, TaskConstant.WANGDIAN_PULL_DATA_TASK),
     WANGDIAN_RETURN_ORDER(101, "wangdian.return.order", MongoTableNameContant.ORIGNAL_WANGDIAN_ORDER, TaskConstant.WANGDIAN_PULL_DATA_TASK),
+    WANGDIAN_SHOP(102, "setting.Shop.queryShop", MongoTableNameContant.ORIGNAL_WANGDIAN_SHOP, TaskConstant.WANGDIAN_PULL_DATA_TASK),
+    WANGDIAN_WAREHOUSE(103, "setting.Warehouse.queryWarehouse", MongoTableNameContant.ORIGNAL_WANGDIAN_WAREHOUSE, TaskConstant.WANGDIAN_PULL_DATA_TASK),
     ;
 
     /** 状态码 */

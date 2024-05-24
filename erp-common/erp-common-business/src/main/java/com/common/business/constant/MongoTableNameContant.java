@@ -243,6 +243,8 @@ public interface MongoTableNameContant {
     String ORIGINAL_LX_FBA_SHIPMENT_RECEIVE = "original_lx_fba_shipment_receive";
 
     String ORIGNAL_WANGDIAN_ORDER = "orignal_wangdian_order";
+    String ORIGNAL_WANGDIAN_WAREHOUSE = "orignal_wangdian_warehouse";
+    String ORIGNAL_WANGDIAN_SHOP = "orignal_wangdian_shop";
     /**
      * 根据任务 key 获取表名
      *
@@ -262,7 +264,7 @@ public interface MongoTableNameContant {
             case TaskConstant.LX_PULL_DATA_TASK:
                 return Arrays.asList(ORIGINAL_LX_SHOP_LIST, ORIGINAL_LX_FBA_SHIPMENT_RECEIVE);
             case TaskConstant.WANGDIAN_PULL_DATA_TASK:
-                return Arrays.asList(ORIGNAL_WANGDIAN_ORDER);
+                return Arrays.asList(ORIGNAL_WANGDIAN_ORDER,ORIGNAL_WANGDIAN_WAREHOUSE,ORIGNAL_WANGDIAN_SHOP);
             default:
                 return Collections.EMPTY_LIST;
         }
