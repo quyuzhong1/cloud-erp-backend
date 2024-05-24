@@ -140,17 +140,17 @@ public class SpElServerImpl implements SpElServer {
     }
 
     @Override
-    public Boolean matchDetailExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> detailMap) {
-        SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, detailMap);
+    public Boolean matchDetailExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj) {
+        SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, obj);
         List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
         for (SpElAddFieldDTO item : addFieldList) {
             //原始字段
             String originalField = item.getOriginalField();
-            Object value = detailMap.get(originalField);
+            Object value = obj.get(originalField);
             String addField = item.getNeedAddField();
-            detailMap.put(addField, value);
+            obj.put(addField, value);
         }
-        return matchExpressionWithVariable(spElDTO, detailMap);
+        return matchExpressionWithVariable(spElDTO, obj);
 
     }
 
@@ -200,26 +200,28 @@ public class SpElServerImpl implements SpElServer {
             //值的类型
             String valueType = element.getValueType();
             Object conversionValue = conversionValue(value, valueType);
-            Boolean isStr="String".equals(valueType);
+            Boolean isStr = "String".equals(valueType);
 
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
-                String content = getContent(field,compare,conversionValue,isStr);
+                String content = getContent(field,compare,conversionValue,isStr, new HashMap<>());
                 RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
                         case CONTAINS:
                             String addField = getAddField(field, addFieldList);
                             content = getContentList(field,addField,compare,conversionValue,spElDTO, new HashMap<>());
-//                            String addField = getAddField(field, addFieldList);
-//                            content = getContent(addField,compare,conversionValue,isStr);
-//                            content = convertToContainsExpression(content);
                             break;
                         case NOT_CONTAINS:
                             String addField1 = getAddField(field, addFieldList);
                             content = getContentList(field,addField1,compare,conversionValue,spElDTO, new HashMap<>());
-//                            String addField1 = getAddField(field, addFieldList);
-//                            content = getContent(addField1,compare,conversionValue,isStr);
-//                            content = convertToNotContainsExpression(content);
+                            break;
+                        case IN_LIST:
+                            String addField2 = getAddField(field, addFieldList);
+                            content = getContentList(field,addField2,compare,value,spElDTO, new HashMap<>());
+                            break;
+                        case NOT_IN_LIST:
+                            String addField3 = getAddField(field, addFieldList);
+                            content = getContentList(field,addField3,compare,value,spElDTO, new HashMap<>());
                             break;
                         case IS_NULL:
                             content = convertToIsNullMapExpression(field);
@@ -272,43 +274,31 @@ public class SpElServerImpl implements SpElServer {
             fieldStr = "";
         }
         String[] split1 = fieldStr.split(",");
-        if (RuleCompareEnum.CONTAINS.getCode().equals(compare)){
-            //包含存在多个用or 并用()包括
-            if (split1.length > 1){
-                sb.append("(");
-                for (int i = 0; i < split1.length; i++) {
-                    sb.append("#").append(addField);
-                    sb.append(".").append(compare);
-                    sb.append("('").append(split1[i]).append("')");
-                    if (i + 1 < split1.length){
-                        sb.append(" or ");
-                    }
+        if (split1.length > 1){
+            sb.append("(");
+            for (int i = 0; i < split1.length; i++) {
+                if (RuleCompareEnum.CONTAINS.getCode().equals(compare) || RuleCompareEnum.IN_LIST.getCode().equals(compare)){
+                    sb.append("#").append(addField).append(".contains");
+                }else if (RuleCompareEnum.NOT_CONTAINS.getCode().equals(compare) || RuleCompareEnum.NOT_IN_LIST.getCode().equals(compare)){
+                    sb.append("!#").append(addField).append(".contains");
                 }
-                sb.append(")");
-            }else {
-                sb.append("#").append(addField);
-                sb.append(".").append(compare);
-                sb.append("('").append(fieldStr).append("')");
-            }
-
-        }else if (RuleCompareEnum.NOT_CONTAINS.getCode().equals(compare)){
-            //不包含存在多个用and 并用()包括
-            if (split1.length > 1){
-                sb.append("(");
-                for (int i = 0; i < split1.length; i++) {
-                    sb.append("!#").append(addField);
-                    sb.append(".").append(RuleCompareEnum.CONTAINS.getCode());
-                    sb.append("('").append(split1[i]).append("')");
-                    if (i + 1 < split1.length){
+                sb.append("('").append(split1[i]).append("')");
+                if (i + 1 < split1.length){
+                    if (RuleCompareEnum.CONTAINS.getCode().equals(compare) || RuleCompareEnum.NOT_CONTAINS.getCode().equals(compare)){
+                        sb.append(" or ");
+                    }else if (RuleCompareEnum.IN_LIST.getCode().equals(compare) || RuleCompareEnum.NOT_IN_LIST.getCode().equals(compare)){
                         sb.append(" and ");
                     }
                 }
-                sb.append(")");
-            }else {
-                sb.append("!#").append(addField);
-                sb.append(".").append(RuleCompareEnum.CONTAINS.getCode());
-                sb.append("('").append(fieldStr).append("')");
             }
+            sb.append(")");
+        }else {
+            if (RuleCompareEnum.CONTAINS.getCode().equals(compare) || RuleCompareEnum.IN_LIST.getCode().equals(compare)){
+                sb.append("#").append(addField).append(".contains");
+            }else if (RuleCompareEnum.NOT_CONTAINS.getCode().equals(compare) || RuleCompareEnum.NOT_IN_LIST.getCode().equals(compare)){
+                sb.append("!#").append(addField).append(".contains");
+            }
+            sb.append("('").append(fieldStr).append("')");
         }
         Map<String, Object> variables = spElDTO.getVariables();
         //对于非数组 就传递字符串
@@ -323,27 +313,55 @@ public class SpElServerImpl implements SpElServer {
 
     /**
      * 获取contemt的值
+     *
+     * @param field       字段
+     * @param compare     比较符号
+     * @param targetValue 目标值
+     * @param isStr       是否是String
+     * @param obj
+     * @return
      * @author yl
      * @date 2023-12-06 15:27
-     * @param field 字段
-     * @param compare 比较符号
-     * @param targetValue 目标值
-     * @param isStr 是否是String
-     * @return
      */
 
-    private String getContent(String field, String compare, Object targetValue,Boolean isStr) {
-        StringBuilder sb=new StringBuilder("['");
-        sb.append(field).append("'] ");
-        sb.append(compare);
-        sb.append(" ");
-        if(isStr){
-            sb.append("'");
-            sb.append(targetValue);
-            sb.append("'");
-        }else{
-            sb.append(targetValue);
+    private String getContent(String field, String compare, Object targetValue, Boolean isStr, Map<String, Object> obj) {
+        StringBuilder sb=new StringBuilder();
+        //需要适配(订单-明细)级别比较 x-(a,b)
+        Object filedValueObj = obj.get(field);
+        //不为空，且是string类型 且字段存在明细汇总到订单中
+        if (Objects.nonNull(filedValueObj) && filedValueObj instanceof String && ((String) filedValueObj).contains(",")){
+            String[] split = filedValueObj.toString().split(",");
+            sb.append("(");
+            for (int i = 0; i < split.length; i++) {
+
+                if(isStr){
+                    sb.append("'").append(split[i]).append("'");
+                    sb.append(" ").append(compare).append(" ");
+                    sb.append("'").append(targetValue).append("'");
+                }else{
+                    sb.append(split[i]);
+                    sb.append(" ").append(compare).append(" ");
+                    sb.append(targetValue);
+                }
+                if (i + 1 < split.length){
+                    sb.append(" and ");
+                }
+            }
+            sb.append(")");
+        }else {
+            sb.append("['");
+            sb.append(field).append("'] ");
+            sb.append(compare);
+            sb.append(" ");
+            if(isStr){
+                sb.append("'");
+                sb.append(targetValue);
+                sb.append("'");
+            }else{
+                sb.append(targetValue);
+            }
         }
+
         return sb.toString();
     }
 
@@ -413,16 +431,18 @@ public class SpElServerImpl implements SpElServer {
                         case CONTAINS:
                             String addField = getAddField(field, addFieldList);
                             content = getContentList(field,addField,compare,value,spElDTO, new HashMap<>());
-//                            String addField = getAddField(field, addFieldList);
-//                            content = new StringBuilder("['").append(addField).append("'] ").append(compare).append(" '").append(value).append("'").toString();
-//                            content = convertToContainsExpression(content);
                             break;
                         case NOT_CONTAINS:
                             String addField1 = getAddField(field, addFieldList);
                             content = getContentList(field,addField1,compare,value,spElDTO, new HashMap<>());
-//                            String addField1 = getAddField(field, addFieldList);
-//                            content = new StringBuilder("['").append(addField1).append("'] ").append(compare).append(" '").append(value).append("'").toString();
-//                            content = convertToNotContainsExpression(content);
+                            break;
+                        case IN_LIST:
+                            String addField2 = getAddField(field, addFieldList);
+                            content = getContentList(field,addField2,compare,value,spElDTO, new HashMap<>());
+                            break;
+                        case NOT_IN_LIST:
+                            String addField3 = getAddField(field, addFieldList);
+                            content = getContentList(field,addField3,compare,value,spElDTO, new HashMap<>());
                             break;
                         case IS_NULL:
                             content = convertToIsNullObjExpression(field);
@@ -482,12 +502,6 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     private String convertToIsNullMapExpression(String field) {
-//        StringBuilder sb=new StringBuilder();
-//        sb.append("#").append(field);
-//        sb.append(" == null || ");
-//        sb.append("#").append(field);
-//        sb.append(" == ''");
-//        return sb.toString();
         StringBuilder expression = new StringBuilder();
         expression.append("['").append(field).append("']");
         expression.append(" == null || ");
@@ -563,10 +577,10 @@ public class SpElServerImpl implements SpElServer {
      * 获取到 传值为map 的 表达式
      *
      * @param conditionElementList
-     * @param detailMap
+     * @param obj
      * @return
      */
-    private SpElExpressionDTO conditionExpressionByMap(List<ConditionElement> conditionElementList, Map<String, Object> detailMap) {
+    private SpElExpressionDTO conditionExpressionByMap(List<ConditionElement> conditionElementList, Map<String, Object> obj) {
         SpElExpressionDTO spElDTO = new SpElExpressionDTO();
         //需要加的字段
         List<SpElAddFieldDTO> addFieldList = new ArrayList<>(5);
@@ -592,17 +606,25 @@ public class SpElServerImpl implements SpElServer {
             Object conversionValue = conversionValue(value, valueType);
             Boolean isStr = "String".equals(valueType);
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
-                String content = getContent(field,compare,conversionValue,isStr);
+                String content = getContent(field,compare,conversionValue,isStr, obj);
                 RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
                         case CONTAINS:
                             String addField = getAddField(field, addFieldList);
-                            content = getContentList(field,addField,compare,conversionValue,spElDTO, detailMap);
+                            content = getContentList(field,addField,compare,conversionValue,spElDTO, obj);
                             break;
                         case NOT_CONTAINS:
                             String addField1 = getAddField(field, addFieldList);
-                            content = getContentList(field, addField1,compare,conversionValue,spElDTO, detailMap);
+                            content = getContentList(field, addField1,compare,conversionValue,spElDTO, obj);
+                            break;
+                        case IN_LIST:
+                            String addField2 = getAddField(field, addFieldList);
+                            content = getContentList(field,addField2,compare,value,spElDTO, new HashMap<>());
+                            break;
+                        case NOT_IN_LIST:
+                            String addField3 = getAddField(field, addFieldList);
+                            content = getContentList(field,addField3,compare,value,spElDTO, new HashMap<>());
                             break;
                         case IS_NULL:
                             content = convertToIsNullMapExpression(field);
