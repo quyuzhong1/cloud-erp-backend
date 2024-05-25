@@ -236,7 +236,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //扣减库存
         InventoryInOutStockRuleDTO inventoryInOutStockDTO = getInventoryInOutStockRuleDTO(inOutStockList);
         if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
-            inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
+//            inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
         }
         //推送金蝶
         sendPushTask(soOutstock);
@@ -244,7 +244,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     private void sendPushTask(SoOutstockEntity obj) {
         //审核通过发送金蝶
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeSoOutstockService.syncB2cDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeSoOutstockService.syncWdtDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
         //推送金蝶
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
