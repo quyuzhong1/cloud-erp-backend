@@ -242,7 +242,15 @@ public interface MongoTableNameContant {
      */
     String ORIGINAL_LX_FBA_SHIPMENT_RECEIVE = "original_lx_fba_shipment_receive";
 
-    String ORIGNAL_WANGDIAN_ORDER = "orignal_wangdian_order";
+    /**
+     * 旺店通销售出库单
+     */
+    String THIRD_SYSTEM_WDT_SELL_STOCK_OUT_ORDER = "third_system_wdt_sell_stock_out_order";
+
+    /**
+     * 旺店通销售出库单
+     */
+    String THIRD_SYSTEM_WDT_RETURN_STOCK_OUT_ORDER = "third_system_wdt_return_stock_out_order";
     String ORIGNAL_WANGDIAN_WAREHOUSE = "orignal_wangdian_warehouse";
     String ORIGNAL_WANGDIAN_SHOP = "orignal_wangdian_shop";
     /**
@@ -263,8 +271,8 @@ public interface MongoTableNameContant {
                 return Arrays.asList(ORIGINAL_IML_INBOUND_ORDER);
             case TaskConstant.LX_PULL_DATA_TASK:
                 return Arrays.asList(ORIGINAL_LX_SHOP_LIST, ORIGINAL_LX_FBA_SHIPMENT_RECEIVE);
-            case TaskConstant.WANGDIAN_PULL_DATA_TASK:
-                return Arrays.asList(ORIGNAL_WANGDIAN_ORDER,ORIGNAL_WANGDIAN_WAREHOUSE,ORIGNAL_WANGDIAN_SHOP);
+            case TaskConstant.WDT_PULL_DATA_TASK:
+                return Arrays.asList(THIRD_SYSTEM_WDT_SELL_STOCK_OUT_ORDER, THIRD_SYSTEM_WDT_RETURN_STOCK_OUT_ORDER,ORIGNAL_WANGDIAN_WAREHOUSE,ORIGNAL_WANGDIAN_SHOP);
             default:
                 return Collections.EMPTY_LIST;
         }

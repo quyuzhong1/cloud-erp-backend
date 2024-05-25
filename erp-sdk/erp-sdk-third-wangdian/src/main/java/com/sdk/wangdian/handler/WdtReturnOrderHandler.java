@@ -22,11 +22,13 @@ import com.sdk.wangdian.sdk.api.wms.stockin.dto.RefundStockinResponse;
 import com.sdk.wangdian.server.WangDianClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -46,6 +48,9 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
 
     @Override
     public List<WdtReturnOrderDTO> convert(List<WangDianReturnOrderEntity> sourceDataList) {
+        if (CollectionUtils.isEmpty(sourceDataList)){
+            return Collections.emptyList();
+        }
         return convertWdtReturnOrder(sourceDataList);
     }
 

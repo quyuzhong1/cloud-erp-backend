@@ -225,5 +225,9 @@ public class WdtSoOutStockDTO extends UniqueDto {
 
     private String shopId;
 
+    private String shopName;
+
+    private String shopNo;
+
     private List<WdtSoOutStockDetailDTO> detailList;
 }

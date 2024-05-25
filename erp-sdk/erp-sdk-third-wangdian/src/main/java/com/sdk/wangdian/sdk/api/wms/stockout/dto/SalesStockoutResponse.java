@@ -273,17 +273,17 @@ public class SalesStockoutResponse {
          * 出库单ID
          */
         @SerializedName("shop_id")
-        private Integer shopId;
+        private String shopId;
         /**
          * 仓库id
          */
         @SerializedName("warehouse_id")
-        private Integer warehouseId;
+        private String warehouseId;
         /**
          * 物流id
          */
         @SerializedName("logistics_id")
-        private Integer logisticsId;
+        private String logisticsId;
 
         /**
          * 异常原因

@@ -2,7 +2,6 @@ package com.erp.server.dmp.pull.schedule;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.TaskConstant;
-import com.common.business.enums.PlatformDictEnum;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -35,7 +34,7 @@ public class PullWangDianJob {
 //        threadPoolTaskExecutor.execute(() -> pullErpDateThread.executeTask(TaskConstant.WANGDIAN_PULL_DATA_TASK));
 
         // 分组查询
-        List<String> groupIds = platformApiTaskService.findGroupIdByPlatform(TaskConstant.WANGDIAN_PULL_DATA_TASK);
+        List<String> groupIds = platformApiTaskService.findGroupIdByPlatform(TaskConstant.WDT_PULL_DATA_TASK);
         if (CollectionUtils.isEmpty(groupIds)) {
             XxlJobHelper.log("[拉取wangdian任务] 任务结束:无任务 =====");
             return;
