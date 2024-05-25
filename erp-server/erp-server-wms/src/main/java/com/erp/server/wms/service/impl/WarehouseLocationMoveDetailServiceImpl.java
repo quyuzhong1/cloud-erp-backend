@@ -139,7 +139,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                 throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
             }
             detailEntity.setMainId(mainId);
-            if (StringUtils.isBlank(warehouseId) || !Objects.equals(detailEntity.getWarehouseId(),warehouseId)){
+            if (StringUtils.isNotBlank(warehouseId)){
                 detailEntity.setWarehouseId(warehouseId);
                 detailEntity.setWarehouseName(warehouseEntity.getName());
             }
