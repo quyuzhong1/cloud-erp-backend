@@ -71,7 +71,7 @@ public class RefundStockinResponse {
     public static class OrderInfoDto {
         private String orderNo;
         private String createdTime;
-        private Integer stockinId;
+        private String stockinId;
         private String customerNo;
         private BigDecimal totalPrice;
         private String refundNo;
@@ -93,7 +93,7 @@ public class RefundStockinResponse {
         private String stockinTime;
         @SerializedName("tid_list")
         private String tidList;
-        private Integer status;
+        private String status;
         private String checkTime;
         private String shopNo;
         @SerializedName("details_list")

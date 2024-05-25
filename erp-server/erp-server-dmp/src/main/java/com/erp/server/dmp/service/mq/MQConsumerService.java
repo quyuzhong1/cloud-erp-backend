@@ -19,7 +19,6 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
-import com.erp.model.dmp.wdt.WangDianOrderEntity;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
@@ -442,21 +441,6 @@ public class MQConsumerService {
         public void onMessage(DmpSyncMqDTO.ParamDTO paramDTO) {
             log.info("监听到DMP同步任务回调：entity={}", JSONUtil.toJsonStr(paramDTO));
             dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
-        }
-    }
-
-    /**
-     * 金蝶同步b2c销售出库单保存任务
-     */
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
-            selectorExpression = "wdt_delivery_order_wms_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_so_outstock_consumer")
-    public class ConsumerWdtSoOutstockInfo implements RocketMQListener<WangDianOrderEntity> {
-        @Override
-        public void onMessage(WangDianOrderEntity ext) {
-            log.info("监听旺店通B2C销售出库单信息消息：entity={}", JSONUtil.toJsonStr(ext));
-            deliveryDetailInfoService.syncTask(ext);
         }
     }
 

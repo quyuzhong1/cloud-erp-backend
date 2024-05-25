@@ -1,59 +1,32 @@
 package com.sdk.wangdian.sdk.api.wms.stockin.dto;
 
+import com.google.gson.annotations.SerializedName;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class RefundStockinRequest {
 
-    private String startTime ;
-    private String endTime ;
-    private Integer status ;
-    private String warehouseNo ;
-    private String stockinNo ;
-    private String refundNo ;
+    @SerializedName("start_time")
+    private String startTime;
+    @SerializedName("end_time")
+    private String endTime;
+    @SerializedName("status")
+    private String status;
+    @SerializedName("warehouse_no")
+    private String warehouseNo;
+    @SerializedName("stockin_no")
+    private String stockinNo;
+    @SerializedName("refund_no")
+    private String refundNo;
+    @SerializedName("shop_nos")
+    private String shopNos;
+    @SerializedName("time_type")
+    private String timeType;
+    @SerializedName("is_slave")
+    private Boolean isSlave = false;
+    @SerializedName("need_sn")
+    private Boolean needSn;
 
-    public String getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(String startTime) {
-        this.startTime = startTime;
-    }
-
-    public String getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(String endTime) {
-        this.endTime = endTime;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    public String getWarehouseNo() {
-        return warehouseNo;
-    }
-
-    public void setWarehouseNo(String warehouseNo) {
-        this.warehouseNo = warehouseNo;
-    }
-
-    public String getStockinNo() {
-        return stockinNo;
-    }
-
-    public void setStockinNo(String stockinNo) {
-        this.stockinNo = stockinNo;
-    }
-
-    public String getRefundNo() {
-        return refundNo;
-    }
-
-    public void setRefundNo(String refundNo) {
-        this.refundNo = refundNo;
-    }
 }

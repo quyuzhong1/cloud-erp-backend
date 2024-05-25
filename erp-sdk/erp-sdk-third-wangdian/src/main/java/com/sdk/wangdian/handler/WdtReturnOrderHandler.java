@@ -1,8 +1,6 @@
 package com.sdk.wangdian.handler;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -11,10 +9,8 @@ import com.common.business.dto.WdtReturnOrderDTO;
 import com.common.business.dto.WdtReturnOrderDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractSoOutStockHandler;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.wdt.WangDianReturnOrderEntity;
+import com.sdk.wangdian.dto.WangDianReturnOrderEntity;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.api.wms.stockin.StockinAPI;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.RefundStockinRequest;
@@ -25,11 +21,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -43,7 +42,10 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
 
     @Override
     public List<WangDianReturnOrderEntity> download(JobTaskDTO data) {
-        return pullData(data);
+        List<RefundStockinResponse.OrderInfoDto> dtos = pullData(data);
+        return dtos.stream()
+                .map(e -> new WangDianReturnOrderEntity(e, data))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -60,16 +62,16 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
     }
 
 
-    private List<WangDianReturnOrderEntity> pullData(JobTaskDTO dto) {
+    private List<RefundStockinResponse.OrderInfoDto> pullData(JobTaskDTO dto) {
         List<RefundStockinResponse.OrderInfoDto> result = new ArrayList<>();
         StockinAPI stockinAPI = wangDianClientService.get(StockinAPI.class);
         RefundStockinRequest request = new RefundStockinRequest();
-
-        request.setStatus(80);
+        request.setStatus("80");
         request.setStartTime(dto.getLastTime().minusMinutes(15).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         request.setEndTime(dto.getNextTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         Pager pager = new Pager();
         int pageSize = 200;
+        pager.setCalcTotal(true);
         pager.setPageSize(pageSize);
         pager.setPageNo(0);
         boolean hasNext = true;
@@ -79,53 +81,65 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
                 response = stockinAPI.searchRefund(request, pager);
             } catch (Exception e) {
                 log.error("拉取旺店通销售出库单失败，原因【{}】", e.getMessage(), e);
-                return BeanMapperUtils.copyList(WangDianReturnOrderEntity.class, result);
+                return result;
             }
             if (ObjectUtil.isEmpty(response) || ObjectUtil.isEmpty(response.getOrders())) {
-                return BeanMapperUtils.copyList(WangDianReturnOrderEntity.class, result);
+                return result;
             }
             result.addAll(response.getOrders());
             Integer totalCount = response.getTotal();
+            pager.setPageNo(pager.getPageNo() + 1);
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
-            pager.setPageNo(pager.getPageNo() + 1);
         }
-        return JSON.parseObject(JSON.toJSONString(result), new TypeReference<List<WangDianReturnOrderEntity>>() {
-        });
+        return result;
     }
 
     private List<WdtReturnOrderDTO> convertWdtReturnOrder(List<WangDianReturnOrderEntity> sourceDataList) {
 
         List<WdtReturnOrderDTO> dtoList = new ArrayList<>();
-        for (WangDianReturnOrderEntity orderEntity : sourceDataList) {
+        for (WangDianReturnOrderEntity entity : sourceDataList) {
+            RefundStockinResponse.OrderInfoDto orderEntity = entity.getOrderInfoDto();
             WdtReturnOrderDTO dto = new WdtReturnOrderDTO();
             dto.setThirdCode(orderEntity.getOrderNo());
             dto.setWarehouseId(orderEntity.getWarehouseId());
             dto.setApproveStatus(ApproveStatusEnum.APPROVE.getCode());
             dto.setType(OrderTypeEnum.B2C.getCode());
-            dto.setBillDate(LocalDateTime.parse(orderEntity.getCheckTime(), DateTimeFormatter.ofPattern(DateUtil.fmt)).toLocalDate());
+            LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(orderEntity.getCheckTime())), ZoneId.systemDefault());
+            dto.setBillDate(approveTime.toLocalDate());
             dto.setInvalidStatus(false);
             dto.setApproveUserName("wangdaintong");
             dto.setCreateUserName("wangdaintong");
-            dto.setApproveTime(LocalDateTime.parse(orderEntity.getCheckTime(), DateTimeFormatter.ofPattern(DateUtil.fmt)));
-            dto.setWarehouseId(orderEntity.getWarehouseId());
+            dto.setApproveTime(approveTime);
+            //店铺id
             dto.setShopId(orderEntity.getShopId());
+            dto.setShopName(orderEntity.getShopName());
+            dto.setShopNo(orderEntity.getShopNo());
+            //仓库id
+            dto.setWarehouseId(orderEntity.getWarehouseId());
+            dto.setWarehouseName(orderEntity.getWarehouseName());
             dto.setSourceType(SourceTypeEnum.WDT_RETURN_ORDER.getCode());
             dto.setSourceId(orderEntity.getTidList());
             dto.setSourceCode(orderEntity.getTradeNoList());
             List<WdtReturnOrderDetailDTO> detailList = new ArrayList<>();
-            for (WangDianReturnOrderEntity.OrderDetailInfoDto infoDto : orderEntity.getDetailList()) {
+            for (RefundStockinResponse.OrderDetailInfoDto infoDto : orderEntity.getDetailList()) {
                 WdtReturnOrderDetailDTO detail = getDetail(orderEntity, infoDto);
                 detailList.add(detail);
             }
             dto.setDetailList(detailList);
+            // 平台类型
+            dto.setPlatform(entity.getPlatform());
+            // 唯一ID
+            dto.setUniqueId(entity.getUniqueId());
+            // 同步任务ID
+            dto.setDmpSyncTaskId(entity.getDmpSyncTaskId());
             dtoList.add(dto);
         }
         return dtoList;
     }
 
-    private static WdtReturnOrderDetailDTO getDetail(WangDianReturnOrderEntity orderEntity, WangDianReturnOrderEntity.OrderDetailInfoDto infoDto) {
+    private static WdtReturnOrderDetailDTO getDetail(RefundStockinResponse.OrderInfoDto orderEntity, RefundStockinResponse.OrderDetailInfoDto infoDto) {
         WdtReturnOrderDetailDTO detail = new WdtReturnOrderDetailDTO();
         detail.setSkuNo(infoDto.getSpecNo());
         detail.setMustQty(infoDto.getExpectNum().intValue());

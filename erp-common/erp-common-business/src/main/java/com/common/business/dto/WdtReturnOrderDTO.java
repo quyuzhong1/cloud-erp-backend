@@ -12,6 +12,7 @@ import java.util.List;
 @Setter
 @EqualsAndHashCode(callSuper = false)
 public class WdtReturnOrderDTO extends UniqueDto {
+
     /**
      * 审核状态
      */
@@ -74,6 +75,11 @@ public class WdtReturnOrderDTO extends UniqueDto {
      * 创建人名称
      */
     private String createUserName;
+
+
+    private String shopName;
+
+    private String shopNo;
 
     private List<WdtReturnOrderDetailDTO> detailList;
 }

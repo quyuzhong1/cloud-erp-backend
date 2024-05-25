@@ -155,6 +155,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
         Pager pager = new Pager();
         int pageSize = 200;
         pager.setPageSize(pageSize);
+        pager.setCalcTotal(true);
         pager.setPageNo(0);
         boolean hasNext = true;
         while (hasNext) {
@@ -170,10 +171,10 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             }
             result.addAll(response.getOrderList());
             Integer totalCount = response.getTotal();
+            pager.setPageNo(pager.getPageNo() + 1);
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
-            pager.setPageNo(pager.getPageNo() + 1);
         }
         return result;
     }

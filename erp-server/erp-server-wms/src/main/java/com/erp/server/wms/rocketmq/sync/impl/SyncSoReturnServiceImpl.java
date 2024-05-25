@@ -228,8 +228,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         List<ThirdMappingEntity> shop = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
                 .eq(ThirdMappingEntity::getThirdSysType, ThirdSysTypeEnum.WANGDIAN.getCode())
-                .eq(ThirdMappingEntity::getThirdId, dto.getShopId()));
-        if (org.apache.commons.collections4.CollectionUtils.isEmpty(shop)) {
+                .eq(ThirdMappingEntity::getThirdCode, dto.getShopId()));
+        if (CollectionUtils.isEmpty(shop)) {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, dto.getShopId());
         }
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
@@ -237,8 +237,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         List<ThirdMappingEntity> warehouseList = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.WAREHOUSE.getCode())
                 .eq(ThirdMappingEntity::getThirdSysType, ThirdSysTypeEnum.WANGDIAN.getCode())
-                .eq(ThirdMappingEntity::getThirdId, inStockEntity.getWarehouseId()));
-        if (org.apache.commons.collections4.CollectionUtils.isEmpty(warehouseList)) {
+                .eq(ThirdMappingEntity::getThirdCode, inStockEntity.getWarehouseId()));
+        if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, inStockEntity.getWarehouseName());
         }
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
@@ -248,10 +248,10 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         inStockEntity.setWarehouseId(warehouse.getId());
         inStockEntity.setWarehouseId(warehouse.getName());
         inStockEntity.setSalesOrgId(shopInfo.getSalesOrgId());
-        inStockEntity.setSalesOrgId(shopInfo.getSalesOrgName());
+        inStockEntity.setSalesOrgName(shopInfo.getSalesOrgName());
         inStockEntity.setInventoryOrgId(company.getId());
         if (ObjectUtil.isNotEmpty(company)) {
-            inStockEntity.setInventoryOrgId(company.getCompanyName());
+            inStockEntity.setInventoryOrgName(company.getCompanyName());
         }
         inStockEntity.setCustomerId(shopInfo.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfo)) {
