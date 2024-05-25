@@ -236,7 +236,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //扣减库存
         InventoryInOutStockRuleDTO inventoryInOutStockDTO = getInventoryInOutStockRuleDTO(inOutStockList);
         if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
-//            inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
+            inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
         }
         //推送金蝶
         sendPushTask(soOutstock);
