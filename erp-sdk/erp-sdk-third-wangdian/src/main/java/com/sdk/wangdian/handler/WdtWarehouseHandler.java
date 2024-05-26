@@ -81,7 +81,6 @@ public class WdtWarehouseHandler implements IBusinessHandler<WdtWarehouseDto, Er
 //        query.setSubType(WarehouseQueryRequest.SUB_TYPE_WDT);
         query.setStartTime(task.getLastTime().minusMinutes(15).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         query.setEndTime(task.getNextTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-//        queryRequest.setHideDelete();
 
         Pager pager = new Pager();
         pager.setPageNo(0);
@@ -107,7 +106,7 @@ public class WdtWarehouseHandler implements IBusinessHandler<WdtWarehouseDto, Er
             }
             warehouseList.addAll(response.getWarehouseList());
             Integer totalCount = response.getTotal();
-            if (totalCount <= pager.getPageNo() * pageSize) {
+            if (totalCount <= (pager.getPageNo() + 1) * pageSize) {
                 hasNext = false;
             }
             pager.setPageNo(pager.getPageNo() + 1);
@@ -118,11 +117,11 @@ public class WdtWarehouseHandler implements IBusinessHandler<WdtWarehouseDto, Er
     public List<ErpWarehouseDto> convert(List<WdtWarehouseDto> sourceDataList) {
         List<ErpWarehouseDto> targetList = new ArrayList<>();
         for (WdtWarehouseDto source : sourceDataList) {
+            source.setUniqueId(String.valueOf(source.getWarehouse_id()));
             ErpWarehouseDto target = new ErpWarehouseDto();
             target.setDisabled(source.getIs_disabled());
             target.setSysType(ThirdSysTypeEnum.WANGDIAN.getCode());
             target.setWarehouseId(String.valueOf(source.getWarehouse_id()));
-            target.setWarehouseId(source.getWarehouse_no());
             target.setType(source.getType());
             target.setSubType(source.getSub_type());
             target.setCode(source.getWarehouse_no());
