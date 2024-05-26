@@ -674,10 +674,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
 
             //同步旺店通
-            list.forEach(obj -> {
-                //同步旺店通
-                syncApproveInStockToWdt(obj);
-            });
+            list.forEach(obj -> syncApproveInStockToWdt(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //中止当前审核流程
 
@@ -692,12 +689,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     /**
      * 将审核通过的采购入库单转换为其他入库单推送到旺店通
+     *
      * @param entity 采购入库单 PoInstockEntity
+     * @param code
      * @return void
      * @date: 2024-05-20
      * @author: tanmujin
      */
-    private void syncApproveInStockToWdt(PoInstockEntity entity) {
+    private void syncApproveInStockToWdt(PoInstockEntity entity, String operateCode) {
         List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
@@ -712,7 +711,16 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             goodsList.add(good);
         });
 
-        syncWdtOtherInStockService.syncDataToWdt(goodsList, entity.getDeliveryWarehouseId(), null);
+        //发送任务
+        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, entity.getDeliveryWarehouseId());
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, inEntity, operateCode);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
     }
 
     private void setFirstMassInstock(List<String> ids) {
@@ -778,26 +786,28 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //反审核通过发送金蝶
         sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-        list.forEach(obj -> {
-            //发送旺店通
-            syncDisApproveInStockToWdt(obj);
-        });
+
+        //反审核通过发送旺店通
+        list.forEach(obj -> syncDisApproveInStockToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return Boolean.TRUE;
     }
 
     /**
      * 将反审核通过的采购入库单转换为其他出库推送给旺店通
+     *
      * @param entity 采购入库单
+     * @param operateCode
      * @return void
      * @date: 2024-05-20
      * @author: tanmujin
      */
-    private void syncDisApproveInStockToWdt(PoInstockEntity entity) {
+    private void syncDisApproveInStockToWdt(PoInstockEntity entity, String operateCode) {
         List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
         }
 
+        //组装SKU
         List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
         detailList.forEach(item -> {
             CreateOtherStockoutRequest.GoodsList good = new CreateOtherStockoutRequest.GoodsList();
@@ -807,7 +817,16 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             goodsList.add(good);
         });
 
-        syncWdtOtherOutStockService.syncDataToWdt(goodsList, entity.getDeliveryWarehouseId(), null);
+        //发送异步任务
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), code, entity.getDeliveryWarehouseId());
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
     }
 
     @Override

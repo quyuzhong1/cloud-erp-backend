@@ -1,9 +1,9 @@
 package com.erp.server.wms.wdt;
 
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -15,22 +15,13 @@ import java.util.List;
 public interface SyncWdtOtherInStockService {
 
     /**
-     * 将ERP其他入库单推送到旺店通
-     * @param entity 其他入库单
-     * @return void
-     * @date: 2024-05-20
+     * 保存推送旺店通其他入库单任务
+     * @param goodsList SKU明细列表
+     * @param entity 其他入库单原始单据
+     * @param operateCode 操作方向: 审核/反审核
+     * @return DmpPushTaskEntity 由DMP返回的任务实体
+     * @date: 2024-05-25
      * @author: tanmujin
      */
-    void syncDataToWdt(OtherInstockEntity entity);
-
-    /**
-     * 推送其他入库单到旺店通
-     * @param goodsList   商品明细列表 CreateOtherStockoutRequest.GoodsList
-     * @param warehouseId 仓库ID
-     * @param outerNo 单据编码, 若为空则自动生成
-     * @return void
-     * @date: 2024-05-17
-     * @author: tanmujin
-     */
-    void syncDataToWdt(List<CreateOtherStockinRequest.GoodsList> goodsList, String warehouseId, @Nullable String outerNo);
+    DmpPushTaskEntity saveTask(List<CreateOtherStockinRequest.GoodsList> goodsList, OtherInstockEntity entity, String operateCode);
 }

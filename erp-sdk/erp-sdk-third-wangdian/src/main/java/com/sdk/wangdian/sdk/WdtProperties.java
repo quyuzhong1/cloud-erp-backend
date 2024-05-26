@@ -3,6 +3,7 @@ package com.sdk.wangdian.sdk;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
  * 旺店通配置绑定
@@ -10,6 +11,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  * @author tanmujin
  */
 @Data
+@Component
 @ConfigurationProperties(prefix = "wdt")
 public class WdtProperties {
     /**

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.wms.dto.excel.OtherInStockImportExcelDTO;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -23,6 +24,7 @@ import java.util.List;
  */
 @Getter
 @Setter
+@NoArgsConstructor
 @Accessors(chain = true)
 @TableName("other_instock")
 public class OtherInstockEntity extends BaseEntity<OtherInstockEntity> {
@@ -200,7 +202,11 @@ public class OtherInstockEntity extends BaseEntity<OtherInstockEntity> {
 
     public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
 
-
+    public OtherInstockEntity(String id, String code, String warehouseId) {
+        setId(id);
+        setCode(code);
+        setWarehouseId(warehouseId);
+    }
 
 
     @Override
