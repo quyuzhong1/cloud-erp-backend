@@ -432,7 +432,6 @@ public class InventoryDTO implements Serializable {
         /**
          * 仓位编码
          */
-        @NotEmpty(message = "仓位编码")
         private String warehouseLocation;
 
         /**
