@@ -1306,30 +1306,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         }
 
-        //验证渠道下是否设置了仓库
-        List<LogisticsChannelWarehouseEntity> list = FeignQuery.create(LogisticsChannelWarehouseEntity.class)
-                .eq(LogisticsChannelWarehouseEntity::getLogisticsChannelId, soB2cLogisticsEntity.getLogisticsChannelId())
-                .list();
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(StrUtil.format("渠道【{}】未设置仓库，请先设置仓库",soB2cLogisticsEntity.getLogisticsChannelName()));
-        }
-        //全部指定直接过，部分指定校验仓库是否一致
-        if (StrUtil.equals(list.get(0).getType(), LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
-            List<String> warehouseIdList = dto.getDetailList().stream().map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getWarehouseId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(warehouseIdList)) {
-                throw new ServiceException("B2C销售订单仓库不能为空");
+        if(StrUtil.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
+            //验证渠道下是否设置了仓库
+            List<LogisticsChannelWarehouseEntity> list = FeignQuery.create(LogisticsChannelWarehouseEntity.class)
+                    .eq(LogisticsChannelWarehouseEntity::getLogisticsChannelId, soB2cLogisticsEntity.getLogisticsChannelId())
+                    .list();
+            if (CollectionUtils.isEmpty(list)) {
+                throw new ServiceException(StrUtil.format("渠道【{}】未设置仓库，请先设置仓库",soB2cLogisticsEntity.getLogisticsChannelName()));
             }
-            List<String> channelWarehouseIdList = list.stream().map(LogisticsChannelWarehouseEntity::getWarehouseId).collect(Collectors.toList());
-            Boolean isMatch =  Boolean.TRUE;
-            for (String warehouseId : warehouseIdList) {
-                if (!channelWarehouseIdList.contains(warehouseId)) {
-                    isMatch = Boolean.FALSE;
-                    break;
+            //全部指定直接过，部分指定校验仓库是否一致
+            if (StrUtil.equals(list.get(0).getType(), LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
+                List<String> warehouseIdList = dto.getDetailList().stream().map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getWarehouseId).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(warehouseIdList)) {
+                    throw new ServiceException("B2C销售订单仓库不能为空");
                 }
-            }
-            //如果仓库没匹配上则进行下一条规则的匹配
-            if (!isMatch) {
-               throw new ServiceException(StrUtil.format("订单【{}】仓库和渠道不存在绑定关系，配货失败！",entity.getCode()));
+                List<String> channelWarehouseIdList = list.stream().map(LogisticsChannelWarehouseEntity::getWarehouseId).collect(Collectors.toList());
+                Boolean isMatch =  Boolean.TRUE;
+                for (String warehouseId : warehouseIdList) {
+                    if (!channelWarehouseIdList.contains(warehouseId)) {
+                        isMatch = Boolean.FALSE;
+                        break;
+                    }
+                }
+                //如果仓库没匹配上则进行下一条规则的匹配
+                if (!isMatch) {
+                    throw new ServiceException(StrUtil.format("订单【{}】仓库和渠道不存在绑定关系，配货失败！",entity.getCode()));
+                }
             }
         }
         //明细仓库更新
