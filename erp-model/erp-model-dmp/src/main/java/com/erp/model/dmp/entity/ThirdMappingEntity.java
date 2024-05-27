@@ -58,6 +58,11 @@ public class ThirdMappingEntity extends BaseEntity<ThirdMappingEntity> {
     /**
      * 第三方id
      */
+    @TableField("third_info_id")
+    private String thirdInfoId;
+    /**
+     * 第三方id
+     */
     @TableField("third_id")
     private String thirdId;
     /**

@@ -202,6 +202,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             ThirdShopEntity thirdShopEntity = thirdShopService.getByIdOpt(thirdMappingEntity.getThirdId()).orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_SHOP_NOTFOUND));
             thirdName = thirdShopEntity.getName();
             sysName = shopInfoEntity.getName();
+            thirdMappingEntity.setThirdInfoId(thirdShopEntity.getShopId());
+            thirdMappingEntity.setThirdCode(thirdShopEntity.getCode());
         } else {
             //校验系统仓库是否存在
             List<WarehouseDTO.ListDTO> listDTOS = Optional.ofNullable(wmsWarehouseFeign.listByIds(Collections.singletonList(thirdMappingEntity.getSysId()))).orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
@@ -209,6 +211,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByIdOpt(thirdMappingEntity.getThirdId()).orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
             thirdName = thirdWarehouseEntity.getName();
             sysName = listDTOS.get(0).getName();
+            thirdMappingEntity.setThirdInfoId(thirdWarehouseEntity.getWarehouseId());
+            thirdMappingEntity.setThirdCode(thirdWarehouseEntity.getCode());
         }
         thirdMappingEntity.setThirdName(thirdName);
         thirdMappingEntity.setSysName(sysName);
