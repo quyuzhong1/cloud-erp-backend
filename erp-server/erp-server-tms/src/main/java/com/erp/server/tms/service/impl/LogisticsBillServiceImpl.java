@@ -1021,6 +1021,38 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return  lambdaQuery().in(LogisticsBillEntity::getOutstockId,outstockIdList).list();
     }
 
+    @Override
+    public ApiResult<String> updateLogisticWeight(LogisticsBillDTO.UpdateWeight dto) {
+        SoB2cLogisticsEntity soB2cLogisticsEntity = dto.getSoB2cLogisticsEntity();
+        SoB2cEntity soB2cEntity = dto.getSoB2cEntity();
+        String channelId = soB2cLogisticsEntity.getLogisticsChannelId();
+        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
+        if (Objects.isNull(auth)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+        }
+        if (StringUtils.isBlank(soB2cEntity.getCode())) {
+            throw new ServiceException("订单为空");
+        }
+        if (StringUtils.isBlank(soB2cLogisticsEntity.getCode())) {
+            throw new ServiceException("物流单号为空");
+        }
+        if (Objects.isNull(soB2cLogisticsEntity.getWeight())) {
+            throw new ServiceException("重量为空");
+        }
+        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
+        LogisticsUpdateWeightVO logisticsUpdateWeightVO = LogisticsUpdateWeightVO.builder()
+                .deliveryNo(soB2cEntity.getCode())
+                .transportNo(soB2cLogisticsEntity.getCode())
+                .weight(soB2cLogisticsEntity.getWeight())
+                .authMap(authMap)
+                .trackNo(soB2cLogisticsEntity.getTrackNo())
+                .build();
+        //平台
+        String logisticsPlatform = auth.getLogisticsPlatform();
+        LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+        return service.updateWeight(logisticsUpdateWeightVO);
+    }
+
     /**
      * 初始化物流手机号信息
      * @param dto
