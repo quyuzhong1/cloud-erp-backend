@@ -911,6 +911,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 if (StringUtils.isBlank(pdaItemDTO.getWarehouseId())){
                     pdaItemDTO.setWarehouseId(data.getWarehouseId());
                 }
+
                 if (StringUtils.isBlank(pdaItemDTO.getWarehouseName())){
                     pdaItemDTO.setWarehouseName(data.getWarehouseName());
                 }
