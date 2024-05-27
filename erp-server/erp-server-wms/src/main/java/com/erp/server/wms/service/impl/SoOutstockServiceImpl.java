@@ -53,7 +53,6 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
@@ -118,7 +117,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -3066,44 +3064,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if(Objects.nonNull(soOutStock)){
             soOutstockDetailService.updateDetailRemark(soOutStock.getId(),remark,false);
         }
-    }
-
-    @Override
-    public List<String> recoveryLogisticsBill(List<String> codeList) {
-        List<SoOutstockEntity> outstockEntityList = new ArrayList<>();
-        if (CollectionUtils.isEmpty(codeList)) {
-            outstockEntityList = baseMapper.listRecoveryLogisticsBill();
-        } else {
-            //根据输入编码查询
-            outstockEntityList = this.listByCodes(codeList);
-        }
-
-        if (CollectionUtils.isEmpty(outstockEntityList)) {
-            throw new ServiceException("未发现销售出库单数据");
-        }
-
-        List<String> outstockIdList = outstockEntityList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
-        List<LogisticsBillEntity> logisticsBillList = logisticsBillFeign.listBySoOutStockIdList(outstockIdList);
-
-        List<String> existList = new ArrayList<>();
-        for (SoOutstockEntity entity : outstockEntityList) {
-            //是否已存在物流单
-            long count = logisticsBillList.stream().filter(obj -> StrUtil.equals(entity.getId(), obj.getOutstockId())).count();
-            if (count > 0) {
-                existList.add(entity.getCode());
-            }
-            CompletableFuture.supplyAsync(() -> {
-                try {
-                    //生成物流单
-                    this.saveLogisticsBill(entity);
-                } catch (Exception e) {
-                    log.error("生成物流单失败，单号 = {},原因 = {}",entity.getCode(),e.getMessage());
-                }
-                return entity.getId();
-            });
-        }
-        log.error("已存在物流单，失败单号，codeList = {},生成物流单",existList);
-        return existList;
     }
 
     @Override

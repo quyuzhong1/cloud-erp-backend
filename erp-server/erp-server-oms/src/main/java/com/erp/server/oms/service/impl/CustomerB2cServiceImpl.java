@@ -1010,17 +1010,6 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         return base;
     }
 
-//    @Override
-//    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-//        return this.lambdaUpdate()
-//                .eq(CustomerB2cEntity::getId, id)
-//                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-//                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeTime, LocalDateTime.now())
-//                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerB2cEntity::getSyncKingdeeId, syncKingdeeId)
-//                .set(StringUtils.isNotBlank(syncOperate), CustomerB2cEntity::getSyncOperate, syncOperate)
-//                .update();
-//    }
-
 
     /**
      * 引用客户

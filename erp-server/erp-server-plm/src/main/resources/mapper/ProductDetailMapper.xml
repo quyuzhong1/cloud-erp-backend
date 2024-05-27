@@ -1045,8 +1045,6 @@
                business_process_id,
                is_change,
                first_mass_product_date,
-               sync_kingdee_status,
-               sync_kingdee_time,
                version,
                is_deleted,
                sync_kingdee_id

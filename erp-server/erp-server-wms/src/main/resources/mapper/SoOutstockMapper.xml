@@ -458,13 +458,6 @@
 		<include refid="SoDataCompareByCondition"/>
     </select>
 
-    <!-- 数据处理 -->
-    <select id="listRecoveryLogisticsBill" resultType="com.erp.model.wms.entity.SoOutstockEntity">
-        select
-            *
-        from so_outstock
-        where is_deleted = false and sync_kingdee_status = '5'
-    </select>
 
 
     <sql id="SoDataCompareByCondition">
