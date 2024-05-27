@@ -908,6 +908,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             for (WarehouseLocationMoveDTO.PdaItemDTO pdaItemDTO : itemDTOList) {
                 pdaItemDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities,
                         StringUtils.isBlank(data.getWarehouseId()) ? pdaItemDTO.getWarehouseId() : data.getWarehouseId(), pdaItemDTO.getInWarehouseLocation()).getName());
+                if (StringUtils.isBlank(pdaItemDTO.getWarehouseId())){
+                    pdaItemDTO.setWarehouseId(data.getWarehouseId());
+                    pdaItemDTO.setWarehouseName(data.getWarehouseName());
+                }
             }
             data.setItemList(itemDTOList);
         }
