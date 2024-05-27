@@ -61,7 +61,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "logisticsServiceInfo.customsService", constant = "N"),
             @Mapping(target = "logisticsServiceInfo.signatureService", source = "logisticsChannelEntity.isApiSign", qualifiedByName = "booleanToYOrN"),
             //收货人
-            @Mapping(target = "recipientInfo.first_name", source = "receiverInfoVO.name"),
+            @Mapping(target = "recipientInfo.first_name", source = "receiverInfoVO.contact"),
             @Mapping(target = "recipientInfo.phone", source = "receiverInfoVO.telNumber"),
             @Mapping(target = "recipientInfo.email", source = "receiverInfoVO.email"),
             @Mapping(target = "recipientInfo.country", source = "receiverInfoVO.country"),
@@ -133,7 +133,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "channelId" ,source = "logisticsSaleChannel.platformChannelId"),
             @Mapping(target = "orderSource" ,source = "orderSource"),
             @Mapping(target = "orderNumber" ,source = "deliveryNo"),
-            @Mapping(target = "receiverInfo.name",source = "receiverInfoVO.name"),
+            @Mapping(target = "receiverInfo.name",source = "receiverInfoVO.contact"),
             @Mapping(target = "receiverInfo.country",source = "receiverInfoVO.country"),
             @Mapping(target = "receiverInfo.address",source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "receiverInfo.phone",source = "receiverInfoVO.telNumber"),
@@ -194,7 +194,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "consignee.consigneeStreet",source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "consignee.consigneeStreet2",source = "receiverInfoVO.addressSecond"),
             @Mapping(target = "consignee.consigneePostcode",source = "receiverInfoVO.zipCode"),
-            @Mapping(target = "consignee.consigneeName",source = "receiverInfoVO.name"),
+            @Mapping(target = "consignee.consigneeName",source = "receiverInfoVO.contact"),
             @Mapping(target = "consignee.consigneeTelephone",source = "receiverInfoVO.telNumber"),
             @Mapping(target = "consignee.consigneeMobile",source = "receiverInfoVO.telNumber"),
             @Mapping(target = "consignee.consigneeEmail",source = "receiverInfoVO.email"),
@@ -245,7 +245,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "dimensionUnit", constant = "CM"),
             @Mapping(target = "platform", source = "orderSource"),
             //收货人
-            @Mapping(target = "recipientName", source = "receiverInfoVO.name"),
+            @Mapping(target = "recipientName", source = "receiverInfoVO.contact"),
             @Mapping(target = "phone", source = "receiverInfoVO.telNumber"),
             @Mapping(target = "email", source = "receiverInfoVO.email"),
             @Mapping(target = "postcode", source = "receiverInfoVO.zipCode"),
@@ -301,6 +301,7 @@ public interface LogisticsOrderConverter {
 
 
     @Mappings({
+            @Mapping(target = "taxNumber" ,source = "receiverInfoVO.receiverTaxNo"),
             @Mapping(target = "customerOrderNumber" ,source = "deliveryNo"),
             @Mapping(target = "shippingMethodCode" ,source = "logisticsSaleChannel.code"),
             @Mapping(target = "length" ,source = "parceInfoVO.length"),
@@ -313,7 +314,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "iossCode" ,source = "iossCode"),
             @Mapping(target = "coverage" ,source = "parceInfoVO.insuranceValue"),
             @Mapping(target = "receiver.countryCode",source = "receiverInfoVO.country"),
-            @Mapping(target = "receiver.firstName",source = "receiverInfoVO.name"),
+            @Mapping(target = "receiver.firstName",source = "receiverInfoVO.contact"),
 //            @Mapping(target = "receiver.lastName",source = "receiverInfoVO.name"),
             @Mapping(target = "receiver.company",source = "receiverInfoVO.companyName"),
             @Mapping(target = "receiver.street",source = "receiverInfoVO.addressFirst"),
@@ -391,7 +392,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "address",source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "email",source = "receiverInfoVO.email"),
             @Mapping(target = "postCode",source = "receiverInfoVO.zipCode"),
-            @Mapping(target = "contact",source = "receiverInfoVO.name"),
+            @Mapping(target = "contact",source = "receiverInfoVO.contact"),
             @Mapping(target = "tel",source = "receiverInfoVO.telNumber"),
             @Mapping(target = "mobile",source = "receiverInfoVO.telNumber")
     })
@@ -445,7 +446,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "recipient.address3", constant = ""),
             @Mapping(target = "recipient.CName", source = "receiverInfoVO.companyName"),
             @Mapping(target = "recipient.city", source = "receiverInfoVO.city"),
-            @Mapping(target = "recipient.contactPerson", source = "receiverInfoVO.name"),
+            @Mapping(target = "recipient.contactPerson", source = "receiverInfoVO.contact"),
             @Mapping(target = "recipient.email", source = "receiverInfoVO.email"),
             @Mapping(target = "recipient.countryCode", source = "receiverInfoVO.country"),
             @Mapping(target = "recipient.mobileNo", source = "receiverInfoVO.telNumber"),
@@ -552,7 +553,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "streetAddress",source = "receiverInfoVO.streetAddress"),
             @Mapping(target = "email",source = "receiverInfoVO.email"),
             @Mapping(target = "postCode",source = "receiverInfoVO.zipCode"),
-            @Mapping(target = "name",source = "receiverInfoVO.name"),
+            @Mapping(target = "name",source = "receiverInfoVO.contact"),
             @Mapping(target = "phone",source = "receiverInfoVO.telNumber")
     })
     Address orderRequestReceiverUserByAliExpress(LogisticsOrderVO logisticsOrderVO);

@@ -33,6 +33,7 @@ import com.erp.model.dmp.gyy.GyyRefundEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpShopInfoService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -130,7 +131,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
             }
             GyyRefundEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);

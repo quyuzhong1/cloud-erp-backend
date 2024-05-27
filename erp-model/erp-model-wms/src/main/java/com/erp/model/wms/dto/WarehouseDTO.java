@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -240,6 +241,50 @@ public class WarehouseDTO implements Serializable {
          */
         private String platformName;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseInventoryQtyDTO extends ListDTO{
+        /**
+         * 库存数量
+         */
+        private Integer inventoryQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryQtyDTO {
+
+        /**
+         * SKU
+         */
+        private String skuId;
+
+        /**
+         * 仓库数据
+         */
+        private List<WarehouseInventoryQtyDTO> warehouseInventoryQtyList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryQtyParamDTO {
+
+        /**
+         * sku
+         */
+        @NotEmpty(message = "SKU不能为空")
+        private List<String> skuIdList;
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -584,6 +629,17 @@ public class WarehouseDTO implements Serializable {
          * 类型id 集合
          */
         private List<String> typeIdList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
 
     }
 

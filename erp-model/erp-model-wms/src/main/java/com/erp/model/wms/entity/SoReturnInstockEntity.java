@@ -168,19 +168,6 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
      */
     @TableField("source_type")
     private String sourceType;
-
-    /**
-     * 仓库id
-     */
-    @TableField("warehouse_id")
-    private String warehouseId;
-
-    /**
-     * 仓库名称
-     */
-    @TableField("warehouse_name")
-    private String warehouseName;
-
     /**
      * 销售单id
      */

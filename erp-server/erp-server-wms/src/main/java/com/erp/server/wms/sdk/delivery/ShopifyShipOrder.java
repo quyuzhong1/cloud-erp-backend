@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.SHOPIFY)
-public class ShopifyShipOrder implements IPlatformService {
+public class ShopifyShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -122,11 +122,27 @@ public class ShopifyShipOrder implements IPlatformService {
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
+            // 来源明细ID为空代表是手工添加的明细忽略
+            soB2cDetailEntityList =  soB2cDetailEntityList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                    .collect(Collectors.toList());
+//            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
+//                throw new ServiceException("平台来源详情ID为空");
+//            }
+            if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
+                log.warn("订单【{}】所有明细来源ID为空,不请求接口", mainEntity.getCode());
+                continue;
+            }
             if (soB2cDetailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
                 throw new ServiceException("平台来源详情ID为空");
             }
+            soB2cDetailEntityList = super.handleBomSplit(soB2cDetailEntityList);
+            if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
+                log.warn("订单【{}】所有明细来源ID为空,不请求shopify接口", mainEntity.getCode());
+                continue;
+            }
             Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
-
+            log.warn("[Shopify标记发货] 平台订单号【{}】,当前提交明细IDS:{}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(detailEntityMap.keySet()));
             String shopId = mainEntity.getShopId();
             ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(shopId);
             if (null == shopInfoDTO) {
@@ -141,14 +157,17 @@ public class ShopifyShipOrder implements IPlatformService {
             ShopifyRestClient shopifyRestClient = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken);
             // Retrieves a list of fulfillment orders for a specific order
             List<ShopifyFulfillmentOrder> fulfillmentOrdersFromOrderList = shopifyRestClient.getFulfillmentOrdersFromOrder(platformOrderId);
+            log.warn("[Shopify标记发货] 订单ID={}, 获取的配送明细参数 fulfillmentOrdersFromOrderList={}",platformOrderId, JSONUtil.toJsonStr(fulfillmentOrdersFromOrderList));
             if (CollectionUtils.isEmpty(fulfillmentOrdersFromOrderList)) {
                 throw new ServiceException("找不到Shopify发货单");
             }
             // 未签收的单
-            fulfillmentOrdersFromOrderList = fulfillmentOrdersFromOrderList.stream().filter(e -> e.getStatus().equalsIgnoreCase("open")).collect(Collectors.toList());
+            fulfillmentOrdersFromOrderList = fulfillmentOrdersFromOrderList.stream()
+                    .filter(e -> e.getStatus().equalsIgnoreCase("open") || "in_progress".equalsIgnoreCase(e.getStatus()) )
+                    .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(fulfillmentOrdersFromOrderList)) {
                 log.warn("Shopify 忽略表发货, 订单已标记, platformCode={}, fulfillment={}", platformOrderId, JSONUtil.toJsonStr(fulfillmentOrdersFromOrderList));
-                return;
+                continue;
             }
 
             // 校验不为空

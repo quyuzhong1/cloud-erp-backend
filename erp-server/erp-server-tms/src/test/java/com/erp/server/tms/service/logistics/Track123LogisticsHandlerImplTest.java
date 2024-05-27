@@ -40,10 +40,10 @@ public class Track123LogisticsHandlerImplTest {
 
     public Track123LogisticsHandlerImplTest(){
         //test
-//        authMap.put("clientSecret","9fa500686633410a84ff0b00daed555e");
+        authMap.put("clientSecret","9fa500686633410a84ff0b00daed555e");
         //pro
-        authMap.put("clientId","Yg4Zf06w_sxZs3A5D");
-        authMap.put("clientSecret","579cf53f55694d89aef0887d81886aec");
+//        authMap.put("clientId","Yg4Zf06w_sxZs3A5D");
+//        authMap.put("clientSecret","579cf53f55694d89aef0887d81886aec");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -59,7 +59,7 @@ public class Track123LogisticsHandlerImplTest {
     public void registerLogisticsNumber(){
         List<LogisticsRegisterVO> registerVOS = new ArrayList<>();
         LogisticsRegisterVO vo = LogisticsRegisterVO.builder()
-                .trackNo("SF1694930851235")
+                .trackNo("SL1694930851235")
                 .phoneSuffix("18855193495")
                 .build();
         registerVOS.add(vo);
@@ -102,7 +102,7 @@ public class Track123LogisticsHandlerImplTest {
     public void getTrack(){
         LogisticsTrackVO logisticsQueryVO = new LogisticsTrackVO();
         List<String> trackNos = new ArrayList<>();
-        trackNos.add("SF1694930851235");
+        trackNos.add("MP0039098709");
 //        trackNos.add("00369744292706509832");
         logisticsQueryVO.setTrackNos(trackNos);
         logisticsQueryVO.setAuthMap(authMap);

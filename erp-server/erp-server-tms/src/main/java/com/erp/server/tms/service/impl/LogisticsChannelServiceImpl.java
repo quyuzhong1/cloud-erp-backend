@@ -84,6 +84,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Resource
     private LogisticsChannelConstraintService logisticsChannelConstraintService;
 
+    @Resource
+    private LogisticsChannelWarehouseService logisticsChannelWarehouseService;
+
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsChannelDTO.AddDTO addDTO) {
@@ -108,6 +112,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelAddressService.add(channelId, addDTO.getAddressList());
         //发货限制 黑名单
         logisticsChannelBlacklistService.add(channelId, addDTO.getBlackList());
+        //仓库设置
+        logisticsChannelWarehouseService.batchUpdate(channelId, addDTO.getWarehouseDTO());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
@@ -141,6 +147,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         String templateId = updateDTO.getShippingTemplateId();
         //保存模板和渠道的关系表
         shippingTemplateRefChannelService.addRef(channelId, templateId);
+        //仓库设置
+        logisticsChannelWarehouseService.batchUpdate(channelId, updateDTO.getWarehouseDTO());
 
         // 记录主单操作日志
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
@@ -158,23 +166,18 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        List<LogisticsChannelEntity> list = this.lambdaQuery().
-                in(LogisticsChannelEntity::getMainId, mainIdList).
-                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
-                orderByAsc(LogisticsChannelEntity::getDisabled).
-                orderByDesc(LogisticsChannelEntity::getCreateTime).
-                list();
+        List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, name);
+//        List<LogisticsChannelEntity> list = this.lambdaQuery().
+//                in(LogisticsChannelEntity::getMainId, mainIdList).
+//                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
+//                orderByAsc(LogisticsChannelEntity::getDisabled).
+//                orderByDesc(LogisticsChannelEntity::getCreateTime).
+//                list();
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
         List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
         List<ShippingTemplateRefChannelEntity> shippingTemplateList = shippingTemplateRefChannelService.listChannelIdList(channelIdList);
         for (LogisticsChannelEntity item : list) {
-            LogisticsChannelDTO.BaseDTO base = new LogisticsChannelDTO.BaseDTO();
-            base.setCode(item.getCode());
-            base.setDisabled(item.getDisabled());
-            base.setId(item.getId());
-            base.setName(item.getName());
-            base.setMainId(item.getMainId());
-            base.setSortingCode(item.getSortingCode());
+            LogisticsChannelDTO.BaseDTO base = LogisticsChannelConverter.INSTANCE.convertToChannelDTO(item);
             String effectiveTime = item.getEffectiveTime();
             String timeUnit = item.getEffectiveTimeUnit();
             String timeUnitName = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class, timeUnit);
@@ -183,8 +186,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
                     map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
             base.setShippingTemplateName(ShippingTemplateName);
-            base.setSourceId(item.getSourceId());
-
             //获取服务商编号
             LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getMainId());
             if (ObjectUtil.isNotEmpty(authEntity)) {
@@ -243,10 +244,17 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
          * 发货限制列表
          */
         List<LogisticsChannelBlacklistDTO.ViewDTO> blackList = logisticsChannelBlacklistService.listByChannelId(id);
+
+        /**
+         * 仓库设置
+         */
+        LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO = logisticsChannelWarehouseService.getByChannelId(id);
+
         view.setAddressList(addressList);
         view.setBlackList(blackList);
         view.setMappingList(mappingList);
         view.setPrintTypeList(printTypeList);
+        view.setWarehouseDTO(warehouseDTO);
         return view;
     }
 

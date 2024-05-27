@@ -24,6 +24,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -84,7 +85,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
             String id = mongoDatum.get_id();
             mongoDatum.set_id(null);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);

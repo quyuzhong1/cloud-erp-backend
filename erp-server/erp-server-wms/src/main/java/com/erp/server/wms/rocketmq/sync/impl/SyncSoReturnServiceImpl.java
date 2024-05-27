@@ -151,8 +151,6 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         instockEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
         instockEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
         instockEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate().split("T")[0]));
-        instockEntity.setWarehouseId("");
-        instockEntity.setWarehouseName("");
         if (CollectionUtils.isNotEmpty(orderItemEntityList)) {
             KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity = orderItemEntityList.get(MathUtil.ZERO);
             instockEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());

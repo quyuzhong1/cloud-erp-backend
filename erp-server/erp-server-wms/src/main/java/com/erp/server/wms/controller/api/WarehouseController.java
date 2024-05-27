@@ -9,9 +9,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
 import com.erp.server.wms.query.WarehouseQueryHandler;
@@ -289,6 +289,33 @@ public class WarehouseController extends BaseController {
     @GetMapping("/list")
     public ApiResult<List<WarehouseDTO.ListDTO>> list() {
         List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
+        return success(list);
+    }
+
+
+    /**
+     * 远程分页下拉查询
+     * @author Will
+     * @date: 2024/5/24 13:06
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/selectPaging")
+    public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody @Validated PagingDTO<WarehouseDTO.SelectDTO> dto) {
+        PagingVO<WarehouseDTO.ListDTO> pagingVO = warehouseService.selectPaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 根据sku查询仓库库存
+     * @author Will
+     * @date: 2024/5/23 18:25
+     * @param dto
+     * @return ApiResult<List<ListDTO>>
+     */
+    @PostMapping("/listWarehouseInventoryQty")
+    public ApiResult<List<WarehouseDTO.ListInventoryQtyDTO>> listWarehouseInventoryQty(@RequestBody @Valid WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        List<WarehouseDTO.ListInventoryQtyDTO> list = warehouseService.listWarehouseInventoryQty(dto);
         return success(list);
     }
 

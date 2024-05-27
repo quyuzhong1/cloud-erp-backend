@@ -287,6 +287,13 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("is_cancel")
     private Boolean isCancel;
 
+
+    /**
+     * 卖家订单编号
+     */
+    @TableField("seller_order_code")
+    private String sellerOrderCode;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

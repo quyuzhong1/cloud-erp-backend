@@ -17,7 +17,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class ReceiverInfoVO {
     /**
-     * 名称
+     * 买家名称
      */
 
     private String name;
@@ -27,7 +27,7 @@ public class ReceiverInfoVO {
 
     private String companyName;
     /**
-     * 联系人
+     * 收货人名称
      */
 
     private String contact;

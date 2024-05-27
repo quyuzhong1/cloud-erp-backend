@@ -22,7 +22,7 @@ public class OkHttpUtils {
     private static final OkHttpClient client =
             new OkHttpClient.Builder()
                     .readTimeout(30, TimeUnit.SECONDS)// 设置超时时间
-                    .addInterceptor(new HttpLogInterceptor())
+//                    .addInterceptor(new HttpLogInterceptor())
                     .build();
 
     private static final int RETRY_COUNT = 3;

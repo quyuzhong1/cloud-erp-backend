@@ -31,4 +31,6 @@ public interface SoB2cDetailMapper extends BaseMapper<SoB2cDetailEntity> {
     List<SoB2cDetailDTO.WaitDeliveryQtyDTO> listWaitDeliveryQty(@Param("paramDTO") SoB2cDetailDTO.WaitDeliveryParamDTO paramDTO);
 
     List<SoB2cDetailEntity> listContainDeleted(@Param("ids") List<String> ids);
+
+    void updateContainDeleted(@Param("ids") List<String> revertDetailIds);
 }

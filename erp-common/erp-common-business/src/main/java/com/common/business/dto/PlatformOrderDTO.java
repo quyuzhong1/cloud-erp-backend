@@ -199,6 +199,10 @@ public class PlatformOrderDTO extends UniqueDto {
     private String downloadTime;
 
     /**
+     * 卖家订单编号
+     */
+    private String sellerOrderCode;
+    /**
      * 订单明细
      */
     private List<PlatformOrderDetailDTO> details;
