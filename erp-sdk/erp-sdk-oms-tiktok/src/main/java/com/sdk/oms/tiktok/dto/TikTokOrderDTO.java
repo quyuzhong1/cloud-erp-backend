@@ -132,6 +132,8 @@ public class TikTokOrderDTO extends CleanBaseDTO {
 
         Map<String, String> lableMap = new HashMap<>();
         lableMap.put("tikTokStatus", ordersBean.getStatus());
+        //自发货(shipping_type=SELLER)	中转仓（shipping_type=TIKTOK）
+        lableMap.put("shippingType", ordersBean.getShippingType());
         orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
         if ("ON_HOLD".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -342,8 +344,8 @@ public class TikTokOrderDTO extends CleanBaseDTO {
                 .code(ordersBean.getTrackingNumber())
                 .name(name)
                 .deliveryTime(ordersBean.getRtsTime()>0 ? LocalDateTime.ofInstant(Instant.ofEpochSecond(ordersBean.getRtsTime()), ZoneId.systemDefault()) : null)
-                .logisticsChannelId(ordersBean.getShippingProviderId())
-                .logisticsChannelName(ordersBean.getShippingProvider())
+                .logisticsChannelId("SELLER".equalsIgnoreCase(ordersBean.getShippingType())?"":ordersBean.getShippingProviderId())
+                .logisticsChannelName("SELLER".equalsIgnoreCase(ordersBean.getShippingType())?"":ordersBean.getShippingProvider())
                 .estimatedShippingCost(cost)
                 .actualShippingCost(BigDecimal.ZERO)
                 .accessoriesCostCurrency("")
@@ -366,19 +368,18 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         BigDecimal taxAmount = BigDecimal.ZERO;
         BigDecimal taxRate = BigDecimal.ZERO;
         for (LineItemsBean lineItem : ordersBean.getLineItems()) {
-            if (CollectionUtil.isEmpty(lineItem.getItemTax())) {
-                continue;
-            }
-            BigDecimal amount = lineItem.getItemTax().stream()
-                    .filter(req -> StringUtils.isNotBlank(req.getTaxType()) && "SALES_TAX".equalsIgnoreCase(req.getTaxType()))
-                    .map(req -> req.getTaxAmount())
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            BigDecimal rate = lineItem.getItemTax().stream()
-                    .map(req -> req.getTaxRate())
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            if (CollectionUtil.isNotEmpty(lineItem.getItemTax())) {
+                BigDecimal amount = lineItem.getItemTax().stream()
+                        .filter(req -> StringUtils.isNotBlank(req.getTaxType()) && "SALES_TAX".equalsIgnoreCase(req.getTaxType()))
+                        .map(req -> req.getTaxAmount())
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal rate = lineItem.getItemTax().stream()
+                        .map(req -> req.getTaxRate())
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
-            taxAmount = taxAmount.add(amount);
-            taxRate = taxRate.add(rate);
+                taxAmount = taxAmount.add(amount);
+                taxRate = taxRate.add(rate);
+            }
         }
         return PlatformOrderFinanceDTO.builder()
                 .currency(ordersBean.getPayment().getCurrency())

@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -630,6 +631,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             String authStatus = item.getAuthStatus();
             String authStatusName = AuthStatusEnum.getName(authStatus);
             item.setAuthStatusName(authStatusName);
+            if (PlatformDictEnum.TIK_TOK.getCode().equals(item.getDictPlatform())) {
+                JSONObject jsonObject = JSONObject.parseObject(item.getExtendData());
+                if (StringUtils.isBlank(jsonObject.getString("sellerType"))) {
+                    continue;
+                }
+                item.setPlatformShopType(jsonObject.getString("sellerType"));
+            }
             //客户名称
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(item.getCustomerId());
             if (Objects.nonNull(customerInfoEntity)) {

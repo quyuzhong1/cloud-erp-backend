@@ -167,6 +167,7 @@ public class TikTokSdkClientService {
         for (ShopsBean shop : tikTokShopAuthDTO.getData().getShops()) {
 //            if (tokenDTO.getSellerBaseRegion().equalsIgnoreCase(shop.getRegion())) {
                 tokenDTO.setShopCipher(shop.getCipher());
+                tokenDTO.setSellerType(shop.getSellerType());
 //            }
         }
         //返回token实体
@@ -1026,7 +1027,6 @@ public class TikTokSdkClientService {
         sb.append("&sign=" + sign + "");
         sb.append("&timestamp=" + timestamp + "");
         sb.append("&version=" + TikTokConstant.VERSION + "");
-
         //拉取数据
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), bodyJson, null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {

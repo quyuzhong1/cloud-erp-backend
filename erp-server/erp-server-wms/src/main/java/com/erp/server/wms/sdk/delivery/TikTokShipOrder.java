@@ -12,6 +12,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.enums.SoB2cSourcePlatformEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -58,7 +59,7 @@ public class TikTokShipOrder implements IPlatformService {
 
         List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
         List<String> sourceDetailIds = detailList.stream()
-                .filter(req -> StringUtils.isBlank(req.getSourcePlatform())
+                .filter(req -> SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode().equalsIgnoreCase(req.getSourcePlatform())
                         && StringUtils.isNotBlank(req.getSourceDetailId())
                 ).map(req -> req.getSourceDetailId())
                 .distinct()

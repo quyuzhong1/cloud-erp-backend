@@ -198,6 +198,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "shippingCost", source = "financeDTO.shippingCost"),
             @Mapping(target = "itemCost", source = "financeDTO.itemCost"),
             @Mapping(target = "logisticsCost", source = "financeDTO.logisticsCost"),
+            @Mapping(target = "platformCost", source = "financeDTO.platformCost"),
             @Mapping(target = "accessoriesCost", source = "financeDTO.accessoriesCost"),
             @Mapping(target = "platformRate", source = "financeDTO.platformRate"),
             @Mapping(target = "vatRate", source = "financeDTO.vatRate"),

@@ -27,6 +27,7 @@ import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import com.erp.server.oms.service.SoB2cSplitService;
+import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -857,10 +858,10 @@ public class SoB2cController extends BaseController {
         for (SoB2cDTO.SplitSaveDTO dto : list) {
             BatchResultDTO result;
             try {
-                List<String> soIdList = soB2cService.splitSave(dto);
+                SoB2cDTO.SplitSaveResultDTO resultDTO = soB2cService.splitSave(dto);
                 SoB2cEntity entity = soB2cService.getById(dto.getId());
                 result = BatchResultDTO.success(dto.getId(),entity.getCode(),"订单拆分成功");
-                allSoIdList.addAll(soIdList);
+                allSoIdList.addAll(resultDTO.getSoB2cIds());
             } catch (Exception e) {
                 log.error("B2C销售订单取消拆分失败", e);
                 SoB2cEntity entity = soB2cService.getById(dto.getId());

@@ -47,7 +47,8 @@
         create_user_name,
         create_time,
         update_user_name,
-        update_time
+        update_time,
+        si.extend_data
         FROM shop_info si
         WHERE ${params.sqlMap.default}
         and si.is_deleted=FALSE

@@ -4539,7 +4539,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //映射详情字段
             List<SoB2cDetailEntity> detailList = soB2cDetailEntities.stream()
                     .filter(req -> soB2cEntity.getId().equals(req.getMainId())
-                            && StringUtils.isBlank(req.getSourcePlatform())
+                            && SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode().equalsIgnoreCase(req.getSourcePlatform())
                     ).collect(Collectors.toList());
             List<WalmartShipOrderDetailDTO> walmartShipOrderDetailDTOS = WalmartShipOrderConverter.INSTANCE.soB2cDetailEntityToWalmartShipOrderDetail(detailList);
             walmartShipDTO.setDetailList(walmartShipOrderDetailDTOS);
@@ -5060,6 +5060,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             financialInfoDTO.setShippingCost(MathUtil.multiply(financialInfoDTO.getShippingCost(),soB2cEntity.getExchangeRate()));
             //物流成本
             financialInfoDTO.setLogisticsCost(MathUtil.multiply(financialInfoDTO.getLogisticsCost(),soB2cEntity.getExchangeRate()));
+            //平台费
+            financialInfoDTO.setPlatformCost(MathUtil.multiply(financialInfoDTO.getPlatformCost(),soB2cEntity.getExchangeRate()));
         } else {
             financialInfoDTO.setCurrency(soB2cEntity.getCurrency());
             financialInfoDTO.setAmount(totalAmount);
@@ -5119,7 +5121,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         financialInfoDTO.setVatRate(vatRate);
 
         //平台费,店铺计算
-        financialInfoDTO.setPlatformCost(platformCost);
+        if (MathUtil.compareTo(financialInfoDTO.getPlatformCost(), BigDecimal.ZERO) == 0) {
+            financialInfoDTO.setPlatformCost(platformCost);
+        }
 
         //转账费,店铺计算
         financialInfoDTO.setPaypalCost(paypalCost);

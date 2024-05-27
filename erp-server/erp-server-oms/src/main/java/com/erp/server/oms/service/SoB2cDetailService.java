@@ -188,6 +188,12 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      **/
     ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform);
 
+    List<SoB2cDetailEntity> listContainDeleted(List<String> ids);
+
+    void updateContainDeleted(List<String> revertDetailIds);
+
+    List<SoB2cDetailEntity> listBySplitId(String detailId);
+
     /**
      * 根据主表id修改平台包裹号
      * @param platformPackageId
@@ -195,10 +201,4 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return
      */
     Boolean updatePlatformPackageIdByMainId(String platformPackageId, String mainId);
-
-    List<SoB2cDetailEntity> listContainDeleted(List<String> ids);
-
-    void updateContainDeleted(List<String> revertDetailIds);
-
-    List<SoB2cDetailEntity> listBySplitId(String detailId);
 }
