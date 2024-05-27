@@ -579,6 +579,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public List<RequisitionApplicationEntity> listBySourceIds(List<String> sourceIds) {
+        if(CollectionUtils.isEmpty(sourceIds)){
+            return new ArrayList<>();
+        }
         return lambdaQuery().in(RequisitionApplicationEntity::getSourceId, sourceIds).list();
     }
 
