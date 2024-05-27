@@ -676,7 +676,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 FirstMileDeliveryDetailDTO.AddDTO detailAdd = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryDetailAdd(generateDeliverView);
 
                 //映射产品信息
-                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst().orElse(null);
+                if(Objects.isNull(skuVO)){
+                    throw new ServiceException(StrUtil.format("{}未找到产品信息",generateDeliverView.getSkuNo()));
+                }
                 detailAdd.setSkuId(skuVO.getSkuId());
                 detailAdd.setNetWeight(skuVO.getNetWeight());
                 detailAdd.setProductSizeLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
