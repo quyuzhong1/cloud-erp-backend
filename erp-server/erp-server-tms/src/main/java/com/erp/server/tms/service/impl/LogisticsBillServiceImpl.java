@@ -503,6 +503,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 //        List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
 //        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
 //        List<LogisticsProductDTO.ProductDTO> ordersSkuList = buildTransferDeclareProduct(country, dto, skuInfoList, minCustomsAmount, maxCustomsAmount,isAliExpress);
+        //中转地址
+        LogisticsAddressEntity logisticsAddressEntity = addressList.stream().filter(a -> LogisticsAddressTypeEnum.TRANSFER.equals(a.getType())).findFirst().orElse(null);
+        if (Objects.nonNull(logisticsAddressEntity)) {
+            ReceiverInfoVO receiverInfo1 = LogisticsBillConverter.INSTANCE.LogisticsAddressEntityToReceiverInfoVO(logisticsAddressEntity);
+            if (Objects.nonNull(receiverInfo)){
+                receiverInfo1.setReceiverTaxNo(receiverInfo.getReceiverTaxNo());
+            }
+            receiverInfo = receiverInfo1;
+        }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
 //        List<LogisticsProductVO> logisticsProductList = LogisticsBillConverter.INSTANCE.convertLogisticsProduct(ordersSkuList);
