@@ -186,6 +186,10 @@ public class ThirdWarehouseDTO implements Serializable {
         @NotBlank(message = "仓库id不能为空")
         @Size(max = 200, message = "仓库id最大长度不能超过200位")
         private String warehouseId;
+        /**
+         * 仓库编码
+         */
+        private String code;
 
         /**
          * 类型:1:普通（内部）,2:自流转,3:平台,4:京东沧海.6:抖音云仓,125:代发仓,126:分销委外
