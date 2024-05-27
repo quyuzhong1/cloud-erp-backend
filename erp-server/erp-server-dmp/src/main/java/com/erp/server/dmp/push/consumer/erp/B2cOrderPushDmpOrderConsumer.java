@@ -79,6 +79,7 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
 
         List<DmpOrderItemSplitEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cToDmpOrderItem(viewDTO.getDetailList());
         itemEntityList.forEach(i -> i.setAmountAfter(i.getSellPrice()));
+        itemEntityList.forEach(i -> i.setErpOrderItemId(i.getItemId()));
         dmpOrderInfoEntity.setItemList(itemEntityList);
         dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
     }
