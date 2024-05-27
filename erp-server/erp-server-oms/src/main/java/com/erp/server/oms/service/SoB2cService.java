@@ -20,10 +20,10 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
-import org.apache.ibatis.annotations.Param;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,12 +36,6 @@ import java.util.Map;
  * @since 2023-08-18
  */
 public interface SoB2cService extends SuperService<SoB2cEntity> {
-
-
-
-
-
-
 
       /**
       * 分页列表查询
@@ -171,13 +165,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
 
     /**
-     * 校验物流尺寸规则
-     * @param id
-     * @param dto
-     * @return
-     */
-    BatchResultDTO checkBasicLogistics(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
-    /**
      * @description: 获取物流单号
      * @author Will
      * @date: 2023/8/18 16:47
@@ -246,10 +233,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @description: 拆分显示
      * @author Will
      * @date: 2023/8/21 9:18
-     * @param id
+     * @param ids
      * @return ViewSplitDTO
      */
-    SoB2cDTO.ViewSplitDTO viewSplit(String id);
+    List<SoB2cDTO.ViewSplitDTO> viewSplit(List<String> ids);
     /**
      * @description: 拆分保存
      * @author Will
@@ -898,4 +885,39 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 
     PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO);
+
+    List<BatchResultDTO> deliveryWithNotOutbound(List<String> ids);
+
+    /**
+     * 申报信息规则信息整理
+     * @param id
+     * @param map
+     * @return
+     */
+    BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate);
+
+    /**
+     * 根据订单拆分 申报明细
+     *
+     * @param detailList
+     * @param soB2cEntity
+     * @return
+     */
+    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
+
+    /**
+     * 修复历史平均成本数据数据
+     * @param dto
+     */
+    void initCostPrice(SoB2cDTO.CostPriceDTO dto);
+
+
+    /**
+     * 根据单号查询销售订单
+     */
+    SoB2cEntity getByCode(String soCode);
+
+    List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> id);
+
+    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> id);
 }

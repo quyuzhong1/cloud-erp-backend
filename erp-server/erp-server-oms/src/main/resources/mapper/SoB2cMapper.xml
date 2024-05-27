@@ -61,6 +61,7 @@
         sb2c.is_match_order_rule as isMatchOrderRule,
         sb2c.is_match_logistics_rule as isMatchLogisticsRule,
         sb2c.sign_order_error as signOrderError,
+        sb2c.seller_order_code as sellerOrderCode,
         sb2cl.logistics_channel_name as logisticsChannelName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
              else sb2cl.actual_shipping_cost
@@ -76,9 +77,11 @@
         sb2cr.customer_id as buyerId,
         sb2cr.name as buyerName,
         sb2cr.country_name as countryName,
+        sb2cr.country as country,
         sb2c.create_time as createTime,
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
-        sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId
+        sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
+        sb2cl.weight
     </sql>
 
     <!-- 通用查询结果列 -->
@@ -550,6 +553,7 @@
             si.name AS customerName,
             sb2r.country,
             sb2r.full_address AS receiverAddress,
+            sb2r.tel_number AS telNumber,
             sb2r.receiver_name AS receiverName
          FROM so_b2c sb2c
          LEFT JOIN so_b2c_receiver sb2r

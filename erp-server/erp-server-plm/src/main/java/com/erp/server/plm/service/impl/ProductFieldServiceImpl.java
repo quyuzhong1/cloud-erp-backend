@@ -6,20 +6,19 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-
-import com.common.core.utils.BeanMapper;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductFieldDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.dto.SysProductFieldDTO;
 import com.erp.model.plm.entity.ProductFieldEntity;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.ProductFieldMapper;
 import com.erp.server.plm.service.ProductFieldService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -49,7 +48,7 @@ public class ProductFieldServiceImpl extends ServiceImpl<ProductFieldMapper, Pro
      */
     @Override
     public Boolean saveOrUpdateSysField(SysProductFieldDTO dto) {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String id = dto.getId();
         String name = dto.getName();
         checkFieldName(id, name);

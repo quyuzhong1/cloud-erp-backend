@@ -115,8 +115,12 @@ public enum SourceTypeEnum {
     TRANSFER_DECLARE("transferDeclare", "中转报关","transfer_declare"),
     DICT_BASIC("dictBasic", "字典","dict_basic"),
     TMS_CFG_COST("tmsCfgCost", "费用管理配置","tms_cfg_cost"),
+
     LOGISTICS_BILL_COST("logisticsBillCost", "自发货物流费用","logistics_bill_cost"),
     FIRST_MILE_LOGISTICS_BILL_COST("firstMileLogisticsBillCost", "头程物流费用","logistics_bill_cost"),
+    LAST_MILE_LOGISTICS_BILL_COST("lastMileLogisticsBillCost", "尾程物流费用","logistics_bill_cost"),
+
+
     LOGISTICS_BILL("logisticsBill", "物流单","logistics_bill"),
     TMS_FIRST_MILE_RECONCILIATION("tmsFirstMileReconciliation", "头程对账单","tms_first_mile_reconciliation"),
 
@@ -146,14 +150,15 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_GET_OUTBOUND_RECEIPT("thirdWarehouseGetOutboundReceipt", "第三方仓出库数据获取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_INVENTORY("thirdWarehouseGetInventory", "第三方仓库存获取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_TRANSIT_WAREHOUSE_AND_LOGISTIC("thirdWarehouseGetTransitWarehouseAndLogistic", "第三方仓中转仓及支持的物流产品基础数据获取","dmp_pull_task"),
-    THIRD_WAREHOUSE_CREATE_INBOUND_BILL("thirdWarehouseCreateInboundBill", "第三方仓入库单创建接口","dmp_push_task"),
-    THIRD_WAREHOUSE_EDIT_INBOUND_BILL("thirdWarehouseEditInboundBill", "第三方仓入库单编辑接口","dmp_push_task"),
-    THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓入库单取消接口","dmp_push_task"),
-    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓订单发货对接海外仓出库创建接口","dmp_push_task"),
-    THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓出库取消接口","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_INBOUND_BILL("thirdWarehouseCreateInboundBill", "第三方仓创建入库单","dmp_push_task"),
+    THIRD_WAREHOUSE_EDIT_INBOUND_BILL("thirdWarehouseEditInboundBill", "第三方仓编辑入库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓取消入库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓创建出库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓取消出库单","dmp_push_task"),
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),
     TRANSFER_LOGISTICS_CREATE_ORDER("transferLogisticsCreateOrder", "物流报关商创建订单","dmp_push_task"),
+    TRANSFER_LOGISTICS_CANCEL_ORDER("transferLogisticsCancelOrder", "物流报关商取消订单","dmp_push_task"),
     TRANSFER_LOGISTICS_CREATE_PRODUCT("transferLogisticsCreateProduct", "物流报关商备案产品","dmp_push_task"),
     TRANSFER_LOGISTICS_GET_ORDER_BY_CODE("transferLogisticsGetOrderByCode", "物流报关商获取单个订单","dmp_pull_task"),
     TRANSFER_LOGISTICS_GET_ALL_PRODUCT_INFO("transferLogisticsGetAllProductInfo", "物流报关商获取备案产品","dmp_pull_task"),

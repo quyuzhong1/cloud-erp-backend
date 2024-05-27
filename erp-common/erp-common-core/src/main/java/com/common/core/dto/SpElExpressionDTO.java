@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Lambda
@@ -28,6 +30,9 @@ public class SpElExpressionDTO implements Serializable {
      */
     private List<SpElAddFieldDTO>  spElAddFieldList;
 
-
+    /**
+     * 需要设置的变量
+     */
+    private Map<String, Object> variables = new ConcurrentHashMap();
 
 }

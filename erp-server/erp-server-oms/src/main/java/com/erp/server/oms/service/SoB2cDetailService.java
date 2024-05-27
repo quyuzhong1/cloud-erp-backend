@@ -71,6 +71,16 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return Boolean
      */
     Boolean updateWarehouseIdByMainId(String mainId, String warehouseId,Boolean isCover);
+
+    /**
+     * @description: 更新明细id
+     * @author Will
+     * @date: 2024/5/24 10:37
+     * @param detailList
+     * @param isCover
+     * @return Boolean
+     */
+    Boolean updateWarehouseId(List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList, Boolean isCover);
     /**
      * @description: 根据主表id删除
      * @author Will
@@ -165,4 +175,10 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @since 2023-11-28
      **/
     ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform);
+
+    List<SoB2cDetailEntity> listContainDeleted(List<String> ids);
+
+    void updateContainDeleted(List<String> revertDetailIds);
+
+    List<SoB2cDetailEntity> listBySplitId(String detailId);
 }

@@ -5,7 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.UserRequestPermissionsDTO;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -69,7 +69,7 @@ public class DataPermissionAspect {
         if (controllerDataScope == null) {
             return;
         }
-        LoginUser userInfo = CommonInterceptor.threadLocal.get();
+        LoginUser userInfo = UserContext.getLoginUser();
         if(Objects.isNull(userInfo)){
             userInfo=new LoginUser();
             userInfo.setUid("1549948476757303297");

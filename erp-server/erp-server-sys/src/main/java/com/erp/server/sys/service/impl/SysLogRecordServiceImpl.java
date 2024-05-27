@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -18,7 +20,6 @@ import com.erp.model.sys.dto.SysLogMqDTO;
 import com.erp.model.sys.dto.SysLogRecordDTO;
 import com.erp.model.sys.entity.SysLogRecordEntity;
 import com.erp.server.sys.mapper.LogRecordMapper;
-import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.SysLogRecordService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -42,16 +43,15 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SysLogRecordServiceImpl extends SuperServiceImpl<LogRecordMapper, SysLogRecordEntity> implements SysLogRecordService {
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private MQProducerService mQProducerService;
 
     @Override
     public void mqBatchSend(List<SysLogRecordDTO.AddDTO> listDto) {
-        String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0" : commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system" : commonService.getUserInfo().getUserName();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         List<SysLogMqDTO> listMqDto = listDto.stream().map(dto -> SysLogMqDTO.init(userId, userName, dto)).collect(Collectors.toList());
 
         // 异步推送MQ

@@ -9,6 +9,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -84,9 +85,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Resource
     private OperateLogService operateLogService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private QcInfoService qcInfoService;
@@ -479,7 +477,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
-            LoginUser userInfo = commonService.getUserInfo();
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnReceiveEntity::getApproveUserId, userInfo.getUid())
@@ -526,13 +524,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             item.setProductGrade(sku.getProductGrade());
             item.setSaleMethod(productDetailEntity.getSaleMethod());
             item.setVariantProperty(sku.getVariantProperty());
-            item.setBoxHeight(LengthConverterUtil.mmToCm(sku.getBoxHeight()));
-            item.setBoxLength(LengthConverterUtil.mmToCm(sku.getBoxLength()));
-            item.setBoxWeight(LengthConverterUtil.mmToCm(sku.getBoxWeight()));
-            item.setBoxWidth(LengthConverterUtil.mmToCm(sku.getBoxWidth()));
-            item.setProductHeight(LengthConverterUtil.mmToCm(sku.getProductHeight()));
-            item.setProductLength(LengthConverterUtil.mmToCm(sku.getProductLength()));
-            item.setProductWidth(LengthConverterUtil.mmToCm(sku.getProductWidth()));
+            item.setBoxHeight(sku.getBoxHeight());
+            item.setBoxLength(sku.getBoxLength());
+            item.setBoxWeight(sku.getBoxWeight());
+            item.setBoxWidth(sku.getBoxWidth());
+            item.setProductHeight(sku.getProductHeight());
+            item.setProductLength(sku.getProductLength());
+            item.setProductWidth(sku.getProductWidth());
             item.setProductNetWeight(sku.getProductNetWeight());
 
         }

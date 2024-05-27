@@ -34,13 +34,12 @@ import com.erp.model.bi.enums.SalePriceRangeEnum;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
-import com.erp.server.bi.enums.DateTypeEnum;
 import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
@@ -59,14 +58,12 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -81,7 +78,7 @@ import java.util.stream.Collectors;
 public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, DmpOrderInfoEntity>
         implements DmpOrderInfoService {
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private DmpOrderItemSplitService dmpOrderItemSplitService;
     @Resource
     private DmpReturnOrderInfoService dmpReturnOrderInfoService;
     @Resource
@@ -305,7 +302,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
             List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
             // 根据订单号获取订单详情，筛选sku
-            count = dmpOrderItemService.countOrderQuantityBySku(orderIds, dto.getSku());
+            count = dmpOrderItemSplitService.countOrderQuantityBySku(orderIds, dto.getSku());
         }
         return new TargetSaleCountVO(count);
     }
@@ -358,7 +355,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
             List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
             // 根据订单号获取订单详情，筛选sku
-            count = dmpOrderItemService.countOrderQuantityBySku(orderIds, dto.getSku());
+            count = dmpOrderItemSplitService.countOrderQuantityBySku(orderIds, dto.getSku());
         }
         return new TargetSaleCountVO(count);
     }
@@ -529,13 +526,13 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return getQuarterVolumeResultList(quarterTargetMap, new HashMap<>(4), start.getYear());
         }
         List<String> orderIds = entityList.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByOrderInfoIds(orderIds);
+        List<DmpOrderItemSplitEntity> entityItemList = dmpOrderItemSplitService.listByOrderInfoIds(orderIds);
         if (CollectionUtils.isEmpty(entityItemList)) {
             return getQuarterVolumeResultList(quarterTargetMap, new HashMap<>(4), start.getYear());
         }
         // 根据订单号的分组计算销量
-        Map<String, Integer> orderQuantityMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getOrderId,
-                Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+        Map<String, Integer> orderQuantityMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getOrderId,
+                Collectors.summingInt(DmpOrderItemSplitEntity::getQuantity)));
         // 对订单号进行季度分组
         Map<Integer, Integer> quarterMap = entityList.stream().collect(Collectors.groupingBy(x -> (
                         // 按照季度分组
@@ -628,13 +625,13 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return getMonthVolumeResultList(quarterTargetMap, new HashMap<>(4), start.getYear());
         }
         List<String> orderIds = entityList.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByOrderInfoIds(orderIds);
+        List<DmpOrderItemSplitEntity> entityItemList = dmpOrderItemSplitService.listByOrderInfoIds(orderIds);
         if (CollectionUtils.isEmpty(entityItemList)) {
             return getMonthVolumeResultList(quarterTargetMap, new HashMap<>(4), start.getYear());
         }
         // 根据订单号的分组计算销量
-        Map<String, Integer> orderQuantityMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getOrderId,
-                Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+        Map<String, Integer> orderQuantityMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getOrderId,
+                Collectors.summingInt(DmpOrderItemSplitEntity::getQuantity)));
         // 对订单号进行月度分组
         Map<Integer, Integer> quarterMap = entityList.stream().collect(Collectors.groupingBy(x ->
                         // 按照季度分组
@@ -682,13 +679,13 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         Collectors.reducing(BigDecimal.ZERO, x -> x.getOrderFee().multiply(x.getCurrencyRate()), BigDecimal::add)));
         // 查询实际销量
         List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByOrderInfoIds(orderIds);
+        List<DmpOrderItemSplitEntity> entityItemList = dmpOrderItemSplitService.listByOrderInfoIds(orderIds);
         if (CollectionUtils.isEmpty(entityItemList)) {
             return new ArrayList<>();
         }
         // 根据订单号的分组计算销量
-        Map<String, Integer> orderQuantityMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getOrderId,
-                Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+        Map<String, Integer> orderQuantityMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getOrderId,
+                Collectors.summingInt(DmpOrderItemSplitEntity::getQuantity)));
         // 对订单号进行平台分组
         Map<String, Integer> salesVolumeMap = orderInfoEntities.stream().collect(Collectors.groupingBy(x -> x.getSourcePlatform(),
                 Collectors.summingInt(x -> orderQuantityMap.getOrDefault(x.getId(), 0))));
@@ -732,16 +729,16 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         // 查询实际销量
         List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByOrderInfoIds(orderIds);
+        List<DmpOrderItemSplitEntity> entityItemList = dmpOrderItemSplitService.listByOrderInfoIds(orderIds);
         if (CollectionUtils.isEmpty(entityItemList)) {
             return new ArrayList<>();
         }
         // 根据订单号的分组计算销量
-        Map<String, Integer> salesVolumeMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getCategoryName,
-                Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+        Map<String, Integer> salesVolumeMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getCategoryName,
+                Collectors.summingInt(DmpOrderItemSplitEntity::getQuantity)));
         // 对订单号进行平台分组
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream().collect(Collectors.toMap(DmpOrderInfoEntity::getId, DmpOrderInfoEntity::getCurrencyRate));
-        Map<String, BigDecimal> saleAmountMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getCategoryName,
+        Map<String, BigDecimal> saleAmountMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getCategoryName,
                 Collectors.reducing(BigDecimal.ZERO,
                         x -> new BigDecimal(x.getQuantity()).multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
                         BigDecimal::add)
@@ -788,27 +785,27 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         // 查询实际销量
         List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, newSign, new ArrayList<>());
+        List<DmpOrderItemSplitEntity> entityItemList = dmpOrderItemSplitService.listByConditions(orderIds, newSign, new ArrayList<>());
         if (CollectionUtils.isEmpty(entityItemList)) {
             return new ArrayList<>();
         }
         // 根据sku的分组计算销量
         Map<String, Integer> salesVolumeMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo()))
-                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
-                        Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+                .collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getSkuNo,
+                        Collectors.summingInt(DmpOrderItemSplitEntity::getQuantity)));
         // 汇率map
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream().collect(Collectors.toMap(DmpOrderInfoEntity::getId, DmpOrderInfoEntity::getCurrencyRate));
         // 根据sku的分组计算销售额
         Map<String, BigDecimal> saleAmountMap = entityItemList.stream()
                 .filter(x -> StringUtils.isNotBlank(x.getSkuNo()))
-                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                .collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getSkuNo,
                         Collectors.reducing(BigDecimal.ZERO,
                                 x -> new BigDecimal(x.getQuantity()).multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
                                 BigDecimal::add)
                 ));
 
         //  sku 品名Map
-        Map<String, String> skuMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+        Map<String, String> skuMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getSkuNo,
                 Collectors.collectingAndThen(Collectors.toList(), v -> v.get(0).getItemName())));
 
         List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, skuMap, salesVolumeMap, saleAmountMap);
@@ -850,14 +847,14 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 查询实际销量
         List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
         List<String> sku = targetList.stream().map(BiTargetManagementEntity::getSkuNo).collect(Collectors.toList());
-        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, null, sku);
+        List<DmpOrderItemSplitEntity> entityItemList = dmpOrderItemSplitService.listByConditions(orderIds, null, sku);
         if (CollectionUtils.isEmpty(entityItemList)) {
             return new ArrayList<>();
         }
         // 根据sku的分组计算销量
         Map<String, Integer> skuSalesVolumeMap = entityItemList.stream()
-                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
-                        Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+                .collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getSkuNo,
+                        Collectors.summingInt(DmpOrderItemSplitEntity::getQuantity)));
         // 产品定位销量map
         Map<String, Integer> salesVolumeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
                 Collectors.summingInt(x -> skuSalesVolumeMap.getOrDefault(x.getSkuNo(), 0))));
@@ -868,7 +865,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         // 根据sku的分组计算销售额
         Map<String, BigDecimal> skuSaleAmountMap = entityItemList.stream()
-                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                .collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getSkuNo,
                         Collectors.reducing(BigDecimal.ZERO,
                                 x -> new BigDecimal(x.getQuantity())
                                         .multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice())
@@ -912,15 +909,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 查询实际销量
         List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
         List<String> sku = targetList.stream().map(BiTargetManagementEntity::getSkuNo).collect(Collectors.toList());
-        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, null, sku);
+        List<DmpOrderItemSplitEntity> entityItemList = dmpOrderItemSplitService.listByConditions(orderIds, null, sku);
         if (CollectionUtils.isEmpty(entityItemList)) {
             return new ArrayList<>();
         }
 
         // 根据sku的分组计算销量
         Map<String, Integer> skuSalesVolumeMap = entityItemList.stream()
-                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
-                        Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+                .collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getSkuNo,
+                        Collectors.summingInt(DmpOrderItemSplitEntity::getQuantity)));
         // 产品定位销量map
         Map<String, Integer> salesVolumeMap = targetList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
                 Collectors.summingInt(x -> skuSalesVolumeMap.getOrDefault(x.getSkuNo(), 0))));
@@ -931,7 +928,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         // 根据sku的分组计算销售额
         Map<String, BigDecimal> skuSaleAmountMap = entityItemList.stream()
-                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                .collect(Collectors.groupingBy(DmpOrderItemSplitEntity::getSkuNo,
                         Collectors.reducing(BigDecimal.ZERO,
                                 x -> new BigDecimal(x.getQuantity())
                                         .multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice())
@@ -1176,7 +1173,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             //主表信息
             List<DmpOrderInfoEntity> infoList = new ArrayList<>();
             //明细信息
-            List<DmpOrderItemEntity> itemList = new ArrayList<>();
+            List<DmpOrderItemSplitEntity> itemList = new ArrayList<>();
 
             for (Map.Entry<String, List<DmpOrderInfoImportExcelDTO>> entry : map.entrySet()) {
                 DmpOrderInfoEntity info = new DmpOrderInfoEntity();
@@ -1204,7 +1201,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 info.setId(IdWorker.getIdStr());
                 infoList.add(info);
                 for (DmpOrderInfoImportExcelDTO excelDTO : value) {
-                    DmpOrderItemEntity item = new DmpOrderItemEntity();
+                    DmpOrderItemSplitEntity item = new DmpOrderItemSplitEntity();
                     item.setOrderId(info.getId());
                     item.setSkuNo(excelDTO.getSkuNo());
                     item.setItemName(excelDTO.getItemName());
@@ -1219,7 +1216,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
             //新增明细信息
             if (CollectionUtils.isNotEmpty(itemList)) {
-                dmpOrderItemService.saveBatch(itemList);
+                dmpOrderItemSplitService.saveBatch(itemList);
             }
         }
     }
@@ -1404,9 +1401,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return;
         }
         List<String> ids = records.stream().map(DmpOrderInfoDTO::getId).collect(Collectors.toList());
-        List<DmpOrderItemEntity> dmpOrderItemList = dmpOrderItemService.listByOrderInfoIds(ids);
+        List<DmpOrderItemSplitEntity> dmpOrderItemList = dmpOrderItemSplitService.listByOrderInfoIds(ids);
         records.forEach(obj -> {
-            List<DmpOrderItemEntity> itemList = dmpOrderItemList.stream().filter(e -> obj.getId().equals(e.getOrderId())).collect(Collectors.toList());
+            List<DmpOrderItemSplitEntity> itemList = dmpOrderItemList.stream().filter(e -> obj.getId().equals(e.getOrderId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(itemList)) {
                 List<DmpOrderItemDTO> itemResultList = BeanMapperUtils.copyList(DmpOrderItemDTO.class, itemList);
                 itemResultList.stream().forEach(e -> e.setSellAmountOrigin(MathUtil.multiply(e.getSellPriceOrigin(), e.getQuantity())));
@@ -1422,7 +1419,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      */
     @Override
     public DmpOrderInfoEntity firstOrderBySkuNo(String skuNo) {
-        String subSql = StrUtil.format("select order_id from dmp_order_item where sku_no = '{}'", skuNo);
+        String subSql = StrUtil.format("select order_id from dmp_order_item_split where sku_no = '{}'", skuNo);
 
         return lambdaQuery()
                 .inSql(DmpOrderInfoEntity::getId, subSql)
@@ -1436,7 +1433,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      */
     @Override
     public Map<String, DmpOrderInfoEntity> mapFirstOrderBySkuNo(String skuNo) {
-        String subSql = StrUtil.format(" select order_id from dmp_order_item where sku_no = '{}' ", skuNo);
+        String subSql = StrUtil.format(" select order_id from dmp_order_item_split where sku_no = '{}' ", skuNo);
 
         List<DmpOrderInfoEntity> list = query()
                 .select("MIN(platform_create_time) as platform_create_time",

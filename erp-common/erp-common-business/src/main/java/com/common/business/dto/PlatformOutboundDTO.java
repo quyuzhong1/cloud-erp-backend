@@ -1,12 +1,12 @@
 package com.common.business.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  *  平台入库单DTO,所有平台订单通用数据，转换为此类后发送mq统一消费处理
@@ -43,4 +43,8 @@ public class PlatformOutboundDTO extends UniqueDto {
     //出库时间
     private LocalDateTime outBoundTime;
 
+    /**
+     * 跟踪号
+     */
+    private String trackNo;
 }

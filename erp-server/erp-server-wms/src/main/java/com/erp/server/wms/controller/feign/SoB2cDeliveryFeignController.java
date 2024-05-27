@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -10,6 +11,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -134,5 +136,13 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/mergePackageDelivery")
     public Boolean mergePackageDelivery(@RequestBody List<String> soIdList) {
         return soB2cDeliveryService.mergePackageDelivery(soIdList);
+    }
+
+    /**
+     * 平台标记发货
+     **/
+    @PostMapping("/shipOrder")
+    public Boolean shipOrder(@RequestBody @Validated PlatformShipOrderDTO platformShipOrderDTO) {
+        return soB2cDeliveryService.shipOrder(platformShipOrderDTO);
     }
 }

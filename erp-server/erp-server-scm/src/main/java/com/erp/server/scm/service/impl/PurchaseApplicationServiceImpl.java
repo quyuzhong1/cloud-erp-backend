@@ -17,6 +17,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -92,9 +93,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
@@ -377,6 +375,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             searchDTO.setSkuId(entity.getSkuId());
             searchDTO.setSkuNo(entity.getSkuNo());
             searchDTO.setSupplierId(skuPurchase.getSupplierId());
+            searchDTO.setPurchaseOrgId(entity.getPurchaseOrgId());
             searchDTO.setPurchaseQty(entity.getApplyQty().intValue() - purchaseQty.intValue());
             Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(searchDTO);
             List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> value = pair.getValue();
@@ -768,7 +767,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             viewDTO.setDeliveryQty(viewDTO.getToPushdownQty());
             viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
             //报价信息
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewDTO.getQty(), viewDTO.getSkuId(), viewDTO.getSkuNo(), viewDTO.getSupplierId());
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewDTO.getQty(), viewDTO.getSkuId(), viewDTO.getSkuNo(), viewDTO.getSupplierId(),viewDTO.getPurchaseOrgId());
             getTaxPrice(priceDTO,viewDTO,null);
             viewDTO.setIndex(index);
             index++;
@@ -800,7 +799,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setCurrencySymbol(null);
                 viewGenerateDTO.setAmount(null);
                 //报价信息
-                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO childPriceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewGenerateDTO.getQty(), viewGenerateDTO.getSkuId(), viewGenerateDTO.getSkuNo(), viewGenerateDTO.getSupplierId());
+                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO childPriceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewGenerateDTO.getQty(), viewGenerateDTO.getSkuId(), viewGenerateDTO.getSkuNo(), viewGenerateDTO.getSupplierId(),viewGenerateDTO.getPurchaseOrgId());
                 getTaxPrice(childPriceDTO,null,viewGenerateDTO);
                 viewGenerateDTO.setIndex(index);
                 index++;
@@ -845,7 +844,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
 
         //创建人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
         if (ObjectUtils.isEmpty(findUserDTO)) {
@@ -964,7 +963,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
      */
     private void updateApproveStatusForApprove(List<String> ids,String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         this.lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
                 .set(PurchaseApplicationEntity::getApproveUserId,userInfo.getUid())

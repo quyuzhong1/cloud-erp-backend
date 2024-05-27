@@ -3,25 +3,27 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.DictRuleConditionDTO;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.server.oms.mapper.DictRuleConditionMapper;
 import com.erp.server.oms.service.DictRuleConditionService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.DictRuleConditionDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>
@@ -36,8 +38,6 @@ import com.common.core.enums.ApiError;
 public class DictRuleConditionServiceImpl extends SuperServiceImpl<DictRuleConditionMapper, DictRuleConditionEntity> implements DictRuleConditionService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -56,7 +56,7 @@ public class DictRuleConditionServiceImpl extends SuperServiceImpl<DictRuleCondi
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "条件字典单", dictRuleConditionEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "条件字典单", dictRuleConditionEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, dictRuleConditionEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -84,7 +84,7 @@ public class DictRuleConditionServiceImpl extends SuperServiceImpl<DictRuleCondi
 
         // 记录主单操作日志
         log.info("编辑 开始记录条件字典单日志数据，id：【{}】", dictRuleConditionEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), dictRuleConditionEntity.getId(), "条件字典单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictRuleConditionEntity.getId(), "条件字典单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, dictRuleConditionEntity, null, dictRuleConditionEntity.getId(), msg);
         return Boolean.TRUE;

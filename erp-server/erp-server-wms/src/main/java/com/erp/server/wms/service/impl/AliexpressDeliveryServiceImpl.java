@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -21,12 +22,9 @@ import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.server.wms.mapper.AliexpressDeliveryMapper;
 import com.erp.server.wms.service.AliexpressDeliveryDetailService;
 import com.erp.server.wms.service.AliexpressDeliveryService;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,10 +45,6 @@ import java.util.List;
 @Slf4j
 @Service
 public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDeliveryMapper, AliexpressDeliveryEntity> implements AliexpressDeliveryService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Resource
     private ShopSysUserAuthFeign shopSysUserAuthFeign;
 
@@ -114,7 +108,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
     @Override
     public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop() {
         ShopSysUserAuthDTO.UserAuthShopParamDTO dto = new ShopSysUserAuthDTO.UserAuthShopParamDTO();
-        dto.setUserId(commonService.getUserInfo().getUid());
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         dto.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         List<ShopSysUserAuthDTO.ViewShopDTO> viewShopDTOList = shopSysUserAuthFeign.listUserAuthShop(dto);
         return viewShopDTOList;

@@ -13,6 +13,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -20,7 +21,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportDTO;
@@ -29,8 +29,6 @@ import com.erp.model.tms.dto.excel.CfgReconciliationFieldImportExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import com.erp.rpc.wms.feign.ScmDictFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.convert.CfgReconciliationFieldConverter;
 import com.erp.server.tms.listener.CfgReconciliationFieldExcelListener;
@@ -63,8 +61,6 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private CommonService commonService;
-    @Resource
     private LogisticsSupplierService logisticsSupplierService;
     @Resource
     private DictBasicService dictBasicService;
@@ -95,7 +91,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
 
         // 记录主单操作日志
         log.info("编辑 开始记录对账字段配置单日志数据，id：【{}】", cfgReconciliationFieldEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfgReconciliationFieldEntity.getId(), "对账字段配置单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgReconciliationFieldEntity.getId(), "对账字段配置单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, cfgReconciliationFieldEntity, ModuleTypeEnum.CFG_FIELD_RECONCILIATION.getCode(), cfgReconciliationFieldEntity.getId(), msg);
         return Boolean.TRUE;
@@ -120,7 +116,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         }
         // TODO 检查下游单据
 
-//        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】删除操作 ", commonService.getUserInfo().getUserName(), "对账字段配置");
+//        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "对账字段配置");
 //        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除对账字段配置");
 
         removeById(id);

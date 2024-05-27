@@ -1,14 +1,12 @@
 package com.erp.server.wms.handler;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
-import com.erp.server.wms.service.CommonService;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 
 /**
@@ -21,17 +19,13 @@ import java.time.LocalDateTime;
 @Component
 public class ErpObjectHandler implements MetaObjectHandler {
 
-    @Resource
-    private CommonService commonService;
 
     //插入时的填充数据
     @Override
     public void insertFill(MetaObject metaObject) {
-        LoginUser userInfo = commonService.getUserInfo();
-        String uid = userInfo.getUid();
-        String userNameStr = userInfo.getUserName();
-        String userId = StrUtil.isBlank(uid) ? "0": uid;
-        String userName = StrUtil.isBlank(userNameStr) ? "system": userNameStr;
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         LocalDateTime localDateTime = LocalDateTime.now();
         this.setFieldValByName("version", MathUtil.ONE, metaObject);
         this.setFieldValByName("createTime", localDateTime, metaObject);
@@ -46,11 +40,9 @@ public class ErpObjectHandler implements MetaObjectHandler {
     //更新时的 填充数据
     @Override
     public void updateFill(MetaObject metaObject) {
-        LoginUser userInfo = commonService.getUserInfo();
-        String uid = userInfo.getUid();
-        String userNameStr = userInfo.getUserName();
-        String userId = StrUtil.isBlank(uid) ? "0": uid;
-        String userName = StrUtil.isBlank(userNameStr) ? "system": userNameStr;
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
         this.setFieldValByName("updateUserName", userName, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);

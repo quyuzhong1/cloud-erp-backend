@@ -450,6 +450,14 @@ public class PurchasePriceDTO implements Serializable {
          */
         private String supplierId;
         /**
+         * 采购组织Id
+         */
+        private String purchaseOrgId;
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+        /**
          * skuId
          */
         private String skuId;

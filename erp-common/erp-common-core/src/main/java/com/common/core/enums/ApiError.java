@@ -76,7 +76,7 @@ public enum ApiError implements Serializable {
     ERROR_1025(1025, "内容过长，请仔细检查修改后再提交"),
     ERROR_1026(1026, "数据已被他人锁住，为避免数据错误，请稍后再试"),
     ERROR_1027(1027, "数据已被他人修改，为避免数据错误，请稍后再试"),
-    ERROR_1028(1028, "名称不能重复"),
+    ERROR_1028(1028, "客户名称不能重复"),
     ERROR_1029(1029, "只有待提交和审核不通过数据支持修改"),
     ERROR_1030(1030, "未找到来源单据"),
     ERROR_1031(1031, "未找到来源单据明细"),
@@ -110,7 +110,9 @@ public enum ApiError implements Serializable {
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
     LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
     LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
+    ERROR_NAME_EXIST(1060,"名称【{}】已存在"),
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
+    ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
 
 
     /**
@@ -406,7 +408,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
 
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
-    ERROR_95163(95163, "未找到选择的销售套装BOM信息"),
+    ERROR_95163(95163, "未找到选择的BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
     ERROR_DOCS_NO(95165,"文档不存在"),
 	ERROR_95166(95166, "未找到BOM子件"),
@@ -1116,7 +1118,7 @@ public enum ApiError implements Serializable {
     ERROR_SHOP_EXIST(92094 , "【{}】平台下【{}】账号已存在店铺"),
     ERROR_SHOP_COUNTRY_EXIST(92095 , "【{}】平台下【{}】账号下【{}】已存在店铺"),
     ERROR_B2C_CUSTOMER_NOT_EXIST(92061,"未找到B2C销售客户"),
-    ERROR_RULE_EXPRESSION_ERROR(92096,"条件表达式【{}】有误"),
+    ERROR_RULE_EXPRESSION_ERROR(92096,"执行条件不完整,请检查填写"),
     ERROR_SO_B2C_FINANCE_NOT_EXIST(92097,"财务信息不存在"),
     ERROR_SO_B2C_IS_NOT_NEED_MERGE_EXIST(92098,"销售订单【{}】无需合并"),
     ERROR_SHOP_AUTHORIZE(92099,"授权的平台编码错误"),
@@ -1143,8 +1145,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】未审核不支持配货"),
     ERROR_SO_B2C_APPROVE_NOT_GET_LOGISTICS(92118,"B2C销售订单【{}】未审核不支持获取物流单"),
     ERROR_SO_B2C_UPDATE_SUBMIT(92116,"B2C销售订单【{}】冻结中和已作废不支持提交"),
-    ERROR_SO_B2C_SAVE_SPLIT_INVALID(92117,"冻结中和已作废不支持拆分"),
-    ERROR_SO_B2C_SAVE_MERGE_INVALID(92118,"冻结中和已作废不支持合并"),
+    ERROR_SO_B2C_SAVE_SPLIT_INVALID(92117,"冻结中，已作废，待发货，已发货不支持拆分"),
+    ERROR_SO_B2C_SAVE_MERGE_INVALID(92118,"冻结中，已作废，待发货，已发货不支持合并"),
     ERROR_SO_B2C_SHOPEE_NOT_SPLIT(92119,"B2C销售订单【{}】为shopee订单不支持拆分"),
     ERROR_SO_B2C_MERGE_FBA(92120,"B2C销售订单【{}】为FBA订单不支持合并"),
     ERROR_SO_B2C_MERGE_CAINIAO(92121,"B2C销售订单【{}】为菜鸟官方仓订单不支持合并"),
@@ -1185,7 +1187,19 @@ public enum ApiError implements Serializable {
 
     SKU_MAPPING_INVENTORY_INSUFFICIENT(92135,"需要扣除的映射关系SKU【{}】可用库存不足"),
     SO_B2C_IS_MATCH_WAREHOUSE_RULE(92136,"仓库匹配规则更新失败"),
+    ERROR_SO_B2C_NOT_DISTRIBUTION_DECLARE(92137,"B2C销售订单【{}】仅支持已审核-配货中的订单可操作"),
+    ERROR_SO_B2C_HAS_DECLARE(92138,"B2C销售订单【{}】已存在申报信息不进行规则匹配"),
+    ERROR_SO_B2C_DECLARE_NOT_EXIST(92139,"申报信息【{}】记录不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST(92140,"销售订单【{}】申报信息不存在"),
 
+    ERROR_DECLARE_NOT_EXIST(92141,"申报信息不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_SKU_NO_NOT_EXIST(92142,"销售订单【{}】申报信息SKU不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_CN_NAME_NOT_EXIST(92143,"申报信息SKU【{}】报关中文名不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_EN_NAME_NOT_EXIST(92144,"申报信息SKU【{}】报关英文名不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_PRICE_NOT_EXIST(92145,"申报信息SKU【{}】目的国申报价不能为0"),
+    ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_NOT_EXIST(92146,"申报信息SKU【{}】目的国申报价币种不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_SYM_NOT_EXIST(92147,"申报信息SKU【{}】目的国申报价币种符号不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_WEIGHT_NOT_EXIST(92148,"申报信息SKU【{}】重量不能为0"),
 
     /**
      * TMS 错误
@@ -1253,6 +1267,11 @@ public enum ApiError implements Serializable {
     LOGISTICS_NOT_PRINT_LOGISTICS_BILL(94042,"物流商【{}】不支持打印物流面单"),
     LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持分开单独打印官方配货单"),
     LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
+    ERROR_CFG_COST_EMPTY(94045,"未发现【{}】费用配置信息"),
+    ERROR_LOGISTICS_CHANNEL_WAREHOUSE_NOT_NULL(94046,"指定仓库不能为空"),
+
+
+
     /**
      * SRM 错误
      * 从96000 开始
@@ -1281,6 +1300,11 @@ public enum ApiError implements Serializable {
     ERROR_CANNOT_SAME_POSITION(94100,"取货和上架仓位不能是同一个仓位"),
     ERROR_OUT_WAREHOUSELOCATION_NOT_FOUND(94101,"取货仓位不存在"),
     ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
+
+    ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于包装长度"),
+    ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于包装宽度"),
+    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
+    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
 
 
 

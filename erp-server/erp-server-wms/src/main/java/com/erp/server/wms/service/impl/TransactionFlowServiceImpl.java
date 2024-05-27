@@ -13,6 +13,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -34,10 +35,6 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO.ListDailyInventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.entity.InventoryHisEntity;
-import com.erp.model.wms.entity.TransactionFlowEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -85,9 +82,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     private TransactionFlowMapper transactionFlowMapper;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private WarehouseService warehouseService;
 
     @Autowired
@@ -131,7 +125,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Transactional(rollbackFor = Exception.class)
     @Override
     public int updateUnapprovedById(String id, Integer version) {
-        LoginUser loginUser =  commonService.getUserInfo();
+        LoginUser loginUser =  UserContext.getDefaultLoginUser();
         return transactionFlowMapper.updateUnapprovedById(id, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 
@@ -169,7 +163,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setSourceCode(param.getSourceCode());
         transactionFlowEntity.setSourceDetailId(param.getSourceDetailId());
         transactionFlowEntity.setDictBizType(businessType.getCode());
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         transactionFlowEntity.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "");
         transactionFlowEntity.setTradeTime(LocalDateTime.now());
         transactionFlowEntity.setTransactionRuleId(StrUtils.null2EmptyWithTrim(transactionRuleId));
@@ -194,7 +188,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Override
     public void add(TransactionFlowEntity tradeParam, Integer afterInventoryQty) {
         // 记录交易流水
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
 
         // 复制所有参数
         TransactionFlowEntity transactionFlow = new TransactionFlowEntity();
@@ -385,7 +379,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Transactional(rollbackFor = Exception.class)
     public void addUnApproveFlow(InventoryDetailEntity detail, TransactionFlowEntity txnFlow, Integer afterQty) {
         // 记录交易流水
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         // 复制所有参数
         TransactionFlowEntity transactionFlow = new TransactionFlowEntity();
         BeanMapper.copy(txnFlow,transactionFlow);

@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -12,9 +13,7 @@ import com.erp.model.tms.dto.TransferDeclareProductDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareProductEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.mapper.TransferDeclareProductMapper;
-import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TransferDeclareProductService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -42,8 +41,6 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private SoB2cFeign soB2cFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -63,7 +60,7 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "中转报关产品" , transferDeclareProductEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "中转报关产品" , transferDeclareProductEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, transferDeclareProductEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -92,7 +89,7 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
 
         // 记录主单操作日志
             log.info("编辑 开始记录中转报关产品日志数据，id：【{}】", transferDeclareProductEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), transferDeclareProductEntity.getId(), "中转报关产品");
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), transferDeclareProductEntity.getId(), "中转报关产品");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, transferDeclareProductEntity, null, transferDeclareProductEntity.getId(), msg);
         return Boolean.TRUE;

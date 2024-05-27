@@ -1,7 +1,8 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.CfgConditionEntity;
+
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.CfgConditionDTO;
+import com.erp.model.oms.entity.CfgConditionEntity;
 
 import java.util.List;
 
@@ -50,6 +51,12 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
     List<CfgConditionDTO.ListDTO> listAllCondition();
 
     /**
+     * 申报规则下拉列表
+     * @return
+     */
+    List<CfgConditionDTO.ListDTO> listDeclareCondition();
+
+    /**
      * 条件树结构
      * @author yl
      * @date 2023-10-08 15:09
@@ -66,4 +73,11 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
      *@date 2023-12-06
      */
     List<CfgConditionEntity> listByFields(List<String> fieldList);
+    /**
+     * @description: 订单处理的条件下拉
+     * @author Will
+     * @date: 2024/5/9 14:34
+     * @return List<ListDTO>
+     */
+    List<CfgConditionDTO.ListDTO> listOrderHandleCondition();
 }

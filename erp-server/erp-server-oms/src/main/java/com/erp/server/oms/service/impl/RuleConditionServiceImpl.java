@@ -4,6 +4,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.exception.ServiceException;
@@ -16,7 +17,10 @@ import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleConditionMapper;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.CfgConditionService;
+import com.erp.server.oms.service.DictRuleConditionService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.RuleConditionService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -42,8 +46,6 @@ import java.util.stream.Collectors;
 public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapper, RuleConditionEntity> implements RuleConditionService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private DictRuleConditionService dictRuleConditionService;
@@ -68,7 +70,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "规则条件单", ruleConditionEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "规则条件单", ruleConditionEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, ruleConditionEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -95,7 +97,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
 
         // 记录主单操作日志
         log.info("编辑 开始记录规则条件单日志数据，id：【{}】", ruleConditionEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleConditionEntity.getId(), "规则条件单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleConditionEntity.getId(), "规则条件单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, ruleConditionEntity, null, ruleConditionEntity.getId(), msg);
         return Boolean.TRUE;
@@ -120,6 +122,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         int i = 1;
         for (RuleConditionDTO.AddDTO item : conditionList) {
             item.setIndex(i);
+            item.setName(StrUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
             i++;
         }
         List<RuleConditionEntity> ruleConditionList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
@@ -182,6 +185,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         int i = 1;
         for (RuleConditionDTO.UpdateDTO item : conditionList) {
             item.setIndex(i);
+            item.setName(StrUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
             i++;
         }
         String moduleType = ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode();
@@ -220,7 +224,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         for (RuleConditionEntity updateItem : updateRuleConditionList) {
             RuleConditionEntity old = dbList.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
             if (Objects.nonNull(old)) {
-                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, "修改了订单规则");
+                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, StrUtil.format("修改了第【{}】条订单规则",updateItem.getIndex()));
             }
         }
         handleDataList(saveOrUpdateList);

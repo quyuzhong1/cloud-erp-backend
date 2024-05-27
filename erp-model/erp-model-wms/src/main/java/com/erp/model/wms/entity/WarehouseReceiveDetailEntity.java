@@ -96,4 +96,10 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
 
     @TableField(exist = false)
     private LocalDate billDate;
+
+    /**
+     * 入库状态（0未入库，1部分入库，2已入库）
+     */
+    @TableField("in_stock_status")
+    private String inStockStatus;
 }

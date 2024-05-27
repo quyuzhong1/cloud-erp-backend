@@ -1,8 +1,5 @@
 package com.erp.server.dmp.convert;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
@@ -20,8 +17,6 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,7 +84,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "cnySettleRate", source = "exchangeRate"),
             @Mapping(target = "sourceItemId", source = "id")
     })
-    DmpOrderItemEntity soDetailToDmpOrderItem(SoDetailEntity soDetailEntity);
+    DmpOrderItemSplitEntity soDetailToDmpOrderItem(SoDetailEntity soDetailEntity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -222,8 +217,8 @@ public interface DmpOrderConverter {
             @Mapping(target = "cnySettleRate", source = "detailViewDTO.exchangeRate"),
             @Mapping(target = "sourceItemId", source = "id")
     })
-    DmpOrderItemEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
-    List<DmpOrderItemEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
+    DmpOrderItemSplitEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
+    List<DmpOrderItemSplitEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
 
 
     @Mappings({

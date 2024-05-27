@@ -2,14 +2,20 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.sys.service.CommonService;
+import com.erp.server.sys.service.SysRoleUserService;
+import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.UserDatePermissionService;
 import io.seata.common.util.CollectionUtils;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -22,7 +28,10 @@ import java.util.List;
 public class UserDatePermissionServiceImpl implements UserDatePermissionService {
     @Resource
     private CommonService commonService;
-
+    @Resource
+    private SysRoleUserService sysRoleUserService;
+    @Resource
+    private SysUserInfoService sysUserInfoService;
     @Resource
     private SysUserFeign sysUserFeign;
 
@@ -51,7 +60,7 @@ public class UserDatePermissionServiceImpl implements UserDatePermissionService 
         if (StringUtil.isBlank(tableField) || StringUtil.isBlank(menuCode)) {
             return "";
         }
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
         List<String> roleIdList = sysUserFeign.getRoleIdList(user.getUid());
@@ -123,5 +132,30 @@ public class UserDatePermissionServiceImpl implements UserDatePermissionService 
             }
         }
         return sqlString.toString();
+    }
+    /**
+     * 根据菜单code查询用户数据权限
+     * @author hyj
+     * @date 2024/5/9 10:43
+     * @param menuCode 菜单编号
+     * @return java.lang.String
+     **/
+    @Override
+    public Boolean getUserDatePermissionByMenuCode(String menuCode) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserInfoService.getRequestPermissionsList(user.getUid());
+        UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
+        List<String> roleIdList = sysRoleUserService.findRoleIdsByUid(user.getUid());
+        if (roleIdList.contains("1")) {
+            return true;
+        }
+        userRequestPermissions = requestPermissionsList
+                .stream()
+                .filter(p -> p.getPermissionsCode().equals(menuCode))
+                .findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(userRequestPermissions)) {
+            return true;
+        }
+        return false;
     }
 }

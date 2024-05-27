@@ -11,9 +11,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.MonthEnum;
-import com.common.business.enums.ProductTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.ProductTypeEnum;
 import com.common.business.enums.SeasonEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
@@ -77,9 +78,6 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Resource
     private ProductPlanRemarkService productPlanRemarkService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private ProductInfoService productInfoService;
@@ -778,7 +776,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
      */
     private Boolean removeByProductPlanId(String productPlanId) {
         //获取当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (ObjectUtils.isEmpty(userInfo)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }

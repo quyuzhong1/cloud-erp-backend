@@ -373,7 +373,7 @@ public class DmpOrderInfoEntity implements Serializable {
     private String orderTypeName;
 
     @TableField(exist = false)
-    private List<DmpOrderItemEntity> itemList;
+    private List<DmpOrderItemSplitEntity> itemList;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

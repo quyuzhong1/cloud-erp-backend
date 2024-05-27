@@ -1,13 +1,15 @@
 package com.erp.server.tms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -23,5 +25,13 @@ public interface LogisticsBillDetailMapper extends BaseMapper<LogisticsBillDetai
 
     IPage<LogisticsBillDetailEntity> getTrackPage(@Param("page") Page<LogisticsBillDetailEntity> page, @Param("query") LogisticsBillDetailQueryDTO query);
     IPage<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(@Param("page") Page<LogisticsTrackDTO.UpdateTrackDTO> page, @Param("query") LogisticsBillDetailQueryDTO query);
-
+    /**
+     * @description: 根据平台订单号和物流跟踪单号查询
+     * @author Will
+     * @date: 2024/5/11 11:51
+     * @param platformCodeList
+     * @param trackNoList
+     * @return List<LogisticsBillDetailEntity>
+     */
+    List<LogisticsBillDetailEntity> listByPlatformCodeAndTrackNo(@Param("platformCodeList") List<String> platformCodeList,@Param("trackNoList") List<String> trackNoList);
 }

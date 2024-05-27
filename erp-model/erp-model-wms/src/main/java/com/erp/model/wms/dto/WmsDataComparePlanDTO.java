@@ -105,7 +105,7 @@ public class WmsDataComparePlanDTO implements Serializable {
     	 /**
           * 单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收
           */
-          @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
+//          @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
           @Size(max = 50,message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收最大长度不能超过50位")
           private String billType;
      }
@@ -124,7 +124,7 @@ public class WmsDataComparePlanDTO implements Serializable {
         /**
         * 单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收
         */
-        @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
+//        @NotBlank(message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收不能为空")
         @Size(max = 50,message = "单据类型：soOutstock=销售出库单，fbaShipment=FBA货件签收，overseasInbound=第三方仓货件签收最大长度不能超过50位")
         private String billType;
 
@@ -149,19 +149,26 @@ public class WmsDataComparePlanDTO implements Serializable {
     	 * 系统数据字段
     	 */
     	private String systemField;
+    	
+    	/**
+    	 * 系统数据字段名称，前端可不传，以后台配置为主
+    	 */
+    	private String systemFieldName;
+    	
     	 /**
     	 * 导入数据字段
     	 */
     	private String importField;
+    	
     	 /**
-    	 * 唯一键标识，true或false
+    	 * 唯一键或汇总标识，true或false
     	 */
     	private Boolean status;
     	
     	/**
-    	 * 导入数据表头索引
+    	 * 数据类型
     	 */
-    	private Integer headIndex;
+    	private String classType;
      }
 
 }

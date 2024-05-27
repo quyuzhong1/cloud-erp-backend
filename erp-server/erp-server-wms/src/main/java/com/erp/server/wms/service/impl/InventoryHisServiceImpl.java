@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -39,8 +40,6 @@ import java.util.stream.Collectors;
 public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper, InventoryHisEntity> implements InventoryHisService {
 
 
-    @Autowired
-    private CommonService commonService;
     @Resource
     private TransactionFlowService transactionFlowService;
 
@@ -56,7 +55,7 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
     @Transactional(rollbackFor = Exception.class)
     @Override
     public int updateQtyById(String id, Integer qty) {
-        LoginUser loginUser =  commonService.getUserInfo();
+        LoginUser loginUser =  UserContext.getDefaultLoginUser();
         return baseMapper.updateQtyById(id, qty, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 

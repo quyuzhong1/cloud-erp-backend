@@ -17,6 +17,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -81,8 +82,6 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     @Autowired
     private ModuleOperateLogService operateLogService;
 
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private SubcontractChangeDetailService subcontractChangeDetailService;
@@ -840,7 +839,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     */
     private void updateForApprove(List<String> ids, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().in(SubcontractChangeEntity::getId, ids)
             .set(SubcontractChangeEntity::getApproveUserId, userInfo.getUid())
             .set(SubcontractChangeEntity::getApproveUserName, userInfo.getUserName())

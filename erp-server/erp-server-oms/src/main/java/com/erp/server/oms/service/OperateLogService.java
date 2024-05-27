@@ -55,6 +55,18 @@ public interface OperateLogService extends SuperService<OperateLogEntity> {
     Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String msg);
 
     /**
+     *
+     * @param oldObj
+     * @param newObj
+     * @param moduleType
+     * @param businessId
+     * @param msg
+     * @param operation
+     * @return
+     */
+    Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String pid, String msg, String operation);
+
+    /**
      * @description: 新增日志
      * @author Will
      * @date: 2023/3/21 10:14

@@ -15,6 +15,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -327,7 +328,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     //TODO 2020330暂时取消审核流程，只修改状态
     /*public void startBomProcess(String bomId, List<BomSkuDTO> skuList) {
         FindProcessDTO findProcess = new FindProcessDTO();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         String businessType = WorkflowBusinessEnum.BOM_AUDIT.getBusinessType();
         String platform = WorkflowBusinessEnum.BOM_AUDIT.getPlatform();
         findProcess.setBusinessType(businessType);
@@ -447,7 +448,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<Integer> stateList = new ArrayList<>();
         //待审核
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
-          /*  String userId = commonService.getUserInfo().getUid();
+          /*  String userId = UserContext.getDefaultLoginUser().getUid();
             //获取我的待办信息
             //TODO 2020330暂时取消审核流程，只修改状态
             List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
@@ -1018,7 +1019,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //待审核
         List<String> bomIdList = new ArrayList<>();
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = commonService.getUserInfo().getUid();
+            String userId = UserContext.getDefaultLoginUser().getUid();
             //获取我的待办信息
             //TODO 2020330暂时取消审核流程，只修改状态
 /*            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
@@ -1096,7 +1097,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Boolean result = this.updateById(bom);
 
         //TODO 2020330暂时取消审核流程，只修改状态
-/*        String userId = commonService.getUserInfo().getUid();
+/*        String userId = UserContext.getDefaultLoginUser().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(bom.getId());
         tableDTO.setUserId(userId);
@@ -1233,7 +1234,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         bom.setState(BomStateEnum.AUDIT_NO_PASS.getState());
         bom.setRemark(dto.getComment());
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(bom.getId());
         tableDTO.setUserId(userId);

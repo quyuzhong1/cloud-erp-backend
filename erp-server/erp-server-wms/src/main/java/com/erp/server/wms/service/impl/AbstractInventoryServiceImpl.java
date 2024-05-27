@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.common.business.enums.DistributedLockEnum;
 import com.common.business.enums.InventoryClosedRecordEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
@@ -29,7 +30,6 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,9 +77,6 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
 
     @Resource
     private AbstractInventoryServiceImpl abstractInventoryService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
@@ -254,7 +251,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
          * 当前登录人为system（金蝶拉取时为system,处理数据时需要）则无需判断关账时间
          * 获取到非system的用户时正常校验
          */
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (!StrUtil.isBlank(userInfo.getUid())) {
             // 存在关账时间并非在途库存
             if(null != closeDate && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum)){

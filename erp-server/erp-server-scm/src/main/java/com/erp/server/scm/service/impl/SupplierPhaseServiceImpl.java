@@ -320,7 +320,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         String searchType = params.getSearchType();
-        List<String> statusList = new ArrayList<>(4);
+        List<String> statusList = new ArrayList<>();
         //待我审核
         if (searchType.equals(SearchType.WAIT_APPROVE)) {
             statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());

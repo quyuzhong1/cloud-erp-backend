@@ -8,9 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -394,6 +392,11 @@ public class LogisticsChannelDTO implements Serializable {
         private Boolean isApiInsurance;
 
         /**
+         * 保宏单号（报关单号类型）
+         */
+        private String declareCodeType;
+
+        /**
          * 物流映射列表
          */
         private List<LogisticsMappingDTO.ViewDTO> mappingList;
@@ -414,7 +417,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private List<LogisticsChannelBlacklistDTO.ViewDTO> blackList;
 
-
+        /**
+         * 仓库设置
+         */
+        private LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO;
     }
 
     /**
@@ -444,6 +450,12 @@ public class LogisticsChannelDTO implements Serializable {
          * 发货限制列表
          */
         private List<LogisticsChannelBlacklistDTO.AddDTO> blackList;
+
+        /**
+         * 仓库设置
+         */
+        @NotEmpty(message = "仓库设置不能为空")
+        private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
     }
 
     /**
@@ -480,6 +492,12 @@ public class LogisticsChannelDTO implements Serializable {
          * 发货限制列表
          */
         private List<LogisticsChannelBlacklistDTO.AddDTO> blackList;
+
+        /**
+         * 仓库设置
+         */
+        @NotNull(message = "仓库设置不能为空")
+        private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
 
     }
 
@@ -629,7 +647,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private Boolean isApiInsurance;
 
-
+        /**
+         * 保宏单号（报关单号类型） /tms/drop/down/dict/list?key=declareCodeType
+         */
+        private String declareCodeType;
     }
 
     @Data

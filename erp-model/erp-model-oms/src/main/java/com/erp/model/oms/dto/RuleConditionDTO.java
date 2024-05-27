@@ -3,12 +3,10 @@ package com.erp.model.oms.dto;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -56,7 +54,12 @@ public class RuleConditionDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 值对应的名称
+         */
+        @NotBlank(message = "值对应的名称不能为空")
+        @Size(max = 100, message = "值对应的名称最大长度不能超过100位")
+        private String name;
     }
 
     /**
@@ -71,6 +74,13 @@ public class RuleConditionDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 值对应的名称
+         */
+        @NotBlank(message = "值对应的名称不能为空")
+        @Size(max = 100, message = "值对应的名称最大长度不能超过100位")
+        private String name;
 
     }
 

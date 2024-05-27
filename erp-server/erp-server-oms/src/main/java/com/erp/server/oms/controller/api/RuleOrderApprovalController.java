@@ -1,27 +1,21 @@
 package com.erp.server.oms.controller.api;
 
 
-import cn.hutool.json.JSONObject;
-import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.RefundOrderDTO;
-import com.erp.server.oms.service.ShopInfoService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.RuleOrderApprovalDTO;
+import com.erp.server.oms.service.RuleOrderApprovalService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.RuleOrderApprovalService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.RuleOrderApprovalDTO;
-
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +47,7 @@ public class RuleOrderApprovalController extends BaseController {
             menuCode = "oms:ruleOrderApproval:paging",
             tableAlias = "roa"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<RuleOrderApprovalDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<RuleOrderApprovalDTO.PagingParamDTO> dto) {
         PagingVO<RuleOrderApprovalDTO.PagingViewDTO> pagingVO = ruleOrderApprovalService.paging(dto);
         return success(pagingVO);

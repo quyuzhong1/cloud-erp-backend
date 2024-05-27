@@ -3,6 +3,8 @@ package com.erp.server.wms.sdk.delivery;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.constant.BusinessCommonConstants;
@@ -12,24 +14,19 @@ import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsMappingDTO;
-import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
@@ -53,7 +50,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.AMAZON)
-public class AmazonShipOrder implements IPlatformService {
+public class AmazonShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -123,6 +120,7 @@ public class AmazonShipOrder implements IPlatformService {
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
+            // 校验捆绑商品拆分
             // 来源明细ID为空代表是手工添加的明细忽略
             detailEntityList =  detailEntityList.stream()
                     .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
@@ -130,9 +128,10 @@ public class AmazonShipOrder implements IPlatformService {
 //            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
 //                throw new ServiceException("平台来源详情ID为空");
 //            }
+            detailEntityList = super.handleBomSplit(detailEntityList);
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
-                return;
+                continue;
             }
 
             //检查销售订单物流信息是否存在
@@ -214,13 +213,13 @@ public class AmazonShipOrder implements IPlatformService {
                 List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
                 if (CollectionUtils.isEmpty(warehouseTypes)){
                     log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
-                    return;
+                    continue;
                 }
                 // 允许通过的ID
                 DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
                 if (null == configAllowPlatformOrderDTO){
                     log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
-                    return;
+                    continue;
                 }
             }
 
@@ -229,11 +228,7 @@ public class AmazonShipOrder implements IPlatformService {
                 ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, mainEntity.getPlatformCode());
                 log.warn("【{}】亚马逊标记发货:响应结果={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(voidApiResponse));
             } catch (ApiException e){
-                if (e.getMessage().contains("ErrorCode: NonexistentOrderItem Description: Failed to find order item list by order ID:")){
-                    throw new ServiceException("平台取消发货，不允许出库，请处理订单发货拦截后，取消发货");
-                } else {
-                    throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
-                }
+                confirmShipmentApiExceptionHandle(e, mainEntity.getPlatformCode(), api);
             } catch (Exception e) {
                 throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
             }
@@ -244,9 +239,10 @@ public class AmazonShipOrder implements IPlatformService {
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
         Boolean isCancel = dto.getOldIsCancel();
-        if (!dto.getOldIsCancel()){
-            isCancel = queryAndUpdateOrderStatus(dto);
-        }
+        // 取消实时查询，调整到打印拣货单批量查询
+//        if (!dto.getOldIsCancel()){
+//            isCancel = queryAndUpdateOrderStatus(dto);
+//        }
 
         if (isCancel) {
             //订单拦截
@@ -363,5 +359,48 @@ public class AmazonShipOrder implements IPlatformService {
             }
         }).collect(Collectors.toList());
         return true;
+    }
+
+    /**
+     * 标记发货亚马逊Api异常处理
+     */
+    public void confirmShipmentApiExceptionHandle(ApiException e, String platformCode, OrdersV0Api api) {
+        if (!StringUtils.isBlank(e.getMessage())){
+            // 其他异常信息
+            throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
+        }
+        JSONArray errorJsonArray = new JSONObject(e.getResponseBody()).getJSONArray("errors");
+        if (CollectionUtils.isEmpty(errorJsonArray)){
+            // 其他异常信息
+            throw new ServiceException("亚马逊标记发货失败:" + JSONUtil.toJsonStr(e));
+        }
+//            { "errors": [{
+//              "code": "InvalidInput",
+//             "message": "Failed to create package due to not finding a matching package or order already fulfilled. ErrorMessage(errorCode\u003dGeneralError, errorDescription\u003dUnable to find package to update for order (250-6220485-3709425), errorMetric\u003dPackageToUpdateNotFound, packageIndex\u003dnull)",
+//             "details": ""}]}
+        JSONObject errorObj = errorJsonArray.getJSONObject(0);
+        String errorMsg = errorObj.getStr("message");
+        if (errorMsg.contains("ErrorCode: NonexistentOrderItem Description: Failed to find order item list by order ID:")){
+            // 判断响应异常信息是取消订单
+            throw new ServiceException("平台取消发货，不允许出库，请处理订单发货拦截后，取消发货");
+        } else if (errorMsg.contains("Failed to create package due to not finding a matching package or order already fulfilled")){
+            // 判断响应异常信息是后台可能已标记发货
+            try {
+                GetOrderResponse response = api.getOrder(platformCode);
+                if (null == response.getPayload()){
+                    throw new ServiceException("查询亚马逊订单最新信息为空:" + errorMsg);
+                } else if (!"shipped".equals(response.getPayload().convertBillStatus())){
+                    throw new ServiceException("亚马逊非已发货-标记发货失败:" + errorMsg);
+                }
+                //平台已发货 跳过
+                log.warn("亚马逊订单【{}】标记发货:亚马逊订单已发货忽略", platformCode);
+            } catch (Exception apiError) {
+                log.warn("查询亚马逊订单【{}】信息响应结果: error={}", platformCode, ExceptionUtil.stacktraceToString(e));
+                throw new ServiceException("查询亚马逊订单最新信息失败:" + errorMsg);
+            }
+        } else {
+            // 其他异常信息
+            throw new ServiceException("亚马逊标记发货失败:" + errorMsg);
+        }
     }
 }

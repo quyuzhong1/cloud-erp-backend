@@ -1,9 +1,7 @@
 package com.erp.server.dmp.service.mq;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -12,8 +10,6 @@ import com.common.business.dto.CleanBaseDTO;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
-import com.common.message.service.mq.MQProducerService;
-import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
@@ -24,8 +20,6 @@ import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.plm.dto.NewProductDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +31,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -67,7 +60,7 @@ public class MQConsumerService {
     private ProductDetailService productDetailService;
 
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private DmpOrderItemSplitService dmpOrderItemSplitService;
     @Resource
     private DmpBomService dmpBomService;
     @Resource
@@ -305,7 +298,7 @@ public class MQConsumerService {
         @Override
         public void onMessage(Map<String,List<NewProductDTO>> ext) {
             try {
-                dmpOrderItemService.updateNewSign(ext);
+                dmpOrderItemSplitService.updateNewSign(ext);
             }catch (Exception e){
                 log.error("sync_dmp_product_listing_tag 更新新品标记失败 ！{}",JSONUtil.toJsonStr(ext),e);
             }
@@ -320,7 +313,7 @@ public class MQConsumerService {
         @Override
         public void onMessage(Map<String,List<NewProductDTO>> ext) {
             try {
-                dmpOrderItemService.getProductListing(ext);
+                dmpOrderItemSplitService.getProductListing(ext);
             }catch (Exception e){
                 log.error("get_dmp_product_listing_tag 查询产品listing失败 ！{}",JSONUtil.toJsonStr(ext),e);
             }

@@ -16,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DeclarePlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
@@ -27,7 +28,6 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
@@ -83,8 +83,6 @@ import java.util.stream.Collectors;
 public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegistrationMapper, ProductRegistrationEntity> implements ProductRegistrationService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Resource
     private LogisticsProductFeign logisticsProductFeign;
@@ -164,13 +162,13 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 ApiResult<ProductRegistrationEntity> queryResult = transferLogisticsService.getProductBySku(productDTO.getSkuNo(),transferLogisticsAuthEntity.getId());
                 if(queryResult.isSuccess()){
                     ProductRegistrationEntity addEntity = queryResult.getData();
+                    //设置推送信息
+                    Map<String, Object> pushMap = BeanUtil.beanToMap(productDTO);
+                    Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                     addEntity.setSkuId(skuId);
                     addEntity.setLatestTime(LocalDateTime.now());
                     addEntity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
                     addEntity.setDeclareSupplierName(transferLogisticsAuthEntity.getName());
-                    //设置推送信息
-                    Map<String, Object> pushMap = BeanUtil.beanToMap(productDTO);
-                    Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                     addEntity.setPushInfo(pushMap);
                     addEntity.setPullInfo(pullMap);
                     ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
@@ -193,7 +191,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
             this.save(addList.get(0));
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】sku为【%s】", commonService.getUserInfo().getUserName(), "产品备案信息");
+        String msg = StrUtil.format("用户【{}】新增【{}】sku为【%s】", UserContext.getDefaultLoginUser().getUserName(), "产品备案信息");
         List<Pair<String, String>> pairList = addList.stream().map(obj -> new Pair<>(obj.getId(), obj.getSkuNo())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_REGISTRATION.getCode(), pairList, "新增操作");
         return resultDTOList;
@@ -342,6 +340,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 ApiResult<ProductRegistrationEntity> queryResult = transferLogisticsService.getProductBySku(productDTO.getSkuNo(),transferLogisticsAuthEntity.getId());
                 if(queryResult.isSuccess()){
                     ProductRegistrationEntity addEntity = queryResult.getData();
+                    Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                     addEntity.setLatestTime(LocalDateTime.now());
                     if(addEntity.getStatus().equals(ProductRegistrationEnum.StatusEnum.REGISTERED.getCode()) && !judgeEquals(addEntity,productDTO)){
                         addEntity.setStatus(ProductRegistrationEnum.StatusEnum.CANCEL.getCode());
@@ -354,7 +353,6 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                         addEntity.setDeclareCurrencySymbol(productDTO.getDeclareCurrencySymbol());
                         ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
                         BeanUtil.copyProperties(erpEntity,addEntity, CopyOptions.create().setIgnoreNullValue(true));
-                        Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                         addEntity.setPullInfo(pullMap);
                         addList.add(addEntity);
                     }else{
@@ -362,7 +360,6 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                         BeanUtil.copyProperties(addEntity,productRegistrationEntity, CopyOptions.create().setIgnoreNullValue(true));
                         ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
                         BeanUtil.copyProperties(erpEntity,productRegistrationEntity, CopyOptions.create().setIgnoreNullValue(true));
-                        Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                         productRegistrationEntity.setPullInfo(pullMap);
                         updateList.add(productRegistrationEntity);
                     }
@@ -459,6 +456,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 ApiResult<ProductRegistrationEntity> queryResult = transferLogisticsService.getProductBySku(entity.getSkuNo(),transferLogisticsAuthEntity.getId());
                 if(queryResult.isSuccess()){
                     ProductRegistrationEntity addEntity = queryResult.getData();
+                    Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                     addEntity.setLatestTime(LocalDateTime.now());
                     addEntity.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(addEntity.getCurrency()));
                     addEntity.setDeclareSupplierId(transferLogisticsAuthEntity.getMainId());
@@ -471,14 +469,12 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                     if(Objects.isNull(existEntity)){
                         ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
                         BeanUtil.copyProperties(erpEntity,addEntity, CopyOptions.create().setIgnoreNullValue(true));
-                        Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                         addEntity.setPullInfo(pullMap);
                         addList.add(addEntity);
                     }else{
                         BeanUtil.copyProperties(addEntity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
                         ProductRegistrationEntity erpEntity = ProductRegistrationConverter.INSTANCE.convertToEntity(productDTO);
                         BeanUtil.copyProperties(erpEntity,existEntity, CopyOptions.create().setIgnoreNullValue(true));
-                        Map<String, Object> pullMap = BeanUtil.beanToMap(queryResult.getData());
                         existEntity.setPullInfo(pullMap);
                         updateList.add(existEntity);
                     }

@@ -3,25 +3,20 @@ package com.erp.server.dmp.service.mq;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.UniqueDto;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.utils.MapUtil;
-import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
-import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
+import com.erp.server.dmp.pull.mapper.DmpOrderItemSplitMapper;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.service.DmpOrderItemService;
+import com.erp.server.dmp.service.DmpOrderItemSplitService;
 import com.erp.server.dmp.service.DmpSkuCostService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,10 +43,10 @@ public  class MQProducerServiceTest {
 //    private MQProducerService mQProducerService;
 
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private DmpOrderItemSplitService dmpOrderItemSplitService;
 
     @Resource
-    private DmpOrderItemMapper dmpOrderItemMapper;
+    private DmpOrderItemSplitMapper dmpOrderItemSplitMapper;
 
     @Resource
     private DmpSkuCostService dmpSkuCostService;
@@ -97,8 +92,8 @@ public  class MQProducerServiceTest {
 
     @Test
     public void testSendBatch() {
-        List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.listByIds(Arrays.asList("1679163638713159686"));
-        List<DmpOrderItemEntity> itemEntityList1 = dmpOrderItemService.splitOrderItem(itemEntityList, PlatformEnum.MABANG.getDesc());
+        List<DmpOrderItemSplitEntity> itemEntityList = dmpOrderItemSplitService.listByIds(Arrays.asList("1679163638713159686"));
+        List<DmpOrderItemSplitEntity> itemEntityList1 = dmpOrderItemSplitService.splitOrderItem(itemEntityList, PlatformEnum.MABANG.getDesc());
         System.out.println(itemEntityList1);
 
 //

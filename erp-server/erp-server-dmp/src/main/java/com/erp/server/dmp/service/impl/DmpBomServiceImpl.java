@@ -45,7 +45,8 @@ public class DmpBomServiceImpl extends SuperServiceImpl<DmpBomMapper, DmpBomEnti
             return;
         }
         List<DmpBomEntity> bomList = lambdaQuery()
-                .eq(DmpBomEntity::getParentSku, ext.getComboSku())
+//                .eq(DmpBomEntity::getParentSku, ext.getComboSku())
+                .eq(DmpBomEntity::getFinancialCode, ext.getFinancialCode())
                 .eq(DmpBomEntity::getPlatformSign, ext.getPlatformSign())
                 .eq(DmpBomEntity::getRelationType, ext.getRelationType())
                 .list();

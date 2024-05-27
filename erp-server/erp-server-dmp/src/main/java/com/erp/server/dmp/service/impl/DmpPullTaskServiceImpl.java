@@ -638,25 +638,25 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         dmpOrderInfoEntity.setCnySettleRate(exchangeRate);
         dmpOrderInfoEntity.setSourceId(soInfoEntity.getId());
         //订单明细
-        List<DmpOrderItemEntity> orderItemEntities = new ArrayList<>(soDetailEntities.size());
+        List<DmpOrderItemSplitEntity> orderItemEntities = new ArrayList<>(soDetailEntities.size());
         //明细字段转换
         if (CollectionUtil.isNotEmpty(soDetailEntities)) {
             soDetailEntities.forEach(soDetailEntity -> {
-                DmpOrderItemEntity dmpOrderItemEntity = DmpOrderConverter.INSTANCE.soDetailToDmpOrderItem(soDetailEntity);
-                dmpOrderItemEntity.setOrderId(dmpOrderInfoEntity.getId());
+                DmpOrderItemSplitEntity dmpOrderItemSplitEntity = DmpOrderConverter.INSTANCE.soDetailToDmpOrderItem(soDetailEntity);
+                dmpOrderItemSplitEntity.setOrderId(dmpOrderInfoEntity.getId());
                 if (StringUtils.isNotEmpty(soDetailEntity.getSkuId())) {
                     ProductDetailEntity productDetail = productDetailService.getById(soDetailEntity.getSkuId());
                     if (Objects.nonNull(productDetail)) {
-                        dmpOrderItemEntity.setItemName(productDetail.getName());
-                        dmpOrderItemEntity.setPictureUrl(productDetail.getImagesUrl());
-                        dmpOrderItemEntity.setSpecifics(productDetail.getVariantProperty());
+                        dmpOrderItemSplitEntity.setItemName(productDetail.getName());
+                        dmpOrderItemSplitEntity.setPictureUrl(productDetail.getImagesUrl());
+                        dmpOrderItemSplitEntity.setSpecifics(productDetail.getVariantProperty());
                     }
                 }
-                dmpOrderItemEntity.setCostPrice(Optional.ofNullable(soDetailEntity.getPurchasePrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
-                dmpOrderItemEntity.setSellPrice(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
-                dmpOrderItemEntity.setStockWarehouseId(soInfoEntity.getWarehouseId());
-                dmpOrderItemEntity.setAmountAfter(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO).subtract(Optional.ofNullable(soDetailEntity.getDiscountAmount()).orElse(BigDecimal.ZERO)));
-                orderItemEntities.add(dmpOrderItemEntity);
+                dmpOrderItemSplitEntity.setCostPrice(Optional.ofNullable(soDetailEntity.getPurchasePrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+                dmpOrderItemSplitEntity.setSellPrice(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+                dmpOrderItemSplitEntity.setStockWarehouseId(soInfoEntity.getWarehouseId());
+                dmpOrderItemSplitEntity.setAmountAfter(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO).subtract(Optional.ofNullable(soDetailEntity.getDiscountAmount()).orElse(BigDecimal.ZERO)));
+                orderItemEntities.add(dmpOrderItemSplitEntity);
             });
         }
         dmpOrderInfoEntity.setItemList(orderItemEntities);
@@ -1020,7 +1020,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-        warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}拉取至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
         warnMsgInfo.setKeyInfo(entity.getReturnMsg());
