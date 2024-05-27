@@ -20,6 +20,7 @@ import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
@@ -580,7 +581,12 @@ public class SoB2cController extends BaseController {
                 result = soB2cService.saveSoB2cDistribution(id, dto);
                 //申报信息匹配
                 if (result.getSuccess()){
-                    soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
+                    SoB2cEntity entity = soB2cService.getById(id);
+                    if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
+                            || !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
+                    ){
+                        soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
+                    }
                 }
             } catch (Exception e) {
                 log.error("B2C销售订单配货失败", e);
