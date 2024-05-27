@@ -130,7 +130,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         }
 
         // 标签json
-        Map<String, String> lableMap = new HashMap<>();
+        Map<String, Object> lableMap = new HashMap<>();
 
         String logisticType = "";
         ShipmentViewDTO shipmentViewDTO = new ShipmentViewDTO();
@@ -141,6 +141,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 //如果是平台仓，状态审核通过
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
                 lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
+                lableMap.put("isAliexpressPlatformWarehouseOrder", Boolean.TRUE);
                 logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
             } else if ("me2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())
                     && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(shipmentViewDTO.getLogistic().getType()) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(shipmentViewDTO.getLogistic().getType()))

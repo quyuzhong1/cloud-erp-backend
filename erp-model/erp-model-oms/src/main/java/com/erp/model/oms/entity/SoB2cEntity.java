@@ -389,7 +389,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
-                Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsAliexpressPlatformWarehouseOrder();
+                Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
                 if (Objects.nonNull(isAliexpressPlatformWarehouseOrder)) {
                     return isAliexpressPlatformWarehouseOrder;
                 }

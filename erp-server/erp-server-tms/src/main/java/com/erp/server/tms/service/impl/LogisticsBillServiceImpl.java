@@ -490,12 +490,19 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //转化成收货人
         ReceiverInfoVO receiverInfo = LogisticsBillConverter.INSTANCE.convertReceiver(receiverDTO);
         //申报信息-sku拆分
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getOrderId());
 
-        //中转地址
-        LogisticsAddressEntity logisticsAddressEntity = addressList.stream().filter(a -> LogisticsAddressTypeEnum.TRANSFER.equals(a.getType())).findFirst().orElse(null);
-        if (Objects.nonNull(logisticsAddressEntity)) {
-            receiverInfo = LogisticsBillConverter.INSTANCE.LogisticsAddressEntityToReceiverInfoVO(logisticsAddressEntity);
+        if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            if (labelJsonDTO.getIsPlatformWarehouseOrder()) {
+                //中转地址
+                LogisticsAddressEntity logisticsAddressEntity = addressList.stream().filter(a -> LogisticsAddressTypeEnum.TRANSFER.equals(a.getType())).findFirst().orElse(null);
+                if (Objects.nonNull(logisticsAddressEntity)) {
+                    receiverInfo = LogisticsBillConverter.INSTANCE.LogisticsAddressEntityToReceiverInfoVO(logisticsAddressEntity);
+                }
+            }
         }
+
 
         //申报信息
         List<LogisticsProductVO> productVOS = dto.getProductVOS();
