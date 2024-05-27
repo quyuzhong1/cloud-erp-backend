@@ -3,6 +3,7 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
@@ -20,8 +21,7 @@ import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSoConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.kingdee.bos.webapi.entity.SaveParam;
-import com.kingdee.bos.webapi.entity.SaveResult;
+import com.kingdee.bos.webapi.entity.RepoResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -128,7 +128,7 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
         }
 
         //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
+        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
@@ -136,10 +136,10 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
             //未查找到数据，新增数据
             JSONObject firstJson = json;
             firstJson.set("FSaleOrderFinance.FAllDisCount", BigDecimal.ZERO);
-            SaveParam paramFirst = new SaveParam(firstJson);
-            SaveResult  save = apiUtils.save(paramFirst);
+            KingdeeParamDTO.SaveParamDTO paramFirst = new KingdeeParamDTO.SaveParamDTO(firstJson);
+            RepoResult save = apiUtils.saveKingDee(paramFirst);
             //新增成功后编辑折扣额
-            String id = save.getResult().getId();
+            String id = save.getId();
             //主单据id
             KingdeeUtils.makeFieldJson(json, "FID", ".", id);
             String allKey = "FSaleOrderFinance.FAllDisCount";

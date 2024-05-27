@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.UrlContant;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.core.security.HmacSHA256Utils;
@@ -21,7 +22,6 @@ import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.mabang.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.MabangApiUtils;
-import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -76,7 +76,7 @@ public class MabangPullServiceTest {
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
-        SaveParam param = new SaveParam(json);
+        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
 //        kingdeeCommonService.queryGroupInfo(apiUtils, map.get("Ids").toString());
         kingdeeCommonService.customerGroupDelete(apiUtils, (String)map.get("syncKingdeeId"),(String)map.get("groupName"));
 
