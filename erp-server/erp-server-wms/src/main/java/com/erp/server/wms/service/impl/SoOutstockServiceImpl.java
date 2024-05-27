@@ -3131,55 +3131,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .update();
     }
 
-	@Override
-	public List<com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO> getDataCompareByCondition(
-			com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params , Integer pageSize) {
-		if("0".equals(params.getId())) {
-			this.getParams(params);
-		}
-		return baseMapper.getDataCompareByCondition(params , pageSize);
-	}
 
-	@Override
-	public Integer getDataCompareByConditionCount(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
-		this.getParams(params);
-		return baseMapper.getDataCompareByConditionCount(params);
-	}
-
-	private void getParams(com.erp.model.wms.dto.WmsDataCompareTaskDTO.SoOutstockDTO params) {
-		if(StringUtils.isBlank(params.getDictPlatform())) {
-			throw new ServiceException("销售出库单的系统数据范围【销售平台】不能为空");
-		}
-
-		if(CollUtil.isEmpty(params.getBillDateList())) {
-			throw new ServiceException("销售出库单的系统数据范围【出库日期】不能为空");
-		}
-
-		List<String> customerIdList = new ArrayList<>();
-		String shopId = params.getShopId();
-		if(StringUtils.isNotBlank(shopId)) {
-			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
-			customerIdList.add(shopInfoEntity.getCustomerId());
-		}else {
-			ApiResult<List<ShopInfoEntity>> list = shopInfoFeign.list();
-			customerIdList = list.getData().stream().filter(s -> s.getCustomerId() != null).map(ShopInfoEntity::getCustomerId).collect(Collectors.toList());
-		}
-
-		List<CustomerInfoEntity> customerInfoEntityList = customerFeign.listCustomerByIds(customerIdList);
-		List<String> customerNameList = customerInfoEntityList.stream().filter(c -> StringUtils.isNotBlank(c.getName())).map(CustomerInfoEntity::getName).collect(Collectors.toList());
-		if(CollUtil.isEmpty(customerNameList)) {
-			throw new ServiceException("选择的店铺未配置客户信息");
-		}
-		params.setCustomerNameList(customerNameList);
-
-		String warehouseId = params.getWarehouseId();
-		if(StringUtils.isNotBlank(warehouseId)) {
-			WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-			if(warehouseEntity != null) {
-				params.setWarehouseName(warehouseEntity.getName());
-			}
-		}
-	}
 
     /**
      * @description: 推送金蝶
