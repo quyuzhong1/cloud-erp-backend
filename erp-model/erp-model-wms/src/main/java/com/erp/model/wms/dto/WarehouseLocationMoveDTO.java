@@ -810,18 +810,6 @@ public class WarehouseLocationMoveDTO implements Serializable {
          */
         private Integer frozenQty = 0;
 
-        public String getWarehouseId() {
-            if (StringUtils.isBlank(warehouseId)){
-                return infoWarehouseId;
-            }
-            return warehouseId;
-        }
-        public String getWarehouseName() {
-            if (StringUtils.isBlank(warehouseName)){
-                return infoWarehouseName;
-            }
-            return warehouseId;
-        }
     }
 
     /**
