@@ -103,13 +103,6 @@ public class SoB2cErrorEntity implements Serializable{
      */
     @TableField("detail_id")
     private String detailId;
-    /**
-     * 异常类型:对应枚举:
-     * {@link com.erp.model.oms.enums.SoB2cErrorErrorTypeEnum}
-     * 细化具体类型供具体业务处理
-     */
-    @TableField("error_type")
-    private String errorType;
 
 
     public static final String MAIN_ID = "main_id";

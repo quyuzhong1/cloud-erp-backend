@@ -15,13 +15,11 @@ import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.*;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.PlatformSaveHandler;
-import com.common.business.service.IPlatformService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
@@ -43,7 +41,6 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -89,10 +86,8 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.Pair;
-import org.python.antlr.ast.Str;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sun.misc.BASE64Decoder;
@@ -269,17 +264,28 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
         if (!SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())) {
+//            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+//                //调用第三方平台SDK发货
+//                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+//                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+//                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+//                try {
+//                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+//                } catch (Exception e) {
+//                    log.error("【发货单手动发货】销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
+//                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
+//                }
+//            }
             if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                //调用第三方平台SDK发货
-                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                try {
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                } catch (Exception e) {
-                    log.error("【发货单手动发货】销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-                }
+                // 调用第三方平台SDK标记发货(独立事务)
+                String businessDesc = "发货单手动发货";
+                asyncService.asyncShipOrder(soB2cEntity.getId(),
+                        soB2cEntity.getCode(),
+                        soB2cEntity.getDictPlatform(),
+                        id,
+                        businessDesc);
+            } else {
+                log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }
         }
 
@@ -334,18 +340,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         //调用第三方平台SDK发货
-        try {
-            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                //调用第三方平台SDK发货
-                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-            }
-        } catch (Exception e) {
-            log.error("【虚假标记发货】销售单【{}】标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-        }
+//        try {
+//            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+//                //调用第三方平台SDK发货
+//                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+//                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+//                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+//                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+//            }
+//        } catch (Exception e) {
+//            log.error("【虚假标记发货】销售单【{}】标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
+//            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
+//        }
         //修改状态为虚假发货
         this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
         //修改订单状态待发货
@@ -353,6 +359,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 操作日志
         String msg = StrUtil.format("用户【{}】虚假发货单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "虚假发货");
+
+        if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+            // 调用第三方平台SDK标记发货(独立事务)
+            String businessDesc = "虚假标记发货";
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    soB2cEntity.getDictPlatform(),
+                    id,
+                    businessDesc);
+        } else {
+            log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
 
@@ -805,48 +823,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .filter(e -> !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equalsIgnoreCase(e.getStatus()))
                 .findFirst()
                 .orElse(null);
-
-        // 具体异常类型: 空=默认虚假发货
-        SoB2cErrorErrorTypeEnum errorTypeEnum = SoB2cErrorErrorTypeEnum.getByCode(soB2cError.getErrorType());
-
-        switch (errorTypeEnum) {
-            case MANUAL_SIGN_DELIVERY:
-                // 手动发货
-                if (null == deliveryEntity){
-                    SoB2cEntity mainEntity = soB2cFeign.getById(soB2cId);
-                    // 非取消的发货单不存在
-                    return Collections.singletonList(BatchResultDTO.fail(soB2cId, mainEntity.getCode(), ApiError.B2C_SO_DELIVERY_NOT_EXISTS.msg));
-                }
-                BatchResultDTO resultDTO = this.manualDelivery(deliveryEntity.getId());
-                //生成销售出库单
-                if(resultDTO.getSuccess()){
-                    this.generateB2cSoOutstock(deliveryEntity);
-                }
-                return Collections.singletonList(resultDTO);
-            case FALSEHOOD_SIGN_DELIVERY:
-                // 虚假发货
-                if (null == deliveryEntity){
-                    SoB2cEntity mainEntity = soB2cFeign.getById(soB2cId);
-                    // 非取消的发货单不存在
-                    return Collections.singletonList(BatchResultDTO.fail(soB2cId, mainEntity.getCode(), ApiError.B2C_SO_DELIVERY_NOT_EXISTS.msg));
-                }
-                return Collections.singletonList(this.falseDelivery(deliveryEntity.getId()));
-            case THIRD_WAREHOUSE_SIGN_DELIVERY:
-                // 第三方出库无发货单
-                BatchResultDTO thirdResultDTO = this.thirdWarehouseDelivery(soB2cId);
-                if (thirdResultDTO.getSuccess()){
-                    // 生成销售出库单
-                    SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cId);
-                    PlatformOutboundDTO dto = JSONUtil.toBean(soB2cError.getParamJson(), PlatformOutboundDTO.class);
-                    // 第三方仓出库生成销售出库单
-                    soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
-                }
-                // 第三方仓出库
-                return Collections.singletonList(thirdResultDTO);
-            default:
-                String msg = StrUtil.format("未找到发货类型:errorTypeEnum={}, soId={}", errorTypeEnum.getCode(), soB2cId);
-                throw new ServiceException(msg);
+        SoB2cEntity mainEntity = soB2cFeign.getById(soB2cId);
+        // 手动发货
+        if (null == deliveryEntity){
+            // 非取消的发货单不存在
+            return Collections.singletonList(BatchResultDTO.fail(soB2cId, mainEntity.getCode(), ApiError.B2C_SO_DELIVERY_NOT_EXISTS.msg));
         }
+        BatchResultDTO resultDTO = this.manualDelivery(deliveryEntity.getId());
+
+        return Collections.singletonList(resultDTO);
+
     }
 
     @Override
@@ -1306,7 +1292,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO) {
         //调用第三方平台SDK发货
-        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+//        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        // 调用第三方平台SDK标记发货(独立事务)
+        String businessDesc = "Feign标记发货";
+        asyncService.asyncShipOrder(platformShipOrderDTO.getSoB2cId(),
+                platformShipOrderDTO.getSoB2cId(),
+                platformShipOrderDTO.getDictPlatform(),
+                platformShipOrderDTO.getSoB2cId(),
+                businessDesc);
         return true;
     }
 
@@ -1603,33 +1596,5 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
         taskFeignDTO.setSyncOperate(view.getStatus());
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO thirdWarehouseDelivery(String soB2cId) {
-        //查询是否冻结
-        SoB2cEntity entity = soB2cFeign.getById(soB2cId);
-        if (entity.getIsFrozen()) {
-            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, entity.getCode());
-        }
-        //调用第三方平台SDK发货
-        try {
-            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                //调用第三方平台SDK发货
-                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-            }
-        } catch (Exception e) {
-            log.error("【第三方仓出库标记平台发货】销售单【{}】标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】第三方仓出库标记平台发货, 单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c销售订单", entity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "第三方仓出库标记平台发货");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "第三方仓出库标记平台发货");
     }
 }

@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.UnitEnum;
@@ -24,10 +25,12 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
+import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WeightingOutboundService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +61,9 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
+    @Lazy
+    @Resource
+    private AsyncService asyncService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -155,19 +161,6 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                 return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);
             }
-            //调用第三方平台SDK发货
-            try {
-                if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                    //调用第三方平台SDK发货
-                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                    platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                    platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                }
-            } catch (Exception e) {
-                log.error("【称重出库】销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-                throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-            }
 
             //获取一个当前时间当作发货时间
             LocalDateTime deliveryTime = LocalDateTime.now();
@@ -189,6 +182,18 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
             String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "称重出库", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
+
+            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                // 调用第三方平台SDK标记发货(独立事务)
+                String businessDesc = "称重出库";
+                asyncService.asyncShipOrder(soB2cEntity.getId(),
+                        soB2cEntity.getCode(),
+                        soB2cEntity.getDictPlatform(),
+                        JSONUtil.toJsonStr(dto),
+                        businessDesc);
+            } else {
+                log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+            }
 
         }
         return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);

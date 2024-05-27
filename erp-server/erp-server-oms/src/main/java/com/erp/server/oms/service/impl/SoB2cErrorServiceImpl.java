@@ -47,14 +47,12 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         if (Objects.nonNull(soB2cErrorEntity)){
             soB2cErrorEntity.setParamJson(addDTO.getParamJson());
             soB2cErrorEntity.setMessage(addDTO.getMessage());
-            soB2cErrorEntity.setErrorType(addDTO.getErrorType());
         }else {
             soB2cErrorEntity = new SoB2cErrorEntity();
             soB2cErrorEntity.setParamJson(addDTO.getParamJson());
             soB2cErrorEntity.setMessage(addDTO.getMessage());
             soB2cErrorEntity.setMainId(addDTO.getMainId());
             soB2cErrorEntity.setType(addDTO.getType());
-            soB2cErrorEntity.setErrorType(addDTO.getErrorType());
             soB2cErrorEntity.setDetailId(StringUtils.isNotBlank(addDTO.getDetailId()) ? addDTO.getDetailId() : "");
         }
         boolean save = super.saveOrUpdate(soB2cErrorEntity);
@@ -96,14 +94,13 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     }
 
     @Override
-    public void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson, String errorType) {
+    public void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson) {
         SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
         soB2cErrorEntity.setMainId(mainId);
         soB2cErrorEntity.setType(type);
         soB2cErrorEntity.setMessage(message);
         soB2cErrorEntity.setParamJson(paramJson);
         soB2cErrorEntity.setReturnJson(returnJson);
-        soB2cErrorEntity.setErrorType(StringUtils.isBlank(errorType) ? "" : errorType);
         this.save(soB2cErrorEntity);
         soB2cService.addSignError(mainId,type);
     }

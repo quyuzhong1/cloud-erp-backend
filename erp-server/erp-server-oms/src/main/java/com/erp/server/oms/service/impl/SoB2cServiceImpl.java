@@ -4173,31 +4173,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         // 前端显示的异常类型
         String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        // 具体异常类型
-        String errorType = SoB2cErrorErrorTypeEnum.FALSEHOOD_SIGN_DELIVERY.getCode();
-        String message = "";
-        String paramJson = "";
-        String returnJson = "";
-        //调用第三方平台SDK发货
-        try {
-            if (this.checkPlatformShipOrder(id)) {
-                //调用第三方平台SDK发货
-                List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-                soB2cDeliveryFeign.falseDeliveryBatch(ids);
-            }
-        } catch (Exception e) {
-            log.error("OMS 销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-            message = e.getMessage();
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(type);
-            addError.setErrorType(errorType);
-            addError.setParamJson(paramJson);
-            addError.setReturnJson(returnJson);
-            addError.setMainId(entity.getSourceId());
-            addError.setMessage(message);
-            soB2cErrorService.add(addError);
-            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-        }
         //修改状态为虚假发货
         List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         soB2cDeliveryFeign.updateStatus(ids, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
@@ -4208,6 +4183,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         String msg = StrUtil.format("操作单据【{}】虚假发货", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "虚假发货");
+
+        //调用第三方平台SDK发货(独立事务)
+        try {
+            if (this.checkPlatformShipOrder(id)) {
+                //调用第三方平台SDK发货
+                List<String> deliveryIds = deliveryEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
+                soB2cDeliveryFeign.falseDeliveryBatch(deliveryIds);
+            }
+        } catch (Exception e) {
+            log.error("OMS 销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
 
