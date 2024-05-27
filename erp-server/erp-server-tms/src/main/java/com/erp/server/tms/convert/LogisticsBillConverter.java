@@ -85,23 +85,6 @@ public interface LogisticsBillConverter {
     })
     LogisticsProductVO convertLogisticsProduct( LogisticsProductDTO.ProductDTO sku);
     List<LogisticsProductVO> convertLogisticsProduct( List<LogisticsProductDTO.ProductDTO> skuList);
-
-    @Mappings({
-            @Mapping(target = "name", source = "name"),
-            @Mapping(target = "contact", source = "contact"),
-            @Mapping(target = "email", source = "email"),
-            @Mapping(target = "telNumber", source = "telNumber"),
-            @Mapping(target = "country", source = "country"),
-            @Mapping(target = "province", source = "provinceName"),
-            @Mapping(target = "city", source = "cityName"),
-            @Mapping(target = "district", source = "districtName"),
-            @Mapping(target = "streetAddress", source = "street"),
-            @Mapping(target = "addressFirst", source = "addressFirst"),
-            @Mapping(target = "addressSecond", source = "addressSecond"),
-            @Mapping(target = "zipCode", source = "zipCode"),
-            @Mapping(target = "receiverTaxNo", ignore = true)
-    })
-    ReceiverInfoVO LogisticsAddressEntityToReceiverInfoVO(LogisticsAddressEntity logisticsAddressEntity);
     @Mappings({
             @Mapping(target = "id", source = "addressId"),
             @Mapping(target = "name", source = "contact"),
