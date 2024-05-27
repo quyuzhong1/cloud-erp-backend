@@ -235,9 +235,6 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
             if (StringUtils.isBlank(entity.getEmail())){
                 entity.setEmail(receiverEntity.getEmail());
             }
-            if (StringUtils.isBlank(entity.getTelNumber())){
-                entity.setTelNumber(receiverEntity.getTelNumber());
-            }
             updateById(entity);
 //            if (!updateById(entity)){
 //                throw new ServiceException("[CustomerB2cAddressEntity] 更新失败");
