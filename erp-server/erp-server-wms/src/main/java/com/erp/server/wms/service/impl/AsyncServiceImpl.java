@@ -32,7 +32,7 @@ public class AsyncServiceImpl implements AsyncService {
     @Resource
     private SoB2cFeign soB2cFeign;
 
-    @Async
+    @Async("wmsErpExecutor")
     @Override
     public void asyncBatchQueryAndUpdateOrderStatus(List<SoB2cEntity> soB2cEntityList) {
         Map<String, List<PlatformOrderQueryDTO>> orderGroupMap = soB2cEntityList.stream()
