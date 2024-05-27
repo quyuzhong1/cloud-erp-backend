@@ -430,6 +430,11 @@ public class InventoryDTO implements Serializable {
         private String skuId;
 
         /**
+         * 仓位编码
+         */
+        private String warehouseLocation;
+
+        /**
          * 单据编号
          */
         private String sourceCode;

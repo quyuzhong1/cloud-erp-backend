@@ -52,7 +52,7 @@ public class Address implements Serializable {
      * 邮编
      * 是
      */
-    @NotBlank(message = "邮编不能为空")
+//    @NotBlank(message = "邮编不能为空")
     @JSONField(name = "post_code")
     private String post_code;
     /**
