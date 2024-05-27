@@ -50,7 +50,7 @@ public class AsyncServiceImpl implements AsyncService {
     }
 
 
-    @Async
+    @Async("wmsErpExecutor")
     @Override
     @DataIdempotent(keyIdName = "soId")
     public void asyncShipOrder(String soId, String soCode, String dictPlatform, String sourceDTOJson, String businessDesc) {
