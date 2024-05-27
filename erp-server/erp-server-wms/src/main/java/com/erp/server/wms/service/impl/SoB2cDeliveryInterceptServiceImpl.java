@@ -117,7 +117,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Autowired
     private SoOutstockDetailServiceImpl soOutstockDetailServiceImpl;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDTO.AddDTO addDTO) {
@@ -440,7 +439,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void updateInterceptStatus(SoB2cDeliveryInterceptEntity entity) {
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
@@ -542,11 +540,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSourceId());
-        if(Objects.isNull(soB2cDelivery)){
-            throw new ServiceException("查询不到发货单");
+        if(Objects.nonNull(soB2cDelivery)){
+            soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
+            soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
         }
-        soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
-        soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
     }
 
     /**

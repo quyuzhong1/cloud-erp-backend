@@ -1,7 +1,9 @@
 package com.erp.server.scm.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -44,6 +46,11 @@ public class SupplierPhaseController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:paging",
+            tableAlias = "sp"
+    )
     public ApiResult<PagingVO<SupplierPhaseDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
         PagingVO<SupplierPhaseDTO.PagingViewDTO> pagingVO = supplierPhaseService.paging(dto);
         return success(pagingVO);
@@ -97,6 +104,12 @@ public class SupplierPhaseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并审核供应商阶段")
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:submit",
+            serviceClass = SupplierPhaseService.class,
+            keyIdName = "id"
+    )
     public ApiResult updateAndSubmit(@RequestBody @Validated SupplierPhaseDTO.UpdateDTO dto) {
         Boolean result = supplierPhaseService.updateAndSubmit(dto);
         return result == true ? success() : failure();
@@ -123,6 +136,12 @@ public class SupplierPhaseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.SUBMIT, desc = "供应商阶段提交审核")
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:submit",
+            serviceClass = SupplierPhaseService.class,
+            keyIdName = "ids"
+    )
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierPhaseService.submit(dto.getIds());
         return result == true ? success() : failure();
@@ -150,7 +169,13 @@ public class SupplierPhaseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "供应商阶段审核")
     @PostMapping("/approve")
-    public ApiResult view(@RequestBody @Validated BaseApproveParamDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:approve",
+            serviceClass = SupplierPhaseService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = supplierPhaseService.approve(dto);
         return result == true ? success() : failure();
     }
@@ -166,6 +191,11 @@ public class SupplierPhaseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销供应商阶段")
     @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:cancelProcess",
+            serviceClass = SupplierPhaseService.class,
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierPhaseService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
@@ -180,6 +210,11 @@ public class SupplierPhaseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除供应商阶段")
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:delete",
+            serviceClass = SupplierPhaseService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierPhaseService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();

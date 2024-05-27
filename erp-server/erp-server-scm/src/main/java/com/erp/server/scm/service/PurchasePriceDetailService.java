@@ -9,7 +9,6 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -44,7 +43,7 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param supplierId
      * @param list
      */
-    void checkPurchasePriceDetail (String supplierId, List<PurchasePriceDetailEntity> list);
+    void checkPurchasePriceDetail (String supplierId,String purchaseOrgId, List<PurchasePriceDetailEntity> list);
     /**
      * @description: 根据skuId查询是否存在符合条件的单价和税率
      * @author Will
@@ -141,13 +140,15 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
 
     
     /**
-     * 查询供应商的
+     * 根据供应商、组织、SKU查询
      * @author yl
      * @date 2023-04-06 9:37
      * @param supplierId
+     * @param purchaseOrgId
+     * @param skuIdList
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.ViewDTO>
      */
-    List<PurchasePriceDetailDTO.ViewDTO> getBySupplierId(String supplierId,List<String> detailIds,List<String> skuIdList);
+    List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(String supplierId,String purchaseOrgId,List<String> skuIdList);
 
     /**
      * 查询供应商的
@@ -212,7 +213,7 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param supplierId
      * @return java.util.List<PurchasePriceDetailEntity>
      */
-    List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId,List<String> statusList);
+    List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId,String purchaseOrgId,List<String> statusList);
 
     /**
      * 更新信息

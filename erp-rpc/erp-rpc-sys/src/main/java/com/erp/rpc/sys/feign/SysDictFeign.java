@@ -1,10 +1,7 @@
 package com.erp.rpc.sys.feign;
 
 import com.erp.model.sys.dto.DictBasicDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.model.sys.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,6 +44,14 @@ public interface SysDictFeign {
      */
     @PostMapping("feign/dictCountry/listCountryByNames")
     List<DictCountryEntity> listCountryByNames(@RequestBody List<String> names);
+
+    /**
+     * 根据组织编码获取国家组织关系列表
+     * @param orgCode
+     * @return
+     */
+    @PostMapping("feign/dictCountry/listCountryOrgByOrgCode")
+    List<DictCountryOrgEntity> listCountryOrgByOrgCode(@RequestBody String orgCode);
 
 
     /**

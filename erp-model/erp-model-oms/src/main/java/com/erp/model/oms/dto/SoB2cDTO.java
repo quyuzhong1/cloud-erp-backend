@@ -3,7 +3,10 @@ package com.erp.model.oms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cFinanceEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
@@ -164,6 +167,11 @@ public class SoB2cDTO implements Serializable {
          * 销售平台
          */
         private String dictPlatform;
+
+        /**
+         * 卖家订单编号
+         */
+        private String sellerOrderCode;
 
         /**
          * 平台订单号
@@ -410,6 +418,16 @@ public class SoB2cDTO implements Serializable {
          * 运输状态
          */
         private String  trackStatusName;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 包装重量单位
+         */
+        private String weightUnit;
     }
 
     @Data
@@ -510,6 +528,11 @@ public class SoB2cDTO implements Serializable {
         private String code;
 
         /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
          * 店铺名称
          */
         private String shopName;
@@ -532,6 +555,10 @@ public class SoB2cDTO implements Serializable {
          * 订单状态
          */
         private String billStatus;
+        /**
+         * 卖家订单编号
+         */
+        private String sellerOrderCode;
         /**
          * 订单状态名称
          */
@@ -937,6 +964,11 @@ public class SoB2cDTO implements Serializable {
          * 订单分类
          */
         private List<String> categoryIdList;
+
+        /**
+         * 卖家订单编号
+         */
+        private String sellerOrderCode;
     }
 
     @Data
@@ -968,6 +1000,21 @@ public class SoB2cDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 明细skuId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
         /**
          * 编码
          */
@@ -992,10 +1039,16 @@ public class SoB2cDTO implements Serializable {
          * 重量
          */
         private BigDecimal weight;
+
         /**
-         * 仓库（逗号分隔）
+         * 仓库id
          */
-        private String warehouseNames;
+        private String warehouseId;
+
+        /**
+         * 单个仓库名称
+         */
+        private String warehouseName;
         /**
          * 物流渠道id
          */
@@ -1036,9 +1089,34 @@ public class SoB2cDTO implements Serializable {
          * 仓库 http://172.16.100.11:3002/project/92/interface/api/22930
          */
         private String warehouseId;
+
+        /**
+         * 明细数据
+         */
+        @NotEmpty(message = "明细数据不能为空")
+        private List<SaveSoB2cDistributionDetailDTO> detailList;
     }
 
+
+
     @Data
+    @NoArgsConstructor
+    public static class SaveSoB2cDistributionDetailDTO {
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+    }
+
+        @Data
     @NoArgsConstructor
     public static class GetLogisticsCode {
 
@@ -1497,6 +1575,11 @@ public class SoB2cDTO implements Serializable {
          * 主表id
          */
         private String id;
+
+        /**
+         * 销售订单号
+         */
+        private String code;
         /**
          * 明细信息
          */
@@ -1513,6 +1596,15 @@ public class SoB2cDTO implements Serializable {
          * 明细id
          */
         private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU编码
+         */
+        private String skuNo;
         /**
          * 图片Url
          */
@@ -1545,6 +1637,16 @@ public class SoB2cDTO implements Serializable {
          * 包装重量
          */
         private BigDecimal weight;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
     }
 
     /**
@@ -1768,6 +1870,11 @@ public class SoB2cDTO implements Serializable {
          * 是否是系统新增的订单
          */
         private boolean isNewInsertOrder = false;
+
+        /**
+         * 是否是状态变更为取消状态
+         */
+        private boolean isUpdateCancel = false;
     }
 
     /**
@@ -1787,6 +1894,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String trackNo;
 
+        /**
+         * 销售单号ID
+         */
+        private String soId;
 
 
     }

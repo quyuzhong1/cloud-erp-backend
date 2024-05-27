@@ -761,14 +761,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PurchaseOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, String supplierId, HttpServletResponse response) {
+    public PurchaseOrderDetailDTO.ImportDTO importFile(ExcelImportDTO.purchaseOrderExcelImportDTO excelImportDTO, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
 
-        PurchaseOrderExcelListener excelListenerUtil = new PurchaseOrderExcelListener(skuList, skuIds);
+        PurchaseOrderExcelListener excelListenerUtil = new PurchaseOrderExcelListener(skuList, excelImportDTO.getSkuIds());
 
         try {
-            EasyExcel.read(excelFile.getInputStream(), PurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelImportDTO.getExcelFile().getInputStream(), PurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -787,7 +787,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //导出错误数据
         List<PurchaseOrderImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理未查询到报价的SKU
-        doOpHandleNotExistPrice(excelDateList, successList, errorList, supplierId);
+        doOpHandleNotExistPrice(excelDateList, successList, errorList, excelImportDTO.getSupplierId(),excelImportDTO.getPurchaseOrgId());
 
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
@@ -1785,13 +1785,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @author Will
      * @date: 2023/3/30 14:58
      */
-    private void doOpHandleNotExistPrice(List<PurchaseOrderImportExcelDTO> excelDateList, List<PurchaseOrderDetailDTO.AddDTO> successList, List<PurchaseOrderImportExcelDTO> errorList, String supplierId) {
+    private void doOpHandleNotExistPrice(List<PurchaseOrderImportExcelDTO> excelDateList, List<PurchaseOrderDetailDTO.AddDTO> successList, List<PurchaseOrderImportExcelDTO> errorList, String supplierId,String purchaseOrgId) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
         List<PurchaseOrderDetailDTO.AddDTO> removeList = new ArrayList<>();
         for (PurchaseOrderDetailDTO.AddDTO addDTO : successList) {
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(addDTO.getPurchaseQty(), addDTO.getSkuId(), addDTO.getSkuNo(), supplierId);
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(addDTO.getPurchaseQty(), addDTO.getSkuId(), addDTO.getSkuNo(), supplierId,purchaseOrgId);
             PurchaseOrderImportExcelDTO purchaseOrderImportExcelDTO = excelDateList.stream().filter(obj -> addDTO.getSkuNo().equals(obj.getSkuNo()) && addDTO.getPurchaseQty().toString().equals(obj.getPurchaseQtyStr())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderImportExcelDTO)) {
                 continue;
