@@ -1,19 +1,15 @@
 package com.erp.server.oms.controller.api;
 
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.PackageDTO;
-import com.erp.server.oms.service.PackageService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * 分拨组包
@@ -31,24 +27,6 @@ public class PackageController extends BaseController {
     @Resource
     private SoB2cService soB2cService;
 
-    @Resource
-    private PackageService packageService;
-
-
-    /**
-     * 扫描
-     * @param
-     * @return
-     * @description
-     * @author Lambda
-     * @create 2024-01-26 14:35
-     */
-    @PostMapping("/scan")
-    public ApiResult<PackageDTO.ScanResultDTO> scan(@RequestBody @Validated PackageDTO.ScanDTO dto) {
-        PackageDTO.ScanResultDTO scanResultDTO = soB2cService.packageScan(dto);
-        return success(scanResultDTO);
-    }
-
     /**
      * 批量分包分页查询
      *
@@ -63,17 +41,5 @@ public class PackageController extends BaseController {
         PagingVO<PackageDTO.PagingViewDTO> pagingView = soB2cService.packagePing(dto);
         return success(pagingView);
     }
-
-    /**
-     * 组包合并  注意对应的ids 为销售订单ids  就是 soId 的集合
-     *
-     * @return
-     */
-    @PostMapping("/merge")
-    public ApiResult<List<BatchResultDTO>> merge(@RequestBody @Validated PackageDTO.MergePackageDTO dto) {
-        List<BatchResultDTO> result = packageService.mergePackage(dto);
-        return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
-    }
-
 
 }

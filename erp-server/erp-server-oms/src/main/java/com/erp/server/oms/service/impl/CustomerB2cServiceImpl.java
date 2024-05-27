@@ -27,6 +27,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -1010,17 +1011,6 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         return base;
     }
 
-//    @Override
-//    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-//        return this.lambdaUpdate()
-//                .eq(CustomerB2cEntity::getId, id)
-//                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-//                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeTime, LocalDateTime.now())
-//                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerB2cEntity::getSyncKingdeeId, syncKingdeeId)
-//                .set(StringUtils.isNotBlank(syncOperate), CustomerB2cEntity::getSyncOperate, syncOperate)
-//                .update();
-//    }
-
 
     /**
      * 引用客户
@@ -1412,10 +1402,10 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CustomerB2cEntity saveOrUpdateEntity(CustomerB2cEntity entity, PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
+    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
         // 当前国家
         DictCountryEntity dictCountryEntity = countryList.stream().findFirst().orElse(null);
-
+        CustomerB2cEntity entity = this.getBySourceId(mainEntity.getId());
         if (null == entity){
             CustomerB2cEntity customerB2cEntity = new CustomerB2cEntity();
             //生成单号
@@ -1458,7 +1448,9 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             if (StringUtils.isBlank(entity.getCurrency())){
                 entity.setCurrency(dto.getCurrency());
             }
-            entity.setName(receiverEntity.getName());
+            if (StringUtils.isBlank(entity.getName())){
+                entity.setName(dto.getReceiver().getName());
+            }
             entity.setApproveStatus(ApproveStatusEnum.APPROVE);
             entity.setDisabled(false);
             updateById(entity);
@@ -1471,7 +1463,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
     @Override
     public CustomerB2cEntity getBySourceId(String sourceId) {
-        return  lambdaQuery().eq(CustomerB2cEntity::getSourceId, sourceId).one();
+        return  lambdaQuery().eq(CustomerB2cEntity::getSourceId, sourceId).last("LIMIT 1").one();
     }
 
     @Override

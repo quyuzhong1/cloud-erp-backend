@@ -6,8 +6,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
+import cn.hutool.core.util.ReflectUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
@@ -361,6 +365,40 @@ public class ReflectUtils {
             return null;
         }
         return getSpecifiedClass(sourceClass.getSuperclass(),targetClass);
+    }
+
+
+    /**
+     * 指定字段有值不更新:
+     * String不为空
+     * BigDecimal不为0
+     * 其他不为null
+     * @param targetObj 目标对象
+     * @param sourceObj 来源对象
+     * @param fieldsExistNotUpdate 有值不更新的字段列表
+     */
+    public static <T> T updateSpecifiedFieldsIfNotValue(T targetObj, T sourceObj, List<String> fieldsExistNotUpdate) {
+        fieldsExistNotUpdate.forEach(fieldName -> {
+            Object sourceObjFieldValue = ReflectUtil.getFieldValue(sourceObj, fieldName);
+            if (null == sourceObjFieldValue) {
+                return;
+            }
+            // 判断 String 类型
+            if (sourceObjFieldValue instanceof String && StringUtils.isNotBlank((String) sourceObjFieldValue)) {
+                ReflectUtil.setFieldValue(targetObj, fieldName, sourceObjFieldValue);
+                return;
+            }
+            // 判断 BigDecimal 类型
+            if (sourceObjFieldValue instanceof BigDecimal) {
+                if (((BigDecimal) sourceObjFieldValue).compareTo(BigDecimal.ZERO) > 0) {
+                    ReflectUtil.setFieldValue(targetObj, fieldName, sourceObjFieldValue);
+                }
+                return;
+            }
+            // 其他类型
+            ReflectUtil.setFieldValue(targetObj, fieldName, sourceObjFieldValue);
+        });
+        return targetObj;
     }
 
 }

@@ -394,6 +394,16 @@ public class SoB2cDTO implements Serializable {
          */
         private String signOrderError;
 
+        /**
+         * 物流类型
+         */
+        private String logisticType;
+
+        /**
+         * 物流类型中文
+         */
+        private String logisticTypeName;
+
 
         /**
          * b2c销售订单明细信息
@@ -439,6 +449,10 @@ public class SoB2cDTO implements Serializable {
          * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
          */
         private String shipNodeType;
+        /**
+         * TikTok状态
+         */
+        private String tikTokStatus;
     }
 
     @Data
@@ -487,10 +501,21 @@ public class SoB2cDTO implements Serializable {
          */
         private String shipNodeType;
 
+        private String mode;
+        /**
+         * 美客多（mode=me2 且 logistic_type = fulfillment是官方仓发货）
+         */
+        private String logisticType;
+
         /**
          * 是否平台仓订单 true 是 fasle 不是
          */
-        private Boolean isAliexpressPlatformWarehouseOrder;
+        private Boolean isPlatformWarehouseOrder;
+
+        /**
+         * TikTok状态
+         */
+        private String tikTokStatus;
     }
 
 
@@ -1590,6 +1615,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * 平台产品sku
+         */
+        private String platformSkuNo;
+        /**
          * 图片Url
          */
         private String imageUrl;
@@ -2527,6 +2556,27 @@ public class SoB2cDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    /**
+     * 拆单保存结果返回
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSaveResultDTO {
+        /**
+         * id
+         */
+        private List<String> soB2cIds;
+        /**
+         * TikTok拆单入参
+         */
+        private OrderSplitPramDTO tikTokPramDTO;
+        /**
+         * 原始订单信息
+         */
+        private SoB2cEntity oldEntity;
+
     }
 
     @Data

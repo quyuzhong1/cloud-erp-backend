@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Service
 public class AsyncServiceImpl implements AsyncService {
 
-    @Async
+    @Async("wmsErpExecutor")
     @Override
     public void asyncBatchQueryAndUpdateOrderStatus(List<SoB2cEntity> soB2cEntityList) {
         Map<String, List<PlatformOrderQueryDTO>> orderGroupMap = soB2cEntityList.stream()

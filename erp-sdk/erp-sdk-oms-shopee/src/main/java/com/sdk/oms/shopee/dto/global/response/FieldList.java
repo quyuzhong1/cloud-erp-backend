@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.global.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -15,10 +15,10 @@ import java.util.List;
  */
 @Data
 public class FieldList implements Serializable {
-    @JSONField(name ="field_type")
+    @Alias("field_type")
     private String field_type;
-    @JSONField(name ="text")
+    @Alias("text")
     private String text;
-    @JSONField(name ="image_info")
+    @Alias("image_info")
     private List<ImageInfo> imageInfo;
 }
