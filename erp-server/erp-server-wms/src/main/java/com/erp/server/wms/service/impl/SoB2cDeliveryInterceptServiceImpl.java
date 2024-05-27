@@ -439,7 +439,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void updateInterceptStatus(SoB2cDeliveryInterceptEntity entity) {
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);

@@ -2129,7 +2129,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //1、新增拦截单
         BaseResultDTO.AddDTO add = soB2cDeliveryInterceptFeign.add(addDTO);
-
+        //修改拦截打标识、冻结状态
+        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+        interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
+        interceptUpdateOrderDTO.setIsFrozen(Boolean.TRUE);
+        interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
+        interceptUpdateOrderDTO.setRemark(remark);
+        Boolean flag = this.updateIntercept(interceptUpdateOrderDTO);
+        if (flag) {
+            // 操作日志
+            String msg ;
+            if (StrUtil.equals(remark,"平台取消")) {
+                msg = "平台订单取消,自动发起拦截";
+            } else {
+                msg = StrUtil.format("用户【{}】发起【{}】，已冻结单据单号【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截", entity.getCode());
+            }
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "发货拦截");
+        }
         //2、如果是API对接的海外仓拦截调用海外仓拦截，否则触发物流拦截
         LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
         if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
