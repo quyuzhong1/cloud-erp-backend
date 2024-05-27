@@ -513,7 +513,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 //审核发送金蝶
                 sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
                 //同时发送旺店通
-                list.forEach(this::syncApproveInfoToWdt);
+                list.forEach(item -> syncApproveInfoToWdt(item, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
@@ -542,16 +542,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     /**
      * 直接调拨单审核通过时将数据同步给旺店通
+     *
      * @param entity 直接调拨单主数据
+     * @param code
      * @date: 2024-05-17
      * @author: tanmujin
      */
-    private void syncApproveInfoToWdt(TransferInfoEntity entity) {
+    private void syncApproveInfoToWdt(TransferInfoEntity entity, String operateCode) {
         //查询直接调拨单明细数据
-        QueryWrapper<TransferInfoDetailEntity> queryWrapper = new QueryWrapper<TransferInfoDetailEntity>()
-                .eq("main_id", entity.getId())
-                .eq("is_deleted", false);
-        List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailMapper.selectList(queryWrapper);
+        List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailService.listByMainId(entity.getId());
 
         List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
         List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
@@ -571,9 +570,24 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             inGoodsList.add(inGoods);
         }
 
-        //推送给旺店通
-        wdtOtherOutStockService.syncDataToWdt(outGoodsList, transferDetailList.get(0).getOutWarehouseId(), null);
-        wdtOtherInStockService.syncDataToWdt(inGoodsList,  transferDetailList.get(0).getInWarehouseId(), null);
+        //推送其他出库单给旺店通
+        String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+        String outWarehouseId = transferDetailList.get(0).getOutWarehouseId();
+        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
+        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode);
+
+        //推送其他入库单给旺店通
+        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+        String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
+        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
+        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(outDmpPushTask, inDmpPushTask));
+            }
+        });
     }
 
     /**
@@ -582,12 +596,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
      * @date: 2024-05-17
      * @author: tanmujin
      */
-    private void syncDisApproveInfoToWdt(TransferInfoEntity entity) {
+    private void syncDisApproveInfoToWdt(TransferInfoEntity entity, String operateCode) {
         //查询直接调拨单明细数据
-        QueryWrapper<TransferInfoDetailEntity> queryWrapper = new QueryWrapper<TransferInfoDetailEntity>()
-                .eq("main_id", entity.getId())
-                .eq("is_deleted", false);
-        List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailMapper.selectList(queryWrapper);
+        List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailService.listByMainId(entity.getId());
+        if(transferDetailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
 
         List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
         List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
@@ -608,9 +622,23 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
 
         //推送其他出库单给旺店通
-        wdtOtherOutStockService.syncDataToWdt(outGoodsList, transferDetailList.get(0).getInWarehouseId(), null);
+        String outWarehouseId = transferDetailList.get(0).getInWarehouseId();
+        String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
+        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode);
+
         //推送其他入库单给旺店通
-        wdtOtherInStockService.syncDataToWdt(inGoodsList, transferDetailList.get(0).getOutWarehouseId(), null);
+        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+        String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
+        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
+        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(outDmpPushTask, inDmpPushTask));
+            }
+        });
     }
 
     @Override
@@ -637,10 +665,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if(isPushKingDee){
             //反审核发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-            list.forEach(obj -> {
-                //同时发送旺店通
-                syncDisApproveInfoToWdt(obj);
-            });
+            //发送旺店通
+            list.forEach(obj -> syncDisApproveInfoToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
 
         //发送马帮（非马帮平台的才需要推送）

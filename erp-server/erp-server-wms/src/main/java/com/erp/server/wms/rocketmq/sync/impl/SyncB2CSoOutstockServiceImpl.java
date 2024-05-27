@@ -159,7 +159,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<ThirdMappingEntity> shop = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
                 .eq(ThirdMappingEntity::getThirdSysType, ThirdSysTypeEnum.WANGDIAN.getCode())
-                .eq(ThirdMappingEntity::getThirdId, entity.getShopId()));
+                .eq(ThirdMappingEntity::getThirdCode, entity.getShopId()));
         if (CollectionUtils.isEmpty(shop)) {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, entity.getShopId());
         }
@@ -168,7 +168,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<ThirdMappingEntity> warehouseList = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.WAREHOUSE.getCode())
                 .eq(ThirdMappingEntity::getThirdSysType, ThirdSysTypeEnum.WANGDIAN.getCode())
-                .eq(ThirdMappingEntity::getThirdId, entity.getWarehouseId()));
+                .eq(ThirdMappingEntity::getThirdCode, entity.getWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, entity.getWarehouseName());
         }
@@ -244,7 +244,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     private void sendPushTask(SoOutstockEntity obj) {
         //审核通过发送金蝶
-        DmpPushTaskEntity pushTaskEntity = syncKingdeeSoOutstockService.syncB2cDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeSoOutstockService.syncWdtDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
         //推送金蝶
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override

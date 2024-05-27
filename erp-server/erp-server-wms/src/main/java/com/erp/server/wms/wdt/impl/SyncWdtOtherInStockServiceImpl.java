@@ -1,25 +1,20 @@
 package com.erp.server.wms.wdt.impl;
 
-import com.sdk.wangdian.sdk.WdtErpException;
-import com.sdk.wangdian.sdk.api.wms.stockin.StockinAPI;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinResponse;
-import com.sdk.wangdian.server.WangDianClientService;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.erp.model.wms.entity.OtherInstockDetailEntity;
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.entity.OtherInstockEntity;
-import com.erp.server.wms.mapper.OtherInstockDetailMapper;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,53 +27,26 @@ import java.util.List;
 public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockService {
 
     @Resource
-    private WangDianClientService wangDianClientService;
+    private DmpMqFeign dmpMqFeign;
 
-    @Resource
-    private OtherInstockDetailMapper otherInstockDetailMapper;
-
-    @Resource
-    private DocNoGenHelper docNoGenHelper;
-
-    @Override
-    public void syncDataToWdt(OtherInstockEntity entity) {
-        QueryWrapper<OtherInstockDetailEntity> queryWrapper = new QueryWrapper<OtherInstockDetailEntity>()
-                .eq("main_id", entity.getId())
-                .eq("is_deleted", false);
-        List<OtherInstockDetailEntity> detailList = otherInstockDetailMapper.selectList(queryWrapper);
-        List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>();
-        detailList.forEach(item -> {
-            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            goods.setSpecNo(item.getSkuNo());
-            goods.setNum(BigDecimal.valueOf(item.getActualQty()));
-            goods.setPositionNo(item.getWarehouseLocation());
-            goodsList.add(goods);
-        });
-
-        syncDataToWdt(goodsList, entity.getWarehouseId(), entity.getCode());
-    }
-
-    @Override
-    public void syncDataToWdt(List<CreateOtherStockinRequest.GoodsList> goodsList, String warehouseId, String outerNo){
+    public DmpPushTaskEntity saveTask(List<CreateOtherStockinRequest.GoodsList> goodsList, OtherInstockEntity entity, String operateCode){
         CreateOtherStockinRequest request = new CreateOtherStockinRequest();
-        request.setOuterNo(outerNo == null ? docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK) : outerNo);
-        request.setWarehouseNo("wjkj03-test");  //todo 根据出货仓库匹配旺店通仓库编号, @韩月娇: 仓库数据任务
+        request.setOuterNo(entity.getCode());
+        request.setWarehouseNo("wjkj03-test");  //todo 根据出货仓库匹配旺店通仓库编号, @仓库数据任务
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
 
-        StockinAPI stockinAPI = wangDianClientService.get(StockinAPI.class);
-        CreateOtherStockinResponse response = null;
-        try {
-            response = stockinAPI.createOtherOrder(request);
-        } catch (WdtErpException e) {
-            e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_3000.code, e.getMessage());
-        }
-
-        if(response.getStatus() != 0){
-            log.error(response.toString());
-            throw new ServiceException(ApiError.ERROR_3000.code, response.getMessage());
-        }
-        log.info("其他入库单推送旺店通成功: {}", request);
+        //添加推送任务
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.OTHER_INSTOCK.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_OTHER_IN_STOCK_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operateCode);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

@@ -2,7 +2,6 @@ package com.sdk.wangdian.sdk.api.wms.stockout;
 
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateTransferStockoutRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateTransferStockoutResponse;
@@ -18,6 +17,7 @@ import com.sdk.wangdian.sdk.impl.Api;
 
 import java.net.ConnectException;
 import java.util.List;
+import java.util.Map;
 
 public interface StockoutAPI
 {
@@ -25,7 +25,7 @@ public interface StockoutAPI
 	SalesStockoutResponse querySales(SalesStockoutRequest request, Pager pager) throws WdtErpException;
 
 	@Api(value = "wms.stockout.Other.createOther")
-	CreateOtherStockoutResponse createOtherOutOrder(CreateOtherStockoutRequest request);
+	CreateOtherStockoutResponse createOtherOutOrder(Map<String, Object> request) throws WdtErpException;
 
 	@Api(value = "wms.stockout.Transfer.createOrder")
 	CreateTransferStockoutResponse createTransferOrder(CreateTransferStockoutRequest.orderInfoDto orderInfo,

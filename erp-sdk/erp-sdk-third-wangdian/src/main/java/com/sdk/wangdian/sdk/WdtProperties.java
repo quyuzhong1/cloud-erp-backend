@@ -3,6 +3,7 @@ package com.sdk.wangdian.sdk;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
  * 旺店通配置绑定
@@ -10,25 +11,26 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  * @author tanmujin
  */
 @Data
+@Component
 @ConfigurationProperties(prefix = "wdt")
 public class WdtProperties {
     /**
      * 旺店通接口地址
      */
-    private String url;
+    private String url = "";
 
     /**
      * 卖家账号
      */
-    private String sid;
+    private String sid = "";
 
     /**
      * 接口账号,在发送的数据中对应 key 字段
      */
-    private String appKey;
+    private String appKey = "";
 
     /**
      * 接口密钥
      */
-    private String appSecret;
+    private String appSecret = "";
 }

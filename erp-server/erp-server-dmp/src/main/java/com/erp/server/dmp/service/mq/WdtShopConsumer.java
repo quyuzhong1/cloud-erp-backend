@@ -13,12 +13,10 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.dto.ThirdShopDTO;
-import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.dmp.service.ThirdShopService;
-import com.erp.server.dmp.service.ThirdWarehouseService;
-import com.sdk.wangdian.dto.ErpWarehouseDto;
+import com.sdk.wangdian.dto.ErpShopDto;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -81,7 +79,7 @@ public class WdtShopConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatfor
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        ErpWarehouseDto entity = JSONUtil.toBean(ext.toString(), ErpWarehouseDto.class);
+        ErpShopDto entity = JSONUtil.toBean(ext.toString(), ErpShopDto.class);
         //入库
         ThirdShopDTO.AddDTO addDTO = new ThirdShopDTO.AddDTO();
         BeanUtils.copyProperties(entity,addDTO);

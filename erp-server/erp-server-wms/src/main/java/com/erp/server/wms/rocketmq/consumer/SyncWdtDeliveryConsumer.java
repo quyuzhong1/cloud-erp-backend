@@ -13,7 +13,6 @@ import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
-import com.erp.model.dmp.wdt.WangDianOrderEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
@@ -30,7 +29,7 @@ import java.util.Objects;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
         selectorExpression = "third_system_wdt_so_out_stock_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_order_consumer",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_so_out_stock_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class SyncWdtDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
     @Resource
@@ -80,6 +79,6 @@ public class SyncWdtDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
      */
     private String getTableName(String platform){
         return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
-                platform, BusinessTypeEnum.ORDER.getCode());
+                platform, BusinessTypeEnum.WDT_SO_OUT_STOCK.getCode());
     }
 }

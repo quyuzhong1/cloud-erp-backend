@@ -61,6 +61,6 @@ public enum ReturnReasonEnum implements EnumMessage {
                 return reasonEnum;
             }
         }
-        return null;
+        return OTHER;
     }
 }

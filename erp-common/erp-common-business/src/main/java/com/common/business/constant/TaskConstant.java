@@ -39,5 +39,5 @@ public interface TaskConstant {
      */
     String LX_PULL_DATA_TASK = "LX_PULL_DATA_TASK";
 
-    String WANGDIAN_PULL_DATA_TASK = "WANGDIAN_PULL_DATA_TASK";
+    String WDT_PULL_DATA_TASK = "WDT_PULL_DATA_TASK";
 }

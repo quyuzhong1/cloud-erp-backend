@@ -2,7 +2,6 @@ package com.sdk.wangdian.sdk.api.wms.stockin;
 
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinResponse;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateTransferStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateTransferStockinResponse;
@@ -17,13 +16,14 @@ import com.sdk.wangdian.sdk.api.wms.stockin.dto.StockinSearchResponse;
 import com.sdk.wangdian.sdk.impl.Api;
 
 import java.util.List;
+import java.util.Map;
 
 public interface StockinAPI {
     @Api(value = "wms.stockin.Refund.queryWithDetail", paged = true)
     RefundStockinResponse searchRefund(RefundStockinRequest request, Pager pager);
 
     @Api(value = "wms.stockin.Other.createOtherOrder")
-    CreateOtherStockinResponse createOtherOrder(CreateOtherStockinRequest request) throws WdtErpException;
+    CreateOtherStockinResponse createOtherOrder(Map<String, Object> request) throws WdtErpException;
     
     @Api(value = "wms.stockin.Other.queryWithDetail", paged = true)
     OtherStockinResponse queryWithDetail(OtherStockinRequest request, Pager pager);

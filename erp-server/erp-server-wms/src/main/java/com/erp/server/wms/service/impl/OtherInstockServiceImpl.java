@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -401,7 +402,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //审核发送金蝶
             sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送旺店通
-            syncWdtOtherInstockService.syncDataToWdt(entity);
+            syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他入库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
@@ -440,34 +441,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
         //发送旺店通
-        syncDisApproveInfoToWdt(entity);
+        syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         //操作日志
         operateLogService.addModuleOperateLog(StrUtil.format("反审核了一个其他入库单【{}】", entity.getCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单反审核");
-    }
-
-    /**
-     * 将其他入库单的反审核操作转换为其他出库单同步给旺店通
-     * @param entity 其他入库单
-     * @return void
-     * @date: 2024-05-20
-     * @author: tanmujin
-     */
-    private void syncDisApproveInfoToWdt(OtherInstockEntity entity) {
-        List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
-
-        //填充SKU明细
-        List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        detailList.forEach(item -> {
-            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
-            goods.setSpecNo(item.getSkuNo());
-            goods.setNum(BigDecimal.valueOf(item.getActualQty()));
-            goods.setPositionNo(item.getWarehouseLocation());
-            goodsList.add(goods);
-        });
-
-        //推送数据
-        syncWdtOtherOutStockService.syncDataToWdt(goodsList, entity.getWarehouseId(), null);
     }
 
     @Override
@@ -1151,6 +1128,66 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             @Override
             public void afterCommit() {
                 dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
+
+    /**
+     *
+     * @param entity 其他入库单
+     * @return void
+     * @date: 2024-05-24
+     * @author: tanmujin
+     */
+    private void syncApproveInfoToWdt(OtherInstockEntity entity, String operateCode) {
+        List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
+        List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>();
+        detailList.forEach(item -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            goods.setSpecNo(item.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(item.getActualQty()));
+            goods.setPositionNo(item.getWarehouseLocation());
+            goodsList.add(goods);
+        });
+
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInstockService.saveTask(goodsList, entity, operateCode);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
+    }
+
+    /**
+     * 将其他入库单的反审核操作转换为其他出库单同步给旺店通
+     *
+     * @param entity 其他入库单
+     * @param code
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncDisApproveInfoToWdt(OtherInstockEntity entity, String operateCode) {
+        List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
+
+        //填充SKU明细
+        List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
+        detailList.forEach(item -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            goods.setSpecNo(item.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(item.getActualQty()));
+            goods.setPositionNo(item.getWarehouseLocation());
+            goodsList.add(goods);
+        });
+
+        //保存任务
+        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), entity.getCode(), entity.getWarehouseId());
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
     }

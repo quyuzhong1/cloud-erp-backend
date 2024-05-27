@@ -16,6 +16,7 @@ public class CreateOtherStockinRequest
 	private List<GoodsList> goodsList;
 	private String remark;
 	private String reason;
+	private String dmpSyncTaskId;
 
 	public static class GoodsList
 	{

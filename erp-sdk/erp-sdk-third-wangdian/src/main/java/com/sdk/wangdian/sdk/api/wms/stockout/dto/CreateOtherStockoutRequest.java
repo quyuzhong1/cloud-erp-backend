@@ -17,6 +17,7 @@ public class CreateOtherStockoutRequest
 	private List<CreateOtherStockoutRequest.GoodsList> goodsList;
 	private String remark;
 	private String reason;
+	private String dmpSyncTaskId;
 
 	public static class GoodsList
 	{

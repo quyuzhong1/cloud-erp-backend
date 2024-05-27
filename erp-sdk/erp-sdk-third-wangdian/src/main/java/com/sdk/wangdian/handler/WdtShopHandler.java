@@ -117,6 +117,7 @@ public class WdtShopHandler implements IBusinessHandler<WdtShopDto, ErpShopDto> 
     public List<ErpShopDto> convert(List<WdtShopDto> sourceDataList) {
         List<ErpShopDto> targetList = new ArrayList<>();
         for (WdtShopDto source : sourceDataList) {
+            source.setUniqueId(String.valueOf(source.getShop_id()));
             ErpShopDto target = new ErpShopDto();
             BeanUtils.copyProperties(source,target);
 
