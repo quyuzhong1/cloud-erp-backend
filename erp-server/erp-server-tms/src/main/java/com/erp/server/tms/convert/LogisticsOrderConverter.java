@@ -53,6 +53,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "cargoType", constant = "3"),
             @Mapping(target = "refNo", source = "deliveryNo"),
             @Mapping(target = "iossNo", source = "iossCode"),
+            @Mapping(target = "vatNo", source = "receiverInfoVO.receiverTaxNo"),
             @Mapping(target = "businessType", constant = "BDS"),
             //费用模式转换
             @Mapping(target = "dutyType", source = "logisticsChannelEntity.taxModel", qualifiedByName = "taxModelToDSF"),
@@ -141,6 +142,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "receiverInfo.city",source = "receiverInfoVO.city"),
             @Mapping(target = "receiverInfo.zipCode",source = "receiverInfoVO.zipCode"),
             @Mapping(target = "receiverInfo.company",source = "receiverInfoVO.companyName"),
+            @Mapping(target = "receiverInfo.taxNumber",source = "receiverInfoVO.receiverTaxNo"),
             @Mapping(target = "senderInfo.name",source = "senderInfo.name"),
             @Mapping(target = "senderInfo.phone",source = "senderInfo.telNumber"),
             @Mapping(target = "senderInfo.company",source = "senderInfo.companyName"),
@@ -151,6 +153,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "senderInfo.zipCode",source = "senderInfo.zipCode"),
             @Mapping(target = "senderInfo.houseNumber",source = "senderInfo.companyName"),
             @Mapping(target = "senderInfo.address",source = "senderInfo.addressFirst"),
+            @Mapping(target = "senderInfo.taxNumber",source = "senderInfo.taxNumber"),
             @Mapping(target = "parcelInfo.hasBattery",source = "parceInfoVO.hasBattery",qualifiedByName = "boolToInteger"),
             @Mapping(target = "parcelInfo.currency",constant = "USD"),
             @Mapping(target = "parcelInfo.totalPrice",source = "parceInfoVO.totalPrice"),
@@ -255,6 +258,7 @@ public interface LogisticsOrderConverter {
 //            @Mapping(target = "recipientInfo.district", source = "receiverInfoVO.district"),
             @Mapping(target = "addressLine1", source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "addressLine2", source = "receiverInfoVO.addressSecond"),
+            @Mapping(target = "recipientTaxId", source = "receiverInfoVO.receiverTaxNo"),
 //            @Mapping(target = "recipientInfo.house_number", source = "receiverInfoVO.addressFirst"),
             //发货人
             @Mapping(target = "shipperName", source = "senderInfo.name"),
@@ -379,7 +383,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "contact",source = "senderInfo.name"),
             @Mapping(target = "tel",source = "senderInfo.telNumber"),
             @Mapping(target = "mobile",source = "senderInfo.telNumber"),
-            @Mapping(target = "email",source = "senderInfo.email")
+            @Mapping(target = "email",source = "senderInfo.email"),
+            @Mapping(target = "taxNo",source = "senderInfo.taxNumber")
     })
     ContactInfo orderRequestSendUserByExpress(LogisticsOrderVO logisticsOrderVO);
     @Mappings({
@@ -394,6 +399,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "postCode",source = "receiverInfoVO.zipCode"),
             @Mapping(target = "contact",source = "receiverInfoVO.contact"),
             @Mapping(target = "tel",source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "taxNo",source = "receiverInfoVO.receiverTaxNo"),
             @Mapping(target = "mobile",source = "receiverInfoVO.telNumber")
     })
     ContactInfo orderRequestReceiverUserByExpress(LogisticsOrderVO logisticsOrderVO);
@@ -435,7 +441,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "orderNo", source = "deliveryNo"),
             @Mapping(target = "passportNumber", source = "passportNumber"),
             @Mapping(target = "source", constant = "BCDC77BDC117750AC882462407E47D92"),
-            @Mapping(target = "taxId", source = "taxId"),
+            @Mapping(target = "taxId", source = "receiverInfoVO.receiverTaxNo"),
             @Mapping(target = "iossVatId", source = "iossCode"),
             @Mapping(target = "isTaxed", constant = "0"),
             @Mapping(target = "transportCost", source = "transportCost"),
