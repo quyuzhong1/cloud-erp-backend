@@ -235,16 +235,14 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         List<ThirdMappingEntity> warehouseList = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.WAREHOUSE.getCode())
                 .eq(ThirdMappingEntity::getThirdSysType, ThirdSysTypeEnum.WANGDIAN.getCode())
-                .eq(ThirdMappingEntity::getThirdInfoId, inStockEntity.getWarehouseId()));
+                .eq(ThirdMappingEntity::getThirdInfoId, dto.getWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, inStockEntity.getWarehouseName());
+            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, dto.getWarehouseName());
         }
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
         //组织信息
         SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
-        inStockEntity.setWarehouseId(warehouse.getId());
-        inStockEntity.setWarehouseId(warehouse.getName());
         inStockEntity.setSalesOrgId(shopInfo.getSalesOrgId());
         inStockEntity.setSalesOrgName(shopInfo.getSalesOrgName());
         inStockEntity.setInventoryOrgId(company.getId());

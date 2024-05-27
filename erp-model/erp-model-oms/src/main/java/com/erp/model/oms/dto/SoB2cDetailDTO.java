@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -293,10 +292,6 @@ public class SoB2cDetailDTO implements Serializable {
          * 拆分的明细id
          */
         private String splitDetailId;
-        /**
-         * 来源明细id
-         */
-        private String sourceDetailId;
 
         /**
          * 是否组合品
