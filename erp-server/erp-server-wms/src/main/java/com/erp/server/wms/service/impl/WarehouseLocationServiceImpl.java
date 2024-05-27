@@ -53,7 +53,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId) {
         // 根据仓库查询仓位
         List<WarehouseLocationEntity> warehouseLocationList =  lambdaQuery().eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
-                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).list();
+                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode())
+                .orderByAsc(WarehouseLocationEntity::getCode).list();
         if(CollUtil.isEmpty(warehouseLocationList)) {
             return Lists.newArrayList();
         }
