@@ -151,6 +151,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 log.error("【第三方出库单】销售单【{}】标记发货失败 >>>错误信息{}", mainEntity.getCode(), ExceptionUtil.stacktraceToString(e));
             }
 
+            // 校验是否已生成销售出库单
+            boolean exist = soOutstockService.checkExist(soB2cCode, SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
+            if (exist) {
+                log.warn("销售订单{} 已生成销售出库单, 忽略生成", soB2cCode );
+                return ApiResult.success();
+            }
+
             try {
                 LocalDateTime outBoundTime = dto.getOutBoundTime();
                 if(Objects.nonNull(outBoundTime)){

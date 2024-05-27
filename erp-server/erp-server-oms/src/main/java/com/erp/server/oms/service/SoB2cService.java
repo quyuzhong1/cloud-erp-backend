@@ -240,10 +240,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @description: 拆分显示
      * @author Will
      * @date: 2023/8/21 9:18
-     * @param id
+     * @param ids
      * @return ViewSplitDTO
      */
-    SoB2cDTO.ViewSplitDTO viewSplit(String id);
+    List<SoB2cDTO.ViewSplitDTO> viewSplit(List<String> ids);
     /**
      * @description: 拆分保存
      * @author Will
