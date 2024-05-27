@@ -582,8 +582,8 @@ public class SoB2cController extends BaseController {
                 //申报信息匹配
                 if (result.getSuccess()){
                     SoB2cEntity entity = soB2cService.getById(id);
-                    if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
-                            || !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
+                    if (SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
                     ){
                         soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
                     }
