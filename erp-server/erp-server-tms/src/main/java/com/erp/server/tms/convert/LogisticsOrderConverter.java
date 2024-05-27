@@ -53,7 +53,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "cargoType", constant = "3"),
             @Mapping(target = "refNo", source = "deliveryNo"),
             @Mapping(target = "iossNo", source = "iossCode"),
-            @Mapping(target = "vatNo", source = "receiverInfoVO.receiverTaxNo"),
+            @Mapping(target = "vatNo", ignore = true),
             @Mapping(target = "businessType", constant = "BDS"),
             //费用模式转换
             @Mapping(target = "dutyType", source = "logisticsChannelEntity.taxModel", qualifiedByName = "taxModelToDSF"),
@@ -383,8 +383,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "contact",source = "senderInfo.name"),
             @Mapping(target = "tel",source = "senderInfo.telNumber"),
             @Mapping(target = "mobile",source = "senderInfo.telNumber"),
-            @Mapping(target = "email",source = "senderInfo.email"),
-            @Mapping(target = "taxNo",source = "senderInfo.taxNumber")
+            @Mapping(target = "email",source = "senderInfo.email")
+//            @Mapping(target = "taxNo",source = "senderInfo.taxNumber")
     })
     ContactInfo orderRequestSendUserByExpress(LogisticsOrderVO logisticsOrderVO);
     @Mappings({
