@@ -343,7 +343,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         // 存在拆分忽略更新
         boolean existSplit = oldDetailEntityList.stream().anyMatch(e -> StringUtils.isNotBlank(e.getSplitDetailId()));
         if (existSplit){
-            return Collections.emptyList();
+            return oldDetailEntityList;
         }
 
         // 来源不为空
