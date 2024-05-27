@@ -152,7 +152,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 return entity;
             }else {
                 SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
-                BeanMapperUtils.copy(receiverDTO, entity2);
+                BeanMapperUtils.copy(entity, entity2);
                 if (null != dictCountryEntity && StringUtils.isBlank(entity2.getCountryName())){
                     entity.setCountryName(dictCountryEntity.getNameCn());
                 }
