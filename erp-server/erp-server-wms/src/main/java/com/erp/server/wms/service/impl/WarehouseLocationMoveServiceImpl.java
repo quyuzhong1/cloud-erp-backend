@@ -750,10 +750,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
 
         data.setDetailList(detailList);
-        if (StringUtils.isBlank(data.getWarehouseId()) && CollectionUtils.isNotEmpty(detailList)) {
-            data.setWarehouseId(detailList.get(0).getWarehouseId());
-            data.setWarehouseName(detailList.get(0).getWarehouseName());
-        }
         return data;
     }
     @Override
@@ -914,10 +910,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                         StringUtils.isBlank(data.getWarehouseId()) ? pdaItemDTO.getWarehouseId() : data.getWarehouseId(), pdaItemDTO.getInWarehouseLocation()).getName());
             }
             data.setItemList(itemDTOList);
-            if (StringUtils.isBlank(data.getWarehouseId()) && CollectionUtils.isNotEmpty(itemDTOList)) {
-                data.setWarehouseId(itemDTOList.get(0).getWarehouseId());
-                data.setWarehouseName(itemDTOList.get(0).getWarehouseName());
-            }
         }
     }
 
