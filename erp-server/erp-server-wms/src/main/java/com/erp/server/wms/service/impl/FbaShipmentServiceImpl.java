@@ -1743,4 +1743,20 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         return new PagingVO(searchData);
     }
+
+    @Override
+    public FbaShipmentEntity getByCode(String fbaShipmentCode) {
+        return lambdaQuery().eq(FbaShipmentEntity::getCode,fbaShipmentCode)
+                .last("limit 1")
+                .one();
+    }
+
+    @Override
+    public List<FbaShipmentEntity> listByCodes(List<String> fbaShipmentCodeList) {
+        if(CollectionUtils.isEmpty(fbaShipmentCodeList)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FbaShipmentEntity::getCode,fbaShipmentCodeList)
+                .list();
+    }
 }
