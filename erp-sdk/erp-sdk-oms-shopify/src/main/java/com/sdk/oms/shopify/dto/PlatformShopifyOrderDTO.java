@@ -232,6 +232,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setFinances(financeDTO);
         // 设置下载其他详情
         orderDTO.setDownloadStatus(0);
+        //卖家订单编号
+        orderDTO.setSellerOrderCode(sourceOrder.getName());
         return orderDTO;
 
     }

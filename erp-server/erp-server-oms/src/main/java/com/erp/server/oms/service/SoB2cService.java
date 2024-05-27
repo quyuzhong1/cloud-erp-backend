@@ -165,13 +165,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
 
     /**
-     * 校验物流尺寸规则
-     * @param id
-     * @param dto
-     * @return
-     */
-    BatchResultDTO checkBasicLogistics(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
-    /**
      * @description: 获取物流单号
      * @author Will
      * @date: 2023/8/18 16:47
@@ -240,10 +233,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @description: 拆分显示
      * @author Will
      * @date: 2023/8/21 9:18
-     * @param id
+     * @param ids
      * @return ViewSplitDTO
      */
-    SoB2cDTO.ViewSplitDTO viewSplit(String id);
+    List<SoB2cDTO.ViewSplitDTO> viewSplit(List<String> ids);
     /**
      * @description: 拆分保存
      * @author Will

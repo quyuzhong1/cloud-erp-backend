@@ -62,6 +62,7 @@
         pf.code,
         pf.handover_no AS handoverNo,
         pf.platform_package_no AS platformPackageNo,
+        COALESCE(pf.handover_no,'') || '/' || COALESCE(pf.platform_package_no,'') as platformNo,
         pf.logistics_supplier_id AS logisticsSupplierId,
         pf.logistics_supplier_name AS logisticsSupplierName,
         pf.transport_no AS transportNo,

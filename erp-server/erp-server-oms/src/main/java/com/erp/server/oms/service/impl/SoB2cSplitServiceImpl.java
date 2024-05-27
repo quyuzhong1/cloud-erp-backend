@@ -148,9 +148,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
                 for (SoB2cDetailEntity soB2cDetailEntity : addDetailList) {
                     //库存SKU
-                    SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(soB2cDetailEntity.getSkuId()) && obj.getWarehouseId().equals(soB2cDetailEntity.getWarehouseId())).findFirst().orElse(null);
-                    if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
-                        soB2cDetailEntity.setWarehouseSkuNo(StrUtil.isBlank(warehouseListSkuDTO.getWarehouseSkuNo()) ? "" : warehouseListSkuDTO.getWarehouseSkuNo());
+                    List<SkuMappingDTO.ListSkuDTO> warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(soB2cDetailEntity.getSkuId()) && obj.getWarehouseId().equals(soB2cDetailEntity.getWarehouseId())).collect(Collectors.toList());
+                    if (warehouseListSkuDTO.size() == 1) {
+                        soB2cDetailEntity.setWarehouseSkuNo(StrUtil.isBlank(warehouseListSkuDTO.get(0).getWarehouseSkuNo()) ? "" : warehouseListSkuDTO.get(0).getWarehouseSkuNo());
                     } else {
                         soB2cDetailEntity.setWarehouseSkuNo("");
                     }

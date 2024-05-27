@@ -163,6 +163,7 @@
         <if test="name != null and name != ''">
             and lc.name ILIKE concat('%',#{name}::text,'%')
         </if>
+        order by  lc.disabled asc,lc.create_time desc
     </select>
 
 

@@ -140,7 +140,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soId));
         }
         List<String> warehouseIds = returnInstockDetailEntities.stream().map(SoReturnInstockDetailEntity::getWarehouseId).collect(Collectors.toList());
-        warehouseIds.add(entity.getWarehouseId());
         //仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
         List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
@@ -270,7 +269,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             map.put("salesOrgCode", resultMap.get("salesOrgCode"));
             //仓库
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String warehouseId = StringUtils.isBlank(detailEntity.getWarehouseId())?entity.getWarehouseId():detailEntity.getWarehouseId();
+                String warehouseId = detailEntity.getWarehouseId();
                 String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(warehouseId)).map(WarehouseDTO.UpdateDTO::getKingdeeWarehouseCode).findFirst().orElse("");
                 //仓库
                 map.put("warehouseCode", warehouseCode);

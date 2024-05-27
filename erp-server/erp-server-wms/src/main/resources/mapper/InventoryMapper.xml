@@ -24,9 +24,10 @@
                t.frozen_qty AS frozenQty,
                t.intransit_qty AS intransitQty,
                t.waitqc_qty AS waitqcQty,
-               t.real_qty AS realQty
+               t.real_qty AS realQty,
+               t.warehouse_location AS warehouse_location
         from (
-            select max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
+            select max(m.warehouse_location) AS warehouse_location, max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
                 sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
                 select max(it.warehouse_id) as warehouse_id,
                 max(it.org_id) as org_id,
@@ -36,14 +37,15 @@
                 max(pd.images_url) as product_img_url,
                 max(pi.spu_no) as spu_no,
                 max(ps.sale_state) as sale_state,
+                max(it.warehouse_location) AS warehouse_location,
                 sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
                 sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty,
                 sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransit_qty,
                 sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqc_qty
-                from inventory it
-                left join product_detail pd on pd.id = it.sku_id
-                left join product_info pi on pd.product_id = pi.id
-                left join product_sale ps on ps.sku_id = pd.id
+            from inventory it
+            left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
+            left join product_info pi on pd.product_id = pi.id  AND pi.is_deleted = FALSE
+            left join product_sale ps on ps.sku_id = pd.id AND  ps.is_deleted = FALSE
             <where>
                 it.is_deleted = false
                 <if test="params.productName != null and params.productName != ''">
@@ -83,9 +85,9 @@
                     ${params.permissionSql}
                 </if>
             </where>
-            group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status
+            group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status,it.warehouse_location
         ) m
-        group by m.warehouse_id,m.org_id,m.sku_id
+        group by m.warehouse_id,m.org_id,m.sku_id,m.warehouse_location
     ) t
     <where>
         <if test="params.hideZeroInventory">
@@ -114,9 +116,10 @@
                t.frozen_qty AS frozenQty,
                t.intransit_qty AS intransitQty,
                t.waitqc_qty AS waitqcQty,
-               t.real_qty AS realQty
+               t.real_qty AS realQty,
+               t.warehouse_location AS warehouse_location
         from (
-        select max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
+        select max(m.warehouse_location) AS warehouse_location, max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
         sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
         select max(it.warehouse_id) as warehouse_id,
         max(it.org_id) as org_id,
@@ -126,14 +129,15 @@
         max(pd.images_url) as product_img_url,
         max(pi.spu_no) as spu_no,
         max(ps.sale_state) as sale_state,
+        max(it.warehouse_location) AS warehouse_location,
         sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
         sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty,
         sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransit_qty,
         sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqc_qty
         from inventory it
-        left join product_detail pd on pd.id = it.sku_id
-        left join product_info pi on pd.product_id = pi.id
-        left join product_sale ps on ps.sku_id = pd.id
+        left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
+        left join product_info pi on pd.product_id = pi.id  AND pi.is_deleted = FALSE
+        left join product_sale ps on ps.sku_id = pd.id AND  ps.is_deleted = FALSE
         <where>
             it.is_deleted = false
             <if test="params.skuIdList != null and params.skuIdList.size != ''">
@@ -176,9 +180,9 @@
                 ${params.permissionSql}
             </if>
         </where>
-        group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status
-        ) m
-        group by m.warehouse_id,m.org_id,m.sku_id
+                group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status,it.warehouse_location
+            ) m
+            group by m.warehouse_id,m.org_id,m.sku_id,m.warehouse_location
         ) t
         <where>
             <if test="params.hideZeroInventory">

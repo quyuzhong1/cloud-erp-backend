@@ -17,7 +17,10 @@ import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleConditionMapper;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.CfgConditionService;
+import com.erp.server.oms.service.DictRuleConditionService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.RuleConditionService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -119,6 +122,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         int i = 1;
         for (RuleConditionDTO.AddDTO item : conditionList) {
             item.setIndex(i);
+            item.setName(StrUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
             i++;
         }
         List<RuleConditionEntity> ruleConditionList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
@@ -181,6 +185,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         int i = 1;
         for (RuleConditionDTO.UpdateDTO item : conditionList) {
             item.setIndex(i);
+            item.setName(StrUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
             i++;
         }
         String moduleType = ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode();
@@ -219,7 +224,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         for (RuleConditionEntity updateItem : updateRuleConditionList) {
             RuleConditionEntity old = dbList.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
             if (Objects.nonNull(old)) {
-                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, "修改了订单规则");
+                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, StrUtil.format("修改了第【{}】条订单规则",updateItem.getIndex()));
             }
         }
         handleDataList(saveOrUpdateList);

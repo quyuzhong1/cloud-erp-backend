@@ -25,6 +25,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
+import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -100,6 +103,12 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId) {
+        //相同sku合并数量
+        if(CollectionUtils.isNotEmpty(createOutboundReq.getItems())){
+            Map<String,Integer> mergeSkuMap = createOutboundReq.getItems().stream().collect(Collectors.toMap(ThirdWarehouseCreateOutboundReq.Item::getProductSku, ThirdWarehouseCreateOutboundReq.Item::getQuantity, Integer::sum));
+            //将map转成List<Item>
+            createOutboundReq.setItems(mergeSkuMap.entrySet().stream().map(v->new ThirdWarehouseCreateOutboundReq.Item(v.getKey(),v.getValue())).collect(Collectors.toList()));
+        }
         return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,createOutboundReq.getReferenceNo());
     }
 
@@ -172,7 +181,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         dmpPushTaskEntity.setSourceId(erpBusinessCode);
         dmpPushTaskEntity.setSourceCode(erpBusinessCode);
         dmpPushTaskEntity.setTargetPlatformName(getPlatForm().getName());
-        dmpPushTaskEntity.setStatus(status.equals(ApiResult.success().getCode()) ? SyncStatusEnum.SUCCESS_SYNC.getCode() : SyncStatusEnum.FAILED_SYNC.getCode());
+        dmpPushTaskEntity.setStatus(status.equals(ApiResult.success().getCode()) ? SyncStatusEnum.SUCCESS_SYNC.getCode() : SyncStatusEnum.NO_NEED_SYNC.getCode());
         dmpPushTaskEntity.setMqTopic("");
         dmpPushTaskEntity.setMqTag("");
         dmpPushTaskEntity.setMqData(ThirdWarehouseContext.getRequestJson());
