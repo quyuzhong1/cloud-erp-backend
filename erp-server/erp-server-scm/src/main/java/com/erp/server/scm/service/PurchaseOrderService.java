@@ -116,11 +116,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 导入
      * @author Will
      * @date: 2023/3/16 11:58
-     * @param excelFile
+     * @param excelImportDTO
      * @param response
      * @return PurchaseOrderDetailDTO.ImportDTO
      */
-    PurchaseOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds,String supplierId, HttpServletResponse response);
+    PurchaseOrderDetailDTO.ImportDTO importFile(ExcelImportDTO.purchaseOrderExcelImportDTO excelImportDTO, HttpServletResponse response);
     /**
      * @description: 导出
      * @author Will

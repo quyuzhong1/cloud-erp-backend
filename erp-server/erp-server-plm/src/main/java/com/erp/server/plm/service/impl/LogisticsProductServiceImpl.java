@@ -965,7 +965,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
         for (LogisticsProductDTO.ExportInfoDTO item : list) {
             String skuId = item.getSkuId();
-            item.setLogisticsApproveStatusName(item.getLogisticsApproveStatus().getName());
+            item.setLogisticsApproveStatusName(ApproveStatusEnum.getName(item.getLogisticsApproveStatus()));
             //含税成本
             BigDecimal actualTaxCost = item.getActualTaxCost();
             if (Objects.isNull(actualTaxCost) || zero.compareTo(actualTaxCost) == 0) {

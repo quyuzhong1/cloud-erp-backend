@@ -64,6 +64,25 @@ public class TypeConversionWorker {
      * @param obj
      * @return
      */
+    @Named("booleanToYOrN")
+    public String booleanToYOrN(Object obj) {
+        if (Objects.isNull(obj)) {
+            return "N";
+        }
+        if (Objects.equals(Boolean.TRUE, obj)){
+            return "Y";
+        }else if (Objects.equals(Boolean.FALSE, obj)){
+            return "N";
+        }else {
+            return "N";
+        }
+    }
+    /**
+     * 递四方费用模式转换
+     *
+     * @param obj
+     * @return
+     */
     @Named("gTokg")
     public Double gTokg(Object obj) {
         if (Objects.isNull(obj)) {
@@ -126,6 +145,24 @@ public class TypeConversionWorker {
             return chanelInfo.getMinProcessDay() +"-"+ chanelInfo.getMaxProcessDay();
         }else{
             return StringUtils.EMPTY;
+        }
+    }
+
+    /**
+     * 获取手机尾号四位
+     * @param phoneSuffix
+     * @return
+     */
+    @Named("getPhoneSuffix4")
+    public String getPhoneSuffix4(String phoneSuffix){
+        if (StringUtils.isEmpty(phoneSuffix)){
+            return "";
+        }
+        //获取手机号后四位
+        if (phoneSuffix.length()<=4){
+            return phoneSuffix;
+        }else {
+            return phoneSuffix.substring(phoneSuffix.length() - 4);
         }
     }
 

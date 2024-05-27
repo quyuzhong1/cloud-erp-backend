@@ -2461,7 +2461,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Override
     public List<SysUserInfoEntity> listQcUser() {
-        List<SysUserInfoEntity> sysUserInfoEntities = sysUserFeign.listUserByDept("品质部");
+        List<SysUserInfoEntity> sysUserInfoEntities = sysUserFeign.listUserByDept("品质中心");
         return sysUserInfoEntities;
     }
 

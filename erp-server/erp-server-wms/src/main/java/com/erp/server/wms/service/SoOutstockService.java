@@ -516,6 +516,24 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void updateRemarkBySoId(String id,String remark);
 
     /**
+     * @description: 物流单生成数据修复
+     * @author Will
+     * @date: 2024/5/20 15:55
+     * @param codeList
+     * @return List<String>
+     */
+    List<String> recoveryLogisticsBill(List<String> codeList);
+
+    /**
+     * 检查销售订单是否已生成销售出库单
+     * @param soCode 销售单号
+     * @param sourceType 来源类型
+     * @param orderType 订单类型
+     * @return true=已存在
+     */
+    boolean checkExist(String soCode, String sourceType, String orderType);
+
+    /**
      * 第三方仓生成销售出库单
      */
     void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto);

@@ -12,7 +12,10 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
-import com.erp.model.scm.entity.*;
+import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -237,15 +240,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         purchasePriceHistoryService.saveBatch(historyList);
 
         //修改价目详情
-        approveCheckData(list,updateList);
+        approveCheckData(list,updateList,purchasePriceChangeList);
         purchasePriceDetailService.updateBatchById(updateList);
-
-        //同步金蝶数据
-        List<String> priceIds = purchasePriceDetailList.stream().distinct().map(PurchasePriceDetailEntity::getPurchasePriceId).collect(Collectors.toList());
-        List<PurchasePriceEntity> purchasePriceList = purchasePriceService.listByIds(priceIds);
-        if (CollectionUtils.isEmpty(purchasePriceList)) {
-            throw new ServiceException(ApiError.ERROR_98024);
-        }
     }
 
     /**
@@ -376,10 +372,12 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      * @param detailList
      * @param updateList
      */
-    private void approveCheckData (List<PurchasePriceChangeDetailEntity> detailList,List<PurchasePriceDetailEntity> updateList) {
+    private void approveCheckData (List<PurchasePriceChangeDetailEntity> detailList,List<PurchasePriceDetailEntity> updateList
+            ,List<PurchasePriceChangeEntity> purchasePriceChangeList) {
         if (CollectionUtils.isEmpty(updateList)) {
             return;
         }
+
         Map<String, List<PurchasePriceChangeDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailEntity::getPriceCode));
 
         for (Map.Entry<String, List<PurchasePriceChangeDetailEntity>> entry :map.entrySet()) {
@@ -389,7 +387,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
             List<PurchasePriceDetailEntity> list = updateList.stream().filter(obj -> purchasePriceDetailIdList.contains(obj.getId())).collect(Collectors.toList());
             //报价信息验证
-            purchasePriceDetailService.checkPurchasePriceDetail(value.get(0).getSupplierId(),list);
+            purchasePriceDetailService.checkPurchasePriceDetail(value.get(0).getSupplierId(),purchasePriceChangeList.get(0).getPurchaseOrgId(),list);
         }
     }
 

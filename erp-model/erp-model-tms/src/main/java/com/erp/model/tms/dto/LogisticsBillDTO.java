@@ -140,7 +140,7 @@ public class LogisticsBillDTO implements Serializable {
         /**
          * 发货类型 http://172.16.100.11:3002/project/128/interface/api/25522 key=shipmentType
          */
-        private String shipmentTypeList;
+        private List<String> shipmentTypeList;
     }
 
     /**
@@ -498,6 +498,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         @NotBlank(message = "发货类型不能为空")
         private String shipmentType;
+        /**
+         * 电话
+         */
+        private String telNumber;
     }
 
     /**
@@ -1047,5 +1051,14 @@ public class LogisticsBillDTO implements Serializable {
          * 物流面单base64格式
          */
         private List<String> logisticsBase64;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BillPhoneDTO {
+        /**
+         * 物流单
+         */
+        private List<String> ids;
     }
 }

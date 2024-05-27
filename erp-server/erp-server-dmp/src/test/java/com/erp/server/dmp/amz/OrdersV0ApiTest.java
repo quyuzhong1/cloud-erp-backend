@@ -14,7 +14,6 @@
 package com.erp.server.dmp.amz;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -99,7 +98,7 @@ public class OrdersV0ApiTest {
 //        String createdAfter = "TEST_CASE_200";
 //        String lastUpdatedAfter = null;
 //        String createdAfter = null;
-        String createdAfter = "2024-05-01T00:00:00";
+        String createdAfter = "2020-10-01T00:00:00";
 //        String createdBefore = "2023-10-16T00:00:00Z";
         String createdBefore = null;
         String lastUpdatedAfter = null;
@@ -120,73 +119,20 @@ public class OrdersV0ApiTest {
         System.out.println(JSONUtil.toJsonStr(orderList));
     }
 
-
-    @Test
-    public void getOrderSandbox429Test() throws Exception {
-        String shopId = "1735509194041200642";
-        // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
-        if (null == shopInfoDTO) {
-            throw new ServiceException("未找到店铺授权:" + shopId);
-        }
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, true, null);
-        if (null == api) {
-            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
-        }
-        List<String> marketplaceIds = new ArrayList<>();
-        marketplaceIds.add(marketplaceEnum.getMarketplaceId());
-
-        List<String> orderStatuses = new ArrayList<>();
-        String createdAfter = "TEST_CASE_400";
-//        String lastUpdatedAfter = null;
-//        String createdAfter = null;
-//        String createdAfter = "2020-10-01T00:00:00";
-        String createdBefore = null;
-//        String lastUpdatedAfter = null;
-//        String lastUpdatedBefore = null;
-        String lastUpdatedBefore = "2024-05-01T01:30:00";
-        String lastUpdatedAfter = "2024-05-01T00:00:00";
-//        orderStatuses.add("Unshipped");
-        String rateLimitStr;
-        try {
-            // 发起请求
-            ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
-                    null, null, lastUpdatedAfter, lastUpdatedBefore, null, null, null, null, null, 100,
-                    null, null,
-                    null, null, null, null, null, null, null, null, null);
-            List<String> limitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
-            rateLimitStr = limitArray.get(0);
-            GetOrdersResponse orders = ordersWithHttpInfo.getData();
-            System.out.println("amz spi查询订单首次");
-            System.out.println(JSONUtil.toJsonStr(ordersWithHttpInfo));
-        } catch (ApiException e) {
-            if (400 == e.getCode()){
-                log.error("【订单拉取】存在400代号");
-            }
-            // 识别代号
-            String msg = StrUtil.format("【订单拉取】 异常, error={}", JSONUtil.toJsonStr(e));
-            throw new ServiceException(msg);
-        } catch (Exception e) {
-            throw new RuntimeException("请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
-        }
-    }
-
-
     @Test
     public void getOrderAllListTest() throws Exception {
-        String shopId = "1735479610549735425";
+        String shopId = "1736965724917731330";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
-//        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
-//                .rateLimitPermit(0.5)
-//                .waitTimeOutInMilliSeconds(10000L)
-//                .build();
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, true, null);
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
         if (null == api) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
         }
@@ -203,10 +149,10 @@ public class OrdersV0ApiTest {
         String createdAfter = null;
 //        String createdAfter = "2020-10-01T00:00:00";
         String createdBefore = null;
-//        String lastUpdatedAfter = null;
-//        String lastUpdatedBefore = null;
-        String lastUpdatedBefore = "2024-05-01T01:30:00";
-        String lastUpdatedAfter = "2024-05-01T00:00:00";
+        String lastUpdatedAfter = null;
+        String lastUpdatedBefore = null;
+//        String lastUpdatedAfter = "2023-10-15T16:30:19";
+//        String lastUpdatedAfter = "2023-10-15T08:46:35.707Z";
 //        orderStatuses.add("Unshipped");
         String rateLimitStr;
         try {
@@ -219,20 +165,19 @@ public class OrdersV0ApiTest {
             rateLimitStr = limitArray.get(0);
             GetOrdersResponse orders = ordersWithHttpInfo.getData();
             System.out.println("amz spi查询订单首次");
-            System.out.println(JSONUtil.toJsonStr(ordersWithHttpInfo));
+            System.out.println(JSONUtil.toJsonStr(orders));
 
             List<Order> orderList = new LinkedList<>(orders.getPayload().getOrders());
             String currentNextToken = orders.getPayload().getNextToken();
             int currentSize = orders.getPayload().getOrders().size();
             while (StringUtils.isNotBlank(currentNextToken) && currentSize == 100) {
-//                // 上一次请求的响应频率设置
-//                if (StringUtils.isNotBlank(rateLimitStr)) {
-//                    RateLimitConfigurationOnRequests rateLimitConfigurationRequests = (RateLimitConfigurationOnRequests) rateLimitConfig;
-//                    rateLimitConfigurationRequests.setRateLimitPermit(Double.parseDouble(rateLimitStr));
-//                    api.getApiClient().setRateLimiter(rateLimitConfigurationRequests);
-//                }
-                ApiResponse<GetOrdersResponse> currentRespWithHttp = api.getOrdersWithHttpInfo(marketplaceIds, null, null, null, null, null, null, null, null, null, 100, null, null, currentNextToken, null, null, null, null, null, null, null, null);
-                GetOrdersResponse currentResp = currentRespWithHttp.getData();
+                // 上一次请求的响应频率设置
+                if (StringUtils.isNotBlank(rateLimitStr)) {
+                    RateLimitConfigurationOnRequests rateLimitConfigurationRequests = (RateLimitConfigurationOnRequests) rateLimitConfig;
+                    rateLimitConfigurationRequests.setRateLimitPermit(Double.parseDouble(rateLimitStr));
+                    api.getApiClient().setRateLimiter(rateLimitConfigurationRequests);
+                }
+                GetOrdersResponse currentResp = api.getOrders(marketplaceIds, null, null, null, null, null, null, null, null, null, 100, null, null, currentNextToken, null, null, null, null, null, null, null, null);
                 System.out.println("amz spi循环查询订单token=" + currentNextToken);
                 System.out.println(JSONUtil.toJsonStr(currentResp));
                 orderList.addAll(currentResp.getPayload().getOrders());
@@ -244,7 +189,7 @@ public class OrdersV0ApiTest {
             // 设置根据亚马逊的响应时间记录下次执行开始时间
             System.out.println(orderList);
             System.out.println("amz sp-查询订单");
-            System.out.println(JSONUtil.toJsonStr(ordersWithHttpInfo));
+            System.out.println(JSONUtil.toJsonStr(orderList));
             Map<String, List<Order>> collect = orderList.stream().collect(Collectors.groupingBy(Order::getAmazonOrderId));
             for (Map.Entry<String, List<Order>> stringListEntry : collect.entrySet()) {
                 if (stringListEntry.getValue().size() > 1) {
@@ -664,8 +609,8 @@ public class OrdersV0ApiTest {
 //        String orderId = "171-1050921-3579503";
 //        String shopId = "1730162240754708482";
 //        String orderId = "701-3274667-0305064";
-        String orderId = "503-9883487-7448618";
-        String shopId = "1735479610549735425";
+        String orderId = "702-3086347-0713815";
+        String shopId = "1736965724917731330";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -677,9 +622,9 @@ public class OrdersV0ApiTest {
                 .build();
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
-        ApiResponse<GetOrderResponse> orderWithHttpInfo = api.getOrderWithHttpInfo(orderId);
+        GetOrderResponse response = api.getOrder(orderId);
         System.out.println("根据ID查询订单");
-        System.out.println(JSONUtil.toJsonStr(orderWithHttpInfo));
+        System.out.println(JSONUtil.toJsonStr(response));
         // TODO: test validations
     }
 
@@ -722,9 +667,9 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderBuyerInfoTest() throws ApiException {
 //        String orderId = "403-5884620-3514762";
-        String orderId = "503-9883487-7448618";
+        String orderId = "503-5798344-1226237";
 //        String shopId = "1730162240754708482";
-        String shopId = "1735479610549735425";
+        String shopId = "1735515255066333185";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -1078,60 +1023,6 @@ public class OrdersV0ApiTest {
         body.setPackageDetail(packageDetail);
         System.out.println("结果");
         System.out.println(JSONUtil.toJsonStr(body));
-    }
-
-    @Test
-    public void getMultiChannelFulfillmentOrderAllListByOrderIdsTest() throws Exception {
-        // 根据国家确定
-        // 最多50个
-        List<String> orderIds = Arrays.asList(
-                "S03-4991422-6891009"
-        );
-        List<List<String>> partition = Lists.partition(orderIds, 50);
-
-        String shopId = "1735479610549735425";
-        // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
-        if (null == shopInfoDTO) {
-            throw new ServiceException("未找到店铺授权:" + shopId);
-        }
-        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
-                .rateLimitPermit(0.5)
-                .waitTimeOutInMilliSeconds(10000L)
-                .build();
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
-        if (null == api) {
-            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
-        }
-
-        List<String> marketplaceIds = Arrays.stream(AmazonMarketplaceEnum.values()).map(AmazonMarketplaceEnum::getMarketplaceId).collect(Collectors.toList());
-//        marketplaceIds.add(marketplaceEnum.getMarketplaceId());
-        for (List<String> curOrderIds : partition) {
-            try {
-                // 发起请求
-                ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
-                        null, null, null, null, null, null, null, null, null, 100,
-                        null, null, null, curOrderIds, null, null, null, null, null, null, null);
-                GetOrdersResponse orders = ordersWithHttpInfo.getData();
-                System.out.println("amz spi根据订单ID查询订单首次");
-                System.out.println(JSONUtil.toJsonStr(orders));
-                //
-                List<Order> orderList = new LinkedList<>(orders.getPayload().getOrders());
-                // 设置根据亚马逊的响应时间记录下次执行开始时间
-                System.out.println(orderList);
-                System.out.println("amz sp-查询订单");
-                System.out.println(JSONUtil.toJsonStr(orderList));
-                Map<String, List<Order>> collect = orderList.stream().collect(Collectors.groupingBy(Order::getAmazonOrderId));
-                for (Map.Entry<String, List<Order>> stringListEntry : collect.entrySet()) {
-                    if (stringListEntry.getValue().size() > 1) {
-                        System.out.println("存在重复,value={}" + JSONUtil.toJsonStr(stringListEntry.getValue()));
-                    }
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
-            }
-        }
     }
 
     /**

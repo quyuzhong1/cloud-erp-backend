@@ -1,7 +1,13 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -13,13 +19,10 @@ import com.erp.model.wms.entity.WmsDataCompareTempEntity;
 import com.erp.server.wms.mapper.WmsDataCompareTempMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsDataCompareTempService;
+
+import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 /**
  * <p>
  * 数据对比对比加工临时表 服务实现类
@@ -94,8 +97,14 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
     // TODO 验证数据 & 数据赋值
     }
 
+    @Override
+	public void batchInsertWmsDataCompareTemp(List<WmsDataCompareTempEntity> list) {
+    	baseMapper.batchInsertWmsDataCompareTemp(list);
+	}
+    
 	@Override
 	public void deleteData(String taskId) {
 		baseMapper.deleteData(taskId);
 	}
+
 }

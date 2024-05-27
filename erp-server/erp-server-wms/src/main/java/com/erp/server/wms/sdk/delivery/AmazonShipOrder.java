@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.AMAZON)
-public class AmazonShipOrder implements IPlatformService {
+public class AmazonShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -120,6 +120,7 @@ public class AmazonShipOrder implements IPlatformService {
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
+            // 校验捆绑商品拆分
             // 来源明细ID为空代表是手工添加的明细忽略
             detailEntityList =  detailEntityList.stream()
                     .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
@@ -127,9 +128,10 @@ public class AmazonShipOrder implements IPlatformService {
 //            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
 //                throw new ServiceException("平台来源详情ID为空");
 //            }
+            detailEntityList = super.handleBomSplit(detailEntityList);
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
-                return;
+                continue;
             }
 
             //检查销售订单物流信息是否存在
@@ -211,13 +213,13 @@ public class AmazonShipOrder implements IPlatformService {
                 List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
                 if (CollectionUtils.isEmpty(warehouseTypes)){
                     log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
-                    return;
+                    continue;
                 }
                 // 允许通过的ID
                 DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
                 if (null == configAllowPlatformOrderDTO){
                     log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
-                    return;
+                    continue;
                 }
             }
 

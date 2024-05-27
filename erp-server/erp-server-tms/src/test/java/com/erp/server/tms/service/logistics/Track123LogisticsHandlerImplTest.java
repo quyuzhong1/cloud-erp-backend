@@ -40,10 +40,10 @@ public class Track123LogisticsHandlerImplTest {
 
     public Track123LogisticsHandlerImplTest(){
         //test
-//        authMap.put("clientSecret","9fa500686633410a84ff0b00daed555e");
+        authMap.put("clientSecret","9fa500686633410a84ff0b00daed555e");
         //pro
-        authMap.put("clientId","Yg4Zf06w_sxZs3A5D");
-        authMap.put("clientSecret","579cf53f55694d89aef0887d81886aec");
+//        authMap.put("clientId","Yg4Zf06w_sxZs3A5D");
+//        authMap.put("clientSecret","579cf53f55694d89aef0887d81886aec");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -59,7 +59,8 @@ public class Track123LogisticsHandlerImplTest {
     public void registerLogisticsNumber(){
         List<LogisticsRegisterVO> registerVOS = new ArrayList<>();
         LogisticsRegisterVO vo = LogisticsRegisterVO.builder()
-                .trackNo("DPK212369350956")
+                .trackNo("SL1694930851235")
+                .phoneSuffix("18855193495")
                 .build();
         registerVOS.add(vo);
 //        LogisticsRegisterVO vo1 = LogisticsRegisterVO.builder()
@@ -72,6 +73,11 @@ public class Track123LogisticsHandlerImplTest {
                 .build();
         ApiResult<List<RegisterResponseVO>> listApiResult = track123LogisticsHandler.registerLogisticsNumber(registerTrackVO);
         System.out.println(listApiResult);
+        /**
+         * {"code":"00000","data":{"accepted":[],"rejected":[{"index":0,"trackNo":"SF1694930851235","courierCode":"sfb2c",
+         * "error":{"code":"A0400","msg":"The order number has been imported"}}]},
+         * "msg":"Success","traceId":"1bd02e6204f94aec92e0c7066a86506e.2971.17161982770923801"}
+         */
     }
 
     /**
@@ -96,7 +102,7 @@ public class Track123LogisticsHandlerImplTest {
     public void getTrack(){
         LogisticsTrackVO logisticsQueryVO = new LogisticsTrackVO();
         List<String> trackNos = new ArrayList<>();
-        trackNos.add("UJ076562757YP");
+        trackNos.add("MP0039098709");
 //        trackNos.add("00369744292706509832");
         logisticsQueryVO.setTrackNos(trackNos);
         logisticsQueryVO.setAuthMap(authMap);

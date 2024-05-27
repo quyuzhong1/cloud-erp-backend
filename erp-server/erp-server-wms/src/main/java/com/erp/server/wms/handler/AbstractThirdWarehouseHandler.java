@@ -25,6 +25,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
+import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -100,6 +103,12 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId) {
+        //相同sku合并数量
+        if(CollectionUtils.isNotEmpty(createOutboundReq.getItems())){
+            Map<String,Integer> mergeSkuMap = createOutboundReq.getItems().stream().collect(Collectors.toMap(ThirdWarehouseCreateOutboundReq.Item::getProductSku, ThirdWarehouseCreateOutboundReq.Item::getQuantity, Integer::sum));
+            //将map转成List<Item>
+            createOutboundReq.setItems(mergeSkuMap.entrySet().stream().map(v->new ThirdWarehouseCreateOutboundReq.Item(v.getKey(),v.getValue())).collect(Collectors.toList()));
+        }
         return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,createOutboundReq.getReferenceNo());
     }
 
@@ -130,12 +139,12 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             ApiResult<T> result = handler.handle();
             ThirdWarehouseContext.setMsg(result.getMsg());
             //记录日志
-            pushOperateLog(businessType,result.getCode(),erpBusinessCode);
+            pushOperateLog(businessType,result.getCode(),erpBusinessCode, false);
             return result;
         } catch (Exception e){
             log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
             ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
-            pushOperateLog(businessType,2000,erpBusinessCode);
+            pushOperateLog(businessType,2000,erpBusinessCode, true);
             return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
         } finally {
             // remove thread-local
@@ -148,7 +157,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         ApiResult<T> handle();
     }
 
-    private void pushOperateLog(SourceTypeEnum businessType, Integer status, String erpBusinessCode) {
+    private void pushOperateLog(SourceTypeEnum businessType, Integer status, String erpBusinessCode, boolean sendMsg) {
         if(businessType == null){
             return;
         }
@@ -156,7 +165,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         try {
             String id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
             //增加异常预警
-            if (!ApiResult.success().getCode().equals(status)) {
+            if (!ApiResult.success().getCode().equals(status) && sendMsg) {
                 dmpPushTaskEntity.setId(id);
                 sendPushWarnMsg(dmpPushTaskEntity);
             }
