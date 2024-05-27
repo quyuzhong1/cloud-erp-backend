@@ -912,7 +912,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                     pdaItemDTO.setWarehouseId(data.getWarehouseId());
                 }
                 if (StringUtils.isBlank(pdaItemDTO.getWarehouseName())){
-                    pdaItemDTO.setWarehouseId(data.getWarehouseName());
+                    pdaItemDTO.setWarehouseName(data.getWarehouseName());
                 }
             }
             data.setItemList(itemDTOList);
