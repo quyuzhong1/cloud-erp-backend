@@ -132,6 +132,8 @@ public class TikTokOrderDTO extends CleanBaseDTO {
 
         Map<String, String> lableMap = new HashMap<>();
         lableMap.put("tikTokStatus", ordersBean.getStatus());
+        //自发货(shipping_type=SELLER)	中转仓（shipping_type=TIKTOK）
+        lableMap.put("shippingType", ordersBean.getShippingType());
         orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
         if ("ON_HOLD".equalsIgnoreCase(ordersBean.getStatus())) {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
