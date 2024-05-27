@@ -13,6 +13,7 @@ import com.erp.tms.batong.model.label.base.BaseResult;
 import com.erp.tms.batong.model.label.request.LabelRequest;
 import com.erp.tms.batong.model.label.request.ListOrder;
 import com.erp.tms.batong.model.label.response.LabelResponse;
+import com.erp.tms.batong.model.order.request.BaTongUpdateWeightReq;
 import com.erp.tms.batong.model.order.request.OrderRequest;
 import com.erp.tms.batong.model.order.response.OrderResponse;
 import com.erp.tms.batong.model.order.response.TrackBase;
@@ -106,6 +107,20 @@ public class BaTongService {
         return  result;
 
     }
+    /**
+     * 更新重量
+     */
+    public BaseResult updateWeight(Map<String, String> authMap, BaTongUpdateWeightReq baTongUpdateWeightReq) {
+        String baseUrl = BaTongConstants.BASE_URL;
+        String serviceMethod = BaTongConstants.UPDATE_ORDER;
+        log.info("更新巴通订单重量：{}", baseUrl + serviceMethod);
+        Map<String, Object> paramsMap = getBaseMap(authMap, serviceMethod);
+        paramsMap.put("paramsJson", JSONUtil.toJsonStr(baTongUpdateWeightReq));
+        String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
+        log.info("更新巴通订单重量返回结果：{}", resBody);
+        BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
+        return  result;
+    }
 
     /**
      * @return
@@ -183,7 +198,10 @@ public class BaTongService {
         Map<String, String> authMap = new HashMap<>();
         authMap.put("clientId", "681425f7eb33b64f3f809d97b56c46cf");
         authMap.put("clientSecret", "d85a27ff8690a777ee6485ebff679792d85a27ff8690a777ee6485ebff679792");
-        BaseResult result = service.deleteOrder(authMap,"XSDS24022900002");
+        BaTongUpdateWeightReq baTongUpdateWeightReq = new BaTongUpdateWeightReq();
+        baTongUpdateWeightReq.setReferenceNo("XSDS24022900002D782");
+        baTongUpdateWeightReq.setOrderWeight("0.6");
+        BaseResult result = service.updateWeight(authMap,baTongUpdateWeightReq);
         System.out.println(JSONUtil.toJsonStr(result));
 
 
