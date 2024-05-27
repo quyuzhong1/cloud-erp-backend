@@ -1338,8 +1338,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //查询已下推的海外入库单
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
 
-        //查询第三方SKU信息
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"","");
         String bomType = BomTypeEnum.COMBINATION.getType();
         // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {

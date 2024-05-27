@@ -226,7 +226,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO> dto);
 
 
-    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode,String warehouseId);
+    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode,String warehouseId,String shopId);
 
     List<ListingAdvanceQueryDTO> advanceQuerySku(AdvanceQueryContainer advanceQueryContainer);
 

@@ -728,22 +728,28 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     }
 
     @Override
-    public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList,String warehouseId, HttpServletResponse response) {
+    public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response) {
 
-        if(StringUtils.isBlank(warehouseId)){
+        if(StringUtils.isBlank(warehouseId)&& StringUtils.isBlank(shopId)){
             throw new ServiceException("仓库id不能为空");
         }
 
-        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(warehouseId));
-        String provideCode = "";
-        if(CollectionUtils.isNotEmpty(viewDTOList)){
-            provideCode = viewDTOList.get(0).getProviderCode();
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList;
+
+        //店铺不为空代表是fba ，否则是第三方仓
+        if(StringUtils.isNotBlank(shopId)){
+            listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),"","",shopId);
+        }else{
+            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(warehouseId));
+            String provideCode = "";
+            if(CollectionUtils.isNotEmpty(viewDTOList)){
+                provideCode = viewDTOList.get(0).getProviderCode();
+            }
+            listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),provideCode,warehouseId,"");
         }
 
-        //查询第三方SKU信息
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),provideCode,warehouseId);
-
-        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList,warehouseId);
+        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList,warehouseId,StringUtils.isNotBlank(shopId));
         try {
             EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {

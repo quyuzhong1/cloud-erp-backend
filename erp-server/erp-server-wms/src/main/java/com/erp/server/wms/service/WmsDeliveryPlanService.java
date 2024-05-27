@@ -221,14 +221,16 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
 
     /**
      * 导入详情信息
-     * @Author Luo_WG
-     * @Date 2023/11/23 14:17
+     *
      * @param excelFile
      * @param thirdSkuNoList
+     * @param shopId
      * @param response
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO.ImportDTO>
+     * @Author Luo_WG
+     * @Date 2023/11/23 14:17
      **/
-    ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, HttpServletResponse response);
+    ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response);
 
     /**
      * 修改发货状态

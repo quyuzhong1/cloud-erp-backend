@@ -727,6 +727,9 @@
                 #{item}
             </foreach>
         </if>
+        <if test="shopId != null and shopId != ''">
+            AND sm.shop_id = #{shopId}
+        </if>
         <if test="provideCode != null and provideCode != ''">
             AND li.platform = #{provideCode}
             AND sm.dict_platform = #{provideCode}
