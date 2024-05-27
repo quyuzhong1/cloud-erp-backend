@@ -1,7 +1,6 @@
 package com.erp.model.oms.dto;
 
-import cn.hutool.core.lang.Dict;
-import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import lombok.Data;
@@ -107,6 +106,12 @@ public class ShopAuthorizeDTO implements Serializable {
         // shopify
         if (StringUtils.isNotBlank(shop)){
             this.setPlatformCode(PlatformDictEnum.SHOPIFY.getCode());
+            return this;
+        }
+
+        // 美客多
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.code, "TG")){
+            this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE.getCode());
             return this;
         }
 

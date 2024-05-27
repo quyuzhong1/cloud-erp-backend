@@ -149,6 +149,18 @@ public interface RedisCacheConstants {
      */
     String PLATFORM_RATE_LIMIT_PREFIX = "platform_rate_limit:{}";
 
+    /**
+     * 美客多授权:{id}
+     * 内容店铺ID
+     */
+    String AUTH_MERCADO_STATE = "third-party-auth:mercado_state:{}";
+
+    /**
+     * 平台token刷新重试次数记录
+     * platform-refresh-token:平台名称:店铺ID
+     */
+    String REDIS_REFRESH_PLATFORM_TOKEN = "platform-refresh-token:{}:{}";
+
 
     /**
      * 平台请求频率:groupId:操作类型

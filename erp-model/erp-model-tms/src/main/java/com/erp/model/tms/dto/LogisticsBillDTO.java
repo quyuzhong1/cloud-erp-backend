@@ -704,6 +704,12 @@ public class LogisticsBillDTO implements Serializable {
         private String trackNo;
 
         /**
+         * 物流类型
+         * 枚举：OrderLogisticTypeEnum
+         */
+        private String logisticType;
+
+        /**
          * 收货人
          */
         private ReceiverDTO receiver;
@@ -1029,8 +1035,14 @@ public class LogisticsBillDTO implements Serializable {
         @NotBlank(message = "发货单号不能为空")
         private String deliveryNo;
 
+        /**
+         * 店铺id
+         */
         private String shopId;
 
+        /**
+         * 物流类型
+         */
         private String logisticType;
 
     }
