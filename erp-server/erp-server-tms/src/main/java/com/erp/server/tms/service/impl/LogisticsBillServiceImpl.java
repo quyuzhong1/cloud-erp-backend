@@ -494,7 +494,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         if (ObjectUtil.isNotEmpty(soB2cEntity)) {
             SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
-            if (labelJsonDTO.getIsPlatformWarehouseOrder()) {
+            //增加判断null值
+            if (Objects.nonNull(labelJsonDTO) && Objects.nonNull(labelJsonDTO.getIsPlatformWarehouseOrder()) && labelJsonDTO.getIsPlatformWarehouseOrder()) {
                 //中转地址
                 LogisticsAddressEntity logisticsAddressEntity = addressList.stream().filter(a -> LogisticsAddressTypeEnum.TRANSFER.equals(a.getType())).findFirst().orElse(null);
                 if (Objects.nonNull(logisticsAddressEntity)) {
