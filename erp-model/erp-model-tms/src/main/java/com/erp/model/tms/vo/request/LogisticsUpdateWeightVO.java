@@ -1,9 +1,7 @@
 package com.erp.model.tms.vo.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -13,8 +11,9 @@ import java.util.Map;
 /**
  * 物流更新重量请求实体
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 public class LogisticsUpdateWeightVO extends LogisticsQueryBaseVO implements Serializable {

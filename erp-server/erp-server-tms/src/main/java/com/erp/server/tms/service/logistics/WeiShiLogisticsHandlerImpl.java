@@ -293,7 +293,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .weight(logisticsUpdateWeightVO.getWeight().divide(new BigDecimal(1000),4, RoundingMode.HALF_UP))
                     .build();
             ValidatorUtil.validateEntity(weiShiCancelOrderRequest);
-            List<WeiShiUpdateWeightRequest> weightRequests = Arrays.asList();
+            List<WeiShiUpdateWeightRequest> weightRequests = Arrays.asList(weiShiCancelOrderRequest);
             WeiShiResponse<String> response = weiShiService.updateWeight(weightRequests, logisticsUpdateWeightVO.getAuthMap());
 
             if(isFailure(response.getAsk())){

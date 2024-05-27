@@ -42,7 +42,7 @@ public class TongYouServiceTest {
                 .logisticsId("FZXXRKVP705")
                 .material("string")
                 .note("note")
-                .orderNo("WJ20240521001")
+                .orderNo("TEST20240527001")
                 .weight(BigDecimal.valueOf(1.1))
                 .declareInfos(Arrays.asList(TongYouCreateOrderRequest.DeclareInfo.builder()
                                 .currency("USD")
@@ -86,7 +86,7 @@ public class TongYouServiceTest {
     public void callBackOrderInfo() {
         TongYouCallBackOrderRequest request = TongYouCallBackOrderRequest.builder()
                 .logisticsId("FZXXRKVP705")
-                .orderNo("WJ20231102001")
+                .orderNo("XSDD24052105803")
                 .build();
         TongYouCallBackOrder orderInfo = tongYouService.callBackOrderInfo(request,authMap);
         System.out.println(orderInfo);
@@ -118,8 +118,9 @@ public class TongYouServiceTest {
     @Test
     public void updateWeight() {
         TongYouUpdateWeightRequest request = TongYouUpdateWeightRequest.builder()
-                .orderNo("WJ20240521001")
-                .weight(new BigDecimal("10.1"))
+                .orderNo("TEST202405271")
+                .trackNo("AT449462225CN")
+                .weight(new BigDecimal("12.1"))
                 .build();
         TongYouResponse<String> orderInfo = tongYouService.updateWeight(request,authMap);
         System.out.println(orderInfo);

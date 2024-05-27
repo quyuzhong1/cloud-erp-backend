@@ -20,6 +20,7 @@ public class TongYouUpdateWeightRequest {
     private String orderNo;
 
     //追踪条码
+    @NotNull(message = "追踪条码不能为空")
     private String trackNo;
 
     //预报重量

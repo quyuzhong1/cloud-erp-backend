@@ -82,7 +82,7 @@ public class WeiShiService {
 
 
     /**
-     * 查询跟踪号
+     * 更新重量
      */
     public WeiShiResponse<String> updateWeight(@Valid List<WeiShiUpdateWeightRequest> request,Map<String, String> authMap){
         String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.MODIFY_ORDER_WEIGHT,request,authMap.get("clientId"),authMap.get("clientSecret"));
