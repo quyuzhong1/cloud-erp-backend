@@ -73,6 +73,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "warehouseOrgName", source = "oldEntity.warehouseOrgName"),
             @Mapping(target = "warehouseLocation", source = "oldEntity.warehouseLocation"),
             @Mapping(target = "platformLineNumber", source = "oldEntity.platformLineNumber"),
+            @Mapping(target = "platformPackageId", source = "oldEntity.platformPackageId"),
             // 映射关系
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
@@ -197,6 +198,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "shippingCost", source = "financeDTO.shippingCost"),
             @Mapping(target = "itemCost", source = "financeDTO.itemCost"),
             @Mapping(target = "logisticsCost", source = "financeDTO.logisticsCost"),
+            @Mapping(target = "platformCost", source = "financeDTO.platformCost"),
             @Mapping(target = "accessoriesCost", source = "financeDTO.accessoriesCost"),
             @Mapping(target = "platformRate", source = "financeDTO.platformRate"),
             @Mapping(target = "vatRate", source = "financeDTO.vatRate"),

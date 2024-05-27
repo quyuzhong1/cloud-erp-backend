@@ -98,7 +98,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         // 进行 Base64 编码
         String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         // 缓存state
-        String key = StrUtil.format(RedisCacheConstants.AUTH_MERCADO_STATE, state);
+        String key = StrUtil.format(RedisCacheConstants.AUTH_MERCADO_STATE, PlatformDictEnum.MERCADOLIBRE.getCode()+state);
 
         redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
 
@@ -106,7 +106,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         String shopAuthorizeUrl = "";
         if (ObjectUtil.isNotEmpty(cfgAppClient)) {
             //https://global-selling.mercadolibre.com/authorization?response_type=code&client_id=%s&redirect_uri=%s&state=%s
-            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), state);
+            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), PlatformDictEnum.MERCADOLIBRE.getCode()+state);
         }
         return shopAuthorizeUrl;
     }

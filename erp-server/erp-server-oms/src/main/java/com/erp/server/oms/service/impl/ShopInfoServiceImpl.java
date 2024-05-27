@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -29,10 +30,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.model.oms.enums.AuthTypeEnum;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.oms.enums.DictBasicValueEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
@@ -553,7 +551,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             String authStatus = item.getAuthStatus();
             String authStatusName = AuthStatusEnum.getName(authStatus);
             item.setAuthStatusName(authStatusName);
-
+            if (PlatformDictEnum.TIK_TOK.getCode().equals(item.getDictPlatform())) {
+                JSONObject jsonObject = JSONObject.parseObject(item.getExtendData());
+                if (StringUtils.isBlank(jsonObject.getString("sellerType"))) {
+                    continue;
+                }
+                item.setPlatformShopType(jsonObject.getString("sellerType"));
+            }
         }
 
     }
@@ -655,6 +659,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+
+
         return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
     }
 

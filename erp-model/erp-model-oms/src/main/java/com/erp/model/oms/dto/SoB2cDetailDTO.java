@@ -285,13 +285,14 @@ public class SoB2cDetailDTO implements Serializable {
         private BigDecimal exchangeRate;
 
         /**
+        * 来源详情id
+        */
+        private String sourceDetailId;
+
+        /**
          * 拆分的明细id
          */
         private String splitDetailId;
-        /**
-         * 来源明细id
-         */
-        private String sourceDetailId;
 
         /**
          * 是否组合品

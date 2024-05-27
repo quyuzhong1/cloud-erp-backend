@@ -162,7 +162,6 @@ public class HttpCommonUtil {
             requestBuilder.get();
         }
         requestBuilder.url(url);
-
         try {
             response = doSend(requestBuilder);
             responseString = response.body().string();

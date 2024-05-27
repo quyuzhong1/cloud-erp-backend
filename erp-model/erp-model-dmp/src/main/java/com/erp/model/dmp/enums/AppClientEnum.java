@@ -26,6 +26,9 @@ public enum AppClientEnum  {
     AMAZON_ACCESS_TOKEN("amazonAccessToken","sales","Amazon"),
     MERCADO_AUTHORIZE("mercadoAuthorize","sales","mercadolibre"),
     MERCADO_ACCESS_TOKEN("mercadoAccessToken","sales","mercadolibre"),
+    TIKTOK_AUTHORIZE("tikTokAuthorize","sales","TikTok"),
+    TIKTOK_ACCESS_TOKEN("tikTokAccessToken","sales","TikTok"),
+
 
     // 物流平台
     TRACK123_AUTHORIZE("track123Authorize","logistics","TRACK123"),
