@@ -233,6 +233,15 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             }
         }
     }
+
+    @Override
+    public ThirdMappingEntity getBySysId(String sysWarehouseId) {
+        LambdaQueryWrapper<ThirdMappingEntity> queryWrapper = new LambdaQueryWrapper<ThirdMappingEntity>()
+                .eq(ThirdMappingEntity::getSysId, sysWarehouseId)
+                .eq(ThirdMappingEntity::getIsDeleted, false)
+                .eq(ThirdMappingEntity::getIsExpire, false);
+        return baseMapper.selectOne(queryWrapper);
+    }
 //    @Resource
 //    private CheckStrategy checkStrategy;
 //    private void handleData1(ThirdMappingEntity thirdMappingEntity) {

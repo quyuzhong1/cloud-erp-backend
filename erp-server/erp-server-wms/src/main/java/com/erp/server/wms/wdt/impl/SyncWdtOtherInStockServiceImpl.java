@@ -6,9 +6,11 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +31,15 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
     @Resource
     private DmpMqFeign dmpMqFeign;
 
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
+
     public DmpPushTaskEntity saveTask(List<CreateOtherStockinRequest.GoodsList> goodsList, OtherInstockEntity entity, String operateCode){
         CreateOtherStockinRequest request = new CreateOtherStockinRequest();
         request.setOuterNo(entity.getCode());
-        request.setWarehouseNo("wjkj03-test");  //todo 根据出货仓库匹配旺店通仓库编号, @仓库数据任务
+        //根据收货仓库ID查询旺店通仓库编号
+        ThirdMappingEntity thirdMappingEntity = dmpThirdMappingFeign.getBySysId(entity.getWarehouseId());
+        request.setWarehouseNo(thirdMappingEntity.getThirdInfoId());
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
 
