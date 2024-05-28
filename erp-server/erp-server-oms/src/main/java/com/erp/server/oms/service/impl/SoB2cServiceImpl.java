@@ -1470,7 +1470,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cErrorService.removeErrorOrder(id,type);
             }else{
                 //添加异常信息
-                soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson, "");
+                soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
             }
             //获取物流单号失败销售订单自动反审核
             //1.26.2 去掉该功能
@@ -2040,7 +2040,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
             //生成异常订单信息
-            soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), "");
+            soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult));
             throw new ServiceException(ApiError.Default.code, message);
         } else {
             String shippingOrderNo = apiResult.getData();
