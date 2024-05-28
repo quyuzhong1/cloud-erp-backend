@@ -204,6 +204,6 @@ public interface LogisticsBillFeign {
      * @param dto
      * @return
      */
-    @PostMapping("/updateLogisticWeight")
+    @PostMapping("/feign/logisticsBill/updateLogisticWeight")
     ApiResult<String> updateLogisticWeight(@RequestBody LogisticsBillDTO.UpdateWeight dto);
 }
