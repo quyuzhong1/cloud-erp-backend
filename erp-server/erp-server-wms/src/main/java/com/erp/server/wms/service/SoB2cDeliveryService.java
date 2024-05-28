@@ -132,7 +132,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      * @create 2023-12-25 14:47
      */
-    List<BatchResultDTO> retryFalseDelivery(String soB2cId);
+    BatchResultDTO retryFalseDelivery(String soB2cId);
 
     /**
      * 根据来源id查询发货单

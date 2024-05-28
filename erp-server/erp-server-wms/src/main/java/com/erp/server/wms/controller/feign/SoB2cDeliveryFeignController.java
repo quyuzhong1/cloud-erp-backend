@@ -15,6 +15,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -122,8 +124,8 @@ public class SoB2cDeliveryFeignController extends BaseController {
      */
     @PostMapping("/retryFalseDelivery")
     public List<BatchResultDTO> retryFalseDelivery(@RequestBody String id) {
-        List<BatchResultDTO> list = soB2cDeliveryService.retryFalseDelivery(id);
-        return list;
+        BatchResultDTO resultDTO = soB2cDeliveryService.retryFalseDelivery(id);
+        return Collections.singletonList(resultDTO);
     }
 
     /**
