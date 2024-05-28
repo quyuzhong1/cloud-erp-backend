@@ -531,6 +531,15 @@
             <if test="params.orgId != null and params.orgId != ''">
                 and it.org_id in #{params.orgId}
             </if>
+        <if test="params.orgIds != null and params.orgIds.size > 0">
+            and it.org_id in
+            <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
+                #{orgId}
+            </foreach>
+        </if>
+        <if test="params.filterSelfAddFlag">
+              and exists (select 1 from warehouse wh where wh.id = it.warehouse_id and wh.warehouse_manage_type = 'selfBuild')
+        </if>
             <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
                 and it.warehouse_location = #{params.warehouseLocation}
             </if>
@@ -577,6 +586,15 @@
             <if test="params.orgId != null and params.orgId != ''">
                 and it.org_id in #{params.orgId}
             </if>
+        <if test="params.orgIds != null and params.orgIds.size > 0">
+            and it.org_id in
+            <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
+                #{orgId}
+            </foreach>
+        </if>
+        <if test="params.filterSelfAddFlag">
+            and exists (select 1 from warehouse wh where wh.id = it.warehouse_id and wh.warehouse_manage_type = 'selfBuild')
+        </if>
             <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
                 and it.warehouse_location = #{params.warehouseLocation}
             </if>
