@@ -57,7 +57,9 @@ public class WmsDataCompareUtils {
         	List<Map<String, String>> makeDataInputStream = null;
         	try {
         		makeDataInputStream = ExcelPrintUtils.makeDataInputStream(inputStream);
-			} catch (Exception e) {
+			}catch (ServiceException e) {
+				throw e;
+			}catch (Exception e) {
 				log.error("读取excel失败" , e);
 				throw new ServiceException("读取excel失败");
 			}
