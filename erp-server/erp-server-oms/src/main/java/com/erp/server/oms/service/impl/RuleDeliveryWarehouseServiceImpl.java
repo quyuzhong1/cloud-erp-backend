@@ -215,12 +215,12 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     /**
      * 获取到发货仓库匹配的结果
      * 存在明细中一个匹配成功即匹配结果成功
+     * @param id
      * @param map
      * @return
      */
     @Override
-    public SoB2cDTO.RuleResultDTO getRuleOrderMatchResult(Map<String,Object> map) {
-        String soId = Objects.nonNull(map.get("id")) ? map.get("id").toString() : null;
+    public SoB2cDTO.RuleResultDTO getRuleOrderMatchResult(String id, Map<String, Object> map) {
         //根据优先级获取规则列表
         List<RuleDeliveryWarehouseEntity> ruleDeliveryWarehouselList = this.listOrderByPriority();
         List<String> ruleIdList = ruleDeliveryWarehouselList.stream().map(RuleDeliveryWarehouseEntity::getId).collect(Collectors.toList());
@@ -234,33 +234,33 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         }
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
-        Boolean isRuleMatch = Boolean.FALSE;
+        boolean isRuleMatch = Boolean.FALSE;
         //明细规则匹配
         for(Map<String, Object> detailMap : mapList){
             String detailId = Objects.nonNull(detailMap.get("detailId")) ? detailMap.get("detailId").toString() : null;
             List<String> detailIdList = StringUtils.isNotEmpty(detailId) ? Collections.singletonList(detailId) : null;
             RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = compareRules(detailMap, ruleDeliveryWarehouselList, allRuleConditionList);
             //配货规则是否通过
-            Boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
+            boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
             if (!distributionSuccess) {
                 //未匹配到条件
-                 soB2cDetailService.updateIsMatchWarehouseRule(soId,detailIdList);
+                 soB2cDetailService.updateIsMatchWarehouseRule(id,detailIdList);
             } else {
                 isRuleMatch = Boolean.TRUE;
                 if(StrUtil.isNotBlank(ruleMatchResult.getName())){
                     String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "配货操作");
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
                 }
                 //更新明细仓库信息
                 String warehouseId = ruleMatchResult.getWarehouseId();
                 //返回了仓库则更新仓库为空的数据
                 if (StrUtil.isNotBlank(warehouseId)) {
-                    soB2cDetailService.updateWarehouse(soId, detailId, warehouseId);
+                    soB2cDetailService.updateWarehouse(id, detailId, warehouseId);
                 }
             }
         }
         SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
-        ruleResult.setId(soId);
+        ruleResult.setId(id);
         ruleResult.setIsRuleMatch(isRuleMatch);
         ruleResult.setMap(map);
         return ruleResult;

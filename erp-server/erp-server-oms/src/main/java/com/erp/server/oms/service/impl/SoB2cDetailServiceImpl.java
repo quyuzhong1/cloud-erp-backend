@@ -9,6 +9,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -44,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -678,10 +680,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         //SKU对照表信息
         SkuMappingDTO.ListSkuParamDTO dto = new SkuMappingDTO.ListSkuParamDTO(detailEntity.getSkuNo(), warehouseId,soB2c.getDictPlatform());
-//        List<SkuMappingDTO.ListSkuParamDTO> listParamList = detailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(),
-//                obj.getWarehouseId(),soB2cList.stream()
-//                .filter(e -> e.getId().equals(obj.getMainId())).findFirst()
-//                .flatMap(e ->Optional.ofNullable(e.getDictPlatform())).orElse(""))).collect(Collectors.toList());
         ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
         listSkuParamList.setList(Collections.singletonList(dto));
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
@@ -690,20 +688,29 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (ObjectUtils.isEmpty(warehouseDTO)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        detailEntity.setWarehouseName(warehouseList.get(0).getName());
-        detailEntity.setWarehouseOrgId(warehouseList.get(0).getOrgId());
-        BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(warehouseList.get(0).getOrgId())).findFirst().orElse(null);
+        String warehouseName = warehouseDTO.getName();
+        String warehouseOrgId = warehouseDTO.getOrgId();
+        String warehouseOrgName = null;
+        BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(warehouseDTO.getOrgId())).findFirst().orElse(null);
         if (codeDTO != null) {
-            detailEntity.setWarehouseOrgName(codeDTO.getName());
+            warehouseOrgName = codeDTO.getName();
         }
-
         //库存SKU
-        SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = skuMappingList.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(),detailEntity.getSkuId())
-                && StrUtil.equals(obj.getWarehouseId(),warehouseId)).findFirst().orElse(null);
-        if (warehouseListSkuDTO != null) {
-            detailEntity.setWarehouseSkuNo(warehouseListSkuDTO.getWarehouseSkuNo());
-        }
-        this.updateById(detailEntity);
+        skuMappingList.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), detailEntity.getSkuId())
+                && StrUtil.equals(obj.getWarehouseId(), warehouseId))
+                .findFirst()
+                .ifPresent(warehouseListSkuDTO -> detailEntity.setWarehouseSkuNo(warehouseListSkuDTO.getWarehouseSkuNo()));
+        //防止更新了其他字段
+        lambdaUpdate().eq(SoB2cDetailEntity::getId, detailId)
+                .set(SoB2cDetailEntity::getWarehouseName, warehouseName)
+                .set(SoB2cDetailEntity::getWarehouseOrgId, warehouseOrgId)
+                .set(StringUtils.isNotEmpty(warehouseOrgName) ,SoB2cDetailEntity::getWarehouseOrgName, warehouseOrgName)
+                .set(SoB2cDetailEntity::getWarehouseSkuNo, detailEntity.getWarehouseSkuNo())
+                .set(SoB2cDetailEntity::getIsMatchWarehouseRule,Boolean.TRUE)
+                .set(SoB2cDetailEntity::getUpdateTime, LocalDate.now())
+                .set(SoB2cDetailEntity::getUpdateUserId, UserContext.getDefaultLoginUser().getUid())
+                .set(SoB2cDetailEntity::getUpdateUserName, UserContext.getDefaultLoginUser().getUserName())
+                .update();
     }
 
     /**

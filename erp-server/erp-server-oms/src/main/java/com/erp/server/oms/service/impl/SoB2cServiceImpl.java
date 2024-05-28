@@ -3957,6 +3957,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setSoB2cFinanceEntity(soB2cFinanceEntity);
         dto.setSoB2cDetailList(detailList);
         SoB2cDTO.FinancialInfoDTO financialInfo = getFinancialInfo(dto, Boolean.FALSE);
+        map.put("id", soB2cEntity.getId());
+        map.put("code", soB2cEntity.getCode());
         map.put("dictPayMethod", soB2cEntity.getDictPayMethod());
         Integer goodsTotalQty = detailList.stream().mapToInt(SoB2cDetailEntity::getQty).sum();
         map.put("goodsTotalQty", goodsTotalQty);
@@ -6123,7 +6125,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             handleMatchJson(id, detailList, map);
         }
         //仓库匹配规则结果
-        return ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
+        return ruleDeliveryWarehouseService.getRuleOrderMatchResult(id,map);
     }
 
     /**
