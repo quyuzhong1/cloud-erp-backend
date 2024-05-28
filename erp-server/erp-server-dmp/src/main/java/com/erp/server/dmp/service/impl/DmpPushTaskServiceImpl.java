@@ -100,6 +100,8 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public DmpPushTaskEntity saveTask(DmpPushTaskFeignDTO dto) {
         // 保存任务表
         DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
+        //判断是否存在上级单据
+        isSendParentBillTask(entity);
         saveOrUpdateDmpSyncTask(entity);
         return entity;
     }
