@@ -116,19 +116,6 @@ public class SoB2cDeliveryFeignController extends BaseController {
 
 
     /**
-     * 标记发货
-     * @author Will
-     * @date: 2024/4/28 9:35
-     * @param id
-     * @return List<BatchResultDTO>
-     */
-    @PostMapping("/retryFalseDelivery")
-    public List<BatchResultDTO> retryFalseDelivery(@RequestBody String id) {
-        BatchResultDTO resultDTO = soB2cDeliveryService.retryFalseDelivery(id);
-        return Collections.singletonList(resultDTO);
-    }
-
-    /**
      * 合并组包发货
      * @Author Luo_WG
      * @Date 2023/12/27 16:00

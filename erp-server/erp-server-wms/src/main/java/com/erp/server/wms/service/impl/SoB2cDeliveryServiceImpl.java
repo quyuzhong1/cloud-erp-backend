@@ -809,51 +809,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds).list();
     }
 
-    @Override
-    @GlobalTransactional
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO retryFalseDelivery(String soB2cId) {
-//        List<BatchResultDTO> resultList = new ArrayList<>(1);
-//        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySoB2cId(soB2cId);
-        // 直接重新触发标记发货
-        // 调用第三方平台SDK标记发货(独立事务)
-        SoB2cEntity mainEntity = soB2cFeign.getById(soB2cId);
-        if (null == mainEntity){
-            return BatchResultDTO.fail(soB2cId, soB2cId, "订单不存在");
-        }
-        String errorType = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        SoB2cErrorEntity soB2cError = soB2cFeign.getB2cError(soB2cId, errorType);
-        if (null == soB2cError){
-            return BatchResultDTO.fail(soB2cId, soB2cId, "无异常信息");
-        }
-        // 移除已有异常
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setType(errorType);
-        deleteDTO.setMainId(soB2cId);
-        soB2cFeign.deleteError(deleteDTO);
-
-        String soCode = mainEntity.getCode();
-        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-        platformShipOrderDTO.setSoB2cId(soB2cId);
-        platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
-        try {
-            PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-            return BatchResultDTO.success(soB2cId, soCode, "重新标记发货成功");
-        } catch (Exception e) {
-            log.error("【标记发货重试】销售单【{}】 标记发货失败 >>>错误信息{}", soCode, ExceptionUtil.stacktraceToString(e));
-            // 独立异常
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
-                    soB2cId,
-                    SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode(),
-                    soB2cId,
-                    e.getMessage(),
-                    ExceptionUtil.stacktraceToString(e),
-                    ""
-            );
-            soB2cFeign.addSoB2cError(addError);
-            return BatchResultDTO.fail(soB2cId, soCode, e.getMessage());
-        }
-    }
 
     @Override
     @GlobalTransactional

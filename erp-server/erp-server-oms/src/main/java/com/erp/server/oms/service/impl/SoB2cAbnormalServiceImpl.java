@@ -13,6 +13,7 @@ import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.service.SoB2cAbnormalService;
+import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
+    @Resource
+    private SoB2cErrorService soB2cErrorService;
+
     @Override
     public PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO) {
         return soB2cService.abnormalPaging(pagingParamDTO);
@@ -68,7 +72,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 resultDTOList.add(soB2cService.submitDelivery(id));
                 break;
             case SIGN_DELIVERY:
-                resultDTOList.addAll(wmsTaskFeign.retryFalseDelivery(id));
+                resultDTOList.add(soB2cErrorService.retryFalseDelivery(id));
                 break;
             case GET_LOGISTICS_CODE:
                 resultDTOList.add(soB2cService.getLogisticsCode(id, Boolean.TRUE));

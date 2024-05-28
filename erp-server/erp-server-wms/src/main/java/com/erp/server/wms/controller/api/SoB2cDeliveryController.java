@@ -242,31 +242,6 @@ public class SoB2cDeliveryController extends BaseController {
 
 
     /**
-     * 订单标记发货失败后再次触发 ids 为销售订单id
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/retryFalseDelivery")
-    public ApiResult<List<BatchResultDTO>> retryDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        //id 为销售订单id
-        for (String id : dto.getIds()) {
-            try {
-                BatchResultDTO resultDTO = soB2cDeliveryService.retryFalseDelivery(id);
-                resultDTOS.add(resultDTO);
-            } catch (Exception e) {
-                log.error("发货单 虚假发货失败", e);
-                resultDTOS.add(BatchResultDTO.fail(id, id, StrUtil.format("标记发货失败：{}", e.getMessage())));
-                continue;
-            }
-
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
      * 打印拣货单预览
      *
      * @param dto
