@@ -100,7 +100,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     addOrUpdate(thirdMappingEntity, existMapping);
                 });
             } else {
-                List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList=new ArrayList<>();
+                List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList = new ArrayList<>();
                 //判断当前平台是否绑定第三方数据
                 existMappingList.forEach(existMapping -> {
                     ThirdMappingDTO.ThirdAddDTO thirdAddDTO = thirdList.stream().filter(item -> Objects.equals(item.getSysType(), existMapping.getThirdSysType())).findFirst().orElse(null);
@@ -115,21 +115,21 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         //如果新增的第三方类型数据在原始数据中存在，判断第三方数据是否绑定
                         //绑定则进行更新
 //                        if (!Objects.equals(thirdAddDTO.getThirdId(), existMapping.getThirdId())) {
-                            ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
-                            BeanMapperUtils.copy(addDTO, thirdMappingEntity);
-                            thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
-                            thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
-                            addOrUpdate(thirdMappingEntity, existMapping);
-                            resultUpdatedList.add(thirdAddDTO);
+                        ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
+                        BeanMapperUtils.copy(addDTO, thirdMappingEntity);
+                        thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
+                        thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
+                        addOrUpdate(thirdMappingEntity, existMapping);
+                        resultUpdatedList.add(thirdAddDTO);
 //                        }
                     }
                 });
 
                 //保存新增数据
                 thirdList.forEach(thirdAddDTO -> {
-                    if (CollectionUtils.isNotEmpty(resultUpdatedList)){
+                    if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
                         ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
-                        if (Objects.isNull(updatedDto)){
+                        if (Objects.isNull(updatedDto)) {
                             ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
                             BeanMapperUtils.copy(addDTO, thirdMappingEntity);
                             thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
@@ -137,12 +137,12 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                             ThirdMappingEntity existMapping = null;
                             addOrUpdate(thirdMappingEntity, existMapping);
                         }
-                    }else{
+                    } else {
                         ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
                         BeanMapperUtils.copy(addDTO, thirdMappingEntity);
                         thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
                         thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
-                        ThirdMappingEntity existMapping =null;
+                        ThirdMappingEntity existMapping = null;
                         addOrUpdate(thirdMappingEntity, existMapping);
                     }
                 });
@@ -303,7 +303,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         }
         ThirdMappingEntity existThirdMapping = baseMapper.selectOne(new LambdaQueryWrapper<ThirdMappingEntity>().eq(ThirdMappingEntity::getType, thirdMappingEntity.getType())
                 .eq(ThirdMappingEntity::getThirdId, thirdMappingEntity.getThirdId()));
-        if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping)&&!Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId()))||Objects.isNull(existSysMapping))) {
+        if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping) && !Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) || Objects.isNull(existSysMapping))) {
             throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), sysName, thirdName);
         }
     }

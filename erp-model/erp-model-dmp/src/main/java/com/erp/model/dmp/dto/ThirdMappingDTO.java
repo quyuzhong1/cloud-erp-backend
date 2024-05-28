@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -98,6 +99,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 第三方系统类型：lingxing领星，wangdian旺店通
          */
+        @NotBlank(message = "第三方系统类型不能为空")
         private String sysType;
     }
 
@@ -153,6 +155,7 @@ public class ThirdMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        @Valid
         private List<ThirdAddDTO> thirdList;
 
     }
