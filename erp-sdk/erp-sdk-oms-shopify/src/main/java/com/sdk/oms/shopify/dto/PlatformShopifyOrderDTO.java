@@ -1,6 +1,7 @@
 package com.sdk.oms.shopify.dto;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
@@ -16,7 +17,7 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -108,8 +109,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setShopId(dto.getShopId());
         // 平台订单原始状态
         orderDTO.setPlatformOrderStatus(sourceOrder.getFulfillmentStatus());
-        // 平台订单原始取消状态
-        orderDTO.setIsCancel(sourceOrder.convertInvalidStatus());
+        // 平台订单原始取消状态(已退款,部分退款)
+        orderDTO.setIsCancel(sourceOrder.convertIsCancel());
 
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(sourceOrder.convertInvalidStatus());
@@ -175,7 +176,15 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 来源编码
         orderDTO.setSourceCode("");
         // 标签json
-        orderDTO.setLabelJson("{}");
+        Map<String, Object> lableMap = new HashMap<>();
+        if (sourceOrder.convertIsCancel()) {
+            lableMap.put("isRefunded", true);
+        } else {
+            lableMap.put("isRefunded", false);
+        }
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
+
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
@@ -191,7 +200,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         ShopifyAddress shippingAddress = dto.getShopifyOrder().getShippingAddress();
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (null != customer) {
-            receiverDTO.setName(
+                    receiverDTO.setName(
                     (StringUtils.isBlank(customer.getFirstName()) ? "" : customer.getFirstName()) +
                             (StringUtils.isBlank(customer.getFirstName()) ? "" : " " + customer.getLastname())
             );
@@ -245,15 +254,31 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
      * 批量转换明细
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(ShopifyOrder sourceOrder) {
+        // 存在退款的明细ID
+        Set<String> refundedLineItemIds = new HashSet<>();
+        List<ShopifyRefund> refunds = sourceOrder.getRefunds();
+        if (!CollectionUtils.isEmpty(refunds)){
+            List<ShopifyRefundLineItem> refundLineItem = refunds.stream().map(ShopifyRefund::getRefundLineItems)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(refundLineItem)){
+                List<String> sourceFundedLineItemIds = refundLineItem.stream()
+                        .map(ShopifyRefundLineItem::getLineItemId)
+                        .distinct()
+                        .collect(Collectors.toList());
+                refundedLineItemIds.addAll(sourceFundedLineItemIds);
+            }
+        }
+
         return sourceOrder.getLineItems().stream()
-                .map(e -> intPlatformOrderDetailDTO(e, sourceOrder))
+                .map(e -> intPlatformOrderDetailDTO(e, sourceOrder, refundedLineItemIds))
                 .collect(Collectors.toList());
     }
 
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(ShopifyLineItem item, ShopifyOrder sourceOrder) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(ShopifyLineItem item, ShopifyOrder sourceOrder, Set<String> refundedLineItemIds) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
         // 图片URL
         detailDTO.setImageUrl("");
@@ -297,6 +322,14 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseOrgName("");
         // 库位
         detailDTO.setWarehouseLocation("");
+        // 当前明细标签
+        Map<String, Object> lableMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(item.getLineItemId())) {
+            lableMap.put("isRefunded", true);
+        } else {
+            lableMap.put("isRefunded", false);
+        }
+        detailDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
         return detailDTO;
     }
 }

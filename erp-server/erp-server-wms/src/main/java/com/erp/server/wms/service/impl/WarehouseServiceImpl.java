@@ -36,6 +36,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.WarehouseManageTypeEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -337,6 +338,18 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> searchDTO) {
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         WarehouseDTO.SelectDTO params = searchDTO.getParams();
+        //查询配置过滤对应组织仓库
+        if(params.isFilterOrgFlag()){
+            List<DictBasicDTO.ListDTO> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
+            if(CollectionUtils.isNotEmpty(listDTOList)){
+                DictBasicDTO.ListDTO orgDTOList = listDTOList.get(0);
+                String orgArr = orgDTOList.getValue();
+                params.setOrgIds(Arrays.asList(orgArr.split(",")));
+            }
+        }
+        if(params.isFilterSelfAddFlag()){
+            params.setWarehouseManageType(WarehouseManageTypeEnum.SELF_BUILD.getCode());
+        }
         IPage<WarehouseDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<WarehouseDTO.ListDTO> records = pagResult.getRecords();
         handleSelect(records);

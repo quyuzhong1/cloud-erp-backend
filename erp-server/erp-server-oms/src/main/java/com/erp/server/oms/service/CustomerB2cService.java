@@ -300,5 +300,14 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param pagingDTO
      * @return
      */
-    PagingVO<CustomerB2CDTO.DropListDTO> customerDropDown(PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO);
+    CustomerB2CDTO.DropPagingDTO<CustomerB2CDTO.DropListDTO> customerDropDown(PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO);
+
+    /**
+     * @description: 根据id或名称查询
+     * @author Will
+     * @date: 2024/5/28 9:23
+     * @param keyWord
+     * @return CustomerB2cEntity
+     */
+    CustomerB2cEntity getByIdOrName (String keyWord);
 }

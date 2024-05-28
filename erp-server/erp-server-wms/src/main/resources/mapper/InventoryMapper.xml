@@ -25,7 +25,7 @@
                t.intransit_qty AS intransitQty,
                t.waitqc_qty AS waitqcQty,
                t.real_qty AS realQty,
-               t.warehouse_location AS warehouse_location
+               t.warehouse_location AS warehouseLocation
         from (
             select max(m.warehouse_location) AS warehouse_location, max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
                 sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
@@ -117,7 +117,7 @@
                t.intransit_qty AS intransitQty,
                t.waitqc_qty AS waitqcQty,
                t.real_qty AS realQty,
-               t.warehouse_location AS warehouse_location
+               t.warehouse_location AS warehouseLocation
         from (
         select max(m.warehouse_location) AS warehouse_location, max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
         sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
@@ -531,6 +531,15 @@
             <if test="params.orgId != null and params.orgId != ''">
                 and it.org_id in #{params.orgId}
             </if>
+        <if test="params.orgIds != null and params.orgIds.size > 0">
+            and it.org_id in
+            <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
+                #{orgId}
+            </foreach>
+        </if>
+        <if test="params.filterSelfAddFlag">
+              and exists (select 1 from warehouse wh where wh.id = it.warehouse_id and wh.warehouse_manage_type = 'selfBuild')
+        </if>
             <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
                 and it.warehouse_location = #{params.warehouseLocation}
             </if>
@@ -577,6 +586,15 @@
             <if test="params.orgId != null and params.orgId != ''">
                 and it.org_id in #{params.orgId}
             </if>
+        <if test="params.orgIds != null and params.orgIds.size > 0">
+            and it.org_id in
+            <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
+                #{orgId}
+            </foreach>
+        </if>
+        <if test="params.filterSelfAddFlag">
+            and exists (select 1 from warehouse wh where wh.id = it.warehouse_id and wh.warehouse_manage_type = 'selfBuild')
+        </if>
             <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
                 and it.warehouse_location = #{params.warehouseLocation}
             </if>

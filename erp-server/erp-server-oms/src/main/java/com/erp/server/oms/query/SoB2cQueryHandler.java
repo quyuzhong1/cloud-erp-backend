@@ -84,6 +84,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     if(valueStr.equals("leadTenTime")){
                         sb.append(" sb2c.label_json ~ 'leadTimeTag#10' ");
                     }
+                    if(valueStr.equals("refunded")){
+                        sb.append(" sb2c.label_json::json->>'isRefunded' = 'true' ");
+                    }
                     isFirst = false;
                 }
             }

@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.dmp.convert.DmpOrderConverter;
 import com.erp.server.dmp.service.DmpDeliveryDetailInfoService;
@@ -75,6 +76,12 @@ public class B2cDeliveryPushDmpDeliveryConsumer extends AbstractPlatformConsumer
         }
 
         DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity = DmpOrderConverter.INSTANCE.soB2cDeliveryToDmpDelivery(viewDTO, soB2cView);
+        if (SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(viewDTO.getStatus())) {
+            dmpDeliveryDetailInfoEntity.setStatus(2);
+        } else {
+            dmpDeliveryDetailInfoEntity.setStatus(1);
+        }
+
         List<DmpDeliveryDetailItemEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cDeliveryDetailToDmpDeliveryItem(viewDTO.getDetailList());
         dmpDeliveryDetailInfoEntity.setDetails(itemEntityList);
 

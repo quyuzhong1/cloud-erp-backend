@@ -1,24 +1,32 @@
 package com.common.core.excel;
 
-import cn.hutool.core.lang.Pair;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.EasyExcelFactory;
-import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.converters.ConverterKeyBuild;
-import com.alibaba.excel.support.ExcelTypeEnum;
-import com.alibaba.excel.util.IoUtils;
-import com.alibaba.excel.write.builder.ExcelWriterBuilder;
-import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
-import com.alibaba.excel.write.metadata.WriteSheet;
-import com.alibaba.excel.write.metadata.fill.FillConfig;
-import com.alibaba.excel.write.metadata.fill.FillWrapper;
-import com.alibaba.excel.write.metadata.style.WriteCellStyle;
-import com.alibaba.excel.write.metadata.style.WriteFont;
-import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
-import com.common.core.dto.ExcelData;
-import com.common.core.listener.EasyExcelListener;
-import com.common.core.utils.IdUtils;
-import com.common.core.utils.R;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.io.IOUtils;
@@ -40,15 +48,27 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.converters.ConverterKeyBuild;
+import com.alibaba.excel.support.ExcelTypeEnum;
+import com.alibaba.excel.util.IoUtils;
+import com.alibaba.excel.write.builder.ExcelWriterBuilder;
+import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.fill.FillConfig;
+import com.alibaba.excel.write.metadata.fill.FillWrapper;
+import com.alibaba.excel.write.metadata.style.WriteCellStyle;
+import com.alibaba.excel.write.metadata.style.WriteFont;
+import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
+import com.common.core.dto.ExcelData;
+import com.common.core.exception.ServiceException;
+import com.common.core.listener.EasyExcelListener;
+import com.common.core.utils.IdUtils;
+import com.common.core.utils.R;
+
+import cn.hutool.core.lang.Pair;
 
 /**
  * 导出Excel 模板
@@ -1062,6 +1082,58 @@ public class ExcelPrintUtils {
 		return dataList;
 	}
 	
+	public static List<Map<String,String>> parseExcelToAllSheetData(byte[] stream, Integer parseRowNumber) {
+		EasyExcelListener readListener = new EasyExcelListener();
+		EasyExcelFactory.read(new ByteArrayInputStream(stream)).registerReadListener(readListener).headRowNumber(parseRowNumber).doReadAll();
+		List<Map<Integer, String>> headList = readListener.getHeadList();
+		if(CollectionUtils.isEmpty(headList)){
+			throw new ServiceException("Excel表头行不能为空");
+		}
+		//获取头部,取最后一次解析的列头数据
+		Map<Integer, String> excelHeadIdxNameMap = headList.get(0);
+		Set<String> headSet = new HashSet<>();
+		for(Map.Entry<Integer, String> headMap : excelHeadIdxNameMap.entrySet()) {
+			Integer key = headMap.getKey();
+			Integer index = key + 1;
+			String head = headMap.getValue();
+			if(StringUtils.isBlank(head)) {
+				throw new ServiceException("Excel表头第" + index +"列为空值");
+			}
+			if(headSet.contains(head)) {
+				throw new ServiceException("Excel表头行含有重复值：" + head);
+			}
+			headSet.add(head);
+			if(headList.size() > 1) {
+				for(int i = 1; i < headList.size(); i++) {
+					Map<Integer, String> tempMaps = headList.get(i);
+					String tempHead = tempMaps.get(key);
+					if(StringUtils.isNotEmpty(head) && StringUtils.isEmpty(tempHead)) {
+						throw new ServiceException("Excel第"+ (i + 1) +"个sheet页表头行第"+ index +"列值["+ tempHead +"]，与第1个sheet页表头行的第"+ index +"列值["+ head +"]，不一致，请检查");
+					}else if(StringUtils.isEmpty(head) && StringUtils.isNotEmpty(tempHead)) {
+						throw new ServiceException("Excel第"+ (i + 1) +"个sheet页表头行第"+ index +"列值["+ tempHead +"]，与第1个sheet页表头行的第"+ index +"列值["+ head +"]，不一致，请检查");
+					}else if(StringUtils.isNotEmpty(head) && StringUtils.isNotEmpty(tempHead) && !head.equals(tempHead)) {
+						throw new ServiceException("Excel第"+ (i + 1) +"个sheet页表头行第"+ index +"列值["+ tempHead +"]，与第1个sheet页表头行的第"+ index +"列值["+ head +"]，不一致，请检查");
+					}
+				}
+			}
+		}
+		
+		List<Map<Integer, String>> dataList = readListener.getDataList();
+		if(CollectionUtils.isEmpty(dataList)){
+			throw new RuntimeException("Excel数据内容不能为空");
+		}
+		//封装数据体
+		List<Map<String,String>> excelDataList = Lists.newArrayList();
+		for (Map<Integer, String> dataRow : dataList) {
+			Map<String,String> rowData = new LinkedHashMap<>();
+			excelHeadIdxNameMap.entrySet().forEach(columnHead -> {
+				rowData.put(columnHead.getValue(), dataRow.get(columnHead.getKey()));
+			});
+			excelDataList.add(rowData);
+		}
+		return excelDataList;
+	}
+	
 	public static List<Map<String,String>> makeDataInputStream(InputStream inputStream){
 		byte[] stream = new byte[0];
 		try {
@@ -1072,7 +1144,7 @@ public class ExcelPrintUtils {
 		if(stream == null || stream.length == 0){
 			return null;
 		}
-		List<Map<String,String>> dataList = parseExcelToData(stream, 1);//从动态获取全部列和数据体，默认从第一行开始解析数据
+		List<Map<String,String>> dataList = parseExcelToAllSheetData(stream, 1);//从动态获取全部列和数据体，默认从第一行开始解析数据
 		try {
 			if(inputStream != null){
 				inputStream.close();
@@ -1083,4 +1155,10 @@ public class ExcelPrintUtils {
 		return dataList;
 	}
 
+	public static void main(String[] args) throws Exception{
+		String filePath = "C:\\Users\\Administrator\\Desktop\\新建 XLS 工作表.xls";
+		InputStream inputStream = new FileInputStream(filePath);
+		List<Map<String, String>> makeDataInputStream = makeDataInputStream(inputStream);
+		System.out.println(makeDataInputStream);
+	}
 }

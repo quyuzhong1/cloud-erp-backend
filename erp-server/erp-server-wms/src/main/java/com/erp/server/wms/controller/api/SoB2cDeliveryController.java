@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -12,6 +13,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -239,34 +241,6 @@ public class SoB2cDeliveryController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
-    /**
-     * 订单标记发货失败后再次触发 ids 为销售订单id
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/retryFalseDelivery")
-    public ApiResult<List<BatchResultDTO>> retryDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        //id 为销售订单id
-        for (String id : dto.getIds()) {
-            try {
-                List<BatchResultDTO> resultList = soB2cDeliveryService.retryFalseDelivery(id);
-                resultDTOS.addAll(resultList);
-            } catch (Exception e) {
-                log.error("发货单 虚假发货失败", e);
-            }
-
-            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-            deleteDTO.setType(type);
-            deleteDTO.setMainId(id);
-            soB2cFeign.deleteError(deleteDTO);
-
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
 
     /**
      * 打印拣货单预览
