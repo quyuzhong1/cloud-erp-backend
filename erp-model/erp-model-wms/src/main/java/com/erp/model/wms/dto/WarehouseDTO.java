@@ -156,6 +156,8 @@ public class WarehouseDTO implements Serializable {
 
         @NotBlank(message = "id不能为空")
         private String id;
+
+        private Integer index;
     }
 
     /**
@@ -630,6 +632,24 @@ public class WarehouseDTO implements Serializable {
          */
         private String searchKeyword;
 
+        /**
+         * 是否需要过滤组织
+         */
+        private boolean filterOrgFlag;
+
+        /**
+         * 是否需要过滤自建
+         */
+        private boolean filterSelfAddFlag;
+
+        /**
+         * 前端忽略
+         */
+        private List<String> orgIds;
+        /**
+         * 前端忽略
+         */
+        private String warehouseManageType;
     }
 
     /**

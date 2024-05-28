@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
+import jnr.ffi.annotations.In;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -143,6 +144,11 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     @TableField("geography_location")
     private String geographyLocation;
 
+    /**
+     * 排序
+     */
+    @TableField("index")
+    private Integer index;
 
     @Override
     public Serializable pkVal() {
