@@ -968,6 +968,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         for (InventoryDTO.PdaInventoryWarehouseDTO warehouseDTO : warehouseDTOList) {
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(warehouseDTO.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             warehouseDTO.setWarehouseName(updateDTO.getName());
+            warehouseDTO.setIndex(updateDTO.getIndex());
             List<InventoryDTO.PdaInventoryWarehouseLocationDTO> locationDTOList = warehouseLocationDTOList.stream().filter(req -> req.getWarehouseId().equals(warehouseDTO.getWarehouseId()) && req.getRealQty() > 0).collect(Collectors.toList());
             for (InventoryDTO.PdaInventoryWarehouseLocationDTO locationDTO : locationDTOList) {
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(locationDTO.getWarehouseId()) && req.getCode().equals(locationDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
@@ -975,6 +976,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
             warehouseDTO.setWarehouseLocationDTOList(locationDTOList);
         }
+        //根据index排序
+        warehouseDTOList.sort(Comparator.comparing(InventoryDTO.PdaInventoryWarehouseDTO::getIndex));
         pdaInventorySearch.setWarehouseDTOList(new PagingVO<>(warehouseDTOPage));
         return pdaInventorySearch;
     }

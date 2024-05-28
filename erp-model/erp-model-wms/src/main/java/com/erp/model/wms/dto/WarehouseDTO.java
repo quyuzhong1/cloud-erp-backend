@@ -156,6 +156,8 @@ public class WarehouseDTO implements Serializable {
 
         @NotBlank(message = "id不能为空")
         private String id;
+
+        private Integer index;
     }
 
     /**

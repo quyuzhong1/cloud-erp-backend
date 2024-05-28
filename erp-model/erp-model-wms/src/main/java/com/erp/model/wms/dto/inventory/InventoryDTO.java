@@ -4,6 +4,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -1492,6 +1493,8 @@ public class InventoryDTO implements Serializable {
          * 仓位信息
          */
         private List<PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList;
+
+        private Integer index = 99999;
     }
 
     @Data
