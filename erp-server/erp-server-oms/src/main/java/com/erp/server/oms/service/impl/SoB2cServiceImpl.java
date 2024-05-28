@@ -5196,6 +5196,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 entity.setApproveStatus(approveStatusEnum);
             }
+            // 检查新增自动作废
+            // Shopify全退款的订单新增自动作废
+            entity.setInvalidStatus(dto.checkInsertInvalidStatus());
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             entity.setCode(code);
