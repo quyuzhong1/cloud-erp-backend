@@ -84,6 +84,23 @@ public class ThirdMappingDTO implements Serializable {
 
     }
 
+ /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ThirdAddDTO {
+        /**
+         * 第三方id
+         */
+        private String thirdId;
+
+        /**
+         * 第三方系统类型：lingxing领星，wangdian旺店通
+         */
+        private String sysType;
+    }
+
 
     /**
      * 详情
@@ -136,7 +153,7 @@ public class ThirdMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        private List<ViewDTO> thirdList;
+        private List<ThirdAddDTO> thirdList;
 
     }
 
