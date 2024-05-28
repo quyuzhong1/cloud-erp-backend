@@ -107,7 +107,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         //验证订单平台是否取消
         if (soB2cEntity.getIsCancel()) {
             //订单拦截
-            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消或退款"));
             return null;
         }
         //请求接口过慢，暂时取消 TODO
@@ -122,7 +122,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 deliveryInterceptDTO.setShopId(soB2cEntity.getShopId());
                 Boolean flag = PlatformSaveHandler.deliveryIntercept(deliveryInterceptDTO);
                 if (flag) {
-                    soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+                    soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消或退款"));
                     return null;
                 }
             }

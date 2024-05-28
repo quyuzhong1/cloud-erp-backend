@@ -104,7 +104,7 @@ public class PackageServiceImpl implements PackageService {
         //查询平台订单是否取消
         if (entity.getIsCancel()) {
             //订单拦截
-            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(entity.getId(), "平台取消"));
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(entity.getId(), "平台取消或退款"));
             throw new ServiceException("平台订单已取消，无法组包");
         }
         //请求接口过慢，暂时取消 TODO

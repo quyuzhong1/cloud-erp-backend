@@ -153,7 +153,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (!mainEntity.hasPlatformWarehouseOrder()
                 && resultDTO.isUpdateCancel()
                 && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())){
-            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消或退款");
         }
     }
 

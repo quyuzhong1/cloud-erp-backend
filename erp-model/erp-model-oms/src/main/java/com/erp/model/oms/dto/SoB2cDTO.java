@@ -439,6 +439,10 @@ public class SoB2cDTO implements Serializable {
          * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
          */
         private String shipNodeType;
+        /**
+         * 是否退款: true=退款, false=未退款
+         */
+        private Boolean isRefunded;
     }
 
     @Data
