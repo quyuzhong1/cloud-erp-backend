@@ -156,8 +156,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
 //        }
 
-        //推送到DMP
-        soB2cService.syncOrderToDmp(mainEntity.getId());
+
+        //走过订单规则审核的不需要重复推送DMP，规则审核时已经推送过
+        Integer count = operateLogService.lambdaQuery()
+                .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
+                .eq(OperateLogEntity::getOperation, "审核操作")
+                .count();
+        if (0 == count) {
+            //推送到DMP
+            soB2cService.syncOrderToDmp(mainEntity.getId());
+        }
+
     }
 
 
