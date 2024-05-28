@@ -1325,6 +1325,7 @@ public enum ApiError implements Serializable {
 
     //旺店通异常
     ERROR_3000(3000, "请求旺店通接口异常"),
+    ERROR_WDT_CANCEL_PUSH(3001, "该单据的前序推送任务未完成, 此任务取消执行"),
 
 
     // 亚马逊公用异常

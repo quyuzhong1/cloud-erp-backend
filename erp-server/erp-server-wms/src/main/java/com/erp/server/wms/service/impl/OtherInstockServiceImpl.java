@@ -1135,6 +1135,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     /**
      *
      * @param entity 其他入库单
+     * @param operateCode 操作代码: 审核/反审核
      * @return void
      * @date: 2024-05-24
      * @author: tanmujin
@@ -1150,7 +1151,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             goodsList.add(goods);
         });
 
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInstockService.saveTask(goodsList, entity, operateCode);
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInstockService.saveTask(goodsList, entity, operateCode, entity.getCode());
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
@@ -1163,7 +1164,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
      * 将其他入库单的反审核操作转换为其他出库单同步给旺店通
      *
      * @param entity 其他入库单
-     * @param code
+     * @param operateCode 操作代码: 审核/反审核
      * @return void
      * @date: 2024-05-20
      * @author: tanmujin
@@ -1182,8 +1183,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         });
 
         //保存任务
-        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), entity.getCode(), entity.getWarehouseId());
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode);
+        String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, entity.getWarehouseId());
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode, entity.getCode());
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {

@@ -555,7 +555,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         String warehouseId = detailList.get(0).getWarehouseId();
         OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), code, warehouseId);
-        return syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode);
+        return syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode, entity.getCode());
     }
 
     /**
@@ -584,7 +584,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         String warehouseId = detailList.get(0).getWarehouseId();
         OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), code, warehouseId);
-        return syncWdtOtherInStockService.saveTask(goodsList, inEntity, operateCode);
+        return syncWdtOtherInStockService.saveTask(goodsList, inEntity, operateCode, entity.getCode());
     }
 
     /**

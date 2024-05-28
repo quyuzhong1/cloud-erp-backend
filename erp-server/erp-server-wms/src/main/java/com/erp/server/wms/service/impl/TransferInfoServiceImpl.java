@@ -6,7 +6,6 @@ import cn.hutool.json.JSONUtil;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -544,7 +543,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
      * 直接调拨单审核通过时将数据同步给旺店通
      *
      * @param entity 直接调拨单主数据
-     * @param code
+     * @param operateCode 操作代码: 审核/反审核
      * @date: 2024-05-17
      * @author: tanmujin
      */
@@ -574,13 +573,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         String outWarehouseId = transferDetailList.get(0).getOutWarehouseId();
         OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
-        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode);
+        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
 
         //推送其他入库单给旺店通
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
         OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode);
+        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -625,13 +624,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         String outWarehouseId = transferDetailList.get(0).getInWarehouseId();
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
-        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode);
+        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
 
         //推送其他入库单给旺店通
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
         OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode);
+        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override

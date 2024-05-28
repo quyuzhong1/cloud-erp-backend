@@ -17,7 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 将erp其他出库单同步至旺店通
@@ -36,19 +38,24 @@ public class SyncWdtOtherOutStockServiceImpl implements SyncWdtOtherOutStockServ
     private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Override
-    public DmpPushTaskEntity saveTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, OtherOutstockEntity entity, String operateCode) {
+    public DmpPushTaskEntity saveTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, OtherOutstockEntity entity, String operateCode, String sourceCode) {
         CreateOtherStockoutRequest request = new CreateOtherStockoutRequest();
         request.setOuterNo(entity.getCode());
         //根据发货仓库ID查询旺店通仓库编号
         ThirdMappingEntity thirdMappingEntity = dmpThirdMappingFeign.getBySysId(entity.getWarehouseId());
-        request.setWarehouseNo(thirdMappingEntity.getThirdInfoId());
+        request.setWarehouseNo(Optional.ofNullable(thirdMappingEntity).orElse(new ThirdMappingEntity("")).getThirdInfoId());
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
+        request.setSourceId(entity.getId());
+        request.setOperateCode(operateCode);
+        request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
+        request.setCreateTime(LocalDateTime.now());
 
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
-        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceCode(sourceCode);
         dmpSyncTaskDTO.setSourceType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
         dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
         dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName());
