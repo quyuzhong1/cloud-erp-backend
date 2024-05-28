@@ -977,7 +977,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             warehouseDTO.setWarehouseLocationDTOList(locationDTOList);
         }
         //根据index排序
-        warehouseDTOList.sort(Comparator.comparing(InventoryDTO.PdaInventoryWarehouseDTO::getIndex));
+        warehouseDTOList.sort(Comparator.nullsLast(Comparator.comparing(InventoryDTO.PdaInventoryWarehouseDTO::getIndex)));
         pdaInventorySearch.setWarehouseDTOList(new PagingVO<>(warehouseDTOPage));
         return pdaInventorySearch;
     }
