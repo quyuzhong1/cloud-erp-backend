@@ -2,10 +2,10 @@ package com.erp.server.plm.rocketmq.sync.wangdian.impl;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.LengthConverterUtil;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -20,17 +20,21 @@ import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailServic
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProductPackService;
 import com.erp.server.plm.service.ProductPurchaseService;
+import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.erp.model.plm.enums.SaleMethodEnum.*;
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
 
@@ -63,10 +67,10 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         GoodsBatchPushDTO.SpecList specList = new GoodsBatchPushDTO.SpecList();
         specList.setSpecNo(entity.getSkuNo());
         specList.setBarcode(productPurchase.getEan());
-        specList.setWeight(LengthConverterUtil.mmToCm(productPack.getProductLength()));
+        specList.setWeight(MathUtil.divide(productPack.getNetWeight(), new BigDecimal(1000), 4, BigDecimal.ROUND_HALF_UP));
         specList.setLength(LengthConverterUtil.mmToCm(productPack.getProductLength()));
-        specList.setWidth(LengthConverterUtil.mmToCm(productPack.getProductLength()));
-        specList.setHeight(LengthConverterUtil.mmToCm(productPack.getProductLength()));
+        specList.setWidth(LengthConverterUtil.mmToCm(productPack.getProductWidth()));
+        specList.setHeight(LengthConverterUtil.mmToCm(productPack.getProductHeight()));
         specList.setImgUrl(entity.getImagesUrl());
 //        specList.setUnitName(entity.getUnitName());
         dto.setSpecList(Collections.singletonList(specList));
@@ -92,19 +96,21 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
 
 
     private int getGoodsType(String saleMethod, String property) {
-        SaleMethodEnum saleMethodEnum = SaleMethodEnum.getEnumByType(saleMethod);
-        if (ObjectUtils.isEmpty(saleMethodEnum)) {
+        if (StringUtils.isEmpty(saleMethod)) {
             return 0;
         }
-        switch (saleMethodEnum) {
-            case GOODS:
-                return (PRODUCT_PROPERTY_COST.equals(property) || PRODUCT_PROPERTY_SERVICE.equals(property)) ? 5 : 1;
-            case PACKAGING_MATERIALS:
-                return 3;
-            case SEMI_FINISHED:
-                return 2;
-            default:
-                return 0;
+        String[] sales = saleMethod.split(",");
+        List<SaleMethodEnum> saleMethods = Stream.of(sales).map(SaleMethodEnum::getEnumByName).collect(Collectors.toList());
+        if (saleMethods.contains(GOODS)) {
+            return (PRODUCT_PROPERTY_COST.equals(property) || PRODUCT_PROPERTY_SERVICE.equals(property)) ? 5 : 1;
+        } else if (saleMethods.contains(GIFT)) {
+            return 0;
+        } else if (saleMethods.contains(PACKAGING_MATERIALS)) {
+            return 3;
+        } else if (saleMethods.contains(SEMI_FINISHED)) {
+            return 2;
+        } else {
+            return 0;
         }
     }
 
