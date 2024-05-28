@@ -210,7 +210,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     }
 
     private WmsDataCompareExcelDto validataImportFile(List<String> excelFiles) {
-		WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getOnlyHeadAndCount(excelFiles);
+		WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(excelFiles);
 		List<List<String>> headFieldLists = wmsDataCompareExcelDto.getHeadFieldLists();
         if(CollUtil.isEmpty(headFieldLists)) {
         	throw new ServiceException("所有导入文件行数都为空，请检查");
@@ -1190,7 +1190,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		wmsDataCompareTempService.updateBatchById(updateTempEntityList);
 		wmsDataCompareTempService.lambdaUpdate().eq(WmsDataCompareTempEntity::getTaskId, taskId)
 				.set(WmsDataCompareTempEntity::getCompareResult, WmsDataCompareTempCompareResultEnum.MISS.getCode())
-				.set(WmsDataCompareTempEntity::getCompareStatus, WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
+				.set(WmsDataCompareTempEntity::getCompareStatus, WmsDataCompareTempCompareStatusEnum.FINISH.getCode()).update();
 	}
 	
 	@Override
