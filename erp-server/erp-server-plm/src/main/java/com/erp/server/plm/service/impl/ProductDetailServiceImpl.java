@@ -976,6 +976,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
+        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
+        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+        // 添加默认spu
+        productSpuBaseInfoDTO.setSpuNo(Optional.ofNullable(productSpuBaseInfoDTO.getSpuNo()).orElse(productSkuBaseInfoDTO.getSkuNo()));
         //检查spu编号是否重复
         if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
@@ -987,9 +991,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
         checkSizeAndWeight(productPackDTO);
-
-        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
-        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
         //产品等级
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
@@ -1007,7 +1008,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //1.修改产品表 主表信息
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
-
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
         //2.修改/新增 sku信息
@@ -1748,7 +1748,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean checkSpuNo(String spuNo, String id) {
-        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getSpuNo, spuNo);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
@@ -4649,7 +4649,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productInfoDTO.setSalesChannel(dto.getSalesChannel());
             productInfoDTO.setMoldCost(MathUtil.valueOf(dto.getMoldCost()));
             productInfoDTO.setEntrustedDevelopCost(MathUtil.valueOf(dto.getEntrustedDevelopCost()));
-
+            // 添加默认spu
+            productInfoDTO.setSpuNo(Optional.ofNullable(dto.getSpuNo()).orElse(dto.getSkuNo()));
+            //检查spu编号是否重复
+            if (Boolean.TRUE.equals(this.checkSpuNo(productInfoDTO.getSpuNo(), productInfoDTO.getId()))) {
+                throw new ServiceException(ApiError.ERROR_95017);
+            }
             //sku信息
             BeanMapper.copy(dto, productSkuBaseInfoDTO);
             if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
