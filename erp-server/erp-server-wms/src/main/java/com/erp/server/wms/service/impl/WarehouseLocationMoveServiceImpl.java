@@ -449,14 +449,13 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         return id;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(WarehouseLocationMoveDTO.UpdateDTO dto) {
+        //分开事务
         // 修改
-        this.update(dto);
+        service.update(dto);
         // 提交
-        this.submit(dto.getId());
+        service.submit(dto.getId());
     }
 
     @Transactional(rollbackFor = Exception.class)
