@@ -17,9 +17,7 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -202,7 +200,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         ShopifyAddress shippingAddress = dto.getShopifyOrder().getShippingAddress();
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (null != customer) {
-            receiverDTO.setName(
+                    receiverDTO.setName(
                     (StringUtils.isBlank(customer.getFirstName()) ? "" : customer.getFirstName()) +
                             (StringUtils.isBlank(customer.getFirstName()) ? "" : " " + customer.getLastname())
             );
@@ -256,15 +254,31 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
      * 批量转换明细
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(ShopifyOrder sourceOrder) {
+        // 存在退款的明细ID
+        Set<String> refundedLineItemIds = new HashSet<>();
+        List<ShopifyRefund> refunds = sourceOrder.getRefunds();
+        if (!CollectionUtils.isEmpty(refunds)){
+            List<ShopifyRefundLineItem> refundLineItem = refunds.stream().map(ShopifyRefund::getRefundLineItems)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(refundLineItem)){
+                List<String> sourceFundedLineItemIds = refundLineItem.stream()
+                        .map(ShopifyRefundLineItem::getLineItemId)
+                        .distinct()
+                        .collect(Collectors.toList());
+                refundedLineItemIds.addAll(sourceFundedLineItemIds);
+            }
+        }
+
         return sourceOrder.getLineItems().stream()
-                .map(e -> intPlatformOrderDetailDTO(e, sourceOrder))
+                .map(e -> intPlatformOrderDetailDTO(e, sourceOrder, refundedLineItemIds))
                 .collect(Collectors.toList());
     }
 
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(ShopifyLineItem item, ShopifyOrder sourceOrder) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(ShopifyLineItem item, ShopifyOrder sourceOrder, Set<String> refundedLineItemIds) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
         // 图片URL
         detailDTO.setImageUrl("");
@@ -308,6 +322,14 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseOrgName("");
         // 库位
         detailDTO.setWarehouseLocation("");
+        // 当前明细标签
+        Map<String, Object> lableMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(item.getLineItemId())) {
+            lableMap.put("isRefunded", true);
+        } else {
+            lableMap.put("isRefunded", false);
+        }
+        detailDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
         return detailDTO;
     }
 }

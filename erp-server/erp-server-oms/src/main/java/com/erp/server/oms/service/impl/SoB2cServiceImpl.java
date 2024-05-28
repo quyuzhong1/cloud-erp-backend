@@ -2132,7 +2132,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (flag) {
             // 操作日志
             String msg ;
-            if (StrUtil.equals(remark,"平台取消")) {
+            if (entity.getIsCancel()) {
                 msg = "平台订单取消,自动发起拦截";
             } else {
                 msg = StrUtil.format("用户【{}】发起【{}】，已冻结单据单号【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截", entity.getCode());
@@ -3311,6 +3311,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 labelDTO.setFulfillmentChannel(labelJsonDTO.getFulfillmentChannel());
                 labelDTO.setShipNodeType(labelJsonDTO.getShipNodeType());
                 labelDTO.setTikTokStatus(labelJsonDTO.getTikTokStatus());
+                labelDTO.setIsRefunded(labelJsonDTO.getIsRefunded());
             }
             //明细信息
             List<SoB2cDetailEntity> detailList = allDetailList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
@@ -3361,6 +3362,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     detailLabelDTO.setAlreadyTaxed(labelJsonDTO.getAlreadyTaxed());
                     detailLabelDTO.setLogisticsWarehouseType(labelJsonDTO.getLogisticsWarehouseType());
                     detailLabelDTO.setTagList(labelJsonDTO.getTagList());
+                    detailLabelDTO.setIsRefunded(labelJsonDTO.getIsRefunded());
                 }
                 Integer useableQty = MathUtil.ZERO;
                 Integer freezeQty = MathUtil.ZERO;
@@ -5426,11 +5428,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ){
                 // 查询是否是本平台发货
                 dto.setInvalidStatus(false);
-                dto.setInvalidRemark("平台取消");
+                dto.setInvalidRemark("平台取消或退款");
             }
             // 保留历史作废状态
             if (oldEntity.getInvalidStatus()){
                 dto.setInvalidStatus(true);
+                dto.setInvalidRemark("平台取消或退款");
             }
 
             // 只替换更新信息

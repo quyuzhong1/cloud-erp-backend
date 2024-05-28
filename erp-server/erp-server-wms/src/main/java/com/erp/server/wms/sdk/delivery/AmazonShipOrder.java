@@ -246,7 +246,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
 
         if (isCancel) {
             //订单拦截
-            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(dto.getSoB2cId(), "平台取消"));
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(dto.getSoB2cId(), "平台取消或退款"));
         }
         return isCancel;
     }
