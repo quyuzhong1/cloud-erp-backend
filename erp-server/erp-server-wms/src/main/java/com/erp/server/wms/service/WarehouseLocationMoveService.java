@@ -111,7 +111,7 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
      * @param dto
      * @return
      */
-     void addAndSubmit(WarehouseLocationMoveDTO.AddDTO dto);
+     String addAndSubmit(WarehouseLocationMoveDTO.AddDTO dto);
 
      /**
      * 修改并提交审核
@@ -251,4 +251,8 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
      * @param id
      */
     BatchResultDTO pcDelete(String id);
+
+    String addAndApprove(WarehouseLocationMoveDTO.AddDTO dto);
+
+    String updateAndApprove(WarehouseLocationMoveDTO.UpdateDTO dto);
 }

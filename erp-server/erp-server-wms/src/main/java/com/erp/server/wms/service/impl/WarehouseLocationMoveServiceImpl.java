@@ -51,6 +51,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
@@ -97,7 +98,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     @Resource
     private SysUserFeign sysUserFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Resource
+    @Lazy
+    private WarehouseLocationMoveServiceImpl service;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(WarehouseLocationMoveDTO.AddDTO addDTO) {
@@ -435,14 +439,14 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public void addAndSubmit(WarehouseLocationMoveDTO.AddDTO dto) {
+    public String addAndSubmit(WarehouseLocationMoveDTO.AddDTO dto) {
+        //新增和提交分开事务
         // 新增
-        String id = this.add(dto);
+        String id = service.add(dto);
         // 提交
-        this.submit(id);
+        service.submit(id);
+        return id;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -455,7 +459,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         this.submit(dto.getId());
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
@@ -601,6 +604,20 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除仓位移动主单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public String addAndApprove(WarehouseLocationMoveDTO.AddDTO dto) {
+        String id = service.addAndSubmit(dto);
+        service.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(),"新增自动审核"));
+        return id;
+    }
+
+    @Override
+    public String updateAndApprove(WarehouseLocationMoveDTO.UpdateDTO dto) {
+        service.updateAndSubmit(dto);
+        service.approve(new ApproveOneDTO(dto.getId(), ApproveTypeEnum.PASS.getStatus(),"更新自动审核"));
+        return "";
     }
 
     /**
