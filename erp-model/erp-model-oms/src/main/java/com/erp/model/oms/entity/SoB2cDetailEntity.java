@@ -153,6 +153,18 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("source_platform")
     private String sourcePlatform;
 
+    /**
+     * 第三方平台的包裹号
+     */
+    @TableField("platform_package_id")
+    private String platformPackageId;
+
+
+    /**
+     * 拆分的明细id
+     */
+    @TableField("split_detail_id")
+    private String splitDetailId;
 
     /**
      * 当前净重

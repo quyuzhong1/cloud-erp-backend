@@ -195,7 +195,7 @@ public interface DmpOrderConverter {
     @Mappings({
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "orderId", source = "detailViewDTO.mainId"),
-            @Mapping(target = "itemId", source = "detailViewDTO.id"),
+            @Mapping(target = "itemId", source = "detailViewDTO.skuId"),
             @Mapping(target = "platformSku", source = "detailViewDTO.platformSkuNo"),
             @Mapping(target = "platformQuantity", source = "detailViewDTO.qty"),
             @Mapping(target = "itemName", source = "detailViewDTO.productName"),
@@ -212,7 +212,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "skuNo", source = "detailViewDTO.skuNo"),
             @Mapping(target = "stockStatus", constant = "3"),
             @Mapping(target = "stockWarehouseId", source = "detailViewDTO.warehouseId"),
-            @Mapping(target = "erpOrderItemId", source = "detailViewDTO.skuId"),
+            @Mapping(target = "erpOrderItemId", source = "detailViewDTO.id"),
             @Mapping(target = "currencyRate", source = "detailViewDTO.exchangeRate"),
             @Mapping(target = "cnySettleRate", source = "detailViewDTO.exchangeRate"),
             @Mapping(target = "sourceItemId", source = "id")

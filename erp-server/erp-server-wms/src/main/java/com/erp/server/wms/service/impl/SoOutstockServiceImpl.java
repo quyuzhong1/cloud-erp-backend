@@ -842,6 +842,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (Objects.nonNull(soInfo)) {
                     addDTO.setShopId(soInfo.getCustomerId());
                     addDTO.setShopName(soInfo.getCustomerName());
+                    addDTO.setTelNumber(soInfo.getTelNumber());
                     addDTO.setOrderTime(soInfo.getCreateTime());
                     addDTO.setSalesPlatform(salesPlatform);
                     addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
@@ -864,6 +865,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (Objects.nonNull(customer)) {
                     addDTO.setShopId(customer.getShopId());
                     addDTO.setShopName(customer.getShopName());
+                    addDTO.setTelNumber(customer.getTelNumber());
                     //国家
                     String country = customer.getCountry();
                     String countryName = "";
@@ -3108,6 +3110,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         log.error("已存在物流单，失败单号，codeList = {},生成物流单",existList);
         return existList;
+    }
+
+    @Override
+    public boolean checkExist(String soCode, String sourceType, String orderType) {
+        return this.lambdaQuery()
+                .eq(SoOutstockEntity::getSoCode, soCode)
+                .eq(StringUtils.isNotBlank(sourceType), SoOutstockEntity::getSourceType, sourceType)
+                .eq(StringUtils.isNotBlank(orderType), SoOutstockEntity::getOrderType, orderType)
+                .eq(SoOutstockEntity::getInvalidStatus, false)
+                .count() > 0;
     }
 
 

@@ -33,6 +33,7 @@ import com.erp.model.dmp.gyy.GyyRefundEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpShopInfoService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +71,13 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
     private CfgSettingService cfgSettingService;
 
     public static void main(String[] args) {
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime time = LocalDateTime.now();
+        String startTime = "2024-03-29 18:00:00";
+        String endTime = "2024-03-29 21:00:00";
+        LocalDateTime start = LocalDateTime.parse(startTime,df);
+        LocalDateTime end = LocalDateTime.parse(endTime,df);
+
         GyyRefundServiceImpl gyyRefundService = new GyyRefundServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -78,8 +86,8 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         jobTaskDTO.setApiName("管易云退款列表");
         jobTaskDTO.setId("35");
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(null);
-        jobTaskDTO.setNextTime(null);
+        jobTaskDTO.setLastTime(start);
+        jobTaskDTO.setNextTime(end);
         jobTaskDTO.setDictPlatform("1");
         jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
@@ -91,7 +99,13 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        System.out.println(orderEntities);
+
+
+        for (GyyRefundEntity orderEntity : orderEntities) {
+            if (orderEntity.getCode().equals("RMO717930794631")) {
+                System.out.println(JSONUtil.toJsonStr(orderEntity));
+            }
+        }
     }
 
 
@@ -117,7 +131,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
             }
             GyyRefundEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);

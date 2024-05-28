@@ -498,6 +498,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         @NotBlank(message = "发货类型不能为空")
         private String shipmentType;
+        /**
+         * 电话
+         */
+        private String telNumber;
     }
 
     /**
@@ -698,6 +702,12 @@ public class LogisticsBillDTO implements Serializable {
          * 物流单号
          */
         private String trackNo;
+
+        /**
+         * 物流类型
+         * 枚举：OrderLogisticTypeEnum
+         */
+        private String logisticType;
 
         /**
          * 收货人
@@ -1025,8 +1035,14 @@ public class LogisticsBillDTO implements Serializable {
         @NotBlank(message = "发货单号不能为空")
         private String deliveryNo;
 
+        /**
+         * 店铺id
+         */
         private String shopId;
 
+        /**
+         * 物流类型
+         */
         private String logisticType;
 
     }
@@ -1047,5 +1063,14 @@ public class LogisticsBillDTO implements Serializable {
          * 物流面单base64格式
          */
         private List<String> logisticsBase64;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BillPhoneDTO {
+        /**
+         * 物流单
+         */
+        private List<String> ids;
     }
 }

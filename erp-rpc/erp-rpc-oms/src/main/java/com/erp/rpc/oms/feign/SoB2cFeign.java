@@ -57,6 +57,17 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/listDetailByIds")
     List<SoB2cDetailEntity> listDetailByIds(@RequestBody List<String> soDetailIdList);
 
+
+    /**
+     * 获取明细信息
+     *
+     * @param soDetailIdList
+     * @return
+     */
+    @PostMapping("/feign/soB2c/listDetailContainDeleted")
+    List<SoB2cDetailEntity> listDetailContainDeleted(@RequestBody List<String> soDetailIdList);
+
+
     /**
      * 根据主表id查询B2C订单主表信息
      *
@@ -450,7 +461,7 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2cError/deleteAll")
     void checkAndDeleteAllError(@RequestBody SoB2cErrorDTO.DeleteDetailDTO deleteDTO);
-    
+
     /**
      * 修改速卖通订单仓库
      * @Author Luo_WG
@@ -549,4 +560,7 @@ public interface SoB2cFeign {
      */
     @GetMapping("/feign/soB2c/getSoCode")
     SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode);
+
+    @GetMapping("/feign/soB2c/listRefBomSplit")
+    List<SoB2cEntity> listRefBomSplit(@RequestParam("detailId") String detailId);
 }

@@ -53,7 +53,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "districtName", source = "districtName"),
             @Mapping(target = "firstAddress", source = "firstAddress"),
             @Mapping(target = "secondAddress", source = "secondAddress"),
-            @Mapping(target = "receiverTaxNo", source = "receiverTaxNo"),
+            @Mapping(target = "receiverTaxNo", source = "receiverTaxNo")
 
     })
     LogisticsBillDTO.ReceiverDTO convertReceiver(SoB2cReceiverEntity receiverEntity);
@@ -263,5 +263,18 @@ public interface B2cOrderConverter {
             @Mapping(target = "url", source = "soB2cDetail.imageUrl")
     })
     LogisticsProductVO convertDeclareProductVOByEntity(SoB2cDeclareProductEntity soB2cDeclareProductEntity, SoB2cDetailEntity soB2cDetail, LogisticsProductDTO.ProductDTO productDTO);
+
+
+    @Mappings({
+            @Mapping(target = "id",ignore = true),
+            @Mapping(target = "version",ignore = true),
+            @Mapping(target = "createTime",ignore = true),
+            @Mapping(target = "createUserId",ignore = true),
+            @Mapping(target = "createUserName",ignore = true),
+            @Mapping(target = "updateTime",ignore = true),
+            @Mapping(target = "updateUserId",ignore = true),
+            @Mapping(target = "updateUserName",ignore = true),
+    })
+    SoB2cDetailEntity cloneSoB2cDetail(SoB2cDetailEntity soB2cDetailEntity);
 
 }

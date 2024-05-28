@@ -1,28 +1,35 @@
 package com.erp.server.oms.sdk.authorize;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
+import com.erp.model.oms.dto.RefreshShopTokenDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
-import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.dto.request.RefreshTokenRequest;
 import com.erp.oms.aliexpress.service.AliExpressAuthService;
+import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.common.business.annotation.PlatformAnnotate;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -65,6 +72,9 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
 
     @Resource
     private AliExpressAuthService aliExpressAuthService;
+
+    @Resource
+    private MQProducerService mqProducerService;
 
     /**
      * 获取授权地址
@@ -162,12 +172,18 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 String token=jsonObject.getOrDefault("access_token","").toString();
                 String refreshToken=jsonObject.getOrDefault("refresh_token","").toString();
                 Integer expiresIn=Integer.valueOf(jsonObject.getOrDefault("expires_in",0).toString());
+
                 shopAuth.setShopId(shopId);
                 shopAuth.setToken(token);
                 shopAuth.setAccessToken(token);
                 shopAuth.setRefreshToken(refreshToken);
                 shopAuth.setAppClientId(cfgAppClient.getId());
                 shopAuth.setExpiresIn(expiresIn);
+                LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(expiresIn);
+                //提前半小时设置token失效，以免失效了以后才刷新容易出错
+                LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+                shopAuth.setTokenExpireTime(tokenExpireTime);
+
                 String sellerId=jsonObject.getOrDefault("seller_id","").toString();
                 Map<String, Object> extendJsonMap = new HashMap<>();
                 extendJsonMap.put("sellerId", sellerId);
@@ -243,9 +259,98 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     /**
      * 刷新token
      */
-    public void refreshToken(ShopDTO.RefreshTokenDTO dto){
+    public Boolean refreshToken(RefreshShopTokenDTO dto){
+        //先获取授权店铺 然后根据授权店铺进行
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_TOKEN;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        if (Objects.isNull(cfgAppClient)) {
+            return Boolean.FALSE;
+        }
+        String appClientId= cfgAppClient.getId();
+        String clientId = cfgAppClient.getClientId();
+        String baseUrl= cfgAppClient.getUrl();
+        String clientSecret=cfgAppClient.getClientSecret();
 
+        ShopAuthEntity authEntity = shopAuthService.getByShopId(dto.getShopId());
+        if (ObjectUtil.isEmpty(authEntity)) {
+            return Boolean.FALSE;
+        }
+        RefreshTokenRequest request = RefreshTokenRequest.builder().
+                baseUrl(baseUrl).
+                refreshToken(authEntity.getRefreshToken()).
+                clientId(clientId).
+                clientSecret(clientSecret).
+                build();
+        try {
+            JSONObject jsonObject = aliExpressAuthService.RefreshToken(request);
+            String code = jsonObject.getOrDefault("code", "").toString();
+            //表示成功
+            if ("0".equals(code)) {
+                String accessToken = jsonObject.getOrDefault("access_token", "").toString();
+                String refreshToken = jsonObject.getOrDefault("refresh_token", "").toString();
+                Integer expiresIn = jsonObject.getInteger("expires_in");
 
+                LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(expiresIn);
+                //提前半小时设置token失效，以免失效了以后才刷新容易出错
+                LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+
+                shopAuthService.refreshToken(authEntity.getId(), accessToken, refreshToken, expiresIn, tokenExpireTime);
+                AliExpressShopInfoDTO shopInfoDTO = new AliExpressShopInfoDTO();
+                shopInfoDTO.setId(authEntity.getShopId());
+                shopInfoDTO.setClientId(clientId);
+                shopInfoDTO.setClientSecret(clientSecret);
+                shopInfoDTO.setBaseUrl(baseUrl);
+                shopInfoDTO.setName("");
+                shopInfoDTO.setToken(accessToken);
+                String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), authEntity.getShopId());
+                redisUtil.set(tokenKey, shopInfoDTO, expiresIn);
+            } else {
+                log.error("::::: 速卖通刷新token失败 ::::: 入参===》{}，错误信息：{}：" , request.toString(), jsonObject.toJSONString());
+                //错误3次记录错误信息，不在重试，并且发送预警通知
+                refreshErrorWarn(authEntity, jsonObject.toJSONString());
+            }
+        } catch (ApiException e) {
+            log.error("刷新店铺id 为>>>{} token失败 {}", authEntity.getShopId(), e.getMessage());
+            //错误3次记录错误信息，不在重试，并且发送预警通知
+            refreshErrorWarn(authEntity, e.getMessage());
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 错误预警
+     * @param authEntity
+     * @param errorMsgStr
+     */
+    private void refreshErrorWarn(ShopAuthEntity authEntity, String errorMsgStr) {
+        //记录错误次数
+        String refreshTokenKey = StrUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), authEntity.getShopId());
+        redisUtil.incr(refreshTokenKey, 1);
+
+        //获取错误次数
+        Object refreshTokenNumObj = redisUtil.get(refreshTokenKey);
+        if (ObjectUtil.isNotEmpty(refreshTokenNumObj)) {
+            Integer refreshTokenNum = Integer.valueOf(String.valueOf(refreshTokenNumObj));
+            if (refreshTokenNum >= 3) {
+                //记录刷新失败信息
+                shopAuthService.updateRefreshTokenError(authEntity.getId(), errorMsgStr);
+
+                //预警通知
+                WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+                warnMsgInfo.setBizName(PlatformDictEnum.MERCADOLIBRE.getName());
+                warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+                warnMsgInfo.setTitle(StrUtil.format("平台【{}】店铺id{}刷新token失败", PlatformDictEnum.ALI_EXPRESS.getName(), authEntity.getShopId()));
+                warnMsgInfo.setTableName("shop_auth");
+                warnMsgInfo.setTableId(authEntity.getId());
+                warnMsgInfo.setKeyInfo(errorMsgStr);
+                warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+                mqProducerService.sendWarnMsg(warnMsgInfo);
+            }
+        }
     }
 
 

@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.global.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -19,6 +19,6 @@ import java.util.List;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = false)
 public class DescriptionInfo implements Serializable {
-    @JSONField(name ="extended_description")
+    @Alias("extended_description")
     private ExtendedDescription extendedDescription;
 }

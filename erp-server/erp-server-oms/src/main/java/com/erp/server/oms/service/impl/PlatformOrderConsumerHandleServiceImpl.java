@@ -149,6 +149,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             soB2cService.autoCancelOrderForecast(mainEntity);
         }
 
+        // 非平台
+//        if (!mainEntity.hasPlatformWarehouseOrder()
+//                && resultDTO.isUpdateCancel()
+//                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())){
+//            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+//        }
+
         //推送到DMP
         soB2cService.syncOrderToDmp(mainEntity.getId());
     }
@@ -216,7 +223,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())){
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.getDetails()
                     .stream()
                     .map(PlatformOrderDetailDTO::getPlatformSpuNo)
@@ -258,9 +267,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         resultDTO.setShopWarehouseId(shopInfo.getWarehouseId());
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo, skuList);
+
         Boolean isWarehouseEmpty = detailList.stream().filter(d -> StringUtils.isBlank(d.getWarehouseId())).count() > 0;
         resultDTO.setIsWarehouseEmpty(isWarehouseEmpty);
         resultDTO.setWarehouseName(detailList.get(MathUtil.ZERO).getWarehouseName());
+
+        if (CollectionUtils.isEmpty(detailList)){
+            // 拆分后无平台来源明细不更新
+            log.warn("[B2C订单消费] 平台订单【{}】：拆分后无平台来源明细不更新", dto.getPlatformCode());
+            return resultDTO;
+        }
+
         // 毛重(捆绑商品按拆分后计算)
         BigDecimal allNetWeight = BigDecimal.ZERO;
         //长宽高计算
@@ -291,10 +308,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
 
         //客户信息
-        // 根据平台和名称判断
-        CustomerB2cEntity customerB2cEntity = customerB2cService.findByPlatformAndName(dto.getDictPlatform(), receiverEntity.getName(), SourceTypeEnum.SO_B2C.getCode());
-
-        customerB2cEntity = customerB2cService.saveOrUpdateEntity(customerB2cEntity, dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
+        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
 
         customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 

@@ -164,6 +164,12 @@ public class SubcontractOrderDetailDTO implements Serializable {
          * 付款条件名称
          */
         private String paymentConditionName;
+
+
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
     }
 
     /**

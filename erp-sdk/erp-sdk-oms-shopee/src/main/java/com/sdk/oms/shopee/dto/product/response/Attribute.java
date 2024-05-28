@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.ToString;
 
@@ -18,18 +18,18 @@ import java.util.List;
 @ToString(callSuper = true)
 public class Attribute implements Serializable {
 
-    @JSONField(name = "attribute_id")
+    @Alias( "attribute_id")
     private Long id;
 
-    @JSONField(name = "original_attribute_name")
+    @Alias( "original_attribute_name")
     private String attributeName;
 
     /**
      * This is to indicate whether this attribute is mandantory.
      */
-    @JSONField(name = "is_mandatory")
+    @Alias( "is_mandatory")
     private boolean isMandatory;
 
-    @JSONField(name = "attribute_value_list")
+    @Alias( "attribute_value_list")
     List<AttributeValue> attributeValueList;
 }

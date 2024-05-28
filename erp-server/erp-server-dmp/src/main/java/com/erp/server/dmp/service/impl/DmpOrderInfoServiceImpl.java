@@ -169,6 +169,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Boolean skipCancel = StrUtil.isNotBlank(orderInfoEntity.getPlatformOrderStatus()) && orderInfoEntity.getPlatformOrderStatus().contains("取消");
         boolean isGyyPlatform = PlatformEnum.GYY.getDesc().equals(orderInfoEntity.getPlatformSign());
         if (null != dmpOrderInfoEntity) {
+        	if("erp-oms".equals(dmpOrderInfoEntity.getPlatformSign()) && "APPROVE".equals(dmpOrderInfoEntity.getPlatformOrderStatus())) {
+        		return dmpOrderInfoEntity.getId();
+        	}
             // 删除已存在取消订单  和非销售订单
             if (isGyyPlatform && (skipOrderType || skipCancel)) {
                 removeById(dmpOrderInfoEntity.getId());

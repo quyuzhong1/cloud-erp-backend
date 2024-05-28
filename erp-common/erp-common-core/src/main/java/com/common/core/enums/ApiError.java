@@ -76,7 +76,7 @@ public enum ApiError implements Serializable {
     ERROR_1025(1025, "内容过长，请仔细检查修改后再提交"),
     ERROR_1026(1026, "数据已被他人锁住，为避免数据错误，请稍后再试"),
     ERROR_1027(1027, "数据已被他人修改，为避免数据错误，请稍后再试"),
-    ERROR_1028(1028, "名称不能重复"),
+    ERROR_1028(1028, "客户名称不能重复"),
     ERROR_1029(1029, "只有待提交和审核不通过数据支持修改"),
     ERROR_1030(1030, "未找到来源单据"),
     ERROR_1031(1031, "未找到来源单据明细"),
@@ -1005,6 +1005,7 @@ public enum ApiError implements Serializable {
 
 
 
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1099,7 +1100,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_NOT_SPLIT_EXIST(92082,"未找到拆分前B2C销售订单【{}】"),
     ERROR_SO_B2C_REF_CATEGORY_NOT_EXIST(92083,"未找到B2C销售订单分类信息"),
     ERROR_SO_B2C_NOT_INVALID(92084, "单据【{}】不支持取消【{}】"),
-    ERROR_SO_B2C_INVALID(92085, "单据【{}】未作废不支持作废"),
+    ERROR_SO_B2C_INVALID(92085, "单据【{}】未作废不支持反作废"),
     ERROR_SO_B2C_MERGE_SIZE(92086, "请至少选择2条订单数据进行合并"),
     ERROR_SO_B2C_PARENT_NOT_SPLIT(92081,"B2C销售订单【{}】非拆分后订单不支持取消拆分"),
     ERROR_SO_B2C_CHILD_NOT_EXIST(92082,"B2C销售订单【{}】未发现拆分后单据"),
@@ -1145,13 +1146,16 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】未审核不支持配货"),
     ERROR_SO_B2C_APPROVE_NOT_GET_LOGISTICS(92118,"B2C销售订单【{}】未审核不支持获取物流单"),
     ERROR_SO_B2C_UPDATE_SUBMIT(92116,"B2C销售订单【{}】冻结中和已作废不支持提交"),
-    ERROR_SO_B2C_SAVE_SPLIT_INVALID(92117,"冻结中和已作废不支持拆分"),
-    ERROR_SO_B2C_SAVE_MERGE_INVALID(92118,"冻结中和已作废不支持合并"),
+    ERROR_SO_B2C_SAVE_SPLIT_INVALID(92117,"冻结中，已作废，待发货，已发货不支持拆分"),
+    ERROR_SO_B2C_SAVE_MERGE_INVALID(92118,"冻结中，已作废，待发货，已发货不支持合并"),
     ERROR_SO_B2C_SHOPEE_NOT_SPLIT(92119,"B2C销售订单【{}】为shopee订单不支持拆分"),
+    ERROR_SO_B2C_MERCADO_NOT_SPLIT(92119,"B2C销售订单【{}】为mercado订单不支持拆分"),
     ERROR_SO_B2C_MERGE_FBA(92120,"B2C销售订单【{}】为FBA订单不支持合并"),
     ERROR_SO_B2C_MERGE_CAINIAO(92121,"B2C销售订单【{}】为菜鸟官方仓订单不支持合并"),
     ERROR_SO_B2C_MERGE_TAX(92122,"B2C销售订单【{}】为速卖通已税订单不支持合并"),
     ERROR_SO_B2C_SHOPEE_NOT_MERGE(92123,"B2C销售订单【{}】为shopee订单不支持合并"),
+    ERROR_SO_B2C_MERCADO_NOT_MERGE(92123,"B2C销售订单【{}】为mercado订单不支持合并"),
+    ERROR_SO_B2C_TIKTOK_NOT_MERGE(92124,"B2C销售订单【{}】为TikTok订单不支持合并"),
     ERROR_SO_B2C_PAYMENT_NOT_OPERATE(92125,"B2C销售订单【{}】未付款不支持任何操作"),
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
@@ -1179,6 +1183,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
     ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
     PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
+    ERROR_REFRESH_TOKEN(92131,"店铺【{}】，刷新token失败：{}"),
+    ERROR_SHOP_AUTHORIZE_FAIL(92108,"店铺【{}】，授权失败：【{}】"),
 
     SKU_MAPPING_NOT_ALLOW_HISTORY(92131,"当前映射关系在【{}】已存在过，无法修改"),
     IS_SO_OUT_STOCK_NOT_UPDATE_MAPPING(92132,"已生成销售出库单，不允许修改映射关系"),
@@ -1193,6 +1199,16 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_DECLARE_NOT_EXIST(92140,"销售订单【{}】申报信息不存在"),
 
     ERROR_DECLARE_NOT_EXIST(92141,"申报信息不存在"),
+    ERROR_SO_B2C_TIKTOK_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
+    ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
+    ERROR_TIKTOK_SPLIT(92081,"订单【{}】TikTok拆分订单失败"),
+    ERROR_SO_B2C_ORDER_DECLARE_SKU_NO_NOT_EXIST(92142,"销售订单【{}】申报信息SKU不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_CN_NAME_NOT_EXIST(92143,"申报信息SKU【{}】报关中文名不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_EN_NAME_NOT_EXIST(92144,"申报信息SKU【{}】报关英文名不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_PRICE_NOT_EXIST(92145,"申报信息SKU【{}】目的国申报价不能为0"),
+    ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_NOT_EXIST(92146,"申报信息SKU【{}】目的国申报价币种不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_SYM_NOT_EXIST(92147,"申报信息SKU【{}】目的国申报价币种符号不存在"),
+    ERROR_SO_B2C_ORDER_DECLARE_WEIGHT_NOT_EXIST(92148,"申报信息SKU【{}】重量不能为0"),
 
     /**
      * TMS 错误
@@ -1261,7 +1277,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL(94043,"物流商【{}】不支持分开单独打印官方配货单"),
     LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
     ERROR_CFG_COST_EMPTY(94045,"未发现【{}】费用配置信息"),
-
+    ERROR_LOGISTICS_CHANNEL_WAREHOUSE_NOT_NULL(94046,"指定仓库不能为空"),
 
 
 

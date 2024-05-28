@@ -14,7 +14,7 @@ import javax.annotation.Resource;
 @Slf4j
 @RestController
 @LogSystemModule("物流费用单feign接口")
-@RequestMapping("/feign/logisticsBill")
+@RequestMapping("/feign/logisticsBillCost")
 public class LogisticsBillCostFeignController {
 
     @Resource

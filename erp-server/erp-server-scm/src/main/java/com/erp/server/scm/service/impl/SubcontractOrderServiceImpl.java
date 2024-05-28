@@ -21,6 +21,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -40,16 +41,13 @@ import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
-import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.wms.feign.SubcontractIssueFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
 import com.erp.server.scm.mapper.SubcontractOrderMapper;
@@ -126,7 +124,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     private WorkflowFeign workflowFeign;
 
     @Resource
-    private SysDictFeign sysDictFeign;
+    private WarehouseLocationFeign warehouseLocationFeign;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -574,6 +572,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //供应商付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList =  kingdeePaymentConditionService.list();
 
+        //仓位信息
+        List<String> warehouseLocationCodeList = detailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getWarehouseLocation())).map(SubcontractOrderDetailEntity::getWarehouseLocation).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode,warehouseLocationCodeList).list();
 
         List<SubcontractOrderDetailDTO.ViewDTO> parentDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ViewDTO.class, parentList);
         for (SubcontractOrderDetailDTO.ViewDTO viewDTO : parentDTOList) {
@@ -632,6 +633,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 //付款条件
                 String childPaymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(childViewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 childViewDTO.setPaymentConditionName(childPaymentConditionName);
+
+                //仓位名称
+                String warehouseLocationName = warehouseLocationList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),childViewDTO.getWarehouseId()) && StrUtil.equals(obj.getCode(), childViewDTO.getWarehouseLocation())).map(WarehouseLocationEntity::getName).findFirst().orElse("");
+                childViewDTO.setWarehouseLocationName(warehouseLocationName);
             }
 
             viewDTO.setChildList(childDTOList);
@@ -687,6 +692,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 searchDTO.setSkuId(dto.getSkuId());
                 searchDTO.setSkuNo(dto.getSkuNo());
                 searchDTO.setSupplierId(dto.getSupplierId());
+                searchDTO.setPurchaseOrgId(dto.getPurchaseOrgId());
                 searchDTO.setPurchaseQty(dto.getQty().intValue() );
                 Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(searchDTO);
                 List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> value = pair.getValue();
@@ -804,11 +810,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
                 if (!addDetailDTO.getIsGift()) {
                     //供应商报价信息
-                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-                    searchDTO.setSkuId(addDetailDTO.getSkuId());
-                    searchDTO.setSupplierId(addDetailDTO.getSupplierId());
-                    searchDTO.setPurchaseQty(addDetailDTO.getQty());
-                    searchDTO.setSkuNo(addDetailDTO.getSkuNo());
+                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(addDetailDTO.getQty(),addDetailDTO.getSkuId(),addDetailDTO.getSkuNo(),addDetailDTO.getSupplierId(),addDetailDTO.getPurchaseOrgId());
                     List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
                     PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
                     poDetailAddDTO.setCurrency(viewDTO.getCurrency());
