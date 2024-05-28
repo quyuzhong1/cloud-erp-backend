@@ -3767,6 +3767,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             });
             //发送金蝶
             sendPushTask(entityList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            syncWangDianProductDetailService.syncDataToWangDian(entityList);
         } else {
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
             //新增审核不通过意见

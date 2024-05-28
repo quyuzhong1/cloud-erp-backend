@@ -27,7 +27,9 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
@@ -46,6 +48,11 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
 
     @Override
     public void syncDataToWangDian(ProductDetailEntity entity) {
+        DmpPushTaskEntity dmpPushTask = getGoodsBatchPushDTO(entity);
+        sendMTask(Collections.singletonList(dmpPushTask));
+    }
+
+    private DmpPushTaskEntity getGoodsBatchPushDTO(ProductDetailEntity entity) {
         ProductInfoEntity info = productInfoService.getById(entity.getProductId());
         ProductPurchaseEntity productPurchase = productPurchaseService.getBySkuId(entity.getId());
         ProductPackEntity productPack = productPackService.getBySkuId(entity.getId());
@@ -63,7 +70,24 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         specList.setImgUrl(entity.getImagesUrl());
 //        specList.setUnitName(entity.getUnitName());
         dto.setSpecList(Collections.singletonList(specList));
-        sendMqAndSaveTask(entity, dto);
+        //添加推送任务
+        DmpPushTaskFeignDTO taskEntity = new DmpPushTaskFeignDTO();
+        taskEntity.setSourceId(entity.getId());
+        taskEntity.setSourceCode(entity.getSkuNo());
+        taskEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+        taskEntity.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
+        taskEntity.setMqTag(RocketMqTagEnum.WDT_PRODUCT_DETAIL_TAG.getName());
+        taskEntity.setMqData(JSONUtil.toJsonStr(dto));
+        taskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskEntity.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
+        taskEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+        return dmpMqFeign.saveTask(taskEntity);
+    }
+
+    @Override
+    public void syncDataToWangDian(List<ProductDetailEntity> entityList) {
+        List<DmpPushTaskEntity> taskEntities = entityList.stream().map(this::getGoodsBatchPushDTO).collect(Collectors.toList());
+        sendMTask(taskEntities);
     }
 
 
@@ -84,23 +108,11 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         }
     }
 
-    private void sendMqAndSaveTask(ProductDetailEntity entity, GoodsBatchPushDTO dto) {
-        //添加推送任务
-        DmpPushTaskFeignDTO taskEntity = new DmpPushTaskFeignDTO();
-        taskEntity.setSourceId(entity.getId());
-        taskEntity.setSourceCode(entity.getSkuNo());
-        taskEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
-        taskEntity.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-        taskEntity.setMqTag(RocketMqTagEnum.WDT_PRODUCT_DETAIL_TAG.getName());
-        taskEntity.setMqData(JSONUtil.toJsonStr(dto));
-        taskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskEntity.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-        taskEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
-        DmpPushTaskEntity dmpPushTask = dmpMqFeign.saveTask(taskEntity);
+    private void sendMTask(List<DmpPushTaskEntity> dmpPushTask) {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTask));
+                dmpMqFeign.sendTask(dmpPushTask);
             }
         });
     }
