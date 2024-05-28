@@ -38,6 +38,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -811,28 +812,47 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> retryFalseDelivery(String soB2cId) {
-        List<BatchResultDTO> resultList = new ArrayList<>(1);
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySoB2cId(soB2cId);
+    public BatchResultDTO retryFalseDelivery(String soB2cId) {
+//        List<BatchResultDTO> resultList = new ArrayList<>(1);
+//        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySoB2cId(soB2cId);
+        // 直接重新触发标记发货
+        // 调用第三方平台SDK标记发货(独立事务)
+        SoB2cEntity mainEntity = soB2cFeign.getById(soB2cId);
+        if (null == mainEntity){
+            return BatchResultDTO.fail(soB2cId, soB2cId, "订单不存在");
+        }
         String errorType = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
         SoB2cErrorEntity soB2cError = soB2cFeign.getB2cError(soB2cId, errorType);
         if (null == soB2cError){
-            return resultList;
+            return BatchResultDTO.fail(soB2cId, soB2cId, "无异常信息");
         }
-        SoB2cDeliveryEntity deliveryEntity = soB2cDeliveryList.stream()
-                .filter(e -> !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equalsIgnoreCase(e.getStatus()))
-                .findFirst()
-                .orElse(null);
-        SoB2cEntity mainEntity = soB2cFeign.getById(soB2cId);
-        // 手动发货
-        if (null == deliveryEntity){
-            // 非取消的发货单不存在
-            return Collections.singletonList(BatchResultDTO.fail(soB2cId, mainEntity.getCode(), ApiError.B2C_SO_DELIVERY_NOT_EXISTS.msg));
+        // 移除已有异常
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setType(errorType);
+        deleteDTO.setMainId(soB2cId);
+        soB2cFeign.deleteError(deleteDTO);
+
+        String soCode = mainEntity.getCode();
+        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+        platformShipOrderDTO.setSoB2cId(soB2cId);
+        platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
+        try {
+            PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+            return BatchResultDTO.success(soB2cId, soCode, "重新标记发货成功");
+        } catch (Exception e) {
+            log.error("【标记发货重试】销售单【{}】 标记发货失败 >>>错误信息{}", soCode, ExceptionUtil.stacktraceToString(e));
+            // 独立异常
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
+                    soB2cId,
+                    SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode(),
+                    soB2cId,
+                    e.getMessage(),
+                    ExceptionUtil.stacktraceToString(e),
+                    ""
+            );
+            soB2cFeign.addSoB2cError(addError);
+            return BatchResultDTO.fail(soB2cId, soCode, e.getMessage());
         }
-        BatchResultDTO resultDTO = this.manualDelivery(deliveryEntity.getId());
-
-        return Collections.singletonList(resultDTO);
-
     }
 
     @Override

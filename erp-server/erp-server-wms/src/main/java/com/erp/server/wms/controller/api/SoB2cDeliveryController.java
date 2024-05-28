@@ -254,18 +254,13 @@ public class SoB2cDeliveryController extends BaseController {
         //id 为销售订单id
         for (String id : dto.getIds()) {
             try {
-                List<BatchResultDTO> resultList = soB2cDeliveryService.retryFalseDelivery(id);
-                resultDTOS.addAll(resultList);
+                BatchResultDTO resultDTO = soB2cDeliveryService.retryFalseDelivery(id);
+                resultDTOS.add(resultDTO);
             } catch (Exception e) {
                 log.error("发货单 虚假发货失败", e);
                 resultDTOS.add(BatchResultDTO.fail(id, id, StrUtil.format("标记发货失败：{}", e.getMessage())));
                 continue;
             }
-
-            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-            deleteDTO.setType(type);
-            deleteDTO.setMainId(id);
-            soB2cFeign.deleteError(deleteDTO);
 
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
