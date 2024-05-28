@@ -730,6 +730,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 							}
 							wmsDataCompareTempEntity.setImportDataJson(JSON.toJSONString(tempData));
 							wmsDataCompareTempEntity.setPkFieldValue(sb.length() > 0 ? sb.toString().substring(1) : "");
+							wmsDataCompareTempEntity.setCompareResult("");
 							wmsDataCompareTempEntityList.add(wmsDataCompareTempEntity);
 						}
 						currParseOffset = currParseOffset + wmsDataCompareTempEntityList.size();
@@ -816,6 +817,8 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			systemDataMapList = new ArrayList<>();
 		}
 		
+		Sequence sequence = new Sequence();
+		
 		Map<String, Map<String, String>> importPkDataMaps = new HashMap<>();
 		Map<String, List<WmsDataCompareTempEntity>> pkFieldValueImportDataMaps = wmsDataCompareTempService.list(Wrappers.<WmsDataCompareTempEntity>lambdaQuery()
 				.eq(WmsDataCompareTempEntity::getTaskId, id)
@@ -849,6 +852,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			Map<String, String> importData = importPkDataMaps.get(pkFieldValue);
 			
 			addWmsDataCompareTempEntity = new WmsDataCompareTempEntity();
+			addWmsDataCompareTempEntity.setId(Long.valueOf(sequence.nextId()).toString());
 			addWmsDataCompareTempEntity.setTaskId(id);
 			addWmsDataCompareTempEntity.setPkFieldValue(pkFieldValue);
 			addWmsDataCompareTempEntity.setCompareStatus(WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
@@ -873,7 +877,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		
 		for(Map.Entry<String, Map<String, String>> importPkDataMap : importPkDataMaps.entrySet()) {
 			addWmsDataCompareTempEntity = new WmsDataCompareTempEntity();
-			
+			addWmsDataCompareTempEntity.setId(Long.valueOf(sequence.nextId()).toString());
 			addWmsDataCompareTempEntity.setTaskId(id);
 			addWmsDataCompareTempEntity.setPkFieldValue(importPkDataMap.getKey());
 			addWmsDataCompareTempEntity.setCompareStatus(WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
@@ -902,6 +906,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				.eq(WmsDataCompareTempEntity::getMainDataType, WmsDataCompareTempMainDataTypeEnum.IMPORT.getCode()))
 				.stream().collect(Collectors.toMap(WmsDataCompareTempEntity::getPkFieldValue , w -> w));
 		
+		Sequence sequence = new Sequence();
 		List<WmsDataCompareTempEntity> insertTempEntityList = new ArrayList<>();
 		List<WmsDataCompareTempEntity> updateTempEntityList = new ArrayList<>();
 		if(CollUtil.isNotEmpty(systemDataMapList)) {
@@ -956,6 +961,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				if(CollUtil.isNotEmpty(systemDataList)) {
 					for(Map<String, String> systemData : systemDataList) {
 						importDataTemp = new WmsDataCompareTempEntity();
+						importDataTemp.setId(Long.valueOf(sequence.nextId()).toString());
 						importDataTemp.setTaskId(id);
 						importDataTemp.setPkFieldValue(pkFieldValue);
 						importDataTemp.setMainDataType(WmsDataCompareTempMainDataTypeEnum.SYSTEM.getCode());
