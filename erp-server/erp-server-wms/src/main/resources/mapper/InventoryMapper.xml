@@ -25,7 +25,7 @@
                t.intransit_qty AS intransitQty,
                t.waitqc_qty AS waitqcQty,
                t.real_qty AS realQty,
-               t.warehouse_location AS warehouse_location
+               t.warehouse_location AS warehouseLocation
         from (
             select max(m.warehouse_location) AS warehouse_location, max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
                 sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
@@ -117,7 +117,7 @@
                t.intransit_qty AS intransitQty,
                t.waitqc_qty AS waitqcQty,
                t.real_qty AS realQty,
-               t.warehouse_location AS warehouse_location
+               t.warehouse_location AS warehouseLocation
         from (
         select max(m.warehouse_location) AS warehouse_location, max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
         sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (

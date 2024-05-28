@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class OrderEntity extends CleanBaseDTO {
 
     private String _id;
@@ -471,6 +470,14 @@ public class OrderEntity extends CleanBaseDTO {
      */
     private LocalDateTime lastPushDeliveryTime;
 
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
+    public OrderEntity() {
+        this.isValid = Boolean.TRUE;
+    }
 
     @Override
     public String toString() {

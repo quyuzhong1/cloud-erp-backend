@@ -452,8 +452,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
 
-        //推送到DMP
-        this.syncOrderToDmp(soB2cEntity.getId());
         return soB2cEntity;
     }
 
@@ -890,9 +888,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLogByObj(old, soB2cEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
-
-        //推送到DMP
-        this.syncOrderToDmp(soB2cEntity.getId());
 
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -4780,6 +4775,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cDeclareProductService.removeBySoId(id);
         String msg = "销售订单【{}】反审核流程";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), id, "反审核流程");
+
+        //推送到DMP
+        this.syncOrderToDmp(entity.getId());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "反审核流程");
     }
 
@@ -6891,7 +6889,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     /**
      * 同步订单到DMP
      */
-    private void syncOrderToDmp(String id) {
+    @Override
+    public void syncOrderToDmp(String id) {
         SoB2cDTO.ViewDTO view = this.view(id);
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();

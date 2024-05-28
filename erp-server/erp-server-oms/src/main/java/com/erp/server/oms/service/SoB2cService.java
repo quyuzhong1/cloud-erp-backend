@@ -915,4 +915,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> id);
 
     List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> id);
+
+    /**
+     * 同步订单到DMP
+     */
+    void syncOrderToDmp(String id);
 }
