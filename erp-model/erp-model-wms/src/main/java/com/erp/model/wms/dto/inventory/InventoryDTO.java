@@ -1494,7 +1494,7 @@ public class InventoryDTO implements Serializable {
          */
         private List<PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList;
 
-        private Integer index = 99999;
+        private Integer index;
     }
 
     @Data
