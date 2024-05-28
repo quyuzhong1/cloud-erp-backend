@@ -72,6 +72,7 @@ public class WmsDataCompareUtils {
         		dto.getDatas().addAll(makeDataInputStream);
         	}
         }
+        dto.setImportDataCount(dto.getDatas().size());
         return dto;
 	}
 	
@@ -244,7 +245,7 @@ public class WmsDataCompareUtils {
 			Workbook workbook = sheet.getWorkbook();
 			int rowIndex = cell.getRowIndex();
 			int columnIndex = cell.getColumnIndex();
-			if(currCellStyleCount > 64000) {
+			if(currCellStyleCount > 60000) {
 				return;
 			}
 			String key = rowIndex + "-" + columnIndex;

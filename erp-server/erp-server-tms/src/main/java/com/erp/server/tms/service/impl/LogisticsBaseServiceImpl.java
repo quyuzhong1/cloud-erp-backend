@@ -412,6 +412,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             if (CollectionUtils.isEmpty(data)) {
                 return batchResultDTOS;
             }
+            //先暂停该渠道数据，然后进行更新动作
+            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
+
             for (ShopAuthEntity shopAuthEntity : data) {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
                 Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
@@ -420,8 +423,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 }
                 chanelQueryVO.setAuthMap(map);
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
-                //先暂停该渠道数据，然后进行更新动作
-                logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
+
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
 //                        logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
@@ -456,6 +458,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             if (CollectionUtils.isEmpty(data)) {
                 return batchResultDTOS;
             }
+            //先暂停该渠道数据，然后进行更新动作
+            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
+
             for (ShopAuthEntity shopAuthEntity : data) {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
                 Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
@@ -467,8 +472,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 log.info("授权信息：{}",JSONObject.toJSON(chanelQueryVO));
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
                 log.info("获取渠道结果：{}",JSONObject.toJSON(channels));
-                //先暂停该渠道数据，然后进行更新动作
-                logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
+
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
@@ -504,6 +508,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             return Collections.emptyList();
         }
 
+        //先暂停该渠道数据，然后进行更新动作
+        logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
+
         List<BatchResultDTO> batchResultDTOS = new ArrayList<>();
         LogisticsService service = logisticsRegistry.getHandler(platform);
         for (ShopAuthEntity shopAuthEntity : data) {
@@ -512,8 +519,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             authMap.put("shopId", shopAuthEntity.getShopId());
             chanelQueryVO.setAuthMap(authMap);
             ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
-            //先暂停该渠道数据，然后进行更新动作
-            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
+
             if (channels.isSuccess()) {
                 channels.getData().forEach(logisticsSaleChannelEntity -> {
                     logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
@@ -590,14 +596,14 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             LogisticsService service = logisticsRegistry.getHandler(platform);
             List<ShopAuthEntity> data = result.getData();
             if (CollectionUtils.isEmpty(data)) return batchResultDTOS;
+            //先暂停该渠道数据，然后进行更新动作
+            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
             for (ShopAuthEntity shopAuthEntity : data) {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
                 Map<String, String> map = new HashMap<>();
                 map.put("shopId", shopAuthEntity.getShopId());
                 chanelQueryVO.setAuthMap(map);
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
-                //先暂停该渠道数据，然后进行更新动作
-                logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
 //                        logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
