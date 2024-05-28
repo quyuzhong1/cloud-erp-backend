@@ -4313,58 +4313,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * @param id
-     * @return Boolean
-     * @description: 配货仓库规则
-     * @author Will
-     * @date: 2023/8/24 15:19
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
-        SoB2cEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
-
-        //仓库匹配规则结果
-        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
-        //配货规则是否通过
-        Boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
-        if (!distributionSuccess) {
-            //仓库规则不匹配,标识异常
-            updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
-            //明细设置仓库规则不匹配
-            List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
-            soB2cDetailService.updateIsMatchWarehouseRule(id,detailIdList);
-            return Boolean.FALSE;
-        }
-        if(StringUtils.isNotBlank(ruleMatchResult.getName())){
-            String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
-        }
-        //更新明细仓库信息
-        String warehouseId = ruleMatchResult.getWarehouseId();
-        //返回了仓库则更新仓库为空的数据
-        if (StrUtil.isNotBlank(warehouseId)) {
-            for (SoB2cDetailEntity detailEntity : detailList) {
-                if (StrUtil.isNotBlank(detailEntity.getWarehouseId())) {
-                    continue;
-                }
-                detailEntity.setWarehouseId(warehouseId);
-            }
-            soB2cDetailService.updateWarehouse(detailList);
-        }
-        try {
-            //走物流规则
-            SoB2cDTO.RuleResultDTO ruleLogistics = logisticsRule(id, map);
-        } catch (Exception e) {
-            log.error("物流规则报错>>>{}", e.getMessage());
-
-        }
-
-        return Boolean.TRUE;
-    }
-
-    /**
      * @param id  订单id
      * @param map 校验的map
      * @return
@@ -6157,7 +6105,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return ruleResult;
     }
 
-
+    /**
+     * 仓库规则匹配
+     * @param id
+     * @param detailList
+     * @param map
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -6171,43 +6125,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             handleMatchJson(id, detailList, map);
         }
         //仓库匹配规则结果
-        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
-
-        //配货规则是否通过
-        Boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
-        Boolean isRuleMatch = Boolean.FALSE;
-        if (!distributionSuccess) {
-            //仓库规则不匹配,标识异常
-            updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
-            //明细设置仓库规则不匹配
-            List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
-            soB2cDetailService.updateIsMatchWarehouseRule(id,detailIdList);
-        } else {
-            isRuleMatch = Boolean.TRUE;
-            if(StringUtils.isNotBlank(ruleMatchResult.getName())){
-                String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
-            }
-            //更新明细仓库信息
-            String warehouseId = ruleMatchResult.getWarehouseId();
-            //返回了仓库则更新仓库为空的数据
-            if (StrUtil.isNotBlank(warehouseId)) {
-                for (SoB2cDetailEntity detailEntity : detailList) {
-                    if (StrUtil.isNotBlank(detailEntity.getWarehouseId())) {
-                        continue;
-                    }
-                    detailEntity.setWarehouseId(warehouseId);
-                }
-                soB2cDetailService.updateWarehouse(detailList);
-            }
-        }
-
-        SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
-        ruleResult.setId(id);
-        ruleResult.setIsRuleMatch(isRuleMatch);
-        ruleResult.setMap(map);
-        ruleResult.setSoB2cDetailList(detailList);
-        return ruleResult;
+        return ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
     }
 
     /**

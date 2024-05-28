@@ -20,10 +20,13 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -211,32 +214,69 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
 
     /**
      * 获取到发货仓库匹配的结果
-     *
+     * 存在明细中一个匹配成功即匹配结果成功
      * @param map
      * @return
      */
     @Override
-    public RuleDeliveryWarehouseDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String,Object> map) {
+    public SoB2cDTO.RuleResultDTO getRuleOrderMatchResult(Map<String,Object> map) {
+        String soId = Objects.nonNull(map.get("id")) ? map.get("id").toString() : null;
         //根据优先级获取规则列表
         List<RuleDeliveryWarehouseEntity> ruleDeliveryWarehouselList = this.listOrderByPriority();
         List<String> ruleIdList = ruleDeliveryWarehouselList.stream().map(RuleDeliveryWarehouseEntity::getId).collect(Collectors.toList());
         List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
-        //deliveryWarehouseId
         //这个表示有仓库id了就不用匹配了 返回成功
         mapList = mapList.stream().filter(m -> m.get("deliveryWarehouseId") == null ||
                         StringUtils.isBlank(m.getOrDefault("deliveryWarehouseId", "").toString())).
                 collect(Collectors.toList());
         if(CollectionUtils.isEmpty(mapList)){
-            return new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
+            return SoB2cDTO.RuleResultDTO.builder().id((String) map.get("id")).isRuleMatch(Boolean.FALSE).map(map).build();
         }
-        map.put("detailList",mapList);
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
+        Boolean isRuleMatch = Boolean.FALSE;
+        //明细规则匹配
+        for(Map<String, Object> detailMap : mapList){
+            String detailId = Objects.nonNull(detailMap.get("detailId")) ? detailMap.get("detailId").toString() : null;
+            List<String> detailIdList = StringUtils.isNotEmpty(detailId) ? Collections.singletonList(detailId) : null;
+            RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = compareRules(detailMap, ruleDeliveryWarehouselList, allRuleConditionList);
+            //配货规则是否通过
+            Boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
+            if (!distributionSuccess) {
+                //未匹配到条件
+                 soB2cDetailService.updateIsMatchWarehouseRule(soId,detailIdList);
+            } else {
+                isRuleMatch = Boolean.TRUE;
+                if(StrUtil.isNotBlank(ruleMatchResult.getName())){
+                    String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "配货操作");
+                }
+                //更新明细仓库信息
+                String warehouseId = ruleMatchResult.getWarehouseId();
+                //返回了仓库则更新仓库为空的数据
+                if (StrUtil.isNotBlank(warehouseId)) {
+                    soB2cDetailService.updateWarehouse(soId, detailId, warehouseId);
+                }
+            }
+        }
+        SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
+        ruleResult.setId(soId);
+        ruleResult.setIsRuleMatch(isRuleMatch);
+        ruleResult.setMap(map);
+        return ruleResult;
+    }
+
+    /**
+     * 匹配规则
+     * @param detailMap
+     * @param ruleDeliveryWarehouselList
+     * @param allRuleConditionList
+     * @return
+     */
+    private RuleDeliveryWarehouseDTO.RuleMatchResultDTO compareRules(Map<String, Object> detailMap, List<RuleDeliveryWarehouseEntity> ruleDeliveryWarehouselList, List<RuleConditionEntity> allRuleConditionList) {
         for (RuleDeliveryWarehouseEntity item : ruleDeliveryWarehouselList) {
-            String warehouseId = item.getWarehouseId();
-            String ruleId = item.getId();
             List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
-                    filter(r -> r.getRuleId().equals(ruleId)).
+                    filter(r -> r.getRuleId().equals(item.getId())).
                     sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
@@ -244,20 +284,19 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
             long isLackCount = conditionElementList.stream().filter(c -> c.getField().equals("isOutStock")).count();
             //表示是有缺货的字段
             if (isLackCount > 0) {
-                handleLackData(warehouseId,map);
+                handleLackData(item.getWarehouseId(),detailMap);
             }
             //获取到表达式
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            Boolean matchResult = spElServer.matchDetailExpressionByConditionList(conditionElementList, detailMap);
             if (matchResult) {
                 RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
-                ruleMatchResult.setWarehouseId(warehouseId);
-                ruleMatchResult.setMap(map);
+                ruleMatchResult.setWarehouseId(item.getWarehouseId());
+                ruleMatchResult.setMap(detailMap);
                 ruleMatchResult.setName(item.getName());
                 return ruleMatchResult;
             }
         }
         return null;
-
     }
 
 
@@ -265,9 +304,9 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
      * 处理缺货数据的map
      * 将仓库id 放到该值中 在看是否缺货
      * @param warehouseId
-     * @param map
+     * @param detailMap
      */
-    private void handleLackData(String warehouseId, Map<String, Object> map) {
+    private void handleLackData(String warehouseId, Map<String, Object> detailMap) {
 
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
@@ -275,48 +314,40 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
                 ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()): Lists.newArrayList();
 
         String usable = InventoryStatusEnum.USABLE.getCode();
-
-        List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.getOrDefault("detailList",new ArrayList<>(0));
-        List<String> skuIdList = mapList.stream().filter(m -> m.get("skuId") != null && StringUtils.isNotBlank(m.get("skuId").toString())).
-                map(m -> m.get("skuId").toString()).collect(Collectors.toList());
-
-        List<String> detailIdList = mapList.stream().filter(m -> m.get("detailId") != null && StringUtils.isNotBlank(m.get("detailId").toString())).
-                map(m -> m.get("detailId").toString()).collect(Collectors.toList());
+        String skuId = Objects.nonNull(detailMap.get("skuId")) ? detailMap.get("skuId").toString() : "";
+        String detailId = Objects.nonNull(detailMap.get("detailId")) ? detailMap.get("detailId").toString() : "";
+        //整理传参
+        List<String> warehouseIdList = StringUtils.isNotEmpty(warehouseId) ? Collections.singletonList(warehouseId) : null;
+        List<String> skuIdList = StringUtils.isNotEmpty(skuId) ? Collections.singletonList(skuId) : null;
+        List<String> detailIdList = StringUtils.isNotEmpty(detailId) ? Collections.singletonList(detailId) : null;
         //即时库存数据
         InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-        skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode()));
-        List<String> warehouseIdList = Arrays.asList(warehouseId);
+        skuInventoryDTO.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
         skuInventoryDTO.setWarehouseIdList(warehouseIdList);
         skuInventoryDTO.setSkuIdList(skuIdList);
         //即时库存的数据
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
-
         /**
          *  已付款且未提交发货且未作废的订单SKU的发货数量
          *  根据SKU、仓库、仓位查询SKU数量
          */
-        SoB2cDetailDTO.WaitDeliveryParamDTO paramDTO = new SoB2cDetailDTO.WaitDeliveryParamDTO(skuIdList,warehouseIdList,detailIdList);
+        SoB2cDetailDTO.WaitDeliveryParamDTO paramDTO = new SoB2cDetailDTO.WaitDeliveryParamDTO(skuIdList, warehouseIdList, detailIdList);
         List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList = soB2cDetailService.listWaitDeliveryQty(paramDTO);
-        for (Map<String, Object> item : mapList) {
-            String skuId = item.get("skuId") != null ? item.get("skuId").toString() : "";
-            //数量
-            Integer qty = item.get("skuQty") != null ? Integer.valueOf(item.get("skuQty").toString()) : 0;
-            //可用库存
-            Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(skuId)
-                            && obj.getWarehouseId().equals(warehouseId)
-                            && usable.equals(obj.getInventoryStatus()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                    .orElse(MathUtil.ZERO);
-            //待发货数量
-            Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId)
-                            && StrUtil.equals(obj.getWarehouseId(), warehouseId))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
+        //数量
+        int qty = detailMap.get("skuQty") != null ? Integer.parseInt(detailMap.get("skuQty").toString()) : 0;
+        //可用库存
+        int usableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(skuId)
+                        && obj.getWarehouseId().equals(warehouseId)
+                        && usable.equals(obj.getInventoryStatus()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                .orElse(MathUtil.ZERO);
+        //待发货数量
+        Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId)
+                        && StrUtil.equals(obj.getWarehouseId(), warehouseId))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
 
-            Boolean isOutStock = (qty> useableQty - waitDeliveryQty) && !ignoreInventorySkuIds.contains(skuId) ;
-            item.put("isOutStock", isOutStock);
-        }
-        long isOutStockCount = mapList.stream().filter(m-> (boolean) m.get("isOutStock")).count();
-        map.put("isOutStock", isOutStockCount > 0);
+        Boolean isOutStock = (qty > (usableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(skuId) ;
+        detailMap.put("isOutStock", isOutStock);
     }
 
     /**

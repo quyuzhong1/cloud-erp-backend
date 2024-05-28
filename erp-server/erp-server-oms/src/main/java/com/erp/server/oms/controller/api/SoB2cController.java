@@ -957,9 +957,14 @@ public class SoB2cController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     *  仓库规则匹配测试方法
+     * @param id
+     * @return
+     */
     @GetMapping("/getJson")
     public ApiResult<Map<String, Object>> getJson(@RequestParam("id") String id) {
-        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.warehouseRule(id, new ArrayList<>(0),new HashMap<>());
+        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.warehouseRule(id, null,new HashMap<>());
         System.out.println(JSONUtil.toJsonStr(logisticsRuleResult));
         return success();
 

@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 import cn.hutool.json.JSONObject;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.RuleOrderApprovalDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -70,5 +71,5 @@ public interface RuleDeliveryWarehouseService extends SuperService<RuleDeliveryW
      * @param map
      * @return
      */
-    RuleDeliveryWarehouseDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String,Object> map);
+    SoB2cDTO.RuleResultDTO getRuleOrderMatchResult(Map<String,Object> map);
 }
