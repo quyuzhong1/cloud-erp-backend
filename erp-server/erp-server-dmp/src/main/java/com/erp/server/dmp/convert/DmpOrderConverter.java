@@ -188,6 +188,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "companyId", source = "orgId"),
             @Mapping(target = "companyName", source = "orgName"),
             @Mapping(target = "platformCreateTime", source = "platformOrderCreateTime"),
+            @Mapping(target = "shippingFee", source = "viewDTO.shippingFee"),
     })
     DmpOrderInfoEntity soB2cToDmpOrder(SoB2cDTO.ViewDTO viewDTO);
 
