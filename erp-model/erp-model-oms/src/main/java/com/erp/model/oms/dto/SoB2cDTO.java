@@ -594,6 +594,11 @@ public class SoB2cDTO implements Serializable {
         private String platformOrderCreateTime;
 
         /**
+         * 运费收入
+         */
+        private String shippingFee;
+
+        /**
          * 物流信息
          */
         private SoB2cLogisticsDTO.ViewDTO logisticsDTO;
