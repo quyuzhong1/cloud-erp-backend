@@ -6129,7 +6129,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             handleMatchJson(id, detailList, map);
         }
         //仓库匹配规则结果
-        return ruleDeliveryWarehouseService.getRuleOrderMatchResult(id,map);
+        return ruleDeliveryWarehouseService.getRuleOrderMatchResult(entity,detailList,map);
     }
 
     /**
@@ -7105,14 +7105,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
-    }
-
-    @Override
-    public Boolean updateIsMatchWarehouseRuleById(String id) {
-        if (ObjectUtil.isEmpty(id)) {
-            return Boolean.TRUE;
-        }
-        return lambdaUpdate().eq(SoB2cEntity::getId,id).set(SoB2cEntity::getIsMatchWarehouseRule,Boolean.FALSE).update();
     }
 
     @Override

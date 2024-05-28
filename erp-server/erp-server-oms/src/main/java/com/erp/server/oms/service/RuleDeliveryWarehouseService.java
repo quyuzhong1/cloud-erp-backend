@@ -1,13 +1,13 @@
 package com.erp.server.oms.service;
 import cn.hutool.json.JSONObject;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -69,9 +69,10 @@ public interface RuleDeliveryWarehouseService extends SuperService<RuleDeliveryW
 
     /**
      * 获取到订单审核匹配结果
-     * @param id
+     * @param entity
+     * @param detailList
      * @param map
      * @return
      */
-    SoB2cDTO.RuleResultDTO getRuleOrderMatchResult(String id, Map<String, Object> map);
+    SoB2cDTO.RuleResultDTO getRuleOrderMatchResult(SoB2cEntity entity, List<SoB2cDetailEntity> detailList,Map<String, Object> map);
 }

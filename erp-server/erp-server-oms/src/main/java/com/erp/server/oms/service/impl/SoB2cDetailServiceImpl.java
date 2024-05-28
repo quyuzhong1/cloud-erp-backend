@@ -556,12 +556,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (CollectionUtils.isEmpty(detailIdList)) {
             return Boolean.TRUE;
         }
-        //更新主表库存匹配状态
-        Boolean isMatchWarehouseRule = soB2cService.updateIsMatchWarehouseRuleById(mainId);
-        if (!isMatchWarehouseRule) {
-            throw new ServiceException(ApiError.SO_B2C_IS_MATCH_WAREHOUSE_RULE);
-        }
-
         return  lambdaUpdate()
                 .in(SoB2cDetailEntity::getId,detailIdList)
                 .set(SoB2cDetailEntity::getIsMatchWarehouseRule,Boolean.FALSE)
@@ -655,17 +649,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public void updateWarehouse(String soId, String detailId, String warehouseId) {
-        if (StringUtils.isBlank(soId) || StringUtils.isBlank(detailId) || StringUtils.isBlank(warehouseId)){
+    public void updateWarehouse(SoB2cEntity entity, SoB2cDetailEntity detail, String warehouseId) {
+        String soId = Objects.nonNull(entity) ? entity.getId() : null;
+        String detailId = Objects.nonNull(detail) ? detail.getId() : null;
+        if (Objects.isNull(entity) || Objects.isNull(detail) || StringUtils.isBlank(warehouseId)){
             throw new ServiceException(String.format("销售订单id[%s]明细id[%s]仓库id[%s],不能为空",soId,detailId,warehouseId));
-        }
-        SoB2cEntity soB2c = soB2cService.getById(soId);
-        if (Objects.isNull(soB2c)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-        }
-        SoB2cDetailEntity detailEntity = soB2cDetailService.getById(detailId);
-        if (Objects.isNull(detailEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));
@@ -679,7 +667,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_EXIST_ORG,warehouseList.stream().map(WarehouseDTO.UpdateDTO::getName).collect(Collectors.joining(",")));
         }
         //SKU对照表信息
-        SkuMappingDTO.ListSkuParamDTO dto = new SkuMappingDTO.ListSkuParamDTO(detailEntity.getSkuNo(), warehouseId,soB2c.getDictPlatform());
+        SkuMappingDTO.ListSkuParamDTO dto = new SkuMappingDTO.ListSkuParamDTO(detail.getSkuNo(), warehouseId,entity.getDictPlatform());
         ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
         listSkuParamList.setList(Collections.singletonList(dto));
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
@@ -696,16 +684,17 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             warehouseOrgName = codeDTO.getName();
         }
         //库存SKU
-        skuMappingList.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), detailEntity.getSkuId())
+        skuMappingList.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), detail.getSkuId())
                 && StrUtil.equals(obj.getWarehouseId(), warehouseId))
                 .findFirst()
-                .ifPresent(warehouseListSkuDTO -> detailEntity.setWarehouseSkuNo(warehouseListSkuDTO.getWarehouseSkuNo()));
+                .ifPresent(warehouseListSkuDTO -> detail.setWarehouseSkuNo(warehouseListSkuDTO.getWarehouseSkuNo()));
         //防止更新了其他字段
         lambdaUpdate().eq(SoB2cDetailEntity::getId, detailId)
-                .set(SoB2cDetailEntity::getWarehouseName, warehouseName)
-                .set(SoB2cDetailEntity::getWarehouseOrgId, warehouseOrgId)
+                .set(StringUtils.isNotEmpty(warehouseId),SoB2cDetailEntity::getWarehouseId, warehouseId)
+                .set(StringUtils.isNotEmpty(warehouseName),SoB2cDetailEntity::getWarehouseName, warehouseName)
+                .set(StringUtils.isNotEmpty(warehouseOrgId),SoB2cDetailEntity::getWarehouseOrgId, warehouseOrgId)
                 .set(StringUtils.isNotEmpty(warehouseOrgName) ,SoB2cDetailEntity::getWarehouseOrgName, warehouseOrgName)
-                .set(SoB2cDetailEntity::getWarehouseSkuNo, detailEntity.getWarehouseSkuNo())
+                .set(StringUtils.isNotEmpty(detail.getWarehouseSkuNo()), SoB2cDetailEntity::getWarehouseSkuNo, detail.getWarehouseSkuNo())
                 .set(SoB2cDetailEntity::getIsMatchWarehouseRule,Boolean.TRUE)
                 .set(SoB2cDetailEntity::getUpdateTime, LocalDate.now())
                 .set(SoB2cDetailEntity::getUpdateUserId, UserContext.getDefaultLoginUser().getUid())
