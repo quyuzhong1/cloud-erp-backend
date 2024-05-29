@@ -41,7 +41,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "salesRecordNumber", source = "code"),
             @Mapping(target = "platformOrderStatus", source = "approveStatus"),
             @Mapping(target = "orderFee", source = "allAmountLc"),
-            @Mapping(target = "sourcePlatform", constant = "B2B"),
+            @Mapping(target = "sourcePlatform", constant = "soInfo"),
             @Mapping(target = "isUnion", constant = "2"),
             @Mapping(target = "isSplit", constant = "2"),
             @Mapping(target = "isResend", constant = "2"),
@@ -162,7 +162,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "salesRecordNumber", source = "code"),
             @Mapping(target = "platformOrderStatus", source = "approveStatus"),
             @Mapping(target = "orderFee", source = "amount"),
-            @Mapping(target = "sourcePlatform", constant = "ERP"),
+            @Mapping(target = "sourcePlatform", constant = "soB2c"),
             @Mapping(target = "isUnion", constant = "2"),
             @Mapping(target = "isSplit", constant = "2"),
             @Mapping(target = "isResend", constant = "2"),
@@ -188,6 +188,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "companyId", source = "orgId"),
             @Mapping(target = "companyName", source = "orgName"),
             @Mapping(target = "platformCreateTime", source = "platformOrderCreateTime"),
+            @Mapping(target = "shippingFee", source = "viewDTO.shippingFee"),
     })
     DmpOrderInfoEntity soB2cToDmpOrder(SoB2cDTO.ViewDTO viewDTO);
 

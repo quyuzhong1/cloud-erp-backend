@@ -115,7 +115,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.math3.util.Pair;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -424,7 +423,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //新增物流信息
         soB2cLogisticsService.add(addDTO.getLogisticsDTO(), soB2cEntity.getId());
         //如果新增客户
-        CustomerB2cEntity cutomer = customerB2cService.getById(addDTO.getReceiverDTO().getCustomerId());
+        CustomerB2cEntity cutomer = customerB2cService.getByIdOrName(addDTO.getReceiverDTO().getCustomerId());
         if (Objects.isNull(cutomer)){
             CustomerB2CDTO.AddDTO dto = buildB2cCustomerAddDTO(addDTO,soB2cEntity.getId());
             String customerId = customerB2cService.add(dto);
@@ -796,7 +795,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("B2C销售订单表保存失败");
         }
         //是否新增b2c客户
-        CustomerB2cEntity cutomer = customerB2cService.getById(updateDTO.getReceiverDTO().getCustomerId());
+        CustomerB2cEntity cutomer = customerB2cService.getByIdOrName(updateDTO.getReceiverDTO().getCustomerId());
         if (Objects.isNull(cutomer)){
             CustomerB2CDTO.AddDTO dto = buildB2cCustomerUpdateDTO(updateDTO);
             String customerId = customerB2cService.add(dto);
@@ -1455,6 +1454,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         result.setTrackNo(soB2cLogisticsEntity.getTrackNo());
         result.setOrderTime(billDate.atStartOfDay());
+        if (StrUtil.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_ID_NOT_EXIST);
+        }
         result.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         result.setLogisticType(soB2cLogisticsEntity.getLogisticType());
         result.setSourceType(SourceTypeEnum.SO_B2C.getCode());
@@ -2068,7 +2070,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (flag) {
             // 操作日志
             String msg ;
-            if (StrUtil.equals(remark,"平台取消")) {
+            if (entity.getIsCancel()) {
                 msg = "平台订单取消,自动发起拦截";
             } else {
                 msg = StrUtil.format("用户【{}】发起【{}】，已冻结单据单号【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截", entity.getCode());
@@ -3247,6 +3249,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 labelDTO.setFulfillmentChannel(labelJsonDTO.getFulfillmentChannel());
                 labelDTO.setShipNodeType(labelJsonDTO.getShipNodeType());
                 labelDTO.setTikTokStatus(labelJsonDTO.getTikTokStatus());
+                labelDTO.setIsRefunded(labelJsonDTO.getIsRefunded());
             }
             //明细信息
             List<SoB2cDetailEntity> detailList = allDetailList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
@@ -3297,6 +3300,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     detailLabelDTO.setAlreadyTaxed(labelJsonDTO.getAlreadyTaxed());
                     detailLabelDTO.setLogisticsWarehouseType(labelJsonDTO.getLogisticsWarehouseType());
                     detailLabelDTO.setTagList(labelJsonDTO.getTagList());
+                    detailLabelDTO.setIsRefunded(labelJsonDTO.getIsRefunded());
                 }
                 Integer useableQty = MathUtil.ZERO;
                 Integer freezeQty = MathUtil.ZERO;
@@ -4194,29 +4198,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY, deliveryEntity.getCode());
             }
         }
+        // 前端显示的异常类型
         String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        String message = "";
-        String paramJson = "";
-        String returnJson = "";
-        //调用第三方平台SDK发货
-        try {
-            if (this.checkPlatformShipOrder(id)) {
-                //调用第三方平台SDK发货
-                List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-                soB2cDeliveryFeign.falseDeliveryBatch(ids);
-            }
-        } catch (Exception e) {
-            log.error("OMS 销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-            message = e.getMessage();
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(type);
-            addError.setParamJson(paramJson);
-            addError.setReturnJson(returnJson);
-            addError.setMainId(entity.getSourceId());
-            addError.setMessage(message);
-            soB2cErrorService.add(addError);
-            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-        }
         //修改状态为虚假发货
         List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         soB2cDeliveryFeign.updateStatus(ids, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
@@ -4227,6 +4210,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         String msg = StrUtil.format("操作单据【{}】虚假发货", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "虚假发货");
+
+        //调用第三方平台SDK发货(独立事务)
+        try {
+            if (this.checkPlatformShipOrder(id)) {
+                //调用第三方平台SDK发货
+                List<String> deliveryIds = deliveryEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
+                soB2cDeliveryFeign.falseDeliveryBatch(deliveryIds);
+            }
+        } catch (Exception e) {
+            log.error("OMS 销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
 
@@ -5187,6 +5181,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 entity.setApproveStatus(approveStatusEnum);
             }
+            // 检查新增自动作废
+            // Shopify全退款的订单新增自动作废
+            entity.setInvalidStatus(dto.checkInsertInvalidStatus());
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             entity.setCode(code);
@@ -5323,11 +5320,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ){
                 // 查询是否是本平台发货
                 dto.setInvalidStatus(false);
-                dto.setInvalidRemark("平台取消");
+                dto.setInvalidRemark("平台取消或退款");
             }
             // 保留历史作废状态
             if (oldEntity.getInvalidStatus()){
                 dto.setInvalidStatus(true);
+                dto.setInvalidRemark("平台取消或退款");
             }
 
             // 只替换更新信息

@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Resource;
 
@@ -210,7 +211,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     }
 
     private WmsDataCompareExcelDto validataImportFile(List<String> excelFiles) {
-		WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getOnlyHeadAndCount(excelFiles);
+		WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(excelFiles);
 		List<List<String>> headFieldLists = wmsDataCompareExcelDto.getHeadFieldLists();
         if(CollUtil.isEmpty(headFieldLists)) {
         	throw new ServiceException("所有导入文件行数都为空，请检查");
@@ -542,20 +543,26 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				}
 				
 				if(WmsDataCompareTypeEnum.PK == compareType && (sysFlag == null || !sysFlag)) {
-					String pkValue = importDataMappingDTOList.stream().map(index -> {
-						if(index.getStatus()) {
-							String field = index.getImportField();
+					StringBuffer sb = new StringBuffer();
+					for(ImportDataMappingDTO importDataMappingDTO : importDataMappingDTOList) {
+						if(importDataMappingDTO.getStatus() != null && importDataMappingDTO.getStatus()) {
+							String field = importDataMappingDTO.getImportField();
 							if(sysFlag != null && sysFlag) {
-								field = index.getSystemField();
+								field = importDataMappingDTO.getSystemField();
 							}
-							String d = data.get(field);
-							if(d == null) {
-								d = "";
+							String excelValue = data.get(field);
+							if(excelValue == null) {
+								excelValue = "";
 							}
-							return d;
+							sb.append("-");
+							sb.append(excelValue);
 						}
-						return "";
-					}).collect(Collectors.joining("-"));
+					}
+					
+					if(Stream.of(sb.toString().split("-")).allMatch(StringUtils::isBlank)) {
+						continue;
+					}
+					String pkValue = sb.length() > 0 ? sb.toString().substring(1) : "";
 					Integer sameCount = pkValueSameCountMaps.get(pkValue);
 					if(sameCount == null) {
 						sameCount = 0;
@@ -729,7 +736,11 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 								}
 							}
 							wmsDataCompareTempEntity.setImportDataJson(JSON.toJSONString(tempData));
+							if(Stream.of(sb.toString().split("-")).allMatch(StringUtils::isBlank)) {
+								continue;
+							}
 							wmsDataCompareTempEntity.setPkFieldValue(sb.length() > 0 ? sb.toString().substring(1) : "");
+							wmsDataCompareTempEntity.setCompareResult("");
 							wmsDataCompareTempEntityList.add(wmsDataCompareTempEntity);
 						}
 						currParseOffset = currParseOffset + wmsDataCompareTempEntityList.size();
@@ -782,6 +793,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		
 		if(CollUtil.isNotEmpty(systemDataMapList)) {
 			systemDataMapList.forEach(d -> {
+				Map<String, String> tempData = new HashMap();
 				StringBuffer sb = new StringBuffer();
 				for(ImportDataMappingDTO importDataMappingDTO : notPkImportDataMappingDTOList) {
 					String excelValue = d.get(importDataMappingDTO.getSystemField());
@@ -795,12 +807,17 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					}
 					sb.append("-");
 					sb.append(excelValue);
+					tempData.put(importDataMappingDTO.getSystemField(), excelValue);
 				}
+				if(Stream.of(sb.toString().split("-")).allMatch(StringUtils::isBlank)) {
+					return;
+				}
+				
 				String pkFieldValue = sb.length() > 0 ? sb.toString().substring(1) : "";
 				Map<String, String> data = systemPkDataMaps.get(pkFieldValue);
 				BigDecimal count = BigDecimal.ZERO;
 				if(data == null) {
-					data = d;
+					data = tempData;
 				}else {
 					count = new BigDecimal(data.get(systemField));
 				}
@@ -816,6 +833,8 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			systemDataMapList = new ArrayList<>();
 		}
 		
+		Sequence sequence = new Sequence();
+		
 		Map<String, Map<String, String>> importPkDataMaps = new HashMap<>();
 		Map<String, List<WmsDataCompareTempEntity>> pkFieldValueImportDataMaps = wmsDataCompareTempService.list(Wrappers.<WmsDataCompareTempEntity>lambdaQuery()
 				.eq(WmsDataCompareTempEntity::getTaskId, id)
@@ -826,16 +845,16 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			List<WmsDataCompareTempEntity> value = pkFieldValueImportDataMap.getValue();
 			BigDecimal count = value.stream().map(p -> {
 				Map<String , String> parseObject = JSON.parseObject(p.getImportDataJson() , Map.class);
-				Object object = parseObject.get(importField);
+				String object = parseObject.get(importField);
 				BigDecimal c = BigDecimal.ZERO;
-				if(object != null) {
+				if(StringUtils.isNotBlank(object)) {
 					c = new BigDecimal(object.toString());
 				}
 				return c;
 			}).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 			
 			Map<String , String> oneMap = JSON.parseObject(value.get(0).getImportDataJson() , Map.class);
-			oneMap.put(pkFieldValueImportDataMap.getKey(), count.toString());
+			oneMap.put(importField, count.toString());
 			importPkDataMaps.put(pkFieldValueImportDataMap.getKey(), oneMap);
 		}
 		//数据已放入importPkDataMaps，置空释放内存
@@ -849,6 +868,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			Map<String, String> importData = importPkDataMaps.get(pkFieldValue);
 			
 			addWmsDataCompareTempEntity = new WmsDataCompareTempEntity();
+			addWmsDataCompareTempEntity.setId(Long.valueOf(sequence.nextId()).toString());
 			addWmsDataCompareTempEntity.setTaskId(id);
 			addWmsDataCompareTempEntity.setPkFieldValue(pkFieldValue);
 			addWmsDataCompareTempEntity.setCompareStatus(WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
@@ -873,7 +893,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		
 		for(Map.Entry<String, Map<String, String>> importPkDataMap : importPkDataMaps.entrySet()) {
 			addWmsDataCompareTempEntity = new WmsDataCompareTempEntity();
-			
+			addWmsDataCompareTempEntity.setId(Long.valueOf(sequence.nextId()).toString());
 			addWmsDataCompareTempEntity.setTaskId(id);
 			addWmsDataCompareTempEntity.setPkFieldValue(importPkDataMap.getKey());
 			addWmsDataCompareTempEntity.setCompareStatus(WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
@@ -902,6 +922,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				.eq(WmsDataCompareTempEntity::getMainDataType, WmsDataCompareTempMainDataTypeEnum.IMPORT.getCode()))
 				.stream().collect(Collectors.toMap(WmsDataCompareTempEntity::getPkFieldValue , w -> w));
 		
+		Sequence sequence = new Sequence();
 		List<WmsDataCompareTempEntity> insertTempEntityList = new ArrayList<>();
 		List<WmsDataCompareTempEntity> updateTempEntityList = new ArrayList<>();
 		if(CollUtil.isNotEmpty(systemDataMapList)) {
@@ -919,6 +940,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					}
 					sb.append("-");
 					sb.append(excelValue);
+				}
+				if(Stream.of(sb.toString().split("-")).allMatch(StringUtils::isBlank)) {
+					return;
 				}
 				String pkFieldValue = sb.length() > 0 ? sb.toString().substring(1) : "";
 				List<Map<String, String>> datas = pkFieldValueSystemDataMaps.get(pkFieldValue);
@@ -956,6 +980,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				if(CollUtil.isNotEmpty(systemDataList)) {
 					for(Map<String, String> systemData : systemDataList) {
 						importDataTemp = new WmsDataCompareTempEntity();
+						importDataTemp.setId(Long.valueOf(sequence.nextId()).toString());
 						importDataTemp.setTaskId(id);
 						importDataTemp.setPkFieldValue(pkFieldValue);
 						importDataTemp.setMainDataType(WmsDataCompareTempMainDataTypeEnum.SYSTEM.getCode());
@@ -1183,8 +1208,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		}
 		wmsDataCompareTempService.updateBatchById(updateTempEntityList);
 		wmsDataCompareTempService.lambdaUpdate().eq(WmsDataCompareTempEntity::getTaskId, taskId)
+				.eq(WmsDataCompareTempEntity::getCompareStatus, WmsDataCompareTempCompareStatusEnum.WAIT.getCode())
 				.set(WmsDataCompareTempEntity::getCompareResult, WmsDataCompareTempCompareResultEnum.MISS.getCode())
-				.set(WmsDataCompareTempEntity::getCompareStatus, WmsDataCompareTempCompareStatusEnum.FINISH.getCode());
+				.set(WmsDataCompareTempEntity::getCompareStatus, WmsDataCompareTempCompareStatusEnum.FINISH.getCode()).update();
 	}
 	
 	@Override
