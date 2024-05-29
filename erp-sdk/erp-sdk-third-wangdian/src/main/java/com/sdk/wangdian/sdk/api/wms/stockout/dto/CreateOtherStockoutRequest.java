@@ -3,6 +3,7 @@ package com.sdk.wangdian.sdk.api.wms.stockout.dto;
 import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import lombok.Data;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -50,6 +51,7 @@ public class CreateOtherStockoutRequest
 	 */
 	private LocalDateTime createTime;
 
+	@ToString
 	public static class GoodsList
 	{
 
