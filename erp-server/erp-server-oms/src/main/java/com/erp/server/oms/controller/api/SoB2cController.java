@@ -15,10 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cDetailDTO;
-import com.erp.model.oms.dto.SoB2cLogisticsDTO;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -970,9 +967,9 @@ public class SoB2cController extends BaseController {
 
     }
     @GetMapping("/getSplitSku")
-    public ApiResult<List<TransferDeclareProductDTO>> getSplitSku(@RequestParam("id") String id) {
+    public ApiResult<List<SplitSkuDTO>> getSplitSku(@RequestParam("id") String id) {
 //        String soId = "1751895670669832193";
-        List<TransferDeclareProductDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(id);
+        List<SplitSkuDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(id);
         System.out.println(JSONUtil.parse(skusBySoInfo));
         return success(skusBySoInfo);
 

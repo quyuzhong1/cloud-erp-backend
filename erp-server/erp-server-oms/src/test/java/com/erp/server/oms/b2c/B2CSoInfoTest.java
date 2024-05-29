@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.enums.WarehouseDeliveryTypeEnum;
@@ -47,7 +48,7 @@ public class B2CSoInfoTest {
     //@Test
     public void splitSoInfo(){
         String soId = "1751895670669832193";
-        List<TransferDeclareProductDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(soId);
+        List<SplitSkuDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(soId);
         System.out.println(JSONUtil.parse(skusBySoInfo));
     }
 

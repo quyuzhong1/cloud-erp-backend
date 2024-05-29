@@ -732,14 +732,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 根据订单拆分sku
      */
-    List<TransferDeclareProductDTO> getTransferDeclareProductBySoInfo(String soId);
+    List<SplitSkuDTO> getTransferDeclareProductBySoInfo(String soId);
 
     /**
      * 根据销售订单id批量拆分
      * @param soIds
      * @return
      */
-    List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(List<String> soIds);
+    List<SplitSkuDTO> getTransferDeclareProductBySoIds(List<String> soIds);
 
     /**
      * 修改速卖通订单仓库
@@ -800,9 +800,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
 
     /**
-     * 计算明细重量
+     * 根据sku拆分订单
+     * @param soB2cDetailEntities
+     * @param skuIds
+     * @param soCode
+     * @return
      */
-    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList);
+    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities,List<String> skuIds, String soCode);
 
     /**
      * 根据条件获取数据对比系统数据

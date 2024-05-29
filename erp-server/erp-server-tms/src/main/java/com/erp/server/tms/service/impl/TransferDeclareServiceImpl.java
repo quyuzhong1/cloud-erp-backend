@@ -26,6 +26,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -749,7 +750,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         SoB2cEntity soB2cEntity = b2cOrderForecastDTO.getSoB2cEntity();
         SoB2cLogisticsEntity soB2cLogisticsEntity = b2cOrderForecastDTO.getSoB2cLogisticsEntity();
         SoB2cReceiverEntity soB2cReceiverEntity = b2cOrderForecastDTO.getSoB2cReceiverEntity();
-        List<TransferDeclareProductDTO> transferDeclareProductDTOList = b2cOrderForecastDTO.getTransferDeclareProductDTOList();
+        List<SplitSkuDTO> transferDeclareProductDTOList = b2cOrderForecastDTO.getTransferDeclareProductDTOList();
         ShopInfoEntity shopInfoEntity = b2cOrderForecastDTO.getShopInfoEntity();
         try {
             //查询授权信息
