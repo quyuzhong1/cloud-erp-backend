@@ -733,11 +733,6 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                     entity.setItemTotalCost(itemTotalCost);
                     entity.setOrderTotalCost(orderTotalCost);
 
-
-                    //订单明细
-                    List<DmpDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(soDetailEntities.size());
-
-
                 }
             } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
                 SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSourceId());
@@ -754,12 +749,6 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 entity.setItemTotalCost(itemTotalCost);
                 entity.setOrderTotalCost(view.getAmount());
-
-                List<SoB2cDetailDTO.ViewDTO> viewDetailList = view.getDetailList();
-                //订单明细
-                List<DmpDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(viewDetailList.size());
-
-
             }
 
 
