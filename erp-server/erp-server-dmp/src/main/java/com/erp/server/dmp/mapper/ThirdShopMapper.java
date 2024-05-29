@@ -6,6 +6,7 @@ import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -19,7 +20,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ThirdShopMapper extends BaseMapper<ThirdShopEntity> {
 
-    IPage<ThirdShopDTO.PageSelectDTO> pagingSelect(Page query, ThirdShopDTO.SelectDTO params);
+    IPage<ThirdShopDTO.PageSelectDTO> pagingSelect(Page query, @Param("params") ThirdShopDTO.SelectDTO params);
 
-    IPage<ThirdShopDTO.PageDTO> paging(Page query, ThirdShopDTO.PagingParamDTO params);
+    IPage<ThirdShopDTO.PageDTO> paging(Page query, @Param("params") ThirdShopDTO.PagingParamDTO params);
 }
