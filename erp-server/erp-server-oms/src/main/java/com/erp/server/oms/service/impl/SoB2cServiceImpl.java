@@ -3453,7 +3453,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId())
                             && StrUtil.equals(obj.getWarehouseLocation(), detailEntity.getWarehouseLocation()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
-            return (detailEntity.getQty() > useableQty - waitDeliveryQty) && !ignoreInventorySkuIds.contains(detailEntity.getSkuId());
+            return (detailEntity.getQty() > (useableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(detailEntity.getSkuId());
         }
         //销售套装bom需要判断子件库存是否够使用
         List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailEntity.getSkuId())
@@ -3477,7 +3477,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
 
            //缺货则赋值
-           if ((detailEntity.getQty() * childrenSkuDTO.getQuantity() > childUseableQty - waitDeliveryQty)
+           if ((detailEntity.getQty() * childrenSkuDTO.getQuantity() > (childUseableQty - waitDeliveryQty))
                    && !ignoreInventorySkuIds.contains(childrenSkuDTO.getSkuId())) {
                isOutStock = Boolean.TRUE;
                break;
