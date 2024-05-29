@@ -441,7 +441,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         LambdaQueryWrapper<ThirdMappingEntity> queryWrapper = new LambdaQueryWrapper<ThirdMappingEntity>()
                 .eq(ThirdMappingEntity::getSysId, sysWarehouseId)
                 .eq(ThirdMappingEntity::getIsDeleted, false)
-                .eq(ThirdMappingEntity::getIsExpire, false);
+                .eq(ThirdMappingEntity::getDisabled, false);
         return baseMapper.selectOne(queryWrapper);
     }
 //    @Resource
