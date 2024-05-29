@@ -224,4 +224,16 @@ public class ShopifyOrder {
         }
         return "waitSubmit";
     }
+
+    /**
+     * 退款/部分退款视为平台取消
+     */
+    public Boolean convertIsCancel() {
+        return "refunded".equalsIgnoreCase(this.fulfillmentStatus)
+                || "partially_refunded".equalsIgnoreCase(this.fulfillmentStatus)
+                || "refunded".equalsIgnoreCase(this.financialStatus)
+                || "partially_refunded".equalsIgnoreCase(this.financialStatus);
+    }
+
+
 }

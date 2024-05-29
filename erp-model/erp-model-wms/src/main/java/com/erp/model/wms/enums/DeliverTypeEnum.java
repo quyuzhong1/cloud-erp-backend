@@ -3,6 +3,9 @@ package com.erp.model.wms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
+
+import java.util.stream.Stream;
 
 /**
  * @author Lambda
@@ -11,9 +14,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @Date 2023-12-29 10:30
  * @Created by yl
  */
+@Getter
 public enum DeliverTypeEnum implements EnumMessage {
     MANUAL("manual","手动发货"),
     FALSEHOOD("falsehood","虚假发货"),
+    THIRD_WAREHOUSE("thirdWarehouse","第三仓出库发货"),
     ;
 
     DeliverTypeEnum(String code, String name) {
@@ -39,5 +44,17 @@ public enum DeliverTypeEnum implements EnumMessage {
     @Override
     public String getName() {
         return this.name;
+    }
+
+    /**
+     * 通过code查询
+     * DeliverTypeEnum
+     * 枚举
+     */
+    public static DeliverTypeEnum getByCode(String code) {
+        return Stream.of(DeliverTypeEnum.values())
+                .filter(e -> e.getCode().equalsIgnoreCase(code))
+                .findFirst()
+                .orElse(null);
     }
 }

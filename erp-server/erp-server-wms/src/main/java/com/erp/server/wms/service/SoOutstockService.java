@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
+import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
@@ -531,4 +532,10 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return true=已存在
      */
     boolean checkExist(String soCode, String sourceType, String orderType);
+
+    /**
+     * 第三方仓生成销售出库单
+     */
+    void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto);
+
 }

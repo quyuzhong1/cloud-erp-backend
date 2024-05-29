@@ -243,4 +243,17 @@ public class PlatformOrderDTO extends UniqueDto {
      * 平台是否取消
      */
     private Boolean isCancel;
+
+    /**
+     * 检查订单新增作废状态
+     */
+    public Boolean checkInsertInvalidStatus() {
+        // Shopify全退款的订单新增自动作废
+        if ("Shopify".equalsIgnoreCase(this.dictPlatform) && "refunded".equalsIgnoreCase(this.platformOrderStatus)){
+            return true;
+        }
+        // 默认来源状态
+        return this.invalidStatus;
+    }
+
 }
