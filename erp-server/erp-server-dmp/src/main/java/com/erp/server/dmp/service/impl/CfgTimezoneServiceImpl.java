@@ -78,4 +78,14 @@ public class CfgTimezoneServiceImpl extends SuperServiceImpl<CfgTimezoneMapper, 
     public CfgTimezoneEntity getAndCacheByCountry(String country) {
         return mapByCountry().get(country);
     }
+
+    @Override
+    public Map<String, CfgTimezoneEntity> mapByCondition() {
+        List<CfgTimezoneEntity> list = listAndCache();
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyMap();
+        }
+        return list.stream()
+                .collect(Collectors.toMap(CfgTimezoneEntity::getCondition, Function.identity()));
+    }
 }

@@ -976,12 +976,13 @@ public class PullAmzJob {
 
     public void handlerFulfilledCheckOrder(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
         // 拉取未存在的主订单
-        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+//        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+        String platformShopCode= key;
         // 查询当前分组未下载的mongo订单
-        List<PlatformAmazonFulfilledShipmentsDTO> dtoList = this.findHandleStatusAndShopId(AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode(), shopIds, 1, size);
+        List<PlatformAmazonFulfilledShipmentsDTO> dtoList = this.findHandleStatusAndPlatformShopCode(AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode(), platformShopCode, 1, size);
 
         if (CollectionUtils.isEmpty(dtoList)){
-            XxlJobHelper.log("不存在需要补充的订单,店铺ID={}", shopIds);
+            XxlJobHelper.log("不存在需要补充的订单,店铺ID={}", key);
             return;
         }
 
@@ -1038,9 +1039,9 @@ public class PullAmzJob {
                 .collect(Collectors.toList());
     }
 
-    private List<PlatformAmazonFulfilledShipmentsDTO> findHandleStatusAndShopId(String handleStatus, List<String> shopIds, int currentPage, Integer pageSize) {
+    private List<PlatformAmazonFulfilledShipmentsDTO> findHandleStatusAndPlatformShopCode(String handleStatus, String platformShopCode, int currentPage, Integer pageSize) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("shopId").in(shopIds)
+        query.addCriteria(Criteria.where("platformShopCode").ne(platformShopCode)
                 .and("handleStatus").is(handleStatus)
                 .and("isClean").is(-10)
         );

@@ -46,6 +46,11 @@ public class CfgTimezoneEntity extends BaseEntity<CfgTimezoneEntity> {
      */
     @TableField("utc_diff_hour")
     private Integer utcDiffHour;
+    /**
+     * 条件:亚马逊=销售渠道
+     */
+    @TableField("condition")
+    private String condition;
 
 
     public static final String REMARK = "remark";

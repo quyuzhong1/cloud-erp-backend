@@ -2,6 +2,7 @@ package com.erp.sdk.oms.amz.spapi.convert;
 
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -29,5 +30,5 @@ public interface SdkListingConverter {
             @Mapping(target = "downloadStatus", constant = "0"),
             @Mapping(target = "platformUpdateTime", source = "updateTime"),
     })
-    PlatformAmazonListingDTO sourceDtoToListingDto(ReportListingCsvEntity csvEntity, String shopId, LocalDateTime updateTime);
+    PlatformAmazonListingDTO sourceDtoToListingDto(ReportListingMongoDTO csvEntity, String shopId, LocalDateTime updateTime);
 }

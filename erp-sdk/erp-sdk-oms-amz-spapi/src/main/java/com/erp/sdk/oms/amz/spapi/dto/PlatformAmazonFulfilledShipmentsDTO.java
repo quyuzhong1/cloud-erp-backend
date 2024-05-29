@@ -131,4 +131,9 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     private String fulfillmentChannel;
 
     private String salesChannel;
+    /**
+     * 亚马逊账号代号
+     */
+    @Panno(findType = PannoEnum.EQ, field = "platformShopCode")
+    private String platformShopCode;
 }

@@ -42,4 +42,13 @@ public interface CfgTimezoneService extends SuperService<CfgTimezoneEntity> {
      */
 
     CfgTimezoneEntity getAndCacheByCountry(String country);
+
+    /**
+     * 查询所有并用condition销售渠道作为key转成map
+     *
+     * @author Jim
+     * {@code @date:} 2024-05-29
+     */
+    Map<String, CfgTimezoneEntity> mapByCondition();
+
 }

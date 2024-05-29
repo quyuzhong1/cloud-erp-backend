@@ -1,5 +1,6 @@
 package com.erp.model.dmp.entity;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -133,6 +134,11 @@ public class AmzReportTaskEntity extends BaseEntity<AmzReportTaskEntity> {
      */
     @TableField("group_id")
     private String groupId;
+    /**
+     * 已解析的报告行数索引
+     */
+    @TableField("parse_row_index")
+    private Integer parseRowIndex;
 
 
     public static final String MAIN_ID = "main_id";
@@ -180,5 +186,13 @@ public class AmzReportTaskEntity extends BaseEntity<AmzReportTaskEntity> {
             return this.marketplaceIds.split(",")[0];
         }
         return "";
+    }
+
+    /**
+     * 获取亚马逊账号代号
+     */
+    public String parsePlatformShopCode() {
+       // Amazon:A7XZMJAHE7S5Z:US_EAST_1取出A7XZMJAHE7S5Z
+        return StringUtils.substringBetween(this.groupId, ":", ":");
     }
 }
