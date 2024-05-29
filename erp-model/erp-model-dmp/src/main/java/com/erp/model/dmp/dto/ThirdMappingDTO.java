@@ -22,19 +22,17 @@ import javax.validation.constraints.Size;
 public class ThirdMappingDTO implements Serializable {
 
 
-
-
     /**
      * 详情
      */
     @Data
     @NoArgsConstructor
-    public static class ViewParamDTO {
+    public static class ViewParamDTO implements Serializable {
         /**
          * 当前查询类型  warehouse 仓库 shop 店铺
          */
         @NotBlank(message = "类型(warehouse 仓库 shop 店铺)不能为空")
-        @Size(max = 20,message = "类型最大长度不能超过20位")
+        @Size(max = 20, message = "类型最大长度不能超过20位")
         private String type;
         /**
          * 系统店铺id
@@ -52,7 +50,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 主键id
          */
-        private String  id;
+        private String id;
 
         /**
          * 第三方id
@@ -85,12 +83,20 @@ public class ThirdMappingDTO implements Serializable {
 
     }
 
- /**
+    /**
      * 详情
      */
     @Data
     @NoArgsConstructor
     public static class ThirdAddDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 第三方id
+         */
+        private String type;
         /**
          * 第三方id
          */
@@ -101,6 +107,30 @@ public class ThirdMappingDTO implements Serializable {
          */
         @NotBlank(message = "第三方系统类型不能为空")
         private String sysType;
+//        /**
+//         * 是否失效 true 失效 false 未失效
+//         */
+//        private Boolean disabled;
+        /**
+         * 系统表名称
+         */
+        private String sysName;
+        /**
+         * 系统表
+         */
+        private String sysCode;
+        /**
+         * 系统表id
+         */
+        private String sysId;
+        /**
+         * 第三方名称
+         */
+        private String thirdName;
+        /**
+         * 第三方编码
+         */
+        private String thirdCode;
     }
 
 
@@ -113,7 +143,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 主键id
          */
-        private String  id;
+        private String id;
 
         /**
          * 系统表id
@@ -183,60 +213,77 @@ public class ThirdMappingDTO implements Serializable {
          * 类型  warehouse 仓库 shop 店铺
          */
         @NotBlank(message = "类型(warehouse 仓库 shop 店铺)不能为空")
-        @Size(max = 20,message = "类型  warehouse 仓库 shop 店铺最大长度不能超过20位")
+        @Size(max = 20, message = "类型  warehouse 仓库 shop 店铺最大长度不能超过20位")
         private String type;
 
         /**
          * 系统表id
          */
         @NotBlank(message = "系统表id不能为空")
-        @Size(max = 19,message = "系统表id最大长度不能超过19位")
+        @Size(max = 19, message = "系统表id最大长度不能超过19位")
         private String sysId;
 
         /**
          * 系统表名称
          */
 //        @NotBlank(message = "系统表名称不能为空")
-        @Size(max = 200,message = "系统表名称最大长度不能超过200位")
+        @Size(max = 200, message = "系统表名称最大长度不能超过200位")
         private String sysName;
 
         /**
          * 第三方id
          */
 //        @NotBlank(message = "第三方id不能为空")
-        @Size(max = 19,message = "第三方id最大长度不能超过19位")
+        @Size(max = 19, message = "第三方id最大长度不能超过19位")
         private String thirdId;
 
         /**
          * 第三方编码
          */
 //        @NotBlank(message = "第三方编码不能为空")
-        @Size(max = 19,message = "第三方编码最大长度不能超过19位")
+        @Size(max = 19, message = "第三方编码最大长度不能超过19位")
         private String thirdCode;
 
         /**
          * 第三方名称
          */
 //        @NotBlank(message = "第三方名称不能为空")
-        @Size(max = 50,message = "第三方名称最大长度不能超过50位")
+        @Size(max = 50, message = "第三方名称最大长度不能超过50位")
         private String thirdName;
 
         /**
          * 第三方系统类型：lingxing领星，wangdian旺店通
          */
-//        @NotBlank(message = "第三方系统类型：lingxing领星，wangdian旺店通不能为空")
-        @Size(max = 16,message = "第三方系统类型：lingxing领星，wangdian旺店通最大长度不能超过16位")
+//        @NotBlank(message = "第三方系统类型：iml,wdt,goodcang不能为空")
+        @Size(max = 16, message = "第三方系统类型：iml,wdt,goodcang最大长度不能超过16位")
         private String thirdSysType;
 
         /**
          * 备注
          */
 //        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
+        @Size(max = 255, message = "备注最大长度不能超过255位")
         private String remark;
 
 
     }
 
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FeignMappingDTO {
+        /**
+         * 类型  warehouse 仓库 shop 店铺
+         */
+        private String type;
+        /**
+         * 第三方系统类型：iml,wdt,goodcang
+         */
+        private String thirdSysType;
 
+
+        private List<ThirdMappingDTO.ThirdAddDTO> addDTOList;
+    }
 }

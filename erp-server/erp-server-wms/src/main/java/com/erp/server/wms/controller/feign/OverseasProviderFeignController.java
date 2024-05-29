@@ -1,13 +1,11 @@
 package com.erp.server.wms.controller.feign;
 
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.wms.service.OverseasProviderService;
-import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * 海外仓feign
@@ -30,5 +28,16 @@ public class OverseasProviderFeignController {
     @GetMapping("/getByPlatformCode")
     public OverseasProviderEntity getByPlatformCode(@RequestParam("code") String code) {
         return overseasProviderService.getByPlatformCode(code);
+    }
+
+    /**
+     * 查询仓库信息
+     *
+     * @param feignDTO
+     * @return com.erp.model.wms.entity.OverseasProviderEntity
+     **/
+    @PostMapping("/getOverseasWarehouse")
+    public OverseasProviderDTO.FeignDTO getOverseasWarehouse(@RequestBody OverseasProviderDTO.FeignDTO feignDTO){
+        return overseasProviderService.getOverseasWarehouse(feignDTO);
     }
 }

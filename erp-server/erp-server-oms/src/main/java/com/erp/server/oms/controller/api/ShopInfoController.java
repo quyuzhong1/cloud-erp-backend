@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -12,13 +13,15 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.oms.query.ShopQueryHandler;
-import com.erp.server.oms.service.CustomerB2cService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -58,7 +61,8 @@ public class ShopInfoController extends BaseController {
     @Resource
     private CustomerInfoService customerInfoService;
 
-
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
     /**
      * 店铺 分页
      *
@@ -240,9 +244,19 @@ public class ShopInfoController extends BaseController {
                 if (Objects.isNull(shop)) {
                     submit = BatchResultDTO.fail(id, id, "店铺不存在");
                 } else {
-                    flagCode = shop.getName();
-                    submit = shopInfoService.updateStatus(shop, disabled);
-
+                    //仓库下绑定第三方店铺不能修改为禁用状态
+                    if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
+                        Boolean flag = checkDmpThirdMapping(id);
+                        if (!flag) {
+                            submit = BatchResultDTO.fail(id, shop.getName(), StrUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
+                        }else{
+                            flagCode = shop.getName();
+                            submit = shopInfoService.updateStatus(shop, disabled);
+                        }
+                    }else {
+                        flagCode = shop.getName();
+                        submit = shopInfoService.updateStatus(shop, disabled);
+                    }
                 }
             } catch (Exception e) {
                 log.error("店铺更改状态失败>>>>{}", e);
@@ -482,5 +496,12 @@ public class ShopInfoController extends BaseController {
         //如果没有选客户，就进行绑定
         saveCustom(shopInfoEntity);
         return null != shopInfoEntity ? success() : failure();
+    }
+
+    private Boolean checkDmpThirdMapping(String shopId) {
+        ThirdMappingDTO.ViewParamDTO viewParamDTO=new ThirdMappingDTO.ViewParamDTO();
+        viewParamDTO.setType(ThirdSysTypeEnum.SHOP.getCode());
+        viewParamDTO.setSysId(shopId);
+        return dmpThirdMappingFeign.getByThirdId(viewParamDTO);
     }
 }

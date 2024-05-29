@@ -90,4 +90,6 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
      * @return
      */
     OverseasProviderEntity getByPlatformCode(String code);
+
+    OverseasProviderDTO.FeignDTO getOverseasWarehouse(OverseasProviderDTO.FeignDTO feignDTO);
 }

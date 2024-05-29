@@ -17,7 +17,7 @@
         <result column="sys_name" property="sysName" />
         <result column="effective_time" property="effectiveTime" />
         <result column="expire_time" property="expireTime" />
-        <result column="is_expire" property="isExpire" />
+        <result column="disabled" property="disabled" />
         <result column="third_id" property="thirdId" />
         <result column="third_code" property="thirdCode" />
         <result column="third_name" property="thirdName" />
@@ -38,6 +38,13 @@
         is_deleted,
         type, sys_id, sys_name, effective_time, expire_time, is_expire, third_id, third_code, third_name, third_sys_type, remark
     </sql>
-
+    <select id="getByThirdSysCode" resultType="com.erp.model.dmp.dto.ThirdMappingDTO$ThirdAddDTO">
+        select id,type,sys_id, sys_name,third_id, third_code, third_name, third_sys_type as sysType
+            from third_mapping
+        where is_deleted=false
+        and disabled=false
+        and third_sys_type=#{thirdSysType}
+        and type=#{type}
+    </select>
 
 </mapper>
