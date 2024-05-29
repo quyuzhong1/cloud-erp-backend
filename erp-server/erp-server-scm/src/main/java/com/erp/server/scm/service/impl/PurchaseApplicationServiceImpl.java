@@ -409,7 +409,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
         //sku信息
         List<String> skuIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuLogisticsByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }

@@ -261,7 +261,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         //产品信息
         List<String> skuIds = newList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuLogisticsByIds(skuIds);
 
         for (PurchaseOrderDetailEntity entity : newList) {
             //赠品单价默认0
