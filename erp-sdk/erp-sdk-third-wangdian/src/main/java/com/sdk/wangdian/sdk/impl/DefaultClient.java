@@ -213,7 +213,7 @@ public class DefaultClient implements Client
 		requestParams.put("sign", sign);
 
 		String requestUrl = this.url + "?" + this.ToQueryString(requestParams);
-
+		System.out.println("旺店通请求参数：" + requestUrl);
 		PrintWriter outWriter = null;
 		BufferedReader inReader = null;
 		String responseBody;
@@ -249,6 +249,7 @@ public class DefaultClient implements Client
 				sb.append(tmp, 0, len);
 			}
 			responseBody = sb.toString();
+			System.out.println("旺店通响应参数：" + responseBody);
 		}
 		finally
 		{
