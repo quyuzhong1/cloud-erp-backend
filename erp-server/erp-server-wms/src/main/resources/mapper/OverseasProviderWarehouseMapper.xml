@@ -59,6 +59,32 @@
            </foreach>
         </if>
     </select>
+    <select id="pagingSelect" resultType="com.erp.model.dmp.dto.ThirdWarehouseDTO$PageSelectDTO">
+        select id, code, name from (
+        SELECT
+        opw.id,
+        opw.platform_warehouse_code as code,
+        opw.platform_warehouse_name as name
+        FROM overseas_provider_warehouse opw
+        INNER JOIN overseas_provider op
+        ON op.id = opw.main_id and op.is_deleted=false
+        WHERE opw.is_deleted=false
+        <if test="params.code!=null and params.code!=''">
+            and  op.code = #{params.code}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((opw.platform_warehouse_code = #{params.searchKeyword}) or opw.platform_warehouse_name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when opw.platform_warehouse_name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when opw.platform_warehouse_name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when opw.platform_warehouse_name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , opw.platform_warehouse_name,
+        </if>
+        opw.platform_warehouse_code desc
+        ) warehouse
+    </select>
 
 
 </mapper>
