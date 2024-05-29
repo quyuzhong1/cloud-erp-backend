@@ -729,16 +729,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
-
-    /**
-     * 计算长度
-     * @param skuList
-     * @return
-     */
-    BigDecimal calculateSplitSkuDTOLength(List<SplitSkuDTO> skuList,String length);
-    BigDecimal calculateSplitSkuDTOWidth(List<SplitSkuDTO> skuList,String width);
-    BigDecimal calculateSplitSkuDTOHeight(List<SplitSkuDTO> skuList,String Height);
-
     /**
      * 根据订单拆分sku
      */

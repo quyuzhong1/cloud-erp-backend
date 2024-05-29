@@ -65,4 +65,58 @@ public class SplitSkuDTO {
         }
         return totalGrossWeight;
     }
+
+    public static BigDecimal calculateSplitSkuDTOHeight(List<SplitSkuDTO> skuList, String height) {
+        BigDecimal totalHeight;
+        //高
+        if (org.apache.commons.lang3.StringUtils.isNotEmpty(height) && CalculateRuleEnum.MAX.getCode().equalsIgnoreCase(height)) {
+            totalHeight = skuList.stream().map(SplitSkuDTO::getHeight)
+                    .filter(Objects::nonNull)
+                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        } else if (org.apache.commons.lang3.StringUtils.isNotEmpty(height) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(height)) {
+            totalHeight = skuList.stream().map(SplitSkuDTO::getHeight)
+                    .filter(Objects::nonNull)
+                    .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        } else {
+            totalHeight = skuList.stream().map(e -> e.getHeight().multiply(new BigDecimal(e.getQty())))
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        }
+        return totalHeight;
+    }
+
+    public static BigDecimal calculateSplitSkuDTOWidth(List<SplitSkuDTO> skuList, String width) {
+        BigDecimal maxWidth;
+        if (org.apache.commons.lang3.StringUtils.isNotEmpty(width) && CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(width)) {
+            maxWidth = skuList.stream().map(e -> e.getWidth().multiply(new BigDecimal(e.getQty())))
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        } else if (org.apache.commons.lang3.StringUtils.isNotEmpty(width) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(width)) {
+            maxWidth = skuList.stream().map(SplitSkuDTO::getWidth)
+                    .filter(Objects::nonNull)
+                    .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        } else {
+            maxWidth = skuList.stream().map(SplitSkuDTO::getWidth)
+                    .filter(Objects::nonNull)
+                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        }
+        return maxWidth;
+    }
+
+    public static BigDecimal calculateSplitSkuDTOLength(List<SplitSkuDTO> skuList, String length) {
+        BigDecimal maxLength;
+        //长
+        if (org.apache.commons.lang3.StringUtils.isNotEmpty(length) && CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(length)) {
+            maxLength = skuList.stream()
+                    .map(e -> e.getLength().multiply(new BigDecimal(e.getQty())))
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        } else if (org.apache.commons.lang3.StringUtils.isNotEmpty(length) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(length)) {
+            maxLength = skuList.stream().map(SplitSkuDTO::getLength)
+                    .filter(Objects::nonNull)
+                    .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        } else {
+            maxLength = skuList.stream().map(SplitSkuDTO::getLength)
+                    .filter(Objects::nonNull)
+                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        }
+        return maxLength;
+    }
 }
