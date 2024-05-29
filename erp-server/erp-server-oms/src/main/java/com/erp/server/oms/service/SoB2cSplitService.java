@@ -16,4 +16,11 @@ public interface SoB2cSplitService extends SuperService<SoB2cEntity> {
     List<BatchResultDTO> bomRestoreAndSave(List<String> ids);
 
     List<SoB2cEntity> listRefBomSplit(String detailId);
+
+    /**
+     * 按照仓库进行订单拆分
+     * @param ids
+     * @return
+     */
+    List<BatchResultDTO> splitOrderByWarehouse(List<String> ids);
 }
