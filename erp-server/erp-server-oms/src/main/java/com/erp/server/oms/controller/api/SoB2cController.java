@@ -1171,4 +1171,15 @@ public class SoB2cController extends BaseController {
         List<BatchResultDTO> batchResultDTOList = soB2cSplitService.bomRestoreAndSave(idDTO.getIds());
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
+
+    /**
+     * 按照仓库进行拆分订单
+     * @param idDTO
+     * @return
+     */
+    @PostMapping("/splitOrderByWarehouse")
+    public ApiResult<List<BatchResultDTO>> splitOrderByWarehouse(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO){
+        List<BatchResultDTO> batchResultDTOList = soB2cSplitService.splitOrderByWarehouse(idDTO.getIds());
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
 }

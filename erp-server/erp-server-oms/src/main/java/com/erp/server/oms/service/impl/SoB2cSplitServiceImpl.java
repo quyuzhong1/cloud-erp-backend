@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -9,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -223,6 +225,90 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             return new ArrayList<>();
         }
         return listByIds(mainIds);
+    }
+
+    @Override
+    public List<BatchResultDTO> splitOrderByWarehouse(List<String> ids) {
+        List<SoB2cDTO.ViewSplitDTO> viewSplitDTOS = soB2cService.viewSplit(ids);
+        //根据展示信息进行仓库组合
+        List<SoB2cDTO.SplitSaveDTO> splitDTOS = buildSplitDtoByWarehouse(viewSplitDTOS);
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<String> allSoIdList = new ArrayList<>();
+        for (SoB2cDTO.SplitSaveDTO dto : splitDTOS){
+            BatchResultDTO result;
+            try {
+                SoB2cDTO.SplitSaveResultDTO resultDTO = soB2cService.splitSave(dto);
+                SoB2cEntity entity = soB2cService.getById(dto.getId());
+                result = BatchResultDTO.success(dto.getId(),entity.getCode(),"订单拆分成功");
+                allSoIdList.addAll(resultDTO.getSoB2cIds());
+            } catch (Exception e) {
+                log.error("B2C销售订单取消拆分失败", e);
+                SoB2cEntity entity = soB2cService.getById(dto.getId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(dto.getId(), dto.getId(), "B2C销售订单不存在, 拆分保存失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        //原有逻辑
+        if (org.apache.commons.collections.CollectionUtils.isNotEmpty(allSoIdList)) {
+            for (String soId : allSoIdList) {
+                try {
+                    soB2cService.checkProductRegistrationAndUpdate(soId, "");
+                } catch (Exception e) {
+                    log.error("拆分保存后检查商品备案失败，soId:{}，异常信息{}", soId, e);
+                }
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 根据仓库进行订单拆分
+     * @param viewSplitDTOS
+     * @return
+     */
+    private List<SoB2cDTO.SplitSaveDTO> buildSplitDtoByWarehouse(List<SoB2cDTO.ViewSplitDTO> viewSplitDTOS) {
+        if (CollectionUtils.isEmpty(viewSplitDTOS)){
+            return Collections.emptyList();
+        }
+        List<SoB2cDTO.SplitSaveDTO> splitSaveDTOS = new ArrayList<>(viewSplitDTOS.size());
+        for (SoB2cDTO.ViewSplitDTO viewSplitDTO : viewSplitDTOS){
+            SoB2cDTO.SplitSaveDTO splitSaveDTO = new SoB2cDTO.SplitSaveDTO();
+            splitSaveDTO.setId(viewSplitDTO.getId());
+            splitSaveDTO.setGroupList(groupSplitDtoByViewDto(viewSplitDTO.getDetailList()));
+            splitSaveDTOS.add(splitSaveDTO);
+        }
+        return splitSaveDTOS;
+    }
+
+    /**
+     * 根据仓库对订单进行分组
+     * @param detailList
+     * @return
+     */
+    private List<SoB2cDTO.GroupSplitSaveDTO> groupSplitDtoByViewDto(List<SoB2cDTO.ViewSplitDetailDTO> detailList) {
+        List<SoB2cDTO.GroupSplitSaveDTO> groupSplitSaveDTOS = new ArrayList<>();
+        //对于空仓库订单进行合并为同一组
+        List<SoB2cDTO.ViewSplitDetailDTO> emptyWarehouseList = detailList.stream().filter(e -> StringUtils.isBlank(e.getWarehouseId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(emptyWarehouseList)){
+            SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = new SoB2cDTO.GroupSplitSaveDTO();
+            groupSplitSaveDTO.setDetailList(B2cOrderConverter.INSTANCE.convertViewToSplitDto(emptyWarehouseList));
+            groupSplitSaveDTOS.add(groupSplitSaveDTO);
+        }
+        Map<String, List<SoB2cDTO.ViewSplitDetailDTO>> groupMap = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getWarehouseId()))
+                .collect(Collectors.groupingBy(SoB2cDTO.ViewSplitDetailDTO::getWarehouseId));
+        if (!groupMap.isEmpty()){
+            for (List<SoB2cDTO.ViewSplitDetailDTO> list :groupMap.values()){
+                SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = new SoB2cDTO.GroupSplitSaveDTO();
+                groupSplitSaveDTO.setDetailList(B2cOrderConverter.INSTANCE.convertViewToSplitDto(list));
+                groupSplitSaveDTOS.add(groupSplitSaveDTO);
+            }
+        }
+        return groupSplitSaveDTOS;
     }
 
     @Transactional(rollbackFor = Exception.class)
