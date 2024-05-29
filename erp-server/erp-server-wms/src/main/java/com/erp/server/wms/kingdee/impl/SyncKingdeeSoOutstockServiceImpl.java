@@ -557,26 +557,19 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //客户编号
         resultMap.put("code", entity.getCode());
         resultMap.put("operate", syncOperate);
-        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
-                .setMqData(JSON.toJSONString(resultMap))
-                .setMqTopic(RocketMqTopic.SYNC_SO_OUTSTOCK_ORDER_TO_DMP_TOPIC)
-                .setMqTag(RocketMqTagEnum.APPROVED_SO_OUTSTOCK_ORDER_TO_DMP_TAG.getName())
-                .setSourceCode(entity.getCode())
-                .setSourceId(entity.getId())
-                .setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode())
-                .setSourcePlatformName(PlatformEnum.ERP_WMS.getDesc())
-                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
-                .setSyncOperate(syncOperate);
-        log.info("推送消息开始：{}", dto.toString());
-        String dmpPullTaskId = dmpTaskFeign.savePullTask(dto);
-        resultMap.put("dmpSyncTaskId", dmpPullTaskId);
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_SO_OUTSTOCK_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_SO_OUTSTOCK_ORDER_TO_DMP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                log.error("soReturn.syncDataToDmp 推送MQ失败 :" + resultMap.get("id"));
-            }
-            return Boolean.TRUE;
-        });
+
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(entity.getId());
+        taskFeignDTO.setSourceCode(entity.getCode());
+        taskFeignDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_SO_OUTSTOCK_ORDER_TO_DMP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.APPROVED_SO_OUTSTOCK_ORDER_TO_DMP_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP_WMS.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
+        taskFeignDTO.setSyncOperate(syncOperate);
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        log.info("推送消息开始：{}", taskFeignDTO.toString());
     }
 }
