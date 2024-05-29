@@ -362,8 +362,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
 
         //获取核算公司
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
-        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(dto.getDetailList().stream().map(v->v.getWarehouseId()).collect(Collectors.toList()));
+        WarehouseDTO.UpdateDTO updateDTO = CollectionUtils.isEmpty(warehouseList)?new WarehouseDTO.UpdateDTO():warehouseList.get(0);
         //获取组织信息
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(updateDTO.getOrgId()));
         entity.setWarehouseKeeperId(warehouseKeeperId);
