@@ -204,7 +204,11 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
         WmsDataCompareTaskDTO.AddViewDTO viewDTO = new WmsDataCompareTaskDTO.AddViewDTO();
         BeanMapperUtils.copy(wmsDataCompareTaskEntity, viewDTO);
         
-        viewDTO.setSettingList(getSetting(billType , wmsDataCompareExcelDto.getHeadFieldLists().get(0) , sysHeadFields));
+        List<DataCompareSettingDTO> setting = getSetting(billType , wmsDataCompareExcelDto.getHeadFieldLists().get(0) , sysHeadFields);
+        if(CollUtil.isEmpty(sysHeadFields) && wmsDataCompareTaskEntity.getCompareType().equals(WmsDataCompareTypeEnum.PK.getCode())) {
+        	setting.forEach(s -> s.setStatus(!s.getStatus()));
+        }
+		viewDTO.setSettingList(setting);
         
         viewDTO.setImportFileUrls(Collections.singletonList(WmsDataCompareUtils.mergeExcel(excelFiles)));
         return viewDTO;
