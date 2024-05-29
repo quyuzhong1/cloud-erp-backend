@@ -239,10 +239,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
-                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSoReturnDetailId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_92023, skuVO.getSkuNo());
-                }
+//                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSoReturnDetailId())).findFirst().orElse(null);
+//                if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
+//                    throw new ServiceException(ApiError.ERROR_92023, skuVO.getSkuNo());
+//                }
                 //实退 入库数量
                 Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 //签收单数量
@@ -252,11 +252,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 if (receiveQty < detailDto.getRealQty() + realQty) {
-                    throw new ServiceException(ApiError.ERROR_92026, soReturnDetailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
                 }
                 detailEntity.setMainId(dto.getId());
-                detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
-                detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+                detailEntity.setSkuId(skuVO.getSkuId());
+                detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
