@@ -45,6 +45,7 @@ public class SyncWdtOtherOutStockServiceImpl implements SyncWdtOtherOutStockServ
     @Override
     public DmpPushTaskEntity saveTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, OtherOutstockEntity entity, String operateCode, String sourceCode) {
         CreateOtherStockoutRequest request = new CreateOtherStockoutRequest();
+        request.setOuterNo(entity.getCode());
 
         //查询推送任务表，如果有了相同的来源单据号，则序号累加
         DmpSyncTaskDTO.ListDTO param = new DmpSyncTaskDTO.ListDTO(Collections.singletonList(entity.getId()), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc());

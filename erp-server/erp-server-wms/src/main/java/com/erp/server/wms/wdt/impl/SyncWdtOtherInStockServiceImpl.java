@@ -43,6 +43,7 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
 
     public DmpPushTaskEntity saveTask(List<CreateOtherStockinRequest.GoodsList> goodsList, OtherInstockEntity entity, String operateCode, String sourceCode){
         CreateOtherStockinRequest request = new CreateOtherStockinRequest();
+        request.setOuterNo(entity.getCode());
 
         //查询推送任务表，如果有了相同的来源单据号，则序号累加
         DmpSyncTaskDTO.ListDTO param = new DmpSyncTaskDTO.ListDTO(Collections.singletonList(entity.getId()), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc());
@@ -61,19 +62,6 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
                 request.setOuterNo(entity.getCode() + "_001");
             }
         }
-        /*Optional<DmpPushTaskEntity> taskOptional = taskList.stream()
-                .filter(task -> task.getSyncOperate().equalsIgnoreCase(operateCode) && task.getSourceCode().contains(entity.getCode()))
-                .max((o1, o2) -> ObjectUtil.compare(o1.getSourceCode(), o2.getSourceCode()));
-        if(taskOptional.isPresent()){
-            String taskSourceCode = taskOptional.get().getSourceCode();
-            if(taskSourceCode.contains("_")){
-                String[] split = taskSourceCode.split("_");
-                Integer seq = Integer.parseInt(split[1]) + 1;
-                request.setOuterNo(split[0] + "_" + String.format("%03d", seq));
-            }else {
-                request.setOuterNo(entity.getCode() + "_001");
-            }
-        }*/
 
         //根据收货仓库ID查询旺店通仓库编号
         ThirdMappingEntity thirdMappingEntity = dmpThirdMappingFeign.getBySysId(entity.getWarehouseId());
