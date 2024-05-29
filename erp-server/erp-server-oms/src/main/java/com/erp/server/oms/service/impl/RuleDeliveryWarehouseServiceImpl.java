@@ -235,7 +235,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         }
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
-        boolean isRuleMatch = Boolean.FALSE;
+        boolean isRuleMatch = Boolean.TRUE;
         //明细规则匹配
         for(Map<String, Object> detailMap : mapList){
             String detailId = Objects.nonNull(detailMap.get("detailId")) ? detailMap.get("detailId").toString() : null;
@@ -246,10 +246,10 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
             //配货规则是否通过
             boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
             if (!distributionSuccess) {
+                isRuleMatch = Boolean.FALSE;
                 //未匹配到条件
                  soB2cDetailService.updateIsMatchWarehouseRule(entity.getId(),detailIdList);
             } else {
-                isRuleMatch = Boolean.TRUE;
                 if(StrUtil.isNotBlank(ruleMatchResult.getName())){
                     String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "配货操作");
