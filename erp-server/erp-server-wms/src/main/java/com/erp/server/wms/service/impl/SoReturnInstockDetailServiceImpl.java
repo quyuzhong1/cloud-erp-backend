@@ -162,6 +162,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByMainIds(Arrays.asList(dto.getSourceId()));
         List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
         List<SoReturnInstockDetailEntity> list = new ArrayList<>();
+        List<String> warehouseIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getWarehouseId).collect(Collectors.toList());
+        warehouseIds.add(dto.getWarehouseId());
+        //获取仓库信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
         for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
             SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
@@ -188,6 +192,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
+            //封装仓库
+            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(v->v.getId().equals(detailDto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+            detailEntity.setWarehouseId(detailDto.getWarehouseId());
+            detailEntity.setWarehouseName(updateDTO.getName());
             list.add(detailEntity);
         }
         //更新委外标识
