@@ -281,4 +281,24 @@ public interface B2cOrderConverter {
      */
     SoB2cDTO.SplitDetailSaveDTO convertViewToSplitDto(SoB2cDTO.ViewSplitDetailDTO emptyWarehouse);
     List<SoB2cDTO.SplitDetailSaveDTO> convertViewToSplitDto(List<SoB2cDTO.ViewSplitDetailDTO> emptyWarehouseList);
+
+    /**
+     * 转换新增参数转换为订单明细
+     * @param detail
+     * @return
+     */
+    @Mapping(target = "skuId", source = "skuId")
+    @Mapping(target = "qty", source = "qty")
+    SoB2cDetailEntity convertAddToDetail(SoB2cDetailDTO.AddDTO detail);
+    List<SoB2cDetailEntity> convertAddToDetail(List<SoB2cDetailDTO.AddDTO> detailList);
+
+    /**
+     * 转换更新参数为订单明
+     * @param detail
+     * @return
+     */
+    @Mapping(target = "skuId", source = "skuId")
+    @Mapping(target = "qty", source = "qty")
+    SoB2cDetailEntity convertUpdateToDetail(SoB2cDetailDTO.UpdateDTO detail);
+    List<SoB2cDetailEntity> convertUpdateToDetail(List<SoB2cDetailDTO.UpdateDTO> detailList);
 }
