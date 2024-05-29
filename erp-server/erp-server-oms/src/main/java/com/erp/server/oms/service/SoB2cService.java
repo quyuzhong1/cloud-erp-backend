@@ -925,4 +925,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 同步订单到DMP
      */
     void syncOrderToDmp(String id);
+
+    /**
+     * 同步处理历史审核订单数据到订单表
+     */
+    void processOrderApproveData();
 }

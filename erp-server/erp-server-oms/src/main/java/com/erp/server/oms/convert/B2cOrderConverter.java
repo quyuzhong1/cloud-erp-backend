@@ -281,4 +281,11 @@ public interface B2cOrderConverter {
      */
     SoB2cDTO.SplitDetailSaveDTO convertViewToSplitDto(SoB2cDTO.ViewSplitDetailDTO emptyWarehouse);
     List<SoB2cDTO.SplitDetailSaveDTO> convertViewToSplitDto(List<SoB2cDTO.ViewSplitDetailDTO> emptyWarehouseList);
+
+    /**
+     * 根据订单进行预览数据转换
+     * @param soB2cEntity
+     * @return
+     */
+    SoB2cDTO.ViewDTO convertEntityToViewDTO(SoB2cEntity soB2cEntity);
 }

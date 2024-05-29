@@ -1182,4 +1182,13 @@ public class SoB2cController extends BaseController {
         List<BatchResultDTO> batchResultDTOList = soB2cSplitService.splitOrderByWarehouse(idDTO.getIds());
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
+
+    /**
+     * 同步处理历史审核订单数据到订单表
+     * @return
+     */
+    public ApiResult processOrderApproveData(){
+        soB2cService.processOrderApproveData();
+        return ApiResult.success();
+    }
 }
