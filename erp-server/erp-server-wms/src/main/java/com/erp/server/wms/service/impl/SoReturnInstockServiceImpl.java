@@ -803,6 +803,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setSkuId(view.getSkuId());
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());
+                detailAddDTO.setWarehouseId(qcInfoEntity.getWarehouseId());
                 //退货类型
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 //退货原因
