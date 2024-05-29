@@ -191,4 +191,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     public OverseasProviderEntity getByPlatformCode(String code) {
         return lambdaQuery().eq(OverseasProviderEntity::getCode,code).one();
     }
+
+    @Override
+    public OverseasProviderDTO.FeignDTO getOverseasWarehouse(OverseasProviderDTO.FeignDTO feignDTO) {
+        return baseMapper.getOverseasWarehouse(feignDTO);
+    }
 }

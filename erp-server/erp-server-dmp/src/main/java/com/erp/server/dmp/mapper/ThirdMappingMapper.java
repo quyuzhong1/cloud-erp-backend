@@ -1,8 +1,13 @@
 package com.erp.server.dmp.mapper;
+
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +21,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ThirdMappingMapper extends BaseMapper<ThirdMappingEntity> {
 
+    List<ThirdMappingDTO.ThirdAddDTO> getByThirdSysCode(@Param("thirdSysType") String thirdSysType, @Param("type") String type);
 }
