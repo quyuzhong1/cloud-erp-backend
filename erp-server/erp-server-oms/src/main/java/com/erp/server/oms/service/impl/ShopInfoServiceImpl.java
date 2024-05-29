@@ -3,9 +3,11 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -41,6 +43,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.oms.convert.ShopInfoConverter;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -628,6 +631,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             String authStatus = item.getAuthStatus();
             String authStatusName = AuthStatusEnum.getName(authStatus);
             item.setAuthStatusName(authStatusName);
+            if (PlatformDictEnum.TIK_TOK.getCode().equals(item.getDictPlatform())) {
+                JSONObject jsonObject = JSONObject.parseObject(item.getExtendData());
+                if (StringUtils.isBlank(jsonObject.getString("sellerType"))) {
+                    continue;
+                }
+                item.setPlatformShopType(jsonObject.getString("sellerType"));
+            }
             //客户名称
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(item.getCustomerId());
             if (Objects.nonNull(customerInfoEntity)) {
@@ -736,6 +746,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+
+
         return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
     }
 
@@ -980,6 +992,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopAuth.setExpiresIn(Math.toIntExact(expireIn));
         shopAuth.setShopId(dto.getId());
         shopAuth.setAppClientId(cfgAppClient.getId());
+        LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(Math.toIntExact(expireIn));
+        //提前半小时设置token失效，以免失效了以后才刷新容易出错
+        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+        shopAuth.setTokenExpireTime(tokenExpireTime);
         shopAuthService.saveOrUpdate(shopAuth);
         //增加店铺信息获取
 
@@ -1135,6 +1151,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfoEntity.setDictPlatform(PlatformDictEnum.SHOPEE.getCode());
+        shopInfoEntity.setAuthTime(LocalDateTime.now());
         //店铺
         this.saveOrUpdate(shopInfoEntity);
         shopId = shopInfoEntity.getId();
@@ -1147,6 +1164,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopAuth.setExpiresIn(Math.toIntExact(expireIn));
         }
         shopAuth.setAppClientId(cfClientId);
+        LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(Math.toIntExact(expireIn));
+        //提前半小时设置token失效，以免失效了以后才刷新容易出错
+        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+        shopAuth.setTokenExpireTime(tokenExpireTime);
         shopAuthService.saveOrUpdate(shopAuth);
         return Boolean.TRUE;
     }
@@ -1499,4 +1520,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return Collections.singletonList(shop);
     }
 
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listShopSelect() {
+        List<ShopInfoEntity> list = this.list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = ShopInfoConverter.INSTANCE.ShopInfoEntityToDisabledDTO(list);
+        return resultList;
+    }
 }

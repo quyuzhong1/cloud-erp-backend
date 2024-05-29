@@ -2,7 +2,11 @@ package com.erp.model.oms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.oms.enums.ShopTypeEnum;
+import com.erp.model.wms.enums.WmsDataCompareTaskStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -163,6 +167,17 @@ public class ShopDTO implements Serializable {
          * 客户名称
          */
         private String customerName;
+
+        /**
+         * 平台店铺类型
+         */
+        @Dict(enumClass = ShopTypeEnum.class)
+        private String platformShopType;
+
+        /**
+         * 扩展字段的 数据+值
+         */
+        private String extendData;
     }
 
 

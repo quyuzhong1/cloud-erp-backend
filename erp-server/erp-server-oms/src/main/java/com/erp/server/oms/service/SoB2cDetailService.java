@@ -71,6 +71,16 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return Boolean
      */
     Boolean updateWarehouseIdByMainId(String mainId, String warehouseId,Boolean isCover);
+
+    /**
+     * @description: 更新明细id
+     * @author Will
+     * @date: 2024/5/24 10:37
+     * @param detailList
+     * @param isCover
+     * @return Boolean
+     */
+    Boolean updateWarehouseId(List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList, Boolean isCover);
     /**
      * @description: 根据主表id删除
      * @author Will
@@ -100,16 +110,28 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
     /**
      * 通过platformSkuNo查询关联关系
      *
+     * @param platformSkuList         平台SKU列表
+     * @param dictPlatform            平台代码
+     * @param shopId                  店铺ID
+     * @param platformOrderCreateTime 生效日期（查询所有=传空）
+     * @param isExpire                是否过期（查询所有=传空）
+     * @return
      * @Author Jim
      * @since 2023-11-28
-     * @param platformSkuList 平台SKU列表
-     * @param dictPlatform 平台代码
-     * @param shopId 店铺ID
-     * @param platformOrderCreateTime 生效日期（查询所有=传空）
-     * @param isExpire 是否过期（查询所有=传空）
-     * @return
      */
     Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, List<String> platformSpuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire);
+
+    /**
+     * 通过platformSkuId查询关联关系
+     *
+     * @param dictPlatform            平台代码
+     * @param shopId                  店铺ID
+     * @param platformOrderCreateTime 生效日期（查询所有=传空）
+     * @param isExpire                是否过期（查询所有=传空）
+     * @return
+     */
+    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuId(List<String> platformSkuIdList, List<String> platformSpuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire);
+
 
     /**
      * 消费处理明细
@@ -156,7 +178,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @param viewDTO
      * @return java.lang.Boolean
      **/
-    Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO);
+    Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO,String soId,List<String> skuIdList);
 
     /**
      * 检查和获取映射关系
@@ -165,4 +187,18 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @since 2023-11-28
      **/
     ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform);
+
+    List<SoB2cDetailEntity> listContainDeleted(List<String> ids);
+
+    void updateContainDeleted(List<String> revertDetailIds);
+
+    List<SoB2cDetailEntity> listBySplitId(String detailId);
+
+    /**
+     * 根据主表id修改平台包裹号
+     * @param platformPackageId
+     * @param mainId
+     * @return
+     */
+    Boolean updatePlatformPackageIdByMainId(String platformPackageId, String mainId);
 }

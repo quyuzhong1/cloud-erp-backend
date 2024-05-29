@@ -13,6 +13,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -36,12 +37,6 @@ import java.util.Map;
  * @since 2023-08-18
  */
 public interface SoB2cService extends SuperService<SoB2cEntity> {
-
-
-
-
-
-
 
       /**
       * 分页列表查询
@@ -171,13 +166,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
 
     /**
-     * 校验物流尺寸规则
-     * @param id
-     * @param dto
-     * @return
-     */
-    BatchResultDTO checkBasicLogistics(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
-    /**
      * @description: 获取物流单号
      * @author Will
      * @date: 2023/8/18 16:47
@@ -246,10 +234,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @description: 拆分显示
      * @author Will
      * @date: 2023/8/21 9:18
-     * @param id
+     * @param ids
      * @return ViewSplitDTO
      */
-    SoB2cDTO.ViewSplitDTO viewSplit(String id);
+    List<SoB2cDTO.ViewSplitDTO> viewSplit(List<String> ids);
     /**
      * @description: 拆分保存
      * @author Will
@@ -257,7 +245,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return Boolean
      */
-    List<String> splitSave(SoB2cDTO.SplitSaveDTO dto);
+    SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto);
     /**
      * @description: 取消合并前数据展示
      * @author Will
@@ -895,9 +883,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(List<String> ids);
 
-    Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
-
     PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO);
+
+    Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 
     List<BatchResultDTO> deliveryWithNotOutbound(List<String> ids);
 
@@ -918,6 +906,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
 
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id,String warehouseId);
+
     /**
      * 修复历史平均成本数据数据
      * @param dto
@@ -929,4 +919,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 根据单号查询销售订单
      */
     SoB2cEntity getByCode(String soCode);
+    /**
+     * 获取目的国申报信息
+     * @param country
+     * @param skuId
+     * @param productCustomsList
+     * @return
+     */
+    ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
+
+    List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> id);
+
+    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> id);
 }

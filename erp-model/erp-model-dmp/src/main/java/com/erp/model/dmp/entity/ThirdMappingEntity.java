@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
 
@@ -19,6 +20,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * @author hyj
  * @since 2024-05-17
  */
+@NoArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
@@ -114,4 +116,7 @@ public class ThirdMappingEntity extends BaseEntity<ThirdMappingEntity> {
         return null;
     }
 
+    public ThirdMappingEntity(String thirdInfoId){
+        this.thirdInfoId = thirdInfoId;
+    }
 }

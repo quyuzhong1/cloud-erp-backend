@@ -54,7 +54,7 @@ public enum SourceTypeEnum {
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单","first_mile_delivery"),
     FBA_INVENTORY("fbaInventory", "FBA仓库","fba_inventory"),
-    OVERSEAS_DELIVERY_PLAN("overseasDeliveryPlan", "海外发货计划","overseas_delivery_plan"),
+    DELIVERY_PLAN("deliveryPlan", "发货计划","wms_delivery_plan"),
     OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),
     REQUISITION_APPLICATION("requisitionApplication", "要货申请","requisition_application"),
     REQUISITION_APPLICATION_HANDLE("requisitionApplicationHandle", "要货申请(处理)","requisition_application"),
@@ -150,11 +150,11 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_GET_OUTBOUND_RECEIPT("thirdWarehouseGetOutboundReceipt", "第三方仓出库数据获取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_INVENTORY("thirdWarehouseGetInventory", "第三方仓库存获取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_TRANSIT_WAREHOUSE_AND_LOGISTIC("thirdWarehouseGetTransitWarehouseAndLogistic", "第三方仓中转仓及支持的物流产品基础数据获取","dmp_pull_task"),
-    THIRD_WAREHOUSE_CREATE_INBOUND_BILL("thirdWarehouseCreateInboundBill", "第三方仓入库单创建接口","dmp_push_task"),
-    THIRD_WAREHOUSE_EDIT_INBOUND_BILL("thirdWarehouseEditInboundBill", "第三方仓入库单编辑接口","dmp_push_task"),
-    THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓入库单取消接口","dmp_push_task"),
-    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓订单发货对接海外仓出库创建接口","dmp_push_task"),
-    THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓出库取消接口","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_INBOUND_BILL("thirdWarehouseCreateInboundBill", "第三方仓创建入库单","dmp_push_task"),
+    THIRD_WAREHOUSE_EDIT_INBOUND_BILL("thirdWarehouseEditInboundBill", "第三方仓编辑入库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓取消入库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓创建出库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓取消出库单","dmp_push_task"),
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),
     TRANSFER_LOGISTICS_CREATE_ORDER("transferLogisticsCreateOrder", "物流报关商创建订单","dmp_push_task"),
@@ -170,6 +170,15 @@ public enum SourceTypeEnum {
 
     // 亚马逊相关
     AMZ_REPORT_CONSUMER("amzReportConsumer", "亚马逊报告消费处理","amz_report_task"),
+
+
+    // 旺店通相关
+    WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单","dmp_pull_task"),
+    WDT_RETURN_ORDER("wdt_return_order", "旺店通退货入库单","dmp_pull_task"),
+
+    //旺店通
+    WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),
+    WDT_SHOP("wdt_shop", "旺店通店铺基础数据", "dmp_pull_task"),
     ;
 
     /**

@@ -72,5 +72,10 @@ public class PlatformOrderFinanceDTO implements Serializable {
      */
     private String vatCostType;
 
+    /**
+     * 平台费
+     */
+    private BigDecimal platformCost;
+
 
 }

@@ -265,7 +265,11 @@ public class ThirdMappingDTO implements Serializable {
         @Size(max = 255, message = "备注最大长度不能超过255位")
         private String remark;
 
-
+        /**
+         * 第三方信息ID
+         */
+        @Size(max = 19,message = "第三方信息ID最大长度不能超过19位")
+        private String thirdInfoId;
     }
 
     /**

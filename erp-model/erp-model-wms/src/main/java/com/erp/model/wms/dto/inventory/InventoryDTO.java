@@ -300,6 +300,16 @@ public class InventoryDTO implements Serializable {
          */
         private String diffQty;
 
+        /**
+         * 仓位编码
+         */
+        private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
     }
 
     /**
@@ -418,6 +428,11 @@ public class InventoryDTO implements Serializable {
          */
         @NotEmpty(message = "sku不能为空")
         private String skuId;
+
+        /**
+         * 仓位编码
+         */
+        private String warehouseLocation;
 
         /**
          * 单据编号

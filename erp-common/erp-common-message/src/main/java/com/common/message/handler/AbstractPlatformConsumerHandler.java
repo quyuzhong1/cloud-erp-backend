@@ -1,16 +1,23 @@
 package com.common.message.handler;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
+
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
-import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.springframework.stereotype.Service;
 
 /**
  * 销售订单处理器抽象类
@@ -20,19 +27,34 @@ import org.springframework.stereotype.Service;
 @Service
 public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO> implements RocketMQListener<Object> {
 
+	@Resource
+    private RedisTemplate<String,Object> redisTemplate;
+	
     @Override
     public void onMessage(Object obj) {
         String dmpSyncTaskId = "";
         String platform = "";
         String uniqueId = "";
-        try {
-            dmpSyncTaskId = new JSONObject(obj).getStr("dmpSyncTaskId");
+        dmpSyncTaskId = new JSONObject(obj).getStr("dmpSyncTaskId");
+        if (StringUtils.isBlank(dmpSyncTaskId)){
+            log.error("平台数据消费异常:找不到dmpSyncTaskId, object={}", JSONUtil.toJsonStr(obj));
+            return;
+        }
+        String redisKey = "dmp:sync:task:" + dmpSyncTaskId;
+        
+        int count = 1;
+        while(!redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.SECONDS)) {
+        	log.warn("同步任务正在执行中：{}，重试获取锁次数：{}" , dmpSyncTaskId , count);
+        	count = count + 1;
+        	try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+			}
+        }
+    	try {
             platform = new JSONObject(obj).getStr("platform");
             uniqueId = new JSONObject(obj).getStr("uniqueId");
-            if (StringUtils.isBlank(dmpSyncTaskId)){
-                log.error("平台数据消费异常:找不到dmpSyncTaskId, object={}", JSONUtil.toJsonStr(obj));
-                return;
-            }
+            
             ApiResult<?> handle = handle(obj);
             if (!handle.isSuccess()) {
                 log.error("平台数据消费异常 {}", JSONUtil.toJsonStr(handle));
@@ -50,7 +72,9 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             //异常预警
             sendWarnMsg(dmpSyncTaskId, e.getMessage());
             updateMongodbData(platform, uniqueId, 0);
-        }
+        }finally {
+        	redisTemplate.delete(redisKey);
+		}
     }
 
     /**

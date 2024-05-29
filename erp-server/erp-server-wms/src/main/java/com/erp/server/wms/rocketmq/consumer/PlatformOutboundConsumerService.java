@@ -86,7 +86,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
      */
     private String getTableName(String platform){
         return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
-                platform, BusinessTypeEnum.INBOUND.getCode());
+                platform, BusinessTypeEnum.OUTBOUND.getCode());
     }
 
     @Override
@@ -151,6 +151,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 log.error("【第三方出库单】销售单【{}】标记发货失败 >>>错误信息{}", mainEntity.getCode(), ExceptionUtil.stacktraceToString(e));
             }
 
+            // 校验是否已生成销售出库单
+            boolean exist = soOutstockService.checkExist(soB2cCode, SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
+            if (exist) {
+                log.warn("销售订单{} 已生成销售出库单, 忽略生成", soB2cCode );
+                return ApiResult.success();
+            }
+
             try {
                 LocalDateTime outBoundTime = dto.getOutBoundTime();
                 if(Objects.nonNull(outBoundTime)){
@@ -171,8 +178,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
-        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-        warnMsgInfo.setTitle(StrUtil.format("平台入库消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfo.setTitle(StrUtil.format("平台出库消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
         warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg) ? "" : msg);

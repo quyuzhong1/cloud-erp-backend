@@ -6,30 +6,42 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.WdtReturnOrderDTO;
+import com.common.business.enums.*;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
 import com.erp.server.wms.service.InventoryTransCoreService;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
@@ -39,11 +51,14 @@ import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -71,6 +86,13 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     
     @Resource
     private CustomerFeign customerFeign;
+
+    @Resource
+    private SyncKingdeeSoReturnService syncKingdeeSoReturnService;
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
 
     @Override
@@ -126,8 +148,6 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         instockEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
         instockEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
         instockEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate().split("T")[0]));
-        instockEntity.setWarehouseId("");
-        instockEntity.setWarehouseName("");
         if (CollectionUtils.isNotEmpty(orderItemEntityList)) {
             KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity = orderItemEntityList.get(MathUtil.ZERO);
             instockEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());
@@ -184,6 +204,91 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 soReturnInstockDetailService.delete(ids);
             }
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void syncWdtReturnOrderToSoReturn(WdtReturnOrderDTO dto) {
+        SoReturnInstockEntity inStockEntity = BeanMapperUtils.map(SoReturnInstockEntity.class, dto);
+        List<SoReturnInstockDetailEntity> detailList = BeanMapperUtils.copyList(SoReturnInstockDetailEntity.class, dto.getDetailList());
+        SoReturnInstockEntity entity = soReturnInstockService.getOne(Wrappers.<SoReturnInstockEntity>lambdaQuery()
+                .eq(SoReturnInstockEntity::getThirdCode, inStockEntity.getThirdCode()));
+        //单据已经存在
+        if (ObjectUtil.isNotEmpty(entity)){
+            return;
+        }
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
+        inStockEntity.setCode(code);
+        //查询旺店通对应系统店铺
+        List<ThirdMappingEntity> shop = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
+                .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
+                .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
+                .eq(ThirdMappingEntity::getThirdInfoId, dto.getShopId()));
+        if (CollectionUtils.isEmpty(shop)) {
+            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, dto.getShopId());
+        }
+        ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
+        //查询旺店通对应系统仓库
+        List<ThirdMappingEntity> warehouseList = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
+                .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.WAREHOUSE.getCode())
+                .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
+                .eq(ThirdMappingEntity::getThirdInfoId, dto.getWarehouseId()));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, dto.getWarehouseName());
+        }
+        WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
+        //组织信息
+        SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
+        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
+        inStockEntity.setSalesOrgId(shopInfo.getSalesOrgId());
+        inStockEntity.setSalesOrgName(shopInfo.getSalesOrgName());
+        inStockEntity.setInventoryOrgId(company.getId());
+        if (ObjectUtil.isNotEmpty(company)) {
+            inStockEntity.setInventoryOrgName(company.getCompanyName());
+        }
+        inStockEntity.setCustomerId(shopInfo.getCustomerId());
+        if (ObjectUtil.isNotEmpty(customerInfo)) {
+            inStockEntity.setCustomerName(customerInfo.getName());
+        }
+        List<String> skuList = detailList.stream().map(SoReturnInstockDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuList);
+        //金蝶sku和plm对应不上跳过
+        if (CollectionUtils.isEmpty(skuNoList)) {
+            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, StringUtil.join(skuNoList, ","));
+        }
+        inStockEntity.setId(IdWorker.getIdStr());
+        for (SoReturnInstockDetailEntity detailEntity : detailList) {
+            detailEntity.setReturnTypeDict(ReturnTypeEnum.DEDUCTION.getCode());
+            //获取仓库信息
+            detailEntity.setWarehouseId(warehouse.getId());
+            detailEntity.setWarehouseName(warehouse.getName());
+            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+            detailEntity.setMainId(inStockEntity.getId());
+            detailEntity.setSkuId(skuVO.getSkuId());
+        }
+        //保存退货入库单和明细
+        soReturnInstockService.save(inStockEntity);
+        soReturnInstockDetailService.saveBatch(detailList);
+        //退库存
+        inventoryTransCore(Collections.singletonList(inStockEntity));
+        //推送金蝶
+        sendPushTask(Collections.singletonList(inStockEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+    }
+
+    private void sendPushTask(List<SoReturnInstockEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSoReturnService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 
     /**

@@ -55,7 +55,7 @@ public enum ModuleTypeEnum {
     SHIPPING_TEMPLATE("53", "运费模板"),
     LOGISTICS_BILL_COST("52", "自发货费用"),
     THIRD_WAREHOUSE("53", "第三方仓"),
-    OVERSEAS_DELIVERY_PLAN("54", "海外发货计划"),
+    DELIVERY_PLAN("54", "发货计划"),
     REQUISITION_APPLICATION("55", "要货申请"),
     OVERSEAS_PROVIDER("56", "仓库设置"),
     OVERSEAS_WAREHOUSE_INBOUND("57", "海外仓入库单"),
@@ -84,6 +84,8 @@ public enum ModuleTypeEnum {
     CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
     SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
     DMP_THIRD_MAPPING("75", "第三方映射"),
+    DMP_THIRD_WAREHOUSE("76", "第三方仓库"),
+    DMP_THIRD_SHOP("77", "第三方店铺"),
     ;
 
 

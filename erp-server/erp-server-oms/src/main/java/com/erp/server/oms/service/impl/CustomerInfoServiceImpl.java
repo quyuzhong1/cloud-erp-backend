@@ -31,6 +31,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -43,6 +44,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
@@ -61,6 +63,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -127,6 +131,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
 
     /**
      * 获取到分组的id 集合
@@ -685,7 +693,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
 
             //批量修改联系人信息
-            customerContactService.updateBatchContact(id, dto.getContactList());
+            List<DmpPushTaskEntity> dmpPushTaskList= customerContactService.updateBatchContact(id, dto.getContactList());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
+            });
 
             //批量修改地址信息
             customerAddressService.updateBatchAddress(id, dto.getAddressList());
@@ -775,19 +790,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
-
-            /*for (CustomerInfoEntity customerInfoEntity : list) {
-                List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(customerInfoEntity.getId());
-                //审核通过发送金蝶
-                contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-            }*/
             //批量保存销售员信息
             customerSellerService.batchSellerHistory(list, LocalDate.now());
-
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
+
         return Boolean.TRUE;
     }
 
@@ -827,13 +837,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         //反审核
         if (result) {
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
-            //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return result;
     }
@@ -862,7 +874,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             throw new ServiceException(ApiError.ERROR_92018);
         }
 
-
         //删除客户
         Boolean result = this.removeByIds(ids);
         if (result) {
@@ -870,8 +881,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String content = "删除客户[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "删除");
-            //推送金蝶
-            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         }
         return result;
     }
@@ -986,18 +997,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String finalContent = "[%s]," + content;
         operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
-        customerList.forEach(req -> {
-            //发送金蝶
-            if (dto.getDisabled()) {
-                syncKingdeeCustomerService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DISABLE.getCode());
-            } else {
-                syncKingdeeCustomerService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_ENABLE.getCode());
-            }
-        });
+        boolean update = this.updateBatchById(customerList);
 
-        return this.updateBatchById(customerList);
-
-
+        //发送金蝶
+        String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
+        if (dto.getDisabled()) {
+            operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
+        }
+        sendPushTask(customerList,operate);
+        return  update;
     }
 
 
@@ -1959,6 +1967,28 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             resultList.add(sellerUserDeptDTO);
         }
         return resultList;
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<CustomerInfoEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            List<DmpPushTaskEntity> pushTaskEntityList = syncKingdeeCustomerService.syncDataToKingdee(obj, operate);
+            resultList.addAll(pushTaskEntityList);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 
     @Override

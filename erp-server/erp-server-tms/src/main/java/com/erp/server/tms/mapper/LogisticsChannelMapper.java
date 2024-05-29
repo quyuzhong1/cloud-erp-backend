@@ -61,4 +61,12 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     List<LogisticsChannelDTO.LogisticsPlatformDTO> listChannelPlatform(@Param("channelIdList")List<String> channelIdList);
 
     List<LogisticsChannelDTO.ProvideChannelDTO> getProvideChannel(@Param("channelCodeList") List<String> channelCodeList, @Param("provideNameList")List<String> provideNameList);
+
+    /**
+     * 根据归属进行模糊匹配
+     * @param mainIdList
+     * @param name
+     * @return
+     */
+    List<LogisticsChannelEntity> listByMainIdsAndName(@Param("mainIdList") List<String> mainIdList,@Param("name") String name);
 }

@@ -1,11 +1,13 @@
 package com.erp.server.oms.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.wms.entity.OtherInstockEntity;
+
+import java.util.List;
 
 public interface SyncKingdeeCustomerService {
     /**
      * 推送金蝶
      */
-    void syncDataToKingdee(CustomerInfoEntity entity, String operate);
+    List<DmpPushTaskEntity> syncDataToKingdee(CustomerInfoEntity entity, String operate);
 }

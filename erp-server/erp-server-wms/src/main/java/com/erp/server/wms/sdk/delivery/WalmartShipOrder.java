@@ -27,17 +27,13 @@ import java.util.List;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.WALMART)
-public class WalmartShipOrder implements IPlatformService {
+public class WalmartShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
 
     @Resource
     private LogisticsMappingFeign logisticsMappingFeign;
-
-    @Resource
-    private LogisticsFeign logisticsFeign;
-
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
@@ -47,15 +43,6 @@ public class WalmartShipOrder implements IPlatformService {
         //调用sdk发货
         for (WalmartShipDTO walmartShipDTO : walmartShipOrderParam) {
             WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
-
-            //获取销售渠道信息
-            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
-                    walmartShipDTO.getLogisticsChannelId(),
-                    PlatformDictEnum.WALMART.getCode()
-            );
-            if (null == tmsScaleChannelShipDTO){
-                throw new ServiceException("找不到渠道信息");
-            }
 
             if (LogisticsPlatformEnum.YAN_WEN.getCode().equals(walmartShipDTO.getLogisticsPlatformCode())) {
                 walmartShipDTO.setLogisticsPlatformCode("Yanwen");

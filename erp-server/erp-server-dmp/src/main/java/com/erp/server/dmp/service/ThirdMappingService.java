@@ -34,6 +34,15 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
      */
     ThirdMappingDTO.MappingViewDTO view(ThirdMappingDTO.ViewParamDTO viewParamDTO);
 
+    /**
+     * 根据erp内部仓库/店铺的id查询映射关系
+     * @param sysId erp内部仓库/店铺ID
+     * @return ThirdMappingEntity 三方映射实体
+     * @date: 2024-05-27
+     * @author: tanmujin
+     */
+    ThirdMappingEntity getBySysId(String sysId);
+
     Boolean getByThirdId(ThirdMappingDTO.ViewParamDTO viewParamDTO);
 
     BaseResultDTO.AddDTO batchAdd(ThirdMappingDTO.FeignMappingDTO feignMappingDTO);

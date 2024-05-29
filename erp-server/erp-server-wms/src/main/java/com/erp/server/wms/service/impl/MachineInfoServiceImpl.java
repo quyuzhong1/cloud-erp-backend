@@ -14,7 +14,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
@@ -24,6 +23,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -44,6 +44,7 @@ import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -59,6 +60,8 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -88,6 +91,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Resource
     private MachineDetailService machineDetailService;
+
+    @Resource
+    private CommonService commonService;
 
     @Resource
     private InventoryService inventoryService;
@@ -124,6 +130,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Resource
     private MachineInfoQueryHandler machineInfoQueryHandler;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
 
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
@@ -169,6 +179,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //处理数据id
         doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
         log.info("加工单新增");
+        List<String> checkSkuIdList=dto.getDetailList().stream().
+                map(MachineDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        checkSkuIsCombination(checkSkuIdList);
         //生成单号
         String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZZCX);
         entity.setCode(code);
@@ -184,6 +197,27 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
 
+    /**
+     * @description
+     * @param checkSkuIdList 检查 的sku
+     * @return
+     * @date 2024-02-28 11:58
+     * @author Lambda
+     */
+    private void checkSkuIsCombination(List<String> checkSkuIdList) {
+        List<BomChildrenSkuDTO> bomSkuList = plmTaskFeign.listBomChildBySkuIds(checkSkuIdList);
+        //套装
+        String combinationType = BomTypeEnum.COMBINATION.getType();
+        //套装bom的父级sku
+        List<String> parentSkuIdList = bomSkuList.stream().filter(b-> combinationType.equals(b.getType())).
+                map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+
+        List<String> notExistSkuIdList = checkSkuIdList.stream().filter(c -> !parentSkuIdList.contains(c)).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(notExistSkuIdList)){
+            throw new ServiceException("存在非销售套装的sku");
+        }
+
+    }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -210,6 +244,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        List<String> checkSkuIdList=dto.getDetailList().stream().
+                map(MachineDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        checkSkuIsCombination(checkSkuIdList);
 
         MachineInfoEntity entity = new MachineInfoEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -469,11 +506,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //删除关联关系数据
         machineRefSoService.removeByMachineIdList(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的加工单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(MachineInfoEntity::getCode).collect(Collectors.joining(",")));
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的加工单", commonService.getUserInfo().getUserName(), list.stream().map(MachineInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "删除操作");
-        //金蝶推送
-        list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        //删除发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表数据
         return this.removeByIds(ids);
     }
@@ -502,8 +539,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 .update();
         //删除关联关系表数据
         machineRefSoService.removeByMachineIdList(ids);
-        //金蝶推送
-        list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
+        //作废发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个加工单【%s】，作废原因：".concat(reason), ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "作废操作");
@@ -536,8 +573,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
             updateInventoryTransCore(list);
-            //金蝶推送
-            list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+
+            //审核发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
             // 发送马帮
             list.forEach(obj->{
                 // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤，后面会限制同步过来的不允许新增或移除SKU
@@ -590,8 +628,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //回扣库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.MACHINE_INFO,ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-        //金蝶推送
-        list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+
+        //反审核发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         // 发送马帮
         list.forEach(obj->{
             // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤
@@ -864,7 +903,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      */
     private void updateApproveStatusForApprove(List<String> ids, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = commonService.getUserInfo();
 
         this.lambdaUpdate().in(MachineInfoEntity::getId, ids)
                 .set(MachineInfoEntity::getApproveUserId, userInfo.getUid())
@@ -922,5 +961,27 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Override
     public List<MachineInfoDTO.ListDTO> listBySku(MachineInfoDTO.FindInfoBySkuDTO dto) {
         return baseMapper.listBySku(dto);
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<MachineInfoEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeMachineInfoService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 }

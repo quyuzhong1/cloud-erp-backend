@@ -21,6 +21,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -29,6 +30,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
@@ -40,16 +42,14 @@ import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
-import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.wms.feign.SubcontractIssueFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
 import com.erp.server.scm.mapper.SubcontractOrderMapper;
@@ -59,6 +59,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -126,7 +128,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     private WorkflowFeign workflowFeign;
 
     @Resource
-    private SysDictFeign sysDictFeign;
+    private DmpMqFeign dmpMqFeign;
+    @Resource
+    private WarehouseLocationFeign warehouseLocationFeign;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -418,8 +422,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (dto.getType().equals(ApproveType.PASS)) {
             //自动生成采购订单
             autoGeneratePo(entity.getId());
-            //审核通过发送金蝶
-            syncKingdeeSubcontractOrderService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            //发送金蝶
+            sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -464,9 +469,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         // 更新审核信息
         updateApproveStatus(Arrays.asList(id), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
-        //审核通过发送金蝶
-        syncKingdeeSubcontractOrderService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-
+        //发送金蝶
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外订单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), entity.getId(), "反审核操作");
@@ -498,8 +502,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        log.info("删除 开始删除委外订单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
        super.removeByIds(ids);
 
-        //删除发送金蝶
-        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        //发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
     }
 
     /**
@@ -574,6 +578,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //供应商付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList =  kingdeePaymentConditionService.list();
 
+        //仓位信息
+        List<String> warehouseLocationCodeList = detailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getWarehouseLocation())).map(SubcontractOrderDetailEntity::getWarehouseLocation).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode,warehouseLocationCodeList).list();
 
         List<SubcontractOrderDetailDTO.ViewDTO> parentDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ViewDTO.class, parentList);
         for (SubcontractOrderDetailDTO.ViewDTO viewDTO : parentDTOList) {
@@ -632,6 +639,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 //付款条件
                 String childPaymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(childViewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 childViewDTO.setPaymentConditionName(childPaymentConditionName);
+
+                //仓位名称
+                String warehouseLocationName = warehouseLocationList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),childViewDTO.getWarehouseId()) && StrUtil.equals(obj.getCode(), childViewDTO.getWarehouseLocation())).map(WarehouseLocationEntity::getName).findFirst().orElse("");
+                childViewDTO.setWarehouseLocationName(warehouseLocationName);
             }
 
             viewDTO.setChildList(childDTOList);
@@ -687,6 +698,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 searchDTO.setSkuId(dto.getSkuId());
                 searchDTO.setSkuNo(dto.getSkuNo());
                 searchDTO.setSupplierId(dto.getSupplierId());
+                searchDTO.setPurchaseOrgId(dto.getPurchaseOrgId());
                 searchDTO.setPurchaseQty(dto.getQty().intValue() );
                 Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(searchDTO);
                 List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> value = pair.getValue();
@@ -804,11 +816,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
                 if (!addDetailDTO.getIsGift()) {
                     //供应商报价信息
-                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-                    searchDTO.setSkuId(addDetailDTO.getSkuId());
-                    searchDTO.setSupplierId(addDetailDTO.getSupplierId());
-                    searchDTO.setPurchaseQty(addDetailDTO.getQty());
-                    searchDTO.setSkuNo(addDetailDTO.getSkuNo());
+                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(addDetailDTO.getQty(),addDetailDTO.getSkuId(),addDetailDTO.getSkuNo(),addDetailDTO.getSupplierId(),addDetailDTO.getPurchaseOrgId());
                     List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
                     PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
                     poDetailAddDTO.setCurrency(viewDTO.getCurrency());
@@ -1027,9 +1035,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //更新订单作废状态
         updateInvalidStatus(ids, remark);
 
-        //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
-
+        //发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个委外订单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "作废操作");
@@ -1439,6 +1446,26 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         entity.setSubcontractOrgName(subcontractOrgName);
     }
 
-
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<SubcontractOrderEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
 
 }

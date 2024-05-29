@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.sync;
 
+import com.common.business.dto.WdtSoOutStockDTO;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 
 /**
@@ -18,4 +19,10 @@ public interface SyncB2CSoOutstockService {
      * @return void
      */
     void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity);
+
+    /**
+     * 同步旺店通的销售出库单
+     * @param entity 旺店通参数
+     */
+    void syncWdtSoOutStock(WdtSoOutStockDTO entity);
 }

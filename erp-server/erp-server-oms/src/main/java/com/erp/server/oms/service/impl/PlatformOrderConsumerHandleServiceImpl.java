@@ -148,6 +148,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);
         }
+
+        // 非平台
+//        if (!mainEntity.hasPlatformWarehouseOrder()
+//                && resultDTO.isUpdateCancel()
+//                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())){
+//            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+//        }
     }
 
 
@@ -172,8 +179,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
     public void handleRule(SoB2cEntity mainEntity) {
         //订单状态
         String billStatus = mainEntity.getBillStatus();
@@ -213,7 +220,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())){
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.getDetails()
                     .stream()
                     .map(PlatformOrderDetailDTO::getPlatformSpuNo)
@@ -255,6 +264,12 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         resultDTO.setShopWarehouseId(shopInfo.getWarehouseId());
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo, skuList);
+        if (CollectionUtils.isEmpty(detailList)){
+            // 拆分后无平台来源明细不更新
+            log.warn("[B2C订单消费] 平台订单【{}】：拆分后无平台来源明细不更新", dto.getPlatformCode());
+            return resultDTO;
+        }
+
         Boolean isWarehouseEmpty = detailList.stream().filter(d -> StringUtils.isBlank(d.getWarehouseId())).count() > 0;
         resultDTO.setIsWarehouseEmpty(isWarehouseEmpty);
         resultDTO.setWarehouseName(detailList.get(MathUtil.ZERO).getWarehouseName());

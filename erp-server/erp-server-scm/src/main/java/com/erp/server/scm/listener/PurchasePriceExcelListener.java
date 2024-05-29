@@ -285,7 +285,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
         //根据供应商 获取到系统已有的区间
         if(StrUtils.isNotEmpty(addDTO.getSupplierId())) {
             if(Objects.nonNull(detailDTO.getMinQty()) && Objects.nonNull(detailDTO.getMaxQty())) {
-                List<PurchasePriceDetailEntity> supplierPriceDetailList = priceDetailService.getBySupplierIdAndStatus(addDTO.getSupplierId(), CHECK_STATUS_LIST);
+                List<PurchasePriceDetailEntity> supplierPriceDetailList = priceDetailService.getBySupplierIdAndStatus(addDTO.getSupplierId(),addDTO.getPurchaseOrgId(), CHECK_STATUS_LIST);
                 Map<String, List<PurchasePriceDetailEntity>> existPriceMap = supplierPriceDetailList.stream().collect(Collectors.groupingBy(PurchasePriceDetailEntity::getSkuId));
                 if(existPriceMap.containsKey(detailDTO.getSkuId())) {
                     int[] addRange = {detailDTO.getMinQty(), detailDTO.getMaxQty()};
@@ -325,8 +325,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
         // 与该Excel已有的行做关联验证
         if(CollUtil.isNotEmpty(importList)) {
             if(Objects.nonNull(detailDTO.getMinQty()) && Objects.nonNull(detailDTO.getMaxQty())) {
-                Map<String, List<ImportPurchasePriceExcelDTO>> importPurchaseMap = importList.stream().collect(Collectors.groupingBy(r->StrUtils.null2EmptyWithTrim(r.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(r.getSkuNo())));
-                String checkKey = StrUtils.null2EmptyWithTrim(addDTO.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(detailDTO.getSkuNo());
+                Map<String, List<ImportPurchasePriceExcelDTO>> importPurchaseMap = importList.stream().collect(Collectors.groupingBy(r->StrUtils.null2EmptyWithTrim(r.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(r.getSkuNo()) + "-" + StrUtils.null2EmptyWithTrim(r.getPurchaseOrgName())));
+                String checkKey = StrUtils.null2EmptyWithTrim(addDTO.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(detailDTO.getSkuNo())+ "-" + StrUtils.null2EmptyWithTrim(excelDTO.getPurchaseOrgName());
                 List<ImportPurchasePriceExcelDTO> importPriceList = importPurchaseMap.get(checkKey);
                 if(CollUtil.isNotEmpty(importPriceList)) {
                     for(ImportPurchasePriceExcelDTO price : importPriceList) {

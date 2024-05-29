@@ -30,7 +30,7 @@ import java.util.List;
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.ALI_EXPRESS)
-public class AliexpressShipOrder implements IPlatformService {
+public class AliexpressShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -51,16 +51,8 @@ public class AliexpressShipOrder implements IPlatformService {
             SoB2cDTO.SignShipOrderDTO signShipOrderDTO = soB2cFeign.getSignShipParam(soB2cId);
             //渠道
             String channelId=signShipOrderDTO.getLogisticsChannelId();
-
-            //获取销售渠道信息
-            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
-                    channelId,
-                    PlatformDictEnum.ALI_EXPRESS.getCode()
-            );
-            if (null == tmsSignShipDTO){
-                throw new ServiceException("找不到渠道信息");
-            }
-
+            //获取渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getSignShipInfoByChannelById(channelId);
 
             //获取渠道标发单号
             String standardOrderType = tmsSignShipDTO.checkAndGetOrderDeliveryMarkType();

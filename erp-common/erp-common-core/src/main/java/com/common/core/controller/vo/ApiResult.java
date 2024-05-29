@@ -2,13 +2,16 @@ package com.common.core.controller.vo;
 
 
 
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.io.Serializable;
 import java.util.Objects;
+
+import org.slf4j.MDC;
+
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 数据结果返回的封装
@@ -29,12 +32,16 @@ public class ApiResult<T>  implements Serializable {
      */
     private Integer code;
 
+    /**
+     * 分布式链路id
+     */
+    private String traceId = MDC.get("traceId");
 
     /**
      * 请求或响应body
      */
     protected T data;
-
+    
 
     /**
      * 是否成功

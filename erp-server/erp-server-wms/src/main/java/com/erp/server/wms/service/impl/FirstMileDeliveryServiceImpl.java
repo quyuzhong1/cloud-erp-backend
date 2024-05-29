@@ -5,6 +5,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
@@ -17,6 +20,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.base.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -31,6 +35,13 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -60,9 +71,13 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.listener.PackingExcelListener;
@@ -146,7 +161,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Autowired
     private WmsCartonDetailService wmsCartonDetailService;
     @Autowired
-    private OverseasDeliveryPlanService overseasDeliveryPlanService;
+    private WmsDeliveryPlanService wmsDeliveryPlanService;
     @Autowired
     private DictBasicService dictBasicService;
     @Resource
@@ -546,15 +561,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //如果是发货计划来源，反审核修改发货状态
-        if (SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
-            OverseasDeliveryPlanEntity planEntity = overseasDeliveryPlanService.getById(entity.getSourceId());
+        if (SourceTypeEnum.DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
+            WmsDeliveryPlanEntity planEntity = wmsDeliveryPlanService.getById(entity.getSourceId());
             if (ObjectUtil.isNotEmpty(planEntity)) {
                 //如果存在有一个审核通过的发货单，状态都是已发货
                 List<FirstMileDeliveryEntity> firstMileDeliveryEntities = this.listBySourceIds(Arrays.asList(entity.getSourceId()));
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(deliveryEntities)) {
                     //如果没有审核通过否发货单，修改发货计划单的发货状态为未发货
-                    overseasDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.UN_SHIPPED.getCode());
+                    wmsDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.UN_SHIPPED.getCode());
                 }
             }
         }
@@ -564,7 +579,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //直接调拨单已审核先反审核
         List<String> approveTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(approveTransferOutIds)) {
-            transferInfoService.disApprove(approveTransferOutIds, Boolean.TRUE);
+            transferInfoService.disApprove(approveTransferOutIds, Boolean.FALSE);
         }
         //直接调拨单审核中先撤销
         List<String> approveIngTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
@@ -715,11 +730,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
             }
             //如果是发货计划来源
-            if (SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
+            if (SourceTypeEnum.DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
                 //审核通过修改发货状态为已发货
-                OverseasDeliveryPlanEntity planEntity = overseasDeliveryPlanService.getById(entity.getSourceId());
+                WmsDeliveryPlanEntity planEntity = wmsDeliveryPlanService.getById(entity.getSourceId());
                 if (ObjectUtil.isNotEmpty(planEntity)) {
-                    overseasDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
+                    wmsDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
             }
 

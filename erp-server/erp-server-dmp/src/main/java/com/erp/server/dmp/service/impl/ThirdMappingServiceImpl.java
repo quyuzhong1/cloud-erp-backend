@@ -435,6 +435,15 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), sysName, thirdName);
         }
     }
+
+    @Override
+    public ThirdMappingEntity getBySysId(String sysWarehouseId) {
+        LambdaQueryWrapper<ThirdMappingEntity> queryWrapper = new LambdaQueryWrapper<ThirdMappingEntity>()
+                .eq(ThirdMappingEntity::getSysId, sysWarehouseId)
+                .eq(ThirdMappingEntity::getIsDeleted, false)
+                .eq(ThirdMappingEntity::getDisabled, false);
+        return baseMapper.selectOne(queryWrapper);
+    }
 //    @Resource
 //    private CheckStrategy checkStrategy;
 //    private void handleData1(ThirdMappingEntity thirdMappingEntity) {

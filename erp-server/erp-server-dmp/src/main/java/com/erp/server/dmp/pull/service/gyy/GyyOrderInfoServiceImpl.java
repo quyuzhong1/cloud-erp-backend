@@ -28,6 +28,7 @@ import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -93,7 +94,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
             }
             GyyOrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(gyyOrderEntity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , gyyOrderEntity)) {
                 log.warn("管易销售订单 mongo数据无变化无需更新 deliveryEntity={}", JSONUtil.toJsonStr(gyyOrderEntity));
                 continue;
             }

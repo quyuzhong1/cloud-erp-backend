@@ -8,11 +8,17 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -109,7 +115,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(SoOutstockEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(SoOutstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -121,8 +127,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity, operate, resultMap);
-            return;
+            return saveTask(entity, operate, resultMap);
         }
 
         //获取销售出库单详情
@@ -305,7 +310,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("FEntity", fEntityList);
 
         //生成任务
-        sendMqAndSaveTask(entity, operate, resultMap);
+        return saveTask(entity, operate, resultMap);
     }
 
 
@@ -321,7 +326,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncB2cDataToKingdee(SoOutstockEntity entity, String operate) {
+    public DmpPushTaskEntity syncB2cDataToKingdee(SoOutstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -334,13 +339,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity, operate, resultMap);
-            return;
+            return saveTask(entity, operate, resultMap);
         }
         //销售单信息
         SoB2cEntity soB2cEntity = soB2cFeign.getById(soId);
         if (Objects.isNull(soB2cEntity)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
         List<SoB2cDetailEntity> soB2cDetailList = soB2cFeign.listDetailByMainIds(Arrays.asList(soId));
         //获取销售出库单详情
@@ -504,7 +508,196 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("FEntity", fEntityList);
 
         //生成任务
-        sendMqAndSaveTask(entity, operate, resultMap);
+        return saveTask(entity, operate, resultMap);
+    }
+
+
+    /**
+     * 同步金蝶到
+     *
+     * @param
+     * @return
+     * @description
+     * @author Lambda
+     * @create 2023-12-27 16:51
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public DmpPushTaskEntity syncWdtDataToKingdee(SoOutstockEntity entity, String operate) {
+        Map<String, Object> resultMap = new HashMap<>();
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        //业务id
+        resultMap.put("id", entity.getId());
+        //退货单号
+        resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            return saveTask(entity, operate, resultMap);
+        }
+        //获取销售出库单详情
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        String sellerId = entity.getSellerId();
+        SysDepartmentUserNumberDTO deptUser = null;
+        String deptId = "";
+        if (StringUtils.isNotBlank(sellerId)) {
+            deptUser = sysUserFeign.getDeptByUserId(sellerId);
+        }
+        if (Objects.nonNull(deptUser)) {
+            deptId = deptUser.getDepartmentId();
+        }
+
+        //组织信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getSalesOrgId(), entity.getWarehouseOrgId()));
+        //客户信息
+        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
+
+        //部门信息
+        SysDepartmentDTO dept =StringUtils.isNotBlank(deptId)? sysUserFeign.getUserDeptById(deptId):null;
+        //查询供应商信息
+        SupplierEntity supplierEntity = null;
+        if (StringUtils.isNotBlank(entity.getCarrierId())) {
+            supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
+        }
+        //币别
+        String currency = "CNY";
+        //获取币别信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(currency));
+        //仓库
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Collections.singletonList(entity.getWarehouseId()));
+        //员工岗位
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(entity.getWarehouseKeeperId()));
+        //单据类型
+        resultMap.put("orderType", entity.getOrderType());
+        //单据日期
+        resultMap.put("billDate", Objects.nonNull(entity.getBillDate()) ? LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) : LocalDateTimeUtil.format(entity.getCreateTime().toLocalDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        //销售组织
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("salesOrgCode", salesOrgCode);
+        }
+        //客户
+        if (CollectionUtils.isNotEmpty(customerInfoEntitieList)) {
+            CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            resultMap.put("customerCode", customerInfoEntity.getCode());
+            resultMap.put("customerName", customerInfoEntity.getName());
+            PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(customerInfoEntity.getPlatformType());
+            String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getKingdeeCode() : "";
+            //平台类型
+            resultMap.put("platformType", salesPlatformCode);
+        }
+        //销售部门
+        if (ObjectUtil.isNotEmpty(dept)) {
+            resultMap.put("salesDeptCode", dept.getCode());
+        }
+        //销售组织
+        String salesOrgId = entity.getSalesOrgId();
+
+        //获取业务员信息
+        if (StringUtils.isNotBlank(sellerId)) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgId(entity.getSalesOrgId());
+            findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
+            //获取员工业务信息
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //销售员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("sellerCode", kingSellerInfo.getDeptCode());
+                resultMap.put("seller", kingSellerInfo.getUserName());
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(userKingdeePostInfoList)) {
+            //仓管员
+            resultMap.put("warehouseKeeperCode", userKingdeePostInfoList.get(0).getKingdeeUserCode());
+        }
+
+
+        String billDate = entity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+        //汇率
+        BigDecimal exchangeRate = dmpTaskFeign.getRate(billDate, currency);
+        if (Objects.isNull(exchangeRate)) {
+            exchangeRate = MathUtil.BigDecimal_1;
+        }
+        //汇率
+        resultMap.put("exchangeRate", exchangeRate);
+        //运输单号
+        resultMap.put("trackNo", entity.getTrackNo());
+        //销售单号
+        resultMap.put("soCode", entity.getSoCode());
+        //销售单金蝶id
+        resultMap.put("soSyncKingdeeId", entity.getSyncKingdeeId());
+        //发货组织
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("warehouseOrgCode", warehouseOrgCode);
+        }
+        //承运商
+        if (ObjectUtil.isNotEmpty(supplierEntity)) {
+            resultMap.put("carrierCode", supplierEntity.getCode());
+        }
+
+        //————————————————————财务信息SubHeadEntity——————————————————————
+        //结算币别
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
+        resultMap.put("currencyCode", viewDTO.getKingdeeCode());
+        //结算组织
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(salesOrgId)).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("salesOrgCode", salesOrgCode);
+        }
+
+
+        //————————————————————物料信息——————————————————————
+        List<Map<String, Object>> fEntityList = new ArrayList<>();
+        for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("skuNo", detailEntity.getSkuNo());
+            map.put("actualQty", detailEntity.getActualQty());
+            map.put("salesQty", detailEntity.getActualQty());
+            map.put("planQty", detailEntity.getPlanQty());
+            map.put("price", detailEntity.getPrice());
+            BigDecimal taxRate = detailEntity.getTaxRate();
+
+            //含税单价
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            BigDecimal taxPrice = MathUtil.multiply(detailEntity.getPrice(), multiplyTax);
+            //含税单价
+            map.put("taxPrice", taxPrice);
+            map.put("amount", detailEntity.getAmount());
+            map.put("isGift", Boolean.FALSE);
+            if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+                map.put("warehouseOrgCode", warehouseOrgCode);
+            }
+            map.put("taxRate", detailEntity.getTaxRate());
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
+                map.put("warehouseCode", warehouseCode);
+            }
+
+            map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            map.put("remark", detailEntity.getRemark());
+            //销售订单金蝶id
+            map.put("soSyncKingdeeId",entity.getSyncKingdeeId());
+            map.put("FSrcType", "SAL_SaleOrder");
+            // 源单编号
+            map.put("FSrcBillNo", entity.getThirdCode());
+            // 订单单号
+            map.put("FSoorDerno", entity.getSourceCode());
+            fEntityList.add(map);
+        }
+        resultMap.put("FEntity", fEntityList);
+
+        //生成任务
+        return saveTask(entity, operate, resultMap);
     }
 
     /**
@@ -515,7 +708,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      * @author Will
      * @date: 2023/10/16 9:17
      */
-    private void sendMqAndSaveTask(SoOutstockEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask(SoOutstockEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -533,7 +726,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         } else {
             dmpSyncTaskDTO.setParentId(entity.getSoId());
         }
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 
     /**

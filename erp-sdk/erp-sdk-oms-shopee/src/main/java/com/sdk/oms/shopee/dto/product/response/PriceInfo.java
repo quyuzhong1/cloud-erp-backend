@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -18,18 +18,18 @@ import java.io.Serializable;
 public class PriceInfo implements Serializable {
 
     private String currency;
-    @JSONField(name = "original_price")
+    @Alias( "original_price")
     private float originalPrice;
-    @JSONField(name = "current_price")
+    @Alias( "current_price")
     private float currentPrice;
-    @JSONField(name = "inflated_price_of_original_price")
+    @Alias( "inflated_price_of_original_price")
     private float inflatedPriceOfOriginalPrice;
-    @JSONField(name = "inflated_price_of_current_price")
+    @Alias( "inflated_price_of_current_price")
     private float inflatedPriceOfCurrentPrice;
-    @JSONField(name = "sip_item_price")
+    @Alias( "sip_item_price")
     private float sipItemPrice;
-    @JSONField(name = "sip_item_price_source")
+    @Alias( "sip_item_price_source")
     private String sipItemPriceSource;
-    @JSONField(name = "sip_item_price_currency")
+    @Alias( "sip_item_price_currency")
     private String sipItemPriceCurrency;
 }

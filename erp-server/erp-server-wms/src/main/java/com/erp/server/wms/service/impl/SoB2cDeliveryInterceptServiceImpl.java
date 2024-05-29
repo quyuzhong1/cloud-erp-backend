@@ -24,12 +24,15 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -37,6 +40,8 @@ import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -117,7 +122,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Autowired
     private SoOutstockDetailServiceImpl soOutstockDetailServiceImpl;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDTO.AddDTO addDTO) {
@@ -440,7 +444,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void updateInterceptStatus(SoB2cDeliveryInterceptEntity entity) {
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
@@ -542,11 +545,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSourceId());
-        if(Objects.isNull(soB2cDelivery)){
-            throw new ServiceException("查询不到发货单");
+        if(Objects.nonNull(soB2cDelivery)){
+            soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
+            soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
         }
-        soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
-        soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
     }
 
     /**

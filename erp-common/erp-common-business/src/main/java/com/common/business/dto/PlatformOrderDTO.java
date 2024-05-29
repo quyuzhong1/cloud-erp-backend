@@ -42,7 +42,7 @@ public class PlatformOrderDTO extends UniqueDto {
     private String shopId;
 
     /**
-     * 作废状态（false未作废，true已作废）
+     * 作废状态（false未作废，true已作废）a
      */
     private Boolean invalidStatus;
 
@@ -198,6 +198,10 @@ public class PlatformOrderDTO extends UniqueDto {
      */
     private String downloadTime;
 
+    /**
+     * 卖家订单编号
+     */
+    private String sellerOrderCode;
     /**
      * 订单明细
      */

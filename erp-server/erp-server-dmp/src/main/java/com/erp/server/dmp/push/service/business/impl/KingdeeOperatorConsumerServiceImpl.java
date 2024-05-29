@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.service.business.impl;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncOperateEnum;
@@ -11,6 +12,7 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeOperatorConsumerService;
@@ -52,7 +54,7 @@ public class KingdeeOperatorConsumerServiceImpl implements KingdeeOperatorConsum
         //操作项
         String operate = (String) map.get("operate");
 
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
@@ -93,6 +95,8 @@ public class KingdeeOperatorConsumerServiceImpl implements KingdeeOperatorConsum
         }catch (Exception e){
             //未查找到数据，新增数据
             JSONObject firstJson = json;
+            JSONUtil.toJsonStr(firstJson);
+            JSONUtil.toJsonStr(param);
             //更新数据
             kingdeeCommonService.save(platformEntity,map,apiUtils,json,param,type);
             return;

@@ -17,6 +17,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
@@ -28,12 +29,16 @@ import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
-import com.erp.server.scm.service.*;
+import com.erp.server.scm.service.ModuleOperateLogService;
+import com.erp.server.scm.service.PurchasePriceDetailService;
+import com.erp.server.scm.service.PurchasePriceService;
+import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +48,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -80,16 +87,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     private PurchasePriceService priceService;
 
     @Resource
-    private PurchasePriceChangeService purchasePriceChangeService;
-
-    @Resource
-    private PurchasePriceHistoryService purchasePriceHistoryService;
-
-    @Resource
     private SyncKingdeePurchasePriceService syncKingdeePurchasePriceService;
 
     @Resource
-    private AttachmentService attachmentService;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private SupplierService supplierService;
@@ -118,7 +119,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_98024);
         }
         //验证时间
-        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),addList);
+        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),purchasePriceEntity.getPurchaseOrgId(),addList);
         for (PurchasePriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
@@ -148,13 +149,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @param list
      */
     @Override
-    public void checkPurchasePriceDetail (String supplierId,List<PurchasePriceDetailEntity> list) {
+    public void checkPurchasePriceDetail (String supplierId,String purchaseOrgId,List<PurchasePriceDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         //查询供应商信息
         List<String> skuIdList = list.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
-        List<PurchasePriceDetailDTO.ViewDTO> purchaseDetailList = getBySupplierId(supplierId, null, skuIdList);
+        List<PurchasePriceDetailDTO.ViewDTO> purchaseDetailList = listCheckPurchasePriceDetail(supplierId, purchaseOrgId, skuIdList);
         if (CollectionUtils.isNotEmpty(purchaseDetailList)) {
             List<String> oldIdList = list.stream().map(PurchasePriceDetailEntity::getId).collect(Collectors.toList());
             purchaseDetailList = purchaseDetailList.stream().filter(obj -> !oldIdList.contains(obj.getId())).collect(Collectors.toList());
@@ -332,7 +333,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
 
         //验证时间
-        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),saveOrUpdateList);
+        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),purchasePriceEntity.getPurchaseOrgId(),saveOrUpdateList);
 
         //这是要添加的
         List<PurchasePriceDetailEntity> addList = saveOrUpdateList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
@@ -458,8 +459,14 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         this.updateBatchById(detailList);
 
         //金蝶更新分录禁用
-        syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList, disabled);
-
+        DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList, disabled);
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
         return Boolean.TRUE;
     }
 
@@ -473,13 +480,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.ViewDTO> getBySupplierId(String supplierId, List<String> detailIds, List<String> skuIdList) {
+    public List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(String supplierId, String purchaseOrgId, List<String> skuIdList) {
         List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
         statusList.add(ApproveStatusEnum.REJECT.getStatus());
-        List<PurchasePriceDetailDTO.ViewDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds, skuIdList);
+        List<PurchasePriceDetailDTO.ViewDTO> list = baseMapper.listCheckPurchasePriceDetail(supplierId, statusList, purchaseOrgId, skuIdList);
         return list;
     }
 
@@ -659,8 +666,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId, List<String> statusList) {
-        return this.baseMapper.getBySupplierAndStatus(supplierId, statusList);
+    public List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId,String purchaseOrgId, List<String> statusList) {
+        return this.baseMapper.getBySupplierAndStatus(supplierId,purchaseOrgId, statusList);
     }
 
     @Override
@@ -730,14 +737,21 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
+        //skuId
         List<String> skuIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
+        //供应商Id
         List<String> supplierIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSupplierId).distinct().collect(Collectors.toList());
+        //采购数量
         List<Integer> purchaseQtyList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseQty).distinct().collect(Collectors.toList());
+        //采购组织Id
+        List<String> purchaseOrgIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
+
 
         PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
         dto.setSkuIdList(skuIdList);
         dto.setSupplierIdList(supplierIdList);
         dto.setPurchaseQtyList(purchaseQtyList);
+        dto.setPurchaseOrgIdList(purchaseOrgIdList);
         //报价信息
         List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = baseMapper.batchGetTaxPrice(dto);
         //币种信息
@@ -751,6 +765,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             if (CollectionUtils.isNotEmpty(viewList)) {
                 PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(searchDTO.getSkuId())
                                 && obj.getSupplierId().equals(searchDTO.getSupplierId())
+                                && StrUtil.equals(obj.getPurchaseOrgId(),searchDTO.getPurchaseOrgId())
                                 && (searchDTO.getPurchaseQty() >= obj.getMinQty() && obj.getMaxQty() > searchDTO.getPurchaseQty()))
                         .findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(viewDTO)) {

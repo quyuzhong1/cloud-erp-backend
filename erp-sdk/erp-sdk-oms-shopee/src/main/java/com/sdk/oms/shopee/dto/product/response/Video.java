@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,10 +18,10 @@ import java.io.Serializable;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = false)
 public class Video implements Serializable {
-    @JSONField(name = "video_url")
+    @Alias( "video_url")
     private String videoUrl;
-    @JSONField(name = "thumbnail_url")
+    @Alias( "thumbnail_url")
     private String thumbnailUrl;
-    @JSONField(name = "")
+    @Alias( "")
     private String duration;
 }

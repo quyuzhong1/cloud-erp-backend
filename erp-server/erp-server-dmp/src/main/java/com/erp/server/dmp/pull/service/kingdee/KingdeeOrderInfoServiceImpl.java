@@ -35,6 +35,7 @@ import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpErrorLogService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -121,7 +122,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             }
             KingdeeOrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -246,7 +247,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
                 itemFilters.add(String.format("FBillNo = '%s'", orderEntity.getFBillNo()));
                 itemFilters.add(String.format("FID = '%s'", orderEntity.getFId()));
                 String itemFilterStr = String.join(" and ", itemFilters);
-                String itemFieldKeys = "FBillNo,FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialId.FNumber,FMaterialModel,FQty,FPriceUnitQty," +
+                String itemFieldKeys = "FSaleOrderEntry_FEntryID,FBillNo,FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialId.FNumber,FMaterialModel,FQty,FPriceUnitQty," +
                         "FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId," +
                         "FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus," +
                         "F_ulz_Decimal,F_ulz_CGCB,FSOStockId.FName,FAllAmount";
@@ -469,7 +470,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             dmpOrderItemSplitEntity.setSkuNo(skuNo);
             //库存状态：1.自动创建 2.待开发 3.正常 4.清仓 5.停止销售
             dmpOrderItemSplitEntity.setStockStatus(0);
-            String erpOrderItemId = orderItemBean.getFBillNo() + "_" + orderItemBean.getFMaterialNumber();
+            String erpOrderItemId = orderItemBean.getFBillNo()+ "_" + orderItemBean.getFEntryID() + "_" + orderItemBean.getFMaterialNumber();
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
             //erp平台商品id
             dmpOrderItemSplitEntity.setErpOrderItemId(erpOrderItemId);

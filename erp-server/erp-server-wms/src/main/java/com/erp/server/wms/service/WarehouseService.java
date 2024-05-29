@@ -40,6 +40,15 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     List<WarehouseDTO.ListDTO> listApproveWarehouse();
 
+    /**
+     * @description:
+     * @author Will
+     * @date: 2024/5/23 18:21
+     * @param dto
+     * @return List<ListInventoryQtyDTO> 
+     */
+    List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto);
+
     
     /**
      * 添加仓库
@@ -267,4 +276,12 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return List<UpdateDTO>
      */
     List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(List<String> warehouseNameList);
+    /**
+     * @description: 远程分页查询仓库信息
+     * @author Will
+     * @date: 2024/5/24 12:45
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> dto);
 }
