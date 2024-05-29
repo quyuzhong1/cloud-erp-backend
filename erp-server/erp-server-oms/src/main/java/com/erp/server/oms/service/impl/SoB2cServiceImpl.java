@@ -3999,43 +3999,47 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             mapList.add(detailMap);
         }
         map.put("detailList", mapList);
-        String skuNo = getByField("skuNo", mapList);
+        Object skuNo = getByField("skuNo", mapList);
         map.put("skuNo", skuNo);
 
-        String sellerSkuNo = getByField("sellerSkuNo", mapList);
+        Object sellerSkuNo = getByField("sellerSkuNo", mapList);
         map.put("sellerSkuNo", sellerSkuNo);
 
-        String platformSkuNo = getByField("platformSkuNo", mapList);
+        Object platformSkuNo = getByField("platformSkuNo", mapList);
         map.put("platformSkuNo", platformSkuNo);
 
-        String platformSpuNo = getByField("platformSpuNo", mapList);
+        Object platformSpuNo = getByField("platformSpuNo", mapList);
         map.put("platformSpuNo", platformSpuNo);
 
-        String skuQty = getByField("skuQty", mapList);
+        Object skuQty = getByField("skuQty", mapList);
         map.put("skuQty", skuQty);
 
-        String deliveryWarehouseId = getByField("deliveryWarehouseId", mapList);
+        Object deliveryWarehouseId = getByField("deliveryWarehouseId", mapList);
         map.put("deliveryWarehouseId", deliveryWarehouseId);
 
-        String deliveryWarehouseLocation = getByField("deliveryWarehouseLocation", mapList);
+        Object deliveryWarehouseLocation = getByField("deliveryWarehouseLocation", mapList);
         map.put("deliveryWarehouseLocation", deliveryWarehouseLocation);
 
-        String category = getByField("category", mapList);
+        Object category = getByField("category", mapList);
         map.put("category", category);
 
-        String property = getByField("propertyId", mapList);
+        Object property = getByField("propertyId", mapList);
         map.put("propertyId", property);
 
-        String isAliExpressTaxOrder = getByField("isAliExpressTaxOrder", mapList);
-        map.put("isAliExpressTaxOrder", isAliExpressTaxOrder);
+        long isAliExpressTaxOrder = mapList.stream().filter(m-> m != null && m.get("isAliExpressTaxOrder") != null
+                && (boolean) m.get("isAliExpressTaxOrder")).count();
+        map.put("isAliExpressTaxOrder", isAliExpressTaxOrder > 0);
 
-        String isAliExpressNewbieWarehouse = getByField("isAliExpressNewbieWarehouse", mapList);
-        map.put("isAliExpressNewbieWarehouse", isAliExpressNewbieWarehouse);
+        long isAliExpressNewbieWarehouse = mapList.stream().filter(m-> m != null && m.get("isAliExpressNewbieWarehouse") != null
+                && (boolean) m.get("isAliExpressNewbieWarehouse")).count();
+        map.put("isAliExpressNewbieWarehouse", isAliExpressNewbieWarehouse > 0);
 
-        String isCombinationOrder = getByField("isCombinationOrder", mapList);
-        map.put("isCombinationOrder", isCombinationOrder);
+        long isCombinationOrder = mapList.stream().filter(m-> m != null && m.get("isCombinationOrder") != null
+                && (boolean) m.get("isCombinationOrder")).count();
+        map.put("isCombinationOrder", isCombinationOrder > 0);
 
-        long isOutStockCount = mapList.stream().filter(m-> (boolean) m.get("isOutStock")).count();
+        long isOutStockCount = mapList.stream().filter(m-> m != null && m.get("isOutStock") != null
+                && (boolean) m.get("isOutStock")).count();
         map.put("isOutStock", isOutStockCount > 0);
 
 
@@ -4176,6 +4180,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 
+
+
     /**
      * 根据 字段获取值
      *
@@ -4185,15 +4191,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date 2023-12-05 10:25
      */
 
-    private String getByField(String fieldCode, List<Map<String, Object>> mapList) {
-        Set<String> list = new HashSet<>(mapList.size());
+    private Object getByField(String fieldCode, List<Map<String, Object>> mapList) {
+        Set<Object> set = new HashSet<>(mapList.size());
         for (Map<String, Object> map : mapList) {
             Object obj = map.getOrDefault(fieldCode, "");
             if (Objects.nonNull(obj)) {
-                list.add(obj.toString());
+                set.add(obj);
             }
         }
-        return list.stream().collect(Collectors.joining(","));
+        if (CollectionUtils.isEmpty(set)){
+            return null;
+        }else if (set.size() == 1){
+            return set.stream().findFirst().get();
+        }else {
+            StringBuilder sb = new StringBuilder();
+            for (Object obj : set){
+                if (sb.length() > 0){
+                    sb.append(",");
+                }
+                sb.append(obj.toString());
+            }
+            return sb.toString();
+        }
+
     }
 
     /**
