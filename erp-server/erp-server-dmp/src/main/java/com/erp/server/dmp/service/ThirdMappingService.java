@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 第三方系统映射关系表 服务类
@@ -40,4 +42,8 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
      * @author: tanmujin
      */
     ThirdMappingEntity getBySysId(String sysId);
+
+    Boolean getByThirdId(ThirdMappingDTO.ViewParamDTO viewParamDTO);
+
+    BaseResultDTO.AddDTO batchAdd(ThirdMappingDTO.FeignMappingDTO feignMappingDTO);
 }

@@ -4,15 +4,19 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -45,7 +50,8 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Resource
     private OverseasProviderService overseasProviderService;
-
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
     /**
     * 修改
     */
@@ -57,12 +63,44 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         List<OverseasProviderWarehouseEntity> list = BeanMapperUtils.copyList(OverseasProviderWarehouseEntity.class, detailList);
         // 数据处理
         handleData(list, mainId);
+        addThirdMapping(updateDTO, list);
         boolean save = this.updateBatchById(list);
         if(!save) {
             throw new ServiceException("海外物流商仓库保存失败");
+        }else {
+            //第三方映射绑定
+            CompletableFuture.runAsync(() -> addThirdMapping(updateDTO, list));
         }
-
         return Boolean.TRUE;
+    }
+
+    /**
+     * 第三方映射绑定
+     * @param updateDTO
+     * @param list
+     */
+    private void addThirdMapping(OverseasProviderDTO.UpdateDTO updateDTO, List<OverseasProviderWarehouseEntity> list) {
+        ThirdMappingDTO.FeignMappingDTO feignMappingDTO = new ThirdMappingDTO.FeignMappingDTO();
+        List<ThirdMappingDTO.ThirdAddDTO> addDTOList = new ArrayList<>();
+        list.forEach(item -> {
+            if (StringUtils.isNotBlank(item.getWarehouseId()) && Objects.equals(item.getDisabled(), false)) {
+                //绑定第三方配置关系
+                ThirdMappingDTO.ThirdAddDTO addDTO = new ThirdMappingDTO.ThirdAddDTO();
+                addDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
+                addDTO.setSysId(item.getWarehouseId());
+                addDTO.setSysCode(item.getWarehouseCode());
+                addDTO.setSysName(item.getWarehouseName());
+                addDTO.setSysType(updateDTO.getCode());
+                addDTO.setThirdId(item.getId());
+                addDTO.setThirdCode(item.getPlatformWarehouseCode());
+                addDTO.setThirdName(item.getPlatformWarehouseName());
+                addDTOList.add(addDTO);
+            }
+        });
+        feignMappingDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
+        feignMappingDTO.setThirdSysType(updateDTO.getCode());
+        feignMappingDTO.setAddDTOList(addDTOList);
+        dmpThirdMappingFeign.batchAdd(feignMappingDTO);
     }
 
     @Override

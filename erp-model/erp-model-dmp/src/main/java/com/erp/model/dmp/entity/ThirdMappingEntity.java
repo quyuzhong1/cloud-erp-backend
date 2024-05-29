@@ -55,8 +55,8 @@ public class ThirdMappingEntity extends BaseEntity<ThirdMappingEntity> {
     /**
      * 是否失效 true 失效 false 未失效
      */
-    @TableField("is_expire")
-    private Boolean isExpire;
+    @TableField("disabled")
+    private Boolean disabled;
     /**
      * 第三方id
      */

@@ -190,7 +190,7 @@ public enum ApiError implements Serializable {
     ERROR_SYS_BINDED(80009,"{}【{}】已经被第三方【{}】绑定"),
     ERROR_THIRD_SHOP_NOTFOUND(80010,"第三方店铺不存在"),
     ERROR_THIRD_WAREHOUSE_NOTFOUND(80011,"第三方仓库不存在"),
-    ERROR_THIRD_SYS_TYPE_BINDING(80012,"同一个第三方平台只能绑定一个仓库"),
+    ERROR_THIRD_SYS_TYPE_BINDING(80012,"同一个第三方平台只能绑定一个{}"),
 
     /**
      * 工作流错误 workflow
@@ -1004,8 +1004,7 @@ public enum ApiError implements Serializable {
     SO_OUTSTOCK_NOT_PACKING(92137,"出库单报关单已生成，不支持修改"),
     TRANSFER_DECLARE_SO_EXISTS(92138,"订单【{}】已存在入库预报单，请不要重复新增"),
     PAPER_SIZE_INCONSISTENT_NOT_PRINT(92139,"纸张大小不一致，不支持批量打印"),
-
-
+    EXIST_THIRD_WAREHOUSE_MAPPING(99140,"仓库【{}】已存在第三方仓库映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
 
 
 
@@ -1217,6 +1216,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_NOT_EXIST(92146,"申报信息SKU【{}】目的国申报价币种不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_SYM_NOT_EXIST(92147,"申报信息SKU【{}】目的国申报价币种符号不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_WEIGHT_NOT_EXIST(92148,"申报信息SKU【{}】重量不能为0"),
+    EXIST_THIRD_SHOP_MAPPING(99140,"店铺【{}】已存在第三方映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
 
     /**
      * TMS 错误

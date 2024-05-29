@@ -13,16 +13,15 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
@@ -40,6 +39,7 @@ import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -114,6 +114,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Resource
     private InventoryService inventoryService;
 
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Override
     public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(List<String> ids) {
@@ -482,6 +484,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String name = dto.getName();
         checkName(warehouseId, name);
         checkKingdeeWarehouseCode(warehouseId, code);
+        //仓库下绑定第三方店铺不能修改为禁用状态
+        if (Objects.nonNull(dto.getDisabled()) && !Objects.equals(dto.getDisabled(), warehouse.getDisabled()) && Objects.equals(dto.getDisabled(), true)) {
+            checkDmpThirdMapping(warehouseId,warehouse.getName());
+        }
         BeanMapper.copy(dto, warehouse);
 
         //如果设置了在途仓，获取匹配在途仓名称
@@ -699,12 +705,26 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE, shopInfoEntity.getName());
             }
         }
+        //仓库下绑定第三方店铺不能进行反审核
+        list.forEach(warehouseEntity -> {
+            checkDmpThirdMapping(warehouseEntity.getId(),warehouseEntity.getName());
+        });
 
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
 
         //反审核后发送金蝶
         sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return result;
+    }
+
+    private void checkDmpThirdMapping(String warehouseId,String warehouseName) {
+        ThirdMappingDTO.ViewParamDTO viewParamDTO=new ThirdMappingDTO.ViewParamDTO();
+        viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
+        viewParamDTO.setSysId(warehouseId);
+        Boolean hasThirdMapping = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
+        if (!hasThirdMapping){
+            throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING,warehouseName);
+        }
     }
 
 

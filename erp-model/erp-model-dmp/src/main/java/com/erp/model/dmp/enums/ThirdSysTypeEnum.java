@@ -8,8 +8,9 @@ package com.erp.model.dmp.enums;
  */
 public enum ThirdSysTypeEnum {
 
-    LINGXING("lingxing", "领星"),
-    WANGDIAN("wangdian", "旺店通"),
+    WDT("wdt", "旺店通"),
+
+
     SHOP("shop", "店铺"),
     WAREHOUSE("warehouse", "仓库"),
     ;

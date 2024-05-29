@@ -123,6 +123,24 @@ public class OverseasProviderWarehouseDTO implements Serializable {
          * 是否禁用 true 禁用 false 启用
          */
         private Boolean disabled;
+        /**
+         * 仓库编码
+         */
+        private String platformWarehouseCode;
+
+        /**
+         * 仓库名称
+         */
+        private String platformWarehouseName;
+        /**
+         * 系统仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 系统仓库编码
+         */
+        private String warehouseCode;
     }
 
     @Data
