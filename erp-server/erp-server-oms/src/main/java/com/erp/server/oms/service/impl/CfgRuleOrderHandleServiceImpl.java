@@ -1,8 +1,11 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -20,6 +23,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -35,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,12 +66,13 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     @Autowired
     private SpElServer spElServer;
 
-
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgRuleOrderHandleDTO.AddDTO addDTO) {
         CfgRuleOrderHandleEntity cfgRuleOrderHandleEntity = new CfgRuleOrderHandleEntity();
+        //处理规则详情
+        Map<String, Object> ruleMap = BeanUtil.beanToMap(addDTO.getRuleContent());
+        cfgRuleOrderHandleEntity.setRuleContent(ruleMap);
         BeanMapperUtils.copy(addDTO, cfgRuleOrderHandleEntity);
 
         List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
@@ -101,7 +107,8 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         CfgRuleOrderHandleEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "订单处理规则单"));
         CfgRuleOrderHandleEntity cfgRuleOrderHandleEntity =  BeanMapperUtils.map(CfgRuleOrderHandleEntity.class, updateDTO);
-
+        Map<String, Object> ruleMap = BeanUtil.beanToMap(updateDTO.getRuleContent());
+        cfgRuleOrderHandleEntity.setRuleContent(ruleMap);
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
@@ -121,8 +128,21 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         // 记录主单操作日志
         log.info("编辑 开始记录订单处理规则单日志数据，id：【{}】", cfgRuleOrderHandleEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleOrderHandleEntity.getId(), "订单处理规则单");
-        operateLogService.addModuleOperateLogByObj(old, cfgRuleOrderHandleEntity, ModuleTypeEnum.CFG_RULE_ORDER_HANDLE.getCode(), cfgRuleOrderHandleEntity.getId(), msg);
+        CfgRuleOrderHandleDTO.LogDTO oldView = this.buildLogDTO(old);
+        CfgRuleOrderHandleDTO.LogDTO newView = this.buildLogDTO(cfgRuleOrderHandleEntity);
+        operateLogService.addModuleOperateLogByObj(oldView, newView, ModuleTypeEnum.CFG_RULE_ORDER_HANDLE.getCode(), cfgRuleOrderHandleEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    private CfgRuleOrderHandleDTO.LogDTO buildLogDTO(CfgRuleOrderHandleEntity old) {
+        CfgRuleOrderHandleDTO.LogDTO logDTO = BeanUtil.copyProperties(old,CfgRuleOrderHandleDTO.LogDTO.class,"ruleContent");
+        JSONObject jsonObject = new JSONObject(old.getRuleContent());
+        CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
+        logDTO.setReceiveHandleContent(ruleDTO.getReceiveHandleContent());
+        logDTO.setAddressHandlerContent(ruleDTO.getAddressHandlerContent());
+        logDTO.setPhoneHandleContent(ruleDTO.getPhoneHandleContent());
+        logDTO.setZipCodeHandleContent(ruleDTO.getZipCodeHandleContent());
+        return logDTO;
     }
 
     @Override
@@ -140,6 +160,9 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         Optional.ofNullable(ruleOrderHandle).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单处理规则"));
         CfgRuleOrderHandleDTO.ViewDTO view = new CfgRuleOrderHandleDTO.ViewDTO();
         BeanMapper.copy(ruleOrderHandle, view);
+        JSONObject jsonObject = new JSONObject(ruleOrderHandle.getRuleContent());
+        CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
+        view.setRuleContent(ruleDTO);
         String type = DictBasicTypeEnum.FIELD.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
         view.setConditionList(conditionList);
