@@ -125,7 +125,7 @@ public class WdtShopHandler implements IBusinessHandler<WdtShopDto, ErpShopDto> 
             target.setPlatformId(source.getPlatform_id());
             target.setSubPlatformId(source.getSub_platform_id());
             target.setDisabled(source.getIs_disabled());
-            target.setSysType(ThirdSysTypeEnum.WANGDIAN.getCode());
+            target.setSysType(PlatformDictEnum.WDT.getCode());
             target.setShopId(String.valueOf(source.getShop_id()));
             target.setAccountId(source.getAccount_id());
             target.setGroupId(source.getGroup_id());
