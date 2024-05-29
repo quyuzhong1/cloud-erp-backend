@@ -424,7 +424,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 .eq(ThirdMappingEntity::getIsDeleted, false).eq(ThirdMappingEntity::getDisabled, false));
         if (Objects.nonNull(existSysMapping)) {
             if (!Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) {
-                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getType()), thirdName, sysName);
+                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, sysName);
             } else {
                 thirdMappingEntity.setId(existSysMapping.getId());
             }
@@ -432,7 +432,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         ThirdMappingEntity existThirdMapping = baseMapper.selectOne(new LambdaQueryWrapper<ThirdMappingEntity>().eq(ThirdMappingEntity::getType, thirdMappingEntity.getType())
                 .eq(ThirdMappingEntity::getThirdId, thirdMappingEntity.getThirdId()).eq(ThirdMappingEntity::getDisabled, false));
         if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping) && !Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) || Objects.isNull(existSysMapping))) {
-            throw new ServiceException(ApiError.ERROR_THIRD_BINDED, EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getType()), sysName, thirdName);
+            throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), sysName, thirdName);
         }
     }
 //    @Resource

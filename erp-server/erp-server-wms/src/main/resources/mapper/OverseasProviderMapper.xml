@@ -86,7 +86,6 @@
         ON opw.main_id = op.id
         WHERE op.is_deleted = FALSE
         AND opw.is_deleted = FALSE
-        AND opw.disabled = FALSE
         <if test="params.overseasProviderWarehouseId != null and params.overseasProviderWarehouseId != ''">
             AND opw.id = #{params.overseasProviderWarehouseId}
         </if>
