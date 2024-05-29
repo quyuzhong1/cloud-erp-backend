@@ -182,8 +182,6 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             //获取到表达式
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             if (matchResult) {
-                ruleMatch.setIsPushCity(item.getIsPushCity());
-                ruleMatch.setIsPushProvince(item.getIsPushProvince());
                 ruleMatch.setApproveSuccess(Boolean.TRUE);
                 ruleMatch.setRuleName(item.getName());
                 return ruleMatch;
