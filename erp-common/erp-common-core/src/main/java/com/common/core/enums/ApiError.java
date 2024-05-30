@@ -1002,6 +1002,7 @@ public enum ApiError implements Serializable {
     TRANSFER_DECLARE_SO_EXISTS(92138,"订单【{}】已存在入库预报单，请不要重复新增"),
     PAPER_SIZE_INCONSISTENT_NOT_PRINT(92139,"纸张大小不一致，不支持批量打印"),
 
+    WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
 
 
 
