@@ -1440,7 +1440,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             fillDb(list);
         }
         StringBuffer stringBuffer = new StringBuffer();
-        String excelPath = "excel/shopInfo.xlsx";
+        String excelPath = "excel/ShopInfo.xlsx";
         String name = "店铺导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         stringBuffer.append(date);
