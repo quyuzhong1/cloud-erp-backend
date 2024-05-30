@@ -229,38 +229,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO cancelMerge(String id);
-    /**
-     * @description: 拆分显示
-     * @author Will
-     * @date: 2023/8/21 9:18
-     * @param ids
-     * @return ViewSplitDTO
-     */
-    List<SoB2cDTO.ViewSplitDTO> viewSplit(List<String> ids);
-    /**
-     * @description: 拆分保存
-     * @author Will
-     * @date: 2023/8/21 9:23
-     * @param dto
-     * @return Boolean
-     */
-    SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto);
-    /**
-     * @description: 取消合并前数据展示
-     * @author Will
-     * @date: 2023/8/24 11:48
-     * @param ids
-     * @return List<CheckCancelSplitDTO>
-     */
-    List<SoB2cDTO.CheckCancelSplitDTO> checkCancelSplit(List<String> ids);
-    /**
-     * @description: 取消合并
-     * @author Will
-     * @date: 2023/8/21 9:24
-     * @param id
-     * @return BatchResultDTO
-     */
-    BatchResultDTO cancelSplit(String id);
+
+    void deleteById(List<String> ids);
 
     void handleData(SoB2cEntity soB2cEntity, Boolean exchangeRateThrow, Boolean checkPayTime);
 
@@ -268,11 +238,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 匹配审核规则
      */
     Map<String,Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
-
-    /**
-     * 匹配配货规则
-     */
-    Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
     /**
      * 报表管理 销售统计
@@ -908,10 +873,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 根据单号查询销售订单
      */
     SoB2cEntity getByCode(String soCode);
-
-    List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> id);
-
-    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> id);
 
     /**
      * 同步订单到DMP
