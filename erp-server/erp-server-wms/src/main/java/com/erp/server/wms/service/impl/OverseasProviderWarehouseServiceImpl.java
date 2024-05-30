@@ -213,7 +213,8 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 if (warehouseCount > 1) {
                     throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
                 }
-                long count = overseasProviderWarehouseEntities.stream().filter(req -> req.getWarehouseId().equals(detailEntity.getWarehouseId())).count();
+                long count = overseasProviderWarehouseEntities.stream().filter(req -> !req.getDisabled()
+                        && req.getWarehouseId().equals(detailEntity.getWarehouseId())).count();
                 if (count > 1) {
                     throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
                 }
