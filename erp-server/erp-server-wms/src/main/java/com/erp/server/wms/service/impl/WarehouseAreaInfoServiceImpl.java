@@ -27,6 +27,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseAreaInfoEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseAreaInfoMapper;
@@ -37,11 +38,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -72,7 +75,16 @@ public class WarehouseAreaInfoServiceImpl extends SuperServiceImpl<WarehouseArea
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
-        // todo 判断仓区是否绑定了库区
+        List<WarehouseLocationEntity> warehouseLocations = warehouseLocationService.list(Wrappers.<WarehouseLocationEntity>lambdaQuery()
+                .in(WarehouseLocationEntity::getParentId, ids));
+        if (!CollectionUtils.isEmpty(warehouseLocations)) {
+            List<String> areaIds = warehouseLocations.stream()
+                    .map(WarehouseLocationEntity::getParentId)
+                    .collect(Collectors.toList());
+            List<WarehouseAreaInfoEntity> areaInfos = listByIds(areaIds);
+            String codes = areaInfos.stream().map(WarehouseAreaInfoEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.POSITION_BINDING_EXIST, codes);
+        }
         this.removeByIds(ids);
     }
 
@@ -272,7 +284,7 @@ public class WarehouseAreaInfoServiceImpl extends SuperServiceImpl<WarehouseArea
         // 调用流程审核
         approveProcess(entity, dto);
         String approveName = ApproveTypeEnum.REJECT.getName();
-        if (Objects.nonNull(approveType)){
+        if (Objects.nonNull(approveType)) {
             approveName = approveType.getName();
         }
         // 操作日志
