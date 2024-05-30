@@ -3136,4 +3136,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .update();
     }
 
+
+    @Override
+    public void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto) {
+        try {
+            LocalDateTime outBoundTime = dto.getOutBoundTime();
+            if(Objects.nonNull(outBoundTime)){
+                generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
+            }
+            //跟踪号
+            generateB2cDTO.setTrackNo(dto.getTrackNo());
+            //运单号
+            generateB2cDTO.setTransportNo(dto.getTrackNo());
+            this.generateB2cSoOutstock(generateB2cDTO);
+        } catch (Exception e) {
+            log.error("销售订单{} 生成销售出库单失败>>>>>>{}", generateB2cDTO.getSoCode(), e.getMessage());
+        }
+    }
+
+
 }

@@ -4,6 +4,8 @@ import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
@@ -43,6 +45,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 
     private OrderDetail orderDetail;
 
+    @Panno(findType = PannoEnum.EQ,field = "shopId")
     private String shopId;
 
     public PlatformShopeeOrderDTO(OrderDetail orderDetail, JobTaskDTO dto) {
@@ -65,7 +68,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 
         Long createTime = orderDetail.getCreateTime();
         Instant instant = null;
-        if(Objects.nonNull(createTime)){
+        if(Objects.nonNull(createTime) && createTime.compareTo(0L) > 0){
             instant = Instant.ofEpochSecond(createTime);
         }
         ZoneId zone = ZoneId.systemDefault();
@@ -146,7 +149,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
         Long paytime = orderDetail.getPayTime();
-        if (Objects.nonNull(paytime)) {
+        if (Objects.nonNull(paytime) && paytime.compareTo(0L) > 0) {
             Instant instant2 = Instant.ofEpochSecond(paytime);
             // 付款时间
             orderDTO.setPayTime(LocalDateTime.ofInstant(instant2, zone));
@@ -246,12 +249,17 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         List<Package> packages = orderDetail.getPackages();
         packages.forEach(p -> {
-            Instant instant = Instant.ofEpochSecond(orderDetail.getShipByDate());
-            ZoneId zone = ZoneId.systemDefault();
+            Long shipByDate = orderDetail.getShipByDate();
+            LocalDateTime deliveryTime = null;
+            if (Objects.nonNull(shipByDate) && shipByDate.compareTo(0L) > 0){
+                Instant instant = Instant.ofEpochSecond(shipByDate);
+                ZoneId zone = ZoneId.systemDefault();
+                deliveryTime = LocalDateTime.ofInstant(instant, zone);
+            }
             PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
                     .code(p.getPackageNumber())
                     .name(LogisticsPlatformEnum.SHOPEE.getName())
-                    .deliveryTime(LocalDateTime.ofInstant(instant, zone))
+                    .deliveryTime(deliveryTime)
                     .logisticsChannelName(p.getShippingCarrier())
                     .estimatedShippingCost(BigDecimal.valueOf(orderDetail.getEstimatedShippingFee()))
                     .actualShippingCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))

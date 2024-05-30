@@ -306,14 +306,29 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void refreshToken(String shopAuthId, String accessToken, String refreshToken, Integer expiresIn) {
-        this.lambdaUpdate().set(ShopAuthEntity::getAccessToken, accessToken).
-                set(ShopAuthEntity::getRefreshToken, refreshToken).
-                set(ShopAuthEntity::getExpiresIn, expiresIn).eq(ShopAuthEntity::getId, shopAuthId).
-                set(ShopAuthEntity::getToken,accessToken).set(ShopAuthEntity::getUpdateTime, LocalDateTime.now()).
-                update();
+    public void refreshToken(String shopAuthId, String accessToken, String refreshToken, Integer expiresIn, LocalDateTime tokenExpireTime) {
+        this.lambdaUpdate().set(ShopAuthEntity::getAccessToken, accessToken)
+                .set(ShopAuthEntity::getRefreshToken, refreshToken)
+                .set(ShopAuthEntity::getExpiresIn, expiresIn)
+                .set(ShopAuthEntity::getToken,accessToken)
+                .set(ShopAuthEntity::getTokenExpireTime, tokenExpireTime)
+                .set(ShopAuthEntity::getUpdateTime, LocalDateTime.now())
+                .eq(ShopAuthEntity::getId, shopAuthId)
+                .update();
     }
 
+    @Override
+    public List<ShopAuthEntity> listTokenExpiresShop() {
+        return baseMapper.listTokenExpiresShop();
+    }
+
+    @Override
+    public Boolean updateRefreshTokenError(String shopAuthId, String msg) {
+        return this.lambdaUpdate().set(ShopAuthEntity::getRefreshStatus, 1)
+                .set(ShopAuthEntity::getRefreshErrorMsg, msg)
+                .eq(ShopAuthEntity::getId, shopAuthId)
+                .update();
+    }
 
     /**
      * 新增修改处理数据

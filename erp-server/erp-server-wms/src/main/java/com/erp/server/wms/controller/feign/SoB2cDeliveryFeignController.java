@@ -15,6 +15,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -55,7 +57,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
       */
     @PostMapping("/add")
     public Boolean listBySoDetailIds(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
-        Boolean addResult=  soB2cDeliveryService.add(dto);
+        Boolean addResult = soB2cDeliveryService.add(dto);
         return addResult;
     }
 
@@ -112,19 +114,6 @@ public class SoB2cDeliveryFeignController extends BaseController {
         return flag;
     }
 
-
-    /**
-     * 标记发货
-     * @author Will
-     * @date: 2024/4/28 9:35
-     * @param id
-     * @return List<BatchResultDTO>
-     */
-    @PostMapping("/retryFalseDelivery")
-    public List<BatchResultDTO> retryFalseDelivery(@RequestBody String id) {
-        List<BatchResultDTO> list = soB2cDeliveryService.retryFalseDelivery(id);
-        return list;
-    }
 
     /**
      * 合并组包发货

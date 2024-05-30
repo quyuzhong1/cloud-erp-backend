@@ -240,10 +240,9 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     /**
      * PDA:库存查询
      *
-     * @param skuNo SKU编号
      * @return PDA即时库存
      **/
-    InventoryDTO.PdaInventorySearch getInventoryBySkuNo(String skuNo);
+    InventoryDTO.PdaInventorySearch getInventoryBySkuNo(PagingDTO<InventoryDTO.PdaSearchParamDTO> dto);
 
 
     /**

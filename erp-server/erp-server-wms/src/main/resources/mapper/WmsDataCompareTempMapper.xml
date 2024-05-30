@@ -38,10 +38,10 @@
     </sql>
 
 	<insert id="batchInsertWmsDataCompareTemp">
-        insert into wms_data_compare_temp(id,task_id,main_data_type,compare_status,pk_field_value,import_data_json)
+        insert into wms_data_compare_temp(id,task_id,main_data_type,compare_status,pk_field_value,import_data_json,diff_fields,compare_result,system_data_json)
         values
         <foreach collection="list" item="l" separator=",">
-            (#{l.id},#{l.taskId},#{l.mainDataType},#{l.compareStatus},#{l.pkFieldValue},#{l.importDataJson})
+            (#{l.id},#{l.taskId},#{l.mainDataType},#{l.compareStatus},#{l.pkFieldValue},#{l.importDataJson},#{l.diffFields},#{l.compareResult},#{l.systemDataJson})
         </foreach>
     </insert>
 

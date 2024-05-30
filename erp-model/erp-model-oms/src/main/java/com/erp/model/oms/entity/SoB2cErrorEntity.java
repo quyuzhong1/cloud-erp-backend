@@ -78,10 +78,8 @@ public class SoB2cErrorEntity implements Serializable{
     @TableField("main_id")
     private String mainId;
     /**
-     * 异常类型
-     *  submitDelivery 提交发货异常
-     *  signDelivery 标记发货异常
-     *  getLogisticsCode 获取物流单异常
+     * 前端显示的异常类型
+     * {@link com.erp.model.oms.enums.SoB2cErrorTypeEnum}
     */
     @TableField("type")
     private String type;

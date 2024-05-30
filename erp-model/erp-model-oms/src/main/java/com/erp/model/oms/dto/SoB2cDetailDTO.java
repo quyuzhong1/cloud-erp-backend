@@ -173,6 +173,10 @@ public class SoB2cDetailDTO implements Serializable {
          * 速卖通打标
          */
         private List<String> tagList;
+        /**
+         * 当前明细是否退款: true=退款, false=未退款
+         */
+        private Boolean isRefunded;
     }
 
     @Data
@@ -200,6 +204,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 缺货订单(待审核、配货中订单，仓库可用库存为0)
          */
        private Boolean isOutStock;
+
+       /**
+        * 当前是否退款: true=退款, false=未退款
+        */
+       private Boolean isRefunded;
     }
 
     /**
@@ -285,13 +294,14 @@ public class SoB2cDetailDTO implements Serializable {
         private BigDecimal exchangeRate;
 
         /**
+        * 来源详情id
+        */
+        private String sourceDetailId;
+
+        /**
          * 拆分的明细id
          */
         private String splitDetailId;
-        /**
-         * 来源明细id
-         */
-        private String sourceDetailId;
 
         /**
          * 是否组合品

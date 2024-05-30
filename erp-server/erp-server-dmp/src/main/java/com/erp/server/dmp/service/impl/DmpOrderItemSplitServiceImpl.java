@@ -15,12 +15,14 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.DmpOrderItemGroup;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemSplitMapper;
 import com.erp.server.dmp.service.*;
@@ -93,7 +95,7 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
     public Boolean batchAdd(List<DmpOrderItemSplitEntity> dmpOrderInfoEntityList, String platformSign) {
         //拆单
         List<DmpOrderItemSplitEntity> itemEntityList = splitOrderItem(dmpOrderInfoEntityList, platformSign);
-        return this.saveBatch(itemEntityList, 500);
+        return this.saveBatch(itemEntityList);
     }
 
     /**
@@ -168,7 +170,6 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
     @Transactional(rollbackFor = Exception.class)
     public void checkOrderItem(List<DmpOrderItemSplitEntity> orderItem, LocalDate platformCreateTime, String platformSign) {
         List<DmpOrderItemSplitEntity> insertList = new ArrayList<>();
-        List<DmpOrderItemSplitEntity> updateList = new ArrayList<>();
         for (DmpOrderItemSplitEntity orderItemBean : orderItem) {
             if(StrUtil.isBlank(orderItemBean.getSkuNo())){
                 continue;
@@ -189,24 +190,38 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
                     orderItemBean.setNewSign(0);
                 }
             }
-            DmpOrderItemSplitEntity dmpOrderItemSplitEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
-            if (null != dmpOrderItemSplitEntity) {
+
+
+           /* DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
+            if (null != dmpOrderItemEntity) {
                 //如果数据有变动需要更新数据库订单商品信息
-                if (!dmpOrderItemSplitEntity.toString().equals(orderItemBean.toString())) {
-                    orderItemBean.setId(dmpOrderItemSplitEntity.getId());
+                if (!dmpOrderItemEntity.toString().equals(orderItemBean.toString())) {
+                    orderItemBean.setId(dmpOrderItemEntity.getId());
 //                    updateById(orderItemBean);
-                    baseMapper.deleteById(dmpOrderItemSplitEntity.getId());
+                    baseMapper.deleteById(dmpOrderItemEntity.getId());
                     updateList.add(orderItemBean);
                 }
             } else {
                 insertList.add(orderItemBean);
-            }
+            }*/
+            insertList.add(orderItemBean);
         }
+
+        //删除原数据
+        List<String> orderIds = orderItem.stream().map(req -> req.getOrderId()).distinct().collect(Collectors.toList());
+        dmpOrderItemService.deleteByOrderIds(orderIds);
+
+        //新增新数据
         if (CollectionUtil.isNotEmpty(insertList)) {
+            //保存未拆分数据
+            List<DmpOrderItemEntity> itemEntityList = BeanMapper.copyList(insertList, DmpOrderItemEntity.class);
+            dmpOrderItemService.batchAdd(itemEntityList, platformSign);
+
+            //删除拆分后的数据
+            this.deleteByOrderIds(orderIds);
+
+            //拆分sku并保存
             this.batchAdd(insertList, platformSign);
-        }
-        if(CollectionUtil.isNotEmpty(updateList)){
-            this.batchUpdate(updateList, platformSign);
         }
     }
 
@@ -452,6 +467,13 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
         return itemListAll;
     }
 
+    @Override
+    public Boolean deleteByOrderIds(List<String> orderIds) {
+        if (CollectionUtils.isEmpty(orderIds)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().in(DmpOrderItemSplitEntity::getOrderId, orderIds).remove();
+    }
 
     /**
      * 查询bom子级的成本信息
