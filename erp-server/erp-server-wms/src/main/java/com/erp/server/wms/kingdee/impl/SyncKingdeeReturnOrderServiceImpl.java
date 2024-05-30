@@ -46,7 +46,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 同步金蝶采购退货单
+ * 退货入库单同步金蝶采购退货单
  * @Author Luo_WG
  * @Date 2023/4/24 11:22
  **/

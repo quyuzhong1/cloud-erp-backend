@@ -276,6 +276,11 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_ERP_SO_B2C_DELIVERY_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_so_b2c_delivery_to_dmp";
 
     /**
+     * ERP 销售出库单->DMP发货详情
+     */
+    public static final String SYNC_SO_OUTSTOCK_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_so_outstock_to_dmp";
+
+    /**
      * 亚马逊创建报告
      */
     public static final String SYNC_AMZ_REPORT_CREATE = "${spring.cloud.nacos.discovery.namespace}-sync_amz_report_create_consumer";
