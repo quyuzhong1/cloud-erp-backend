@@ -309,6 +309,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private CfgRuleDeclareService cfgRuleDeclareService;
 
+    @Resource
+    private CfgRuleOrderHandleService cfgRuleOrderHandleService;
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -2036,6 +2039,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
         createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
         createOutboundReq.setItems(itemList);
+        //通过订单处理规则处理参数
+        Map<String,Object> map = this.getRuleOrderHandleMap(entity,logisticsChannelId,receiver);
+        createOutboundReq = cfgRuleOrderHandleService.handleRuleOrderThirdWarehouse(createOutboundReq,map);
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
         log.info("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
@@ -2051,6 +2057,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         eq(SoB2cEntity::getId, mainId).update(new SoB2cEntity());
             }
         }
+    }
+
+    private Map<String, Object> getRuleOrderHandleMap(SoB2cEntity entity, String logisticsChannelId,SoB2cReceiverEntity receiverEntity) {
+        Map<String,Object> resultMap = new HashMap<>(4);
+        resultMap.put("dictPlatform", entity.getDictPlatform());
+        resultMap.put("shop", entity.getShopId());
+        resultMap.put("destCountry", ObjectUtil.isEmpty(receiverEntity) ? "" : receiverEntity.getCountry());
+        resultMap.put("logisticsChannelId", logisticsChannelId);
+
+        //现有规则解析必须包含明细信息
+        Map<String,Object> detailMap = new HashMap<>(4);
+        detailMap.put("dictPlatform", entity.getDictPlatform());
+        detailMap.put("shop", entity.getShopId());
+        detailMap.put("destCountry", ObjectUtil.isEmpty(receiverEntity) ? "" : receiverEntity.getCountry());
+        detailMap.put("logisticsChannelId", logisticsChannelId);
+
+        resultMap.put("detailList", Arrays.asList(detailMap));
+        return  resultMap;
     }
 
 

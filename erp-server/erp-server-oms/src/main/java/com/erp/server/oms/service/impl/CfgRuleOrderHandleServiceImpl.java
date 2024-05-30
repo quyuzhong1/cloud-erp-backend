@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.ReceiverDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -35,6 +36,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.vo.request.LogisticsOrderRuleVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.ReceiverInfoVO;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.oms.mapper.CfgRuleOrderHandleMapper;
 import com.erp.server.oms.service.CfgRuleOrderHandleService;
 import com.erp.server.oms.service.CommonService;
@@ -243,16 +245,34 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         LogisticsOrderVO logisticsOrderVO = logisticsOrderRuleVO.getLogisticsOrderVO();
         if(ruleMatchDTO.getApproveSuccess()){
             //处理地址
-            this.handleAddressRule(logisticsOrderVO,ruleMatchDTO.getRuleContent());
+            this.handleAddressRule(logisticsOrderVO.getReceiverInfoVO(),ruleMatchDTO.getRuleContent());
             //处理电话
-            this.handlePhoneRule(logisticsOrderVO,ruleMatchDTO.getRuleContent());
+            this.handlePhoneRule(logisticsOrderVO.getReceiverInfoVO(),ruleMatchDTO.getRuleContent());
             //处理邮编
-            this.handleZipCodeRule(logisticsOrderVO,ruleMatchDTO.getRuleContent());
+            this.handleZipCodeRule(logisticsOrderVO.getReceiverInfoVO(),ruleMatchDTO.getRuleContent());
             //处理收货人
-            this.handleReceiveRule(logisticsOrderVO,ruleMatchDTO.getRuleContent());
+            this.handleReceiveRule(logisticsOrderVO.getReceiverInfoVO(),ruleMatchDTO.getRuleContent());
         }
         return logisticsOrderVO;
     }
+
+    @Override
+    public ThirdWarehouseCreateOutboundReq handleRuleOrderThirdWarehouse(ThirdWarehouseCreateOutboundReq createOutboundReq, Map<String, Object> map) {
+        CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatchDTO = this.getRuleOrderHandleMatchResult(map);
+        if(ruleMatchDTO.getApproveSuccess()){
+            //处理地址
+            this.handleAddressRule(createOutboundReq.getReceiverInfo(),ruleMatchDTO.getRuleContent());
+            //处理电话
+            this.handlePhoneRule(createOutboundReq.getReceiverInfo(),ruleMatchDTO.getRuleContent());
+            //处理邮编
+            this.handleZipCodeRule(createOutboundReq.getReceiverInfo(),ruleMatchDTO.getRuleContent());
+            //处理收货人
+            this.handleReceiveRule(createOutboundReq.getReceiverInfo(),ruleMatchDTO.getRuleContent());
+        }
+        return createOutboundReq;
+    }
+
+
 
     /**
      * 根据规则名称查询
@@ -296,12 +316,10 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
 
     /**
      * 地址处理
-     * @param logisticsOrderVO
      * @param ruleContent
      */
-    private void handleAddressRule(LogisticsOrderVO logisticsOrderVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
+    private <T extends ReceiverDTO> void handleAddressRule(T receiverInfoVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
         CfgRuleOrderHandleDTO.AddressHandleContent addressHandleContent = ruleContent.getAddressHandlerContent();
-        ReceiverInfoVO receiverInfoVO = logisticsOrderVO.getReceiverInfoVO();
         if(Objects.isNull(addressHandleContent)){
             return;
         }
@@ -363,14 +381,14 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             }
         }
     }
+
     /**
      * 电话处理
-     * @param logisticsOrderVO
+     * @param receiverInfoVO
      * @param ruleContent
      */
-    private void handlePhoneRule(LogisticsOrderVO logisticsOrderVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
+    private <T extends ReceiverDTO> void handlePhoneRule(T receiverInfoVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
         CfgRuleOrderHandleDTO.PhoneHandleContent phoneHandleContent = ruleContent.getPhoneHandleContent();
-        ReceiverInfoVO receiverInfoVO = logisticsOrderVO.getReceiverInfoVO();
         if(Objects.isNull(phoneHandleContent)){
             return;
         }
@@ -397,12 +415,11 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     }
     /**
      * 邮编处理
-     * @param logisticsOrderVO
+     * @param receiverInfoVO
      * @param ruleContent
      */
-    private void handleZipCodeRule(LogisticsOrderVO logisticsOrderVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
+    private <T extends ReceiverDTO> void handleZipCodeRule(T receiverInfoVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
         CfgRuleOrderHandleDTO.ZipCodeHandleContent zipCodeHandleContent = ruleContent.getZipCodeHandleContent();
-        ReceiverInfoVO receiverInfoVO = logisticsOrderVO.getReceiverInfoVO();
         if(Objects.isNull(zipCodeHandleContent)){
             return;
         }
@@ -423,12 +440,11 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     }
     /**
      * 收货人处理
-     * @param logisticsOrderVO
+     * @param receiverInfoVO
      * @param ruleContent
      */
-    private void handleReceiveRule(LogisticsOrderVO logisticsOrderVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
+    private <T extends ReceiverDTO> void handleReceiveRule(T receiverInfoVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
         CfgRuleOrderHandleDTO.ReceiveHandleContent receiveHandleContent = ruleContent.getReceiveHandleContent();
-        ReceiverInfoVO receiverInfoVO = logisticsOrderVO.getReceiverInfoVO();
         if(Objects.isNull(receiveHandleContent)){
             return;
         }
@@ -438,7 +454,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             if(Objects.nonNull(receiveFillRuleContentEnum) && StringUtils.isBlank(receiverInfoVO.getContact())){
                 switch (receiveFillRuleContentEnum){
                     case FILL_WITH_CUSTOMER_NAME:
-                        receiverInfoVO.setContact(receiverInfoVO.getName());
+                        receiverInfoVO.setContact(receiverInfoVO.getBuyerName());
                         break;
                     case CUSTOMIZE:
                         receiverInfoVO.setContact(receiveHandleContent.getReceiveFillText());
