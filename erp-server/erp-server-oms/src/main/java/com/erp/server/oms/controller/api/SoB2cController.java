@@ -539,7 +539,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return success(resultDTOS);
     }
 
     /**

@@ -231,7 +231,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
                         StringUtils.isBlank(m.getOrDefault("deliveryWarehouseId", "").toString())).
                 collect(Collectors.toList());
         if(CollectionUtils.isEmpty(mapList)){
-            return SoB2cDTO.RuleResultDTO.builder().id((String) map.get("id")).isRuleMatch(Boolean.FALSE).map(map).build();
+            return SoB2cDTO.RuleResultDTO.builder().id((String) map.get("id")).isRuleMatch(Boolean.TRUE).map(map).build();
         }
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
