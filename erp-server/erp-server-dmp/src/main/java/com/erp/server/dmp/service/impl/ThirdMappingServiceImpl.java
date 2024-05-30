@@ -39,8 +39,6 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
@@ -74,6 +72,12 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
+        //获取仓库信息
+        List<WarehouseDTO.ListDTO> listDTOS = wmsWarehouseFeign.listByIds(Collections.singletonList(addDTO.getSysId()));
+        if (CollectionUtils.isEmpty(listDTOS)) {
+            return new BaseResultDTO.AddDTO();
+        }
+        WarehouseDTO.ListDTO warehouse = listDTOS.get(0);
         List<ThirdMappingDTO.ThirdAddDTO> thirdList = addDTO.getThirdList();
         //如果第三方信息为空，删除绑定关系
         if (CollectionUtils.isEmpty(thirdList)) {
@@ -84,13 +88,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             if (CollectionUtils.isEmpty(existMappingList)) {
                 return new BaseResultDTO.AddDTO();
             }
-            existMappingList.forEach(existMapping -> {
-                // 操作日志
-                String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                        existMapping.getThirdName(), "");
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
-            });
-            baseMapper.deleteBatchIds(existMappingList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
+            deleteBinded(existMappingList);
         } else {
             //同一个第三方平台只能绑定一个仓库
             checkSysTypeBind(thirdList, addDTO.getType());
@@ -101,52 +99,120 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             //如果当前平台没有绑定第三方数据，直接添加
             if (CollectionUtils.isEmpty(existMappingList)) {
                 thirdList.forEach(item -> {
-                    makeThirdMappingDto(addDTO, item);
+                    makeThirdMappingDto(addDTO, item, warehouse);
                 });
             } else {
                 List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList = new ArrayList<>();
                 //判断当前平台是否绑定第三方数据
-                existMappingList.forEach(existMapping -> {
-                    ThirdMappingDTO.ThirdAddDTO thirdAddDTO = thirdList.stream().filter(item ->
-                            Objects.equals(item.getSysType(), existMapping.getThirdSysType())).findFirst().orElse(null);
-                    //如果新增的第三方类型数据在原始数据中不存在，删除原始数据
-                    if (Objects.isNull(thirdAddDTO)) {
-                        // 操作日志
-                        String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                                existMapping.getThirdName(), "");
-                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
-                        baseMapper.deleteById(existMapping.getId());
-                    } else {
-                        //如果新增的第三方类型数据在原始数据中存在，判断第三方数据是否绑定
-                        //绑定则进行更新
-                        ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
-                        BeanMapperUtils.copy(addDTO, thirdMappingEntity);
-                        thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
-                        thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
-                        thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
-                        thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
-                        addOrUpdate(thirdMappingEntity, existMapping);
-                        resultUpdatedList.add(thirdAddDTO);
-                    }
-                });
-
+                checkSysBinding(addDTO, existMappingList, thirdList, warehouse, resultUpdatedList);
                 //保存新增数据
-                thirdList.forEach(thirdAddDTO -> {
-                    if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
-                        ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
-                        if (Objects.isNull(updatedDto)) {
-                            makeThirdMappingDto(addDTO, thirdAddDTO);
-                        }
-                    } else {
-                        makeThirdMappingDto(addDTO, thirdAddDTO);
-                    }
-                });
+                saveAddDto(addDTO, thirdList, resultUpdatedList, warehouse);
             }
         }
         return new BaseResultDTO.AddDTO();
     }
 
-    private void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO) {
+    /**
+     * 保存新增数据
+     *
+     * @param addDTO
+     * @param thirdList
+     * @param resultUpdatedList
+     * @param warehouse
+     */
+    private void saveAddDto(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingDTO.ThirdAddDTO> thirdList, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList, WarehouseDTO.ListDTO warehouse) {
+        thirdList.forEach(thirdAddDTO -> {
+            if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
+                ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
+                if (Objects.isNull(updatedDto)) {
+                    makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
+                }
+            } else {
+                makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
+            }
+        });
+    }
+
+    /**
+     * 判断当前平台是否绑定第三方数据
+     *
+     * @param addDTO
+     * @param existMappingList
+     * @param thirdList
+     * @param warehouse
+     * @param resultUpdatedList
+     */
+    private void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdMappingDTO.ThirdAddDTO> thirdList, WarehouseDTO.ListDTO warehouse, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList) {
+        existMappingList.forEach(existMapping -> {
+            ThirdMappingDTO.ThirdAddDTO thirdAddDTO = thirdList.stream().filter(item ->
+                    Objects.equals(item.getSysType(), existMapping.getThirdSysType())).findFirst().orElse(null);
+            //如果新增的第三方类型数据在原始数据中不存在，删除原始数据
+            if (Objects.isNull(thirdAddDTO)) {
+                // 操作日志
+                String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+                        existMapping.getThirdName(), "");
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                baseMapper.deleteById(existMapping.getId());
+                saveOrDeleteFeignBind(existMapping, "", "", "", true);
+            } else {
+                //如果新增的第三方类型数据在原始数据中存在，判断第三方数据是否绑定
+                //绑定则进行更新
+                ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
+                BeanMapperUtils.copy(addDTO, thirdMappingEntity);
+                thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
+                thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
+                thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
+                thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
+                addOrUpdate(thirdMappingEntity, existMapping, warehouse);
+                resultUpdatedList.add(thirdAddDTO);
+            }
+        });
+    }
+
+    /**
+     * 删除绑定数据
+     *
+     * @param existMappingList
+     */
+    private void deleteBinded(List<ThirdMappingEntity> existMappingList) {
+        existMappingList.forEach(existMapping -> {
+            // 操作日志
+            String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+                    existMapping.getThirdName(), "");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+        });
+        baseMapper.deleteBatchIds(existMappingList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
+        //如果包含iml谷仓 需要通知海外仓解除绑定
+        existMappingList.forEach(thirdMappingEntity -> {
+            saveOrDeleteFeignBind(thirdMappingEntity, "", "", "", true);
+        });
+    }
+
+    /**
+     * 删除海外仓绑定数据
+     *
+     * @param existMapping
+     * @param warehouseId
+     * @param warehouseCode
+     * @param warehouseName
+     * @param disabled
+     */
+    private void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
+        if (PlatformDictEnum.IML.getCode().equals(existMapping.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(existMapping.getThirdSysType())) {
+            OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
+            feignDTO.setCode(existMapping.getThirdSysType());
+            feignDTO.setOverseasProviderWarehouseId(existMapping.getThirdId());
+            feignDTO.setPlatformWarehouseCode(existMapping.getThirdCode());
+            feignDTO.setPlatformWarehouseName(existMapping.getThirdName());
+            feignDTO.setWarehouseId(warehouseId);
+            feignDTO.setWarehouseName(warehouseName);
+            feignDTO.setWarehouseCode(warehouseCode);
+            feignDTO.setDisabled(disabled);
+            overseasProviderFeign.feignBind(feignDTO);
+        }
+    }
+
+    private void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO, WarehouseDTO.ListDTO warehouse) {
         ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
         BeanMapperUtils.copy(addDTO, thirdMappingEntity);
         thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
@@ -154,10 +220,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
         thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
         ThirdMappingEntity existMapping = null;
-        addOrUpdate(thirdMappingEntity, existMapping);
+        addOrUpdate(thirdMappingEntity, existMapping, warehouse);
     }
 
-    private void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping) {
+    private void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping, WarehouseDTO.ListDTO warehouse) {
         // 数据处理
         handleData(thirdMappingEntity);
         log.info("开始新增第三方系统映射关系单");
@@ -169,40 +235,32 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         }
         if (!save) {
             throw new ServiceException("第三方系统映射关系单保存失败");
-        }else{
+        } else {
             //保存海外仓设置
-            if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
-                OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
-                feignDTO.setCode(thirdMappingEntity.getThirdSysType());
-                feignDTO.setOverseasProviderWarehouseId(thirdMappingEntity.getThirdId());
-                feignDTO.setPlatformWarehouseCode(thirdMappingEntity.getThirdCode());
-                feignDTO.setPlatformWarehouseName(thirdMappingEntity.getThirdName());
-                feignDTO.setWarehouseId(thirdMappingEntity.getSysId());
-                feignDTO.setWarehouseName(thirdMappingEntity.getSysName());
-                feignDTO.setDisabled(true);
-                overseasProviderFeign.feignBind(feignDTO);
-            }
-            }
+            saveOrDeleteFeignBind(thirdMappingEntity, thirdMappingEntity.getSysId(), warehouse.getKingdeeWarehouseCode(), thirdMappingEntity.getSysName(), false);
+        }
         // 操作日志
         String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()),
                 Objects.isNull(existMapping) ? "" : existMapping.getThirdName(), thirdMappingEntity.getThirdName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), thirdMappingEntity.getSysId(), "编辑操作");
     }
 
+    /**
+     * 同一个第三方平台只能绑定一个仓库
+     *
+     * @param thirdList
+     * @param type
+     */
     private static void checkSysTypeBind(List<ThirdMappingDTO.ThirdAddDTO> thirdList, String type) {
-        Map<String, List<ThirdMappingDTO.ThirdAddDTO>> listMap = thirdList.stream()
-                .collect(groupingBy(
-                        ThirdMappingDTO.ThirdAddDTO::getSysType,
-                        collectingAndThen(
-                                Collectors.toList(),
-                                list -> {
-                                    if (list.size() > 1) {
-                                        throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, EnumMessage.getNameByCode(PlatformDictEnum.class, type));
-                                    }
-                                    return list;
-                                }
-                        )
-                ));
+        thirdList.stream().collect(groupingBy(ThirdMappingDTO.ThirdAddDTO::getSysType,
+                collectingAndThen(Collectors.toList(), list -> {
+                            if (list.size() > 1) {
+                                throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, EnumMessage.getNameByCode(PlatformDictEnum.class, type));
+                            }
+                            return list;
+                        }
+                )
+        ));
     }
 
 
@@ -216,30 +274,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             if (Objects.isNull(shopInfo)) {
                 return mappingViewDTO;
             }
-            //获取第三方数据信息
-            List<ThirdMappingDTO.ViewDTO> viewDTOList = new ArrayList<>();
-            List<ThirdMappingEntity> thirdMappingEntityList = baseMapper.selectList(new LambdaQueryWrapper<ThirdMappingEntity>().eq(ThirdMappingEntity::getSysId, sysId)
-                    .eq(ThirdMappingEntity::getType, viewParamDTO.getType()));
-
-            thirdMappingEntityList.forEach(thirdMappingEntity -> {
-                ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
-                ThirdShopEntity thirdShopEntity = thirdShopService.getById(thirdMappingEntity.getThirdId());
-                if (Objects.isNull(thirdShopEntity)) {
-                    viewDTOList.add(viewDTO);
-                }
-                viewDTO.setName(thirdShopEntity.getName());
-                viewDTO.setThirdId(thirdMappingEntity.getThirdId());
-                viewDTO.setCode(thirdShopEntity.getCode());
-                viewDTO.setId(thirdMappingEntity.getId());
-                viewDTO.setSysType(thirdMappingEntity.getThirdSysType());
-                viewDTO.setSysTypeName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));
-                viewDTOList.add(viewDTO);
-            });
-            mappingViewDTO.setSalesOrgId(shopInfo.getSalesOrgId());
-            mappingViewDTO.setSalesOrgName(shopInfo.getSalesOrgName());
-            mappingViewDTO.setSysName(shopInfo.getName());
-            mappingViewDTO.setSysId(shopInfo.getId());
-            mappingViewDTO.setThirdList(viewDTOList);
+            makeShopViewDto(viewParamDTO, sysId, mappingViewDTO, shopInfo);
         } else {
             //获取系统仓库
             List<WarehouseDTO.ListDTO> listDTOS =
@@ -247,49 +282,79 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             if (CollectionUtils.isEmpty(listDTOS)) {
                 return mappingViewDTO;
             }
-            //获取第三方数据信息
-            List<ThirdMappingDTO.ViewDTO> viewDTOList = new ArrayList<>();
-            List<ThirdMappingEntity> thirdMappingEntityList = baseMapper.selectList(new LambdaQueryWrapper<ThirdMappingEntity>()
-                    .eq(ThirdMappingEntity::getSysId, sysId)
-                    .eq(ThirdMappingEntity::getType, viewParamDTO.getType()));
-
-            for (ThirdMappingEntity thirdMappingEntity : thirdMappingEntityList) {
-                ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
-
-                if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
-                    ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getById(thirdMappingEntity.getThirdId());
-                    if (Objects.isNull(thirdWarehouseEntity)) {
-                        continue;
-                    }
-                    viewDTO.setName(thirdWarehouseEntity.getName());
-                    viewDTO.setCode(thirdWarehouseEntity.getCode());
-                }
-                if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
-                    //校验第三方仓库是否存在
-                    OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
-                    feignDTO.setCode(thirdMappingEntity.getThirdSysType());
-                    feignDTO.setOverseasProviderWarehouseId(thirdMappingEntity.getThirdId());
-                    OverseasProviderDTO.FeignDTO overseasWarehouse = overseasProviderFeign.getOverseasWarehouse(feignDTO);
-                    if (Objects.isNull(overseasWarehouse)) {
-                        continue;
-                    }
-                    viewDTO.setName(overseasWarehouse.getPlatformWarehouseName());
-                    viewDTO.setCode(overseasWarehouse.getPlatformWarehouseCode());
-
-                }
-                viewDTO.setThirdId(thirdMappingEntity.getThirdId());
-                viewDTO.setId(thirdMappingEntity.getId());
-                viewDTO.setSysType(thirdMappingEntity.getThirdSysType());
-                viewDTO.setSysTypeName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));
-                viewDTOList.add(viewDTO);
-            }
-            mappingViewDTO.setOrgId(listDTOS.get(0).getOrgId());
-            mappingViewDTO.setOrgName(listDTOS.get(0).getOrgName());
-            mappingViewDTO.setSysName(listDTOS.get(0).getName());
-            mappingViewDTO.setSysId(listDTOS.get(0).getId());
-            mappingViewDTO.setThirdList(viewDTOList);
+            makeWarehouseViewDto(viewParamDTO, sysId, mappingViewDTO, listDTOS);
         }
         return mappingViewDTO;
+    }
+
+    private void makeShopViewDto(ThirdMappingDTO.ViewParamDTO viewParamDTO, String sysId, ThirdMappingDTO.MappingViewDTO mappingViewDTO, ShopInfoEntity shopInfo) {
+        //获取第三方数据信息
+        List<ThirdMappingDTO.ViewDTO> viewDTOList = new ArrayList<>();
+        List<ThirdMappingEntity> thirdMappingEntityList = baseMapper.selectList(new LambdaQueryWrapper<ThirdMappingEntity>().eq(ThirdMappingEntity::getSysId, sysId)
+                .eq(ThirdMappingEntity::getType, viewParamDTO.getType()));
+
+        thirdMappingEntityList.forEach(thirdMappingEntity -> {
+            ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
+            ThirdShopEntity thirdShopEntity = thirdShopService.getById(thirdMappingEntity.getThirdId());
+            if (Objects.isNull(thirdShopEntity)) {
+                viewDTOList.add(viewDTO);
+            }
+            viewDTO.setName(thirdShopEntity.getName());
+            viewDTO.setThirdId(thirdMappingEntity.getThirdId());
+            viewDTO.setCode(thirdShopEntity.getCode());
+            viewDTO.setId(thirdMappingEntity.getId());
+            viewDTO.setSysType(thirdMappingEntity.getThirdSysType());
+            viewDTO.setSysTypeName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));
+            viewDTOList.add(viewDTO);
+        });
+        mappingViewDTO.setSalesOrgId(shopInfo.getSalesOrgId());
+        mappingViewDTO.setSalesOrgName(shopInfo.getSalesOrgName());
+        mappingViewDTO.setSysName(shopInfo.getName());
+        mappingViewDTO.setSysId(shopInfo.getId());
+        mappingViewDTO.setThirdList(viewDTOList);
+    }
+
+    private void makeWarehouseViewDto(ThirdMappingDTO.ViewParamDTO viewParamDTO, String sysId, ThirdMappingDTO.MappingViewDTO mappingViewDTO, List<WarehouseDTO.ListDTO> listDTOS) {
+        //获取第三方数据信息
+        List<ThirdMappingDTO.ViewDTO> viewDTOList = new ArrayList<>();
+        List<ThirdMappingEntity> thirdMappingEntityList = baseMapper.selectList(new LambdaQueryWrapper<ThirdMappingEntity>()
+                .eq(ThirdMappingEntity::getSysId, sysId)
+                .eq(ThirdMappingEntity::getType, viewParamDTO.getType()));
+
+        for (ThirdMappingEntity thirdMappingEntity : thirdMappingEntityList) {
+            ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
+
+            if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
+                ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getById(thirdMappingEntity.getThirdId());
+                if (Objects.isNull(thirdWarehouseEntity)) {
+                    continue;
+                }
+                viewDTO.setName(thirdWarehouseEntity.getName());
+                viewDTO.setCode(thirdWarehouseEntity.getCode());
+            }
+            if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
+                //校验第三方仓库是否存在
+                OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
+                feignDTO.setCode(thirdMappingEntity.getThirdSysType());
+                feignDTO.setOverseasProviderWarehouseId(thirdMappingEntity.getThirdId());
+                OverseasProviderDTO.FeignDTO overseasWarehouse = overseasProviderFeign.getOverseasWarehouse(feignDTO);
+                if (Objects.isNull(overseasWarehouse)) {
+                    continue;
+                }
+                viewDTO.setName(overseasWarehouse.getPlatformWarehouseName());
+                viewDTO.setCode(overseasWarehouse.getPlatformWarehouseCode());
+            }
+            viewDTO.setThirdId(thirdMappingEntity.getThirdId());
+            viewDTO.setId(thirdMappingEntity.getId());
+            viewDTO.setSysType(thirdMappingEntity.getThirdSysType());
+            viewDTO.setSysTypeName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));
+            viewDTOList.add(viewDTO);
+        }
+        mappingViewDTO.setOrgId(listDTOS.get(0).getOrgId());
+        mappingViewDTO.setOrgName(listDTOS.get(0).getOrgName());
+        mappingViewDTO.setSysName(listDTOS.get(0).getName());
+        mappingViewDTO.setSysId(listDTOS.get(0).getId());
+        mappingViewDTO.setThirdList(viewDTOList);
     }
 
     @Override

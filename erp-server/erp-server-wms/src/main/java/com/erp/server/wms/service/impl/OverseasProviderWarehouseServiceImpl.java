@@ -214,7 +214,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                     throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
                 }
                 long count = overseasProviderWarehouseEntities.stream().filter(req -> !req.getDisabled()
-                        && req.getWarehouseId().equals(detailEntity.getWarehouseId())).count();
+                        && req.getWarehouseId().equals(detailEntity.getWarehouseId()) && !Objects.equals(req.getMainId(), mainId)).count();
                 if (count > 1) {
                     throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
                 }
@@ -241,6 +241,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         overseasProviderWarehouseEntity.setWarehouseName(feignDTO.getWarehouseName());
         overseasProviderWarehouseEntity.setId(feignDTO.getOverseasProviderWarehouseId());
         overseasProviderWarehouseEntity.setWarehouseCode(feignDTO.getWarehouseCode());
+        overseasProviderWarehouseEntity.setDisabled(feignDTO.getDisabled());
         int flag = baseMapper.updateById(overseasProviderWarehouseEntity);
         if (flag<=0){
             throw new ServiceException(ApiError.ERROR_BINDING);
