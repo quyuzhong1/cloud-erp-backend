@@ -6974,6 +6974,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * 同步订单到DMP
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncOrderToDmp(String id, String syncOperate) {
         SoB2cDTO.ViewDTO view = this.view(id);
         Map<String, Object> resultMap = new HashMap<>();
