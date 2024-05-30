@@ -67,6 +67,12 @@ public class SoB2cFinanceEntity extends BaseEntity<SoB2cFinanceEntity> {
     private BigDecimal platformRate;
 
     /**
+     * 平台费
+     */
+    @TableField("platform_cost")
+    private BigDecimal platformCost;
+
+    /**
      * vat 费率
      */
     @TableField("vat_rate")

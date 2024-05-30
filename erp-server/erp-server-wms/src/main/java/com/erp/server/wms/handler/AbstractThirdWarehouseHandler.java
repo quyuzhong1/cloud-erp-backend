@@ -181,7 +181,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         dmpPushTaskEntity.setSourceId(erpBusinessCode);
         dmpPushTaskEntity.setSourceCode(erpBusinessCode);
         dmpPushTaskEntity.setTargetPlatformName(getPlatForm().getName());
-        dmpPushTaskEntity.setStatus(status.equals(ApiResult.success().getCode()) ? SyncStatusEnum.SUCCESS_SYNC.getCode() : SyncStatusEnum.FAILED_SYNC.getCode());
+        dmpPushTaskEntity.setStatus(status.equals(ApiResult.success().getCode()) ? SyncStatusEnum.SUCCESS_SYNC.getCode() : SyncStatusEnum.NO_NEED_SYNC.getCode());
         dmpPushTaskEntity.setMqTopic("");
         dmpPushTaskEntity.setMqTag("");
         dmpPushTaskEntity.setMqData(ThirdWarehouseContext.getRequestJson());

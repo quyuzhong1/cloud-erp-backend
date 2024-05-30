@@ -92,7 +92,7 @@ public class WeiShiCreateOrderRequest {
 
         //收件人邮编
         @JSONField(name = "consignee_postcode")
-        @NotNull(message = "收件人邮编不能为空")
+//        @NotNull(message = "收件人邮编不能为空")
         private String consigneePostcode;
 
         //收件人姓名
@@ -163,7 +163,7 @@ public class WeiShiCreateOrderRequest {
 
         //发件人邮编
         @JSONField(name = "shipper_postcode")
-        @NotNull(message = "发件人邮编不能为空")
+//        @NotNull(message = "发件人邮编不能为空")
         private String shipperPostcode;
 
         //区域代码

@@ -310,8 +310,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
 
-        //推送到DMP
-        this.syncDeliveryToDmp(entity.getId());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
 
 
@@ -543,6 +541,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //查询是否冻结
         List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
+
         for (SoB2cEntity soB2cEntity : soB2cEntities) {
             if (soB2cEntity.getIsFrozen()) {
                 throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
@@ -606,6 +606,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 waybillDetailDTO.setLogisticsChannelName(deliveryEntity.getLogisticsChannelName());
                 waybillDetailDTO.setTransportNo(deliveryEntity.getTransportNo());
                 waybillDetailDTO.setShopId(deliveryEntity.getShopId());
+                String logisticType = soB2cLogisticsEntities.stream().filter(req -> req.getMainId().equals(deliveryEntity.getSourceId())).map(SoB2cLogisticsEntity::getLogisticType).findFirst().orElse("");
+                waybillDetailDTO.setLogisticType(logisticType);
+
                 //匹配物流商名称
                 LogisticsChannelDTO.BaseDTO baseDTO = channelInfoList.stream().filter(req -> req.getId().equals(logisticsChannelId)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(baseDTO)) {
@@ -833,11 +836,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.FALSE;
         }
-        return lambdaUpdate()
+
+        Boolean flag = lambdaUpdate()
                 .set(SoB2cDeliveryEntity::getStatus, status)
                 .in(SoB2cDeliveryEntity::getId, ids)
                 .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
                 .update();
+        return flag;
     }
 
     /**
@@ -1325,6 +1330,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             printLogisticsWaybill.setB2cSoId(detailDTO.getSoB2cId());
             printLogisticsWaybill.setDeliveryNo(detailDTO.getSoCode());
             printLogisticsWaybill.setShopId(detailDTO.getShopId());
+            printLogisticsWaybill.setLogisticType(detailDTO.getLogisticType());
 
             SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO = waybillDetailDTOList.stream().filter(req -> req.getSoB2cId().equals(detailDTO.getSoB2cId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsWaybillDetailDTO)) {
@@ -1555,7 +1561,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     /**
-     * 同步发货单到DMP
+     * 同步发货单到DMP(暂不推送B2C发货单，用销售出库单代替)
      */
     private void syncDeliveryToDmp(String id) {
         SoB2cDeliveryDTO.ViewDTO view = this.view(id);

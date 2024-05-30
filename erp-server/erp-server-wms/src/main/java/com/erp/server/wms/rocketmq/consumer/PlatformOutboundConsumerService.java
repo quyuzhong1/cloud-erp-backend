@@ -125,6 +125,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
             return ApiResult.success();
         }
+        // 当前单据状态
+        String curBillStatus = mainEntity.getBillStatus();
 
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
         updateStatus.setSoCode(soB2cCode);
@@ -133,17 +135,27 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         updateStatus.setTrackNo(dto.getTrackNo());
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
+
+            // 主单待发货首次变成已发货才触发标记
+            if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(curBillStatus)){
+                // 调用第三方平台SDK标记发货(独立事务)
+                String businessDesc = "第三方仓出库";
+                asyncService.asyncShipOrder(mainEntity.getId(),
+                        mainEntity.getCode(),
+                        mainEntity.getDictPlatform(),
+                        JSONUtil.toJsonStr(dto),
+                        businessDesc);
+            }
+
+            // 校验是否已生成销售出库单
+            boolean exist = soOutstockService.checkExist(soB2cCode, SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
+            if (exist) {
+                log.warn("销售订单{} 已生成销售出库单, 忽略生成", soB2cCode );
+                return ApiResult.success();
+            }
             SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
             // 第三方仓出库生成销售出库单（独立事务）
             soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
-
-            // 调用第三方平台SDK标记发货(独立事务)
-            String businessDesc = "第三方仓出库";
-            asyncService.asyncShipOrder(mainEntity.getId(),
-                    mainEntity.getCode(),
-                    mainEntity.getDictPlatform(),
-                    JSONUtil.toJsonStr(dto),
-                    businessDesc);
         }
         return ApiResult.success();
     }

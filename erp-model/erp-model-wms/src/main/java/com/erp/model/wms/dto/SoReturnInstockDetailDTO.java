@@ -231,5 +231,10 @@ public class SoReturnInstockDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+
+        /**
+         * 销售退货明细表id
+         */
+        private String soReturnDetailId;
     }
 }

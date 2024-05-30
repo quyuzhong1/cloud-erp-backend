@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -62,6 +63,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Resource
     private CustomerFeign customerFeign;
+
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
 
     private static Integer pageNumber = 1;
 
@@ -165,6 +169,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Boolean skipCancel = StrUtil.isNotBlank(orderInfoEntity.getPlatformOrderStatus()) && orderInfoEntity.getPlatformOrderStatus().contains("取消");
         boolean isGyyPlatform = PlatformEnum.GYY.getDesc().equals(orderInfoEntity.getPlatformSign());
         if (null != dmpOrderInfoEntity) {
+        	if("erp-oms".equals(dmpOrderInfoEntity.getPlatformSign()) && "APPROVE".equals(dmpOrderInfoEntity.getPlatformOrderStatus())) {
+        		return dmpOrderInfoEntity.getId();
+        	}
             // 删除已存在取消订单  和非销售订单
             if (isGyyPlatform && (skipOrderType || skipCancel)) {
                 removeById(dmpOrderInfoEntity.getId());
@@ -200,6 +207,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         String orderId = orderInfoId;
         itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
+
+        //保存未拆分数据
         dmpOrderItemSplitService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
         return orderInfoId;
     }

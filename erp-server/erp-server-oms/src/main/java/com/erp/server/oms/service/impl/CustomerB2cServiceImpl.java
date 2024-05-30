@@ -1011,17 +1011,6 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         return base;
     }
 
-//    @Override
-//    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-//        return this.lambdaUpdate()
-//                .eq(CustomerB2cEntity::getId, id)
-//                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-//                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeTime, LocalDateTime.now())
-//                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerB2cEntity::getSyncKingdeeId, syncKingdeeId)
-//                .set(StringUtils.isNotBlank(syncOperate), CustomerB2cEntity::getSyncOperate, syncOperate)
-//                .update();
-//    }
-
 
     /**
      * 引用客户
@@ -1488,11 +1477,42 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     }
 
     @Override
-    public PagingVO<CustomerB2CDTO.DropListDTO> customerDropDown(PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO) {
+    public CustomerB2CDTO.DropPagingDTO<CustomerB2CDTO.DropListDTO> customerDropDown(PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO) {
         Page<CustomerB2CDTO.DropListDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<CustomerB2CDTO.DropListDTO> pageData=  baseMapper.customerDropDown(query, pagingDTO.getParams());
         buildCustomerDTO(pageData.getRecords());
-        return new PagingVO<>(pageData);
+        CustomerB2CDTO.DropPagingDTO<CustomerB2CDTO.DropListDTO> result = new CustomerB2CDTO.DropPagingDTO<>(pageData);
+        if (CollectionUtils.isNotEmpty(pageData.getRecords()))  {
+            long count = pageData.getRecords().stream().filter(obj -> StrUtil.equals(obj.getCustomerName(), pagingDTO.getParams().getCustomerName())).count();
+            if (count > 0) {
+                result.setIsExist(Boolean.TRUE);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public CustomerB2cEntity getByIdOrName(String keyWord) {
+        CustomerB2cEntity customerB2cEntity = this.getById(keyWord);
+        if (ObjectUtil.isNotEmpty(customerB2cEntity)) {
+            return customerB2cEntity;
+        }
+        CustomerB2cEntity b2cEntity = this.getByName(keyWord);
+        return b2cEntity;
+    }
+
+    /**
+     * @description: 根据名称查询
+     * @author Will
+     * @date: 2024/5/28 9:28
+     * @param name
+     * @return CustomerB2cEntity
+     */
+    private CustomerB2cEntity getByName (String name) {
+        CustomerB2cEntity customerB2cEntity = lambdaQuery().eq(CustomerB2cEntity::getName, name)
+                .last("limit 1")
+                .one();
+        return customerB2cEntity;
     }
 
     /**
@@ -1512,6 +1532,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 }
             }
         });
+
     }
 
     /**

@@ -126,6 +126,7 @@ public class SoB2cDeliveryController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
     /**
      * 详情
      *

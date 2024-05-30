@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.order.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -16,17 +16,17 @@ import java.util.List;
 @Data
 public class Package implements Serializable {
 
-    @JSONField(name = "package_number")
+    @Alias( "package_number")
     private String packageNumber;
 
-    @JSONField(name = "logistics_status")
+    @Alias( "logistics_status")
     private String logisticsStatus;
 
-    @JSONField(name = "shipping_carrier")
+    @Alias( "shipping_carrier")
     private String shippingCarrier;
-    @JSONField(name = "item_list")
+    @Alias( "item_list")
     private List<OrderItemSimple> itemSimpleList;
 
-    @JSONField(name = "parcel_chargeable_weight_graml")
+    @Alias( "parcel_chargeable_weight_graml")
     private Long parcelChargeableWeightGraml;
 }

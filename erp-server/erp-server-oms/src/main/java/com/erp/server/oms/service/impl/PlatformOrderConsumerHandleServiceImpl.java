@@ -150,11 +150,23 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
 
         // 非平台
-        if (!mainEntity.hasPlatformWarehouseOrder()
-                && resultDTO.isUpdateCancel()
-                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())){
-            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消或退款");
+//        if (!mainEntity.hasPlatformWarehouseOrder()
+//                && resultDTO.isUpdateCancel()
+//                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())){
+//            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+//        }
+
+
+        //走过订单规则审核的不需要重复推送DMP，规则审核时已经推送过
+        Integer count = operateLogService.lambdaQuery()
+                .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
+                .eq(OperateLogEntity::getOperation, "审核操作")
+                .count();
+        if (0 == count) {
+            //推送到DMP
+            soB2cService.syncOrderToDmp(mainEntity.getId());
         }
+
     }
 
 
@@ -220,7 +232,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())){
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.getDetails()
                     .stream()
                     .map(PlatformOrderDetailDTO::getPlatformSpuNo)

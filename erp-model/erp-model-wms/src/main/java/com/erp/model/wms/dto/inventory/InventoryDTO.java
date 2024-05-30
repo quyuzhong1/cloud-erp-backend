@@ -1,7 +1,10 @@
 package com.erp.model.wms.dto.inventory;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -428,6 +431,11 @@ public class InventoryDTO implements Serializable {
          */
         @NotEmpty(message = "sku不能为空")
         private String skuId;
+
+        /**
+         * 仓位编码
+         */
+        private String warehouseLocation;
 
         /**
          * 单据编号
@@ -1256,6 +1264,16 @@ public class InventoryDTO implements Serializable {
          * 库位
          */
         private List<String> warehouseLocations;
+
+        /**
+         * 是否需要过滤组织
+         */
+        private boolean filterOrgFlag;
+
+        /**
+         * 是否需要过滤自建
+         */
+        private boolean filterSelfAddFlag;
     }
 
     @Data
@@ -1265,6 +1283,7 @@ public class InventoryDTO implements Serializable {
          * 组织id
          */
         private String orgId;
+        private List<String> orgIds;
         /**
          * 仓库id
          */
@@ -1281,6 +1300,11 @@ public class InventoryDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+
+        /**
+         * 是否需要过滤自建
+         */
+        private boolean filterSelfAddFlag;
     }
 
     @Data
@@ -1435,7 +1459,7 @@ public class InventoryDTO implements Serializable {
         /**
          * 仓库信息
          */
-        private List<PdaInventoryWarehouseDTO> warehouseDTOList;
+        private PagingVO<PdaInventoryWarehouseDTO> warehouseDTOList;
     }
 
     @Data
@@ -1469,6 +1493,8 @@ public class InventoryDTO implements Serializable {
          * 仓位信息
          */
         private List<PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList;
+
+        private Integer index;
     }
 
     @Data

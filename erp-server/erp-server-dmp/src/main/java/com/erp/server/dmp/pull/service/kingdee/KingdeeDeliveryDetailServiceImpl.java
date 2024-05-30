@@ -99,6 +99,11 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
+            //过滤无效数据
+            if (!mongoDatum.getIsValid()) {
+                continue;
+            }
+
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
@@ -131,7 +136,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         //判断是否需要推送MQ
         KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
         if (kingdeeApiUtils.notNeedPushMQ(dto.getJobTaskDTO().getLastTime())){
-            pushToMqList = pushToMqList.stream().filter(e ->CommonConstants.SYSTEM.equals(e.getDataSources())).collect(Collectors.toList());
+            pushToMqList = pushToMqList.stream().filter(e -> !CommonConstants.SYSTEM.equals(e.getDataSources())).collect(Collectors.toList());
         }
         // 构造订单结构
         List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()

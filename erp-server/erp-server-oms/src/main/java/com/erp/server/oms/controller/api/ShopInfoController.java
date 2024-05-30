@@ -165,6 +165,16 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
+     * 店铺下拉
+     * @return
+     */
+    @GetMapping("/listShopSelect")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listShopSelect() {
+        List<BaseDropDownDTO.DisabledDTO> list = shopInfoService.listShopSelect();
+        return success(list);
+    }
+
+    /**
      * 获取已授权店铺
      *
      * @return ApiResult<List < ShopInfoEntity>>
