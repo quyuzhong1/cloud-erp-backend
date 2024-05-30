@@ -125,6 +125,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
             return ApiResult.success();
         }
+        // 当前单据状态
+        String curBillStatus = mainEntity.getBillStatus();
 
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
         updateStatus.setSoCode(soB2cCode);
@@ -137,13 +139,16 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             // 第三方仓出库生成销售出库单（独立事务）
             soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
 
-            // 调用第三方平台SDK标记发货(独立事务)
-            String businessDesc = "第三方仓出库";
-            asyncService.asyncShipOrder(mainEntity.getId(),
-                    mainEntity.getCode(),
-                    mainEntity.getDictPlatform(),
-                    JSONUtil.toJsonStr(dto),
-                    businessDesc);
+            // 主单待发货首次变成已发货才触发标记
+            if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(curBillStatus)){
+                // 调用第三方平台SDK标记发货(独立事务)
+                String businessDesc = "第三方仓出库";
+                asyncService.asyncShipOrder(mainEntity.getId(),
+                        mainEntity.getCode(),
+                        mainEntity.getDictPlatform(),
+                        JSONUtil.toJsonStr(dto),
+                        businessDesc);
+            }
         }
         return ApiResult.success();
     }
