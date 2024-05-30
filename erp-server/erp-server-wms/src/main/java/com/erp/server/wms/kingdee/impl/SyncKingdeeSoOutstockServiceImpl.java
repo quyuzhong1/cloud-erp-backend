@@ -39,6 +39,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -117,7 +118,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     private SoOutstockService soOutstockService;
 
     @Resource
-    private ProductDetailService productDetailService;
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 发送消息同步金蝶
@@ -741,12 +742,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
             dmpOrderItemEntity.setSaleOrderNo(finalSoId);
             dmpOrderItemEntity.setPlatformOrderId(finalSoCode);
-            ProductDetailEntity productDetail = productDetailService.getById(soOutstockDetailEntity.getSkuId());
-            if (Objects.nonNull(productDetail)) {
-                dmpOrderItemEntity.setItemName(productDetail.getName());
-                dmpOrderItemEntity.setItemId(productDetail.getProductId());
-                dmpOrderItemEntity.setProductUnit(productDetail.getUnitName());
-                dmpOrderItemEntity.setSpecifics(productDetail.getVariantProperty());
+            List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(Collections.singletonList(soOutstockDetailEntity.getSkuId()));
+            if (CollectionUtils.isNotEmpty(productDetailEntityList)) {
+                dmpOrderItemEntity.setItemName(productDetailEntityList.get(0).getName());
+                dmpOrderItemEntity.setItemId(productDetailEntityList.get(0).getProductId());
+                dmpOrderItemEntity.setProductUnit(productDetailEntityList.get(0).getUnitName());
+                dmpOrderItemEntity.setSpecifics(productDetailEntityList.get(0).getVariantProperty());
 
                 //B2C订单
                 SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getSoDetailId())).findFirst().orElse(null);
