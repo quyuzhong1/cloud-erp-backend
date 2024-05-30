@@ -135,9 +135,6 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         updateStatus.setTrackNo(dto.getTrackNo());
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
-            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
-            // 第三方仓出库生成销售出库单（独立事务）
-            soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
 
             // 主单待发货首次变成已发货才触发标记
             if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(curBillStatus)){
@@ -149,6 +146,16 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         JSONUtil.toJsonStr(dto),
                         businessDesc);
             }
+
+            // 校验是否已生成销售出库单
+            boolean exist = soOutstockService.checkExist(soB2cCode, SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
+            if (exist) {
+                log.warn("销售订单{} 已生成销售出库单, 忽略生成", soB2cCode );
+                return ApiResult.success();
+            }
+            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
+            // 第三方仓出库生成销售出库单（独立事务）
+            soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
         }
         return ApiResult.success();
     }
