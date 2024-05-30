@@ -17,7 +17,6 @@ import java.util.List;
  * @Author: zhangchunlin
  */
 @Data
-@NoArgsConstructor
 public class DeliveryEntity extends CleanBaseDTO {
 
     private String _id;
@@ -196,6 +195,14 @@ public class DeliveryEntity extends CleanBaseDTO {
      */
     private List<DeliveryItemEntity> stockList;
 
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
+    public DeliveryEntity() {
+        this.isValid = Boolean.TRUE;
+    }
 
     @Override
     public String toString() {

@@ -4148,6 +4148,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //没有子集获取父级
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomBySkuIds(Arrays.asList(skuId));
         List<String> skuIds = bomChildrenSkuDTOS.stream().map(req -> req.getParentSkuId()).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
         List<SkuVO> skuInfoBySkuIds = baseMapper.getSkuBaseBySkuIds(skuIds);
         if (CollectionUtils.isNotEmpty(skuInfoBySkuIds)) {
             List<String> parentSkuIds = skuInfoBySkuIds.stream().map(req -> req.getSkuId()).collect(Collectors.toList());

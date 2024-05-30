@@ -2,6 +2,7 @@ package com.erp.model.oms.enums;
 
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
@@ -12,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @Date 2023-09-06 15:32
  * @Created by yl
  */
-public enum RuleOrderFlowStatusEnum {
+public enum RuleOrderFlowStatusEnum implements EnumMessage {
 
     REJECT("reject",  "审核不通过"),
 

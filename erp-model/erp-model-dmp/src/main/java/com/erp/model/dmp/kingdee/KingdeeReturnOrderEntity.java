@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 @ToString
 public class KingdeeReturnOrderEntity extends CleanBaseDTO {
 
@@ -111,7 +110,17 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     @JsonProperty("FETHIRDBILLNO")
     private String fEThirdBillNo;
 
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
+
+    public KingdeeReturnOrderEntity() {
+        this.isValid = Boolean.TRUE;
+    }
+
     @Override
     public String toString() {
         return "KingdeeReturnOrderEntity{" +

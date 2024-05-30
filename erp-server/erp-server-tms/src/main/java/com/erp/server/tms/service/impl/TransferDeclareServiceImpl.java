@@ -189,6 +189,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             }
         }
 
+        if (StringUtils.isBlank(transferDeclareEntity.getTransferLogisticsSupplierId())) {
+            throw new ServiceException("未找到订单的中转物流商，请检查是否无需中转，无需中转不需要入库预报");
+        }
+
         // 数据处理
         handleData(transferDeclareEntity);
 
@@ -967,6 +971,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(transferDeclareEntity.getDeliveryLogisticsSupplierId());
         if (ObjectUtil.isNotEmpty(logisticsSupplierEntity)) {
             transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+        }
+
+        if (StringUtils.isBlank(transferDeclareEntity.getTransferLogisticsSupplierId())) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
         }
         //中转物流商名称
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(transferDeclareEntity.getTransferLogisticsSupplierId());

@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
 
@@ -127,4 +128,9 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * @return void
      **/
     void deleteAndAddErrorBatch(SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO);
+
+    /**
+     * 标记发货重试
+     */
+    BatchResultDTO retryFalseDelivery(String soId);
 }

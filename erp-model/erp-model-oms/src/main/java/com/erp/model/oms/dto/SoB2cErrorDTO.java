@@ -1,6 +1,8 @@
 package com.erp.model.oms.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
@@ -67,10 +69,17 @@ public class SoB2cErrorDTO implements Serializable {
     * 新增
     */
     @Data
+    @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+        public AddDTO(String mainId, String type, String paramJson, String message, String returnJson, String detailId) {
+            super.mainId = mainId;
+            super.type = type;
+            super.paramJson = paramJson;
+            super.message = message;
+            super.returnJson = returnJson;
+            super.detailId = detailId;
+        }
     }
 
     /**
@@ -164,11 +173,9 @@ public class SoB2cErrorDTO implements Serializable {
         private String mainId;
 
         /**
-         * 异常类型
-         * submitDelivery 提交发货异常
-         * signDelivery 标记发货异常
-          * getLogisticsCode 获取物流单异常
-        */
+         * 前端显示的异常类型
+         * {@link com.erp.model.oms.enums.SoB2cErrorTypeEnum}
+         */
         @NotBlank(message = "异常类型 异常不能为空")
         private String type;
 
@@ -194,7 +201,6 @@ public class SoB2cErrorDTO implements Serializable {
          * 订单详情id
          */
         private String detailId;
-
 
     }
     @Data

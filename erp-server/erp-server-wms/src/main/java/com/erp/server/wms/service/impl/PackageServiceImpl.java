@@ -4,11 +4,8 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.PlatformDeliveryInterceptDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.UnitEnum;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -33,9 +30,6 @@ import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
-import com.erp.rpc.wms.feign.PackageForecastFeign;
-import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.wms.service.PackageForecastService;
 import com.erp.server.wms.service.PackageService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -50,7 +44,6 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -63,9 +56,6 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class PackageServiceImpl implements PackageService {
-
-    @Resource
-    private PackageForecastFeign packageForecastFeign;
 
     @Resource
     private LogisticsFeign logisticsFeign;
@@ -104,7 +94,7 @@ public class PackageServiceImpl implements PackageService {
         //查询平台订单是否取消
         if (entity.getIsCancel()) {
             //订单拦截
-            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(entity.getId(), "平台取消"));
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(entity.getId(), "平台取消或退款"));
             throw new ServiceException("平台订单已取消，无法组包");
         }
         //请求接口过慢，暂时取消 TODO

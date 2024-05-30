@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.global.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -19,10 +19,10 @@ import java.util.List;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = false)
 public class AttributeList implements Serializable {
-    @JSONField(name = "attribute_id")
+    @Alias( "attribute_id")
     private int attributeId;
-    @JSONField(name = "original_attribute_name")
+    @Alias( "original_attribute_name")
     private String originalAttributeName;
-    @JSONField(name = "attribute_value_list")
+    @Alias( "attribute_value_list")
     private List<AttributeValueList> attributeValueList;
 }

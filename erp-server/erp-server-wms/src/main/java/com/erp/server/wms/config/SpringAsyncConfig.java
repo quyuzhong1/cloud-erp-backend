@@ -34,7 +34,7 @@ public class SpringAsyncConfig {
 	@Value("${openApi.download.pool.poolName}")
 	private String poolName = "";
 
-	@Bean("pullErpOpenApi")
+	@Bean("wmsErpExecutor")
 	public ThreadPoolTaskExecutor asyncServiceErpExecutor() {
 		ThreadPoolTaskExecutor executor = createExecutor();
 		printThreadPoolStatus(executor);

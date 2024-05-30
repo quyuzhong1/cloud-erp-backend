@@ -9,6 +9,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ReflectUtils;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -152,10 +153,13 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 return entity;
             }else {
                 SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
-                BeanMapperUtils.copy(receiverDTO, entity2);
+                BeanMapperUtils.copy(entity, entity2);
                 if (null != dictCountryEntity && StringUtils.isBlank(entity2.getCountryName())){
                     entity.setCountryName(dictCountryEntity.getNameCn());
                 }
+                // 指定有值不更新
+                ReflectUtils.updateSpecifiedFieldsIfNotValue(entity2, entity, SoB2cReceiverEntity.fieldsExistNotUpdate());
+
                 entity2.setId(entity.getId());
                 this.updateById(entity2);
 //                if (!this.updateById(entity2)){

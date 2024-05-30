@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Builder;
 import lombok.Data;
 
@@ -18,9 +18,9 @@ import java.util.List;
 @Data
 @Builder
 public class ShopeeProduct implements Serializable {
-    @JSONField(name = "total_count")
+    @Alias( "total_count")
     private Integer totalCount;
-    @JSONField(name = "has_next_page")
+    @Alias( "has_next_page")
     private Boolean hasNextPage;
     private String next;
 

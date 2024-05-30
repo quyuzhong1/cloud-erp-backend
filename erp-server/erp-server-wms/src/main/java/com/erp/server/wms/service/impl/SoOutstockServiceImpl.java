@@ -3112,6 +3112,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return existList;
     }
 
+    @Override
+    public boolean checkExist(String soCode, String sourceType, String orderType) {
+        return this.lambdaQuery()
+                .eq(SoOutstockEntity::getSoCode, soCode)
+                .eq(StringUtils.isNotBlank(sourceType), SoOutstockEntity::getSourceType, sourceType)
+                .eq(StringUtils.isNotBlank(orderType), SoOutstockEntity::getOrderType, orderType)
+                .eq(SoOutstockEntity::getInvalidStatus, false)
+                .count() > 0;
+    }
+
 
     /**
      * 修改装箱状态
@@ -3126,5 +3136,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .eq(SoOutstockEntity::getId, id)
                 .update();
     }
+
+
+    @Override
+    public void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto) {
+        try {
+            LocalDateTime outBoundTime = dto.getOutBoundTime();
+            if(Objects.nonNull(outBoundTime)){
+                generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
+            }
+            //跟踪号
+            generateB2cDTO.setTrackNo(dto.getTrackNo());
+            //运单号
+            generateB2cDTO.setTransportNo(dto.getTrackNo());
+            this.generateB2cSoOutstock(generateB2cDTO);
+        } catch (Exception e) {
+            log.error("销售订单{} 生成销售出库单失败>>>>>>{}", generateB2cDTO.getSoCode(), e.getMessage());
+        }
+    }
+
 
 }

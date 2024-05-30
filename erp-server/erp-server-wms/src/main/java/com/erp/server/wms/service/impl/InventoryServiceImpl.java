@@ -28,6 +28,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.UserRangeTypeEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
@@ -41,7 +42,9 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.InventoryMapper;
+import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
@@ -59,6 +62,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -95,6 +99,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Autowired
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -658,20 +665,19 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
-        //物料编码
-        List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
         //仓库
         List<String> warehouseIdList = list.stream().map(InventoryDTO.PagingViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
-        List<String> warehouseCodeList = warehouseList.stream().map(WarehouseEntity::getKingdeeWarehouseCode).collect(Collectors.toList());
         //组织
         List<String> orgIdList = list.stream().map(InventoryDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-        List<String> orgCodeList = orgList.stream().map(BaseIdDTO.CodeDTO::getCode).collect(Collectors.toList());
-        //金蝶库存信息
-        List<Map<String, Object>> mapList = listKingdeeInventory(skuNoList, warehouseCodeList, orgCodeList);
 
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+
+        List<String> warehouseIdIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIdIds);
+
+
         list.stream().parallel().forEach(data -> {
             // 仓库名称赋值
             WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(data.getWarehouseId())).findFirst().orElse(null);
@@ -694,30 +700,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 //规格类型
                 data.setSpecType(skuVO.getSpecType());
             }
+
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
+                    .filter(req -> req.getCode().equals(data.getWarehouseLocation())
+                            && req.getWarehouseId().equals(data.getWarehouseId())
+                    ).findFirst().orElse(new WarehouseLocationEntity());
+            data.setWarehouseLocationName(warehouseLocationEntity.getName());
+
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
-            //未查到金蝶库存
-            if (CollectionUtils.isEmpty(mapList)) {
-                log.info("未查到金蝶库存，skuNoList = {}，warehouseCodeList = {}，orgCodeList = {}",skuNoList,warehouseCodeList,orgCodeList);
-                return;
-            }
-            //仓库编码
-            String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(data.getWarehouseId())).findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse("");
-            //组织编码
-            String orgCode = orgList.stream().filter(obj -> obj.getId().equals(data.getOrgId())).findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
-            List<Map<String, Object>> mapQtyList = mapList.stream().filter(obj -> data.getSkuNo().equals(obj.get("FMaterialId.FNumber")) && warehouseCode.equals(obj.get("FStockId.FNumber")) && orgCode.equals(obj.get("FStockOrgId.FNumber")))
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(mapQtyList)) {
-                //基本单位库存量(需要单位换算)，相同仓库、组织、sku存在多个数据需要合计
-                BigDecimal divide = mapQtyList.stream().map(obj -> MathUtil.divide(MathUtil.multiply(MathUtil.valueOf(obj.get("FBASEQTY")), MathUtil.valueOf(obj.get("FMaterialid.FSTOREURNOM"))), MathUtil.valueOf(obj.get("FMaterialid.FSTOREURNUM")))).reduce(BigDecimal.ZERO,BigDecimal::add);
-
-                //金蝶库存(fBaseQty*fStoreurnom/fStoreurnum)
-                data.setKingdeeQty(divide.stripTrailingZeros().toPlainString());
-                //库存差异
-                data.setDiffQty(MathUtil.subtract(MathUtil.valueOf(data.getUsableQty().toString()),divide).stripTrailingZeros().toPlainString());
-            }
         });
     }
 
@@ -930,15 +921,19 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public InventoryDTO.PdaInventorySearch getInventoryBySkuNo(String skuNo) {
-        InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
-        paramDTO.setSkuNo(skuNo);
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNo));
+    public InventoryDTO.PdaInventorySearch getInventoryBySkuNo(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
+        InventoryDTO.PdaSearchParamDTO params = searchDTO.getParams();
+        if(StringUtils.isBlank(params.getSkuNo())){
+            return new InventoryDTO.PdaInventorySearch();
+        }
+
+        //sku信息
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(params.getSkuNo()));
         if (ObjectUtil.isEmpty(skuVOList)) {
             return new InventoryDTO.PdaInventorySearch();
         }
         InventoryDTO.PdaInventorySearch pdaInventorySearch = new InventoryDTO.PdaInventorySearch();
-        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(skuNo)).findFirst().orElse(new SkuVO());
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(params.getSkuNo())).findFirst().orElse(new SkuVO());
         pdaInventorySearch.setSkuNo(skuVO.getSkuNo());
         pdaInventorySearch.setSkuName(skuVO.getSkuName());
         pdaInventorySearch.setSpuNo(skuVO.getSpuNo());
@@ -949,14 +944,31 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         pdaInventorySearch.setVariantProperty(skuVO.getVariantProperty());
         pdaInventorySearch.setImagesUrl(skuVO.getSkuImagesUrl());
-        List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList = baseMapper.listInventoryWarehouseByParam(paramDTO);
+
+        //库存信息
+        InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
+        paramDTO.setSkuNo(params.getSkuNo());
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        //查询配置过滤对应组织仓库
+        if(params.isFilterOrgFlag()){
+            List<DictBasicDTO.ListDTO> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
+            if(CollectionUtils.isNotEmpty(listDTOList)){
+                DictBasicDTO.ListDTO orgDTOList = listDTOList.get(0);
+                String orgArr = orgDTOList.getValue();
+                paramDTO.setOrgIds(Arrays.asList(orgArr.split(",")));
+            }
+        }
+        paramDTO.setFilterSelfAddFlag(params.isFilterSelfAddFlag());
+        IPage<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOPage = baseMapper.listInventoryWarehouseByParam(query,paramDTO);
         List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList = baseMapper.listInventoryWarehouseLocationByParam(paramDTO);
+        List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList = warehouseDTOPage.getRecords();
         List<String> warehouseIds = warehouseDTOList.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
         for (InventoryDTO.PdaInventoryWarehouseDTO warehouseDTO : warehouseDTOList) {
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(warehouseDTO.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             warehouseDTO.setWarehouseName(updateDTO.getName());
+            warehouseDTO.setIndex(updateDTO.getIndex());
             List<InventoryDTO.PdaInventoryWarehouseLocationDTO> locationDTOList = warehouseLocationDTOList.stream().filter(req -> req.getWarehouseId().equals(warehouseDTO.getWarehouseId()) && req.getRealQty() > 0).collect(Collectors.toList());
             for (InventoryDTO.PdaInventoryWarehouseLocationDTO locationDTO : locationDTOList) {
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(locationDTO.getWarehouseId()) && req.getCode().equals(locationDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
@@ -964,7 +976,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
             warehouseDTO.setWarehouseLocationDTOList(locationDTOList);
         }
-        pdaInventorySearch.setWarehouseDTOList(warehouseDTOList);
+        //根据index排序
+        warehouseDTOList.sort(Comparator.nullsLast(Comparator.comparing(InventoryDTO.PdaInventoryWarehouseDTO::getIndex)));
+        pdaInventorySearch.setWarehouseDTOList(new PagingVO<>(warehouseDTOPage));
         return pdaInventorySearch;
     }
 

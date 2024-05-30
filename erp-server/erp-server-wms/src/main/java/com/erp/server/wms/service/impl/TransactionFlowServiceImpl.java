@@ -412,10 +412,14 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO params, HttpServletResponse response) {
+        PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> pagingParamDTO = new PagingDTO<InventoryReportDTO.DailyInventoryParamDTO>();
+        pagingParamDTO.setParams(params);
+        pagingParamDTO.setPageSize(-1);
         if (ObjectUtils.isEmpty(params.getDate())) {
             params.setDate(LocalDate.now());
         }
-        List<InventoryReportDTO.ListDailyInventoryDTO> dataList = baseMapper.listDailyInventory(params);
+        PagingVO<InventoryReportDTO.ListDailyInventoryDTO> pageData = this.dailyInventoryPaging(pagingParamDTO);
+        List<ListDailyInventoryDTO> dataList = (List<ListDailyInventoryDTO>) pageData.getList();
         // 填充
         handleDailyInventory(dataList);
         StringBuffer sb = new StringBuffer();

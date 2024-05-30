@@ -27,17 +27,17 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.checkerframework.checker.units.qual.A;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -65,6 +65,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
+    @Lazy
+    @Resource
+    private AsyncService asyncService;
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
@@ -122,6 +125,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
             return ApiResult.success();
         }
+        // 当前单据状态
+        String curBillStatus = mainEntity.getBillStatus();
 
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
         updateStatus.setSoCode(soB2cCode);
@@ -130,40 +135,27 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         updateStatus.setTrackNo(dto.getTrackNo());
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
+
+            // 主单待发货首次变成已发货才触发标记
+            if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(curBillStatus)){
+                // 调用第三方平台SDK标记发货(独立事务)
+                String businessDesc = "第三方仓出库";
+                asyncService.asyncShipOrder(mainEntity.getId(),
+                        mainEntity.getCode(),
+                        mainEntity.getDictPlatform(),
+                        JSONUtil.toJsonStr(dto),
+                        businessDesc);
+            }
+
+            // 校验是否已生成销售出库单
+            boolean exist = soOutstockService.checkExist(soB2cCode, SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
+            if (exist) {
+                log.warn("销售订单{} 已生成销售出库单, 忽略生成", soB2cCode );
+                return ApiResult.success();
+            }
             SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
-
-            // 调用第三方平台SDK标记发货(无事务)
-            PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-            platformShipOrderDTO.setSoB2cId(mainEntity.getId());
-            platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
-            try {
-                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-            } catch (Exception e) {
-                // 独立异常信息
-                String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(type);
-                addError.setParamJson(JSONUtil.toJsonStr(dto));
-                addError.setReturnJson(ext.toString());
-                addError.setMainId(mainEntity.getId());
-                addError.setMessage(e.getMessage());
-                soB2cFeign.addSoB2cError(addError);
-                log.error("【第三方出库单】销售单【{}】标记发货失败 >>>错误信息{}", mainEntity.getCode(), ExceptionUtil.stacktraceToString(e));
-            }
-
-            try {
-                LocalDateTime outBoundTime = dto.getOutBoundTime();
-                if(Objects.nonNull(outBoundTime)){
-                    generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
-                }
-                //跟踪号
-                generateB2cDTO.setTrackNo(dto.getTrackNo());
-                //运单号
-                generateB2cDTO.setTransportNo(dto.getTrackNo());
-                soOutstockService.generateB2cSoOutstock(generateB2cDTO);
-            } catch (Exception e) {
-                log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
-            }
+            // 第三方仓出库生成销售出库单（独立事务）
+            soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
         }
         return ApiResult.success();
     }

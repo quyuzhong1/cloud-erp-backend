@@ -116,7 +116,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             return new BaseResultDTO.AddDTO();
         }
         log.info("开始新增采购对账单明细");
-        boolean save = super.saveBatch(poReconciliationDetailList);
+        boolean save = super.saveBatch(resultList);
         if(!save) {
             throw new ServiceException("采购对账单明细保存失败");
         }

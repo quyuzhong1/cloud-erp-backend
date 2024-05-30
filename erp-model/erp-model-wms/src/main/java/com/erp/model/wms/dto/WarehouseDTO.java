@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -8,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -156,6 +156,8 @@ public class WarehouseDTO implements Serializable {
 
         @NotBlank(message = "id不能为空")
         private String id;
+
+        private Integer index;
     }
 
     /**
@@ -237,6 +239,50 @@ public class WarehouseDTO implements Serializable {
          */
         private String platformName;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseInventoryQtyDTO extends ListDTO{
+        /**
+         * 库存数量
+         */
+        private Integer inventoryQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryQtyDTO {
+
+        /**
+         * SKU
+         */
+        private String skuId;
+
+        /**
+         * 仓库数据
+         */
+        private List<WarehouseInventoryQtyDTO> warehouseInventoryQtyList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryQtyParamDTO {
+
+        /**
+         * sku
+         */
+        @NotEmpty(message = "SKU不能为空")
+        private List<String> skuIdList;
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -577,6 +623,35 @@ public class WarehouseDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+
+        /**
+         * 是否需要过滤组织
+         */
+        private boolean filterOrgFlag;
+
+        /**
+         * 是否需要过滤自建
+         */
+        private boolean filterSelfAddFlag;
+
+        /**
+         * 前端忽略
+         */
+        private List<String> orgIds;
+        /**
+         * 前端忽略
+         */
+        private String warehouseManageType;
+    }
+
     /**
      * 分页参数
      */
@@ -734,5 +809,6 @@ public class WarehouseDTO implements Serializable {
             this.warehouseName = viewDTO.getWarehouseName();
         }
     }
+
 
 }

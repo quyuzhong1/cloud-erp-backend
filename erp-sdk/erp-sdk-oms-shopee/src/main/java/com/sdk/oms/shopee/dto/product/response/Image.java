@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,12 +14,12 @@ public class Image implements Serializable {
     /**
      * image url
      */
-    @JSONField(name = "image_url_list")
+    @Alias( "image_url_list")
     private List<String> urls;
 
     /**
      * image url
      */
-    @JSONField(name = "image_id_list")
+    @Alias( "image_id_list")
     private List<String> ids;
 }

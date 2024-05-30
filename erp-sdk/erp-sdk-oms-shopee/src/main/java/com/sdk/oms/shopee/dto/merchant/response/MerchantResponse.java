@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.merchant.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,24 +14,24 @@ import java.io.Serializable;
  */
 @Data
 public class MerchantResponse implements Serializable {
-    @JSONField(name = "merchant_name")
+    @Alias( "merchant_name")
     private String merchantName;
-    @JSONField(name = "is_cnsc")
+    @Alias( "is_cnsc")
     private Boolean isCnsc;
-    @JSONField(name = "auth_time")
+    @Alias( "auth_time")
     private Long authTime;
-    @JSONField(name = "expire_time")
+    @Alias( "expire_time")
     private Long expireTime;
-    @JSONField(name = "request_id")
+    @Alias( "request_id")
     private String requestId;
-    @JSONField(name = "merchant_currency")
+    @Alias( "merchant_currency")
     private String merchantCurrency;
-    @JSONField(name = "merchant_region")
+    @Alias( "merchant_region")
     private String merchantRegion;
-    @JSONField(name = "is_upgraded_cbsc")
+    @Alias( "is_upgraded_cbsc")
     private Boolean isUpgradedCbsc;
-    @JSONField(name = "error")
+    @Alias( "error")
     private String error;
-    @JSONField(name = "message")
+    @Alias( "message")
     private String message;
 }
