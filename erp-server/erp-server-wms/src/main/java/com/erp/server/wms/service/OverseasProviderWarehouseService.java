@@ -82,4 +82,5 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     OverseasProviderEntity findPlatformByWarehouseId(String destWarehouseId);
 
     PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(PagingDTO<OverseasProviderWarehouseDTO.SelectDTO> dto);
+    Boolean feignBind(OverseasProviderDTO.FeignDTO feignDTO);
 }

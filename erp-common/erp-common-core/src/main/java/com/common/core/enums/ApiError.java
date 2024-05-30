@@ -1005,6 +1005,7 @@ public enum ApiError implements Serializable {
     TRANSFER_DECLARE_SO_EXISTS(92138,"订单【{}】已存在入库预报单，请不要重复新增"),
     PAPER_SIZE_INCONSISTENT_NOT_PRINT(92139,"纸张大小不一致，不支持批量打印"),
     EXIST_THIRD_WAREHOUSE_MAPPING(99140,"仓库【{}】已存在第三方仓库映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
+    ERROR_BINDING(99141,"绑定失败"),
 
 
 

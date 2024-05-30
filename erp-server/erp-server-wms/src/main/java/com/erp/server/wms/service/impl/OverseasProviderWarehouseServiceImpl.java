@@ -62,6 +62,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     /**
     * 修改
     */
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(OverseasProviderDTO.UpdateDTO updateDTO, String mainId) {
@@ -70,13 +71,12 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         List<OverseasProviderWarehouseEntity> list = BeanMapperUtils.copyList(OverseasProviderWarehouseEntity.class, detailList);
         // 数据处理
         handleData(list, mainId);
-        addThirdMapping(updateDTO, list);
         boolean save = this.updateBatchById(list);
         if(!save) {
             throw new ServiceException("海外物流商仓库保存失败");
         }else {
             //第三方映射绑定
-            CompletableFuture.runAsync(() -> addThirdMapping(updateDTO, list));
+            addThirdMapping(updateDTO, list);
         }
         return Boolean.TRUE;
     }
@@ -232,5 +232,18 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             }
         }
 
+    }
+    @Override
+    public Boolean feignBind(OverseasProviderDTO.FeignDTO feignDTO) {
+        OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = new OverseasProviderWarehouseEntity();
+        overseasProviderWarehouseEntity.setWarehouseId(feignDTO.getWarehouseId());
+        overseasProviderWarehouseEntity.setWarehouseName(feignDTO.getWarehouseName());
+        overseasProviderWarehouseEntity.setId(feignDTO.getOverseasProviderWarehouseId());
+        overseasProviderWarehouseEntity.setWarehouseCode(feignDTO.getWarehouseCode());
+        int flag = baseMapper.updateById(overseasProviderWarehouseEntity);
+        if (flag<=0){
+            throw new ServiceException(ApiError.ERROR_BINDING);
+        }
+        return Boolean.TRUE;
     }
 }

@@ -25,6 +25,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.service.ThirdShopService;
 import com.erp.server.dmp.service.ThirdWarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,6 +70,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
 
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
@@ -167,7 +169,20 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         }
         if (!save) {
             throw new ServiceException("第三方系统映射关系单保存失败");
-        }
+        }else{
+            //保存海外仓设置
+            if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
+                OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
+                feignDTO.setCode(thirdMappingEntity.getThirdSysType());
+                feignDTO.setOverseasProviderWarehouseId(thirdMappingEntity.getThirdId());
+                feignDTO.setPlatformWarehouseCode(thirdMappingEntity.getThirdCode());
+                feignDTO.setPlatformWarehouseName(thirdMappingEntity.getThirdName());
+                feignDTO.setWarehouseId(thirdMappingEntity.getSysId());
+                feignDTO.setWarehouseName(thirdMappingEntity.getSysName());
+                feignDTO.setDisabled(true);
+                overseasProviderFeign.feignBind(feignDTO);
+            }
+            }
         // 操作日志
         String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()),
                 Objects.isNull(existMapping) ? "" : existMapping.getThirdName(), thirdMappingEntity.getThirdName());
@@ -409,6 +424,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 //校验第三方仓库是否存在
                 OverseasProviderDTO.FeignDTO overseasWarehouse = Optional.ofNullable(overseasProviderFeign.getOverseasWarehouse(feignDTO))
                         .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+//                //校验第三方仓库是否被绑定
+//                if (!overseasWarehouse.getDisabled()&&!Objects.equals(overseasWarehouse.getWarehouseId(),thirdMappingEntity.getSysId())){
+//                    throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, sysName);
+//                }
                 thirdName = overseasWarehouse.getPlatformWarehouseName();
                 sysName = overseasWarehouse.getWarehouseName();
                 thirdMappingEntity.setThirdInfoId(overseasWarehouse.getOverseasProviderWarehouseId());

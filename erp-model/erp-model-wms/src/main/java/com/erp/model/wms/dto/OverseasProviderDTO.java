@@ -25,9 +25,6 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 public class OverseasProviderDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */
@@ -355,5 +352,9 @@ public class OverseasProviderDTO implements Serializable {
          * ERP系统仓库
          */
         private String warehouseName;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
     }
 }

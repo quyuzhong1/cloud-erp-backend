@@ -3,6 +3,8 @@ package com.erp.server.wms.controller.feign;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.wms.service.OverseasProviderService;
+import com.erp.server.wms.service.OverseasProviderWarehouseService;
+import org.apache.xpath.operations.Bool;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -16,6 +18,8 @@ public class OverseasProviderFeignController {
 
     @Resource
     private OverseasProviderService overseasProviderService;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
 
     /**
@@ -39,5 +43,15 @@ public class OverseasProviderFeignController {
     @PostMapping("/getOverseasWarehouse")
     public OverseasProviderDTO.FeignDTO getOverseasWarehouse(@RequestBody OverseasProviderDTO.FeignDTO feignDTO){
         return overseasProviderService.getOverseasWarehouse(feignDTO);
+    }
+    /**
+     * 查询仓库信息
+     *
+     * @param feignDTO
+     * @return com.erp.model.wms.entity.OverseasProviderEntity
+     **/
+    @PostMapping("/feignBind")
+    public Boolean feignBind(@RequestBody OverseasProviderDTO.FeignDTO feignDTO){
+        return overseasProviderWarehouseService.feignBind(feignDTO);
     }
 }

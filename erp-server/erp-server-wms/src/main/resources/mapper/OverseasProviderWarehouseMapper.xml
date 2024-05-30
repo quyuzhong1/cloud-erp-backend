@@ -73,7 +73,7 @@
             and  op.code = #{params.code}
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            and ((opw.platform_warehouse_code = #{params.searchKeyword}) or opw.platform_warehouse_name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            and ((opw.id = #{params.searchKeyword}) or (opw.platform_warehouse_code = #{params.searchKeyword}) or opw.platform_warehouse_name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
