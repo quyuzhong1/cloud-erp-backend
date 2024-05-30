@@ -411,7 +411,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //更新审核状态
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(SoReturnEntity::getId, ids)
-                .update();
+                .update(new SoReturnEntity());
 
         return Boolean.TRUE;
     }
@@ -462,14 +462,14 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     .set(SoReturnEntity::getApproveUserName, userInfo.getUserName())
                     .set(SoReturnEntity::getApproveTime, LocalDateTime.now())
                     .in(SoReturnEntity::getId, ids)
-                    .update();
+                    .update(new SoReturnEntity());
             //增加广播通知
             entityList.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
                     .in(SoReturnEntity::getId, ids)
-                    .update();
+                    .update(new SoReturnEntity());
         }
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -670,7 +670,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //修改状态为待提交
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(SoReturnEntity::getId, ids)
-                .update();
+                .update(new SoReturnEntity());
         //推送到DMP
         entityList.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         //操作日志
@@ -700,7 +700,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //修改状态为待提交
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(SoReturnEntity::getId, ids)
-                .update();
+                .update(new SoReturnEntity());
 
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -731,7 +731,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         lambdaUpdate().set(SoReturnEntity::getInvalidStatus, Boolean.TRUE)
                 .set(SoReturnEntity::getInvalidRemark, remark)
                 .in(SoReturnEntity::getId, ids)
-                .update();
+                .update(new SoReturnEntity());
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个发货通知单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "作废操作");
@@ -945,7 +945,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         return  this.lambdaUpdate()
                 .eq(SoReturnEntity::getId,id)
                 .set(StringUtils.isNotBlank(syncKingdeeId),SoReturnEntity::getSyncKingdeeId,syncKingdeeId)
-                .update();
+                .update(new SoReturnEntity());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -956,7 +956,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 .set(StringUtils.isNotBlank(telNumber), SoReturnEntity::getTelNumber, telNumber)
                 .eq(SoReturnEntity::getSourceType, SourceTypeEnum.SO_INFO)
                 .eq(SoReturnEntity::getSourceId, soId)
-                .update();
+                .update(new SoReturnEntity());
     }
 
     @Override
