@@ -493,8 +493,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(logisticsDTO.getLength()) && Objects.nonNull(logisticsDTO.getWidth()) && Objects.nonNull(logisticsDTO.getHeight())) {
             return;//存在则不重算
         }
+        List<String> skuIds = detailList.stream().map(SoB2cDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         //根据明细进行sku拆分
-        List<SplitSkuDTO> splitSkuDTOS = splitBySoDetailByAdd(detailList);
+        List<SplitSkuDTO> splitSkuDTOS = this.splitBySoDetail(B2cOrderConverter.INSTANCE.convertAddToDetail(detailList),skuIds,null);
         //拆分完成后根据拆分结果进行汇总
         List<String> keyList = new ArrayList<>();
         keyList.add(CalculateSizeEnum.LENGTH.getCode());
@@ -502,9 +503,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         keyList.add(CalculateSizeEnum.HEIGHT.getCode());
         List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
         Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-        logisticsDTO.setLength(calculateSplitSkuDTOLength(splitSkuDTOS, collect.get(CalculateSizeEnum.LENGTH.getCode())));
-        logisticsDTO.setWidth(calculateSplitSkuDTOWidth(splitSkuDTOS, collect.get(CalculateSizeEnum.WIDTH.getCode())));
-        logisticsDTO.setHeight(calculateSplitSkuDTOHeight(splitSkuDTOS, collect.get(CalculateSizeEnum.HEIGHT.getCode())));
+        logisticsDTO.setLength(SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS, collect.get(CalculateSizeEnum.LENGTH.getCode())));
+        logisticsDTO.setWidth(SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS, collect.get(CalculateSizeEnum.WIDTH.getCode())));
+        logisticsDTO.setHeight(SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS, collect.get(CalculateSizeEnum.HEIGHT.getCode())));
+        logisticsDTO.setWeight(SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS, collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode())));
     }
 
     /**
@@ -520,8 +522,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(logisticsDTO.getLength()) && Objects.nonNull(logisticsDTO.getWidth()) && Objects.nonNull(logisticsDTO.getHeight())) {
             return;//存在则不重算
         }
+        List<String> skuIds = detailList.stream().map(SoB2cDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         //根据明细进行sku拆分
-        List<SplitSkuDTO> splitSkuDTOS = splitBySoDetailByUpdate(detailList);
+        List<SplitSkuDTO> splitSkuDTOS = this.splitBySoDetail(B2cOrderConverter.INSTANCE.convertUpdateToDetail(detailList),skuIds, null);
         //拆分完成后根据拆分结果进行汇总
         List<String> keyList = new ArrayList<>();
         keyList.add(CalculateSizeEnum.LENGTH.getCode());
@@ -529,70 +532,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         keyList.add(CalculateSizeEnum.HEIGHT.getCode());
         List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
         Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-        logisticsDTO.setLength(calculateSplitSkuDTOLength(splitSkuDTOS, collect.get(CalculateSizeEnum.LENGTH.getCode())));
-        logisticsDTO.setWidth(calculateSplitSkuDTOWidth(splitSkuDTOS, collect.get(CalculateSizeEnum.WIDTH.getCode())));
-        logisticsDTO.setHeight(calculateSplitSkuDTOHeight(splitSkuDTOS, collect.get(CalculateSizeEnum.HEIGHT.getCode())));
+        logisticsDTO.setLength(SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS, collect.get(CalculateSizeEnum.LENGTH.getCode())));
+        logisticsDTO.setWidth(SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS, collect.get(CalculateSizeEnum.WIDTH.getCode())));
+        logisticsDTO.setHeight(SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS, collect.get(CalculateSizeEnum.HEIGHT.getCode())));
+        logisticsDTO.setWeight(SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS, collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode())));
     }
-
     @Override
-    public BigDecimal calculateSplitSkuDTOLength(List<SplitSkuDTO> skuList, String length) {
-        BigDecimal maxLength;
-        //长
-        if (org.apache.commons.lang3.StringUtils.isNotEmpty(length) && CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(length)) {
-            maxLength = skuList.stream()
-                    .map(e -> e.getLength().multiply(new BigDecimal(e.getQty())))
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-        } else if (org.apache.commons.lang3.StringUtils.isNotEmpty(length) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(length)) {
-            maxLength = skuList.stream().map(SplitSkuDTO::getLength)
-                    .filter(Objects::nonNull)
-                    .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-        } else {
-            maxLength = skuList.stream().map(SplitSkuDTO::getLength)
-                    .filter(Objects::nonNull)
-                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-        }
-        return maxLength;
-    }
-
-    @Override
-    public BigDecimal calculateSplitSkuDTOWidth(List<SplitSkuDTO> skuList, String width) {
-        BigDecimal maxWidth;
-        if (org.apache.commons.lang3.StringUtils.isNotEmpty(width) && CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(width)) {
-            maxWidth = skuList.stream().map(e -> e.getWidth().multiply(new BigDecimal(e.getQty())))
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-        } else if (org.apache.commons.lang3.StringUtils.isNotEmpty(width) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(width)) {
-            maxWidth = skuList.stream().map(SplitSkuDTO::getWidth)
-                    .filter(Objects::nonNull)
-                    .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-        } else {
-            maxWidth = skuList.stream().map(SplitSkuDTO::getWidth)
-                    .filter(Objects::nonNull)
-                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-        }
-        return maxWidth;
-    }
-
-    @Override
-    public BigDecimal calculateSplitSkuDTOHeight(List<SplitSkuDTO> skuList, String height) {
-        BigDecimal totalHeight;
-        //高
-        if (org.apache.commons.lang3.StringUtils.isNotEmpty(height) && CalculateRuleEnum.MAX.getCode().equalsIgnoreCase(height)) {
-            totalHeight = skuList.stream().map(SplitSkuDTO::getHeight)
-                    .filter(Objects::nonNull)
-                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-        } else if (org.apache.commons.lang3.StringUtils.isNotEmpty(height) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(height)) {
-            totalHeight = skuList.stream().map(SplitSkuDTO::getHeight)
-                    .filter(Objects::nonNull)
-                    .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-        } else {
-            totalHeight = skuList.stream().map(e -> e.getHeight().multiply(new BigDecimal(e.getQty())))
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-        }
-        return totalHeight;
-    }
-
-    @Override
-    public List<TransferDeclareProductDTO> getTransferDeclareProductBySoInfo(String soId) {
+    public List<SplitSkuDTO> getTransferDeclareProductBySoInfo(String soId) {
         SoB2cEntity soB2cEntity = this.getById(soId);
         if (ObjectUtils.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
@@ -601,15 +547,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        return splitBySoDetail(soB2cDetailEntities,soB2cEntity.getCode());
+        return splitBySoDetail(soB2cDetailEntities,null,soB2cEntity.getCode());
     }
 
     @Override
-    public List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(List<String> soIds) {
+    public List<SplitSkuDTO> getTransferDeclareProductBySoIds(List<String> soIds) {
         if (CollectionUtils.isEmpty(soIds)){
             return Collections.emptyList();
         }
-        List<TransferDeclareProductDTO> transferDeclareProductDTOS = new ArrayList<>();
+        List<SplitSkuDTO> transferDeclareProductDTOS = new ArrayList<>();
         for (String soId: soIds) {
             SoB2cEntity soB2cEntity = this.getById(soId);
             if (ObjectUtils.isEmpty(soB2cEntity)){
@@ -619,7 +565,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
                 continue;
             }
-            List<TransferDeclareProductDTO> productDTOS = splitBySoDetail(soB2cDetailEntities, soB2cEntity.getCode());
+            List<SplitSkuDTO> productDTOS = splitBySoDetail(soB2cDetailEntities, null, soB2cEntity.getCode());
             if (CollectionUtils.isNotEmpty(productDTOS)){
                 transferDeclareProductDTOS.addAll(productDTOS);
             }
@@ -627,19 +573,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return transferDeclareProductDTOS;
     }
 
-    private List<TransferDeclareProductDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities,String soCode) {
+    /**
+     * 申报信息拆分
+     * @param soB2cDetailEntities
+     * @param soCode
+     * @return
+     */
+    @Override
+    public List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities,List<String> skuIds, String soCode) {
         if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
             return Collections.emptyList();
         }
-        List<TransferDeclareProductDTO> transferDeclareProductDTOS = new ArrayList<>();
-        List<String> skuIds = soB2cDetailEntities.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
-//        List<BomChildrenSkuDTO> skuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
+        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
+        if(CollectionUtils.isEmpty(skuIds)){
+            //skuIds传值时，根据skuIds进行查询，否则取明细列表数据
+            skuIds = soB2cDetailEntities.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        }
         //子sku列表
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         //合并 子sku和父级sku获取 全量sku明细
         if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)) {
             skuIds = Stream.concat(skuIds.stream(), bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).filter(StrUtil::isNotEmpty))
                     .collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(skuIds)){
+            return splitSkuDTOS;
         }
         //全量sku的产品明细
         List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIds);
@@ -664,7 +622,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(soB2cDetailEntity.getSkuId());
                     bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
                         LogisticsProductDTO.ProductDTO bomProduct = skuMap.get(bomChildrenSkuDTO.getSkuId());
-                        transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+                        splitSkuDTOS.add(SplitSkuDTO.builder()
                                 .soId(soB2cDetailEntity.getMainId())
                                 .soCode(soCode)
                                 .skuId(bomChildrenSkuDTO.getSkuId())
@@ -680,7 +638,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                 .declarePrice(Objects.nonNull(bomProduct) ? bomProduct.getDeclarePrice() : BigDecimal.ZERO)
                                 .destDeclarePrice(Objects.nonNull(bomProduct) ? bomProduct.getDestDeclarePrice() : BigDecimal.ZERO)
                                 .destCurrency(Objects.nonNull(bomProduct) ? bomProduct.getDestCurrency() : "")
-//                                .currency(Objects.nonNull(bomProduct) ? bomProduct.getDestCurrency() : "")
                                 .customsCode(Objects.nonNull(bomProduct) ? bomProduct.getCustomsCode() : "")
                                 .declareUnit(Objects.nonNull(bomProduct) ? bomProduct.getDeclareUnit() : "")
                                 .declareModel(Objects.nonNull(bomProduct) ? bomProduct.getDeclareModel() : "")
@@ -695,11 +652,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                 .combinationDeclareType(Objects.nonNull(bomProduct) ? bomProduct.getCombinationDeclareType() : "")
                                 .productProperty(Objects.nonNull(bomProduct) ? bomProduct.getProductProperty() : "")
                                 .productPropertyId(Objects.nonNull(bomProduct) ? bomProduct.getProductPropertyId() : "")
+                                .length(Objects.nonNull(bomProduct) ? LengthConverterUtil.mmToCm(bomProduct.getProductLength()) : BigDecimal.ZERO)
+                                .width(Objects.nonNull(bomProduct) ? LengthConverterUtil.mmToCm(bomProduct.getProductWidth()) : BigDecimal.ZERO)
+                                .height(Objects.nonNull(bomProduct) ? LengthConverterUtil.mmToCm(bomProduct.getProductHeight()) : BigDecimal.ZERO)
                                 .build());
                     });
                 }
             }else {
-                transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+                splitSkuDTOS.add(SplitSkuDTO.builder()
                         .soId(soB2cDetailEntity.getMainId())
                         .soCode(soCode)
                         .skuId(soB2cDetailEntity.getSkuId())
@@ -730,85 +690,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .combinationDeclareType(Objects.nonNull(productDTO) ? productDTO.getCombinationDeclareType() : "")
                         .productProperty(Objects.nonNull(productDTO) ? productDTO.getProductProperty() : "")
                         .productPropertyId(Objects.nonNull(productDTO) ? productDTO.getProductPropertyId() : "")
-                        .build());
-            }
-        });
-        return transferDeclareProductDTOS;
-    }
-
-
-    private List<SplitSkuDTO> splitBySoDetailByAdd(List<SoB2cDetailDTO.AddDTO> detailList) {
-        if (CollectionUtils.isEmpty(detailList)){
-            return Collections.emptyList();
-        }
-        List<String> skuIds = detailList.stream().map(SoB2cDetailDTO.AddDTO::getSkuId).filter(org.apache.commons.lang3.StringUtils::isNotEmpty).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-//        List<BomChildrenSkuDTO> skuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
-        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
-        detailList.forEach(addDTO -> {
-            BomChildrenSkuDTO skuVO = bomChildrenSkuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getParentSkuId()) && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(addDTO.getSkuId()))
-                    .findFirst().orElse(null);
-            if (Objects.nonNull(skuVO) && org.apache.commons.lang3.StringUtils.isNotEmpty(skuVO.getType()) && BomTypeEnum.COMBINATION.getType().equals(skuVO.getType())){
-                //组合品时进行拆分
-                List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getParentSkuId()) && addDTO.getSkuId().equals(e.getParentSkuId()))
-                        .collect(Collectors.toList());
-                //子sku数量需要乘订单数量
-                childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
-                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
-                            .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
-                            .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getLength()) : BigDecimal.ZERO)
-                            .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getWidth()) : BigDecimal.ZERO)
-                            .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getHeight()) : BigDecimal.ZERO)
-                            .build());
-                });
-            }else {
-                splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
-                        .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
-                        .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? LengthConverterUtil.mmToCm(skuVO.getLength()) : BigDecimal.ZERO)
-                        .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? LengthConverterUtil.mmToCm(skuVO.getWidth()) : BigDecimal.ZERO)
-                        .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? LengthConverterUtil.mmToCm(skuVO.getHeight()) : BigDecimal.ZERO)
+                        .length(Objects.nonNull(productDTO) ? LengthConverterUtil.mmToCm(productDTO.getProductLength()) : BigDecimal.ZERO)
+                        .width(Objects.nonNull(productDTO) ? LengthConverterUtil.mmToCm(productDTO.getProductWidth()) : BigDecimal.ZERO)
+                        .height(Objects.nonNull(productDTO) ? LengthConverterUtil.mmToCm(productDTO.getProductHeight()) : BigDecimal.ZERO)
                         .build());
             }
         });
         return splitSkuDTOS;
     }
-    private List<SplitSkuDTO> splitBySoDetailByUpdate(List<SoB2cDetailDTO.UpdateDTO> detailList) {
-        if (CollectionUtils.isEmpty(detailList)){
-            return Collections.emptyList();
-        }
-        List<String> skuIds = detailList.stream().map(SoB2cDetailDTO.UpdateDTO::getSkuId).filter(org.apache.commons.lang3.StringUtils::isNotEmpty).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-//        List<BomChildrenSkuDTO> skuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
-        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
-        detailList.forEach(addDTO -> {
-            BomChildrenSkuDTO skuVO = bomChildrenSkuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getParentSkuId())
-                            && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(addDTO.getSkuId()))
-                    .findFirst().orElse(null);
-            if (Objects.nonNull(skuVO) && org.apache.commons.lang3.StringUtils.isNotEmpty(skuVO.getType()) && BomTypeEnum.COMBINATION.getType().equals(skuVO.getType())){
-                //组合品时进行拆分
-                List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getParentSkuId()) && addDTO.getSkuId().equals(e.getParentSkuId()))
-                        .collect(Collectors.toList());
-                //子sku数量需要乘订单数量
-                childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
-                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
-                            .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
-                            .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getLength()) : BigDecimal.ZERO)
-                            .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getWidth()) : BigDecimal.ZERO)
-                            .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getHeight()) : BigDecimal.ZERO)
-                            .build());
-                });
-            }else {
-                splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
-                        .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
-                        .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? LengthConverterUtil.mmToCm(skuVO.getLength()) : BigDecimal.ZERO)
-                        .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? LengthConverterUtil.mmToCm(skuVO.getWidth()) : BigDecimal.ZERO)
-                        .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? LengthConverterUtil.mmToCm(skuVO.getHeight()) : BigDecimal.ZERO)
-                        .build());
-            }
-        });
-        return splitSkuDTOS;
-    }
-
     /**
      * 检查产品是否备案
      * 返回 不在备案产品的sku no list
@@ -3488,68 +3377,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @description: 明细子件是否缺货
      * @author Will
      * @date: 2024/4/22 15:28
-     * @param bomChildrenList
      * @param inventoryList
      * @param waitDeliveryQtyList
-     * @param detailEntity
+     * @param skuId
+     * @param warehouseId
+     * @param qty
      * @param ignoreInventorySkuIds
      * @return Boolean
      */
-    private Boolean isChildOutStock (List<BomChildrenSkuDTO> bomChildrenList,List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList
-            ,List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList,SoB2cDetailEntity detailEntity,List<String> ignoreInventorySkuIds) {
-
-        //判断是否是组合品
-        Boolean isCombination = Boolean.FALSE;
-        long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailEntity.getSkuId())).count();
-        if (count > 0) {
-            isCombination = Boolean.TRUE;
-        }
-        Boolean isOutStock = Boolean.FALSE;
-        //费销售套装bom判断父级SKU是否够使用
-        if (!isCombination ) {
-            //可用库存
-            Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())
-                            && obj.getWarehouseId().equals(detailEntity.getWarehouseId())
-                            && obj.getWarehouseLocationId().equals(detailEntity.getWarehouseLocation())
-                            && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                    .orElse(MathUtil.ZERO);
-            //待发货数量
-            Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId())
-                            && StrUtil.equals(obj.getWarehouseLocation(), detailEntity.getWarehouseLocation()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
-            return (detailEntity.getQty() > useableQty - waitDeliveryQty) && !ignoreInventorySkuIds.contains(detailEntity.getSkuId());
-        }
-        //销售套装bom需要判断子件库存是否够使用
-        List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailEntity.getSkuId())
-                        && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(childList)) {
+    @Override
+    public Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
+                                   List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
+                                   String skuId,String warehouseId, Integer qty) {
+        if (CollectionUtils.isEmpty(inventoryList)){
             return Boolean.TRUE;
         }
-        for (BomChildrenSkuDTO childrenSkuDTO : childList) {
-            //可用库存
-            Integer childUseableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())
-                            && obj.getWarehouseId().equals(detailEntity.getWarehouseId())
-                            && obj.getWarehouseLocationId().equals(detailEntity.getWarehouseLocation())
-                            && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                    .orElse(MathUtil.ZERO);
-            //待发货数量
-            Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId())
-                            && StrUtil.equals(obj.getWarehouseLocation(), detailEntity.getWarehouseLocation()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
-
-           //缺货则赋值
-           if ((detailEntity.getQty() * childrenSkuDTO.getQuantity() > childUseableQty - waitDeliveryQty)
-                   && !ignoreInventorySkuIds.contains(childrenSkuDTO.getSkuId())) {
-               isOutStock = Boolean.TRUE;
-               break;
-           }
-        }
-        return isOutStock;
+        //费销售套装bom判断父级SKU是否够使用
+        //可用库存
+        Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(skuId)
+                        && obj.getWarehouseId().equals(warehouseId)
+                        && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                .orElse(MathUtil.ZERO);
+        //待发货数量
+        Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId)
+                        && StrUtil.equals(obj.getWarehouseId(), warehouseId))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
+        return (qty > (useableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(skuId);
     }
 
     /**
@@ -3921,21 +3775,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(soB2cFinanceEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_FINANCE_NOT_EXIST);
         }
-        List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
         List<ProductDetailDTO.ProductDTO> productList = plmTaskFeign.listProductBySkuIds(skuIdList);
-
+        List<String> warehouseIdList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).filter(StrUtil::isNotBlank).collect(Collectors.toList());
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(ignoreInventorySkuList) ?
                 ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()): com.google.common.collect.Lists.newArrayList();
-
-        //即时库存数据
-        InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-        skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode()));
-        List<String> warehouseIdList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
-        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
-        skuInventoryDTO.setSkuIdList(skuIdList);
-        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
 
         /**
          *  已付款且未提交发货且未作废的订单SKU的发货数量
@@ -3947,12 +3794,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //含税总成本
         BigDecimal totalTaxCost = detailList.stream().filter(obj -> MathUtil.compareTo(obj.getTaxCost(), MathUtil.ZERO) > MathUtil.ZERO)
-                .map(SoB2cDetailEntity::getTaxCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(e -> MathUtil.multiply(e.getTaxCost(),e.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         //根据SKU查询BOM判断是否是组合SKU
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-        String combination = BomTypeEnum.COMBINATION.getType();
-        bomChildrenList = bomChildrenList.stream().filter(b -> combination.equals(b.getType())).collect(Collectors.toList());
+        //即时库存数据
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = null;
+        if (CollectionUtils.isNotEmpty(warehouseIdList) && CollectionUtils.isNotEmpty(skuIdList)){
+            InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+            skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode()));
+            skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+            skuInventoryDTO.setSkuIdList(skuIdList);
+            inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
+        }
+
         SoB2cDTO.FinancialParamDTO dto = new SoB2cDTO.FinancialParamDTO();
         dto.setId(soB2cEntity.getId());
         dto.setIsCny(Boolean.TRUE);
@@ -3961,6 +3816,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setSoB2cFinanceEntity(soB2cFinanceEntity);
         dto.setSoB2cDetailList(detailList);
         SoB2cDTO.FinancialInfoDTO financialInfo = getFinancialInfo(dto, Boolean.FALSE);
+        map.put("id", soB2cEntity.getId());
+        map.put("code", soB2cEntity.getCode());
         map.put("dictPayMethod", soB2cEntity.getDictPayMethod());
         Integer goodsTotalQty = detailList.stream().mapToInt(SoB2cDetailEntity::getQty).sum();
         map.put("goodsTotalQty", goodsTotalQty);
@@ -4013,7 +3870,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("packageWidth", logisticsEntity.getWidth());
 
         //仓库数量
-        long warehouseCount = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().count();
+        long warehouseCount = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).filter(StrUtil::isNotBlank).distinct().count();
         map.put("deliveryWarehouseQty", warehouseCount);
         map.put("buyLogisticsChannelId", logisticsEntity.getName());
         map.put("destCountry", receiverEntity.getCountry());
@@ -4028,6 +3885,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Map<String, Object> detailMap = new HashMap<>();
             detailMap.put("detailId", detailEntity.getId());
             detailMap.put("platformSkuNo", detailEntity.getPlatformSkuNo());
+            detailMap.put("platformSpuNo", detailEntity.getPlatformSpuNo());
             detailMap.put("skuQty", detailEntity.getQty());
             detailMap.put("skuId",detailEntity.getSkuId());
             detailMap.put("skuNo", detailEntity.getSkuNo());
@@ -4049,10 +3907,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             map.put("packageMultiSize",detailPackageMultiSize);
 
             //是否缺货
-            Boolean isOutStock = isChildOutStock(bomChildrenList, inventoryList,waitDeliveryQtyList, detailEntity,ignoreInventorySkuIds);
-            detailMap.put("isOutStock", isOutStock);
-
-
+            if (StrUtil.isNotBlank(detailEntity.getWarehouseId())){
+                Boolean isOutStock = isChildOutStock(inventoryList, waitDeliveryQtyList, ignoreInventorySkuIds,
+                        detailEntity.getSkuId(),detailEntity.getWarehouseId(), detailEntity.getQty());
+                detailMap.put("isOutStock", isOutStock);
+            }else {
+                detailMap.put("isOutStock", Boolean.TRUE);
+            }
             detailMap.put("shop", soB2cEntity.getShopId());
             detailMap.put("logisticsChannelId", logisticsEntity.getLogisticsChannelId());
             detailMap.put("actualShippingCost", logisticsEntity.getActualShippingCost());
@@ -4107,40 +3968,47 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             mapList.add(detailMap);
         }
         map.put("detailList", mapList);
-        String skuNo = getByField("skuNo", mapList);
+        Object skuNo = getByField("skuNo", mapList);
         map.put("skuNo", skuNo);
 
-        String sellerSkuNo = getByField("sellerSkuNo", mapList);
+        Object sellerSkuNo = getByField("sellerSkuNo", mapList);
         map.put("sellerSkuNo", sellerSkuNo);
 
-        String platformSkuNo = getByField("platformSkuNo", mapList);
+        Object platformSkuNo = getByField("platformSkuNo", mapList);
         map.put("platformSkuNo", platformSkuNo);
 
-        String skuQty = getByField("skuQty", mapList);
+        Object platformSpuNo = getByField("platformSpuNo", mapList);
+        map.put("platformSpuNo", platformSpuNo);
+
+        Object skuQty = getByField("skuQty", mapList);
         map.put("skuQty", skuQty);
 
-        String deliveryWarehouseId = getByField("deliveryWarehouseId", mapList);
+        Object deliveryWarehouseId = getByField("deliveryWarehouseId", mapList);
         map.put("deliveryWarehouseId", deliveryWarehouseId);
 
-        String deliveryWarehouseLocation = getByField("deliveryWarehouseLocation", mapList);
+        Object deliveryWarehouseLocation = getByField("deliveryWarehouseLocation", mapList);
         map.put("deliveryWarehouseLocation", deliveryWarehouseLocation);
 
-        String category = getByField("category", mapList);
+        Object category = getByField("category", mapList);
         map.put("category", category);
 
-        String property = getByField("propertyId", mapList);
+        Object property = getByField("propertyId", mapList);
         map.put("propertyId", property);
 
-        String isAliExpressTaxOrder = getByField("isAliExpressTaxOrder", mapList);
-        map.put("isAliExpressTaxOrder", isAliExpressTaxOrder);
+        long isAliExpressTaxOrder = mapList.stream().filter(m-> m != null && m.get("isAliExpressTaxOrder") != null
+                && (boolean) m.get("isAliExpressTaxOrder")).count();
+        map.put("isAliExpressTaxOrder", isAliExpressTaxOrder > 0);
 
-        String isAliExpressNewbieWarehouse = getByField("isAliExpressNewbieWarehouse", mapList);
-        map.put("isAliExpressNewbieWarehouse", isAliExpressNewbieWarehouse);
+        long isAliExpressNewbieWarehouse = mapList.stream().filter(m-> m != null && m.get("isAliExpressNewbieWarehouse") != null
+                && (boolean) m.get("isAliExpressNewbieWarehouse")).count();
+        map.put("isAliExpressNewbieWarehouse", isAliExpressNewbieWarehouse > 0);
 
-        String isCombinationOrder = getByField("isCombinationOrder", mapList);
-        map.put("isCombinationOrder", isCombinationOrder);
+        long isCombinationOrder = mapList.stream().filter(m-> m != null && m.get("isCombinationOrder") != null
+                && (boolean) m.get("isCombinationOrder")).count();
+        map.put("isCombinationOrder", isCombinationOrder > 0);
 
-        long isOutStockCount = mapList.stream().filter(m-> (boolean) m.get("isOutStock")).count();
+        long isOutStockCount = mapList.stream().filter(m-> m != null && m.get("isOutStock") != null
+                && (boolean) m.get("isOutStock")).count();
         map.put("isOutStock", isOutStockCount > 0);
 
 
@@ -4281,6 +4149,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 
+
+
     /**
      * 根据 字段获取值
      *
@@ -4290,67 +4160,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date 2023-12-05 10:25
      */
 
-    private String getByField(String fieldCode, List<Map<String, Object>> mapList) {
-        Set<String> list = new HashSet<>(mapList.size());
+    private Object getByField(String fieldCode, List<Map<String, Object>> mapList) {
+        Set<Object> set = new HashSet<>(mapList.size());
         for (Map<String, Object> map : mapList) {
             Object obj = map.getOrDefault(fieldCode, "");
             if (Objects.nonNull(obj)) {
-                list.add(obj.toString());
+                set.add(obj);
             }
         }
-        return list.stream().collect(Collectors.joining(","));
-    }
-
-    /**
-     * @param id
-     * @return Boolean
-     * @description: 配货仓库规则
-     * @author Will
-     * @date: 2023/8/24 15:19
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
-        SoB2cEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
-
-        //仓库匹配规则结果
-        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
-        //配货规则是否通过
-        Boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
-        if (!distributionSuccess) {
-            //仓库规则不匹配,标识异常
-            updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
-            //明细设置仓库规则不匹配
-            List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
-            soB2cDetailService.updateIsMatchWarehouseRule(id,detailIdList);
-            return Boolean.FALSE;
-        }
-        if(StringUtils.isNotBlank(ruleMatchResult.getName())){
-            String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
-        }
-        //更新明细仓库信息
-        String warehouseId = ruleMatchResult.getWarehouseId();
-        //返回了仓库则更新仓库为空的数据
-        if (StrUtil.isNotBlank(warehouseId)) {
-            for (SoB2cDetailEntity detailEntity : detailList) {
-                if (StrUtil.isNotBlank(detailEntity.getWarehouseId())) {
-                    continue;
+        if (CollectionUtils.isEmpty(set)){
+            return null;
+        }else if (set.size() == 1){
+            return set.stream().findFirst().get();
+        }else {
+            StringBuilder sb = new StringBuilder();
+            for (Object obj : set){
+                if (sb.length() > 0){
+                    sb.append(",");
                 }
-                detailEntity.setWarehouseId(warehouseId);
+                sb.append(obj.toString());
             }
-            soB2cDetailService.updateWarehouse(detailList);
-        }
-        try {
-            //走物流规则
-            SoB2cDTO.RuleResultDTO ruleLogistics = logisticsRule(id, map);
-        } catch (Exception e) {
-            log.error("物流规则报错>>>{}", e.getMessage());
-
+            return sb.toString();
         }
 
-        return Boolean.TRUE;
     }
 
     /**
@@ -5545,7 +5377,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal totalHeight = BigDecimal.ZERO;
         if (CollectionUtils.isNotEmpty(skuList)){
             //拆分明细
-            List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList, skuList);
+            List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList, skuIds, entity.getCode());
             //根据sku进行计算
             List<String> keyList = new ArrayList<>();
             keyList.add(CalculateSizeEnum.LENGTH.getCode());
@@ -5553,9 +5385,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             keyList.add(CalculateSizeEnum.HEIGHT.getCode());
             List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
             Map<String, String> cfgCollect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-            maxLength = this.calculateSplitSkuDTOLength(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.LENGTH.getCode()));
-            maxWidth = this.calculateSplitSkuDTOWidth(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.WIDTH.getCode()));
-            totalHeight = this.calculateSplitSkuDTOHeight(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.HEIGHT.getCode()));
+            maxLength = SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.LENGTH.getCode()));
+            maxWidth = SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.WIDTH.getCode()));
+            totalHeight = SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.HEIGHT.getCode()));
         }
         //物流信息更新保存
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
@@ -6153,7 +5985,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return ruleResult;
     }
 
-
+    /**
+     * 仓库规则匹配
+     * @param id
+     * @param detailList
+     * @param map
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -6167,43 +6005,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             handleMatchJson(id, detailList, map);
         }
         //仓库匹配规则结果
-        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
-
-        //配货规则是否通过
-        Boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
-        Boolean isRuleMatch = Boolean.FALSE;
-        if (!distributionSuccess) {
-            //仓库规则不匹配,标识异常
-            updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
-            //明细设置仓库规则不匹配
-            List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
-            soB2cDetailService.updateIsMatchWarehouseRule(id,detailIdList);
-        } else {
-            isRuleMatch = Boolean.TRUE;
-            if(StringUtils.isNotBlank(ruleMatchResult.getName())){
-                String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
-            }
-            //更新明细仓库信息
-            String warehouseId = ruleMatchResult.getWarehouseId();
-            //返回了仓库则更新仓库为空的数据
-            if (StrUtil.isNotBlank(warehouseId)) {
-                for (SoB2cDetailEntity detailEntity : detailList) {
-                    if (StrUtil.isNotBlank(detailEntity.getWarehouseId())) {
-                        continue;
-                    }
-                    detailEntity.setWarehouseId(warehouseId);
-                }
-                soB2cDetailService.updateWarehouse(detailList);
-            }
-        }
-
-        SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
-        ruleResult.setId(id);
-        ruleResult.setIsRuleMatch(isRuleMatch);
-        ruleResult.setMap(map);
-        ruleResult.setSoB2cDetailList(detailList);
-        return ruleResult;
+        return ruleDeliveryWarehouseService.getRuleOrderMatchResult(entity,detailList,map);
     }
 
     /**
@@ -6541,7 +6343,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
             logisticsChannelId = Objects.nonNull(soB2cLogistics) ? soB2cLogistics.getLogisticsChannelId() : "";
         }
-        List<TransferDeclareProductDTO> productList = this.getTransferDeclareProductBySoInfo(id);
+        List<SplitSkuDTO> productList = this.getTransferDeclareProductBySoInfo(id);
         //渠道名称
         String logisticsChannelName = "";
 
@@ -6552,7 +6354,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          */
         String packageStatus = PackageStatusEnum.NOT.getCode();
         String transferStatus = TransferStatusEnum.NOT.getCode();
-        List<String> skuNoList = productList.stream().map(TransferDeclareProductDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuNoList = productList.stream().map(SplitSkuDTO::getSkuNo).distinct().collect(Collectors.toList());
         String declarePlatform = "";
         String declarePlatformName = "";
         if (StringUtils.isNotBlank(logisticsChannelId)) {
@@ -7090,7 +6892,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal totalHeight = BigDecimal.ZERO;
         if (CollectionUtils.isNotEmpty(skuList)){
             //拆分明细
-            List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList, skuList);
+            List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList, skuIds, entity.getCode());
             //根据sku进行计算
             List<String> keyList = new ArrayList<>();
             keyList.add(CalculateSizeEnum.LENGTH.getCode());
@@ -7098,9 +6900,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             keyList.add(CalculateSizeEnum.HEIGHT.getCode());
             List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
             Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-            maxLength = this.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
-            maxWidth = this.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
-            totalHeight = this.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
+            maxLength = SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
+            maxWidth = SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
+            totalHeight = SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
         }
 
         //物流信息更新保存
@@ -7182,14 +6984,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Boolean updateIsMatchWarehouseRuleById(String id) {
-        if (ObjectUtil.isEmpty(id)) {
-            return Boolean.TRUE;
-        }
-        return lambdaUpdate().eq(SoB2cEntity::getId,id).set(SoB2cEntity::getIsMatchWarehouseRule,Boolean.FALSE).update();
-    }
-
-    @Override
     public List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<SoB2cEntity> soB2cEntityList = listByIds(dto.getIds());
@@ -7198,7 +6992,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cReceiverEntity> soReceiiveEntityList = soB2cReceiverService.listByMainIds(ids);
         List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(shopIds);
-        List<TransferDeclareProductDTO> allTransferDeclareProductDTOList = getTransferDeclareProductBySoIds(ids);
+        List<SplitSkuDTO> allTransferDeclareProductDTOList = getTransferDeclareProductBySoIds(ids);
         List<SoB2cEntity> updateList = new ArrayList<>();
         List<String> deleteErrorIds = new ArrayList<>();
         List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(ids, SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
@@ -7223,7 +7017,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"未找到买家信息"));
                 continue;
             }
-            List<TransferDeclareProductDTO> transferDeclareProductDTOList = allTransferDeclareProductDTOList.stream().filter(v->v.getSoId().equals(soB2cEntity.getId())).collect(Collectors.toList());
+            List<SplitSkuDTO> transferDeclareProductDTOList = allTransferDeclareProductDTOList.stream().filter(v->v.getSoId().equals(soB2cEntity.getId())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(transferDeclareProductDTOList)){
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"sku明细为空"));
                 continue;
@@ -7929,63 +7723,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
-
-    @Override
-    public List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList) {
-        if (CollectionUtils.isEmpty(detailList)){
-            return Collections.emptyList();
-        }
-        Map<String, SkuInfoSimpleVO> sourceSkuMap = skuList.stream().collect(Collectors.toMap(SkuInfoSimpleVO::getSkuId, Function.identity()));
-
-        List<String> skuIds = detailList.stream().map(SoB2cDetailEntity::getSkuId).filter(org.apache.commons.lang3.StringUtils::isNotEmpty).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-//        List<BomChildrenSkuDTO> skuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
-        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
-        detailList.forEach(addDTO -> {
-            BomChildrenSkuDTO skuVO = bomChildrenSkuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getParentSkuId()) && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(addDTO.getSkuId()))
-                    .findFirst().orElse(null);
-            if (Objects.nonNull(skuVO) && org.apache.commons.lang3.StringUtils.isNotEmpty(skuVO.getType()) && BomTypeEnum.COMBINATION.getType().equals(skuVO.getType())){
-                //组合品时进行拆分
-                List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getParentSkuId()) && addDTO.getSkuId().equals(e.getParentSkuId()))
-                        .collect(Collectors.toList());
-
-                //子sku数量需要乘订单数量
-                childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
-                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
-                            .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
-                            .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getLength()) : BigDecimal.ZERO)
-                            .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getWidth()) : BigDecimal.ZERO)
-                            .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getHeight()) : BigDecimal.ZERO)
-                            .grossWeight( Objects.nonNull(bomChildrenSkuDTO.getGrossWeight()) ? bomChildrenSkuDTO.getGrossWeight() : BigDecimal.ZERO)
-                            .build());
-                });
-            }else {
-                SkuInfoSimpleVO simpleSkuVO = sourceSkuMap.get(addDTO.getSkuId());
-                if (null == simpleSkuVO){
-                    // 部分无映射关系设置为空
-                    splitSkuDTOS.add(new SplitSkuDTO(addDTO.getSkuId(), addDTO.getSkuNo()));
-                } else {
-                    skuVO = BomChildrenSkuDTO.builder()
-                            .skuId(simpleSkuVO.getSkuId())
-                            .grossWeight(simpleSkuVO.getGrossWeight())
-                            .length(simpleSkuVO.getProductLength())
-                            .width(simpleSkuVO.getProductWidth())
-                            .height(simpleSkuVO.getProductHeight())
-                            .build();
-                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
-                            .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
-                            .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? LengthConverterUtil.mmToCm(skuVO.getLength()) : BigDecimal.ZERO)
-                            .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? LengthConverterUtil.mmToCm(skuVO.getWidth()) : BigDecimal.ZERO)
-                            .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? LengthConverterUtil.mmToCm(skuVO.getHeight()) : BigDecimal.ZERO)
-                            .grossWeight( Objects.nonNull(skuVO.getGrossWeight()) ? skuVO.getGrossWeight() : BigDecimal.ZERO)
-                            .build());
-                }
-
-            }
-        });
-        return splitSkuDTOS;
-    }
-
 	@Override
 	public List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(
 			WmsDataCompareTaskDTO.SoOutstockDTO params) {
@@ -8390,7 +8127,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         });
     }
 
-    private ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList) {
+    /**
+     * 获取目的国申报信息
+     * @param country
+     * @param skuId
+     * @param productCustomsList
+     * @return
+     */
+    @Override
+    public ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList) {
         ProductCustomsEntity customs = null;
         if (org.apache.commons.lang3.StringUtils.isNotEmpty(country)){
             customs = productCustomsList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotEmpty(e.getSkuId()) && org.apache.commons.lang3.StringUtils.isNotEmpty(skuId) && skuId.equals(e.getSkuId())
