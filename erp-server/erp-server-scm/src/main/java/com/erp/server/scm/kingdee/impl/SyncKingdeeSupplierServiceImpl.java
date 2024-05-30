@@ -1,6 +1,5 @@
 package com.erp.server.scm.kingdee.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -18,8 +17,6 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.sys.dto.DictBasicDTO;
-import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
