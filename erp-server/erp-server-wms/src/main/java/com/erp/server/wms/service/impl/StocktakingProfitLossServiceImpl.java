@@ -543,12 +543,23 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
         }
-        List<CreateOtherStockoutRequest. GoodsList> goodsList = new ArrayList<>(detailList.size());
-        detailList.forEach(item -> {
+
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(StocktakingProfitLossDetailDTO.ViewDTO::getDiffQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
+
+        //填充SKU明细
+        List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>();
+        skuMap.forEach((key, value) -> {
             CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
-            goods.setSpecNo(item.getSkuNo());
-            goods.setNum(BigDecimal.valueOf(item.getDiffQty()).abs());  //盘亏单的差异数量为负数,而旺店通不允许负数,这里取绝对值
-            goods.setPositionNo(item.getWarehouseLocation());
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
             goodsList.add(goods);
         });
 
@@ -572,14 +583,31 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
         }
+
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(StocktakingProfitLossDetailDTO.ViewDTO::getDiffQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        detailList.forEach(item -> {
+        skuMap.forEach((key, value) -> {
             CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            goods.setSpecNo(item.getSkuNo());
-            goods.setNum(BigDecimal.valueOf(item.getDiffQty()));
-            goods.setPositionNo(item.getWarehouseLocation());
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
             goodsList.add(goods);
         });
+
+//        detailList.forEach(item -> {
+//            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+//            goods.setSpecNo(item.getSkuNo());
+//            goods.setNum(BigDecimal.valueOf(item.getDiffQty()));
+//            goods.setPositionNo(item.getWarehouseLocation());
+//            goodsList.add(goods);
+//        });
 
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         String warehouseId = detailList.get(0).getWarehouseId();

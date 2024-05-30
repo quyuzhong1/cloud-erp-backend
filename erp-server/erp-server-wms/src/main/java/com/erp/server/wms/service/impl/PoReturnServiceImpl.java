@@ -776,19 +776,27 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
         }
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(PoReturnDetailEntity::getReturnQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
 
         //组装SKU
         List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        detailList.forEach(item -> {
-            CreateOtherStockoutRequest.GoodsList good = new CreateOtherStockoutRequest.GoodsList();
-            good.setSpecNo(item.getSkuNo());
-            good.setNum(BigDecimal.valueOf(item.getReturnQty()));
-            good.setPositionNo(item.getWarehouseLocation());
-            goodsList.add(good);
+        skuMap.forEach((key, value) -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
+            goodsList.add(goods);
         });
 
         //发送异步任务
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTH);
         OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), code, entity.getReturnWarehouseId());
         DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode, entity.getCode());
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -950,7 +958,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     /**
-     * 将反审核通过的采购退货单转换为采购入库单推送到旺店通
+     * 将反审核通过的采购退货单转换为其他入库单推送到旺店通
      *
      * @param entity 采购退货单
      * @param operateCode
@@ -963,14 +971,22 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
         }
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(PoReturnDetailEntity::getReturnQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
 
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        detailList.forEach(item -> {
-            CreateOtherStockinRequest.GoodsList good = new CreateOtherStockinRequest.GoodsList();
-            good.setSpecNo(item.getSkuNo());
-            good.setNum(BigDecimal.valueOf(item.getReturnQty()));
-            good.setPositionNo(item.getWarehouseLocation());
-            goodsList.add(good);
+        skuMap.forEach((key, value) -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
+            goodsList.add(goods);
         });
 
         //发送异步任务

@@ -402,7 +402,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //审核发送金蝶
             sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送旺店通
-            syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+                syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            }else {
+                syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            }
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他入库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
@@ -441,7 +445,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
         //发送旺店通
-        syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+            syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        }else {
+            syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        }
         //操作日志
         operateLogService.addModuleOperateLog(StrUtil.format("反审核了一个其他入库单【{}】", entity.getCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单反审核");
@@ -1142,12 +1150,20 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
      */
     private void syncApproveInfoToWdt(OtherInstockEntity entity, String operateCode) {
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(OtherInstockDetailEntity::getActualQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>();
-        detailList.forEach(item -> {
+        skuMap.forEach((key, value) -> {
             CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            goods.setSpecNo(item.getSkuNo());
-            goods.setNum(BigDecimal.valueOf(item.getActualQty()));
-            goods.setPositionNo(item.getWarehouseLocation());
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
             goodsList.add(goods);
         });
 
@@ -1171,14 +1187,22 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
      */
     private void syncDisApproveInfoToWdt(OtherInstockEntity entity, String operateCode) {
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(OtherInstockDetailEntity::getActualQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
 
         //填充SKU明细
         List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        detailList.forEach(item -> {
+        skuMap.forEach((key, value) -> {
             CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
-            goods.setSpecNo(item.getSkuNo());
-            goods.setNum(BigDecimal.valueOf(item.getActualQty()));
-            goods.setPositionNo(item.getWarehouseLocation());
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
             goodsList.add(goods);
         });
 

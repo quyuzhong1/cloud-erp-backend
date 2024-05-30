@@ -691,7 +691,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      * 将审核通过的采购入库单转换为其他入库单推送到旺店通
      *
      * @param entity 采购入库单 PoInstockEntity
-     * @param code
+     * @param operateCode 操作代码 审核/反审核
      * @return void
      * @date: 2024-05-20
      * @author: tanmujin
@@ -702,13 +702,22 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_95107);
         }
 
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(PoInstockDetailEntity::getStockInQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
+
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        detailList.forEach(item -> {
-            CreateOtherStockinRequest.GoodsList good = new CreateOtherStockinRequest.GoodsList();
-            good.setSpecNo(item.getSkuNo());
-            good.setNum(BigDecimal.valueOf(item.getStockInQty()));
-            good.setPositionNo(item.getWarehouseLocation());
-            goodsList.add(good);
+        skuMap.forEach((key, value) -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
+            goodsList.add(goods);
         });
 
         //发送任务
@@ -806,15 +815,23 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
         }
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(PoInstockDetailEntity::getStockInQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
 
         //组装SKU
         List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        detailList.forEach(item -> {
-            CreateOtherStockoutRequest.GoodsList good = new CreateOtherStockoutRequest.GoodsList();
-            good.setSpecNo(item.getSkuNo());
-            good.setNum(BigDecimal.valueOf(item.getStockInQty()));
-            good.setPositionNo(item.getWarehouseLocation());
-            goodsList.add(good);
+        skuMap.forEach((key, value) -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
+            goodsList.add(goods);
         });
 
         //发送异步任务

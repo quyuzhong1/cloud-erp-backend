@@ -551,23 +551,41 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //查询直接调拨单明细数据
         List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailService.listByMainId(entity.getId());
 
+        //转换成出库单
+        HashMap<String, BigDecimal> outSkuMap = new HashMap<>();
+        transferDetailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getOutWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
+                    outSkuMap.put(key, BigDecimal.valueOf(collect));
+                });
         List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
-        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
-        for (TransferInfoDetailEntity item : transferDetailList) {
-            //转换为调出仓库的其他出库单
-            CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
-            outGoods.setSpecNo(item.getSkuNo());
-            outGoods.setNum(BigDecimal.valueOf(item.getQty()));
-            outGoods.setPositionNo(item.getOutWarehouseLocation());
-            outGoodsList.add(outGoods);
+        outSkuMap.forEach((key, value) -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
+            outGoodsList.add(goods);
+        });
 
-            //转换为调入仓库的其他入库单
-            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
-            inGoods.setSpecNo(item.getSkuNo());
-            inGoods.setNum(BigDecimal.valueOf(item.getQty()));
-            inGoods.setPositionNo(item.getInWarehouseLocation());
-            inGoodsList.add(inGoods);
-        }
+        //转换成入库单
+        HashMap<String, BigDecimal> inSkuMap = new HashMap<>();
+        transferDetailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getInWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
+                    inSkuMap.put(key, BigDecimal.valueOf(collect));
+                });
+        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
+        inSkuMap.forEach((key, value) -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
+            inGoodsList.add(goods);
+        });
 
         //推送其他出库单给旺店通
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
@@ -602,23 +620,41 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_95107);
         }
 
-        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+        //其他入库单
+        HashMap<String, BigDecimal> inSkuMap = new HashMap<>();
+        transferDetailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getInWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
+                    inSkuMap.put(key, BigDecimal.valueOf(collect));
+                });
         List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
-        for (TransferInfoDetailEntity item : transferDetailList) {
-            //转换为调出仓库的其他入库单
-            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
-            inGoods.setSpecNo(item.getSkuNo());
-            inGoods.setNum(BigDecimal.valueOf(item.getQty()));
-            inGoods.setPositionNo(item.getOutWarehouseLocation());
-            inGoodsList.add(inGoods);
+        inSkuMap.forEach((key, value) -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
+            inGoodsList.add(goods);
+        });
 
-            //转换为调入仓库的其他出库单
-            CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
-            outGoods.setSpecNo(item.getSkuNo());
-            outGoods.setNum(BigDecimal.valueOf(item.getQty()));
-            outGoods.setPositionNo(item.getInWarehouseLocation());
-            outGoodsList.add(outGoods);
-        }
+        //其他出库单
+        HashMap<String, BigDecimal> outSkuMap = new HashMap<>();
+        transferDetailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getOutWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
+                    outSkuMap.put(key, BigDecimal.valueOf(collect));
+                });
+        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+        outSkuMap.forEach((key, value) -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split[1]);
+            outGoodsList.add(goods);
+        });
 
         //推送其他出库单给旺店通
         String outWarehouseId = transferDetailList.get(0).getInWarehouseId();

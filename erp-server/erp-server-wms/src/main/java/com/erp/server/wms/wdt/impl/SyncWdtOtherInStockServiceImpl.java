@@ -73,6 +73,7 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
         request.setCreateTime(LocalDateTime.now());
+        request.setRemark("原始单据号：" + sourceCode);
 
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
