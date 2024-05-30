@@ -24,5 +24,5 @@ public interface CfgRuleFeign {
 
 
     @PostMapping("feign/cfgRule/handleRuleOrderLogistic")
-    LogisticsOrderVO handleRuleOrderLogistic(LogisticsOrderRuleVO logisticsOrderRuleVO);
+    LogisticsOrderVO handleRuleOrderLogistic(@RequestBody LogisticsOrderRuleVO logisticsOrderRuleVO);
 }
