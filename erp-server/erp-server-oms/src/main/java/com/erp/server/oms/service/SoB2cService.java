@@ -13,6 +13,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.tms.dto.SettingForecastDTO;
@@ -21,6 +22,7 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -915,4 +917,19 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
+
+    /**
+     * 校验是否缺货状态
+     * @param bomChildrenList
+     * @param inventoryList
+     * @param waitDeliveryQtyList
+     * @param ignoreInventorySkuIds
+     * @param skuId
+     * @param warehouseId
+     * @param qty
+     * @return
+     */
+    Boolean isChildOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
+                            List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
+                            String skuId, String warehouseId, Integer qty);
 }
