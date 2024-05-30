@@ -5429,6 +5429,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         oldEntity.setRemark("");
                     }
                 }
+            }
             // 自发货订单状态不更新(由ERP系统决定)
             if (!oldEntity.hasPlatformWarehouseOrder()) {
                 dto.setBillStatus(oldEntity.getBillStatus());
