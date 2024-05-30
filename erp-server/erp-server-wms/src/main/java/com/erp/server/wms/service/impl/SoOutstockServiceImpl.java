@@ -1033,6 +1033,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 //B2B发送金蝶
                 sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
             }
+            //订单推送dmp
+            list.forEach(entity -> {
+                syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            });
 
             //修改中转报关单订单出库状态
             TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
