@@ -34,7 +34,7 @@ import java.util.Objects;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC,
         selectorExpression = "approved_return_order_to_dmp_tag",
-        consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER,
+        consumerGroup = RocketMqConsumerGroup.SYNC_OMS_RETURN_TO_DMP,
         consumeMode = ConsumeMode.CONCURRENTLY)
 public class B2bSoReturnToDmpConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
