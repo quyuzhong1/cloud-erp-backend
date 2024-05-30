@@ -402,7 +402,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         }
         //截取
         if(phoneHandleContent.isPhoneInterceptSwitch()){
-            if(StringUtils.isNotBlank(receiverInfoVO.getTelNumber()) && Objects.nonNull(phoneHandleContent.getPhoneInterceptStartIndex()) && phoneHandleContent.getPhoneInterceptStartIndex() <= receiverInfoVO.getTelNumber().length()){
+            if(StringUtils.isNotBlank(receiverInfoVO.getTelNumber()) && Objects.nonNull(phoneHandleContent.getPhoneInterceptStartIndex()) && phoneHandleContent.getPhoneInterceptStartIndex() > 0 && phoneHandleContent.getPhoneInterceptStartIndex() <= receiverInfoVO.getTelNumber().length()){
                 receiverInfoVO.setTelNumber(receiverInfoVO.getTelNumber().substring(phoneHandleContent.getPhoneInterceptStartIndex()));
             }
         }
