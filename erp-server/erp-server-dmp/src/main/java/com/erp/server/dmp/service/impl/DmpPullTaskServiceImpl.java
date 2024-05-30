@@ -1030,10 +1030,11 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<DmpPullTaskEntity> batchCheckSaveAndUpdate(List<DmpPullTaskEntity> allList, String platform, String sourceCode, String targetPlatform, String topic, String tag) {
+    public List<DmpPullTaskEntity> batchCheckSaveAndUpdate(List<DmpPullTaskEntity> allList, String platform, String sourceType, String targetPlatform, String topic, String tag) {
+        List<DmpPullTaskEntity> resultList = new ArrayList<>();
         List<String> sourceIds = allList.stream().map(DmpPullTaskEntity::getSourceId).collect(Collectors.toList());
         // 查询所有
-        List<DmpPullTaskEntity> existTaskList = this.findList(platform, sourceCode, targetPlatform, topic, tag, sourceIds);
+        List<DmpPullTaskEntity> existTaskList = this.findList(platform, sourceType, targetPlatform, topic, tag, sourceIds);
 
         Map<String, DmpPullTaskEntity> taskMap = existTaskList.stream().collect(Collectors.toMap(DmpPullTaskEntity::redissonKey, Function.identity()));
         // 需要保存的List
@@ -1060,6 +1061,8 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 if (!this.saveBatch(curList)){
                     throw new ServiceException("批量保存DmpPullTaskEntity失败");
                 }
+                // 添加到结果
+                resultList.addAll(curList);
             }
         }
         // 批量更新
@@ -1067,20 +1070,21 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             // 分组
             List<List<DmpPullTaskEntity>> partition = Lists.partition(updateList, 1000);
             for (List<DmpPullTaskEntity> curList : partition) {
-                if (!this.saveBatch(curList)){
+                if (!this.updateBatchById(curList)){
                     throw new ServiceException("批量更新DmpPullTaskEntity失败");
                 }
+                // 添加到结果
+                resultList.addAll(curList);
             }
         }
-        return allList;
+        return resultList;
     }
 
     @Override
-    public List<DmpPullTaskEntity> findList(String platform, String sourceCode, String targetPlatform, String topic, String tag, List<String> sourceIds) {
+    public List<DmpPullTaskEntity> findList(String platform, String sourceType, String targetPlatform, String topic, String tag, List<String> sourceIds) {
         return lambdaQuery()
                 .in(DmpPullTaskEntity::getSourceId, sourceIds)
-                .eq(DmpPullTaskEntity::getSourceType, sourceCode)
-                .eq(DmpPullTaskEntity::getSourceCode, sourceCode)
+                .eq(DmpPullTaskEntity::getSourceType, sourceType)
                 .eq(DmpPullTaskEntity::getSourcePlatformName, platform)
                 .eq(DmpPullTaskEntity::getTargetPlatformName, targetPlatform)
                 .eq(DmpPullTaskEntity::getMqTopic, topic)

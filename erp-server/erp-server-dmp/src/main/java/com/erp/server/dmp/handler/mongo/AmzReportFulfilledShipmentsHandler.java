@@ -16,10 +16,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import com.erp.server.dmp.handler.DmpMongoHandler;
 import com.erp.server.dmp.service.CfgTimezoneService;
@@ -70,13 +67,8 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         Integer handleCount = mongoHandleTaskEntity.getHandleCount();
         // 指定的mongo表
         String mongoTableName = MongoTableNameContant.DATA_REPORT_AMZ_FULFILLED_SHIPMENTS;
-
-        // 最后处理的ID
-        String lastId = mongoHandleTaskEntity.getLastId();
         // 查询
-        Query query = new Query();
-        query.addCriteria(Criteria.where("_id").gt(lastId)).limit(handleCount);
-        List<ReportFulfilledShipmentsMongoDTO> allList = mongoTemplate.find(query, ReportFulfilledShipmentsMongoDTO.class, mongoTableName);
+        List<ReportFulfilledShipmentsMongoDTO> allList = dmpMongoHandleTaskService.findMongoData(mongoHandleTaskEntity.getLastId(), handleCount, mongoTableName, ReportFulfilledShipmentsMongoDTO.class);
         if (CollectionUtils.isEmpty(allList)) {
             log.warn("亚马逊物流销售报告处理服务处理结束：处理数据为空:handleType={}", mongoHandleTaskEntity.getHandleType());
             return 0;
@@ -86,9 +78,9 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         dmpMongoHandleTaskService.updateMaxLastIdAndNextTime(mongoHandleTaskEntity, maxLastId);
 
         // 补充数据
-        List<ReportFulfilledShipmentsMongoDTO> canHandleList = fillDataAndFilter(allList);
+        List<ReportFulfilledShipmentsMongoDTO> canHandleList = fillData(allList);
 
-        log.debug("亚马逊物流销售报告处理服务处理：转换后的数据={}", JSONUtil.toJsonStr(allList));
+//        log.debug("亚马逊物流销售报告处理服务处理：转换后的数据={}", JSONUtil.toJsonStr(allList));
 
         List<String> uniqueIds = allList.stream()
                 .map(e -> StrUtil.format("{}_{}", e.getAmazonOrderId(), e.getShopId()))
@@ -101,7 +93,7 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
             // 都不存在直接保存mongo等待重新触发
             // 不存在保存mongo等待重新触发
             directSaveMongo(canHandleList, AmazonHandleStatusEnum.WAIT_DOWNLOAD);
-            return 0;
+            return allList.size();
         }
         Map<String, PlatformAmazonOrderDTO> existMap = existOrderList.stream()
                 .collect(Collectors.toMap(e -> e.getOrder().getAmazonOrderId(), Function.identity()));
@@ -154,13 +146,13 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         return allList.size();
     }
 
-    private List<ReportFulfilledShipmentsMongoDTO> fillDataAndFilter(List<ReportFulfilledShipmentsMongoDTO> allList) {
+    private List<ReportFulfilledShipmentsMongoDTO> fillData(List<ReportFulfilledShipmentsMongoDTO> allList) {
         // 所有店铺信息Map<亚马逊账号， Map<国家代号, 店铺ID>
         Map<String, Map<String, String>> shopMap = shopInfoFeign.listByParams(
                         new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null)
                 )
                 .stream()
-                .collect(Collectors.groupingBy(ShopInfoEntity::getDictCountryCode,
+                .collect(Collectors.groupingBy(ShopInfoEntity::getPlatformShopCode,
                         Collectors.toMap(ShopInfoEntity::getDictCountryCode, ShopInfoEntity::getId)));
 
         // 矫正时区(报告来源的时间可能不带时区)
