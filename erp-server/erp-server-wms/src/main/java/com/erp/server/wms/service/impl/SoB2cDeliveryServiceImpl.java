@@ -15,13 +15,11 @@ import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.*;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.PlatformSaveHandler;
-import com.common.business.service.IPlatformService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
@@ -40,6 +38,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -90,7 +89,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sun.misc.BASE64Decoder;
@@ -267,17 +265,28 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
         if (!SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())) {
+//            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+//                //调用第三方平台SDK发货
+//                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+//                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+//                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+//                try {
+//                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+//                } catch (Exception e) {
+//                    log.error("【发货单手动发货】销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
+//                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
+//                }
+//            }
             if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                //调用第三方平台SDK发货
-                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                try {
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                } catch (Exception e) {
-                    log.error("【发货单手动发货】销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-                }
+                // 调用第三方平台SDK标记发货(独立事务)
+                String businessDesc = "发货单手动发货";
+                asyncService.asyncShipOrder(soB2cEntity.getId(),
+                        soB2cEntity.getCode(),
+                        soB2cEntity.getDictPlatform(),
+                        id,
+                        businessDesc);
+            } else {
+                log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }
         }
 
@@ -330,18 +339,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         //调用第三方平台SDK发货
-        try {
-            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                //调用第三方平台SDK发货
-                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-            }
-        } catch (Exception e) {
-            log.error("【虚假标记发货】销售单【{}】标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-        }
+//        try {
+//            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+//                //调用第三方平台SDK发货
+//                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+//                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+//                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+//                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+//            }
+//        } catch (Exception e) {
+//            log.error("【虚假标记发货】销售单【{}】标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
+//            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
+//        }
         //修改状态为虚假发货
         this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
         //修改订单状态待发货
@@ -349,6 +358,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 操作日志
         String msg = StrUtil.format("用户【{}】虚假发货单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "虚假发货");
+
+        if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+            // 调用第三方平台SDK标记发货(独立事务)
+            String businessDesc = "虚假标记发货";
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    soB2cEntity.getDictPlatform(),
+                    id,
+                    businessDesc);
+        } else {
+            log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
 
@@ -791,32 +812,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds).list();
     }
 
-    @Override
-    @GlobalTransactional
-    @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> retryFalseDelivery(String soB2cId) {
-        List<BatchResultDTO> resultList = new ArrayList<>(1);
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySoB2cId(soB2cId);
-        String errorType = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        SoB2cErrorEntity soB2cError = soB2cFeign.getB2cError(soB2cId, errorType);
-        String shippedCode = SoB2cDeliveryStatusEnum.SHIPPED.getCode();
-        if (Objects.nonNull(soB2cError)) {
-            String type = soB2cError.getParamJson();
-            for (SoB2cDeliveryEntity item : soB2cDeliveryList) {
-                String status = item.getStatus();
-                //表示已发货
-                if (shippedCode.equals(status)) {
-                   resultList.add(BatchResultDTO.success(item.getId(), item.getCode(), "手动发货"));
-                }else{
-                    BatchResultDTO resultDTO = this.delivery(item.getId(),type);
-                    resultList.add(resultDTO);
-                }
-
-            }
-        }
-
-        return resultList;
-    }
 
     @Override
     @GlobalTransactional
@@ -867,7 +862,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         } else {
             return this.falseDelivery(id);
         }
-
     }
 
     @Override
@@ -1278,7 +1272,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO) {
         //调用第三方平台SDK发货
-        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+//        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        // 调用第三方平台SDK标记发货(独立事务)
+        String businessDesc = "Feign标记发货";
+        asyncService.asyncShipOrder(platformShipOrderDTO.getSoB2cId(),
+                platformShipOrderDTO.getSoB2cId(),
+                platformShipOrderDTO.getDictPlatform(),
+                platformShipOrderDTO.getSoB2cId(),
+                businessDesc);
         return true;
     }
 

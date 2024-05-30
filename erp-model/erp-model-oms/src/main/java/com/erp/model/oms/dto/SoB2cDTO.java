@@ -453,6 +453,10 @@ public class SoB2cDTO implements Serializable {
          * TikTok状态
          */
         private String tikTokStatus;
+        /**
+         * 是否退款: true=退款, false=未退款
+         */
+        private Boolean isRefunded;
     }
 
     @Data
@@ -516,6 +520,11 @@ public class SoB2cDTO implements Serializable {
          * TikTok状态
          */
         private String tikTokStatus;
+
+        /**
+         * 是否退款: true=退款, false=未退款
+         */
+        private Boolean isRefunded;
     }
 
 
