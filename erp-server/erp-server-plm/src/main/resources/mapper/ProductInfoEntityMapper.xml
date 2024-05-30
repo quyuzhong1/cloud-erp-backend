@@ -1738,6 +1738,7 @@
                 pd.id as skuId,
                 pd.sku_no,
                 pi.category,
+                pi.category_id,
                 pi.property,
                 COALESCE(pl.product_property_id,'') AS logisticsPropertyId
             from  product_detail pd
