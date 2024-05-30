@@ -1,6 +1,8 @@
 package com.erp.rpc.oms.feign;
 
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
+import com.erp.model.tms.vo.request.LogisticsOrderRuleVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,4 +23,6 @@ public interface CfgRuleFeign {
     CfgRuleOrderHandleDTO.RuleMatchDTO getRuleOrderHandleMatchResult(@RequestBody Map<String, Object> map);
 
 
+    @PostMapping("feign/cfgRule/handleRuleOrderLogistic")
+    LogisticsOrderVO handleRuleOrderLogistic(LogisticsOrderRuleVO logisticsOrderRuleVO);
 }

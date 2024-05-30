@@ -7,6 +7,8 @@ import lombok.Getter;
 /**
  * 订单处理规则枚举
  */
+@AllArgsConstructor
+@Getter
 public enum RuleOrderHandleEnum {
     ;
     @Getter
@@ -24,7 +26,7 @@ public enum RuleOrderHandleEnum {
     @Getter
     @AllArgsConstructor
     public enum CityRuleContentEnum implements EnumMessage {
-        REPLACE_WITH_CITY("replaceWithProvince","若收货地址城市为空,使用州省信息进行填充"),
+        REPLACE_WITH_PROVINCE("replaceWithProvince","若收货地址城市为空,使用州省信息进行填充"),
         REPLACE_BLANK("replaceBlank","省州推送物流商下单为空"),
         CUSTOM_REPLACE("customReplace","自定义替换"),
         ;

@@ -455,6 +455,11 @@ public class CfgRuleOrderHandleDTO implements Serializable {
         private String receiveFillText;
 
         /**
+         * 收货人过滤特殊符号开关
+         */
+        private boolean receiveFilterSwitch;
+
+        /**
          * 收货人过滤特殊符号 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.ReceiveFilterEnum}
          * oms/common/enumDropDown?type=ReceiveFilter
          */
@@ -478,15 +483,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          */
         private String ruleName;
 
-
         /**
-         * 城市（推送物流商下单为空）
+         * 规则处理
          */
-        private Boolean isPushCity;
+        private RuleContent ruleContent;
 
-        /**
-         * 州（推送物流商下单为空）
-         */
-        private Boolean isPushProvince;
     }
 }

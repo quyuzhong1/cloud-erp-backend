@@ -7,6 +7,8 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
+import com.erp.model.tms.vo.request.LogisticsOrderRuleVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
 
 import java.util.Map;
 
@@ -73,4 +75,6 @@ public interface CfgRuleOrderHandleService extends SuperService<CfgRuleOrderHand
    * @return RuleMatchDTO
    */
   CfgRuleOrderHandleDTO.RuleMatchDTO getRuleOrderHandleMatchResult(Map<String,Object> jsonObject);
+
+    LogisticsOrderVO handleRuleOrderLogistic(LogisticsOrderRuleVO logisticsOrderRuleVO);
 }

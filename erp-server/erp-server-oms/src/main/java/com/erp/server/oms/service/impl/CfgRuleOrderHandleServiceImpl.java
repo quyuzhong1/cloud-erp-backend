@@ -7,6 +7,8 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -14,6 +16,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
@@ -27,7 +30,11 @@ import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.RuleOrderHandleEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.vo.request.LogisticsOrderRuleVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.request.ReceiverInfoVO;
 import com.erp.server.oms.mapper.CfgRuleOrderHandleMapper;
 import com.erp.server.oms.service.CfgRuleOrderHandleService;
 import com.erp.server.oms.service.CommonService;
@@ -56,9 +63,6 @@ import java.util.stream.Collectors;
 public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrderHandleMapper, CfgRuleOrderHandleEntity> implements CfgRuleOrderHandleService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private RuleConditionService ruleConditionService;
@@ -203,8 +207,8 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     @Override
     public CfgRuleOrderHandleDTO.RuleMatchDTO getRuleOrderHandleMatchResult(Map<String, Object> map) {
         CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatch = new CfgRuleOrderHandleDTO.RuleMatchDTO();
+        ruleMatch.setApproveSuccess(Boolean.FALSE);
         if (Objects.isNull(map)) {
-            ruleMatch.setApproveSuccess(Boolean.FALSE);
             return ruleMatch;
         }
         log.info("参数为=========={}", map);
@@ -224,10 +228,30 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             if (matchResult) {
                 ruleMatch.setApproveSuccess(Boolean.TRUE);
                 ruleMatch.setRuleName(item.getName());
+                JSONObject jsonObject = new JSONObject(item.getRuleContent());
+                CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
+                ruleMatch.setRuleContent(ruleDTO);
                 return ruleMatch;
             }
         }
         return ruleMatch;
+    }
+
+    @Override
+    public LogisticsOrderVO handleRuleOrderLogistic(LogisticsOrderRuleVO logisticsOrderRuleVO) {
+        CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatchDTO = this.getRuleOrderHandleMatchResult(logisticsOrderRuleVO.getMap());
+        LogisticsOrderVO logisticsOrderVO = logisticsOrderRuleVO.getLogisticsOrderVO();
+        if(ruleMatchDTO.getApproveSuccess()){
+            //处理地址
+            this.handleAddressRule(logisticsOrderVO,ruleMatchDTO.getRuleContent());
+            //处理电话
+            this.handlePhoneRule(logisticsOrderVO,ruleMatchDTO.getRuleContent());
+            //处理邮编
+            this.handleZipCodeRule(logisticsOrderVO,ruleMatchDTO.getRuleContent());
+            //处理收货人
+            this.handleReceiveRule(logisticsOrderVO,ruleMatchDTO.getRuleContent());
+        }
+        return logisticsOrderVO;
     }
 
     /**
@@ -268,5 +292,169 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                 orderByAsc(CfgRuleOrderHandleEntity::getPriority).
                 orderByDesc(CfgRuleOrderHandleEntity::getUpdateTime).
                 list();
+    }
+
+    /**
+     * 地址处理
+     * @param logisticsOrderVO
+     * @param ruleContent
+     */
+    private void handleAddressRule(LogisticsOrderVO logisticsOrderVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
+        CfgRuleOrderHandleDTO.AddressHandleContent addressHandleContent = ruleContent.getAddressHandlerContent();
+        ReceiverInfoVO receiverInfoVO = logisticsOrderVO.getReceiverInfoVO();
+        if(Objects.isNull(addressHandleContent)){
+            return;
+        }
+        //处理州/省
+        if(addressHandleContent.isProvinceSwitch()){
+            RuleOrderHandleEnum.ProvinceRuleContentEnum provinceRuleContentEnum = EnumMessage.getByCode(RuleOrderHandleEnum.ProvinceRuleContentEnum.class,addressHandleContent.getHandleProvinceRule());
+            if(Objects.nonNull(provinceRuleContentEnum)) {
+                switch (provinceRuleContentEnum) {
+                    case REPLACE_WITH_CITY:
+                        if (StringUtils.isBlank(receiverInfoVO.getProvince())) {
+                            receiverInfoVO.setProvince(receiverInfoVO.getCity());
+                        }
+                        break;
+                    case REPLACE_BLANK:
+                        receiverInfoVO.setProvince(null);
+                        break;
+                    case CUSTOM_REPLACE:
+                        if (StringUtils.isNotBlank(receiverInfoVO.getProvince()) && StringUtils.isNotBlank(addressHandleContent.getProvinceWaitReplaceText()) && StringUtils.isNotBlank(addressHandleContent.getProvinceReplaceText())) {
+                            receiverInfoVO.setProvince(receiverInfoVO.getProvince().replace(addressHandleContent.getProvinceWaitReplaceText(), addressHandleContent.getProvinceReplaceText()));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        if(addressHandleContent.isCitySwitch()){
+            RuleOrderHandleEnum.CityRuleContentEnum cityRuleContentEnum = EnumMessage.getByCode(RuleOrderHandleEnum.CityRuleContentEnum.class,addressHandleContent.getHandleCityRule());
+            if(Objects.nonNull(cityRuleContentEnum)){
+                switch (cityRuleContentEnum) {
+                    case REPLACE_WITH_PROVINCE:
+                        if (StringUtils.isBlank(receiverInfoVO.getCity())) {
+                            receiverInfoVO.setCity(receiverInfoVO.getProvince());
+                        }
+                        break;
+                    case REPLACE_BLANK:
+                        receiverInfoVO.setCity(null);
+                        break;
+                    case CUSTOM_REPLACE:
+                        if (StringUtils.isNotBlank(receiverInfoVO.getCity()) && StringUtils.isNotBlank(addressHandleContent.getCityWaitReplaceText()) && StringUtils.isNotBlank(addressHandleContent.getCityReplaceText())) {
+                            receiverInfoVO.setCity(receiverInfoVO.getCity().replace(addressHandleContent.getCityWaitReplaceText(), addressHandleContent.getCityReplaceText()));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        if(addressHandleContent.isAddress1FilterSwitch()){
+            if(StringUtils.isNotBlank(receiverInfoVO.getAddressFirst()) && CollectionUtils.isNotEmpty((addressHandleContent.getFilterAddress1TextList()))){
+                for (String filterStr : addressHandleContent.getFilterAddress1TextList()) {
+                    receiverInfoVO.setAddressFirst(receiverInfoVO.getAddressFirst().replace(filterStr, ""));
+                }
+            }
+        }
+        if(addressHandleContent.isAddress1ReplaceSwitch()){
+            if(StringUtils.isNotBlank(receiverInfoVO.getAddressFirst()) && StringUtils.isNotBlank(addressHandleContent.getAddress1WaitReplaceText())&& StringUtils.isNotBlank(addressHandleContent.getAddress1ReplaceText())){
+                receiverInfoVO.setAddressFirst(receiverInfoVO.getAddressFirst().replace(addressHandleContent.getAddress1WaitReplaceText(), addressHandleContent.getAddress1ReplaceText()));
+            }
+        }
+    }
+    /**
+     * 电话处理
+     * @param logisticsOrderVO
+     * @param ruleContent
+     */
+    private void handlePhoneRule(LogisticsOrderVO logisticsOrderVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
+        CfgRuleOrderHandleDTO.PhoneHandleContent phoneHandleContent = ruleContent.getPhoneHandleContent();
+        ReceiverInfoVO receiverInfoVO = logisticsOrderVO.getReceiverInfoVO();
+        if(Objects.isNull(phoneHandleContent)){
+            return;
+        }
+        //过滤指定字符
+        if(phoneHandleContent.isPhoneFilterSwitch()){
+            if(StringUtils.isNotBlank(receiverInfoVO.getTelNumber()) && CollectionUtils.isNotEmpty(phoneHandleContent.getFilterPhoneTextList())){
+                for (String filterStr : phoneHandleContent.getFilterPhoneTextList()) {
+                    receiverInfoVO.setTelNumber(receiverInfoVO.getTelNumber().replace(filterStr, ""));
+                }
+            }
+        }
+        //截取
+        if(phoneHandleContent.isPhoneInterceptSwitch()){
+            if(StringUtils.isNotBlank(receiverInfoVO.getTelNumber()) && Objects.nonNull(phoneHandleContent.getPhoneInterceptStartIndex()) && phoneHandleContent.getPhoneInterceptStartIndex() <= receiverInfoVO.getTelNumber().length()){
+                receiverInfoVO.setTelNumber(receiverInfoVO.getTelNumber().substring(phoneHandleContent.getPhoneInterceptStartIndex()));
+            }
+        }
+        //为空填充
+        if(phoneHandleContent.isPhoneEmptyFillSwitch()){
+            if(StringUtils.isBlank(receiverInfoVO.getTelNumber())){
+                receiverInfoVO.setTelNumber(phoneHandleContent.getPhoneEmptyFillText());
+            }
+        }
+    }
+    /**
+     * 邮编处理
+     * @param logisticsOrderVO
+     * @param ruleContent
+     */
+    private void handleZipCodeRule(LogisticsOrderVO logisticsOrderVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
+        CfgRuleOrderHandleDTO.ZipCodeHandleContent zipCodeHandleContent = ruleContent.getZipCodeHandleContent();
+        ReceiverInfoVO receiverInfoVO = logisticsOrderVO.getReceiverInfoVO();
+        if(Objects.isNull(zipCodeHandleContent)){
+            return;
+        }
+        //过滤特殊字符
+        if(zipCodeHandleContent.isZipCodeFilterSwitch()){
+            if(StringUtils.isNotBlank(receiverInfoVO.getZipCode()) && CollectionUtils.isNotEmpty(zipCodeHandleContent.getFilterZipCodeTextList())){
+                for (String filterStr : zipCodeHandleContent.getFilterZipCodeTextList()) {
+                    receiverInfoVO.setZipCode(receiverInfoVO.getZipCode().replace(filterStr, ""));
+                }
+            }
+        }
+        //为空填充
+        if(zipCodeHandleContent.isZipCodeEmptyFillSwitch()){
+            if(StringUtils.isBlank(receiverInfoVO.getZipCode())){
+                receiverInfoVO.setZipCode(zipCodeHandleContent.getZipCodeEmptyFillText());
+            }
+        }
+    }
+    /**
+     * 收货人处理
+     * @param logisticsOrderVO
+     * @param ruleContent
+     */
+    private void handleReceiveRule(LogisticsOrderVO logisticsOrderVO,CfgRuleOrderHandleDTO.RuleContent ruleContent){
+        CfgRuleOrderHandleDTO.ReceiveHandleContent receiveHandleContent = ruleContent.getReceiveHandleContent();
+        ReceiverInfoVO receiverInfoVO = logisticsOrderVO.getReceiverInfoVO();
+        if(Objects.isNull(receiveHandleContent)){
+            return;
+        }
+        //为空填充
+        if(receiveHandleContent.isReceiveEmptyFillSwitch()){
+            RuleOrderHandleEnum.ReceiveFillRuleContentEnum receiveFillRuleContentEnum = EnumMessage.getByCode(RuleOrderHandleEnum.ReceiveFillRuleContentEnum.class,receiveHandleContent.getHandleReceiveEmptyFillRule());
+            if(Objects.nonNull(receiveFillRuleContentEnum) && StringUtils.isBlank(receiverInfoVO.getContact())){
+                switch (receiveFillRuleContentEnum){
+                    case FILL_WITH_CUSTOMER_NAME:
+                        receiverInfoVO.setContact(receiverInfoVO.getName());
+                        break;
+                    case CUSTOMIZE:
+                        receiverInfoVO.setContact(receiveHandleContent.getReceiveFillText());
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        //过滤特殊符号
+        if(receiveHandleContent.isReceiveFilterSwitch()){
+            if(StringUtils.isNotBlank(receiverInfoVO.getContact()) && CollectionUtils.isNotEmpty(receiveHandleContent.getFilterReceiveTextList())){
+                for (String filterStr : receiveHandleContent.getFilterReceiveTextList()) {
+                    receiverInfoVO.setContact(receiverInfoVO.getContact().replace(filterStr, ""));
+                }
+            }
+        }
     }
 }
