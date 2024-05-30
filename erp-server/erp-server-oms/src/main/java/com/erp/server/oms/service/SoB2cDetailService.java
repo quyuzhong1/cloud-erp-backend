@@ -190,4 +190,11 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      */
     Boolean updatePlatformPackageIdByMainId(String platformPackageId, String mainId);
 
+    /**
+     * 根据匹配规则进行明细更新
+     * @param entity
+     * @param detail
+     * @param warehouseId
+     */
+    void updateWarehouse(SoB2cEntity entity, SoB2cDetailEntity detail, String warehouseId);
 }

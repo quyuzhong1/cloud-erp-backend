@@ -1627,13 +1627,13 @@
             pl.second_qty as secondQty,
             pl.approve_status as approveStatus,
             pd.images_url as imagesUrl
-         FROM product_logistics pl
-        inner join product_detail pd on pl.sku_id = pd.id and pd.is_deleted = false
+         FROM product_detail pd
+        LEFT join product_logistics pl on pl.sku_id = pd.id and pl.is_deleted = false
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pp.sku_id = pl.sku_id and pp.is_deleted = false
-        WHERE  pl.is_deleted=false
+        WHERE  pd.is_deleted=false
          <if test="skuIdList !=null and skuIdList.size>0">
-            AND pl.sku_id IN
+            AND pd.id IN
             <foreach collection="skuIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
