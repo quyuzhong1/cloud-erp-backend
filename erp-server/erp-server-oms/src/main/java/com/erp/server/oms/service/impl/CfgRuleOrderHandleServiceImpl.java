@@ -142,6 +142,23 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         logDTO.setAddressHandlerContent(ruleDTO.getAddressHandlerContent());
         logDTO.setPhoneHandleContent(ruleDTO.getPhoneHandleContent());
         logDTO.setZipCodeHandleContent(ruleDTO.getZipCodeHandleContent());
+        //日志组件不支持嵌套List,特殊处理，将List挪到外层
+        if(Objects.nonNull(logDTO.getAddressHandlerContent()) && Objects.nonNull(logDTO.getAddressHandlerContent().getFilterAddress1TextList())){
+            logDTO.setFilterAddressOneTextList(logDTO.getAddressHandlerContent().getFilterAddress1TextList());
+            logDTO.getAddressHandlerContent().setFilterAddress1TextList(null);
+        }
+        if(Objects.nonNull(logDTO.getPhoneHandleContent()) && Objects.nonNull(logDTO.getPhoneHandleContent().getFilterPhoneTextList())){
+            logDTO.setFilterPhoneTextList(logDTO.getPhoneHandleContent().getFilterPhoneTextList());
+            logDTO.getPhoneHandleContent().setFilterPhoneTextList(null);
+        }
+        if(Objects.nonNull(logDTO.getZipCodeHandleContent()) && Objects.nonNull(logDTO.getZipCodeHandleContent().getFilterZipCodeTextList())){
+            logDTO.setFilterZipCodeTextList(logDTO.getZipCodeHandleContent().getFilterZipCodeTextList());
+            logDTO.getZipCodeHandleContent().setFilterZipCodeTextList(null);
+        }
+        if(Objects.nonNull(logDTO.getReceiveHandleContent()) && Objects.nonNull(logDTO.getReceiveHandleContent().getFilterReceiveTextList())){
+            logDTO.setFilterReceiveTextList(logDTO.getReceiveHandleContent().getFilterReceiveTextList());
+            logDTO.getReceiveHandleContent().setFilterReceiveTextList(null);
+        }
         return logDTO;
     }
 
