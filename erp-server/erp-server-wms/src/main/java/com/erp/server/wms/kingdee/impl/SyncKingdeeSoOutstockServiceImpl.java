@@ -608,7 +608,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         BigDecimal exchangeRate;
         entity.setDeliveryDate(Objects.nonNull(soOutstockEntity.getActualDeliveryDate()) ? soOutstockEntity.getActualDeliveryDate() : null);
 
-        if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
+        if (OrderTypeEnum.B2B.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soOutstockEntity.getSoId());
             if (Objects.isNull(soInfoEntity)) {
                 throw new ServiceException(ApiError.NO_PERMISSION.code, "获取原始B2B订单异常:[" + soOutstockEntity.getSoId() + "]");
@@ -653,9 +653,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 entity.setItemTotalCost(itemTotalCost);
                 entity.setOrderTotalCost(orderTotalCost);
 
+                CustomerInfoEntity customerInfo = customerFeign.getCustomerById(soOutstockEntity.getCustomerId());
+                if (Objects.nonNull(customerInfo)) {
+                    entity.setShopName("B2B");
+                    entity.setShopNo("B2B");
+                    entity.setCustomerName(customerInfo.getName());
+                }
             }
         } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
-            SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSourceId());
+            SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSoId());
             if (Objects.isNull(view)) {
                 throw new ServiceException(ApiError.NO_PERMISSION.code, "获取原始B2C订单异常:[" + soOutstockEntity.getSourceId() + "]");
             }
@@ -669,6 +675,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             entity.setItemTotalCost(itemTotalCost);
             entity.setOrderTotalCost(view.getAmount());
+            entity.setShopName(view.getShopName());
+            entity.setShopNo(view.getShopId());
+            entity.setCustomerName(view.getReceiverDTO().getReceiverName());
+
         }
 
 
@@ -680,25 +690,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         entity.setCompanyId(soOutstockEntity.getTrackNo());
         entity.setCompanyId(soOutstockEntity.getSalesDeptId());
         entity.setCompanyName(soOutstockEntity.getSalesOrgName());
-
-
-        CustomerInfoEntity customerInfo = customerFeign.getCustomerById(soOutstockEntity.getCustomerId());
-        if (Objects.nonNull(customerInfo)) {
-            entity.setShopName(customerInfo.getName());
-            entity.setShopNo(customerInfo.getCode());
-            entity.setCustomerName(customerInfo.getName());
-        }
+        entity.setCountryNameCn(soOutstockEntity.getCountry());
+        entity.setCountryNameEn(soOutstockEntity.getCountry());
 
         entity.setOrderTotalCost(Optional.ofNullable(soOutstockEntity.getTotalDiscountAmount()).orElse(BigDecimal.ZERO).add(Optional.ofNullable(entity.getItemTotalCost()).orElse(BigDecimal.ZERO)));
-        //国家字典
-        if (Objects.nonNull(customerInfo) && StringUtils.isNotEmpty(customerInfo.getCountryId())) {
 
-            DictCountryEntity country = sysUserFeign.getCountryById(customerInfo.getCountryId());
-            if (Objects.nonNull(country)) {
-                entity.setCountryNameCn(country.getNameCn());
-                entity.setCountryNameEn(country.getNameEn());
-            }
-        }
         //销售部门
         if (StringUtils.isNotEmpty(soOutstockEntity.getSalesDeptId())) {
 

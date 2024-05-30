@@ -99,7 +99,7 @@ public interface SoOutstockConverter {
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "billNo", source = "code"),
             @Mapping(target = "logisticsNo", source = "trackNo"),
-            @Mapping(target = "platformName", constant = "B2B"),
+            @Mapping(target = "platformName", source = "orderType"),
             @Mapping(target = "subsidyAmount", constant = "0"),
             @Mapping(target = "salesManId", source = "sellerId"),
             @Mapping(target = "salesManName", source = "sellerName"),
