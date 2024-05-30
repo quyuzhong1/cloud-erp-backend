@@ -12,6 +12,7 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
@@ -20,6 +21,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
@@ -48,7 +50,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.checkerframework.checker.units.qual.K;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,7 +123,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Override
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(SoInfoEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(SoInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -136,14 +137,13 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         String warehouseId = entity.getWarehouseId();
         List<SoDetailDTO.ViewDTO> details = soDetailService.listByMainId(id, warehouseId);
         if (CollectionUtils.isEmpty(details)) {
-            return;
+            throw new ServiceException("未找到销售订单明细");
         }
         //交货方式
         resultMap.put("deliveryMode", entity.getDeliveryMode());
@@ -315,7 +315,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         resultMap.put("detailList", list);
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+       return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -326,7 +326,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (SoInfoEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (SoInfoEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -338,7 +338,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return  dmpMqFeign.saveTask(taskFeignDTO);
     }
 
     /**

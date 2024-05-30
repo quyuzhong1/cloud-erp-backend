@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.KingdeeParamDTO;
 import com.google.gson.Gson;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
@@ -90,8 +91,6 @@ public class KingdeeApiUtils {
         identifyInfo.setUserName(USERNAME);
         identifyInfo.setServerUrl(SERVERURL);
         identifyInfo.setAppSecret(APPSECRET);
-        identifyInfo.setRequestTimeout(REQUEST_TIME_OUT);
-        identifyInfo.setStockTimeout(STOCK_TIME_OUT);
         this.client = new K3CloudApi(identifyInfo);
         this.formId = formId;
     }
@@ -546,12 +545,42 @@ public class KingdeeApiUtils {
     }
 
     /**
+     * @description: 新增金蝶数据
+     * @author Will
+     * @date: 2024/5/27 10:56
+     * @param data
+     * @return RepoResult
+     */
+    public RepoResult saveKingDee(KingdeeParamDTO.SaveParamDTO data) {
+        RepoResult result;
+        try {
+            String resultJson = client.save(this.formId, JSONUtil.toJsonStr(data));
+            //用于记录结果
+            Gson gson = new Gson();
+            //对返回结果进行解析和校验
+            RepoRet repoRet = gson.fromJson(resultJson, RepoRet.class);
+            if (repoRet.getResult().getResponseStatus().isIsSuccess()) {
+                result = repoRet.getResult();
+                ArrayList<SuccessEntity> successEntitys = result.getResponseStatus().getSuccessEntitys();
+                if (CollectionUtils.isEmpty(successEntitys)) {
+                    throw new RuntimeException("新增失败" + successEntitys);
+                }
+            } else {
+                throw new RuntimeException("【新增数据】出错:" + gson.toJson(repoRet.getResult().getResponseStatus()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    /**
      * 分组保存单据
      *
      * @param data 单据数据
      * @return
      */
-    public RepoRet customerGroupSave(SaveParam<?> data) {
+    public RepoRet customerGroupSave(KingdeeParamDTO.SaveParamDTO data) {
         RepoRet repoRet;
         try {
             String jsonData = JSONUtil.toJsonStr(data.getModel());

@@ -10,9 +10,12 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
@@ -69,7 +72,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(PurchasePriceEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(PurchasePriceEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //业务id
@@ -84,13 +87,12 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
         //查询供应商
         SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
-            return;
+           throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
         //供应商编码
         resultMap.put("supplierCode", supplierEntity.getCode());
@@ -123,7 +125,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         //价目明细
         List<PurchasePriceDetailDTO.ViewDTO> details = purchasePriceDetailService.getByPurchasePriceId(entity.getId());
         if (CollectionUtils.isEmpty(details)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_98049);
         }
         List<JSONObject> list = new ArrayList<>();
         for (PurchasePriceDetailDTO.ViewDTO detailEntity : details) {
@@ -147,21 +149,21 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         resultMap.put("list", list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+       return saveTask(entity,operate,resultMap);
     }
 
     /**
      * 组装数据发送到金蝶
      */
     @Override
-    public void syncDataDetailToKingdee(List<PurchasePriceDetailEntity> details, Boolean disabled) {
+    public DmpPushTaskEntity syncDataDetailToKingdee(List<PurchasePriceDetailEntity> details, Boolean disabled) {
         if (CollectionUtils.isEmpty(details)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_98049);
         }
         List<String> purchasePriceIds = details.stream().map(PurchasePriceDetailEntity::getPurchasePriceId).distinct().collect(Collectors.toList());
         List<PurchasePriceEntity> list = purchasePriceService.listByIds(purchasePriceIds);
         if (CollectionUtils.isEmpty(list)) {
-            return;
+           throw new ServiceException(ApiError.ERROR_98024);
         }
         Map<String, Object> resultMap = new HashMap<>();
 
@@ -206,7 +208,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 
     /**
@@ -217,7 +219,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (PurchasePriceEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (PurchasePriceEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -229,6 +231,6 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+       return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }
