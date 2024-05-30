@@ -1202,21 +1202,18 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         List<String> ids = records.stream().map(PoInstockDTO.ListDTO::getSkuId).collect(Collectors.toList());
         //产品信息
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(ids);
 
         //采购入库明细ids
         List<String> podIds = records.stream().map(PoInstockDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
-
-        List<String> warehouseIds = records.stream().map(req -> req.getDeliveryWarehouseId()).distinct().collect(Collectors.toList());
-
-        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
-
         for (PoInstockDTO.ListDTO obj : records) {
+            SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
             //产品名称
-            if (CollectionUtils.isNotEmpty(productDetailList)) {
-                String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-                obj.setProductName(productName);
+            if (Objects.nonNull(skuVO)) {
+                obj.setProductName(skuVO.getSpuName());
+                //仓位名称
+                obj.setWarehouseLocationName(skuVO.getWarehouseLocation());
             }
             //收货数量
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
@@ -1244,11 +1241,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
             String taxRateStr = taxRate.toString().concat("%");
             obj.setTaxRateStr(taxRateStr);
-            //仓位名称
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getDeliveryWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(null);
-            if (Objects.nonNull(warehouseLocationEntity)){
-                obj.setWarehouseLocationName(warehouseLocationEntity.getName());
-            }
         }
     }
 
