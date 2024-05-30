@@ -521,6 +521,10 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         // 记录每次解析数量
         AmzReportTaskEntity curTask = newQueryEntity;
         for (List<? extends ReportSuperMongoDTO> curList : partitionList) {
+            // 记录首次解析开始时间
+            if (0 == curTask.getParseRowIndex()) {
+                curTask.setReportParseTime(LocalDateTime.now(ZoneId.systemDefault()));
+            }
             // 保存mongo处理
             curTask = this.saveMongoAndUpdateRowIndex(recordType.getMongoInfoEnum().getMongoTableName(), curList, curTask);
         }
@@ -996,9 +1000,6 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         }
         // 更新解析的行数
         currentEntity.setParseRowIndex(currentEntity.getParseRowIndex() + mongoList.size());
-        if (0 == currentEntity.getParseRowIndex()) {
-            currentEntity.setReportParseTime(LocalDateTime.now(ZoneId.systemDefault()));
-        }
         if (!this.updateById(currentEntity)){
             throw new ServiceException("[AmzReportTaskEntity] 更新解析的行数失败");
         }

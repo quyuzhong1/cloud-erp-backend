@@ -121,13 +121,6 @@ public class ReportFulfilledShipmentsMongoDTO extends ReportSuperMongoDTO {
     private String pointsGranted;
 
     /**
-     * 亚马逊账号代号
-     */
-    @Panno(findType = PannoEnum.EQ, field = "platformShopCode")
-    private String platformShopCode;
-
-
-    /**
      * 中转参数:不保存mongo
      */
     @Transient
