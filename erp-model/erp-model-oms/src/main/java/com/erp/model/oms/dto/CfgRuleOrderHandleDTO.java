@@ -76,6 +76,11 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 收货人处理
          */
         private ReceiveHandleContent receiveHandleContent;
+
+        private List<String> filterAddressOneTextList;
+        private List<String> filterPhoneTextList;
+        private List<String> filterZipCodeTextList;
+        private List<String> filterReceiveTextList;
     }
     /**
      * 分页列表
@@ -306,6 +311,7 @@ public class CfgRuleOrderHandleDTO implements Serializable {
 
         /**
          * 处理州省的规则 {@link RuleOrderHandleEnum.ProvinceRuleContentEnum}
+         * oms/common/enumDropDown?type=ProvinceRuleContent
          */
         private String handleProvinceRule;
 
@@ -326,6 +332,7 @@ public class CfgRuleOrderHandleDTO implements Serializable {
 
         /**
          * 处理城市的规则 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.CityRuleContentEnum}
+         * oms/common/enumDropDown?type=CityRuleContent
          */
         private String handleCityRule;
         /**
@@ -345,6 +352,7 @@ public class CfgRuleOrderHandleDTO implements Serializable {
 
         /**
          * 收货地址1过滤 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.Address1FilterEnum}
+         *  oms/common/enumDropDown?type=Address1Filter
          */
         private List<String> filterAddress1TextList;
 
@@ -375,6 +383,7 @@ public class CfgRuleOrderHandleDTO implements Serializable {
         private boolean phoneFilterSwitch;
         /**
          * 电话过滤特殊符号 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.PhoneFilterEnum}
+         * oms/common/enumDropDown?type=PhoneFilter
          */
         private List<String> filterPhoneTextList;
 
@@ -410,6 +419,7 @@ public class CfgRuleOrderHandleDTO implements Serializable {
         private boolean zipCodeFilterSwitch;
         /**
          * 邮编过滤特殊符号 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.ZipCodeFilterEnum}
+         * oms/common/enumDropDown?type=ZipCodeFilter
          */
         private List<String> filterZipCodeTextList;
 
@@ -436,6 +446,7 @@ public class CfgRuleOrderHandleDTO implements Serializable {
         private boolean receiveEmptyFillSwitch;
         /**
          * 处理收货人为空的规则 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.ReceiveFillRuleContentEnum}
+         * oms/common/enumDropDown?type=ReceiveFillRuleContent
          */
         private String handleReceiveEmptyFillRule;
         /**
@@ -445,6 +456,7 @@ public class CfgRuleOrderHandleDTO implements Serializable {
 
         /**
          * 收货人过滤特殊符号 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.ReceiveFilterEnum}
+         * oms/common/enumDropDown?type=ReceiveFilter
          */
         private List<String> filterReceiveTextList;
     }
