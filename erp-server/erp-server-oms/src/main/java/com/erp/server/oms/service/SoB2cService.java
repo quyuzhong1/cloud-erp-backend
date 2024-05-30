@@ -920,7 +920,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 校验是否缺货状态
-     * @param bomChildrenList
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
@@ -929,7 +928,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param qty
      * @return
      */
-    Boolean isChildOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
+    Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
                             List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
                             String skuId, String warehouseId, Integer qty);
 }

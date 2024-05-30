@@ -330,17 +330,6 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         List<String> warehouseIdList = StringUtils.isNotEmpty(warehouseId) ? Collections.singletonList(warehouseId) : null;
         List<String> skuIdList = StringUtils.isNotEmpty(skuId) ? Collections.singletonList(skuId) : null;
         List<String> detailIdList = StringUtils.isNotEmpty(detailId) ? Collections.singletonList(detailId) : null;
-
-        //根据SKU查询BOM判断是否是组合SKU
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-        //汇总子sku 和父级sku全量ids
-        List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
-        //汇总skuIds
-        if (CollectionUtils.isNotEmpty(childSkuIds) && CollectionUtils.isNotEmpty(skuIdList)){
-            skuIdList = Stream.concat(skuIdList.stream(), childSkuIds.stream()).distinct().collect(Collectors.toList());
-        }else if (CollectionUtils.isNotEmpty(childSkuIds)){
-            skuIdList = childSkuIds;
-        }
         //即时库存数据
         InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
         skuInventoryDTO.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
@@ -356,7 +345,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList = soB2cDetailService.listWaitDeliveryQty(paramDTO);
 
         //是否缺货
-        Boolean isOutStock = soB2cService.isChildOutStock(bomChildrenList, inventoryList, waitDeliveryQtyList, ignoreInventorySkuIds,
+        Boolean isOutStock = soB2cService.isChildOutStock(inventoryList, waitDeliveryQtyList, ignoreInventorySkuIds,
                 skuId,warehouseId, qty);
         detailMap.put("isOutStock", isOutStock);
     }

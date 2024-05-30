@@ -3377,7 +3377,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @description: 明细子件是否缺货
      * @author Will
      * @date: 2024/4/22 15:28
-     * @param bomChildrenList
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param skuId
@@ -3387,58 +3386,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @return Boolean
      */
     @Override
-    public Boolean isChildOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
+    public Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
                                    List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
                                    String skuId,String warehouseId, Integer qty) {
-
-        //判断是否是组合品
-        Boolean isCombination = Boolean.FALSE;
-        long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(skuId)).count();
-        if (count > 0) {
-            isCombination = Boolean.TRUE;
-        }
-        Boolean isOutStock = Boolean.FALSE;
-        //费销售套装bom判断父级SKU是否够使用
-        if (!isCombination) {
-            //可用库存
-            Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(skuId)
-                            && obj.getWarehouseId().equals(warehouseId)
-                            && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                    .orElse(MathUtil.ZERO);
-            //待发货数量
-            Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId)
-                            && StrUtil.equals(obj.getWarehouseId(), warehouseId))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
-            return (qty > (useableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(skuId);
-        }
-        //销售套装bom需要判断子件库存是否够使用
-        List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(skuId)
-                        && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(childList)) {
+        if (CollectionUtils.isEmpty(inventoryList)){
             return Boolean.TRUE;
         }
-        for (BomChildrenSkuDTO childrenSkuDTO : childList) {
-            //可用库存
-            Integer childUseableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())
-                            && obj.getWarehouseId().equals(warehouseId)
-                            && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                    .orElse(MathUtil.ZERO);
-            //待发货数量
-            Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), warehouseId))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
-
-            //缺货则赋值
-            if ((qty * childrenSkuDTO.getQuantity() > (childUseableQty - waitDeliveryQty))
-                    && !ignoreInventorySkuIds.contains(childrenSkuDTO.getSkuId())) {
-                isOutStock = Boolean.TRUE;
-                break;
-            }
-        }
-        return isOutStock;
+        //费销售套装bom判断父级SKU是否够使用
+        //可用库存
+        Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(skuId)
+                        && obj.getWarehouseId().equals(warehouseId)
+                        && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                .orElse(MathUtil.ZERO);
+        //待发货数量
+        Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId)
+                        && StrUtil.equals(obj.getWarehouseId(), warehouseId))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
+        return (qty > (useableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(skuId);
     }
 
     /**
@@ -3833,23 +3798,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //根据SKU查询BOM判断是否是组合SKU
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-        String combination = BomTypeEnum.COMBINATION.getType();
-        bomChildrenList = bomChildrenList.stream().filter(b -> combination.equals(b.getType())).collect(Collectors.toList());
-
-        //汇总子sku 和父级sku全量ids
-        List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
         //即时库存数据
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = null;
         if (CollectionUtils.isNotEmpty(warehouseIdList) && CollectionUtils.isNotEmpty(skuIdList)){
             InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
             skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode()));
             skuInventoryDTO.setWarehouseIdList(warehouseIdList);
-            //汇总skuIds
-            if (CollectionUtils.isNotEmpty(childSkuIds) && CollectionUtils.isNotEmpty(skuIdList)){
-                skuIdList.addAll(childSkuIds);
-            }else if (CollectionUtils.isNotEmpty(childSkuIds)){
-                skuIdList = childSkuIds;
-            }
             skuInventoryDTO.setSkuIdList(skuIdList);
             inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
         }
@@ -3954,7 +3908,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             //是否缺货
             if (StrUtil.isNotBlank(detailEntity.getWarehouseId())){
-                Boolean isOutStock = isChildOutStock(bomChildrenList, inventoryList, waitDeliveryQtyList, ignoreInventorySkuIds,
+                Boolean isOutStock = isChildOutStock(inventoryList, waitDeliveryQtyList, ignoreInventorySkuIds,
                         detailEntity.getSkuId(),detailEntity.getWarehouseId(), detailEntity.getQty());
                 detailMap.put("isOutStock", isOutStock);
             }else {
