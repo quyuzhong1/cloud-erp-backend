@@ -3466,56 +3466,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
-    /**
-     * @param entity
-     * @param soB2cRefList
-     * @description: 验证拆分数据
-     * @author Will
-     * @date: 2023/8/23 15:12
-     */
-    private void checkSplitData(SoB2cEntity entity,List<SoB2cRefEntity> soB2cRefList) {
-        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
-        if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || entity.getInvalidStatus()
-        || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus()) ||SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_SAVE_SPLIT_INVALID);
-        }
-        if(Objects.nonNull(soB2cLogisticsEntity) && StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())){
-            throw new ServiceException("已获取跟踪号不允许拆分");
-        }
-        if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_SPLIT, entity.getCode());
-        }
-        if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
-        }
-        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
-            TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
-            SplitAttributesDTO splitAttributesDTO = tikTokSdkClientService.sendTikTokSplitAttributes(tikTokShopInfoDTO, entity.getPlatformCode());
-            SplitAttributesBean splitAttributesBean = splitAttributesDTO.getData().getSplitAttributes().stream().filter(req -> entity.getPlatformCode().equals(req.getOrderId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(splitAttributesBean) || !splitAttributesBean.getCanSplit()) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_TIKTOK_NOT_SPLIT, entity.getCode(), ObjectUtil.isNotEmpty(splitAttributesBean) ? splitAttributesBean.getReason() : "");
-            }
-        }
-
-        //未付款数据不能操作
-        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
-        }
-
-        //查询订单是否是合并订单或拆分子订单
-        List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> StrUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(thisRefList)) {
-            return;
-        }
-        long mergeCount = thisRefList.stream().filter(obj -> SoB2cOptionTypeEnum.ENUM_MERGE.getCode().equals(obj.getType())).count();
-        if (mergeCount > 0) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_NOT_SPLIT, entity.getCode());
-        }
-        long splitCount = thisRefList.stream().filter(obj -> SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())).count();
-        if (splitCount > 0) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_CHILD_SPLIT_NOT_SPLIT, entity.getCode());
-        }
-    }
 
     /**
      * @param id

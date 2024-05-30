@@ -471,15 +471,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
         //已拆分数据不能再次拆分
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(Arrays.asList(dto.getId()));
-        if (CollectionUtils.isNotEmpty(soB2cRefList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_Operate_NOT_SPLIT);
-        }
         //拆分后的销售订单集合
         List<String> soIdList = new ArrayList<>(5);
         /**
          * 拆分后金额、费用根据金额比例进行分摊
          */
-
         //验证拆分数据
         checkSplitData(entity,soB2cRefList);
         //原单据明细
@@ -702,7 +698,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
         }
 
-        //查询订单是否是合并订单或拆分子订单
+        //查询订单是否是合并订单
         List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> StrUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(thisRefList)) {
             return;
@@ -710,10 +706,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         long mergeCount = thisRefList.stream().filter(obj -> SoB2cOptionTypeEnum.ENUM_MERGE.getCode().equals(obj.getType())).count();
         if (mergeCount > 0) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_NOT_SPLIT, entity.getCode());
-        }
-        long splitCount = thisRefList.stream().filter(obj -> SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())).count();
-        if (splitCount > 0) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_CHILD_SPLIT_NOT_SPLIT, entity.getCode());
         }
     }
 
