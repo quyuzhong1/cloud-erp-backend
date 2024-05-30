@@ -45,7 +45,10 @@ import com.erp.rpc.wms.feign.ScmDictFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
-import com.erp.server.srm.service.*;
+import com.erp.server.srm.service.AttachmentService;
+import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.PoReconciliationDetailScmService;
+import com.erp.server.srm.service.PoReconciliationScmService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -218,7 +221,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
             SupplierEntity supplierEntity = supplierDefaultDTO.getSupplierEntity();
             if (ObjectUtils.isNotEmpty(supplierEntity)) {
-                exportDTO.setTitil(StrUtil.format("{}{}年{}月对账单",supplierEntity.getName(),listDTO.getStartDate().getYear(),listDTO.getStartDate().getMonthValue()));
+                exportDTO.setTitil(StrUtil.format("{}{}年{}月对账单",supplierEntity.getName(),listDTO.getEndDate().getYear(),listDTO.getEndDate().getMonthValue()));
                 //结算方式名称
                 List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(Arrays.asList(supplierEntity.getPayMethodId()));
                 if (CollectionUtils.isNotEmpty(dictBasicList)) {
