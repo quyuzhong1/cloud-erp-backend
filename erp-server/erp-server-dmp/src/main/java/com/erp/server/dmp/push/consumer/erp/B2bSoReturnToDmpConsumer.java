@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.consumer.erp;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -74,16 +75,18 @@ public class B2bSoReturnToDmpConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
     /**
      * 清洗订单
      */
-    private void cleanOrderField(DmpReturnOrderInfoEntity dmpOrderInfoEntity, String operate) {
-
+    private void cleanOrderField(DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity, String operate) {
+        if (ObjectUtil.isEmpty(dmpReturnOrderInfoEntity)) {
+            throw new RuntimeException("存储的对象dmpReturnOrderInfoEntity不能为空！");
+        }
         //根据操作类型进行操作
         if (Objects.equals(operate, SyncOperateEnum.OPERATE_APPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_UPDATE.getCode())) {
             //审核
-            dmpReturnOrderInfoService.checkOrder(dmpOrderInfoEntity);
+            dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);
 
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
-            dmpReturnOrderInfoService.removeReturnOrderByCode(Collections.singletonList(String.valueOf(dmpOrderInfoEntity.getPlatformOrderId())));
+            dmpReturnOrderInfoService.removeReturnOrderByCode(Collections.singletonList(String.valueOf(dmpReturnOrderInfoEntity.getPlatformOrderId())));
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_INVALID.getCode())) {
             //作废 不处理
             log.info("作废状态，直接忽略同步dmp订单操作");

@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.consumer.erp;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -70,7 +71,9 @@ public class SoOutstockToDmpDeliverConsumer <T extends DmpSyncTaskIdDTO> extends
      * 清洗订单
      */
     private void cleanOrderField(DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity, String operate) {
-
+        if (ObjectUtil.isEmpty(dmpDeliveryDetailInfoEntity)) {
+            throw new RuntimeException("存储的对象dmpDeliveryDetailInfoEntity不能为空！");
+        }
         //根据操作类型进行操作
         if (Objects.equals(operate, SyncOperateEnum.OPERATE_APPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_UPDATE.getCode())) {
             //审核
