@@ -536,12 +536,12 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					if(StringUtils.isNotBlank(value)) {
 						try {
 							if(classType == WmsDataCompareTaskClassTypeEnum.INT) {
-								new BigDecimal(value);
+								getBigDecimalValue(value);
 							}else if(classType == WmsDataCompareTaskClassTypeEnum.DATE) {
 								getDateValue(value);
 							}
 						} catch (Exception e) {
-							errMessageList.add("字段类型校验失败：导入的"+ allDatas.getKey() + "文件，第" + row + "行的【" + field + "】值是【" + value + "】，不为" + type + "类型");
+							errMessageList.add("字段类型校验失败：导入的"+ allDatas.getKey() + "文件，第" + row + "行的【" + field + "】值是【" + value + "】，不为" + classType.getName() + "类型");
 						}
 					}
 				}
@@ -598,6 +598,16 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		} catch (Exception e) {
 			return DateUtil.format(DateUtil.parse(value, "MM/dd/yyyy"), "yyyy-MM-dd");
 		}
+	}
+	
+	private BigDecimal getBigDecimalValue(Object value) {
+		if(value == null) {
+			return BigDecimal.ZERO;
+		}
+		if(StringUtils.isBlank(value.toString())) {
+			return BigDecimal.ZERO;
+		}
+		return new BigDecimal(value.toString().replace(",", "").replace("，", ""));
 	}
 	
 	@Override
@@ -823,13 +833,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				if(data == null) {
 					data = tempData;
 				}else {
-					count = new BigDecimal(data.get(systemField));
+					count = getBigDecimalValue(data.get(systemField));
 				}
-				String currCountStr = d.get(systemField);
-				if(StringUtils.isNotBlank(currCountStr)) {
-					count = count.add(new BigDecimal(currCountStr));
-				}
-				data.put(systemField, count.toString());
+				data.put(systemField, count.add(getBigDecimalValue(d.get(systemField))).toString());
 				systemPkDataMaps.put(pkFieldValue, data);
 			});
 			
@@ -849,12 +855,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			List<WmsDataCompareTempEntity> value = pkFieldValueImportDataMap.getValue();
 			BigDecimal count = value.stream().map(p -> {
 				Map<String , String> parseObject = JSON.parseObject(p.getImportDataJson() , Map.class);
-				String object = parseObject.get(importField);
-				BigDecimal c = BigDecimal.ZERO;
-				if(StringUtils.isNotBlank(object)) {
-					c = new BigDecimal(object.toString());
-				}
-				return c;
+				return getBigDecimalValue(parseObject.get(importField));
 			}).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 			
 			Map<String , String> oneMap = JSON.parseObject(value.get(0).getImportDataJson() , Map.class);
@@ -1014,7 +1015,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			if(!systemValue.equals(importValue)) {
 				if(WmsDataCompareTaskClassTypeEnum.INT.getCode().equals(importDataMappingDTO.getClassType())) {
 					if(StringUtils.isNotBlank(systemValue) && StringUtils.isNotBlank(importValue)) {
-						if(new BigDecimal(systemValue).compareTo(new BigDecimal(importValue)) != 0) {
+						if(getBigDecimalValue(systemValue).compareTo(getBigDecimalValue(importValue)) != 0) {
 							diff.add(importDataMappingDTO);
 						}
 					}
@@ -1037,7 +1038,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		}
 		if(!systemValue.equals(importValue)) {
 			if(StringUtils.isNotBlank(systemValue) && StringUtils.isNotBlank(importValue)) {
-				return new BigDecimal(systemValue).compareTo(new BigDecimal(importValue)) == 0;
+				return getBigDecimalValue(systemValue).compareTo(getBigDecimalValue(importValue)) == 0;
 			}else {
 				return false;
 			}
