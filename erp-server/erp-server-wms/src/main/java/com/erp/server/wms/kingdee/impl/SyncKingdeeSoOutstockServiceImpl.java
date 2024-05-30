@@ -56,6 +56,8 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -561,9 +563,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      * @param syncOperate
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncOrderToDmp(SoOutstockEntity entity, String syncOperate) {
-        //判断是否增加任务
-        //判断是否需要推送记录
         //判断是否需要推送记录
         if (!dmpTaskFeign.needPushMQ(LocalDateTime.now())) {
             return;
@@ -588,7 +590,17 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP_WMS.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
         taskFeignDTO.setSyncOperate(syncOperate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+
+        DmpPushTaskEntity dmpPushTaskEntity = dmpMqFeign.saveTask(taskFeignDTO);
+
+        //推送DMP
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
+
         log.info("推送消息开始：{}", taskFeignDTO.toString());
     }
 
