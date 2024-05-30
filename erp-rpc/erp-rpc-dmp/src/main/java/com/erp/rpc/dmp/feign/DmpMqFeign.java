@@ -16,7 +16,7 @@ import java.util.List;
  * @description: DMP远程调用接口
  * @date: 2023/1/12 16:54
  */
-@FeignClient(value = "erp-dmp", contextId = "DmpMqFeign")
+@FeignClient(value = "erp-dmp",path = "feign/dmp", contextId = "DmpMqFeign")
 public interface DmpMqFeign {
 
     /**
@@ -24,7 +24,7 @@ public interface DmpMqFeign {
      * @param dto
      * @return
      */
-    @PostMapping("/feign/dmp/send/mq/save/task")
+    @PostMapping("/send/mq/save/task")
     Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto);
 
     /**
@@ -32,7 +32,7 @@ public interface DmpMqFeign {
      * @param oneDTO
      * @return
      */
-    @PostMapping("/feign/dmp/getByParam")
+    @PostMapping("/getByParam")
     DmpPushTaskEntity getByParam(@RequestBody @Valid DmpSyncTaskDTO.OneDTO oneDTO);
 
     /**
@@ -40,7 +40,7 @@ public interface DmpMqFeign {
      * @param listDTO
      * @return
      */
-    @PostMapping("/feign/dmp/listByParam")
+    @PostMapping("/listByParam")
     List<DmpPushTaskEntity> listByParam(@RequestBody @Valid DmpSyncTaskDTO.ListDTO listDTO);
 
 }
