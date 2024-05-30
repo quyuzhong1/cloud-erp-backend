@@ -1187,6 +1187,7 @@ public class SoB2cController extends BaseController {
      * 同步处理历史审核订单数据到订单表
      * @return
      */
+    @PostMapping("/processOrderApproveData")
     public ApiResult processOrderApproveData(){
         soB2cService.processOrderApproveData();
         return ApiResult.success();

@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.IdUtil;
@@ -50,6 +51,7 @@ import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.OperateLogEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -6998,11 +7000,44 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     public void processOrderApproveData() {
-        //获取已审核的销售订单(对于反审数据)
-        List<SoB2cEntity> list = lambdaQuery().list();
-        //根据订单获取审核记录
+        //获取已审核的销售订单(对于反审数据会清空审核记录)
+        List<SoB2cEntity> list = lambdaQuery().select(SoB2cEntity::getId).eq(SoB2cEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus()).list();
+        if (list.size() > 100){
+            List<List<SoB2cEntity>> partition = ListUtil.partition(list, 100);
+            for (List<SoB2cEntity> entityList : partition){
+                buildOrderApproveData(entityList);
+            }
+        }else {
+            buildOrderApproveData(list);
+        }
+    }
 
+    /**
+     * 具体同步动作处理
+     *
+     * @param entityList
+     */
+    private void buildOrderApproveData(List<SoB2cEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList)){
+            return;
+        }
+        //根据订单获取审核记录
+        List<String> soIds = entityList.stream().map(SoB2cEntity::getId).distinct().collect(Collectors.toList());
+        List<OperateLogEntity> list = operateLogService.listLastLogBySoIds(soIds, "审核操作");
         //更新审核订单明细数据
+        List<SoB2cEntity> updateList = new ArrayList<>();
+        entityList.forEach(soB2cEntity -> {
+            OperateLogEntity operateLogEntity = list.stream().filter(e -> e.getBusinessId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(operateLogEntity)){
+                soB2cEntity.setApproveTime(operateLogEntity.getCreateTime());
+                soB2cEntity.setApproveUserId(operateLogEntity.getCreateUserId());
+                soB2cEntity.setApproveUserName(operateLogEntity.getCreateUserName());
+                updateList.add(soB2cEntity);
+            }
+        });
+        if (CollectionUtils.isNotEmpty(updateList)){
+            baseMapper.updateBatchApproveById(updateList);
+        }
     }
 
 
@@ -7199,15 +7234,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return Boolean.TRUE;
     }
-
-    @Override
-    public Boolean updateIsMatchWarehouseRuleById(String id) {
-        if (ObjectUtil.isEmpty(id)) {
-            return Boolean.TRUE;
-        }
-        return lambdaUpdate().eq(SoB2cEntity::getId,id).set(SoB2cEntity::getIsMatchWarehouseRule,Boolean.FALSE).update();
-    }
-
     @Override
     public List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();

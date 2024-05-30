@@ -835,14 +835,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return Boolean
      */
     Boolean exportExcel(SoB2cDTO.ExportParamDTO dto, HttpServletResponse response);
-    /**
-     * @description: 更新主表仓库匹配规则
-     * @author Will
-     * @date: 2024/4/24 12:02
-     * @param id
-     * @return Boolean
-     */
-    Boolean updateIsMatchWarehouseRuleById(String id);
 
     List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto);
 
