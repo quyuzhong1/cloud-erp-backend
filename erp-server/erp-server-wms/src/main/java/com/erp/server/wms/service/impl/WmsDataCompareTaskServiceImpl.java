@@ -520,6 +520,10 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 
 	private void validateExcelData(List<String> errMessageList , Map<String, List<Map<String, String>>> allDatasMap 
 			, List<ImportDataMappingDTO> importDataMappingDTOList, Boolean sysFlag , WmsDataCompareTypeEnum compareType) {
+		String fileType = "导入的对比数据文件";
+		if(sysFlag != null && sysFlag) {
+			fileType = "导入的系统数据文件";
+		}
 		Map<String, Integer> pkValueSameCountMaps = new HashMap<>();
 		for(Map.Entry<String, List<Map<String, String>>> allDatas : allDatasMap.entrySet()) {
 			int row = 1;
@@ -541,7 +545,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 								getDateValue(value);
 							}
 						} catch (Exception e) {
-							errMessageList.add("字段类型校验失败：导入的"+ allDatas.getKey() + "文件，第" + row + "行的【" + field + "】值是【" + value + "】，不为" + classType.getName() + "类型");
+							errMessageList.add("字段类型校验失败："+ fileType + "第" + row + "行【" + field + "】的值是【" + value + "】，不为" + classType.getName() + "类型");
 						}
 					}
 				}
