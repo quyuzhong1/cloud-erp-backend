@@ -1,9 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
@@ -42,8 +42,8 @@ public class WarehouseAreaInfoController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery
-    public ApiResult<IPage<WarehouseAreaDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<WarehouseAreaDTO.PagingParam> dto) {
-        IPage<WarehouseAreaDTO.PagingView> pagingVO = warehouseAreaInfoService.paging(dto);
+    public ApiResult<PagingVO<WarehouseAreaDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<WarehouseAreaDTO.PagingParam> dto) {
+        PagingVO<WarehouseAreaDTO.PagingView> pagingVO = warehouseAreaInfoService.paging(dto);
         return success(pagingVO);
     }
 
@@ -78,8 +78,8 @@ public class WarehouseAreaInfoController extends BaseController {
      * @param id id
      **/
     @LogViewService
-    @GetMapping("/view")
-    public ApiResult<WarehouseAreaDTO.View> view(@RequestParam("id") String id) {
+    @GetMapping("/view/{id}")
+    public ApiResult<WarehouseAreaDTO.View> view(@PathVariable("id") String id) {
         WarehouseAreaDTO.View dto = warehouseAreaInfoService.view(id);
         return success(dto);
     }

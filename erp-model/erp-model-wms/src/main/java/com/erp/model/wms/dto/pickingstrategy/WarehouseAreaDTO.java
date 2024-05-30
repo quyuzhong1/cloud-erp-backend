@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -84,7 +85,7 @@ public class WarehouseAreaDTO {
         private String warehouseId;
         private String remark;
         private String updateUserName;
-        private String updateTime;
+        private LocalDateTime updateTime;
 
     }
 
@@ -103,6 +104,6 @@ public class WarehouseAreaDTO {
         private String status;
         private String remark;
         private String updateUserName;
-        private String updateTime;
+        private LocalDateTime updateTime;
     }
 }

@@ -1,9 +1,9 @@
 package com.erp.server.wms.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseAreaInfoEntity;
 
@@ -29,7 +29,7 @@ public interface WarehouseAreaInfoService extends SuperService<WarehouseAreaInfo
 
     void add(WarehouseAreaDTO.Add dto);
 
-    IPage<WarehouseAreaDTO.PagingView> paging(PagingDTO<WarehouseAreaDTO.PagingParam> dto);
+    PagingVO<WarehouseAreaDTO.PagingView> paging(PagingDTO<WarehouseAreaDTO.PagingParam> dto);
 
 
 }

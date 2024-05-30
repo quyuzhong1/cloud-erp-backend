@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,6 +18,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -105,8 +105,9 @@ public class WarehouseAreaInfoServiceImpl extends SuperServiceImpl<WarehouseArea
     }
 
     @Override
-    public IPage<WarehouseAreaDTO.PagingView> paging(PagingDTO<WarehouseAreaDTO.PagingParam> dto) {
-        return baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+    public PagingVO<WarehouseAreaDTO.PagingView> paging(PagingDTO<WarehouseAreaDTO.PagingParam> dto) {
+        IPage<WarehouseAreaDTO.PagingView> paging = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        return new PagingVO<>(paging);
     }
 
     public Boolean approveEnd(ApproveOneDTO dto, WarehouseAreaInfoEntity entity) {
@@ -164,8 +165,7 @@ public class WarehouseAreaInfoServiceImpl extends SuperServiceImpl<WarehouseArea
         approveDTO.setUserId(userId);
         approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
-        Integer code = approveResult.getCode();
-        if (200 != code) {
+        if (!approveResult.isSuccess()) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
@@ -202,7 +202,7 @@ public class WarehouseAreaInfoServiceImpl extends SuperServiceImpl<WarehouseArea
             throw new ServiceException(ApiError.NOT_EXIST);
         }
         // 待提交或审核不通过并且未作废允许提交
-        if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus()))) {
+        if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         // 更新单据审核状态
@@ -242,7 +242,7 @@ public class WarehouseAreaInfoServiceImpl extends SuperServiceImpl<WarehouseArea
                 .eq(WarehouseAreaInfoEntity::getId, id)
                 .set(WarehouseAreaInfoEntity::getStatus, ApproveStatusEnum.WAIT_SUBMIT.getCode()));
         String msg = "库区【{}】撤销流程";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.WAREHOUSE_AREA.getCode(), id, "撤销流程");
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.WAREHOUSE_AREA.getCode(), id, "撤销流程");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "撤销流程");
     }
 
@@ -298,7 +298,7 @@ public class WarehouseAreaInfoServiceImpl extends SuperServiceImpl<WarehouseArea
                 .eq(WarehouseAreaInfoEntity::getId, id)
                 .set(WarehouseAreaInfoEntity::getStatus, ApproveStatusEnum.WAIT_SUBMIT.getCode()));
         String msg = "库区【{}】反审核流程";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.WAREHOUSE_AREA.getCode(), id, "反审核流程");
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.WAREHOUSE_AREA.getCode(), id, "反审核流程");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "反审核流程");
     }
 }
