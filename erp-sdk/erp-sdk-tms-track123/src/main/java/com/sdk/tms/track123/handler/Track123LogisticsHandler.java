@@ -113,7 +113,7 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                     .build();
             try {
                 TrackResponse track = trackShipperService.getTrack(token, trackRequest);
-                return track.getData();
+                return Objects.isNull(track) ? null : track.getData();
             } catch (Exception e) {
                 log.error("获取Track123物流轨迹查询异常：{}", e.getMessage());
                 return null;

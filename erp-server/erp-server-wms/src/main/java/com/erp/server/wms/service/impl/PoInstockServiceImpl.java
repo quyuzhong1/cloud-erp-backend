@@ -394,15 +394,18 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             if (Objects.nonNull(poInstockEntity)){
                 //收货单已收数量（已审核）
                 List<WarehouseReceiveDetailEntity> receiveList = receiveDetailList.stream()
-                        .filter(req -> req.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
+                        .filter(req -> StringUtils.isNotBlank(req.getPurchaseOrderDetailId()) &&  StringUtils.isNotBlank(req.getMainId()) && StringUtils.isNotBlank(req.getId())
+                                && req.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
                                 && req.getMainId().equals(poInstockEntity.getSourceId())
                                 && req.getId().equalsIgnoreCase(poInstockDetailEntity.getSourceDetailId())
-                                && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).collect(Collectors.toList());
+                                && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(receiveList)){
                     Integer receiveQty = receiveList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     //已退货数量 根据收货单获取对应退货明细
-                    Integer returnQty = returnDetailDTOS.stream().filter(e -> poInstockDetailEntity.getSourceDetailId().equals(e.getReceiveDetailId())
-                                    && e.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
+                    Integer returnQty = returnDetailDTOS.stream().filter(e -> StringUtils.isNotBlank(poInstockDetailEntity.getSourceDetailId()) && StringUtils.isNotBlank(poInstockDetailEntity.getPurchaseOrderDetailId())
+                                    && StringUtils.isNotBlank(poInstockDetailEntity.getSkuId())
+                                    && poInstockDetailEntity.getSourceDetailId().equals(e.getReceiveDetailId())
+                                    && poInstockDetailEntity.getPurchaseOrderDetailId().equals(e.getPurchaseOrderDetailId())
                                     && poInstockDetailEntity.getSkuId().equals(e.getSkuId())
                                     && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
                             .map(WarehouseReceiveDTO.PoReturnDetailDTO::getReturnQty).reduce(MathUtil.ZERO,Integer::sum);

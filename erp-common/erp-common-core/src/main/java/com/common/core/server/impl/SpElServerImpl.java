@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @Description
@@ -303,12 +305,38 @@ public class SpElServerImpl implements SpElServer {
             sb.append("('").append(fieldStr).append("')");
         }
         Map<String, Object> variables = spElDTO.getVariables();
-        //对于非数组 就传递字符串
-        if (split.length > 1){
-            variables.put(addField, Arrays.asList(split));
+        //是否存在记录
+        Object object = variables.get(addField);
+        if (Objects.nonNull(object) && object instanceof List){
+            //列表
+            List<Object> list = (List<Object>)object;
+            //对于非数组 就传递字符串
+            if (split.length > 1){
+                List<Object> list2 = Arrays.asList(split);
+                List<Object> list3 = Stream.of(list, list2).flatMap(List::stream).collect(Collectors.toList());
+                variables.put(addField, list3);
+            }else {
+                list.add(targetValue);
+                variables.put(addField, list);
+            }
         }else {
-            variables.put(addField, targetValue);
+            List<Object> list = new ArrayList<>();
+            //对于非数组 就传递字符串
+            if (split.length > 1){
+                List<Object> list2 = Arrays.asList(split);
+                if (Objects.nonNull(object)){
+                    list2.add(object);
+                }
+                variables.put(addField, list2);
+            }else {
+                if (Objects.nonNull(object)){
+                    list.add(object);
+                }
+                list.add(targetValue);
+                variables.put(addField, list);
+            }
         }
+
         spElDTO.setVariables(variables);
         return sb.toString();
     }
