@@ -185,6 +185,11 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         BeanMapper.copy(ruleOrderHandle, view);
         JSONObject jsonObject = new JSONObject(ruleOrderHandle.getRuleContent());
         CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
+        ruleDTO.getAddressHandlerContent().setFilterAddress1TextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.Address1FilterEnum.class,ruleDTO.getAddressHandlerContent().getFilterAddress1TextList()));
+        ruleDTO.getPhoneHandleContent().setFilterPhoneTextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.PhoneFilterEnum.class,ruleDTO.getPhoneHandleContent().getFilterPhoneTextList()));
+        ruleDTO.getReceiveHandleContent().setFilterReceiveTextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.ReceiveFilterEnum.class,ruleDTO.getReceiveHandleContent().getFilterReceiveTextList()));
+        ruleDTO.getZipCodeHandleContent().setFilterZipCodeTextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.ZipCodeFilterEnum.class,ruleDTO.getZipCodeHandleContent().getFilterZipCodeTextList()));
+
         view.setRuleContent(ruleDTO);
         String type = DictBasicTypeEnum.FIELD.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);

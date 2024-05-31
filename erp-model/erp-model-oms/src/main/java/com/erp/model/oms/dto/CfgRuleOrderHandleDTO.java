@@ -357,6 +357,12 @@ public class CfgRuleOrderHandleDTO implements Serializable {
         private List<String> filterAddress1TextList;
 
         /**
+         * 收货地址1过滤 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.Address1FilterEnum}
+         *  oms/common/enumDropDown?type=Address1Filter
+         */
+        private List<String> filterAddress1TextNameList;
+
+        /**
          * 收货地址1替换开关
          */
         private boolean address1ReplaceSwitch;
@@ -387,6 +393,11 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          */
         private List<String> filterPhoneTextList;
 
+        /**
+         * 电话过滤特殊符号 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.PhoneFilterEnum}
+         * oms/common/enumDropDown?type=PhoneFilter
+         */
+        private List<String> filterPhoneTextNameList;
         /**
          * 电话号码截取开关
          */
@@ -422,6 +433,11 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * oms/common/enumDropDown?type=ZipCodeFilter
          */
         private List<String> filterZipCodeTextList;
+        /**
+         * 邮编过滤特殊符号 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.ZipCodeFilterEnum}
+         * oms/common/enumDropDown?type=ZipCodeFilter
+         */
+        private List<String> filterZipCodeTextNameList;
 
         /**
          * 邮编为空填充开关
@@ -464,6 +480,13 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * oms/common/enumDropDown?type=ReceiveFilter
          */
         private List<String> filterReceiveTextList;
+
+
+        /**
+         * 收货人过滤特殊符号 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.ReceiveFilterEnum}
+         * oms/common/enumDropDown?type=ReceiveFilter
+         */
+        private List<String> filterReceiveTextNameList;
     }
 
     /**
