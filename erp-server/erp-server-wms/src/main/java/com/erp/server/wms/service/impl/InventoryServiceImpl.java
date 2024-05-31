@@ -959,7 +959,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
         paramDTO.setFilterSelfAddFlag(params.isFilterSelfAddFlag());
-        IPage<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOPage = baseMapper.listInventoryWarehouseByParam(query,paramDTO);
+        IPage<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOPage = baseMapper.pageInventoryWarehouseByParam(query,paramDTO);
         List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList = baseMapper.listInventoryWarehouseLocationByParam(paramDTO);
         List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList = warehouseDTOPage.getRecords();
         List<String> warehouseIds = warehouseDTOList.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
@@ -979,6 +979,14 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         //根据index排序
         warehouseDTOList.sort(Comparator.nullsLast(Comparator.comparing(InventoryDTO.PdaInventoryWarehouseDTO::getIndex)));
         pdaInventorySearch.setWarehouseDTOList(new PagingVO<>(warehouseDTOPage));
+        //汇总仓位实际库存/可用库存/冻结库存数量
+        List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList1 = baseMapper.listInventoryWarehouseByParam(paramDTO);
+        pdaInventorySearch.setRealTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getRealQty)
+                .filter(Objects::nonNull).reduce(0, Integer::sum));
+        pdaInventorySearch.setFrozenTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getFrozenQty)
+                .filter(Objects::nonNull).reduce(0, Integer::sum));
+        pdaInventorySearch.setUsableTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getUsableQty)
+                .filter(Objects::nonNull).reduce(0, Integer::sum));
         return pdaInventorySearch;
     }
 
