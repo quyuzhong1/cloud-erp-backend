@@ -10,6 +10,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.SystemConstants;
+import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
@@ -24,7 +25,10 @@ import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.*;
+import com.erp.model.dmp.enums.ApiFieldTypeEnum;
+import com.erp.model.dmp.enums.ApiGroupTypeEnum;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -136,13 +140,13 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     @Override
-    public PlatformEntity getPlatformEntity(Map<String, Object> map, Integer type) {
+    public PlatformEntity getPlatformEntity(Map<String, Object> map, String typeName) {
         //传入map数据不能为空
         if (CollectionUtils.isEmpty(map)) {
             log.error("同步数据不存在！");
             return null;
         }
-        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
+        PlatformEntity platformEntity = platformService.getByName(typeName);
         return platformEntity;
     }
 
@@ -297,7 +301,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean customerGroupSaveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
+    public Boolean customerGroupSaveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type) {
         String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
@@ -322,19 +326,19 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
+    public Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type) {
         String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
         }
         log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}", msg, JSONUtil.toJsonStr(param), json);
-        SaveResult save = apiUtils.save(param);
-        if (!save.isSuccessfully()) {
+        RepoResult save = apiUtils.saveKingDee(param);
+        if (!save.getResponseStatus().isIsSuccess()) {
             throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
         }
         //数据id
-        String id = save.getResult().getId();
-        RepoStatus repoStatus=save.getResult().getResponseStatus();
+        String id = save.getId();
+        RepoStatus repoStatus=save.getResponseStatus();
         String kingdeeCode="";
         if(repoStatus.isIsSuccess()){
             kingdeeCode= repoStatus.getSuccessEntitys().get(0).getNumber();
@@ -351,15 +355,15 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean saveOrUpdateCustomerContact(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
+    public Boolean saveOrUpdateCustomerContact(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type) {
         String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
         }
         log.info("msg>>>>>{}，param>>>>>>>{}", msg, param);
-        SaveResult save = apiUtils.save(param);
+        RepoResult save = apiUtils.saveKingDee(param);
         //数据id
-        String id = save.getResult().getId();
+        String id = save.getId();
         //金蝶id
         map.put("syncKingdeeId", id);
         //更新业务表中的金蝶id
@@ -369,7 +373,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, SaveParam param, Integer type, JSONObject json) {
+    public Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, KingdeeParamDTO.SaveParamDTO param, Integer type, JSONObject json) {
         //下推
         RepoResult result = sourceApiUtils.push(jsonMap);
         //数据id
@@ -628,13 +632,13 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             throw new ServiceException(ApiError.ERROR_97025);
         }
         JSONObject json = kingdeeCommonService.makeApiFieldJson(dataMap, platformEntity.getId(), modelType);
-        SaveResult saveResult = apiUtils.save(new SaveParam<>(json));
-        boolean save = saveResult.isSuccessfully();
+        RepoResult saveResult = apiUtils.saveKingDee(new KingdeeParamDTO.SaveParamDTO(json));
+        boolean save = saveResult.getResponseStatus().isIsSuccess();
         if (!save) {
             log.error("KingdeeCommonServiceImpl>>>addKingdeeRecord>>>调用金蝶保存接口失败saveResult:{}", saveResult);
             throw new ServiceException(ApiError.ERROR_KINGDEE_SAVE);
         }
-        return saveResult.getResult().getId();
+        return saveResult.getId();
     }
 
     /**
@@ -664,19 +668,19 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     @Override
-    public Boolean save(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
+    public Boolean save(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type) {
         String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
         }
         log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}", msg, JSONUtil.toJsonStr(param), json);
-        SaveResult save = apiUtils.save(param);
-        if (!save.isSuccessfully()) {
+        RepoResult save = apiUtils.saveKingDee(param);
+        if (!save.getResponseStatus().isIsSuccess()) {
             throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
         }
         //数据id
-        String id = save.getResult().getId();
-        RepoStatus repoStatus=save.getResult().getResponseStatus();
+        String id = save.getId();
+        RepoStatus repoStatus=save.getResponseStatus();
         String kingdeeCode="";
         if(repoStatus.isIsSuccess()){
             kingdeeCode= repoStatus.getSuccessEntitys().get(0).getNumber();

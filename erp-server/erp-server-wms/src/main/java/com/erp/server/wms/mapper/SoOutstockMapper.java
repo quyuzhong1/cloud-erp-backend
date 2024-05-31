@@ -110,10 +110,4 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics( FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
-    /**
-     * @description: 查询需要生成物流单的数据
-     * @author Will
-     * @date: 2024/5/20 18:22
-     */
-    List<SoOutstockEntity>  listRecoveryLogisticsBill();
 }

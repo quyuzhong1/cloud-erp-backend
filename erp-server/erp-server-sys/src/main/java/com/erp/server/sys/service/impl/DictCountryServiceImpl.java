@@ -23,17 +23,20 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.KingdeeDTO;
-import com.erp.model.sys.entity.*;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
 import com.erp.model.sys.enums.KingdeeAssistDataTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.DictCountryMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeCountryService;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeGlobalAreaService;
 import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.DictCountryService;
 import com.erp.server.sys.service.DictGlobalAreaService;
@@ -42,6 +45,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -71,6 +76,8 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Resource
     private SyncKingdeeCountryService syncKingdeeCountryService;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
 
 
@@ -92,7 +99,14 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         entity.setId(dto.getCode());
         Boolean addResult = this.save(entity);
         if (addResult) {
-            syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
         }
         return addResult;
     }
@@ -112,7 +126,14 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         handleData(entity);
         Boolean updateResult = this.updateById(entity);
         if (updateResult) {
-            syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
         }
         return updateResult;
     }
@@ -433,7 +454,14 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         Boolean result= this.removeById(id);
         if (result ) {
             //金蝶推送
-            syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
             thirdpartyRefBusinessService.removeByBusinessId(id);
 
         }

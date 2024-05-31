@@ -7,6 +7,7 @@ import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
@@ -164,7 +165,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 .count();
         if (0 == count) {
             //推送到DMP
-            soB2cService.syncOrderToDmp(mainEntity.getId());
+            soB2cService.syncOrderToDmp(mainEntity.getId(), SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
 
     }

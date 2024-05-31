@@ -1,17 +1,17 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -171,24 +171,9 @@ public class PurchaseOrderDTO implements Serializable {
         private String receiveOrgName;
 
         /**
-        * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-        */
-        private String syncKingdeeStatus;
-
-        /**
-        * 同步时间
-        */
-        private LocalDateTime syncKingdeeTime;
-
-        /**
         * 金蝶数据id
         */
         private String syncKingdeeId;
-
-        /**
-        * 同步操作
-        */
-        private String syncOperate;
 
         /**
         * 来源主键id
@@ -352,24 +337,9 @@ public class PurchaseOrderDTO implements Serializable {
         private String receiveOrgName;
 
         /**
-        * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-        */
-        private String syncKingdeeStatus;
-
-        /**
-        * 同步时间
-        */
-        private LocalDateTime syncKingdeeTime;
-
-        /**
         * 金蝶数据id
         */
         private String syncKingdeeId;
-
-        /**
-        * 同步操作
-        */
-        private String syncOperate;
 
         /**
         * 来源主键id
@@ -505,30 +475,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String receiveOrgName;
 
         /**
-        * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-        */
-        @NotBlank(message = "同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）不能为空")
-        @Size(max = 1,message = "同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）最大长度不能超过1位")
-        private String syncKingdeeStatus;
-
-        /**
-        * 同步时间
-        */
-        private LocalDateTime syncKingdeeTime;
-
-        /**
         * 金蝶数据id
         */
         @NotBlank(message = "金蝶数据id不能为空")
         @Size(max = 100,message = "金蝶数据id最大长度不能超过100位")
         private String syncKingdeeId;
-
-        /**
-        * 同步操作
-        */
-        @NotBlank(message = "同步操作不能为空")
-        @Size(max = 32,message = "同步操作最大长度不能超过32位")
-        private String syncOperate;
 
         /**
         * 来源主键id
