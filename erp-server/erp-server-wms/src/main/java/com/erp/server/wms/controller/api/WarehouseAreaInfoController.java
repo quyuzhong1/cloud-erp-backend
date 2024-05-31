@@ -64,8 +64,8 @@ public class WarehouseAreaInfoController extends BaseController {
      * @param dto 编辑参数
      **/
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改库区")
-    @PostMapping("/update/{id}")
-    public ApiResult<String> update(@RequestBody @Validated WarehouseAreaDTO.Add dto, @PathVariable(value = "id") String id) {
+    @PostMapping("/update")
+    public ApiResult<String> update(@RequestBody @Validated WarehouseAreaDTO.Add dto, @RequestParam(value = "id") String id) {
         warehouseLocationService.updateArea(dto, id);
         return success();
     }
@@ -76,8 +76,8 @@ public class WarehouseAreaInfoController extends BaseController {
      * @param id id
      **/
     @LogViewService
-    @GetMapping("/view/{id}")
-    public ApiResult<WarehouseAreaDTO.View> view(@PathVariable("id") String id) {
+    @GetMapping("/view")
+    public ApiResult<WarehouseAreaDTO.View> view(@RequestParam("id") String id) {
         WarehouseAreaDTO.View dto = warehouseLocationService.viewArea(id);
         return success(dto);
     }
