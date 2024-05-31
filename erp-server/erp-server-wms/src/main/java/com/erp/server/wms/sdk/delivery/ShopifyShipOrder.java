@@ -11,7 +11,6 @@ import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -20,8 +19,6 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsMappingDTO;
-import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.LogisticsMappingFeign;
@@ -60,7 +57,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
 
 
     @Override
-    public void shipOrder(PlatformShipOrderDTO dto) {
+    public List<String> shipOrder(PlatformShipOrderDTO dto) {
         List<SoB2cEntity> sourceOrderList;
         Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = new HashMap<>();
         Map<String, SoB2cLogisticsEntity> logisticsEntityMap= new HashMap<>();
@@ -110,7 +107,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             soB2cDetailEntityListMap = allDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
         }
 
-
+        List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
             //检查销售订单物流信息是否存在
             SoB2cLogisticsEntity logisticsEntity = logisticsEntityMap.get(mainEntity.getId());
@@ -136,7 +133,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             if (soB2cDetailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
                 throw new ServiceException("平台来源详情ID为空");
             }
-            soB2cDetailEntityList = super.handleBomSplit(soB2cDetailEntityList);
+            soB2cDetailEntityList = super.handleSplit(soB2cDetailEntityList, dto.isFalseDeliveryFlag());
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求shopify接口", mainEntity.getCode());
                 continue;
@@ -199,6 +196,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                     item.setQuantity(detailEntity.getQty());
                     item.setId(lineItem.getId());
                     items.add(item);
+                    signShippedDetailList.add(detailEntity.getId());
                 }
                 orderRequestDTO.setFulfillmentOrderId(fulfillmentOrder.getId());
                 orderRequestDTO.setFulfillmentOrderLineItems(items);
@@ -239,7 +237,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                     } else {
                         log.warn("【{}】非正式环境不带test域名的店铺：不请求Shopify接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(request));
                     }
-                    return;
+                    return signShippedDetailList;
                 }
                 log.warn("[Shopify标记发货]platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
                 // Creates a fulfillment for one or many fulfillment orders
@@ -250,7 +248,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 }
             }
         }
-
+        return signShippedDetailList;
     }
 
 

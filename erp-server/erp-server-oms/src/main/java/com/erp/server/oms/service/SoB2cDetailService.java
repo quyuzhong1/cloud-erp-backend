@@ -190,4 +190,5 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      */
     Boolean updatePlatformPackageIdByMainId(String platformPackageId, String mainId);
 
+    void updateSignShippedByDetailId(List<String> detailIdList);
 }

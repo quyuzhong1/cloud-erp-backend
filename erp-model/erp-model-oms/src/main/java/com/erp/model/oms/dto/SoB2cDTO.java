@@ -2604,4 +2604,14 @@ public class SoB2cDTO implements Serializable {
 
         private List<String> ids;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CombinationDTO{
+        private List<SoB2cEntity> soB2cEntityList;
+        private List<SoB2cDetailEntity> soB2cDetailEntityList;
+    }
 }

@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -45,7 +46,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
     private LogisticsMappingFeign logisticsMappingFeign;
 
     @Override
-    public void shipOrder(PlatformShipOrderDTO dto) {
+    public List<String> shipOrder(PlatformShipOrderDTO dto) {
         String soB2cId = dto.getSoB2cId();
         try {
             SoB2cDTO.SignShipOrderDTO signShipOrderDTO = soB2cFeign.getSignShipParam(soB2cId);
@@ -81,8 +82,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         } catch (ApiException e) {
            log.error("销售订单【{}】速卖通 标记发货失败 >>>>{}",soB2cId, ExceptionUtil.stacktraceToString(e));
         }
-
-
+        return new ArrayList<>();
     }
 
     @Override

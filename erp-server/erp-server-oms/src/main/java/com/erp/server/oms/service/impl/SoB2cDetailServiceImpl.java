@@ -639,6 +639,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         return lambdaUpdate().set(SoB2cDetailEntity::getPlatformPackageId, platformPackageId).eq(SoB2cDetailEntity::getMainId, mainId).update();
     }
 
+    @Override
+    public void updateSignShippedByDetailId(List<String> detailIdList) {
+        this.lambdaUpdate().in(SoB2cDetailEntity::getId, detailIdList).set(SoB2cDetailEntity::getIsSignShipped, true);
+    }
+
     /**
      * 查询需要删除的数据
      */

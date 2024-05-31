@@ -53,12 +53,14 @@ public class AsyncServiceImpl implements AsyncService {
     @Async("wmsErpExecutor")
     @Override
     @DataIdempotent(keyIdName = "soId")
-    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String sourceDTOJson, String businessDesc) {
+    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soId);
         platformShipOrderDTO.setDictPlatform(dictPlatform);
         try {
-            PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+            List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+            //更新销售明细标识
+            soB2cFeign.updateSignShippedByDetailId(detailIds);
         } catch (Exception e) {
             log.error("【{}】销售单【{}】 标记发货失败 >>>错误信息{}", businessDesc, soCode, ExceptionUtil.stacktraceToString(e));
             // 独立异常

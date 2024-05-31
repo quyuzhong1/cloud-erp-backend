@@ -7,13 +7,11 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -433,7 +431,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                             soB2cEntity.getCode(),
                             soB2cEntity.getDictPlatform(),
                             JSONUtil.toJsonStr(dto),
-                            businessDesc);
+                            businessDesc, false);
                 } else {
                     log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
                 }

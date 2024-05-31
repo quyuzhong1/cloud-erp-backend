@@ -39,7 +39,7 @@ public interface SoB2cSplitService extends SuperService<SoB2cEntity> {
      * @param detailId
      * @return
      */
-    List<SoB2cEntity> listRefBomSplit(String detailId);
+    SoB2cDTO.CombinationDTO listRefBomSplit(String detailId);
 
     /**
      * 按照仓库进行订单拆分

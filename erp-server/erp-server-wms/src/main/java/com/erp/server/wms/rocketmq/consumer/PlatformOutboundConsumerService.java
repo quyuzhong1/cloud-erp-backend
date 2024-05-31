@@ -1,15 +1,12 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOutboundDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.*;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
@@ -19,10 +16,8 @@ import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -143,7 +138,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     mainEntity.getCode(),
                     mainEntity.getDictPlatform(),
                     JSONUtil.toJsonStr(dto),
-                    businessDesc);
+                    businessDesc, false);
         }
         return ApiResult.success();
     }

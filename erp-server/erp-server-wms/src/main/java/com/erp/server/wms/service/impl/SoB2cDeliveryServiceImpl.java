@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -19,7 +18,6 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
@@ -38,11 +36,9 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -284,7 +280,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         soB2cEntity.getCode(),
                         soB2cEntity.getDictPlatform(),
                         id,
-                        businessDesc);
+                        businessDesc, false);
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }
@@ -366,7 +362,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     soB2cEntity.getCode(),
                     soB2cEntity.getDictPlatform(),
                     id,
-                    businessDesc);
+                    businessDesc, true);
         } else {
             log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
@@ -1279,7 +1275,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 platformShipOrderDTO.getSoB2cId(),
                 platformShipOrderDTO.getDictPlatform(),
                 platformShipOrderDTO.getSoB2cId(),
-                businessDesc);
+                businessDesc, platformShipOrderDTO.isFalseDeliveryFlag());
         return true;
     }
 
