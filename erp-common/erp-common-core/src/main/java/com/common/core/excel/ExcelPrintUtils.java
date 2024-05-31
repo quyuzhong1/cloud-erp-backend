@@ -1082,9 +1082,9 @@ public class ExcelPrintUtils {
 		return dataList;
 	}
 	
-	public static List<Map<String,String>> parseExcelToAllSheetData(byte[] stream, Integer parseRowNumber) {
+	public static List<Map<String,String>> parseExcelToAllSheetData(InputStream inputStream, Integer parseRowNumber) {
 		EasyExcelListener readListener = new EasyExcelListener();
-		EasyExcelFactory.read(new ByteArrayInputStream(stream)).registerReadListener(readListener).headRowNumber(parseRowNumber).doReadAll();
+		EasyExcelFactory.read(inputStream).registerReadListener(readListener).headRowNumber(parseRowNumber).doReadAll();
 		List<Map<Integer, String>> headList = readListener.getHeadList();
 		if(CollectionUtils.isEmpty(headList)){
 			throw new ServiceException("Excel表头行不能为空");
@@ -1135,16 +1135,7 @@ public class ExcelPrintUtils {
 	}
 	
 	public static List<Map<String,String>> makeDataInputStream(InputStream inputStream){
-		byte[] stream = new byte[0];
-		try {
-			stream = IoUtils.toByteArray(inputStream);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if(stream == null || stream.length == 0){
-			return null;
-		}
-		List<Map<String,String>> dataList = parseExcelToAllSheetData(stream, 1);//从动态获取全部列和数据体，默认从第一行开始解析数据
+		List<Map<String,String>> dataList = parseExcelToAllSheetData(inputStream, 1);//从动态获取全部列和数据体，默认从第一行开始解析数据
 		try {
 			if(inputStream != null){
 				inputStream.close();
