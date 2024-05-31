@@ -402,9 +402,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     Integer receiveQty = receiveList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     //已退货数量 根据收货单获取对应退货明细
                     Integer returnQty = returnDetailDTOS.stream().filter(e -> poInstockDetailEntity.getSourceDetailId().equals(e.getReceiveDetailId())
-                                    && Objects.nonNull(e.getPurchaseOrderDetailId()) && StringUtils.isNotBlank(e.getSkuId())
-                                    && StringUtils.isNotBlank(e.getApproveStatus())
-                                    && e.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
+                                    && poInstockDetailEntity.getPurchaseOrderDetailId().equals(e.getPurchaseOrderDetailId())
                                     && poInstockDetailEntity.getSkuId().equals(e.getSkuId())
                                     && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
                             .map(WarehouseReceiveDTO.PoReturnDetailDTO::getReturnQty).reduce(MathUtil.ZERO,Integer::sum);
