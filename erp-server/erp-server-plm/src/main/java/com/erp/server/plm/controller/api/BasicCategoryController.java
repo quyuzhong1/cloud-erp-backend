@@ -8,10 +8,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
-import com.erp.model.plm.dto.BasicCategoryDTO;
-import com.erp.model.plm.dto.CategoryControllerDTO;
-import com.erp.model.plm.dto.SaveBasicCategoryDTO;
-import com.erp.model.plm.dto.UpdateBasicNameDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.server.plm.service.BasicCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,6 +108,17 @@ public class BasicCategoryController extends BaseController {
     @GetMapping("/drop/down")
     public ApiResult<List<CategoryControllerDTO.CategoryDropDownDTO>> listCategoryDropDown(@RequestParam(name = "grade",defaultValue = "2", required = false) Integer grade){
         List<CategoryControllerDTO.CategoryDropDownDTO> result = categoryService.listCategoryDropDown(grade);
+        return success(result);
+    }
+
+    /**
+     * 品类下拉框2
+     * @mock 2
+     * (获取二级分类，并拼接一级分类名称)
+     */
+    @GetMapping("/grade/down")
+    public ApiResult<List<BasicCategoryTreeDTO>> categoryGradeDown(){
+        List<BasicCategoryTreeDTO> result = categoryService.categoryGradeDown();
         return success(result);
     }
 

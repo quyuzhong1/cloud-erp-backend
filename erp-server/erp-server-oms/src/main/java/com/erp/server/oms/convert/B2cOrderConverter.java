@@ -4,10 +4,7 @@ import com.common.business.mapper.BigDecimalMapperWork;
 import com.common.business.mapper.BooleanMapperWork;
 import com.common.business.mapper.NumberMapperWork;
 import com.common.business.mapper.ObjectMapperWork;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
-import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -277,4 +274,31 @@ public interface B2cOrderConverter {
     })
     SoB2cDetailEntity cloneSoB2cDetail(SoB2cDetailEntity soB2cDetailEntity);
 
+    /**
+     * 展示明细转换为拆分明细
+     * @param emptyWarehouse
+     * @return
+     */
+    SoB2cDTO.SplitDetailSaveDTO convertViewToSplitDto(SoB2cDTO.ViewSplitDetailDTO emptyWarehouse);
+    List<SoB2cDTO.SplitDetailSaveDTO> convertViewToSplitDto(List<SoB2cDTO.ViewSplitDetailDTO> emptyWarehouseList);
+
+    /**
+     * 转换新增参数转换为订单明细
+     * @param detail
+     * @return
+     */
+    @Mapping(target = "skuId", source = "skuId")
+    @Mapping(target = "qty", source = "qty")
+    SoB2cDetailEntity convertAddToDetail(SoB2cDetailDTO.AddDTO detail);
+    List<SoB2cDetailEntity> convertAddToDetail(List<SoB2cDetailDTO.AddDTO> detailList);
+
+    /**
+     * 转换更新参数为订单明
+     * @param detail
+     * @return
+     */
+    @Mapping(target = "skuId", source = "skuId")
+    @Mapping(target = "qty", source = "qty")
+    SoB2cDetailEntity convertUpdateToDetail(SoB2cDetailDTO.UpdateDTO detail);
+    List<SoB2cDetailEntity> convertUpdateToDetail(List<SoB2cDetailDTO.UpdateDTO> detailList);
 }

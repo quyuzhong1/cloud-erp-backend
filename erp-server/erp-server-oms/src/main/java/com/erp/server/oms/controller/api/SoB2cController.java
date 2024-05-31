@@ -15,10 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cDetailDTO;
-import com.erp.model.oms.dto.SoB2cLogisticsDTO;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -542,7 +539,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return success(resultDTOS);
     }
 
     /**
@@ -957,17 +954,22 @@ public class SoB2cController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     *  仓库规则匹配测试方法
+     * @param id
+     * @return
+     */
     @GetMapping("/getJson")
     public ApiResult<Map<String, Object>> getJson(@RequestParam("id") String id) {
-        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.warehouseRule(id, new ArrayList<>(0),new HashMap<>());
+        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.warehouseRule(id, null,new HashMap<>());
         System.out.println(JSONUtil.toJsonStr(logisticsRuleResult));
         return success();
 
     }
     @GetMapping("/getSplitSku")
-    public ApiResult<List<TransferDeclareProductDTO>> getSplitSku(@RequestParam("id") String id) {
+    public ApiResult<List<SplitSkuDTO>> getSplitSku(@RequestParam("id") String id) {
 //        String soId = "1751895670669832193";
-        List<TransferDeclareProductDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(id);
+        List<SplitSkuDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(id);
         System.out.println(JSONUtil.parse(skusBySoInfo));
         return success(skusBySoInfo);
 
@@ -1169,6 +1171,17 @@ public class SoB2cController extends BaseController {
     @PostMapping("/bomRestoreAndSave")
     public ApiResult<List<BatchResultDTO>> bomRestoreAndSave(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
         List<BatchResultDTO> batchResultDTOList = soB2cSplitService.bomRestoreAndSave(idDTO.getIds());
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
+
+    /**
+     * 按照仓库进行拆分订单
+     * @param idDTO
+     * @return
+     */
+    @PostMapping("/splitOrderByWarehouse")
+    public ApiResult<List<BatchResultDTO>> splitOrderByWarehouse(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO){
+        List<BatchResultDTO> batchResultDTOList = soB2cSplitService.splitOrderByWarehouse(idDTO.getIds());
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
 }

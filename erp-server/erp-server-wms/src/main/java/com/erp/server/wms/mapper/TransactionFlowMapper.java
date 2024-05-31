@@ -114,15 +114,7 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @return IPage<ListDailyInventoryDTO>
      */
     IPage<InventoryReportDTO.ListDailyInventoryDTO> dailyInventoryPaging(Page query, @Param("params") InventoryReportDTO.DailyInventoryParamDTO params);
-    /**
-     * @description: 每日库存导出查询
-     * @author Will
-     * @date: 2023/12/6 18:04
-     * @param params
-     * @return List<ListDailyInventoryDTO>
-     */
-    List<InventoryReportDTO.ListDailyInventoryDTO> listDailyInventory(@Param("params") InventoryReportDTO.DailyInventoryParamDTO params);
-    
+
     /**
      * 只查询库存数量
      * @param params
