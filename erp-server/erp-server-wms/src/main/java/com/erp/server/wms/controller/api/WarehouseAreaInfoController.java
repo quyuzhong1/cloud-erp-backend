@@ -2,7 +2,9 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
@@ -10,13 +12,11 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
-import com.erp.server.wms.service.WarehouseAreaInfoService;
-import com.erp.server.wms.service.impl.BatchApproveService;
+import com.erp.server.wms.service.WarehouseLocationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * <p>
@@ -31,9 +31,7 @@ import java.util.List;
 public class WarehouseAreaInfoController extends BaseController {
 
     @Resource
-    private WarehouseAreaInfoService warehouseAreaInfoService;
-    @Resource
-    private BatchApproveService batchApproveService;
+    private WarehouseLocationService warehouseLocationService;
 
     /**
      * 分页查询
@@ -43,7 +41,7 @@ public class WarehouseAreaInfoController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery
     public ApiResult<PagingVO<WarehouseAreaDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<WarehouseAreaDTO.PagingParam> dto) {
-        PagingVO<WarehouseAreaDTO.PagingView> pagingVO = warehouseAreaInfoService.paging(dto);
+        PagingVO<WarehouseAreaDTO.PagingView> pagingVO = warehouseLocationService.areaPaging(dto);
         return success(pagingVO);
     }
 
@@ -56,7 +54,7 @@ public class WarehouseAreaInfoController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "新增库区")
     @PostMapping("/add")
     public ApiResult<Void> add(@RequestBody @Validated WarehouseAreaDTO.Add dto) {
-        warehouseAreaInfoService.add(dto);
+        warehouseLocationService.addArea(dto);
         return success();
     }
 
@@ -68,7 +66,7 @@ public class WarehouseAreaInfoController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改库区")
     @PostMapping("/update/{id}")
     public ApiResult<String> update(@RequestBody @Validated WarehouseAreaDTO.Add dto, @PathVariable(value = "id") String id) {
-        warehouseAreaInfoService.update(dto, id);
+        warehouseLocationService.updateArea(dto, id);
         return success();
     }
 
@@ -80,60 +78,8 @@ public class WarehouseAreaInfoController extends BaseController {
     @LogViewService
     @GetMapping("/view/{id}")
     public ApiResult<WarehouseAreaDTO.View> view(@PathVariable("id") String id) {
-        WarehouseAreaDTO.View dto = warehouseAreaInfoService.view(id);
+        WarehouseAreaDTO.View dto = warehouseLocationService.viewArea(id);
         return success(dto);
-    }
-
-    /**
-     * 提交
-     *
-     * @param dto dto
-     **/
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交库区")
-    @PostMapping("/submit")
-    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        batchApproveService.setApproveHandler(warehouseAreaInfoService);
-        List<BatchResultDTO> results = batchApproveService.submit(dto.getIds());
-        return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
-    }
-
-    /**
-     * 批量审核
-     *
-     * @param baseApproveParamDTO baseApproveParamDTO
-     **/
-    @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核库区")
-    @PostMapping("/approve")
-    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        batchApproveService.setApproveHandler(warehouseAreaInfoService);
-        List<BatchResultDTO> results = batchApproveService.approve(baseApproveParamDTO);
-        return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
-    }
-
-    /**
-     * 批量反审核
-     *
-     * @param dto dto
-     **/
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "批量反审核库区")
-    @PostMapping("/disApprove")
-    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        batchApproveService.setApproveHandler(warehouseAreaInfoService);
-        List<BatchResultDTO> results = batchApproveService.disApprove(dto.getIds());
-        return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
-    }
-
-    /**
-     * 取消流程
-     *
-     * @param dto dto
-     **/
-    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销库区")
-    @PostMapping("/cancelProcess")
-    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        batchApproveService.setApproveHandler(warehouseAreaInfoService);
-        List<BatchResultDTO> results = batchApproveService.cancelProcess(dto.getIds());
-        return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
     }
 
     /**
@@ -144,7 +90,7 @@ public class WarehouseAreaInfoController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除库区")
     @PostMapping("/delete")
     public ApiResult<String> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        warehouseAreaInfoService.delete(idsDTO.getIds());
+        warehouseLocationService.deleteArea(idsDTO.getIds());
         return success();
     }
 
@@ -156,7 +102,7 @@ public class WarehouseAreaInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用库区:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
     public ApiResult<String> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
-        warehouseAreaInfoService.updateStatus(dto);
+        warehouseLocationService.updateStatusArea(dto);
         return success();
     }
 }

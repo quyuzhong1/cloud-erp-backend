@@ -2,10 +2,12 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 
@@ -145,4 +147,20 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @return PagingVO<LocationListDTO>
      */
     PagingVO<WarehouseLocationDTO.LocationListDTO> pagingSelect(PagingDTO<WarehouseLocationDTO.SelectDTO> dto);
+
+    /**
+     * 库区分页
+     * @param dto dto
+     */
+    PagingVO<WarehouseAreaDTO.PagingView> areaPaging(PagingDTO<WarehouseAreaDTO.PagingParam> dto);
+
+    void addArea(WarehouseAreaDTO.Add dto);
+
+    void updateArea(WarehouseAreaDTO.Add dto, String id);
+
+    WarehouseAreaDTO.View viewArea(String id);
+
+    void deleteArea(List<String> ids);
+
+    void updateStatusArea(UpdateStateDTO.BatchUpdateDTO dto);
 }

@@ -4,7 +4,8 @@ import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.wms.entity.WarehouseAreaInfoEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -61,11 +62,12 @@ public class WarehouseAreaDTO {
          */
         private String remark;
 
-        public WarehouseAreaInfoEntity getWarehouseAreaInfo(){
-            WarehouseAreaInfoEntity entity = new WarehouseAreaInfoEntity();
+        public WarehouseLocationEntity getWarehouseAreaInfo(){
+            WarehouseLocationEntity entity = new WarehouseLocationEntity();
             entity.setCode(this.code);
             entity.setName(this.name);
-            entity.setType(this.type);
+            entity.setAreaType(this.type);
+            entity.setType(WarehouseLocationTypeEnum.AREA.getCode());
             entity.setWarehouseId(this.warehouseId);
             entity.setRemark(this.remark);
             return entity;
@@ -80,7 +82,7 @@ public class WarehouseAreaDTO {
         private String code;
         private String name;
         @Dict(queryTypeField = "warehouseAreaType")
-        private String type;
+        private String areaType;
         @Dict(queryFieldName = "id", tableName = "warehouse")
         private String warehouseId;
         private String remark;
@@ -96,7 +98,7 @@ public class WarehouseAreaDTO {
         private String code;
         private String name;
         @Dict(queryTypeField = "warehouseAreaType")
-        private String type;
+        private String areaType;
         @Dict(queryFieldName = "id", tableName = "warehouse")
         private String warehouseId;
         private Boolean disabled;

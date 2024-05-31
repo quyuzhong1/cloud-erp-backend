@@ -1003,7 +1003,7 @@ public enum ApiError implements Serializable {
     PAPER_SIZE_INCONSISTENT_NOT_PRINT(92139,"纸张大小不一致，不支持批量打印"),
 
     WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
-    POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除"),
+    POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除或禁用"),
 
 
 

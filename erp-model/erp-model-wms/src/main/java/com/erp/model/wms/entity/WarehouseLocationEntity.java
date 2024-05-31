@@ -66,6 +66,12 @@ public class WarehouseLocationEntity extends BaseEntity<WarehouseLocationEntity>
     private Boolean disabled;
 
     /**
+     * 库区类型 warehouseAreaType
+     */
+    @TableField("area_type")
+    private String areaType;
+
+    /**
      * 备注
      */
     @TableField("remark")
