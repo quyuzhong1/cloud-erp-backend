@@ -130,6 +130,7 @@
             COALESCE(pod.tax_price,0) AS taxPrice,
             COALESCE(pod.currency,'CNY') AS currency,
             COALESCE(pod.currency_symbol,'¥') AS currencySymbol,
+            psi.delivery_warehouse_id AS deliveryWarehouseId,
             psi.delivery_warehouse_name AS deliveryWarehouseName,
             psi.purchase_type as purchaseType,
             psid.remark
