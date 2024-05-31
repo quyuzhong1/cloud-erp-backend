@@ -142,5 +142,6 @@
         FROM warehouse_location AS wl
         where ${params.sqlMap.default}
           and wl.type = 'area'
+        order by wl.id desc
     </select>
 </mapper>
