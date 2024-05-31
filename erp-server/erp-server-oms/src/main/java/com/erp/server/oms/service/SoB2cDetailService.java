@@ -180,7 +180,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
 
     void updateContainDeleted(List<String> revertDetailIds);
 
-    List<SoB2cDetailEntity> listBySplitId(String detailId);
+    List<SoB2cDetailEntity> listBySplitId(List<String> detailIds);
 
     /**
      * 根据主表id修改平台包裹号

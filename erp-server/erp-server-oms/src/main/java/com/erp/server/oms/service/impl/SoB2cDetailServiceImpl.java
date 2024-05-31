@@ -39,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,6 +89,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Resource
     private SoB2cErrorService soB2cErrorService;
 
+    @Resource
+    @Lazy
+    private SoB2cDetailService service;
+
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
         List<SoB2cDetailDTO.AddDTO> detailList = addDTO.getDetailList();
@@ -134,7 +139,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         //处理明细中的数据id
         handleDetailList(list,soB2cEntity,Boolean.FALSE);
-        return this.saveOrUpdateBatch(list);
+        return service.saveOrUpdateBatch(list);
     }
 
     @Override
@@ -486,8 +491,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public List<SoB2cDetailEntity> listBySplitId(String detailId) {
-        return lambdaQuery().eq(SoB2cDetailEntity::getSplitDetailId, detailId).list();
+    public List<SoB2cDetailEntity> listBySplitId(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(SoB2cDetailEntity::getSplitDetailId, detailIds).list();
     }
 
     /**
@@ -665,6 +673,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         //如果是还原捆绑商品，需要将删除的明细还原
         List<String> detailIds = list.stream().map(SoB2cDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         this.updateContainDeleted(detailIds);
+
+        //如果 revertId 不为空，则是原订单捆绑拆分拆单后，当前订单做还原，需要将不是当前订单的明细删除 revertId 为原单的捆绑拆分原始id
+        List<String> revertDetailIdList = list.stream().map(SoB2cDetailEntity::getRevertId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<SoB2cDetailEntity> needDeleteDetailList = this.listBySplitId(revertDetailIdList);
+        needDeleteDetailList = needDeleteDetailList.stream().filter(v->!v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(needDeleteDetailList)){
+            List<String> needDeleteDetailIds = needDeleteDetailList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
+            service.removeByIds(needDeleteDetailIds);
+        }
 
         //产品信息
         List<String> skuIds = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());

@@ -184,6 +184,12 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("is_sign_shipped")
     private Boolean isSignShipped;
 
+    /**
+     * 还原id
+     */
+    @TableField(exist = false)
+    private String revertId;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String IMAGE_URL = "image_url";

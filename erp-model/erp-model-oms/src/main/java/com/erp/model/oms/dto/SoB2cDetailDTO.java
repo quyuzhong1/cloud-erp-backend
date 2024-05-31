@@ -307,6 +307,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 是否组合品
          */
         private Boolean isCombination = false;
+
+        /**
+         * 还原id
+         */
+        private String revertId;
     }
 
     /**
@@ -358,6 +363,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 建议售价（本位币）
          */
         private BigDecimal advicePrice;
+
+        /**
+         * 还原id
+         */
+        private String revertId;
     }
 
     @Data

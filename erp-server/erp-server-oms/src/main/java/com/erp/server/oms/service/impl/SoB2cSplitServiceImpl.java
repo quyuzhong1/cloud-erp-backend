@@ -12,6 +12,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -292,8 +293,15 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<String> splitDetailIds =  allSoB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSplitDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //原来
         List<SoB2cDetailEntity> allOriginDetailList = soB2cDetailService.listContainDeleted(splitDetailIds);
+        List<SoB2cDetailEntity> sameSplitDetailList = soB2cDetailService.listBySplitId(splitDetailIds);
+        List<String> sameSplitMainIds = sameSplitDetailList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> sameMainList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(sameSplitMainIds)){
+            sameMainList = this.listByIds(sameSplitMainIds);
+        }
         List<String> removeDetailIds = new ArrayList<>();
         List<String> revertDetailIds = new ArrayList<>();
+        List<SoB2cDetailEntity> addDetailList = new ArrayList<>();
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
             if(!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus()) && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())){
@@ -305,26 +313,55 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"还原捆绑拆分失败，没有已拆分的明细"));
                 continue;
             }
-            List<String> originIds = detailList.stream().map(v->v.getSplitDetailId()).collect(Collectors.toList());
-            List<SoB2cDetailEntity> originDetailList = allOriginDetailList.stream().filter(v->originIds.contains(v.getId())).collect(Collectors.toList());
+            List<String> splitIds = detailList.stream().map(SoB2cDetailEntity::getSplitDetailId).distinct().collect(Collectors.toList());
+            //判断有没有不同订单 otherDetailList: 不同订单相同明细
+            List<SoB2cDetailEntity> otherDetailList = sameSplitDetailList.stream().filter(v->splitIds.contains(v.getSplitDetailId()) && !v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
+            List<String> otherMainIds = otherDetailList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+            List<SoB2cEntity> otherMainList = sameMainList.stream().filter(v->otherMainIds.contains(v.getId())).collect(Collectors.toList());
+            //校验别的订单的状态
+            List<SoB2cEntity> notPassMainList = otherMainList.stream().filter(v->v.getIsFrozen() || v.getInvalidStatus() || (!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(v.getBillStatus()) && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(v.getBillStatus()))).collect(Collectors.toList());
+            //不通过，封装错误信息返回
+            if(CollectionUtils.isNotEmpty(notPassMainList)){
+                StringBuilder sb = new StringBuilder();
+                for (SoB2cEntity notPassMain : notPassMainList) {
+                    List<SoB2cDetailEntity> notPassDetailList = otherDetailList.stream().filter(v->v.getMainId().equals(notPassMain.getId())).collect(Collectors.toList());
+                    for(SoB2cDetailEntity soB2cDetailEntity : notPassDetailList){
+                        sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
+                    }
+                }
+                batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),sb.toString()));
+                continue;
+            }
+            List<SoB2cDetailEntity> originDetailList = allOriginDetailList.stream().filter(v->splitIds.contains(v.getId())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(originDetailList)){
                 batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"还原捆绑拆分失败，没有待还原的数据"));
                 continue;
             }
-            removeDetailIds.addAll(detailList.stream().map(v->v.getId()).collect(Collectors.toList()));
-            revertDetailIds.addAll(originDetailList.stream().map(v->v.getId()).collect(Collectors.toList()));
 
+            //删除的明细明细（可能有不同订单）
+            List<String> removeDetails = sameSplitDetailList.stream().filter(v->splitIds.contains(v.getSplitDetailId())).map(BaseEntity::getId).collect(Collectors.toList());
+            removeDetailIds.addAll(removeDetails);
+            //还原的明细，分两种情况，如果要还原的明细的订单与当前订单相同，直接将明细还原，如果不同，将明细复制一条到当前订单
+            for (SoB2cDetailEntity soB2cDetailEntity : originDetailList) {
+                if(soB2cDetailEntity.getMainId().equals(soB2cEntity.getId())){
+                    revertDetailIds.add(soB2cDetailEntity.getId());
+                }else{
+                    SoB2cDetailEntity addDetail = B2cOrderConverter.INSTANCE.cloneSoB2cDetail(soB2cDetailEntity);
+                    addDetail.setMainId(soB2cEntity.getId());
+                    addDetailList.add(addDetail);
+                }
+            }
             // 操作日志
             String msg = StrUtil.format("用户【{}】操作还原捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "还原捆绑拆分");
         }
-        service.batchHandleTransaction(removeDetailIds,new ArrayList<>(),revertDetailIds);
+        service.batchHandleTransaction(removeDetailIds,addDetailList,revertDetailIds);
         return batchResultDTOList;
     }
 
     @Override
     public SoB2cDTO.CombinationDTO listRefBomSplit(String detailId) {
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listBySplitId(detailId);
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listBySplitId(Arrays.asList(detailId));
         List<String> mainIds = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getMainId).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(mainIds)){
             return SoB2cDTO.CombinationDTO.builder()
@@ -380,11 +417,48 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByIds(ids);
+        SoB2cEntity soB2cEntity = this.getById(soB2cDetailEntityList.get(0).getMainId());
         List<SoB2cDetailEntity> restoreEntity = soB2cDetailService.listContainDeleted(ids);
         if(Objects.isNull(restoreEntity)){
             throw new ServiceException("原明细为空");
         }
-        List<SoB2cDetailDTO.ViewDTO> viewDTOList = BeanUtil.copyToList(restoreEntity,SoB2cDetailDTO.ViewDTO.class);
+        List<String> splitDetailIds = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSplitDetailId).collect(Collectors.toList());
+        List<SoB2cDetailEntity> sameSplitDetailList = soB2cDetailService.listBySplitId(splitDetailIds);
+        //相同明细对应的订单
+        List<SoB2cEntity> allMainList = this.listByIds(sameSplitDetailList.stream().map(SoB2cDetailEntity::getMainId).collect(Collectors.toList()));
+        //排除当前订单
+        List<SoB2cEntity> otherMainList = allMainList.stream().filter(v->!soB2cEntity.getId().equals(v.getId())).collect(Collectors.toList());
+        //校验别的订单的状态
+        List<SoB2cEntity> notPassMainList = otherMainList.stream().filter(v->v.getIsFrozen() || v.getInvalidStatus() || (!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(v.getBillStatus()) && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(v.getBillStatus()))).collect(Collectors.toList());
+        //不通过，封装错误信息返回
+        if(CollectionUtils.isNotEmpty(notPassMainList)){
+            StringBuilder sb = new StringBuilder();
+            for (SoB2cEntity notPassMain : notPassMainList) {
+                List<SoB2cDetailEntity> notPassDetailList = sameSplitDetailList.stream().filter(v->v.getMainId().equals(notPassMain.getId())).collect(Collectors.toList());
+                for(SoB2cDetailEntity soB2cDetailEntity : notPassDetailList){
+                    sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
+                }
+            }
+            throw new ServiceException(sb.toString());
+        }
+        List<SoB2cDetailEntity> resultDetailList = new ArrayList<>();
+        //还原的明细，分两种情况，如果要还原的明细的订单与当前订单相同，直接将明细还原，如果不同，将明细复制一条到当前订单
+        for (SoB2cDetailEntity soB2cDetailEntity : restoreEntity) {
+            if(soB2cDetailEntity.getMainId().equals(soB2cEntity.getId())){
+                resultDetailList.add(soB2cDetailEntity);
+            }else{
+                SoB2cDetailEntity addDetail = B2cOrderConverter.INSTANCE.cloneSoB2cDetail(soB2cDetailEntity);
+                addDetail.setMainId(soB2cEntity.getId());
+                addDetail.setRevertId(soB2cDetailEntity.getId());
+                resultDetailList.add(addDetail);
+            }
+        }
+
+        List<SoB2cDetailDTO.ViewDTO> viewDTOList = BeanUtil.copyToList(resultDetailList,SoB2cDetailDTO.ViewDTO.class);
         List<String> skuIds = viewDTOList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         viewDTOList.forEach(v->{
