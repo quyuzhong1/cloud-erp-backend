@@ -133,7 +133,8 @@
             psi.delivery_warehouse_id AS deliveryWarehouseId,
             psi.delivery_warehouse_name AS deliveryWarehouseName,
             psi.purchase_type as purchaseType,
-            psid.remark
+            psid.remark,
+            psid.warehouse_location AS warehouseLocation
         from po_instock psi
         inner join po_instock_detail psid
         on psi.id = psid.main_id and psid.is_deleted = false
