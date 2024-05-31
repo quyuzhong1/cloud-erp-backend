@@ -4,19 +4,32 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.CfgRulePickingEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="name" property="name" />
-        <result column="disabled" property="disabled" />
-        <result column="priority" property="priority" />
-        <result column="description" property="description" />
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="name" property="name"/>
+        <result column="disabled" property="disabled"/>
+        <result column="priority" property="priority"/>
+        <result column="description" property="description"/>
     </resultMap>
+    <select id="paging" resultType="com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO$PagingView">
+        select cfp.id,
+               cfp.priority,
+               cfp.name,
+               cfp.description,
+               cfp.disabled,
+               cfp.update_user_name,
+               cfp.update_time
+        from cfg_rule_picking as cfp
+        where ${params.sqlMap.default}
+          and is_deleted = false
+        order by cfp.id desc
+    </select>
 
 </mapper>

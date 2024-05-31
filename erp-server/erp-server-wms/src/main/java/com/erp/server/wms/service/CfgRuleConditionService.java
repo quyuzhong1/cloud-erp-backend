@@ -3,6 +3,8 @@ package com.erp.server.wms.service;
 import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.common.business.service.SuperService;
 
+import java.util.List;
+
 /**
  * <p>
  * 规则条件表 服务类
@@ -13,4 +15,9 @@ import com.common.business.service.SuperService;
  */
 public interface CfgRuleConditionService extends SuperService<CfgRuleConditionEntity> {
 
+    /**
+     *  根据规则id删除规则条件
+     * @param ids 规则id
+     */
+    void removeByRuleIds(List<String> ids);
 }

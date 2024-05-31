@@ -142,6 +142,6 @@
         FROM warehouse_location AS wl
         where ${params.sqlMap.default}
           and wl.type = 'area' and is_deleted = false
-        order by wl.id desc
+        order by wl.create_time desc,wl.id desc
     </select>
 </mapper>

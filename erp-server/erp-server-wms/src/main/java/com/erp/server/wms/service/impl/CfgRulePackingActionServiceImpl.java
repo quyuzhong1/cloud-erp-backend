@@ -1,10 +1,14 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.wms.entity.CfgRulePackingActionEntity;
 import com.erp.server.wms.mapper.CfgRulePackingActionMapper;
 import com.erp.server.wms.service.CfgRulePackingActionService;
-import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +21,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePackingActionMapper, CfgRulePackingActionEntity> implements CfgRulePackingActionService {
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeByRuleIds(List<String> ids) {
+        remove(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().in(CfgRulePackingActionEntity::getRuleId, ids));
+    }
 }

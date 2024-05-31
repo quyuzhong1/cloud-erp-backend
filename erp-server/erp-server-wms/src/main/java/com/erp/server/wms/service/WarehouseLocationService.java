@@ -156,7 +156,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
 
     void addArea(WarehouseAreaDTO.Add dto);
 
-    void updateArea(WarehouseAreaDTO.Add dto, String id);
+    void updateArea(WarehouseAreaDTO.Update dto);
 
     WarehouseAreaDTO.View viewArea(String id);
 

@@ -74,6 +74,50 @@ public class WarehouseAreaDTO {
         }
     }
 
+    @Getter
+    @Setter
+    public static class Update {
+
+        private String id;
+        @NotBlank(message = "库区编码不能为空")
+        private String code;
+
+        /**
+         * 库区名字
+         */
+        @NotBlank(message = "库区名称不能为空")
+        private String name;
+
+        /**
+         * 库区类型
+         */
+        @NotBlank(message = "库区类型不能为空")
+        private String areaType;
+
+        /**
+         * 所属仓库
+         */
+        @NotBlank(message = "所属仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        public WarehouseLocationEntity getWarehouseAreaInfo(){
+            WarehouseLocationEntity entity = new WarehouseLocationEntity();
+            entity.setCode(this.code);
+            entity.setId(this.id);
+            entity.setName(this.name);
+            entity.setAreaType(this.areaType);
+            entity.setType(WarehouseLocationTypeEnum.AREA.getCode());
+            entity.setWarehouseId(this.warehouseId);
+            entity.setRemark(this.remark);
+            return entity;
+        }
+    }
+
 
     @Getter
     @Setter

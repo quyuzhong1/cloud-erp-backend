@@ -18,7 +18,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FilterUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
@@ -28,7 +27,6 @@ import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMapper;
-import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
@@ -56,8 +54,6 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     private SysUserFeign sysUserFeign;
     @Resource
     private WarehouseService warehouseService;
-    @Resource
-    private OperateLogService operateLogService;
 
     @Override
     public List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId) {
@@ -380,18 +376,17 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         existName(dto.getName(), null, WarehouseLocationTypeEnum.AREA.getCode());
         WarehouseLocationEntity entity = dto.getWarehouseAreaInfo();
         save(entity);
-        operateLogService.addModuleOperateLog(String.format("新增了一个库区【%s】", dto.getCode()), ModuleTypeEnum.WAREHOUSE_AREA.getCode(), entity.getId(), "新增操作");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateArea(WarehouseAreaDTO.Add dto, String id) {
-        existCode(dto.getCode(), id, WarehouseLocationTypeEnum.AREA.getCode());
-        existName(dto.getName(), id, WarehouseLocationTypeEnum.AREA.getCode());
-        WarehouseLocationEntity entity = dto.getWarehouseAreaInfo();
-        entity.setId(id);
+    public void updateArea(WarehouseAreaDTO.Update dto) {
+        existCode(dto.getCode(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode());
+        existName(dto.getName(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode());
+        WarehouseLocationEntity entity;
+        entity = dto.getWarehouseAreaInfo();
+        entity.setId(dto.getId());
         updateById(entity);
-        operateLogService.addModuleOperateLog(String.format("编辑了库区【%s】", dto.getCode()), ModuleTypeEnum.WAREHOUSE_AREA.getCode(), entity.getId(), "新增操作");
     }
 
     @Override

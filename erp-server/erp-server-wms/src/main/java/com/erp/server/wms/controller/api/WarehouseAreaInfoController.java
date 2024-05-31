@@ -65,8 +65,8 @@ public class WarehouseAreaInfoController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改库区")
     @PostMapping("/update")
-    public ApiResult<String> update(@RequestBody @Validated WarehouseAreaDTO.Add dto, @RequestParam(value = "id") String id) {
-        warehouseLocationService.updateArea(dto, id);
+    public ApiResult<String> update(@RequestBody @Validated WarehouseAreaDTO.Update dto) {
+        warehouseLocationService.updateArea(dto);
         return success();
     }
 
