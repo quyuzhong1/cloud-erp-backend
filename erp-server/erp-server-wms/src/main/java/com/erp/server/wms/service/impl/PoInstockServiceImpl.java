@@ -1220,7 +1220,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> podIds = records.stream().map(PoInstockDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
 
-        List<String> warehouseIds = records.stream().map(PoInstockDTO.ListDTO::getDeliveryWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> warehouseIds = records.stream().map(req -> req.getDeliveryWarehouseId()).distinct().collect(Collectors.toList());
 
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
 
@@ -1257,8 +1257,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             String taxRateStr = taxRate.toString().concat("%");
             obj.setTaxRateStr(taxRateStr);
             //仓位名称
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseLocationEntity());
-            obj.setWarehouseLocationName(warehouseLocationEntity.getName());
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getDeliveryWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(null);
+            if (Objects.nonNull(warehouseLocationEntity)){
+                obj.setWarehouseLocationName(warehouseLocationEntity.getName());
+            }
         }
     }
 
