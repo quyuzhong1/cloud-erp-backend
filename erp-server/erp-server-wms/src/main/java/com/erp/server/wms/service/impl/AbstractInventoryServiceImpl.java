@@ -272,15 +272,8 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                         .findFirst()
                         .orElse(null);
                 if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))){
-                    if (null == sourceType) {
-                        // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                        throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, lastDTO.getCode(), lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
-                    }
-                    // 盘点类型跳过检查
-                    if (!InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS.equals(sourceType)){
-                        // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                        throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, lastDTO.getCode(), lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
-                    }
+                    // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
+                    throw new ServiceException(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, lastDTO.getCode(), lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
                 }
             }
         }
