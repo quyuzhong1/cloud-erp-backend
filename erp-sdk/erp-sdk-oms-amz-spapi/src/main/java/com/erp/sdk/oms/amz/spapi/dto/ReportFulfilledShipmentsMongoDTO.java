@@ -1,8 +1,15 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.annotation.Transient;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 
 /**
@@ -12,6 +19,8 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class ReportFulfilledShipmentsMongoDTO extends ReportSuperMongoDTO {
+
+    private String amazonReportId;
 
     private String amazonOrderId;
 
@@ -27,9 +36,15 @@ public class ReportFulfilledShipmentsMongoDTO extends ReportSuperMongoDTO {
 
     private String purchaseDate;
 
+    private String purchaseDateLocale;
+
     private String paymentsDate;
 
+    private String paymentsDateLocale;
+
     private String shipmentDate;
+
+    private String shipmentDateLocale;
 
     private String reportingDate;
 
@@ -102,4 +117,46 @@ public class ReportFulfilledShipmentsMongoDTO extends ReportSuperMongoDTO {
     private String fulfillmentChannel;
 
     private String salesChannel;
+
+    private String pointsGranted;
+
+    /**
+     * 中转参数:不保存mongo
+     */
+    @Transient
+    private String shopId;
+
+    @Transient
+    public String getShopId() {
+        return shopId;
+    }
+
+    public void setShopId(String shopId) {
+        this.shopId = shopId;
+    }
+
+    public String convertShipmentDate(){
+        if (StringUtils.isBlank(this.shipmentDateLocale)){
+            return "";
+        }
+        return OffsetDateTime.parse(this.shipmentDate).toLocalDate().toString();
+    }
+
+    public void checkAndSetAllDateLocale(Integer utfDiffHour) {
+        if (null == utfDiffHour){
+            return;
+        }
+        if (StringUtils.isNotBlank(this.shipmentDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.shipmentDate);
+            this.setShipmentDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+        }
+        if (StringUtils.isNotBlank(this.paymentsDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.paymentsDate);
+            this.setPaymentsDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+        }
+        if (StringUtils.isNotBlank(this.purchaseDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
+            this.setPurchaseDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+        }
+    }
 }

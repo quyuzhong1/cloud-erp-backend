@@ -26,7 +26,7 @@ public enum AmazonReportRecordTypeEnum {
     // 库存报告类型值
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-inventory
 //    GET_FLAT_FILE_OPEN_LISTINGS_DATA("GET_FLAT_FILE_OPEN_LISTINGS_DATA", "库存报告", false, "", null),
-    GET_MERCHANT_LISTINGS_ALL_DATA("GET_MERCHANT_LISTINGS_ALL_DATA", "所有商品信息报告", MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class, "amzReportAllListingHandler"),
+    GET_MERCHANT_LISTINGS_ALL_DATA("GET_MERCHANT_LISTINGS_ALL_DATA", "所有商品信息报告", false, AmazonReportMongoInfoEnum.MERCHANT_LISTINGS_ALL_DATA_MONGO_INFO),
 //    GET_MERCHANT_LISTINGS_DATA("GET_MERCHANT_LISTINGS_DATA", "在售商品报告", false, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class),
 //    GET_MERCHANT_LISTINGS_INACTIVE_DATA("GET_MERCHANT_LISTINGS_INACTIVE_DATA", "非在售商品报告", false, "", null),
 //    GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT("GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT", "表符分隔的库存模板文件在售商品报告", false, "", null),
@@ -41,12 +41,12 @@ public enum AmazonReportRecordTypeEnum {
     // 亚马逊物流 (FBA) 报告类型值
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-fba
     // 亚马逊物流库存报告
-    GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryCsvEntity.class, ReportFbaMyiAllInventoryMongoDTO.class, "amzReportFbaMyiAllInventoryHandler"),
-    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告",  MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedCsvEntity.class, ReportReservedMongoDTO.class,"amzReportReservedInventoryHandler"),
-    GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告",  MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningCsvEntity.class, ReportFbaInventoryPlanningMongoDTO.class,"amzReportFbaInventoryPlanningHandler"),
-    GET_LEDGER_DETAIL_VIEW_DATA("GET_LEDGER_DETAIL_VIEW_DATA", "亚马逊物流库存账本详情报告",  null, null, null,"amzReportLedgerDetailViewHandler"),
+    GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", false, AmazonReportMongoInfoEnum.FBA_MYI_ALL_INVENTORY_DATA_MONGO_INFO),
+    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告", false, AmazonReportMongoInfoEnum.RESERVED_INVENTORY_DATA_MONGO_INFO),
+    GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告", false, AmazonReportMongoInfoEnum.FBA_INVENTORY_PLANNING_DATA_MONGO_INFO),
+    GET_LEDGER_DETAIL_VIEW_DATA("GET_LEDGER_DETAIL_VIEW_DATA", "亚马逊物流库存账本详情报告", false, AmazonReportMongoInfoEnum.LEDGER_DETAIL_VIEW_DATA_MONGO_INFO),
 
-    GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL","亚马逊物流销售报告", MongoTableNameContant.REPORT_AMAZON_FULFILLED_SHIPMENTS, ReportFulfilledShipmentsCsvEntity.class, null,"amzReportFulfilledShipmentsHandler")
+    GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL","亚马逊物流销售报告",true, AmazonReportMongoInfoEnum.AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL_MONGO_INFO)
     ;
 
     /**
@@ -62,25 +62,14 @@ public enum AmazonReportRecordTypeEnum {
     private final String name;
 
     /**
-     * mongo表名
+     * 报告类型是否合并站点
      */
-    private final String mongoTableName;
+    private final boolean hasMergeMarketplaces;
 
     /**
-     * CSV实体
+     * 报告类型对应mongo信息枚举
      */
-    private final Class<?> cvsClass;
-
-    /**
-     * mongo表实体
-     */
-    private final Class<?> mongoDTOClass;
-
-
-    /**
-     * Listing报告处理服务实现类名称
-     */
-    private final String amzReportBusinessHandlerName;
+    private final AmazonReportMongoInfoEnum mongoInfoEnum;
 
 
     /**
@@ -108,11 +97,12 @@ public enum AmazonReportRecordTypeEnum {
     /**
      * 获取和检查mongo
      */
-    public Class<?> getAndCheckMongoDTOClass() {
-        if (null == this.getMongoDTOClass()) {
+    public Class<? extends ReportSuperMongoDTO> getAndCheckMongoDTOClass() {
+        AmazonReportMongoInfoEnum mongoInfoEnum = this.mongoInfoEnum;
+        if (null == mongoInfoEnum.getMongoDTOClass()) {
             throw new ServiceException("未找到对应mongo表实体, recordType=" + this.recordType);
         }
-        return this.mongoDTOClass;
+        return mongoInfoEnum.getMongoDTOClass();
     }
 
     /**
