@@ -7,16 +7,19 @@ import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.erp.model.dmp.DmpPullOtherOutStockDTO;
+import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
+import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.SoMultiChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -24,28 +27,26 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Objects;
 
 /**
- * 下载平台订单消费服务
- * @author Cloud
+ * 下载平台多渠道订单消费服务
+ * @author Jim
  */
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_order_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_order_consumer",
+        selectorExpression = "third_system_so_multi_channel_tag",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_so_multi_channel_consumer",
         consumeMode = ConsumeMode.ORDERLY)
-public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+public class PlatformSoMultiChannelConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
-    private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
-    @Resource
-    private PlatformSoMultiChannelConsumerService platformSoMultiChannelConsumerService;
+    private SoMultiChannelService soMultiChannelService;
 
 
     @Override
@@ -64,14 +65,26 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        log.info("[B2C订单消费] 消费:dto={}", JSONUtil.toJsonStr(ext));
+        log.info("[多渠道订单消费] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
-        // 多渠道订单处理(兼容清洗)
-        if (SourceTypeEnum.SO_MULTI_CHANNEL.getCode().equalsIgnoreCase(dto.getSourceType())){
-            platformSoMultiChannelConsumerService.handle(ext);
-            return ApiResult.success();
+        SoMultiChannelEntity mainEntity = soMultiChannelService.handleSave(dto);
+
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())){
+            try {
+                // 多渠道订单生成其他出库单
+                Boolean result = dmpMongoDbFeign.checkOtherOutStock(new DmpPullOtherOutStockDTO(
+                        mainEntity.getShopId(),
+                        mainEntity.getPlatformCode(),
+                        mainEntity.getId(),
+                        mainEntity.getDictPlatform()
+                ));
+                if (!result){
+                    log.warn("处理检查渠道订单生成其他出库单失败:platformOrderId={}", dto.getPlatformCode());
+                }
+            } catch (Exception e) {
+                log.error("检查渠道订单生成其他出库单失败:platformOrderId={}", dto.getPlatformCode());
+            }
         }
-        platformOrderConsumerHandleService.handleAll(dto);
         return ApiResult.success();
     }
 
@@ -90,11 +103,16 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
     /**
      * 根据平台组装表名
-     * @param platform
-     * @return
      */
-    private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
-                platform, BusinessTypeEnum.ORDER.getCode());
+    public String getTableName(String platform){
+        // 亚马逊多渠道订单和B2C订单来源一致
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(platform)){
+            return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+                    platform, BusinessTypeEnum.ORDER.getCode());
+        } else {
+            return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+                    platform, BusinessTypeEnum.SO_MULTI_CHANNEL.getCode());
+        }
+
     }
 }

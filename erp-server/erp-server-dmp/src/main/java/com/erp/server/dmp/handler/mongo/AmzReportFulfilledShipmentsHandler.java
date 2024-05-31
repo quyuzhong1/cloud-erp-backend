@@ -156,11 +156,14 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
                         Collectors.toMap(ShopInfoEntity::getDictCountryCode, ShopInfoEntity::getId)));
 
         // 矫正时区(报告来源的时间可能不带时区)
-        Map<String, CfgTimezoneEntity> cfgTimezoneEntityMap = cfgTimezoneService.mapByCondition();
+        List<CfgTimezoneEntity> timeList = cfgTimezoneService.listAndCache();
 
         return allList.stream()
                 .map(e -> {
-                    CfgTimezoneEntity timeZoneEntity = cfgTimezoneEntityMap.get(e.getSalesChannel());
+                    CfgTimezoneEntity timeZoneEntity = timeList.stream()
+                            .filter(t -> t.getAndParseCondition().contains(e.getSalesChannel()))
+                            .findFirst()
+                            .orElse(null);
                     if (null == timeZoneEntity) {
                         // 配置找不到
                         return e;

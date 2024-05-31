@@ -1,6 +1,5 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -9,6 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 订单DTO 所有平台订单通用数据，转换为此类后发送mq统一消费处理
@@ -256,4 +256,25 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.invalidStatus;
     }
 
+    /**
+     * 明细平台SKU列表
+     */
+    public List<String> convertPlatformSkuList() {
+        return this.getDetails()
+                .stream()
+                .map(PlatformOrderDetailDTO::getPlatformSkuNo)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 明细平台SPU列表
+     */
+    public List<String> convertPlatformSpuList() {
+        return this.getDetails()
+                .stream()
+                .map(PlatformOrderDetailDTO::getPlatformSpuNo)
+                .distinct()
+                .collect(Collectors.toList());
+    }
 }

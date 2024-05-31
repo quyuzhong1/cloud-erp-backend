@@ -6,7 +6,6 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
@@ -25,7 +24,6 @@ import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -81,6 +79,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private DictBasicService dictBasicService;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private SkuMappingService skuMappingService;
 
 
 
@@ -224,25 +224,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Transactional(rollbackFor = Exception.class)
     public SoB2cDTO.PullOrderResultDTO checkAndSaveAll(PlatformOrderDTO dto) {
         // 查询关联关系
-        List<String> platformSkuList = dto.getDetails()
-                .stream()
-                .map(PlatformOrderDetailDTO::getPlatformSkuNo)
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> platformSkuList = dto.convertPlatformSkuList();
 
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
-            platformSpuList = dto.getDetails()
-                    .stream()
-                    .map(PlatformOrderDetailDTO::getPlatformSpuNo)
-                    .distinct()
-                    .collect(Collectors.toList());
+            platformSpuList = dto.convertPlatformSpuList();
         }
 
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, platformSpuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), null);
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = skuMappingService.mapListingByPlatformSkuNo(platformSkuList, platformSpuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), null);
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());

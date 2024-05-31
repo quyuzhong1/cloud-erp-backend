@@ -5,11 +5,16 @@ import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import org.apache.commons.lang3.StringUtils;
 
 
 /**
@@ -47,7 +52,7 @@ public class CfgTimezoneEntity extends BaseEntity<CfgTimezoneEntity> {
     @TableField("utc_diff_hour")
     private Integer utcDiffHour;
     /**
-     * 条件:亚马逊=销售渠道
+     * 条件:亚马逊=销售渠道（多个，拼接）
      */
     @TableField("condition")
     private String condition;
@@ -60,5 +65,16 @@ public class CfgTimezoneEntity extends BaseEntity<CfgTimezoneEntity> {
     public static final String TIME_ZONE = "time_zone";
 
     public static final String UTC_DIFF_HOUR = "utc_diff_hour";
+
+    public List<String> getAndParseCondition(){
+        if (StringUtils.isBlank(this.condition)){
+            return Collections.emptyList();
+        }
+        if (this.condition.contains(",")){
+            return Arrays.stream(this.condition.split(",")).collect(Collectors.toList());
+        } else {
+            return Collections.singletonList(this.condition);
+        }
+    }
 
 }

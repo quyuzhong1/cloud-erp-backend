@@ -1180,4 +1180,20 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkAndAdd(OtherOutstockDTO.AddDTO generateDTO) {
+        String uniqueId = generateDTO.getProcessApplyCode();
+        // 已存在不新增
+        Integer count = this.lambdaQuery()
+                .eq(OtherOutstockEntity::getProcessApplyCode, uniqueId)
+                .eq(OtherOutstockEntity::getInvalidStatus, false)
+                .count();
+        if (count > 0){
+            log.warn("【{}】已生成其他出库单跳过", uniqueId);
+            return;
+        }
+        this.addAndApprove(generateDTO);
+    }
+
 }

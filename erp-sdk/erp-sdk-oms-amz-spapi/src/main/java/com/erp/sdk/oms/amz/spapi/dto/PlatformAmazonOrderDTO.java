@@ -7,8 +7,11 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
+import com.erp.sdk.oms.amz.spapi.model.sellers.Marketplace;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -32,6 +35,8 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class PlatformAmazonOrderDTO extends CleanBaseDTO {
+
+    public static final String NON_AMAZON = "Non-Amazon";
 
     private Order order;
 
@@ -90,8 +95,62 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         } else {
             this.setDownloadStatus(0);
         }
-        this.setDownloadAddressStatus(0);
+        if (order.getAmazonOrderId().contains("S")){
+            // 多渠道订单不下载地址
+            this.setDownloadAddressStatus(-1);
+        } else {
+            this.setDownloadAddressStatus(0);
+        }
         this.setIsClean(CleanStatusEnum.NONE.getCode());
+    }
+
+    public PlatformAmazonOrderDTO(Order order, AmazonShopInfoDTO shopInfoDTO, List<CfgTimezoneEntity> timeZoneList) {
+        this.order = order;
+        // 1 根据站点判断店铺ID
+        AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(order.getMarketplaceId());
+        if (null == shopNameDTO){
+            // 2, 多渠道订单找不到站点配置通过销售渠道匹配
+            CfgTimezoneEntity timeZoneEntity = timeZoneList.stream()
+                    .filter(t -> t.getAndParseCondition().contains(order.getSalesChannel()))
+                    .findFirst()
+                    .orElse(null);
+            if (null != timeZoneEntity){
+                AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(timeZoneEntity.getCountry());
+                if (null != marketplaceEnum){
+                    shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceEnum.getMarketplaceId());
+                }
+            }
+        }
+        if (null == shopNameDTO && null != order.getShippingAddress()){
+            //3, 根据地址国家判断
+            String countryCode = order.getShippingAddress().getCountryCode();
+            if (StringUtils.isNotBlank(countryCode)) {
+                AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(countryCode);
+                if (null != marketplaceEnum){
+                    shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceEnum.getMarketplaceId());
+                }
+            }
+        }
+
+        this.shopId = null == shopNameDTO ? "" : shopNameDTO.getShopId();
+        this.shopName = null == shopNameDTO ? "" : shopNameDTO.getShopName();
+        this.platformShopCode = shopInfoDTO.getPlatformShopCode();
+        this.setUniqueId(combineUnique(order.getAmazonOrderId(), this.shopId));
+        this.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        if (StringUtils.isBlank(this.shopId)){
+            // 店铺为空异常
+            this.setDownloadStatus(-1);
+        } else {
+            this.setDownloadStatus(0);
+        }
+        if (order.getAmazonOrderId().contains("S")){
+            // 多渠道订单不下载地址
+            this.setDownloadAddressStatus(-1);
+        } else {
+            this.setDownloadAddressStatus(0);
+        }
+        this.setIsClean(CleanStatusEnum.NONE.getCode());
+
     }
 
     public static PlatformAmazonOrderDTO getByAddressDownloadStatus() {
@@ -115,8 +174,9 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         BeanUtils.copyProperties(dto, orderDTO);
 
-        // 来源类型
-        orderDTO.setSourceType("soB2c");
+        // 来源类型/多渠道订单/B2C销售订单
+        String sourceType = dto.getOrder().hasMultiChannel() ? "soMultiChannel" : "soB2c";
+        orderDTO.setSourceType(sourceType);
         // 来源id
         orderDTO.setSourceId(sourceOrder.getAmazonOrderId());
         // 来源编码

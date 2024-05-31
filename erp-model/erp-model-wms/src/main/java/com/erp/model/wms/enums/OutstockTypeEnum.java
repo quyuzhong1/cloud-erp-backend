@@ -18,7 +18,8 @@ public enum OutstockTypeEnum implements EnumMessage {
     ACCESSORY("accessory", "配件"),
     SCRAP("scrap", "报废"),
 
-    REPORT_LOSSES("reportLosses", "报损")
+    REPORT_LOSSES("reportLosses", "报损"),
+    SO_MULTI_CHANNEL("soMultiChannel", "多渠道订单"),
 
     ;
 
