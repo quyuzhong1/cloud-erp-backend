@@ -2,6 +2,7 @@ package com.sdk.tms.track123.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.track123.constant.PathConstants;
@@ -87,6 +88,9 @@ public class TrackShipperService {
         headers.put("timestamp", String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.GET_TRACK_URL, trackRequest, headers);
         TrackResponse response = null;
+        if (StringUtils.isBlank(result)){
+            return null;
+        }
         try {
             response = JSONUtil.toBean(result, TrackResponse.class);
         }catch (Exception e){
