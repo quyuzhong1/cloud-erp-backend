@@ -49,7 +49,7 @@ public class WarehouseAreaDTO {
          * 库区类型
          */
         @NotBlank(message = "库区类型不能为空")
-        private String type;
+        private String areaType;
 
         /**
          * 所属仓库
@@ -66,7 +66,7 @@ public class WarehouseAreaDTO {
             WarehouseLocationEntity entity = new WarehouseLocationEntity();
             entity.setCode(this.code);
             entity.setName(this.name);
-            entity.setAreaType(this.type);
+            entity.setAreaType(this.areaType);
             entity.setType(WarehouseLocationTypeEnum.AREA.getCode());
             entity.setWarehouseId(this.warehouseId);
             entity.setRemark(this.remark);
