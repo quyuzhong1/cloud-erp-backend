@@ -1207,13 +1207,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //采购入库明细ids
         List<String> podIds = records.stream().map(PoInstockDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        List<String> warehouseIds = records.stream().map(PoInstockDTO.ListDTO::getDeliveryWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
         for (PoInstockDTO.ListDTO obj : records) {
             SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
             //产品名称
             if (Objects.nonNull(skuVO)) {
-                obj.setProductName(skuVO.getSpuName());
-                //仓位名称
-                obj.setWarehouseLocationName(skuVO.getWarehouseLocation());
+                obj.setProductName(skuVO.getSkuName());
             }
             //收货数量
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
@@ -1241,6 +1241,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
             String taxRateStr = taxRate.toString().concat("%");
             obj.setTaxRateStr(taxRateStr);
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
     }
 
