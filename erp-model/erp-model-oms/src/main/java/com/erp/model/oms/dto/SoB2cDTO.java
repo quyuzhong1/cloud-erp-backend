@@ -861,7 +861,9 @@ public class SoB2cDTO implements Serializable {
      * 订单规则结果
      */
     @Data
+    @Builder
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class RuleResultDTO{
 
         private Boolean isRuleMatch;

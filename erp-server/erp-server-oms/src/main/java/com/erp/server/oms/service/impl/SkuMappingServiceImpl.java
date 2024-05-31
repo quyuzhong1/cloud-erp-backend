@@ -666,7 +666,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(dataList)) {
             return Collections.EMPTY_LIST;
         }
-        List<String> skuNoList = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuNoList = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         if (CollectionUtils.isEmpty(skuList)) {
             return Collections.EMPTY_LIST;
@@ -681,7 +681,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         //根据ERP仓库查询绑定的海外仓
-        List<String> warehouseIds = dataList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<String> warehouseIds = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<OverseasProviderWarehouseDTO.ViewDTO> providerWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIds);
 
         //库存

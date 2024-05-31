@@ -402,6 +402,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     Integer receiveQty = receiveList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     //已退货数量 根据收货单获取对应退货明细
                     Integer returnQty = returnDetailDTOS.stream().filter(e -> poInstockDetailEntity.getSourceDetailId().equals(e.getReceiveDetailId())
+                                    && e.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
                                     && poInstockDetailEntity.getSkuId().equals(e.getSkuId())
                                     && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
                             .map(WarehouseReceiveDTO.PoReturnDetailDTO::getReturnQty).reduce(MathUtil.ZERO,Integer::sum);
@@ -801,6 +802,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+
+        List<String> resultIds = new ArrayList<>();
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
             dto.setSourceType(SourceTypeEnum.PO_INSTOCK.getCode());
@@ -819,6 +822,15 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             dto.setCurrencySymbol(detailEntity.getCurrencySymbol());
             //单价
             dto.setTaxPrice(detailEntity.getTaxPrice());
+            //相同采购单号清空后面数据的采购单号和供应商
+            boolean contains = list.contains(dto.getPurchaseOrderId());
+
+            if (contains) {
+                dto.setPurchaseOrderCode(null);
+                dto.setSupplierName(null);
+                continue;
+            }
+            resultIds.add(dto.getPurchaseOrderId());
         }
         return list;
     }
@@ -1207,7 +1219,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //采购入库明细ids
         List<String> podIds = records.stream().map(PoInstockDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+
         List<String> warehouseIds = records.stream().map(PoInstockDTO.ListDTO::getDeliveryWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
         for (PoInstockDTO.ListDTO obj : records) {
             SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
@@ -1241,7 +1255,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
             String taxRateStr = taxRate.toString().concat("%");
             obj.setTaxRateStr(taxRateStr);
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            //仓位名称
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseLocationEntity());
             obj.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
     }
