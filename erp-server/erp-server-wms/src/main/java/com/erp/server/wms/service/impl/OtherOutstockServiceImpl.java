@@ -1251,7 +1251,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             String[] split = key.split("@");
             goods.setSpecNo(split[0]);
             goods.setNum(value);
-            goods.setPositionNo(StringUtils.isBlank(split[1])? "" : split[1]);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
             goodsList.add(goods);
         });
 
@@ -1287,7 +1287,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             String[] split = key.split("@");
             goods.setSpecNo(split[0]);
             goods.setNum(value);
-            goods.setPositionNo(StringUtils.isBlank(split[1])? "" : split[1]);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
             goodsList.add(goods);
         });
 
