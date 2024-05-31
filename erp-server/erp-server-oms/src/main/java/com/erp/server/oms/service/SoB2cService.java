@@ -908,7 +908,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 同步订单到DMP
      */
-    void syncOrderToDmp(String id);
+    void syncOrderToDmp(String id, String syncOperate);
     /**
      * 获取目的国申报信息
      * @param country

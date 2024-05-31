@@ -7,6 +7,7 @@ import com.common.business.enums.PlatformApiEnum;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
@@ -147,7 +148,7 @@ public class KingdeePullServiceTest {
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
         Map<String, Object> map = new HashMap<>();
         map.put("code", "XSD23082300002");
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
 
         JSONObject model =kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         System.out.println(model);

@@ -158,7 +158,7 @@ public class RocketMqConsumerGroup {
     /**
      * 订单 oms推送到dmp
      */
-    public static final String SYNC_OMS_RETURN_TO_DMP_ORDER = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer";
+    public static final String SYNC_OMS_RETURN_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_oms_return_to_dmp";
 
     /**
      * 委外订单
@@ -274,6 +274,11 @@ public class RocketMqConsumerGroup {
      * ERP B2c发货单->DMP
      */
     public static final String SYNC_ERP_SO_B2C_DELIVERY_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_so_b2c_delivery_to_dmp";
+
+    /**
+     * ERP 销售出库单->DMP发货详情
+     */
+    public static final String SYNC_SO_OUTSTOCK_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_so_outstock_to_dmp";
 
     /**
      * 亚马逊创建报告
