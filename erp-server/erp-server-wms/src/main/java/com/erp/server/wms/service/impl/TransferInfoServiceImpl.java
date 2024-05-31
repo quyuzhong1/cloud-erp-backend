@@ -565,7 +565,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             String[] split = key.split("@");
             goods.setSpecNo(split[0]);
             goods.setNum(value);
-            goods.setPositionNo(split[1]);
+            goods.setPositionNo(StringUtils.isBlank(split[1])? "" : split[1]);
             outGoodsList.add(goods);
         });
 
@@ -583,7 +583,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             String[] split = key.split("@");
             goods.setSpecNo(split[0]);
             goods.setNum(value);
-            goods.setPositionNo(split[1]);
+            goods.setPositionNo(StringUtils.isBlank(split[1])? "" : split[1]);
             inGoodsList.add(goods);
         });
 
@@ -634,7 +634,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             String[] split = key.split("@");
             goods.setSpecNo(split[0]);
             goods.setNum(value);
-            goods.setPositionNo(split[1]);
+            goods.setPositionNo(StringUtils.isBlank(split[1])? "" : split[1]);
             inGoodsList.add(goods);
         });
 
@@ -652,7 +652,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             String[] split = key.split("@");
             goods.setSpecNo(split[0]);
             goods.setNum(value);
-            goods.setPositionNo(split[1]);
+            goods.setPositionNo(StringUtils.isBlank(split[1])? "" : split[1]);
             outGoodsList.add(goods);
         });
 

@@ -791,7 +791,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             String[] split = key.split("@");
             goods.setSpecNo(split[0]);
             goods.setNum(value);
-            goods.setPositionNo(split[1]);
+            goods.setPositionNo(StringUtils.isBlank(split[1])? "" : split[1]);
             goodsList.add(goods);
         });
 
@@ -985,7 +985,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             String[] split = key.split("@");
             goods.setSpecNo(split[0]);
             goods.setNum(value);
-            goods.setPositionNo(split[1]);
+            goods.setPositionNo(StringUtils.isBlank(split[1])? "" : split[1]);
             goodsList.add(goods);
         });
 
