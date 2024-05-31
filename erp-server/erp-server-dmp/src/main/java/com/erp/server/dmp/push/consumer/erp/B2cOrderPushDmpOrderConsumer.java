@@ -64,8 +64,9 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
 
         //操作项
         String operate = String.valueOf(map.get("operate"));
+        String entity = String.valueOf(map.get("entity"));
 
-        SoB2cDTO.ViewDTO viewDTO = JSON.parseObject(ext.toString(), SoB2cDTO.ViewDTO.class);
+        SoB2cDTO.ViewDTO viewDTO = JSON.parseObject(entity, SoB2cDTO.ViewDTO.class);
         this.cleanOrderField(viewDTO, operate);
         return ApiResult.success();
     }
