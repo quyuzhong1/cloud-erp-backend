@@ -1183,14 +1183,15 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void checkAndAdd(OtherOutstockDTO.AddDTO generateDTO) {
-        String uniqueId = generateDTO.getProcessApplyCode();
+        List<String> uniqueIds = generateDTO.getDetailList().stream().map(OtherOutstockDetailDTO.AddDTO::getRemark)
+                .distinct()
+                .collect(Collectors.toList());
         // 已存在不新增
-        Integer count = this.lambdaQuery()
-                .eq(OtherOutstockEntity::getProcessApplyCode, uniqueId)
-                .eq(OtherOutstockEntity::getInvalidStatus, false)
+        Integer count = otherOutstockDetailService.lambdaQuery()
+                .in(OtherOutstockDetailEntity::getRemark, uniqueIds)
                 .count();
         if (count > 0){
-            log.warn("【{}】已生成其他出库单跳过", uniqueId);
+            log.warn("【{}】已生成其他出库单跳过", uniqueIds);
             return;
         }
         this.addAndApprove(generateDTO);

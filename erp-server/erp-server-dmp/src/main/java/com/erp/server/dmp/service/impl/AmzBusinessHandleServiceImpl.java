@@ -1,22 +1,25 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
-import com.common.business.dto.PlatformOtherOutStockDTO;
-import com.common.business.dto.PlatformOtherOutStockDetailDTO;
-import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.*;
 import com.common.business.enums.*;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -38,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -96,6 +100,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
         query.addCriteria(
                 Criteria.where("amazonOrderId").is(dto.getPlatformCode())
                         .and("amazonOrderItemId").in(sourceDetailIds)
+                        .and("isClean").ne(CleanStatusEnum.CLEANED.getCode())
         );
         List<PlatformAmazonFulfilledShipmentsDTO> list = mongoTemplate.find(query, PlatformAmazonFulfilledShipmentsDTO.class, tableName);
         if (CollectionUtils.isEmpty(list)) {
@@ -123,10 +128,9 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
             throw new ServiceException("手动重试销售出库单失败");
         }
 
-        Class<? > tClass = currentDTO.getClass();
-        currentDTO.setIsClean(2);
-        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(currentDTO), MapUtil.class);
-        mongoService.updateMongoData(currentDTO, mapUtil, tableName, tClass);
+        MapUtil mapUtil = getMapParam();
+        UniqueDto updateDto = UniqueDto.getUniqId(currentDTO.getUniqueId());
+        finishClean(mapUtil, updateDto,tableName, PlatformAmazonFulfilledShipmentsDTO.class);
 
         String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, businessType.getSourceType().getCode(), "ERP", topic, tag, platformSoOutStockDTO));
         // 同步处理
@@ -159,6 +163,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
                 Criteria.where("amazonOrderId").is(dto.getPlatformCode())
                         // 亚马逊多渠道订单的OrderItemId=merchantOrderItemId
                         .and("merchantOrderItemId").in(sourceDetailIds)
+                        .and("isClean").ne(CleanStatusEnum.CLEANED.getCode())
         );
         List<PlatformAmazonFulfilledShipmentsDTO> list = mongoTemplate.find(query, PlatformAmazonFulfilledShipmentsDTO.class, tableName);
         if (CollectionUtils.isEmpty(list)) {
@@ -172,20 +177,21 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
 
         // 其他出库单生产者
         for (PlatformAmazonFulfilledShipmentsDTO currentDTO : list) {
+            MapUtil mapUtil = getMapParam();
+            UniqueDto updateDto = UniqueDto.getUniqId(currentDTO.getUniqueId());
+            finishClean(mapUtil, updateDto,tableName, PlatformAmazonFulfilledShipmentsDTO.class);
+
             PlatformOtherOutStockDTO msg = this.convertMsg(currentDTO, detailMap.get(currentDTO.getMerchantOrderItemId()));
+
+            String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(msg.getPlatform(), businessType.getSourceType().getCode(), "ERP", topic, tag, msg));
+            // 同步处理
+//            dmpPullTaskService.updateSyncInfo(String.valueOf(modelTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
+            msg.setDmpSyncTaskId(modelTaskId);
             ApiResult<?> apiResult = wmsAmazonFeign.consumerOtherSoOutStock(msg);
             if (200 != apiResult.getCode()) {
                 throw new ServiceException("重试其他出库单失败");
             }
 
-            Class<? > tClass = currentDTO.getClass();
-            currentDTO.setIsClean(2);
-            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(currentDTO), MapUtil.class);
-            mongoService.updateMongoData(currentDTO, mapUtil, tableName, tClass);
-
-            String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(msg.getPlatform(), businessType.getSourceType().getCode(), "ERP", topic, tag, msg));
-            // 同步处理
-            dmpPullTaskService.updateSyncInfo(String.valueOf(modelTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
         }
         return true;
     }
@@ -210,5 +216,25 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
                 sourceDTO.getUniqueId(),
                 PlatformDictEnum.AMAZON.getCode()
         );
+    }
+
+
+    private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, UniqueDto updateDto, String tableName, Class<T> clazz) {
+        List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);
+        if(CollectionUtil.isEmpty(mongoData)){
+            log.warn("mongo暂未写入数据, 请稍后重试");
+            throw new RuntimeException("mongo暂未写入数据, 请稍后重试");
+        }
+        if(CleanStatusEnum.CLEANED.getCode().equals(mongoData.get(0).getIsClean())){
+            return;
+        }
+        mongoService.updateMongoData(updateDto, mapUtil, tableName, clazz);
+    }
+
+    private static MapUtil getMapParam() {
+        CleanBaseDTO updateParam = new CleanBaseDTO();
+        updateParam.setIsClean(CleanStatusEnum.CLEANED.getCode());
+        updateParam.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
+        return JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
     }
 }

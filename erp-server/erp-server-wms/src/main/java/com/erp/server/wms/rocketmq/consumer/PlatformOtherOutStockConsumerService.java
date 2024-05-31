@@ -206,7 +206,7 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
             detailDTO.setSkuNo(e.getSkuNo());
             detailDTO.setActualQty(e.getActualQty());
             detailDTO.setWarehouseLocation(e.getWarehouseLocation());
-            detailDTO.setRemark(detailDTO.getRemark());
+            detailDTO.setRemark(dto.getUniqueId());
             return detailDTO;
         }).collect(Collectors.toList());
 
