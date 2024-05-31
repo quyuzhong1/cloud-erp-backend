@@ -141,7 +141,7 @@
                wl.update_time
         FROM warehouse_location AS wl
         where ${params.sqlMap.default}
-          and wl.type = 'area'
+          and wl.type = 'area' and is_deleted = false
         order by wl.id desc
     </select>
 </mapper>
