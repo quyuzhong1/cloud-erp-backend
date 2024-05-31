@@ -3,8 +3,7 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
-
-import java.util.List;
+import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 
 /**
  * <p>
@@ -36,12 +35,13 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
 
     /**
      * 根据erp内部仓库/店铺的id查询映射关系
+     *
      * @param sysId erp内部仓库/店铺ID
      * @return ThirdMappingEntity 三方映射实体
      * @date: 2024-05-27
      * @author: tanmujin
      */
-    ThirdMappingEntity getBySysId(String sysId);
+    ThirdWarehouseEntity getBySysId(String sysId);
 
     Boolean getByThirdId(ThirdMappingDTO.ViewParamDTO viewParamDTO);
 

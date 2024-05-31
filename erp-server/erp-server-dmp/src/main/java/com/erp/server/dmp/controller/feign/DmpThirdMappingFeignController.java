@@ -2,6 +2,7 @@ package com.erp.server.dmp.controller.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.server.dmp.service.ThirdMappingService;
 import org.springframework.web.bind.annotation.*;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
@@ -20,7 +21,7 @@ public class DmpThirdMappingFeignController {
     private ThirdMappingService thirdMappingService;
 
     @GetMapping("/getBySysId")
-    public ThirdMappingEntity getBySysId(@RequestParam String sysId) {
+    public ThirdWarehouseEntity getBySysId(@RequestParam String sysId) {
         return thirdMappingService.getBySysId(sysId);
     }
 

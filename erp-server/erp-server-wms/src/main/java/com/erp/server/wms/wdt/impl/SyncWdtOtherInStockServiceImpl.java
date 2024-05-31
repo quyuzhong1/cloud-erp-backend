@@ -10,6 +10,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -64,8 +65,8 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
         }
 
         //根据收货仓库ID查询旺店通仓库编号
-        ThirdMappingEntity thirdMappingEntity = dmpThirdMappingFeign.getBySysId(entity.getWarehouseId());
-        request.setWarehouseNo(Optional.ofNullable(thirdMappingEntity).orElse(new ThirdMappingEntity("")).getThirdInfoId());
+        ThirdWarehouseEntity thirdWarehouse = dmpThirdMappingFeign.getBySysId(entity.getWarehouseId());
+        request.setWarehouseNo(Optional.ofNullable(thirdWarehouse).orElse(new ThirdWarehouseEntity()).getCode());
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
         request.setSourceId(entity.getId());

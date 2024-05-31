@@ -521,12 +521,17 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     }
 
     @Override
-    public ThirdMappingEntity getBySysId(String sysWarehouseId) {
+    public ThirdWarehouseEntity getBySysId(String sysWarehouseId) {
         LambdaQueryWrapper<ThirdMappingEntity> queryWrapper = new LambdaQueryWrapper<ThirdMappingEntity>()
                 .eq(ThirdMappingEntity::getSysId, sysWarehouseId)
                 .eq(ThirdMappingEntity::getIsDeleted, false)
                 .eq(ThirdMappingEntity::getDisabled, false);
-        return baseMapper.selectOne(queryWrapper);
+        ThirdMappingEntity mappingEntity = baseMapper.selectOne(queryWrapper);
+        LambdaQueryWrapper<ThirdWarehouseEntity> warehouseWrapper = new LambdaQueryWrapper<ThirdWarehouseEntity>()
+                .eq(ThirdWarehouseEntity::getWarehouseId, mappingEntity.getThirdInfoId())
+                .eq(ThirdWarehouseEntity::getIsDeleted, false)
+                .eq(ThirdWarehouseEntity::getDisabled, false);
+        return thirdWarehouseService.getBaseMapper().selectOne(warehouseWrapper);
     }
 //    @Resource
 //    private CheckStrategy checkStrategy;

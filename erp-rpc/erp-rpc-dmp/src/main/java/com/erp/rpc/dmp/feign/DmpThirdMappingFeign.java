@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface DmpThirdMappingFeign {
 
     @GetMapping("/getBySysId")
-    ThirdMappingEntity getBySysId(@RequestParam String sysId);
+    ThirdWarehouseEntity getBySysId(@RequestParam String sysId);
 
     /**
      * 查询绑定关系
