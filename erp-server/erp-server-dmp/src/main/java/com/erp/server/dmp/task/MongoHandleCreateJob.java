@@ -56,8 +56,9 @@ public class MongoHandleCreateJob {
         List<List<DmpMongoHandleTaskEntity>> partition = Lists.partition(list, runCount);
 
         for (List<DmpMongoHandleTaskEntity> curList : partition) {
-            for (DmpMongoHandleTaskEntity taskEntity : curList) {
-                threadPoolTaskExecutor.execute(() -> {
+            curList.parallelStream().forEach(taskEntity -> {
+//            for (DmpMongoHandleTaskEntity taskEntity : curList) {
+//                threadPoolTaskExecutor.execute(() -> {
                     try {
                         DmpMongoHandleTypeEnum handleTypeEnum = DmpMongoHandleTypeEnum.getByCode(taskEntity.getHandleType(), true);
                         // 指定根据业务类型和当前条件查询对应mongo表处理
@@ -70,7 +71,7 @@ public class MongoHandleCreateJob {
                         );
                     }
                 });
-            }
+//            }
         }
         XxlJobHelper.log("mongoHandleJob 执行任务列表结束");
     }
