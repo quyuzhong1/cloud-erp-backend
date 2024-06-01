@@ -442,6 +442,7 @@
 		        SELECT g.id,g.platform_code so_code,t.customer_name shop_name,
 			T.warehouse_name,
 			G.sku_no,
+			G.platform_detail_id platform_sku_no,
 			G.actual_qty::VARCHAR actual_qty,
 			TO_CHAR(T.bill_date, 'YYYY-MM-DD') bill_date
 		FROM
