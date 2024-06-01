@@ -54,13 +54,13 @@ public class WmsDataCompareSoHandler extends WmsAbstractDataCompareHandler{
 			.eq(ShopInfoEntity::getDictPlatform, params.getDictPlatform())
 			.eq(StringUtils.isNotBlank(params.getShopId()) , ShopInfoEntity::getId, params.getShopId())
 			.list();
-		List<String> customerNameList = shopInfoEntityList.stream()
-				.filter(s -> StringUtils.isNotBlank(s.getName())).map(ShopInfoEntity::getName).collect(Collectors.toList());
+		List<String> customerIdList = shopInfoEntityList.stream()
+				.filter(s -> StringUtils.isNotBlank(s.getName())).map(ShopInfoEntity::getCustomerId).collect(Collectors.toList());
 
-		if(CollUtil.isEmpty(customerNameList)) {
+		if(CollUtil.isEmpty(customerIdList)) {
 			throw new ServiceException("选择的销售平台下没有店铺");
 		}
-		params.setCustomerNameList(customerNameList);
+		params.setCustomerIdList(customerIdList);
 
 		String warehouseId = params.getWarehouseId();
 		if(StringUtils.isNotBlank(warehouseId)) {
