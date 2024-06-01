@@ -82,7 +82,7 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
 
 //        log.debug("亚马逊物流销售报告处理服务处理：转换后的数据={}", JSONUtil.toJsonStr(allList));
 
-        List<String> uniqueIds = allList.stream()
+        List<String> uniqueIds = canHandleList.stream()
                 .map(e -> StrUtil.format("{}_{}", e.getAmazonOrderId(), e.getShopId()))
                 .distinct()
                 .collect(Collectors.toList());
