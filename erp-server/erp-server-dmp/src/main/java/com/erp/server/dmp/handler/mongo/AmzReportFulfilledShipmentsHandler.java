@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
+import com.common.business.dto.UniqueDto;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -96,14 +97,15 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
             return allList.size();
         }
         Map<String, PlatformAmazonOrderDTO> existMap = existOrderList.stream()
-                .collect(Collectors.toMap(e -> e.getOrder().getAmazonOrderId(), Function.identity()));
+                .collect(Collectors.toMap(UniqueDto::getUniqueId, Function.identity()));
 
         List<ReportFulfilledShipmentsMongoDTO> existList = new LinkedList<>();
         List<ReportFulfilledShipmentsMongoDTO> notExistList = new LinkedList<>();
         List<ReportFulfilledShipmentsMongoDTO> existMainList = new LinkedList<>();
 
         for (ReportFulfilledShipmentsMongoDTO source : allList) {
-            PlatformAmazonOrderDTO dto = existMap.get(source.getAmazonOrderId());
+            String uniqueId = StrUtil.format("{}_{}", source.getAmazonOrderId(), source.getShopId());
+            PlatformAmazonOrderDTO dto = existMap.get(uniqueId);
             if (null == dto) {
                 notExistList.add(source);
                 continue;
