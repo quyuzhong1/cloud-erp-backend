@@ -375,5 +375,5 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      **/
     List<CustomerDTO.SellerUserDeptDTO> listSellerUserDepByCodes(List<String> codeList);
 
-    PagingVO<CustomerDTO.PageSelectDTO> pageSelect(PagingDTO<CustomerDTO.SelectDTO> dto);
+    PagingVO<CustomerDTO.PageSelectDTO> pagingSelect(PagingDTO<CustomerDTO.SelectDTO> dto);
 }

@@ -606,6 +606,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (Objects.isNull(warehouse)) {
             throw new ServiceException(ApiError.ERROR_99001);
         }
+        //仓库下绑定第三方店铺不能修改为禁用状态
+        if (Objects.nonNull(dto.getState()) && !Objects.equals(dto.getState(), warehouse.getDisabled()) && Objects.equals(dto.getState(), true)) {
+            checkDmpThirdMapping(warehouseId,warehouse.getName());
+        }
         warehouse.setDisabled(dto.getState());
         this.updateById(warehouse);
 

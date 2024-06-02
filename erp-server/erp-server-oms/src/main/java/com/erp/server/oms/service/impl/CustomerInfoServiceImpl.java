@@ -1992,7 +1992,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    public PagingVO<CustomerDTO.PageSelectDTO> pageSelect(PagingDTO<CustomerDTO.SelectDTO> dto) {
+    public PagingVO<CustomerDTO.PageSelectDTO> pagingSelect(PagingDTO<CustomerDTO.SelectDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<CustomerDTO.PageSelectDTO> pageData = this.baseMapper.pageSelect(query, dto.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {

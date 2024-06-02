@@ -81,6 +81,7 @@ public class ThirdShopController extends BaseController {
      */
     @PostMapping("/pagingSelect")
     public ApiResult<PagingVO<ThirdShopDTO.PageSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ThirdShopDTO.SelectDTO> dto) {
+        dto.setPageSize(100);
         return success(thirdShopService.pagingSelect(dto));
     }
 }

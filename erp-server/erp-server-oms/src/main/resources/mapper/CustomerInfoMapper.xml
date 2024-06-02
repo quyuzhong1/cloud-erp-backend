@@ -94,7 +94,9 @@
         ci.name
         from customer_info ci
         where  ci.is_deleted = FALSE
-        and ci.disabled=false
+        <if test="params.disabled != null">
+            and ci.disabled=#{params.disabled}
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and  ((ci.id=#{params.searchKeyword} or ci.code = #{params.searchKeyword}) or ci.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>

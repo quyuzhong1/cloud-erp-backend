@@ -191,6 +191,7 @@ public enum ApiError implements Serializable {
     ERROR_THIRD_SHOP_NOTFOUND(80010,"第三方店铺不存在"),
     ERROR_THIRD_WAREHOUSE_NOTFOUND(80011,"第三方仓库不存在"),
     ERROR_THIRD_SYS_TYPE_BINDING(80012,"同一个第三方平台只能绑定一个{}"),
+    ERROR_SYS_TYPE_NOTFOUND(80013,"{}不存在"),
 
     /**
      * 工作流错误 workflow

@@ -187,6 +187,11 @@ public class CustomerDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SelectDTO {
+        /**
+         * 是否禁用
+         * false 没有
+         */
+        private Boolean disabled;
 
         /**
          * 关键词
