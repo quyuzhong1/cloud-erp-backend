@@ -6678,9 +6678,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         logisticsEntity.setDeliveryTime(earliestDeliveryDateTime.toLocalDateTime());
-        if (!soB2cLogisticsService.updateById(logisticsEntity)){
-            throw new ServiceException("更新发货时间失败:id=" + logisticsEntity.getId());
-        }
+        soB2cLogisticsService.updateById(logisticsEntity);
+//        if (!soB2cLogisticsService.updateById(logisticsEntity)){
+//            throw new ServiceException("更新发货时间失败:id=" + logisticsEntity.getId());
+//        }
         return true;
     }
 
