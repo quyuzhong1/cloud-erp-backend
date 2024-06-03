@@ -307,7 +307,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
             if(!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus()) && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())){
-                batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"只有待配货和配货中可以拆分"));
+                batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"只有待配货和配货中可以拆分还原"));
                 continue;
             }
             List<SoB2cDetailEntity> detailList = allSoB2cDetailEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());

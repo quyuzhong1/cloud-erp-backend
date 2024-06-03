@@ -21,6 +21,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
@@ -689,6 +690,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<SoB2cDetailEntity> needDeleteDetailList = this.listBySplitId(revertDetailIdList);
         needDeleteDetailList = needDeleteDetailList.stream().filter(v->!v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(needDeleteDetailList)){
+            //过滤掉主表是自动作废的
+            List<String> allMainIds = needDeleteDetailList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+            List<SoB2cEntity> allMains = soB2cService.listByIds(allMainIds);
+            allMains = allMains.stream().filter(v->!SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode().equals(v.getInvalidType())).collect(Collectors.toList());
+            List<String> filterMainIds = allMains.stream().map(SoB2cEntity::getId).distinct().collect(Collectors.toList());
+            needDeleteDetailList = needDeleteDetailList.stream().filter(v->!filterMainIds.contains(v.getMainId())).collect(Collectors.toList());
             List<String> needDeleteDetailIds = needDeleteDetailList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
             service.removeByIds(needDeleteDetailIds);
         }
