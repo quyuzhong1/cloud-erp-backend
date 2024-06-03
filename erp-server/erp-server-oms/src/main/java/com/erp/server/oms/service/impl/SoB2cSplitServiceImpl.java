@@ -342,7 +342,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
             //删除的明细明细（可能有不同订单）不能删除原订单（比如订单A里面有捆绑拆分的sku1和sku2，订单拆分成订单B和订单C，订单B操作还原捆绑，不能删除订单A的明细）
             List<String> excludeMainIds = otherMainList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-            List<String> removeDetails = sameSplitDetailList.stream().filter(v->!excludeMainIds.contains(v.getMainId()) && splitIds.contains(v.getSplitDetailId())).map(BaseEntity::getId).collect(Collectors.toList());
+            excludeMainIds.add(soB2cEntity.getId());
+            List<String> removeDetails = sameSplitDetailList.stream().filter(v->excludeMainIds.contains(v.getMainId()) && splitIds.contains(v.getSplitDetailId())).map(BaseEntity::getId).collect(Collectors.toList());
             removeDetailIds.addAll(removeDetails);
             //还原的明细，分两种情况，如果要还原的明细的订单与当前订单相同，直接将明细还原，如果不同，将明细复制一条到当前订单
             for (SoB2cDetailEntity soB2cDetailEntity : originDetailList) {
@@ -351,6 +352,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 }else{
                     SoB2cDetailEntity addDetail = B2cOrderConverter.INSTANCE.cloneSoB2cDetail(soB2cDetailEntity);
                     addDetail.setMainId(soB2cEntity.getId());
+                    addDetail.setIsDeleted(false);
                     addDetailList.add(addDetail);
                 }
             }

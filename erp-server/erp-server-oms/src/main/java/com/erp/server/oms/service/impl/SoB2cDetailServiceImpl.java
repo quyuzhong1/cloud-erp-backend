@@ -683,6 +683,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     revertDetailIdList.add(soB2cDetailEntity.getId());
                     soB2cDetailEntity.setId(null);
                     soB2cDetailEntity.setMainId(soB2cEntity.getId());
+                    soB2cDetailEntity.setIsDeleted(false);
                 }
             }
         }
@@ -695,7 +696,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             List<SoB2cEntity> allMains = soB2cService.listByIds(allMainIds);
             allMains = allMains.stream().filter(v->!SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode().equals(v.getInvalidType())).collect(Collectors.toList());
             List<String> filterMainIds = allMains.stream().map(SoB2cEntity::getId).distinct().collect(Collectors.toList());
-            needDeleteDetailList = needDeleteDetailList.stream().filter(v->!filterMainIds.contains(v.getMainId())).collect(Collectors.toList());
+            needDeleteDetailList = needDeleteDetailList.stream().filter(v->filterMainIds.contains(v.getMainId())).collect(Collectors.toList());
             List<String> needDeleteDetailIds = needDeleteDetailList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
             service.removeByIds(needDeleteDetailIds);
         }
