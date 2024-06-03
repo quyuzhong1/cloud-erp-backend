@@ -479,4 +479,17 @@ public class WarehouseLocationDTO implements Serializable {
          */
         private String disabled;
     }
+
+    @Data
+    @AllArgsConstructor
+    public static class tabDto{
+        /**
+         * tab名称
+         */
+        private String name;
+        /**
+         * 统计数量
+         */
+        private Integer count;
+    }
 }

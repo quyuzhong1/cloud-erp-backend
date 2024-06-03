@@ -252,5 +252,21 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      */
     void update(WarehouseLocationDTO.updateDto dto);
 
+    /**
+     * 通过仓库ID查询仓位列表
+     * @param warehouseId 仓库ID
+     * @return 仓位列表
+     * @date: 2024-06-03
+     * @author: tanmujin
+     */
     List<WarehouseLocationDTO.ViewDto> listAreaByWarehouseId(String warehouseId);
+
+    /**
+     * tab名称及其包含的数据量统计
+     * @param
+     * @return WarehouseLocationDTO.tabDto
+     * @date: 2024-06-03
+     * @author: tanmujin
+     */
+    List<WarehouseLocationDTO.tabDto> tabList();
 }

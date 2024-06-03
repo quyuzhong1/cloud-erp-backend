@@ -684,7 +684,40 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public List<WarehouseLocationDTO.ViewDto> listAreaByWarehouseId(String warehouseId) {
-        List<WarehouseLocationDTO.ViewDto> list = baseMapper.listAreaByWarehouseId(warehouseId);
-        return null;
+        return baseMapper.listAreaByWarehouseId(warehouseId);
+    }
+
+    @Override
+    public List<WarehouseLocationDTO.tabDto> tabList() {
+        List<WarehouseLocationDTO.tabDto> list = new ArrayList<>(4);
+        Integer occupiedCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
+                .eq("type", "location")
+                .eq("is_deleted", false)
+                .eq("status", WarehouseLocationStatusEnum.OCCUPIED.getCode()));
+        WarehouseLocationDTO.tabDto occupied = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.OCCUPIED.getName(), occupiedCount);
+        list.add(occupied);
+
+        Integer recyclableCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
+                .eq("type", "location")
+                .eq("is_deleted", false)
+                .eq("status", WarehouseLocationStatusEnum.RECYCLABLE.getCode()));
+        WarehouseLocationDTO.tabDto recyclable = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.RECYCLABLE.getName(), recyclableCount);
+        list.add(recyclable);
+
+        Integer idleCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
+                .eq("type", "location")
+                .eq("is_deleted", false)
+                .eq("status", WarehouseLocationStatusEnum.IDLE.getCode()));
+        WarehouseLocationDTO.tabDto idle = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.IDLE.getName(), idleCount);
+        list.add(idle);
+
+        Integer allCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
+                .eq("type", "location")
+                .eq("is_deleted", false)
+                .ne("status", WarehouseLocationStatusEnum.STOP.getCode()));
+        WarehouseLocationDTO.tabDto all = new WarehouseLocationDTO.tabDto("全部", allCount);
+        list.add(all);
+
+        return list;
     }
 }
