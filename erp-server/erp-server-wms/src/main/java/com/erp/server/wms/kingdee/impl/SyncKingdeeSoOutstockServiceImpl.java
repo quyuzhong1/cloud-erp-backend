@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -624,7 +625,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         DmpDeliveryDetailInfoEntity entity = SoOutstockConverter.INSTANCE.soOutstockToDmpDelivery(soOutstockEntity);
         BigDecimal exchangeRate;
         entity.setDeliveryDate(Objects.nonNull(soOutstockEntity.getActualDeliveryDate()) ? soOutstockEntity.getActualDeliveryDate() : null);
-
+        if (StrUtil.isBlank(soOutstockEntity.getSoId())){
+            log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到订单id获取原始B2C订单异常:[" + soOutstockEntity.getSoId() + "]");
+            return null;
+        }
         if (OrderTypeEnum.B2B.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soOutstockEntity.getSoId());
             if (Objects.isNull(soInfoEntity)) {
