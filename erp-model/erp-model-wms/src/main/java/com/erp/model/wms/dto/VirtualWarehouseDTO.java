@@ -61,7 +61,9 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String name;
 
-
+        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+        private List<String> thirdMappingList;
+        private List<String> warehouseIdList;
     }
 
     /**
@@ -88,6 +90,25 @@ public class VirtualWarehouseDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+        private List<String> thirdMappingList;
+        private List<String> warehouseIdList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public class UpdateStateDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * true 禁用
+         * false 启用
+         */
+        @NotNull(message = "状态不能为空")
+        private Boolean disabled;
     }
 
     @Data
@@ -186,9 +207,9 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String name;
 
-//        public String getDisabledName() {
-//            return Objects.equals(disabled, Boolean.TRUE) ? "停用" : "启用";
-//        }
+        public String getDisabledName() {
+            return Objects.equals(disabled, Boolean.TRUE) ? "停用" : "启用";
+        }
     }
 
 }

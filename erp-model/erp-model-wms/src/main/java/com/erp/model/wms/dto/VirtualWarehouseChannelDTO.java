@@ -173,7 +173,17 @@ public class VirtualWarehouseChannelDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class BatchAddDTO{
+        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+        private String virtualWarehouseId;
+    }
+    @Data
+    @NoArgsConstructor
     public static class ChannelAddDTO{
+        /**
+         * 平台类型
+         */
+        private String dictPlatformType;
         /**
          * 平台的dict值
          */

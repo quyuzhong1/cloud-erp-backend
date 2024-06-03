@@ -1001,6 +1001,10 @@ public enum ApiError implements Serializable {
     SO_OUTSTOCK_NOT_PACKING(92137,"出库单报关单已生成，不支持修改"),
     TRANSFER_DECLARE_SO_EXISTS(92138,"订单【{}】已存在入库预报单，请不要重复新增"),
     PAPER_SIZE_INCONSISTENT_NOT_PRINT(92139,"纸张大小不一致，不支持批量打印"),
+    ERROR_VMNAME_EXIST(92200,"虚拟仓名称已存在"),
+    ERROR_VM_NOTFOUND(92201,"虚拟仓不存在"),
+    ERROR_WAREHOUSE_BINDED(92202,"当前实体仓已被虚拟仓【{}】绑定"),
+    ERROR_SAME_DISABLED(92203,"存在相同状态"),
 
 
 

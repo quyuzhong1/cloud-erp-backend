@@ -44,7 +44,8 @@
         vw.code,
         vw.name
         from virtual_warehouse vw
-        where vw.is_deleted=false
+        where ${params.sqlMap.default}
+        and vw.is_deleted=false
         <if test="params.disabled!=null">
             and vm.disabled=#{params.disabled}
         </if>

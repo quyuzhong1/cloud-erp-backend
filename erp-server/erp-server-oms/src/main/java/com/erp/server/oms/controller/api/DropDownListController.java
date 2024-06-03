@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +54,31 @@ public class DropDownListController extends BaseController {
                 .collect(Collectors.toList());
         return success(result);
     }
+
+    /**
+     * 根据type和subType返回树状结构
+     *
+     * @param key
+     * @return
+     */
+//    @GetMapping("/dict/tree")
+//    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam("key") String key) {
+//        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
+//        //list 根据sort排序
+//        list = list.stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
+//
+//        Map<String, List<DictBasicDTO.ViewDTO>> map = list.stream().collect(Collectors.groupingBy(DictBasicDTO.ViewDTO::getType));
+//        List<BaseDropDownDTO.Tree> treeList = new ArrayList<>();
+//        map.forEach((type, viewList) -> {
+//            BaseDropDownDTO.Tree tree = new BaseDropDownDTO.Tree();
+//            tree.setCode(type);
+//            tree.setValue();
+//        });
+//        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+//                .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
+//                .collect(Collectors.toList());
+//        return success(result);
+//    }
 
     /**
      * 单据状态下拉
