@@ -38,7 +38,7 @@ public enum PlatformDictEnum implements EnumMessage {
     TMALL("Tmall", "天猫", "Tmall", "006"),
     SOP("JDZY", "京东自营厂送", "京东自营", "007"),
     WE_CHAT_VEDIO("WeChatVedio", "微信视频号", "微信视频号", "027"),
-    MERCADOLIBRE("mercadolibre", "美客多", "美客多", "028"),
+    MERCADOLIBRE("mercadolibre", "美客多", "美客多", "033"),
     TIK_TOK("TikTok", "TikTok", "TikTok", "032"),
     //物流平台
     DSF("DSF", "递四方", "递四方(新)", "41"),

@@ -6020,16 +6020,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @create 2023-12-18 14:54
      */
     @Override
-    @Async
     public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
-        Map<String, Boolean> orderRule = this.approveRule(id, detailList, map);
-        Boolean isMatch = orderRule.getOrDefault("isMatch", Boolean.FALSE);
-        Boolean isPass = orderRule.getOrDefault("isPass", Boolean.FALSE);
+//        Map<String, Boolean> orderRule = this.approveRule(id, detailList, map);
+//        Boolean isMatch = orderRule.getOrDefault("isMatch", Boolean.FALSE);
+//        Boolean isPass = orderRule.getOrDefault("isPass", Boolean.FALSE);
+        SoB2cDTO.RuleResultDTO ruleResultDTO = orderRule(id);
+        Boolean isMatch = ruleResultDTO.getIsRuleMatch();
+        Boolean isPass = ruleResultDTO.getIsPass();
         if (isMatch && isPass) {
-            SoB2cDTO.RuleResultDTO warehouseRuleResult = this.warehouseRule(id, detailList, map);
+            SoB2cDTO.RuleResultDTO warehouseRuleResult = warehouseRule(id, detailList, map);
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = this.logisticsRule(id, new HashMap<>());
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = logisticsRule(id, new HashMap<>());
                 if(logisticsRuleResult.getIsRuleMatch()){
                     checkProductRegistrationAndUpdate(id, "");
                     //申报信息规则
