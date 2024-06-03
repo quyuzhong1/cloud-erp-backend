@@ -382,7 +382,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 //    }
 
     @Override
-    public Boolean getByThirdId(ThirdMappingDTO.ViewParamDTO viewParamDTO) {
+    public Boolean getWhetherBind(ThirdMappingDTO.ViewParamDTO viewParamDTO) {
         //查看当前平台sysId绑定的第三方信息
         List<ThirdMappingEntity> existMappingList = baseMapper.selectList(new LambdaQueryWrapper<ThirdMappingEntity>()
                 .eq(ThirdMappingEntity::getType, viewParamDTO.getType())
@@ -392,6 +392,16 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             return false;
         }
         return true;
+    }
+    @Override
+    public List<ThirdMappingEntity> getByThirdId(ThirdMappingDTO.ViewParamDTO viewParamDTO) {
+        //查看当前平台sysId绑定的第三方信息
+        List<ThirdMappingEntity> existMappingList = baseMapper.selectList(new LambdaQueryWrapper<ThirdMappingEntity>()
+                .eq(ThirdMappingEntity::getType, viewParamDTO.getType())
+                .eq(ThirdMappingEntity::getThirdSysType, viewParamDTO.getSysType())
+                .eq(ThirdMappingEntity::getThirdId, viewParamDTO.getThirdId())
+                .eq(ThirdMappingEntity::getIsDeleted, false).eq(ThirdMappingEntity::getDisabled, false));
+        return existMappingList;
     }
 
     @Override

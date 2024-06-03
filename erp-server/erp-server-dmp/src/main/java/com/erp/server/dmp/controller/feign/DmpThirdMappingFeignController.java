@@ -7,6 +7,7 @@ import com.erp.server.dmp.service.ThirdMappingService;
 import org.springframework.web.bind.annotation.*;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 第三方仓库/店铺映射Feign控制器
@@ -25,8 +26,12 @@ public class DmpThirdMappingFeignController {
         return thirdMappingService.getBySysId(sysId);
     }
 
+    @PostMapping("/getWhetherBind")
+    public Boolean getWhetherBind(@RequestBody ThirdMappingDTO.ViewParamDTO viewParamDTO) {
+        return thirdMappingService.getWhetherBind(viewParamDTO);
+    }
     @PostMapping("/getByThirdId")
-    public Boolean getByThirdId(@RequestBody ThirdMappingDTO.ViewParamDTO viewParamDTO) {
+    public List<ThirdMappingEntity> getByThirdId(@RequestBody ThirdMappingDTO.ViewParamDTO viewParamDTO) {
         return thirdMappingService.getByThirdId(viewParamDTO);
     }
 

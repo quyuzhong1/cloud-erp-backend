@@ -38,6 +38,15 @@ public class ThirdMappingDTO implements Serializable {
          * 系统店铺id
          */
         private String sysId;
+        /**
+         * 系统店铺id
+         */
+        private String thirdId;
+
+        /**
+         * 第三方系统类型
+         */
+        private String sysType;
     }
 
     /**

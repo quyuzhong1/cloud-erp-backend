@@ -512,6 +512,6 @@ public class ShopInfoController extends BaseController {
         ThirdMappingDTO.ViewParamDTO viewParamDTO=new ThirdMappingDTO.ViewParamDTO();
         viewParamDTO.setType(ThirdSysTypeEnum.SHOP.getCode());
         viewParamDTO.setSysId(shopId);
-        return dmpThirdMappingFeign.getByThirdId(viewParamDTO);
+        return dmpThirdMappingFeign.getWhetherBind(viewParamDTO);
     }
 }

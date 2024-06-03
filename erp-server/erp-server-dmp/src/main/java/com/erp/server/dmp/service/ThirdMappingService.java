@@ -49,6 +49,7 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
     List<ThirdMappingEntity> getList(String type, String sysId);
 
     void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping, WarehouseDTO.ListDTO warehouse);
+
     /**
      * 查找系统绑定的第三方信息
      *
@@ -56,6 +57,7 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
      * @return
      */
     ThirdMappingEntity getByTypeAndSysIdAndSysType(ThirdMappingEntity thirdMappingEntity);
+
     /**
      * 查找第三方系统绑定的信息
      *
@@ -63,6 +65,7 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
      * @return
      */
     ThirdMappingEntity getByTypeAndThirdId(ThirdMappingEntity thirdMappingEntity);
+
     /**
      * 根据erp内部仓库/店铺的id查询映射关系
      *
@@ -73,7 +76,9 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
      */
     ThirdWarehouseEntity getBySysId(String sysId);
 
-    Boolean getByThirdId(ThirdMappingDTO.ViewParamDTO viewParamDTO);
+    Boolean getWhetherBind(ThirdMappingDTO.ViewParamDTO viewParamDTO);
+
+    List<ThirdMappingEntity> getByThirdId(ThirdMappingDTO.ViewParamDTO viewParamDTO);
 
     BaseResultDTO.AddDTO batchAdd(ThirdMappingDTO.FeignMappingDTO feignMappingDTO);
 }
