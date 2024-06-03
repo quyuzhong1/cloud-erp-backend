@@ -76,7 +76,7 @@ public enum BusinessNoTypeEnum {
     CODE_SJDB(61, "sjdb","数据对比","SJDB"),
     CODE_BGZD(61, "bgzd","报关账单","BGZD"),
     CODE_TCZD(62, "tczd","头程账单","TCZD"),
-
+    CODE_XNC(63, "xnc","虚拟仓", BusinessNoConstant.XNC),
     ;
 
 

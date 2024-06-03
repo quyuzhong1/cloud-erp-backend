@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -173,6 +174,10 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private Boolean disabled;
         /**
+         * 是否失效 true 失效 false 未失效
+         */
+        private String disabledName;
+        /**
          * code
          */
         private String code;
@@ -180,6 +185,10 @@ public class VirtualWarehouseDTO implements Serializable {
          * 名称
          */
         private String name;
+
+//        public String getDisabledName() {
+//            return Objects.equals(disabled, Boolean.TRUE) ? "停用" : "启用";
+//        }
     }
 
 }

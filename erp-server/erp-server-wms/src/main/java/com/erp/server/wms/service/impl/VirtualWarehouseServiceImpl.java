@@ -8,8 +8,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.server.wms.mapper.VirtualWarehouseMapper;
@@ -34,6 +36,8 @@ import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 虚拟仓 服务实现类
@@ -45,9 +49,9 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehouseMapper, VirtualWarehouseEntity> implements VirtualWarehouseService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -62,8 +66,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
 
         log.info("开始新增虚拟仓");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XNC);
         virtualWarehouseEntity.setCode(code);
         boolean save = super.save(virtualWarehouseEntity);
         if (!save) {
@@ -73,7 +76,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓", virtualWarehouseEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, virtualWarehouseEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(virtualWarehouseEntity.getId(), code);

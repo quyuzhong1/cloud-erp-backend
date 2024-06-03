@@ -3,23 +3,24 @@
 <mapper namespace="com.erp.server.wms.mapper.VirtualWarehouseMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.VirtualWarehouseEntity">
-       <result column="id" property="id" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_time" property="createTime" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_time" property="updateTime" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="disabled" property="disabled" />
-       <result column="code" property="code" />
-       <result column="name" property="name" />
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="disabled" property="disabled"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
+        id
+        ,
         create_user_id,
         create_user_name,
         create_time,
@@ -30,7 +31,7 @@
         is_deleted,
         disabled, code, name
     </sql>
-    <select id="paging" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$ListDTO>">
+    <select id="paging" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$ListDTO">
         select
         vw.id,
         vw.create_user_id,
@@ -46,6 +47,9 @@
         where vw.is_deleted=false
         <if test="params.disabled!=null">
             and vm.disabled=#{params.disabled}
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         order by id desc
     </select>

@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.threadlocal.UserContext;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.server.wms.mapper.VirtualWarehouseChannelMapper;
 import com.erp.server.wms.service.VirtualWarehouseChannelService;
