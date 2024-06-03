@@ -420,18 +420,19 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if(CollectionUtils.isEmpty(ids)){
             return new ArrayList<>();
         }
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByIds(ids);
-        SoB2cEntity soB2cEntity = this.getById(soB2cDetailEntityList.get(0).getMainId());
         List<SoB2cDetailEntity> restoreEntity = soB2cDetailService.listContainDeleted(ids);
         if(Objects.isNull(restoreEntity)){
             throw new ServiceException("原明细为空");
         }
-        List<String> splitDetailIds = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSplitDetailId).collect(Collectors.toList());
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listBySplitId(restoreEntity.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList()));
+        SoB2cEntity soB2cEntity = this.getById(restoreEntity.get(0).getMainId());
+        List<String> splitDetailIds = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSplitDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<SoB2cDetailEntity> sameSplitDetailList = soB2cDetailService.listBySplitId(splitDetailIds);
+        List<String> allMainIds = sameSplitDetailList.stream().map(SoB2cDetailEntity::getMainId).collect(Collectors.toList());
         //相同明细对应的订单
-        List<SoB2cEntity> allMainList = this.listByIds(sameSplitDetailList.stream().map(SoB2cDetailEntity::getMainId).collect(Collectors.toList()));
-        //排除当前订单
-        List<SoB2cEntity> otherMainList = allMainList.stream().filter(v->!soB2cEntity.getId().equals(v.getId())).collect(Collectors.toList());
+        List<SoB2cEntity> allMainList = CollectionUtils.isEmpty(allMainIds)?new ArrayList<>():this.listByIds(sameSplitDetailList.stream().map(SoB2cDetailEntity::getMainId).collect(Collectors.toList()));
+        //排除当前订单和自动作废
+        List<SoB2cEntity> otherMainList = allMainList.stream().filter(v->!soB2cEntity.getId().equals(v.getId()) || !SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode().equals(v.getInvalidType())).collect(Collectors.toList());
         //校验别的订单的状态
         List<SoB2cEntity> notPassMainList = otherMainList.stream().filter(v->v.getIsFrozen() || v.getInvalidStatus() || (!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(v.getBillStatus()) && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(v.getBillStatus()))).collect(Collectors.toList());
         //不通过，封装错误信息返回
