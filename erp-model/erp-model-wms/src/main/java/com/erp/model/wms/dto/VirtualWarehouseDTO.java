@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -62,7 +63,7 @@ public class VirtualWarehouseDTO implements Serializable {
         private String name;
 
         private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
-        private List<String> thirdMappingList;
+        private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
         private List<String> warehouseIdList;
     }
 
@@ -73,7 +74,7 @@ public class VirtualWarehouseDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
         private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
-        private List<String> thirdMappingList;
+        private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
     }
 
@@ -91,7 +92,7 @@ public class VirtualWarehouseDTO implements Serializable {
         private String id;
 
         private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
-        private List<String> thirdMappingList;
+        private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
 
     }
@@ -118,7 +119,6 @@ public class VirtualWarehouseDTO implements Serializable {
         /**
          * 是否失效 true 失效 false 未失效
          */
-        @NotNull(message = "是否失效 true 失效 false 未失效不能为空")
         private Boolean disabled;
 
         /**

@@ -110,7 +110,7 @@ public class VirtualWarehouseController extends BaseController {
     }
 
     /**
-     * 修改状态
+     * 详情
      */
     @GetMapping("/view")
     @LogViewService
