@@ -150,10 +150,12 @@
             wl.id as id,
             wl.code as code,
             wl.name as name,
-            wt.name as warehouseName,
-            wa.name as warehouseAreaName,
             wl.warehouse_id as warehouseId,
-            wl.parent_id as warehouseAreaId,
+            wt.kingdee_warehouse_code warehouseCode,
+            wt.name as warehouseName,
+            wa.id as warehouseAreaId,
+            wa.code as warehouseAreaCode,
+            wa.name as warehouseAreaName,
             wl.status,
             wl.disabled,
             wl.remark,
@@ -248,5 +250,15 @@
         <if test="dto.updateTimeList != null and dto.updateTimeList.length == 2">
             and T.update_time between #{dto.updateTimeList[0]} and #{dto.updateTimeList[1]}
         </if>
+    </select>
+    <select id="listAreaByWarehouseId" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
+        select id,
+               code,
+               name
+        from warehouse_location
+        where warehouse_id = #{warehouseId}
+          and type = 'area'
+          and is_deleted = false
+          and disabled = false
     </select>
 </mapper>
