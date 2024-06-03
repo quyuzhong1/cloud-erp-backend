@@ -4,6 +4,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
+import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -166,7 +167,7 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @author Jim
      * @date 2024-03-05
      */
-    List<StocktakingProfitLossDTO.LastDTO> listByOrgIdAndSkuIds(List<String> orgIds, List<String> skuIds);
+    List<StocktakingProfitLossDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds);
 
 
     /**
@@ -183,5 +184,5 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @author Jim
      * @date 2024-03-07
      */
-    boolean checkClosed(List<String> orgIds, List<String> skuIds, LocalDate billDate);
+    boolean checkClosed(List<String> warehouseIds,List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate);
 }

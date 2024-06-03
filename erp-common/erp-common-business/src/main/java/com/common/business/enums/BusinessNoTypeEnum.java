@@ -77,6 +77,8 @@ public enum BusinessNoTypeEnum {
     CODE_BGZD(61, "bgzd","报关账单","BGZD"),
     CODE_TCZD(62, "tczd","头程账单","TCZD"),
 
+    CODE_DQDD(53, "DQDD","多渠道订单(平台)",BusinessNoConstant.DQDD),
+
     ;
 
 

@@ -174,6 +174,7 @@ public class JobTaskDTO {
         this.operateType = tbTask.getOperateType();
         this.apiParam = tbTask.getApiParam();
         this.platformCategory = tbTask.getPlatformCategory();
+        this.groupId = tbTask.getGroupId();
     }
 
     public Long getAndCheckTimeoutSeconds(Long timeoutSeconds) {

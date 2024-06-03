@@ -6,6 +6,10 @@ import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 
 /**
@@ -131,4 +135,28 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     private String fulfillmentChannel;
 
     private String salesChannel;
+    /**
+     * 亚马逊账号代号
+     */
+    @Panno(findType = PannoEnum.EQ, field = "platformShopCode")
+    private String platformShopCode;
+
+
+    public void checkAndSetAllDateLocale(Integer utfDiffHour) {
+        if (null == utfDiffHour){
+            return;
+        }
+        if (StringUtils.isNotBlank(this.shipmentDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.shipmentDate);
+            this.setShipmentDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+        }
+        if (StringUtils.isNotBlank(this.paymentsDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.paymentsDate);
+            this.setPaymentsDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+        }
+        if (StringUtils.isNotBlank(this.purchaseDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
+            this.setPurchaseDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+        }
+    }
 }

@@ -20,9 +20,9 @@ public interface SysRoleMenuMapper extends BaseMapper<SysRoleMenuEntity> {
 
     List<String> findMenuIdsByRoleIds(@Param("roleIds") List<String> roleIds);
 
-    List<String> findMenuIdsByRoleIdsAndType(@Param("roleIds") List<String> roleIds, @Param("type") Integer type);
+    List<String> findMenuIdsByRoleIdsAndType(@Param("roleIds") List<String> roleIds, @Param("type") Integer type, @Param("userType") String userType);
 
-    List<String> findMenuCodeByRoleIds(@Param("roleIds") List<String> roleIds, @Param("type") Integer type);
+    List<String> findMenuCodeByRoleIds(@Param("roleIds") List<String> roleIds, @Param("type") Integer type, @Param("userType") String userType);
 
-    List<String> findAllMenuCode(@Param("type") Integer type);
+    List<String> findAllMenuCode(@Param("type") Integer type, @Param("userType") String userType);
 }

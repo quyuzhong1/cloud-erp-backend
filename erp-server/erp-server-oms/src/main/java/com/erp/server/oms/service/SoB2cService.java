@@ -352,7 +352,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean  orderShipped(String  id);
 
-    /** 
+    /**
      * @description 运费测算后选择物流渠道
      * @param dto
      * @author Lambda
