@@ -61,7 +61,7 @@ public class PdaInventoryController extends BaseController {
     }
 
     /**
-     * PDA:库存查询
+     * PDA:库存查询（SKU搜索）
      * @Author Luo_WG
      * @Date 2023/8/30 11:39
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventorySearch>
@@ -72,5 +72,15 @@ public class PdaInventoryController extends BaseController {
         return success(inventory);
     }
 
-
+    /**
+     * PDA:库存查询（仓库）
+     * @Author Luo_WG
+     * @Date 2023/8/30 11:39
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventorySearch>
+     **/
+    @PostMapping(value = "/getInventoryByWarehouse")
+    public ApiResult<InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryWarehouseDTO>> getInventoryByWarehouse(@RequestBody PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
+        InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryWarehouseDTO> inventory = inventoryService.getInventoryByWarehouse(searchDTO);
+        return success(inventory);
+    }
 }

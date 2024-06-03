@@ -23,6 +23,7 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
+import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
@@ -1056,5 +1057,37 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
         return viewList;
+    }
+    /**
+     * PDA:库存查询（仓库）
+     * @param searchDTO
+     * @return
+     */
+    @Override
+    public InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryWarehouseDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
+        InventoryDTO.PdaSearchParamDTO params = searchDTO.getParams();
+        if(StringUtils.isBlank(params.getWarehouseLocation())){
+            return new InventoryDTO.PdaInventoryWarehousePageDTO<>();
+        }
+        //仓位信息查询
+
+        //库存信息
+        InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        //查询配置过滤对应组织仓库
+        if(params.isFilterOrgFlag()){
+            List<DictBasicDTO.ListDTO> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
+            if(CollectionUtils.isNotEmpty(listDTOList)){
+                DictBasicDTO.ListDTO orgDTOList = listDTOList.get(0);
+                String orgArr = orgDTOList.getValue();
+                paramDTO.setOrgIds(Arrays.asList(orgArr.split(",")));
+            }
+        }
+        paramDTO.setFilterSelfAddFlag(params.isFilterSelfAddFlag());
+        IPage<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOPage = baseMapper.pageInventoryWarehouseByParam(query,paramDTO);
+        InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryWarehouseDTO> result = new InventoryDTO.PdaInventoryWarehousePageDTO<>(warehouseDTOPage);
+        //TODO 仓位信息回填
+//        result.setWarehouseId();
+        return result;
     }
 }
