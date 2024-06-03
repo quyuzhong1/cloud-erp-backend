@@ -105,7 +105,7 @@ public interface SoOutstockFeign {
      * 生成b2c 销售出库单(平台拉取发货信息生成)
      */
     @PostMapping("feign/soOutstock/generateB2cSoOutstockByPlatformData")
-    Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
+    Boolean generateB2cSoOutstockByPlatformData(@RequestBody List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
 
     @PostMapping("feign/soOutstock/getCanGenerateDeclare")
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);

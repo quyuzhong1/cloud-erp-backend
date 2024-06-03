@@ -504,7 +504,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto);
 
     List<SoOutstockEntity> listByCodes(List<String> codes);
-    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
+//    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
 
     Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
     /**
