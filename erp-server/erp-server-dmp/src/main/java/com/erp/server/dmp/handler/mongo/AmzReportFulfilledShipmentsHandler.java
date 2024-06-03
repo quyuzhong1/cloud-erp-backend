@@ -23,6 +23,7 @@ import com.erp.server.dmp.handler.DmpMongoHandler;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DmpMongoHandleTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -93,7 +94,7 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         if (CollectionUtils.isEmpty(existOrderList)) {
             // 都不存在直接保存mongo等待重新触发
             // 不存在保存mongo等待重新触发
-            directSaveMongo(canHandleList, AmazonHandleStatusEnum.WAIT_DOWNLOAD);
+            directSaveMongo(canHandleList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, -10);
             return allList.size();
         }
         Map<String, PlatformAmazonOrderDTO> existMap = existOrderList.stream()
@@ -119,11 +120,11 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
 
         if (!CollectionUtils.isEmpty(notExistList)) {
             // 不存在保存mongo等待重新触发
-            directSaveMongo(notExistList, AmazonHandleStatusEnum.WAIT_DOWNLOAD);
+            directSaveMongo(notExistList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, -10);
         }
         if (!CollectionUtils.isEmpty(existMainList)) {
             // 不存在保存mongo等待重新触发
-            directSaveMongo(existMainList, AmazonHandleStatusEnum.WAIT_HANDLE);
+            directSaveMongo(existMainList, AmazonHandleStatusEnum.WAIT_HANDLE, CleanStatusEnum.NONE.getCode());
         }
 
         // 存在的订单直接触发销售出库单
@@ -191,14 +192,14 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         return mongoTemplate.find(query, PlatformAmazonOrderDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER);
     }
 
-    private void directSaveMongo(List<ReportFulfilledShipmentsMongoDTO> handleList, AmazonHandleStatusEnum handleStatusEnum) {
+    private void directSaveMongo(List<ReportFulfilledShipmentsMongoDTO> handleList, AmazonHandleStatusEnum handleStatusEnum, Integer isClean) {
         List<PlatformAmazonFulfilledShipmentsDTO> sourceList = handleList.stream()
                 .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e,
                         e.getReportId(),
                         e.getShopId(),
                         StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), e.getShopId()),
                         handleStatusEnum.getCode(),
-                        CleanStatusEnum.NONE.getCode()
+                        isClean
                 ))
                 .collect(Collectors.toList());
         businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
