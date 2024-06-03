@@ -670,12 +670,22 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
      * @param isAdd
      */
     private void handleDetailList (List<SoB2cDetailEntity> list,SoB2cEntity soB2cEntity,Boolean isAdd) {
-        //如果是还原捆绑商品，需要将删除的明细还原
-        List<String> detailIds = list.stream().map(SoB2cDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        this.updateContainDeleted(detailIds);
-
-        //如果 revertId 不为空，则是原订单捆绑拆分拆单后，当前订单做还原，需要将不是当前订单的明细删除 revertId 为原单的捆绑拆分原始id
-        List<String> revertDetailIdList = list.stream().map(SoB2cDetailEntity::getRevertId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        // 如果 revertId 不为空，分两种情况，第一种是要还原的订单ID与当前订单id一致，则将删除的明细还原，
+        // 第二种是要还原的订单ID与当前订单id不一致，则是原订单捆绑拆分拆单后，当前订单做还原，需要将不是当前订单的明细删除 ，并将id清空，MainID设置为当前订单ID
+        List<String> restoreIds = new ArrayList<>();
+        List<String> revertDetailIdList = new ArrayList<>();
+        for (SoB2cDetailEntity soB2cDetailEntity : list) {
+            if(StringUtils.isNotBlank(soB2cDetailEntity.getRevertId())){
+                if(soB2cEntity.getId().equals(soB2cDetailEntity.getMainId())){
+                    restoreIds.add(soB2cDetailEntity.getId());
+                }else{
+                    revertDetailIdList.add(soB2cDetailEntity.getId());
+                    soB2cDetailEntity.setId(null);
+                    soB2cDetailEntity.setMainId(soB2cEntity.getId());
+                }
+            }
+        }
+        this.updateContainDeleted(restoreIds);
         List<SoB2cDetailEntity> needDeleteDetailList = this.listBySplitId(revertDetailIdList);
         needDeleteDetailList = needDeleteDetailList.stream().filter(v->!v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(needDeleteDetailList)){

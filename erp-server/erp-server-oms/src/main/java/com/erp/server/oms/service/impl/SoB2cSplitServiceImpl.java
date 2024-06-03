@@ -299,6 +299,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if(CollectionUtils.isNotEmpty(sameSplitMainIds)){
             sameMainList = this.listByIds(sameSplitMainIds);
         }
+        //过滤掉自动作废的
+        sameMainList = sameMainList.stream().filter(v->!SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode().equals(v.getInvalidType())).collect(Collectors.toList());
         List<String> removeDetailIds = new ArrayList<>();
         List<String> revertDetailIds = new ArrayList<>();
         List<SoB2cDetailEntity> addDetailList = new ArrayList<>();
@@ -338,8 +340,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 continue;
             }
 
-            //删除的明细明细（可能有不同订单）
-            List<String> removeDetails = sameSplitDetailList.stream().filter(v->splitIds.contains(v.getSplitDetailId())).map(BaseEntity::getId).collect(Collectors.toList());
+            //删除的明细明细（可能有不同订单）不能删除原订单（比如订单A里面有捆绑拆分的sku1和sku2，订单拆分成订单B和订单C，订单B操作还原捆绑，不能删除订单A的明细）
+            List<String> excludeMainIds = otherMainList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            List<String> removeDetails = sameSplitDetailList.stream().filter(v->!excludeMainIds.contains(v.getMainId()) && splitIds.contains(v.getSplitDetailId())).map(BaseEntity::getId).collect(Collectors.toList());
             removeDetailIds.addAll(removeDetails);
             //还原的明细，分两种情况，如果要还原的明细的订单与当前订单相同，直接将明细还原，如果不同，将明细复制一条到当前订单
             for (SoB2cDetailEntity soB2cDetailEntity : originDetailList) {
@@ -449,14 +452,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<SoB2cDetailEntity> resultDetailList = new ArrayList<>();
         //还原的明细，分两种情况，如果要还原的明细的订单与当前订单相同，直接将明细还原，如果不同，将明细复制一条到当前订单
         for (SoB2cDetailEntity soB2cDetailEntity : restoreEntity) {
-            if(soB2cDetailEntity.getMainId().equals(soB2cEntity.getId())){
-                resultDetailList.add(soB2cDetailEntity);
-            }else{
-                SoB2cDetailEntity addDetail = B2cOrderConverter.INSTANCE.cloneSoB2cDetail(soB2cDetailEntity);
-                addDetail.setMainId(soB2cEntity.getId());
-                addDetail.setRevertId(soB2cDetailEntity.getId());
-                resultDetailList.add(addDetail);
-            }
+            resultDetailList.add(soB2cDetailEntity);
+            soB2cDetailEntity.setRevertId(soB2cDetailEntity.getId());
         }
 
         List<SoB2cDetailDTO.ViewDTO> viewDTOList = BeanUtil.copyToList(resultDetailList,SoB2cDetailDTO.ViewDTO.class);

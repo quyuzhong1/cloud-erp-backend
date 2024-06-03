@@ -368,6 +368,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 还原id
          */
         private String revertId;
+
+        /**
+         * 主表Id
+         */
+        private String mainId;
     }
 
     @Data
