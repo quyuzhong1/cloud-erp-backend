@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -12,6 +13,8 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationAreaTypeEnum;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
+import com.erp.server.wms.query.WarehouseLocationInfoQueryHandler;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import lombok.AllArgsConstructor;
@@ -980,6 +983,7 @@ public class WarehouseLocationController extends BaseController {
      * 分页查询仓位
      */
     @PostMapping("/pagingByParam")
+    @WebAdvanceQuery(handler = WarehouseLocationInfoQueryHandler.class)
     public ApiResult<PagingVO<WarehouseLocationDTO.ViewDto>> pagingByParam(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.SearchParamDTO> dto){
         PagingVO<WarehouseLocationDTO.ViewDto> list = warehouseLocationService.pagingByParam(dto);
         return ApiResult.success(list);
@@ -1066,7 +1070,10 @@ public class WarehouseLocationController extends BaseController {
         return ApiResult.success(warehouseLocationService.tabList());
     }
 
-    @PostMapping("/downloadTemplate")
+    /**
+     * 下载导入模板
+     */
+    @GetMapping("/downloadTemplate")
     public void downloadTemplate(HttpServletResponse response){
         warehouseLocationService.downloadTemplate(response);
     }

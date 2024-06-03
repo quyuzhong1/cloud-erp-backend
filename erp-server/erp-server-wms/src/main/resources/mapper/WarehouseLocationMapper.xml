@@ -184,8 +184,9 @@
         <if test="params.updateUserName != null and params.updateUserName != ''">
             AND wl.update_user_name = #{params.updateUserName}
         </if>
-        <!--<if test="params.updateTime != null">
-            AND wl.update_time >= concat(#{params.updateTime},' 00:00:00') and wl.update_time &lt;= concat(#{params.updateTime},' 23:59:59')
+        <!--<if test="params.updateTime != null and params.updateTime != ''">
+            AND to_char(wl.update_time, 'YYYY-MM-DD') = #{params.updateTime}
+&#45;&#45;             and wl.update_time >= #{params.updateTime} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.bill_date
         </if>-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -195,7 +196,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        order by wl.update_time desc
+        order by wl.create_time desc
     </select>
     <select id="listByIds" resultType="com.erp.model.wms.vo.WarehouseLocationExportVo">
         select T.id,

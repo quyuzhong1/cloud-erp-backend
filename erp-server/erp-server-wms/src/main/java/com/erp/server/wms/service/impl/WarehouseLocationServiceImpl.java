@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -56,6 +58,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.DateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -641,6 +646,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         insertEntity.setCode(dto.getCode());
         insertEntity.setName(dto.getName());
         insertEntity.setWarehouseId(dto.getWarehouseId());
+        insertEntity.setParentId(dto.getWarehouseAreaId());
+        insertEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
         insertEntity.setRemark(dto.getRemark());
         baseMapper.insert(insertEntity);
         operateLogService.addModuleOperateLog(String.format("新增仓位【%s】", insertEntity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), null, "新增", user.getUid(), user.getUserName());
