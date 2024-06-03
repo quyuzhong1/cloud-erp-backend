@@ -3,6 +3,7 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.enums.RuleTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -103,6 +104,7 @@ public class CfgConditionEntity extends BaseEntity<CfgConditionEntity> {
 
     /**
      * 条件所属规则类型 PICKING_STRATEGY（拣货规则）
+     * @see RuleTypeEnum
      */
     @TableField("rule_type")
     private String ruleType;

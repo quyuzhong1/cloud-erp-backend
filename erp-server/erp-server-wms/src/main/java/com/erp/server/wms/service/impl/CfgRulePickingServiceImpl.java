@@ -18,6 +18,7 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.model.wms.entity.CfgRulePackingActionEntity;
 import com.erp.model.wms.entity.CfgRulePickingEntity;
+import com.erp.model.wms.enums.RuleTypeEnum;
 import com.erp.server.wms.mapper.CfgRulePickingMapper;
 import com.erp.server.wms.service.CfgRuleConditionService;
 import com.erp.server.wms.service.CfgRulePackingActionService;
@@ -63,7 +64,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "拣货策略规则", entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PICKING_STRATEGY.getCode(), entity.getId(), "新增操作");
-        cfgRuleConditionService.saveRuleCondition(entity.getId(), dto.getConditionList(), "PICKING_STRATEGY");
+        cfgRuleConditionService.saveRuleCondition(entity.getId(), dto.getConditionList(), RuleTypeEnum.PICKING_STRATEGY.getCode());
         cfgRulePackingActionService.saveRuleAction(entity.getId(), dto.getActions());
     }
 
@@ -76,7 +77,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         updateById(entity);
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dto.getId(), "拣货策略规则");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PICKING_STRATEGY.getCode(), dto.getId(), msg);
-        cfgRuleConditionService.updateRuleCondition(dto.getId(), dto.getConditionList(), ModuleTypeEnum.PICKING_STRATEGY.getCode(), "");
+        cfgRuleConditionService.updateRuleCondition(dto.getId(), dto.getConditionList(), ModuleTypeEnum.PICKING_STRATEGY.getCode(), RuleTypeEnum.PICKING_STRATEGY.getCode());
         cfgRulePackingActionService.updateRuleAction(dto.getId(), dto.getActions());
     }
 
