@@ -61,4 +61,6 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
     List<WarehouseLocationExportVo> selectAllByParam(@Param("dto") WarehouseLocationDTO.exportParamDto dto);
 
     List<WarehouseLocationDTO.ViewDto> listAreaByWarehouseId(@Param("warehouseId") String warehouseId);
+
+    int update(@Param("id") String id);
 }

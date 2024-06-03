@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.WarehouseLocationMapper">
+    <update id="update">
+        update warehouse_location set is_deleted = false where id = #{id}
+    </update>
 
     <select id="paging" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$LocationSelectDTO">
          select distinct code, name from warehouse_location
@@ -146,6 +149,36 @@
     </select>
     <!--仓位管理高级查询-->
     <select id="pagingByArgs" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
+        select wl.id,
+               wl.code,
+               wl.name,
+               wl.status,
+               wl.disabled,
+               wl.remark,
+               wl.update_user_name as updateUserName,
+               wl.update_time as updateTime,
+               wa.id as warehouseAreaId,
+               wa.code as warehouseAreaCode,
+               wa.name as warehouseAreaName,
+               wt.id as warehouseId,
+               wt.kingdee_warehouse_code as warehouseCode,
+               wt.name as warehouseName
+        from warehouse_location wl inner join warehouse_location wa on wl.parent_id = wa.id
+                                   inner join warehouse wt on wl.warehouse_id = wt.id
+        where wl.is_deleted = false and wa.is_deleted = false and wt.is_deleted = false
+          and wa.disabled = false and wt.disabled = false and wt.approve_status = 'approve'
+          and ${params.sqlMap.default}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        order by wl.create_time desc
+    </select>
+    <select id="pagingByArgs1" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
         SELECT
             wl.id as id,
             wl.code as code,
@@ -162,28 +195,30 @@
             wl.update_user_name as updateUserName,
             wl.update_time as updateTime
         FROM  warehouse_location wl
-            LEFT JOIN warehouse wt on wl.warehouse_id = wt.id
+--             LEFT JOIN warehouse wt on wl.warehouse_id = wt.id
             LEFT JOIN warehouse_location wa on wl.parent_id = wa.id
-            LEFT JOIN dict_basic db on db.id = wt.type_id and db.is_deleted = false and db.type = 'warehouseType'
-        where wl.is_deleted = false  and wl."type" = 'location' and wt.disabled = false and wl.disabled = false and wa.disabled = false and wt.approve_status = 'approve'
-        <if test="params.code != null and params.code != ''">
+--             LEFT JOIN dict_basic db on db.id = wt.type_id and db.is_deleted = false and db.type = 'warehouseType'
+        where wl.is_deleted = false and wl.type = 'location'
+          and wa.is_deleted = false and wa.disabled = false
+--           and wt.is_deleted = false and wt.disabled = false and wt.approve_status = 'approve'
+        <!--<if test="params.code != null and params.code != ''">
             AND wl.code = #{params.code}
-        </if>
-        <if test="params.warehouseAreaCode != null and params.warehouseAreaCode != ''">
+        </if>-->
+        <!--<if test="params.warehouseAreaCode != null and params.warehouseAreaCode != ''">
             AND wa.code = #{params.warehouseAreaCode}
-        </if>
-        <if test="params.warehouseName !=null and params.warehouseName != ''">
+        </if>-->
+        <!--<if test="params.warehouseName !=null and params.warehouseName != ''">
             AND wl.name = #{params.warehouseName}
-        </if>
-        <if test="params.status != null and params.status != ''">
+        </if>-->
+        <!--<if test="params.status != null and params.status != ''">
             AND wl.status = #{params.status}
-        </if>
-        <if test="params.disabled != null and params.disabled != ''">
+        </if>-->
+        <!--<if test="params.disabled != null and params.disabled != ''">
             AND wl.disabled = #{params.disabled}
-        </if>
-        <if test="params.updateUserName != null and params.updateUserName != ''">
+        </if>-->
+        <!--<if test="params.updateUserName != null and params.updateUserName != ''">
             AND wl.update_user_name = #{params.updateUserName}
-        </if>
+        </if>-->
         <!--<if test="params.updateTime != null and params.updateTime != ''">
             AND to_char(wl.update_time, 'YYYY-MM-DD') = #{params.updateTime}
 &#45;&#45;             and wl.update_time >= #{params.updateTime} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.bill_date

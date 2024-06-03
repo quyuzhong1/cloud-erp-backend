@@ -10,8 +10,7 @@ import lombok.Data;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * 仓位信息导入监听
@@ -19,14 +18,20 @@ import java.util.List;
  * @author tanmujin
  */
 @Getter
-public class WarehouseLocationExcelListener extends AnalysisEventListener<WarehouseLocationExcelDto> {
+public class WarehouseLocationExcelListener extends AnalysisEventListener<LinkedHashMap<Integer, String>> {
 
     private List<String> errorMsgList = new ArrayList<>();
     private List<WarehouseLocationExcelDto> successList = new ArrayList<>();
 
     @Override
-    public void invoke(WarehouseLocationExcelDto dto, AnalysisContext context) {
+    public void invoke(LinkedHashMap<Integer, String> data, AnalysisContext context) {
         Integer rowIndex = context.readRowHolder().getRowIndex();
+        WarehouseLocationExcelDto dto = new WarehouseLocationExcelDto();
+        dto.setWarehouseName(data.get(0));
+        dto.setWarehouseAreaCode(data.get(1));
+        dto.setWarehouseLocationCode(data.get(2));
+        dto.setWarehouseLocationName(data.get(3));
+        dto.setRemark(data.get(4));
         if(verifyNotBlank(dto)){
             successList.add(dto);
         }else {

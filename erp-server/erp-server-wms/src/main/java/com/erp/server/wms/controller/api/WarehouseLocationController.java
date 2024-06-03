@@ -1029,9 +1029,9 @@ public class WarehouseLocationController extends BaseController {
      * 回收仓位
      */
     @PostMapping("/recycle")
-    public ApiResult<Void> recycle(@RequestBody @Validated WarehouseLocationDTO.IdsDto idsDto){
-        warehouseLocationService.recycle(idsDto);
-        return ApiResult.success();
+    public ApiResult<List<String>> recycle(@RequestBody @Validated WarehouseLocationDTO.IdsDto idsDto){
+        List<String> errorMsgList = warehouseLocationService.recycle(idsDto);
+        return ApiResult.success(errorMsgList);
     }
 
     /**

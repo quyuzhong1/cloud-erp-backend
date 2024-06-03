@@ -1,8 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -58,9 +56,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.DateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -83,6 +78,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     private OperateLogService operateLogService;
     @Resource
     private InventoryMapper inventoryMapper;
+    @Resource
+    private WarehouseLocationMapper warehouseLocationMapper;
 
     @Override
     public List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId) {
@@ -486,8 +483,6 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public List<String> deleteBatch(WarehouseLocationDTO.IdsDto idsDto) {
         List<String> errorList = new ArrayList<>();
         LoginUser user = UserContext.getNonLoginUser();
-        WarehouseLocationEntity updateEntity = new WarehouseLocationEntity();
-        updateEntity.setIsDeleted(true);
 
         List<WarehouseLocationEntity> list = baseMapper.selectBatchIds(idsDto.getIds());
         LambdaQueryWrapper<InventoryEntity> queryWrapper;
@@ -500,8 +495,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 errorList.add(String.format("仓位：%s 存在商品，不能删除", entity.getCode()));
                 continue;
             }
-            updateEntity.setId(entity.getId());
-            baseMapper.updateById(updateEntity);
+            baseMapper.deleteById(entity.getId());
             operateLogService.addModuleOperateLog(String.format("删除仓位【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), entity.getId(), "删除", user.getUid(), user.getUserName());
         }
         return errorList;
@@ -529,7 +523,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             String warehouseId = warehouseName2IdMap.get(row.getWarehouseName());
 
             //当前仓库下必须存在对应的库区
-            WarehouseLocationEntity areaEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", warehouseId).eq("type", "area").eq("name", row.getWarehouseAreaCode()).eq("is_deleted", false).eq("disabled", false));
+            WarehouseLocationEntity areaEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", warehouseId).eq("type", "area").eq("code", row.getWarehouseAreaCode()).eq("is_deleted", false).eq("disabled", false));
             if (areaEntity == null) {
                 errorMsgList.add(String.format("当前【%s】仓库下没有【%s】库区", row.getWarehouseName(), row.getWarehouseAreaCode()));
                 continue;
@@ -658,9 +652,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public void update(WarehouseLocationDTO.updateDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
         WarehouseLocationEntity entity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId()).eq("code", dto.getCode()).eq("type", "location").eq("is_deleted", false));
-        if(entity != null){
+        /*if(entity != null){
             throw new ServiceException(ApiError.WAREHOUSE_LOCATION_EXIST, dto.getCode());
-        }
+        }*/
 
         WarehouseLocationEntity baseEntity = baseMapper.selectById(dto.getId());
         WarehouseLocationEntity newEntity = new WarehouseLocationEntity();

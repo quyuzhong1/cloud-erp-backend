@@ -467,11 +467,6 @@ public class WarehouseLocationDTO implements Serializable {
          * 更新时间
          */
         private String updateTime;
-
-        /**
-         * 数据统计
-         */
-        private Integer count;
     }
 
     @EqualsAndHashCode(callSuper = true)
