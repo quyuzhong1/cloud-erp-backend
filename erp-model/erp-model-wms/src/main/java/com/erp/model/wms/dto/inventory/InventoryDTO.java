@@ -1,12 +1,12 @@
 package com.erp.model.wms.dto.inventory;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.poi.ss.formula.functions.T;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -1274,6 +1274,10 @@ public class InventoryDTO implements Serializable {
          * 是否需要过滤自建
          */
         private boolean filterSelfAddFlag;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
     }
 
     @Data
@@ -1427,7 +1431,7 @@ public class InventoryDTO implements Serializable {
     }
 
     /**
-     * PDA:库存查询
+     * PDA:库存查询（SKU）
      */
     @Data
     @NoArgsConstructor
@@ -1461,7 +1465,37 @@ public class InventoryDTO implements Serializable {
          */
         private PagingVO<PdaInventoryWarehouseDTO> warehouseDTOList;
     }
+    /**
+     * PDA:库存查询（SKU）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventoryWarehousePageDTO<T> extends PagingVO implements Serializable{
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 产品数量
+         */
+        private Integer productQty;
 
+        public PdaInventoryWarehousePageDTO(IPage<T> page) {
+            this.setList(page.getRecords());
+            this.setTotalCount((int) page.getTotal());
+            this.setPageSize((int) page.getSize());
+            this.setCurrPage((int) page.getCurrent());
+            this.setTotalPage((int) page.getPages());
+        }
+    }
     @Data
     @NoArgsConstructor
     public static class PdaInventoryWarehouseDTO {
@@ -1477,6 +1511,10 @@ public class InventoryDTO implements Serializable {
          * skuId
          */
         private String skuId;
+        /**
+         * sku品名名称
+         */
+        private String skuName;
         /**
          * 实际库存
          */
