@@ -3,20 +3,15 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import cn.hutool.json.JSONObject;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import javax.json.JsonObject;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -29,9 +24,6 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class OverseasProviderDTO implements Serializable {
-
-
-
 
     /**
     * 详情
@@ -98,6 +90,11 @@ public class OverseasProviderDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+        * code
+        */
+        private String code;
 
         /**
          * 详情
@@ -315,5 +312,49 @@ public class OverseasProviderDTO implements Serializable {
          * 国家中文
          */
         private String countryName;
+    }
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FeignDTO {
+
+        /**
+         * 第三方仓库id
+         */
+        private String overseasProviderWarehouseId;
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 第三方仓库编码
+         */
+        private String platformWarehouseCode;
+        /**
+         * 第三方仓库名称
+         */
+        private String platformWarehouseName;
+
+        /**
+         * ERP系统仓库id
+         */
+        private String warehouseId;
+        /**
+         * ERP系统仓库
+         */
+        private String warehouseCode;
+        /**
+         * ERP系统仓库
+         */
+        private String warehouseName;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
     }
 }

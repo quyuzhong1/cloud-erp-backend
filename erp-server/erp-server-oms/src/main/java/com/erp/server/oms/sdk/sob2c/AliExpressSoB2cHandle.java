@@ -12,10 +12,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -71,6 +68,11 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
+
+    @Resource
+    private SoB2cDetailService soB2cDetailService;
+    @Resource
+    private SoB2cService soB2cService;
 
     @Override
     public Boolean handleRule(SoB2cEntity mainEntity) {

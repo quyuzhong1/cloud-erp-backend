@@ -33,6 +33,12 @@ public class ListingInfoParamDTO {
      */
     private List<String> skuIdList;
 
+
+    /**
+     * 平台sku ID列表
+     */
+    private List<String> platformSkuIdList;
+
     /**
      * 平台
      */

@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum FmDeclareSourceTypeEnum implements EnumMessage {
     FBA_SHIPMENT("fbaShipment", "FBA仓"),
-    OVERSEAS_DELIVERY_PLAN("overseasDeliveryPlan", "第三方仓")
+    DELIVERY_PLAN("deliveryPlan", "第三方仓")
     ;
 
     /**

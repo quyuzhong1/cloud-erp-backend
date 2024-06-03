@@ -34,7 +34,7 @@ public class HttpLogInterceptor implements Interceptor {
             body = buffer.readString(charset);
         }
 
-        log.info("发送请求: method：{}\nurl：{}\n请求头：{}请求参数: {}", request.method(), request.url(), request.headers(), body);
+        log.error("发送请求: method：{}\nurl：{}\n请求头：{}\n请求参数: {}", request.method(), request.url(), request.headers(), body);
 
         long startNs = System.nanoTime();
         Response response = chain.proceed(request);
@@ -57,7 +57,7 @@ public class HttpLogInterceptor implements Interceptor {
             }
         }
         rBody = buffer.clone().readString(charset);
-        log.info("收到响应: 耗时:{} ms code:{}\n请求url：{}\n请求body：{}\n 响应结果: {}",tookMs, response.code(), response.request().url(), body, rBody);
+        log.error("收到响应: code:{}\n请求url：{}\n请求body：{}\nResponse: {}", response.code(), response.request().url(), body, rBody);
         return response;
     }
 }

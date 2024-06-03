@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.dto.PlatformOtherOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.core.controller.vo.ApiResult;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -18,4 +19,11 @@ public interface WmsAmazonFeign {
     @PostMapping("/feign/amz/soOutStock/consumer")
     ApiResult<?> consumerSoOutStock(@RequestBody PlatformSoOutStockDTO currentDTO);
 
+
+    /**
+     * 直接消费其他出库单
+     * @author Jim
+     */
+    @PostMapping("/feign/amz/otherOutStock/consumer")
+    ApiResult<?> consumerOtherSoOutStock(@RequestBody PlatformOtherOutStockDTO msg);
 }

@@ -132,6 +132,8 @@ public interface BusinessNoConstant {
     String ZZBG = "ZZBG";
     // 组包预报
     String ZB = "ZB";
+    // 多渠道订单
+    String DQDD = "DQDD";
     //虚拟仓
     String XNC = "XNC";
 }

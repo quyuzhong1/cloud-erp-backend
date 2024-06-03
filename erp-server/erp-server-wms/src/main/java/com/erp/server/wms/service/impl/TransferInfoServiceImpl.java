@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -57,8 +59,11 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
+import com.erp.server.wms.mapper.TransferInfoDetailMapper;
 import com.erp.server.wms.mapper.TransferInfoMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -76,6 +81,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -139,6 +145,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Autowired
     private DmpMqFeign dmpMqFeign;
 
+    @Resource
+    private SyncWdtOtherInStockService wdtOtherInStockService;
+
+    @Resource
+    private SyncWdtOtherOutStockService wdtOtherOutStockService;
+
+    @Resource
+    private TransferInfoDetailMapper transferInfoDetailMapper;
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -497,6 +511,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (isSyncKingDee) {
                 //审核发送金蝶
                 sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+                //同时发送旺店通
+                list.forEach(item -> syncApproveInfoToWdt(item, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
@@ -523,6 +539,143 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个直接调拨单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "审核操作");
     }
 
+    /**
+     * 直接调拨单审核通过时将数据同步给旺店通
+     *
+     * @param entity 直接调拨单主数据
+     * @param operateCode 操作代码: 审核/反审核
+     * @date: 2024-05-17
+     * @author: tanmujin
+     */
+    private void syncApproveInfoToWdt(TransferInfoEntity entity, String operateCode) {
+        //查询直接调拨单明细数据
+        List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailService.listByMainId(entity.getId());
+
+        //转换成出库单
+        HashMap<String, BigDecimal> outSkuMap = new HashMap<>();
+        transferDetailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getOutWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
+                    outSkuMap.put(key, BigDecimal.valueOf(collect));
+                });
+        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+        outSkuMap.forEach((key, value) -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            outGoodsList.add(goods);
+        });
+
+        //转换成入库单
+        HashMap<String, BigDecimal> inSkuMap = new HashMap<>();
+        transferDetailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getInWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
+                    inSkuMap.put(key, BigDecimal.valueOf(collect));
+                });
+        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
+        inSkuMap.forEach((key, value) -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            inGoodsList.add(goods);
+        });
+
+        //推送其他出库单给旺店通
+        String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+        String outWarehouseId = transferDetailList.get(0).getOutWarehouseId();
+        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
+        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
+
+        //推送其他入库单给旺店通
+        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+        String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
+        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
+        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(outDmpPushTask, inDmpPushTask));
+            }
+        });
+    }
+
+    /**
+     * 反审核的调拨单转换成调出仓的其他入库单、调入仓的其他出库单同步至旺店通
+     * @param entity 直接调拨单主数据
+     * @date: 2024-05-17
+     * @author: tanmujin
+     */
+    private void syncDisApproveInfoToWdt(TransferInfoEntity entity, String operateCode) {
+        //查询直接调拨单明细数据
+        List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailService.listByMainId(entity.getId());
+        if(transferDetailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+
+        //其他入库单
+        HashMap<String, BigDecimal> inSkuMap = new HashMap<>();
+        transferDetailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getInWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
+                    inSkuMap.put(key, BigDecimal.valueOf(collect));
+                });
+        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
+        inSkuMap.forEach((key, value) -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            inGoodsList.add(goods);
+        });
+
+        //其他出库单
+        HashMap<String, BigDecimal> outSkuMap = new HashMap<>();
+        transferDetailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getOutWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
+                    outSkuMap.put(key, BigDecimal.valueOf(collect));
+                });
+        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+        outSkuMap.forEach((key, value) -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            outGoodsList.add(goods);
+        });
+
+        //推送其他出库单给旺店通
+        String outWarehouseId = transferDetailList.get(0).getInWarehouseId();
+        String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
+        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
+
+        //推送其他入库单给旺店通
+        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+        String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
+        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
+        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(outDmpPushTask, inDmpPushTask));
+            }
+        });
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -547,6 +700,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if(isPushKingDee){
             //反审核发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            //发送旺店通
+            list.forEach(obj -> syncDisApproveInfoToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
 
         //发送马帮（非马帮平台的才需要推送）

@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -333,7 +334,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         BeanMapperUtils.copy(entity, vo);
         vo.setIsSupper(entity.getIsSuper());
         //判断是否是超级管理员登录
-        SysUserDTO sysUserDTO = adminLogin(vo);
+        SysUserDTO sysUserDTO = adminLogin(vo,dto.getUserType());
         if (sysUserDTO != null) {
             return sysUserDTO;
         }
@@ -343,7 +344,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
         List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds,dto.getUserType());
         List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds,MathUtil.ONE,dto.getUserType());
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE,dto.getUserType());
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
         vo.setLeftMenuList(leftMenuList);
@@ -363,9 +364,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (!vo.getUserAccount().equals(SysConstant.ADMIN_USER)) {
             return null;
         }
-        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll();
-        List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
+        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll(vo.getUserType());
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll(vo.getUserType());
+        List<String> permissionList = sysRoleMenuService.findMenuCodeAll(vo.getUserType());
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(menuAll);
         vo.setLeftMenuList(leftMenuList);
@@ -374,13 +375,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return vo;
     }
 
-    public SysUserDTO adminLogin(SysUserDTO vo) {
+    public SysUserDTO adminLogin(SysUserDTO vo,String userType) {
         if (!vo.getUserAccount().equals(SysConstant.ADMIN_USER)) {
             return null;
         }
-        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll(MathUtil.ONE);
-        List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
+        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll(userType);
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll(MathUtil.ONE, userType);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeAll(userType);
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(menuAll);
         vo.setLeftMenuList(leftMenuList);
@@ -545,6 +546,30 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     /**
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
+     */
+    @Override
+    public PagingVO<UserSelectDto.PageSelectDTO> pagingSelect(PagingDTO<UserSelectDto.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<UserSelectDto.PageSelectDTO> pageData = this.baseMapper.pagingSelect(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        Integer notState = SysConstant.NO_STATE;
+        LoginUser loginUser = UserContext.getLoginUser();
+
+        pageData.getRecords().forEach(item -> {
+            Integer userState = item.getUserState();
+            item.setDisabled(notState.equals(userState));
+            item.setIsMyState(Objects.nonNull(loginUser) && Objects.equals(loginUser.getUid(), item.getUserId()) ? 1 : 0);
+        });
+        return new PagingVO<>(pageData);
+    }
+
+    /**
      * 设置登录ip
      *
      * @param dto
@@ -639,9 +664,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String uid = userEntity.getUid();
 
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds,UserTypeEnum.ERP.code);
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds,MathUtil.ONE,UserTypeEnum.ERP.code);
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
+        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds,userEntity.getUserType());
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds,MathUtil.ONE,userEntity.getUserType());
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE,userEntity.getUserType());
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
         vo.setLeftMenuList(leftMenuList);
@@ -899,7 +924,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserAccount, account)
-                .eq(SysUserInfoEntity::getUserType, userType)
+                .eq(StringUtils.isNotBlank(userType), SysUserInfoEntity::getUserType, userType)
                 .eq(SysUserInfoEntity::getDeleteState, 1);
         queryWrapper.last("LIMIT 1");
         SysUserInfoEntity entity = this.getOne(queryWrapper);
@@ -1173,7 +1198,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
         List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds, entity.getUserType());
         List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds, entity.getUserType());
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE,entity.getUserType());
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
         vo.setLeftMenuList(leftMenuList);

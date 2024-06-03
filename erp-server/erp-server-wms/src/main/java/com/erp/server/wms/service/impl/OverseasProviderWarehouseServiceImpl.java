@@ -1,18 +1,29 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.dto.ThirdShopDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -45,10 +57,12 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Resource
     private OverseasProviderService overseasProviderService;
-
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
     /**
     * 修改
     */
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(OverseasProviderDTO.UpdateDTO updateDTO, String mainId) {
@@ -60,9 +74,40 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         boolean save = this.updateBatchById(list);
         if(!save) {
             throw new ServiceException("海外物流商仓库保存失败");
+        }else {
+            //第三方映射绑定
+            addThirdMapping(updateDTO, list);
         }
-
         return Boolean.TRUE;
+    }
+
+    /**
+     * 第三方映射绑定
+     * @param updateDTO
+     * @param list
+     */
+    private void addThirdMapping(OverseasProviderDTO.UpdateDTO updateDTO, List<OverseasProviderWarehouseEntity> list) {
+        ThirdMappingDTO.FeignMappingDTO feignMappingDTO = new ThirdMappingDTO.FeignMappingDTO();
+        List<ThirdMappingDTO.ThirdAddDTO> addDTOList = new ArrayList<>();
+        list.forEach(item -> {
+            if (StringUtils.isNotBlank(item.getWarehouseId()) && Objects.equals(item.getDisabled(), false)) {
+                //绑定第三方配置关系
+                ThirdMappingDTO.ThirdAddDTO addDTO = new ThirdMappingDTO.ThirdAddDTO();
+                addDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
+                addDTO.setSysId(item.getWarehouseId());
+                addDTO.setSysCode(item.getWarehouseCode());
+                addDTO.setSysName(item.getWarehouseName());
+                addDTO.setSysType(updateDTO.getCode());
+                addDTO.setThirdId(item.getId());
+                addDTO.setThirdCode(item.getPlatformWarehouseCode());
+                addDTO.setThirdName(item.getPlatformWarehouseName());
+                addDTOList.add(addDTO);
+            }
+        });
+        feignMappingDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
+        feignMappingDTO.setThirdSysType(updateDTO.getCode());
+        feignMappingDTO.setAddDTOList(addDTOList);
+        dmpThirdMappingFeign.batchAdd(feignMappingDTO);
     }
 
     @Override
@@ -129,6 +174,16 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         return providerEntity;
     }
 
+    @Override
+    public PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(PagingDTO<OverseasProviderWarehouseDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ThirdWarehouseDTO.PageSelectDTO> pageData = this.baseMapper.pagingSelect(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        return new PagingVO<>(pageData);
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -158,7 +213,8 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 if (warehouseCount > 1) {
                     throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
                 }
-                long count = overseasProviderWarehouseEntities.stream().filter(req -> req.getWarehouseId().equals(detailEntity.getWarehouseId())).count();
+                long count = overseasProviderWarehouseEntities.stream().filter(req -> !req.getDisabled()
+                        && req.getWarehouseId().equals(detailEntity.getWarehouseId()) && !Objects.equals(req.getMainId(), mainId)).count();
                 if (count > 1) {
                     throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
                 }
@@ -177,5 +233,19 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             }
         }
 
+    }
+    @Override
+    public Boolean feignBind(OverseasProviderDTO.FeignDTO feignDTO) {
+        OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = new OverseasProviderWarehouseEntity();
+        overseasProviderWarehouseEntity.setWarehouseId(feignDTO.getWarehouseId());
+        overseasProviderWarehouseEntity.setWarehouseName(feignDTO.getWarehouseName());
+        overseasProviderWarehouseEntity.setId(feignDTO.getOverseasProviderWarehouseId());
+        overseasProviderWarehouseEntity.setWarehouseCode(feignDTO.getWarehouseCode());
+        overseasProviderWarehouseEntity.setDisabled(feignDTO.getDisabled());
+        int flag = baseMapper.updateById(overseasProviderWarehouseEntity);
+        if (flag<=0){
+            throw new ServiceException(ApiError.ERROR_BINDING);
+        }
+        return Boolean.TRUE;
     }
 }

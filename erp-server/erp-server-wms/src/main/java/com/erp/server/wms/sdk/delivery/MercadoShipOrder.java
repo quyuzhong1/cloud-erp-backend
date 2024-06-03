@@ -53,6 +53,7 @@ public class MercadoShipOrder implements IPlatformService {
         mercadoSdkClientService.shipOrder(shipOrderDTO);
     }
 
+
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
         return null;

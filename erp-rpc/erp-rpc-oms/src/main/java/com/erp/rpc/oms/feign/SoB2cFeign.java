@@ -112,9 +112,6 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/orderShipped")
     Boolean orderShipped(@RequestBody String soId);
 
-
-
-
     /**
      * 根据b2c订单id查询详情信息
      *
@@ -461,7 +458,7 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2cError/deleteAll")
     void checkAndDeleteAllError(@RequestBody SoB2cErrorDTO.DeleteDetailDTO deleteDTO);
-
+    
     /**
      * 修改速卖通订单仓库
      * @Author Luo_WG

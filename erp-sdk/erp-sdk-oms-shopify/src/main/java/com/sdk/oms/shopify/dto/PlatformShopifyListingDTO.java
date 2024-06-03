@@ -76,10 +76,10 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
             imageUrl = StringUtils.isBlank(sourceProduct.getImage().getSource()) ? "" : sourceProduct.getImage().getSource();
         }
         // 规格的图片不为空查询
-        if (StringUtils.isNotBlank(variant.getImageId())) {
+        if (CollectionUtils.isNotEmpty(sourceProduct.getImages()) && StringUtils.isNotBlank(variant.getImageId())) {
             // 找到对应ImageId的图片
             Image currentImage = sourceProduct.getImages().stream()
-                    .filter(e -> e.getId().equalsIgnoreCase(variant.getImageId()))
+                    .filter(e -> null != e.getId() && e.getId().equalsIgnoreCase(variant.getImageId()))
                     .findFirst().orElse(null);
             if (null != currentImage) {
                 imageUrl = currentImage.getSource();

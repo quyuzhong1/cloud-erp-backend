@@ -1,7 +1,6 @@
 package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -39,4 +38,6 @@ public interface OverseasProviderMapper extends BaseMapper<OverseasProviderEntit
      * @Date 2023/11/29
      */
     List<OverseasProviderDTO.ListWithWarehouseDTO> selectListWithWarehouse(Boolean notEmptyWarehouseId);
+
+    OverseasProviderDTO.FeignDTO getOverseasWarehouse(@Param("params") OverseasProviderDTO.FeignDTO params);
 }

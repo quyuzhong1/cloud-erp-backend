@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -152,6 +153,7 @@ public class SoOutstockFeignController {
     Boolean generateB2cSoOutstockByPlatformData(@RequestBody List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO) {
         return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO);
     }
+
     /**
      * 生成B2C销售出库单
      * @param generateB2cDTO
