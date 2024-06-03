@@ -1070,7 +1070,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             return new InventoryDTO.PdaInventoryWarehousePageDTO<>();
         }
         //仓位信息查询
-
+//        warehouseLocationService.f
         //库存信息
         InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
@@ -1084,10 +1084,40 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
         paramDTO.setFilterSelfAddFlag(params.isFilterSelfAddFlag());
-        IPage<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOPage = baseMapper.pageInventoryWarehouseByParam(query,paramDTO);
-        InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryWarehouseDTO> result = new InventoryDTO.PdaInventoryWarehousePageDTO<>(warehouseDTOPage);
+        IPage<InventoryDTO.PdaInventoryWarehouseDTO> page = baseMapper.pageInventoryWarehouseByParam(query,paramDTO);
+        //填充基础信息
+        buildWarehouseInfo(page.getRecords());
+        InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryWarehouseDTO> result = new InventoryDTO.PdaInventoryWarehousePageDTO<>(page);
         //TODO 仓位信息回填
-//        result.setWarehouseId();
+        result.setWarehouseCode(params.getWarehouseLocation());
+        //汇总仓位实际库存/可用库存/冻结库存数量
+        List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList1 = baseMapper.listInventoryWarehouseByParam(paramDTO);
+        result.setRealTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getRealQty)
+                .filter(Objects::nonNull).reduce(0, Integer::sum));
+        result.setProductQty((int) warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getSkuId)
+                .filter(Objects::nonNull).distinct().count());
         return result;
+    }
+
+    /**
+     * 填充基础信息
+     * @param records
+     */
+    private void buildWarehouseInfo(List<InventoryDTO.PdaInventoryWarehouseDTO> records) {
+        if (CollectionUtils.isEmpty(records)){
+            return;
+        }
+        List<String> skuIds = records.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuBaseByIds(skuIds);
+        List<String> warehouseIds = records.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
+        records.forEach(pdaInventoryWarehouseDTO -> {
+            SkuVO skuVO = skuVOList.stream().filter(e -> StringUtils.isNotBlank(pdaInventoryWarehouseDTO.getSkuId()) && pdaInventoryWarehouseDTO.getSkuId().equals(e.getSkuId()))
+                    .findFirst().orElse(new SkuVO());
+            pdaInventoryWarehouseDTO.setSkuName(skuVO.getSkuName());
+            WarehouseEntity warehouseEntity = warehouseList.stream().filter(e -> StringUtils.isNotBlank(pdaInventoryWarehouseDTO.getWarehouseId()) && pdaInventoryWarehouseDTO.getWarehouseId().equals(e.getId()))
+                    .findFirst().orElse(new WarehouseEntity());
+            pdaInventoryWarehouseDTO.setWarehouseName(warehouseEntity.getName());
+        });
     }
 }

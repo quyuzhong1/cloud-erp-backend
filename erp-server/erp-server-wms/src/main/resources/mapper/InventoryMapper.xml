@@ -709,9 +709,5 @@
         inv.sku_no,
         inv.dict_inventory_status
     </select>
-    <select id="pageInventoryWarehouseByWarehouse"
-            resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehousePageDTO">
-        <include refid="inventoryWarehouseByWarehouse"/>
-    </select>
 
 </mapper>
