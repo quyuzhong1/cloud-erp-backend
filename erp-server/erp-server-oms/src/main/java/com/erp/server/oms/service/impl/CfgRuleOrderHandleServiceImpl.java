@@ -342,8 +342,8 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         receiverInfoVO.setProvince(null);
                         break;
                     case CUSTOM_REPLACE:
-                        if (StringUtils.isNotBlank(receiverInfoVO.getProvince()) && StringUtils.isNotBlank(addressHandleContent.getProvinceWaitReplaceText()) && StringUtils.isNotBlank(addressHandleContent.getProvinceReplaceText())) {
-                            receiverInfoVO.setProvince(receiverInfoVO.getProvince().replace(addressHandleContent.getProvinceWaitReplaceText(), addressHandleContent.getProvinceReplaceText()));
+                        if (StringUtils.isNotBlank(receiverInfoVO.getProvince()) && StringUtils.isNotBlank(addressHandleContent.getProvinceWaitReplaceText()) && receiverInfoVO.getProvince().equals(addressHandleContent.getProvinceWaitReplaceText())) {
+                            receiverInfoVO.setProvince(addressHandleContent.getProvinceReplaceText());
                         }
                         break;
                     default:
@@ -364,8 +364,8 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         receiverInfoVO.setCity(null);
                         break;
                     case CUSTOM_REPLACE:
-                        if (StringUtils.isNotBlank(receiverInfoVO.getCity()) && StringUtils.isNotBlank(addressHandleContent.getCityWaitReplaceText()) && StringUtils.isNotBlank(addressHandleContent.getCityReplaceText())) {
-                            receiverInfoVO.setCity(receiverInfoVO.getCity().replace(addressHandleContent.getCityWaitReplaceText(), addressHandleContent.getCityReplaceText()));
+                        if (StringUtils.isNotBlank(receiverInfoVO.getCity()) && StringUtils.isNotBlank(addressHandleContent.getCityWaitReplaceText()) && receiverInfoVO.getCity().equals(addressHandleContent.getCityWaitReplaceText())) {
+                            receiverInfoVO.setCity(addressHandleContent.getCityReplaceText());
                         }
                         break;
                     default:
