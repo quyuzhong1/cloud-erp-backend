@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import lombok.AllArgsConstructor;
@@ -10,8 +11,10 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 仓位请求响应实体
@@ -282,10 +285,10 @@ public class WarehouseLocationDTO implements Serializable {
 
     }
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = true)
-    public static class SearchParamDTO extends SortDTO {
+    public static class SearchParamDTO extends SortDTO{
         /**
          * 仓位编码
          */
@@ -319,7 +322,17 @@ public class WarehouseLocationDTO implements Serializable {
         /**
          * 更新时间
          */
-        private List<LocalDateTime> updateTimeList;
+        private LocalDate updateTime;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
 
     }
 
@@ -431,14 +444,14 @@ public class WarehouseLocationDTO implements Serializable {
         private String warehouseAreaName;
 
         /**
-         * 仓位状态
+         * 仓位状态：idle可分配，occupied被占用，recyclable可回收
          */
         private String status;
 
         /**
          * 启用状态：false启用，true禁用
          */
-        private String disabled;
+        private Boolean disabled;
 
         /**
          * 备注
@@ -454,6 +467,11 @@ public class WarehouseLocationDTO implements Serializable {
          * 更新时间
          */
         private String updateTime;
+
+        /**
+         * 数据统计
+         */
+        private Integer count;
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -484,11 +502,12 @@ public class WarehouseLocationDTO implements Serializable {
     @AllArgsConstructor
     public static class tabDto{
         /**
-         * tab名称
+         * 类型：idle可分配，occupied被占用，recyclable可回收，all全部
          */
-        private String name;
+        private String tabFlag;
+
         /**
-         * 统计数量
+         * 数量
          */
         private Integer count;
     }

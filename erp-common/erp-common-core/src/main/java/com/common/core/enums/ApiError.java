@@ -1004,7 +1004,7 @@ public enum ApiError implements Serializable {
 
     WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
     POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除或禁用"),
-    WAREHOUSE_LOCATION_EXIST(92144, "仓位{}已存在，无法新增"),
+    WAREHOUSE_LOCATION_EXIST(92144, "仓位{}已存在"),
 
 
 

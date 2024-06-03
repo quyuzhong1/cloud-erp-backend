@@ -184,9 +184,18 @@
         <if test="params.updateUserName != null and params.updateUserName != ''">
             AND wl.update_user_name = #{params.updateUserName}
         </if>
-        <if test="params.updateTimeList != null and params.updateTimeList.length > 0">
-            AND wl.update_time between #{params.updateTimeList[0]} and #{params.updateTimeList[1]}
+        <!--<if test="params.updateTime != null">
+            AND wl.update_time >= concat(#{params.updateTime},' 00:00:00') and wl.update_time &lt;= concat(#{params.updateTime},' 23:59:59')
+        </if>-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        order by wl.update_time desc
     </select>
     <select id="listByIds" resultType="com.erp.model.wms.vo.WarehouseLocationExportVo">
         select T.id,

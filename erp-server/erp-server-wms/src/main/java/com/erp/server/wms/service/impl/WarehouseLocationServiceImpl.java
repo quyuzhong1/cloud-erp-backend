@@ -42,6 +42,9 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -51,6 +54,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -694,30 +699,53 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq("type", "location")
                 .eq("is_deleted", false)
                 .eq("status", WarehouseLocationStatusEnum.OCCUPIED.getCode()));
-        WarehouseLocationDTO.tabDto occupied = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.OCCUPIED.getName(), occupiedCount);
+        WarehouseLocationDTO.tabDto occupied = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.OCCUPIED.getCode(), occupiedCount);
         list.add(occupied);
 
         Integer recyclableCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("type", "location")
                 .eq("is_deleted", false)
                 .eq("status", WarehouseLocationStatusEnum.RECYCLABLE.getCode()));
-        WarehouseLocationDTO.tabDto recyclable = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.RECYCLABLE.getName(), recyclableCount);
+        WarehouseLocationDTO.tabDto recyclable = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.RECYCLABLE.getCode(), recyclableCount);
         list.add(recyclable);
 
         Integer idleCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("type", "location")
                 .eq("is_deleted", false)
                 .eq("status", WarehouseLocationStatusEnum.IDLE.getCode()));
-        WarehouseLocationDTO.tabDto idle = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.IDLE.getName(), idleCount);
+        WarehouseLocationDTO.tabDto idle = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.IDLE.getCode(), idleCount);
         list.add(idle);
 
         Integer allCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("type", "location")
                 .eq("is_deleted", false)
                 .ne("status", WarehouseLocationStatusEnum.STOP.getCode()));
-        WarehouseLocationDTO.tabDto all = new WarehouseLocationDTO.tabDto("全部", allCount);
+        WarehouseLocationDTO.tabDto all = new WarehouseLocationDTO.tabDto("all", allCount);
         list.add(all);
 
         return list;
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/warehouseLocation.xlsx";
+        String excelName = "template.xlsx";
+
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
