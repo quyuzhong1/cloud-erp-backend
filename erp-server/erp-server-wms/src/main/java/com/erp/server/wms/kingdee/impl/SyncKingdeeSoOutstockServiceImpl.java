@@ -625,7 +625,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (OrderTypeEnum.B2B.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soOutstockEntity.getSoId());
             if (Objects.isNull(soInfoEntity)) {
-                throw new ServiceException(ApiError.NO_PERMISSION.code, "获取原始B2B订单异常:[" + soOutstockEntity.getSoId() + "]");
+                log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2B订单异常:[" + soOutstockEntity.getSourceId() + "]");
             }
 
             soId = soInfoEntity.getId();
@@ -677,7 +677,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
             SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSoId());
             if (Objects.isNull(view)) {
-                throw new ServiceException(ApiError.NO_PERMISSION.code, "获取原始B2C订单异常:[" + soOutstockEntity.getSourceId() + "]");
+                log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2C订单异常:[" + soOutstockEntity.getSourceId() + "]");
             }
             soId = view.getId();
             soCode = view.getCode();
