@@ -577,6 +577,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("id", entity.getId());
         resultMap.put("operate", syncOperate);
         DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity = this.outStockDataConvert(entity);
+        if (ObjectUtil.isNull(dmpDeliveryDetailInfoEntity)){
+            return;
+        }
         resultMap.put("entity", dmpDeliveryDetailInfoEntity);
 
 
@@ -626,6 +629,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soOutstockEntity.getSoId());
             if (Objects.isNull(soInfoEntity)) {
                 log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2B订单异常:[" + soOutstockEntity.getSourceId() + "]");
+                return null;
             }
 
             soId = soInfoEntity.getId();
@@ -678,6 +682,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSoId());
             if (Objects.isNull(view)) {
                 log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2C订单异常:[" + soOutstockEntity.getSourceId() + "]");
+                return null;
             }
             soId = view.getId();
             soCode = view.getCode();
