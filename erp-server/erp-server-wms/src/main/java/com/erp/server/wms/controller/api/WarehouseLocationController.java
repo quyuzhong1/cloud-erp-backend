@@ -1058,6 +1058,9 @@ public class WarehouseLocationController extends BaseController {
         return ApiResult.success();
     }
 
+    /**
+     * 仓位管理tab接口
+     */
     @GetMapping("/tabList")
     public ApiResult<List<WarehouseLocationDTO.tabDto>> tabList(){
         return ApiResult.success(warehouseLocationService.tabList());
