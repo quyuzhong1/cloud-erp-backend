@@ -5,22 +5,24 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
-import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.TransactionFlowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 库存报表管理
@@ -245,4 +247,15 @@ public class InventoryController extends BaseController {
     public void exportDailyInventory(@RequestBody InventoryReportDTO.DailyInventoryParamDTO dto, HttpServletResponse response) {
         transactionFlowService.exportDailyInventory(dto, response);
     }
+
+    /**
+     * 通过sku获取库位库存（推荐库位）
+     * @param skus sku
+     */
+    @PostMapping("/listLocationInventoryBySkus")
+    public ApiResult<Map<String, List<InventoryDTO.LocationInventory>>> listLocationInventoryBySkus(@RequestBody List<String> skus){
+        Map<String, List<InventoryDTO.LocationInventory>> locationInventoryMap = inventoryService.listLocationInventoryBySkus(skus);
+        return ApiResult.success(locationInventoryMap);
+    }
+
 }

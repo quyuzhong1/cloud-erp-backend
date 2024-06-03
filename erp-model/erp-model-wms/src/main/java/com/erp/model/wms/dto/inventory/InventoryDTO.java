@@ -3,7 +3,9 @@ package com.erp.model.wms.dto.inventory;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -1513,4 +1515,16 @@ public class InventoryDTO implements Serializable {
         private Integer frozenQty;
     }
 
+    @Getter
+    @Setter
+    public static class LocationInventory {
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+    }
 }

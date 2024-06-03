@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -62,7 +63,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1018,5 +1018,23 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
         return viewList;
+    }
+
+    @Override
+    public Map<String, List<InventoryDTO.LocationInventory>> listLocationInventoryBySkus(List<String> skus) {
+        if (CollectionUtils.isEmpty(skus)) {
+            return Collections.emptyMap();
+        }
+        List<InventoryEntity> inventoryEntities = list(Wrappers.<InventoryEntity>lambdaQuery()
+                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                .in(InventoryEntity::getSkuNo, skus));
+        return inventoryEntities.stream()
+                .collect(Collectors.groupingBy(InventoryEntity::getSkuNo, Collectors.collectingAndThen(Collectors.toList(), e -> e.stream()
+                        .map(v -> {
+                            InventoryDTO.LocationInventory inventory = new InventoryDTO.LocationInventory();
+                            inventory.setWarehouseLocation(v.getWarehouseLocation());
+                            inventory.setUsableQty(v.getQty());
+                            return inventory;
+                        }).collect(Collectors.toList()))));
     }
 }
