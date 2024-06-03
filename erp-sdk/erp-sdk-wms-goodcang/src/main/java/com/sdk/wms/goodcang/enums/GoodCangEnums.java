@@ -2,6 +2,7 @@ package com.sdk.wms.goodcang.enums;
 
 
 import com.common.business.enums.OverseasInstockStatusEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasCustomsTypeNewEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
@@ -434,18 +435,17 @@ public enum GoodCangEnums {
      */
     @Getter
     public enum OrderStatusEnum {
-        TO_BE_SHIPPED("W","待发货","waitShipped"),
-        SHIPPED("D","已发货","shipped"),
-        ABNORMAL("N","异常订单",null),
-        PROBLEM("P","问题件",null),
+        TO_BE_SHIPPED("W","待发货",SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
+        SHIPPED("D","已发货",SoB2cBillStatusEnum.ENUM_SHIPPED),
+        ABNORMAL("N","异常订单",SoB2cBillStatusEnum.ENUM_EXCEPTION),
+        PROBLEM("P","问题件", null),
         REMOVED("X","已删除",null),
         ;
         private final String code;
         private final String name;
-        //本来应该是引用枚举SoB2cBillStatusEnum，但是枚举不在common包下，引包会导致循环依赖
-        private final String erpSoStatus;
+        private final SoB2cBillStatusEnum erpSoStatus;
 
-        OrderStatusEnum(String code, String name,String erpSoStatus) {
+        OrderStatusEnum(String code, String name,SoB2cBillStatusEnum erpSoStatus) {
             this.code = code;
             this.name = name;
             this.erpSoStatus = erpSoStatus;
@@ -456,7 +456,8 @@ public enum GoodCangEnums {
                     .filter(item -> code.equals(item.getCode()))
                     .findFirst()
                     .map(OrderStatusEnum::getErpSoStatus)
-                    .orElse(null);
+                    .map(SoB2cBillStatusEnum::getCode)
+                    .orElse(code);
         }
 
         public static String getName(String code){

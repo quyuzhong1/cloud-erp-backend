@@ -50,8 +50,8 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.OperateLogEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -106,11 +106,6 @@ import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
-import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
-import com.sdk.oms.tiktok.dto.tiktok.split.PackagesBean;
-import com.sdk.oms.tiktok.dto.tiktok.split.PlatformSplitViewDTO;
-import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesBean;
-import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -5611,7 +5606,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cErrorService.deleteByCodeAndType(dto.getSoCode(), SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
         return this.lambdaUpdate().eq(StringUtils.isNotBlank(dto.getSoCode()), SoB2cEntity::getCode, dto.getSoCode()).
                 set(isShipped, SoB2cEntity::getSignOrderError, "").
-                set(SoB2cEntity::getBillStatus, billStatus).
+                set(StringUtils.isNotBlank(billStatus),SoB2cEntity::getBillStatus, billStatus).
                 update(new SoB2cEntity());
     }
 

@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.BusinessNoConstant;
@@ -16,8 +17,10 @@ import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -33,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.json.JsonObject;
 import java.util.Objects;
 
 /**
@@ -124,7 +128,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
         updateStatus.setSoCode(soB2cCode);
         updateStatus.setSoId(mainEntity.getId());
-        updateStatus.setBillStatus(billStatus);
+        if (!SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode().equals(dto.getOrderStatus())){
+            updateStatus.setBillStatus(billStatus);
+        }
         updateStatus.setTrackNo(dto.getTrackNo());
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
@@ -139,6 +145,18 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     mainEntity.getDictPlatform(),
                     JSONUtil.toJsonStr(dto),
                     businessDesc, false);
+        }
+        if (SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode().equals(dto.getOrderStatus())) {
+            //更新异常订单信息
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
+                    mainEntity.getId(),
+                    SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode(),
+                    null,
+                    dto.getAbnormalProblemReason(),
+                    JSONUtil.toJsonStr(dto),
+                    ""
+            );
+            soB2cFeign.addSoB2cError(addError);
         }
         return ApiResult.success();
     }
