@@ -6018,9 +6018,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Async
     public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
-        Map<String, Boolean> orderRule = this.approveRule(id, detailList, map);
-        Boolean isMatch = orderRule.getOrDefault("isMatch", Boolean.FALSE);
-        Boolean isPass = orderRule.getOrDefault("isPass", Boolean.FALSE);
+//        Map<String, Boolean> orderRule = this.approveRule(id, detailList, map);
+//        Boolean isMatch = orderRule.getOrDefault("isMatch", Boolean.FALSE);
+//        Boolean isPass = orderRule.getOrDefault("isPass", Boolean.FALSE);
+        SoB2cDTO.RuleResultDTO ruleResultDTO = this.orderRule(id);
+        Boolean isMatch = ruleResultDTO.getIsRuleMatch();
+        Boolean isPass = ruleResultDTO.getIsPass();
         if (isMatch && isPass) {
             SoB2cDTO.RuleResultDTO warehouseRuleResult = this.warehouseRule(id, detailList, map);
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
