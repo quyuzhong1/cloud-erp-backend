@@ -3,19 +3,23 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -30,13 +34,11 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.convert.PackingInspectConverter;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.PackingInspectionService;
-import com.erp.server.wms.service.SoB2cDeliveryDetailService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.*;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,6 +79,10 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
+    @Lazy
+    @Resource
+    private AsyncService asyncService;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -101,7 +107,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         //验证订单平台是否取消
         if (soB2cEntity.getIsCancel()) {
             //订单拦截
-            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消或退款"));
             return null;
         }
         //请求接口过慢，暂时取消 TODO
@@ -116,7 +122,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 deliveryInterceptDTO.setShopId(soB2cEntity.getShopId());
                 Boolean flag = PlatformSaveHandler.deliveryIntercept(deliveryInterceptDTO);
                 if (flag) {
-                    soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+                    soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消或退款"));
                     return null;
                 }
             }
@@ -266,20 +272,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 return viewDTO;
             }
 
-            //调用第三方平台SDK发货
-            try {
-                if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                    //调用第三方平台SDK发货
-                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                    platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                    platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                }
-            } catch (Exception e) {
-                log.error("【包装验货】销售单【{}】后:标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-                throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-            }
-
             //获取一个当前时间当作发货时间
             LocalDateTime deliveryTime = LocalDateTime.now();
 
@@ -302,6 +294,18 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
             String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "包装验货", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
+
+            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                // 调用第三方平台SDK标记发货(独立事务)
+                String businessDesc = "包装验货";
+                asyncService.asyncShipOrder(soB2cEntity.getId(),
+                        soB2cEntity.getCode(),
+                        soB2cEntity.getDictPlatform(),
+                        JSONUtil.toJsonStr(dto),
+                        businessDesc);
+            } else {
+                log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+            }
         }
         return viewDTO;
     }

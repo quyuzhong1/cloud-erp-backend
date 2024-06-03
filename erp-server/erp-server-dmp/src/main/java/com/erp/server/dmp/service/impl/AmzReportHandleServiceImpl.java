@@ -371,132 +371,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         ReportsApi reportsApi = null;
         // 查询当前报告是否是属于系统计划报告
         Report report = reportsApi.getReport(sqsEntity.getPayload().getReportProcessingFinishedNotification().getReportId());
-        this.handleReport(reportsApi, report, recordTypeEnum, null);
+//        this.handleReport(reportsApi, report, recordTypeEnum, null);
 
-    }
-
-    @Override
-    public void saveMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, AmzReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException {
-        List<?> cvsList = handleDownloadAndParse(reportDocument, recordTypeEnum, columnMap);
-        // 填充报告相关信息
-        List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
-
-        // 报告保存
-        mongoService.saveMongoData(reportInfoMongoDTO, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT);
-
-        // 填充报告来源信息
-        mongoService.saveMongoDataMult(mongoDTOSList, recordTypeEnum.getMongoTableName());
-
-    }
-
-    @Override
-    public List<?> handleDownloadAndParse(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws IOException {
-        String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
-
-        return AmazonSpApiReportUtils.downloadFromFastDFSAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass(), columnMap, recordTypeEnum.getRecordType());
-    }
-
-    @Override
-    public void updateMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, AmzReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException {
-
-        String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
-
-        List<?> cvsList = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass(), columnMap, recordTypeEnum.getRecordType());
-        // 填充报告相关信息
-        List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
-
-        // 更新报告保存
-        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(reportInfoMongoDTO), MapUtil.class);
-        ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(reportInfoMongoDTO.getId());
-        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-
-        // 填充报告来源信息
-        mongoService.saveMongoDataMult(mongoDTOSList, recordTypeEnum.getMongoTableName());
-
-        // TODO 扩展
-        if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
-        }
-    }
-
-
-    @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
-    public void saveOrUpdateAllReportFbaInventoryPlanning(ReportInfoMongoDTO mongoDTO, List<ReportFbaInventoryPlanningMongoDTO> planningMongoDTOList) {
-        // 报告保存已处理
-        mongoDTO.setReportHandleStatus(1);
-        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDTO), MapUtil.class);
-        ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(mongoDTO.getId());
-        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-
-
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws Exception {
-        if (!"DONE".equalsIgnoreCase(report.getProcessingStatus().getValue())) {
-            log.error("报告状态未完成：{}", JSONUtil.toJsonStr(report));
-            // 未完成也更新
-            ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportId(report.getReportId());
-            List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-            ReportInfoMongoDTO oldReportInfoMongoDTO = mongoData.get(0);
-            // 转换
-            ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.updateReportInfoMongoDTO(oldReportInfoMongoDTO, null, report);
-            // 更新报告保存
-            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(reportInfoMongoDTO), MapUtil.class);
-            ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(reportInfoMongoDTO.getId());
-            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-            return;
-        }
-
-        // 报告计划
-        String reportScheduleId = report.getReportScheduleId();
-        AmzReportScheduleEntity reportScheduleEntity = null;
-        // 报告计划任务
-        if (StringUtils.isNotBlank(reportScheduleId)) {
-            // 查询报告计划ID是否已存在
-            reportScheduleEntity = reportScheduleService.getByReportScheduleId(reportScheduleId);
-        }
-
-        // 校验报告
-        ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportId(report.getReportId());
-        List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-        if (null != reportScheduleEntity) {
-            // 报告计划存在, 报告记录存在忽略
-            if (CollectionUtils.isEmpty(mongoData)) {
-                // 查询报告当前链接
-                ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
-                // 转换
-                ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.newReportInfoMongoDTO(report, reportDocument, reportScheduleEntity);
-                // 保存并处理
-                this.saveMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO, columnMap);
-            }
-            return;
-        } else {
-            // 非报价计划从报告信息的主表ID 获取reportSchedule
-            if (!CollectionUtils.isEmpty(mongoData)) {
-                ReportInfoMongoDTO oldReportInfoMongoDTO = mongoData.get(0);
-                reportScheduleEntity = reportScheduleService.getById(oldReportInfoMongoDTO.getMainId());
-            }
-        }
-
-        if (null == reportScheduleEntity) {
-            log.info("非系统请求的报告ID,忽略:ReportId={}", report.getReportId());
-            return;
-        }
-
-        // 报告计划不存在, 报告记录为空忽略
-        if (CollectionUtils.isEmpty(mongoData)) {
-            return;
-        }
-        ReportInfoMongoDTO oldReportInfoMongoDTO = mongoData.get(0);
-        // 查询报告当前链接
-        ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
-        // 转换
-        ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.updateReportInfoMongoDTO(oldReportInfoMongoDTO, reportDocument, report);
-        // 更新并处理
-        this.updateMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO, columnMap);
     }
 
     @Override
@@ -632,23 +508,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         return reportDocument;
     }
 
-
-    public List<? extends ReportSuperMongoDTO> handleData(List<?> cvsList, Report report, AmazonReportRecordTypeEnum recordTypeEnum) {
-        return cvsList.stream().map(o -> {
-            try {
-                ReportSuperMongoDTO mongoDTO = (ReportSuperMongoDTO) (recordTypeEnum.getMongoDTOClass().newInstance());
-                BeanUtils.copyProperties(o, mongoDTO);
-                mongoDTO.setDataStartTime(report.getDataStartTime().toString());
-                mongoDTO.setDataEndTime(report.getDataEndTime().toString());
-                mongoDTO.setMarketplaceIds(report.getMarketplaceIds());
-                mongoDTO.setReportId(report.getReportId());
-                mongoDTO.setReportScheduleId(report.getReportScheduleId());
-                return mongoDTO;
-            } catch (Exception e) {
-                throw new ServiceException("csv转换mongoDTO失败, error=" + e.getMessage());
-            }
-        }).collect(Collectors.toList());
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

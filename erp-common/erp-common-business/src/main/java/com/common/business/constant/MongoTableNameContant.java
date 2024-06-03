@@ -182,34 +182,28 @@ public interface MongoTableNameContant {
     /**
      * 亚马逊物流管理库存状况报告
      */
-    String REPORT_AMAZON_FBA_INVENTORY_PLANNING = "report_amazon_fba_inventory_planning";
-
-
-    /**
-     * 亚马逊报表表
-     */
-    String REPORT_AMAZON_INFO = "report_amazon_info";
+    String DATA_REPORT_AMZ_FBA_INVENTORY_PLANNING = "data_report_amz_fba_inventory_planning";
 
     /**
      * 亚马逊商品报告表
      */
-    String REPORT_AMAZON_LISTING = "report_amazon_listing";
+    String DATA_REPORT_AMZ_LISTING = "data_report_amz_listing";
 
     /**
      * 亚马逊物流管理库存-已存档
      */
-    String REPORT_AMAZON_FBA_MYI_ALL_INVENTORY = "report_amazon_fba_myi_all_inventory";
+    String DATA_REPORT_AMZ_FBA_MYI_ALL_INVENTORY = "data_report_amz_fba_myi_all_inventory";
 
     /**
      * 亚马逊物流预留库存报告
      */
-    String REPORT_AMAZON_RESERVED = "report_amazon_reserved";
-
+    String DATA_REPORT_AMZ_RESERVED = "data_report_amz_reserved";
 
     /**
      * 亚马逊物流销售报告
      */
-    String REPORT_AMAZON_FULFILLED_SHIPMENTS = "report_amazon_fulfilled_shipments";
+    String DATA_REPORT_AMZ_FULFILLED_SHIPMENTS = "data_report_amz_fulfilled_shipments";
+
 
     // Shopify数据库表名
     /**

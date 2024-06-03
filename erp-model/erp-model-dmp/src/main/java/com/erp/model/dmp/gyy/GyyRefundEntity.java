@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class GyyRefundEntity extends CleanBaseDTO {
 
     /**
@@ -232,6 +231,15 @@ public class GyyRefundEntity extends CleanBaseDTO {
     private BigDecimal amount;
     @SerializedName("details")
     private List<RefundDetailsBean> details;
+
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
+    public GyyRefundEntity(Boolean isValid) {
+        this.isValid = Boolean.TRUE;
+    }
 
     @Override
     public String toString() {

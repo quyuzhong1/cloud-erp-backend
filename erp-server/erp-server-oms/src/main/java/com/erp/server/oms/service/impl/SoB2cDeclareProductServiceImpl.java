@@ -31,6 +31,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cDeclareProductMapper;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.*;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
@@ -49,6 +50,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.*;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Collections;
@@ -77,7 +80,6 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     @Autowired
     @Lazy
     private SoB2cReceiverService soB2cReceiverService;
-
     @Autowired
     @Lazy
     private SoB2cService soB2cService;

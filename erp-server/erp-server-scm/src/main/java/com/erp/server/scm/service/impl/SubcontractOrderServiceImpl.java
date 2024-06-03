@@ -129,6 +129,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+
     @Resource
     private WarehouseLocationFeign warehouseLocationFeign;
 

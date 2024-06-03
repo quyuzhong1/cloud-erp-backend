@@ -79,7 +79,7 @@ public class YanWenCreateWayBillRequest {
         private String city;
 
         //邮编
-        @NotBlank(message = "邮编不能为空")
+//        @NotBlank(message = "邮编不能为空")
         private String zipCode;
 
         //收件人邮箱

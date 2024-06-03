@@ -111,7 +111,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         List<KingdeeOrderEntity> insertList = new ArrayList<>();
         List<KingdeeOrderEntity> pushToMqList = new ArrayList<>();
         for (KingdeeOrderEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByFIdAndBillNo(entity.getFBillNo(), entity.getFId());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByFIdAndBillNo(entity.getFBillNo());
             List<KingdeeOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
@@ -123,6 +123,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             KingdeeOrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
             if (DataCompareUtil.compareObject(mongoDatum , entity)) {
+                continue;
+            }
+            //过滤无效数据
+            if (!mongoDatum.getIsValid()) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -141,7 +145,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         //判断是否需要推送MQ
         KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils();
         if (kingdeeApiUtils.notNeedPushMQ(dto.getJobTaskDTO().getLastTime())){
-            pushToMqList = pushToMqList.stream().filter(e -> CommonConstants.B2BXSDD.equals(e.getFBillTypeCode())).collect(Collectors.toList());
+            pushToMqList = pushToMqList.stream().filter(e -> !CommonConstants.B2BXSDD.equals(e.getFBillTypeCode())).collect(Collectors.toList());
         }
         // 构造订单结构
         List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
@@ -480,3 +484,4 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         return orderItemList;
     }
 }
+

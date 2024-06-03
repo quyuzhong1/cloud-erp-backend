@@ -469,6 +469,14 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
                 .collect(Collectors.toList());
         return result;
     }
+    /**
+     * 获取二级分类的列表 拼接一级名称
+     * @return
+     */
+    @Override
+    public List<BasicCategoryTreeDTO> categoryGradeDown() {
+        return baseMapper.categoryGradeDown();
+    }
 
     /**
      * list加入父级品类

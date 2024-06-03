@@ -195,26 +195,10 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private Boolean isNotMerge;
 
     /**
-     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-     */
-    @TableField("sync_kingdee_status")
-    private String syncKingdeeStatus;
-    /**
-     * 同步时间
-     */
-    @TableField("sync_kingdee_time")
-    private LocalDateTime syncKingdeeTime;
-    /**
      * 金蝶数据id
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
-    /**
-     * 同步操作
-     */
-    @TableField("sync_operate")
-    private String syncOperate;
-
 
     /**
      * 是否匹配订单规则
@@ -268,12 +252,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
 
     @TableField("extend_data")
     private String extendData;
-
-    /**
-     * 是否匹配仓库规则
-     */
-    @TableField("is_match_warehouse_rule")
-    private Boolean isMatchWarehouseRule;
 
     /**
      * 平台订单状态
@@ -348,13 +326,8 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
 
     public static final String ABNORMAL_TYPE = "abnormal_type";
 
-    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
-
-    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
-
     public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
 
-    public static final String SYNC_OPERATE = "sync_operate";
 
     @Override
     public String toString() {
@@ -389,7 +362,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
-                Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsAliexpressPlatformWarehouseOrder();
+                Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
                 if (Objects.nonNull(isAliexpressPlatformWarehouseOrder)) {
                     return isAliexpressPlatformWarehouseOrder;
                 }

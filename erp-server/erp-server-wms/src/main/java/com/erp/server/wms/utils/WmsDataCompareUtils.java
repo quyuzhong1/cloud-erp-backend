@@ -46,7 +46,9 @@ public class WmsDataCompareUtils {
 		if(CollUtil.isEmpty(excelFiles)) {
 			return dto;
 		}
+		int i = 1;
         for(String excelFile : excelFiles) {
+        	log.warn("数据对比解析第{}个文件开始：{}" , i , excelFile);
         	InputStream inputStream = null;
         	try {
 				inputStream = FastDFSClientUtil.getInputStream(excelFile);
@@ -57,7 +59,9 @@ public class WmsDataCompareUtils {
         	List<Map<String, String>> makeDataInputStream = null;
         	try {
         		makeDataInputStream = ExcelPrintUtils.makeDataInputStream(inputStream);
-			} catch (Exception e) {
+			}catch (ServiceException e) {
+				throw e;
+			}catch (Exception e) {
 				log.error("读取excel失败" , e);
 				throw new ServiceException("读取excel失败");
 			}
@@ -71,7 +75,10 @@ public class WmsDataCompareUtils {
         		dto.getHeadFieldLists().add(headFields);
         		dto.getDatas().addAll(makeDataInputStream);
         	}
+        	log.warn("数据对比解析第{}个文件结束：{}" , i , excelFile);
+        	i = i + 1;
         }
+        dto.setImportDataCount(dto.getDatas().size());
         return dto;
 	}
 	
@@ -244,7 +251,7 @@ public class WmsDataCompareUtils {
 			Workbook workbook = sheet.getWorkbook();
 			int rowIndex = cell.getRowIndex();
 			int columnIndex = cell.getColumnIndex();
-			if(currCellStyleCount > 64000) {
+			if(currCellStyleCount > 60000) {
 				return;
 			}
 			String key = rowIndex + "-" + columnIndex;

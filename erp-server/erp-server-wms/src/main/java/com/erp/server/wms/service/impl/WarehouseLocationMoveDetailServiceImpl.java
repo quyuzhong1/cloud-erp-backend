@@ -28,9 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -63,9 +61,9 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
 
         // 数据处理
         if (!addDTO.getPcShow()) {
-            handleData(warehouseLocationMoveDetailEntities, mainId, addDTO.getWarehouseId(), addDTO.getPcShow());
+            handleData(warehouseLocationMoveDetailEntities, mainId, addDTO.getWarehouseId());
         }else{
-            pcHandleData(warehouseLocationMoveDetailEntities, mainId, addDTO.getPcShow());
+            pcHandleData(warehouseLocationMoveDetailEntities, mainId);
         }
         log.info("开始新增仓位移动明细单");
         boolean save = super.saveBatch(warehouseLocationMoveDetailEntities);
@@ -98,9 +96,9 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
         List<WarehouseLocationMoveDetailEntity> list = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, dto.getDetailList());
         // 数据处理
         if (!dto.getPcShow()) {
-            handleData(list, mainId, dto.getWarehouseId(), dto.getPcShow());
+            handleData(list, mainId, dto.getWarehouseId());
         }else{
-            pcHandleData(list, mainId, dto.getPcShow());
+            pcHandleData(list, mainId);
         }
         return this.saveOrUpdateBatch(list);
     }
@@ -120,14 +118,54 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId, String warehouseId, Boolean pcShow) {
+    private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId, String warehouseId) {
         //获取仓库信息
-        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        WarehouseEntity warehouseEntity = Optional.ofNullable(warehouseService.getById(warehouseId)).orElse(new WarehouseEntity());
         for (WarehouseLocationMoveDetailEntity detailEntity : list) {
             InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
             paramDTO.setOrgId(warehouseEntity.getOrgId());
             paramDTO.setWarehouseId(warehouseId);
-            paramDTO.setSkuIds(Arrays.asList(detailEntity.getSkuId()));
+            paramDTO.setSkuIds(Collections.singletonList(detailEntity.getSkuId()));
+            if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
+                    || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
+                throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
+            }
+            paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
+            List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
+            InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
+                    && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+
+            if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
+                throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
+            }
+            detailEntity.setMainId(mainId);
+            if (StringUtils.isNotBlank(warehouseId)){
+                detailEntity.setWarehouseId(warehouseId);
+                detailEntity.setWarehouseName(warehouseEntity.getName());
+            }
+        }
+
+        //添加操作日志
+        List<String> addList = list.stream().map(WarehouseLocationMoveDetailEntity::getId).filter(StringUtils::isBlank).collect(Collectors.toList());
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<WarehouseLocationMoveDetailEntity> receiveDetailEntityList = this.listByIds(addList);
+            List<Pair<String, String>> addPairList = receiveDetailEntityList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), addPairList, "编辑操作");
+        }
+    }
+    /**
+    * 新增修改处理数据
+    */
+    private void pcHandleData(List<WarehouseLocationMoveDetailEntity> list, String mainId) {
+        //获取仓库信息
+        for (WarehouseLocationMoveDetailEntity detailEntity : list) {
+            String warehouseId = detailEntity.getWarehouseId();
+            WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+            InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
+            paramDTO.setOrgId(warehouseEntity.getOrgId());
+            paramDTO.setWarehouseId(warehouseId);
+            paramDTO.setSkuIds(Collections.singletonList(detailEntity.getSkuId()));
             if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
                     || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
                 throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
@@ -141,65 +179,14 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                 throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
             }
             detailEntity.setMainId(mainId);
-            if (pcShow) {
-                List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(detailEntity.getWarehouseId()));
-                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-                detailEntity.setWarehouseName(updateDTO.getName());
-                detailEntity.setInventoryOrgId(updateDTO.getOrgId());
-                //获取核算公司
-                SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(updateDTO.getOrgId());
-                if (ObjectUtil.isNotEmpty(companyEntity)) {
-                    detailEntity.setInventoryOrgName(companyEntity.getCompanyName());
-                }
-            }
-        }
-
-        //添加操作日志
-        List<String> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).map(WarehouseLocationMoveDetailEntity::getId).collect(Collectors.toList());
-        //添加操作日志
-        if (CollectionUtils.isNotEmpty(addList)) {
-            List<WarehouseLocationMoveDetailEntity> receiveDetailEntityList = this.listByIds(addList);
-            List<Pair<String, String>> addPairList = receiveDetailEntityList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), addPairList, "编辑操作");
-        }
-    }
-    /**
-    * 新增修改处理数据
-    */
-    private void pcHandleData(List<WarehouseLocationMoveDetailEntity> list, String mainId, Boolean pcShow) {
-        //获取仓库信息
-        for (WarehouseLocationMoveDetailEntity detailEntity : list) {
-            String warehouseId = detailEntity.getWarehouseId();
-            WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-            InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
-            paramDTO.setOrgId(warehouseEntity.getOrgId());
-            paramDTO.setWarehouseId(warehouseId);
-            paramDTO.setSkuIds(Collections.singletonList(detailEntity.getSkuId()));
-            if (pcShow) {
-                if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
-                        || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
-                    throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
-                }
-            }
-            paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
-            List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
-            InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
-                    && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
-
-            if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
-                throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
-            }
-            detailEntity.setMainId(mainId);
-            if (pcShow) {
-                List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(detailEntity.getWarehouseId()));
-                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-                detailEntity.setWarehouseName(updateDTO.getName());
-                detailEntity.setInventoryOrgId(updateDTO.getOrgId());
-                //获取核算公司
-                SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(updateDTO.getOrgId());
-                if (ObjectUtil.isNotEmpty(companyEntity)) {
-                    detailEntity.setInventoryOrgName(companyEntity.getCompanyName());
-                }
+            List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(detailEntity.getWarehouseId()));
+            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+            detailEntity.setWarehouseName(updateDTO.getName());
+            detailEntity.setInventoryOrgId(updateDTO.getOrgId());
+            //获取核算公司
+            SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(updateDTO.getOrgId());
+            if (ObjectUtil.isNotEmpty(companyEntity)) {
+                detailEntity.setInventoryOrgName(companyEntity.getCompanyName());
             }
         }
 

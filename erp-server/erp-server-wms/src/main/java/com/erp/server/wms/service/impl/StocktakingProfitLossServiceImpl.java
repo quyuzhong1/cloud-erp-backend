@@ -467,8 +467,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             return Boolean.FALSE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        Boolean result = updateForApprove(entity.getId(), approveStatus);
-        if (result) {
+        Boolean result;
             if (ApproveType.PASS.equals(dto.getType())) {
                 //盘盈单
                 BillTypeEnum profit = BillTypeEnum.PROFIT;
@@ -499,6 +498,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                     //扣减库存
                     inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
                 }
+                // 扣除库存后才更新状态
+                result = updateForApprove(entity.getId(), approveStatus);
+
                 DmpPushTaskEntity pushTaskEntity = new DmpPushTaskEntity();
                 DmpPushTaskEntity pushWdtTask = new DmpPushTaskEntity();
                 if (isProfit) {
@@ -524,8 +526,10 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                         dmpMqFeign.sendTask(Arrays.asList(finalPushTaskEntity, finalPushWdtTask));
                     }
                 });
+            } else {
+                // 更新状态
+                result = updateForApprove(entity.getId(), approveStatus);
             }
-        }
         return result;
     }
 

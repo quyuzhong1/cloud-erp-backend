@@ -208,6 +208,9 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
                 String kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
                 jsonObject.set("kingdeeWarehouseCode",kingdeeWarehouseCode);
             }
+            //是否赠品
+            jsonObject.set("isGift",purchaseOrderDetailEntity.getIsGift());
+
             //税率
             jsonObject.set("taxRate", MathUtil.multiply(purchaseOrderDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             //源单分录内码

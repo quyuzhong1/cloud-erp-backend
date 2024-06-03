@@ -57,5 +57,9 @@ public interface WmsDataCompareTaskService extends SuperService<WmsDataCompareTa
     
     void saveTempTable(String importId , List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList , Integer currParseOffset , boolean isLast);
     
+    void compareGroupSaveTempTable(String taskId , List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList);
+    
+    void comparePkSaveTempTable(String taskId , List<WmsDataCompareTempEntity> insertTempEntityList , List<WmsDataCompareTempEntity> updateTempEntityList);
+    
     void dealFinishData(String id , String resultReportUrl , Integer resultSameCount, Integer resultExceedCount, Integer resultMissCount, Integer resultDiffCount);
 }

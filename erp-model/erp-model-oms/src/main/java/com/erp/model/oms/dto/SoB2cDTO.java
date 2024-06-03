@@ -453,6 +453,10 @@ public class SoB2cDTO implements Serializable {
          * TikTok状态
          */
         private String tikTokStatus;
+        /**
+         * 是否退款: true=退款, false=未退款
+         */
+        private Boolean isRefunded;
     }
 
     @Data
@@ -510,12 +514,17 @@ public class SoB2cDTO implements Serializable {
         /**
          * 是否平台仓订单 true 是 fasle 不是
          */
-        private Boolean isAliexpressPlatformWarehouseOrder;
+        private Boolean isPlatformWarehouseOrder;
 
         /**
          * TikTok状态
          */
         private String tikTokStatus;
+
+        /**
+         * 是否退款: true=退款, false=未退款
+         */
+        private Boolean isRefunded;
     }
 
 
@@ -592,6 +601,11 @@ public class SoB2cDTO implements Serializable {
          * 平台创建时间
          */
         private String platformOrderCreateTime;
+
+        /**
+         * 运费收入
+         */
+        private String shippingFee;
 
         /**
          * 物流信息
@@ -847,7 +861,9 @@ public class SoB2cDTO implements Serializable {
      * 订单规则结果
      */
     @Data
+    @Builder
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class RuleResultDTO{
 
         private Boolean isRuleMatch;

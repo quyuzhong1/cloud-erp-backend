@@ -1,5 +1,6 @@
 package com.erp.server.tms.convert;
 
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
@@ -45,6 +46,6 @@ public interface TransferDeclareConverter {
             @Mapping(target = "productTitleEn", source = "declareEnglishName"),
             @Mapping(target = "purposeDeclaredValue", source = "destDeclarePrice"),
     })
-    TransferLogisticsCreateOrderReq.ProductDetail transferDeclareProductConvert(TransferDeclareProductDTO transferDeclareProductDTO);
-    List<TransferLogisticsCreateOrderReq.ProductDetail> transferDeclareProductConvert(List<TransferDeclareProductDTO> transferDeclareProductDTOList);
+    TransferLogisticsCreateOrderReq.ProductDetail transferDeclareProductConvert(SplitSkuDTO transferDeclareProductDTO);
+    List<TransferLogisticsCreateOrderReq.ProductDetail> transferDeclareProductConvert(List<SplitSkuDTO> transferDeclareProductDTOList);
 }

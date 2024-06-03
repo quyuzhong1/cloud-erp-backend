@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -17,7 +18,6 @@ import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSubcontractIssueConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -140,7 +140,7 @@ public class KingdeeSubcontractIssueConsumerServiceImpl implements KingdeeSubcon
         }
 
         //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
+        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);

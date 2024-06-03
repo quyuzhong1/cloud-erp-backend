@@ -368,8 +368,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
 
         //获取核算公司
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
-        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(dto.getDetailList().stream().map(v->v.getWarehouseId()).collect(Collectors.toList()));
+        WarehouseDTO.UpdateDTO updateDTO = CollectionUtils.isEmpty(warehouseList)?new WarehouseDTO.UpdateDTO():warehouseList.get(0);
         //获取组织信息
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(updateDTO.getOrgId()));
         entity.setWarehouseKeeperId(warehouseKeeperId);
@@ -809,6 +809,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setSkuId(view.getSkuId());
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());
+                detailAddDTO.setWarehouseId(qcInfoEntity.getWarehouseId());
                 //退货类型
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 //退货原因
@@ -879,6 +880,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
+                detailAddDTO.setWarehouseId(soReturnReceiveEntity.getWarehouseId());
 
                 if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
                     detailAddDTO.setSourceDetailId(view.getId());

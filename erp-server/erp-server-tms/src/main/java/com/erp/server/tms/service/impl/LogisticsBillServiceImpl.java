@@ -490,19 +490,28 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsBillDTO.ReceiverDTO receiverDTO = dto.getReceiver();
         //转化成收货人
         ReceiverInfoVO receiverInfo = LogisticsBillConverter.INSTANCE.convertReceiver(receiverDTO);
+        //申报信息-sku拆分
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getOrderId());
+
+        if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(soB2cEntity.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            //增加判断null值
+            if (Objects.nonNull(labelJsonDTO) && Objects.nonNull(labelJsonDTO.getIsPlatformWarehouseOrder()) && labelJsonDTO.getIsPlatformWarehouseOrder()) {
+                //中转地址
+                LogisticsAddressEntity logisticsAddressEntity = addressList.stream().filter(a -> LogisticsAddressTypeEnum.TRANSFER.equals(a.getType())).findFirst().orElse(null);
+                if (Objects.nonNull(logisticsAddressEntity)) {
+                    receiverInfo = LogisticsBillConverter.INSTANCE.LogisticsAddressEntityToReceiverInfoVO(logisticsAddressEntity);
+                }
+            }
+        }
+
+
         //申报信息
         List<LogisticsProductVO> productVOS = dto.getProductVOS();
 //        List<LogisticsBillDTO.SkuDTO> skuList = dto.getSkuList();
 //        List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
 //        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
 //        List<LogisticsProductDTO.ProductDTO> ordersSkuList = buildTransferDeclareProduct(country, dto, skuInfoList, minCustomsAmount, maxCustomsAmount,isAliExpress);
-        //申报信息-sku拆分
-
-        //中转地址
-        LogisticsAddressEntity logisticsAddressEntity = addressList.stream().filter(a -> LogisticsAddressTypeEnum.TRANSFER.equals(a.getType())).findFirst().orElse(null);
-        if (Objects.nonNull(logisticsAddressEntity)) {
-            receiverInfo = LogisticsBillConverter.INSTANCE.LogisticsAddressEntityToReceiverInfoVO(logisticsAddressEntity);
-        }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
 //        List<LogisticsProductVO> logisticsProductList = LogisticsBillConverter.INSTANCE.convertLogisticsProduct(ordersSkuList);
