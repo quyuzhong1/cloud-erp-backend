@@ -254,6 +254,10 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                     .setOperation("编辑信息");
             list.add(entity);
         }
+
+        if (CollectionUtils.isEmpty(list)) {
+            return true;
+        }
         return this.saveBatch(list);
     }
 

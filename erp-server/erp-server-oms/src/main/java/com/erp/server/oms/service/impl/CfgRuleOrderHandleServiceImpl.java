@@ -407,9 +407,14 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         }
         //截取
         if(phoneHandleContent.isPhoneInterceptSwitch()){
-            if(StringUtils.isNotBlank(receiverInfoVO.getTelNumber()) && Objects.nonNull(phoneHandleContent.getPhoneInterceptStartIndex()) && phoneHandleContent.getPhoneInterceptStartIndex() > 0 && phoneHandleContent.getPhoneInterceptStartIndex() <= receiverInfoVO.getTelNumber().length()){
-                receiverInfoVO.setTelNumber(receiverInfoVO.getTelNumber().substring(phoneHandleContent.getPhoneInterceptStartIndex()));
+            Integer startIndex = phoneHandleContent.getPhoneInterceptStartIndex();
+            if(Objects.nonNull(startIndex)){
+                startIndex = startIndex - 1;
+                if(StringUtils.isNotBlank(receiverInfoVO.getTelNumber())  && startIndex > 0 && startIndex <= receiverInfoVO.getTelNumber().length()){
+                    receiverInfoVO.setTelNumber(receiverInfoVO.getTelNumber().substring(startIndex));
+                }
             }
+
         }
         //为空填充
         if(phoneHandleContent.isPhoneEmptyFillSwitch()){
@@ -418,6 +423,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             }
         }
     }
+
     /**
      * 邮编处理
      * @param receiverInfoVO
