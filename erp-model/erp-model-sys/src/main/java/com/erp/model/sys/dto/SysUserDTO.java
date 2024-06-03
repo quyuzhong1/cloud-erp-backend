@@ -1,6 +1,7 @@
 package com.erp.model.sys.dto;
 
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.sys.vo.SysMenuVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -53,7 +54,10 @@ public class SysUserDTO implements Serializable {
      * 是否是超级管理员
      */
     private Boolean isSupper;
-
+    /**
+     * 用户类型（默认erp, srm供应商系统）
+     */
+    private String userType;
     //全局 菜单的列表 后面还会改
     private List<SysMenuVO> overallMenuList;
 
