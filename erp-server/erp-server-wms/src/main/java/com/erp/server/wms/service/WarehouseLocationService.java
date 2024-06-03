@@ -5,12 +5,15 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -163,4 +166,89 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     void deleteArea(List<String> ids);
 
     void updateStatusArea(UpdateStateDTO.BatchUpdateDTO dto);
+
+    /**
+     * 仓位管理高级查询
+     * @param dto 查询参数
+     * @return 仓位信息列表
+     * @date: 2024-05-31
+     * @author: tanmujin
+     */
+    PagingVO<WarehouseLocationDTO.ViewDto> pagingByParam(PagingDTO<WarehouseLocationDTO.SearchParamDTO> dto);
+
+    /**
+     * 批量删除
+     *
+     * @param idsDto
+     * @return void
+     * @date: 2024-05-31
+     * @author: tanmujin
+     */
+    List<String> deleteBatch(WarehouseLocationDTO.IdsDto idsDto);
+
+    /**
+     * 导入仓位Excel
+     *
+     * @param file 上传的文件
+     * @return 上传失败的条目信息
+     * @date: 2024-05-31
+     * @author: tanmujin
+     */
+    List<String> importExcel(MultipartFile file);
+
+    /**
+     * 回收仓位
+     *
+     * @param idsDto
+     * @return void
+     * @date: 2024-05-31
+     * @author: tanmujin
+     */
+    List<String> recycle(WarehouseLocationDTO.IdsDto idsDto);
+
+    /**
+     * 更新仓位状态：启用/禁用
+     * @param dto
+     * @return void
+     * @date: 2024-05-31
+     * @author: tanmujin
+     */
+    void updateStatus(WarehouseLocationDTO.updateStatusDto dto);
+
+    /**
+     * 查询操作日志
+     * @param dto
+     * @return 操作日志列表
+     * @date: 2024-05-31
+     * @author: tanmujin
+     */
+//    PagingVO<OperateLogDTO.ListDTO> listOperateLog(PagingDTO<OperateLogDTO.SearchDTO> dto);
+
+    /**
+     * 导出仓位信息
+     * @param dto 导出excel的参数
+     * @param response
+     * @return void
+     * @date: 2024-05-31
+     * @author: tanmujin
+     */
+    void exportExcel(WarehouseLocationDTO.exportParamDto dto, HttpServletResponse response);
+
+    /**
+     * 新增仓位
+     * @param addDTO
+     * @return void
+     * @date: 2024-05-31
+     * @author: tanmujin
+     */
+    void add(WarehouseLocationDTO.AddDTO addDTO);
+
+    /**
+     * 编辑更新仓位信息
+     * @param dto
+     * @return void
+     * @date: 2024-05-31
+     * @author: tanmujin
+     */
+    void update(WarehouseLocationDTO.updateDto dto);
 }

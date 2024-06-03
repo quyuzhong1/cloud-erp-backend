@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -17,6 +18,7 @@ import java.io.Serializable;
  * @author zhangchunlin
  * @since 2023-05-22
  */
+@ToString
 @Getter
 @Setter
 @Accessors(chain = true)
@@ -24,7 +26,7 @@ import java.io.Serializable;
 public class WarehouseLocationEntity extends BaseEntity<WarehouseLocationEntity> {
 
     /**
-     * 类型
+     * 类型，location-仓位;area-分区
      */
     @TableField("type")
     private String type;

@@ -84,7 +84,8 @@ public enum ModuleTypeEnum {
     CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
     SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
 
-    WAREHOUSE_AREA("80", "库区")
+    WAREHOUSE_AREA("80", "库区"),
+    WAREHOUSE_LOCATION("90", "仓位")
     ;
 
 

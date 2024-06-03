@@ -3,9 +3,11 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -51,5 +53,11 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
      */
     IPage<WarehouseLocationDTO.LocationListDTO> pagingSelect(Page query,@Param("params") WarehouseLocationDTO.SelectDTO params);
 
+    IPage<WarehouseLocationDTO.ViewDto> pagingByArgs(@Param("query") Page<WarehouseLocationDTO.ViewDto> query, @Param("params") WarehouseLocationDTO.SearchParamDTO params);
+
     IPage<WarehouseAreaDTO.PagingView> areaPaging(@Param("page") Page<WarehouseAreaDTO.PagingView> page,@Param("params") WarehouseAreaDTO.PagingParam params);
+
+    List<WarehouseLocationExportVo> listByIds(@Param("ids") List<String> ids);
+
+    List<WarehouseLocationExportVo> selectAllByParam(@Param("dto") WarehouseLocationDTO.exportParamDto dto);
 }

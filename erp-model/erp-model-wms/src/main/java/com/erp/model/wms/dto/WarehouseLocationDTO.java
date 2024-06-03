@@ -1,12 +1,16 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -276,5 +280,193 @@ public class WarehouseLocationDTO implements Serializable {
          */
         private String searchKeyword;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
+    public static class SearchParamDTO extends SortDTO {
+        /**
+         * 仓位编码
+         */
+        private String code;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 所属库区编码
+         */
+        private String warehouseAreaCode;
+
+        /**
+         * 仓位状态：idle可分配，occupied被占用，recyclable可回收
+         */
+        private String status;
+
+        /**
+         * 启用状态：false启用，true禁用
+         */
+        private String disabled;
+
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private List<LocalDateTime> updateTimeList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
+    public static class updateDto extends AddDTO{
+
+        /**
+         * 仓位ID
+         */
+        @NotBlank(message = "仓位ID不能为空")
+        private String id;
+        /**
+         * recyclable可回收，idle空闲可分配，occupied被占用
+         */
+        private String status;
+
+        /**
+         * false启用，true禁用
+         */
+        private Boolean disabled;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO{
+        /**
+         * 仓库Id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+
+        /**
+         * 库区ID
+         */
+        @NotBlank(message = "库区ID不能为空")
+        private String warehouseAreaId;
+
+        /**
+         * 仓位编码
+         */
+        @NotBlank(message = "仓位编码不能为空")
+        private String code;
+
+        /**
+         * 仓位名称
+         */
+        @NotBlank(message = "仓位名称不能为空")
+        private String name;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class IdsDto{
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDto {
+        /**
+         * 仓位ID
+         */
+        private String id;
+
+        /**
+         * 仓位编码
+         */
+        private String code;
+
+        /**
+         * 仓位名称
+         */
+        private String name;
+
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
+        /**
+         * 所属仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 库区ID
+         */
+        private String warehouseAreaId;
+        /**
+         * 所属库区名称
+         */
+        private String warehouseAreaName;
+
+        /**
+         * 仓位状态
+         */
+        private String status;
+
+        /**
+         * 启用状态：false启用，true禁用
+         */
+        private String disabled;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private String updateTime;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class exportParamDto extends SearchParamDTO{
+        /**
+         * 仓位ID集合
+         */
+        private List<String> ids;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class updateStatusDto{
+        /**
+         * 仓位ID
+         */
+        private String id;
+
+        /**
+         * 状态：false启用，true禁用
+         */
+        private String disabled;
     }
 }
