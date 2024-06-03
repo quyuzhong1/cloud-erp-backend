@@ -85,6 +85,7 @@ public enum ModuleTypeEnum {
     SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
 
     WAREHOUSE_AREA("80", "库区"),
+    PICKING_STRATEGY("81", "拣货策略"),
     WAREHOUSE_LOCATION("90", "仓位")
     ;
 

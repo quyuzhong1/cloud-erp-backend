@@ -7,7 +7,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
-import com.common.core.anno.LogViewService;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
@@ -27,6 +27,7 @@ import javax.annotation.Resource;
  * @since 2024-05-28
  */
 @RestController
+@LogSystemModule("拣货规则")
 @RequestMapping("/cfg-rule-picking")
 public class CfgRulePickingController extends BaseController {
 
@@ -50,7 +51,6 @@ public class CfgRulePickingController extends BaseController {
      *
      * @param dto 新增参数
      */
-    @LogAction(value = LogActionEnum.INSERT, desc = "新增拣货规则")
     @PostMapping("/add")
     public ApiResult<Void> add(@RequestBody @Validated CfgRulePickingDTO.Add dto) {
         cfgRulePickingService.add(dto);
@@ -62,10 +62,9 @@ public class CfgRulePickingController extends BaseController {
      *
      * @param dto 编辑参数
      **/
-    @LogAction(value = LogActionEnum.UPDATE, desc = "修改拣货规则")
     @PostMapping("/update")
-    public ApiResult<String> update(@RequestBody @Validated CfgRulePickingDTO.Add dto, @RequestParam(value = "id") String id) {
-        cfgRulePickingService.update(dto, id);
+    public ApiResult<String> update(@RequestBody @Validated CfgRulePickingDTO.Update dto) {
+        cfgRulePickingService.update(dto);
         return success();
     }
 
@@ -74,7 +73,6 @@ public class CfgRulePickingController extends BaseController {
      *
      * @param id id
      **/
-    @LogViewService
     @GetMapping("/view")
     public ApiResult<CfgRulePickingDTO.View> view(@RequestParam("id") String id) {
         CfgRulePickingDTO.View dto = cfgRulePickingService.view(id);
@@ -98,7 +96,6 @@ public class CfgRulePickingController extends BaseController {
      *
      * @param dto dto
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用拣货规则:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
     public ApiResult<String> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         cfgRulePickingService.updateStatus(dto);

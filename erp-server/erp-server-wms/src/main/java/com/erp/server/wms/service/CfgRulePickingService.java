@@ -23,7 +23,7 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
 
     void add(CfgRulePickingDTO.Add dto);
 
-    void update(CfgRulePickingDTO.Add dto, String id);
+    void update(CfgRulePickingDTO.Update dto);
 
     CfgRulePickingDTO.View view(String id);
 

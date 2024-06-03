@@ -42,6 +42,11 @@ public class CfgRulePackingActionEntity extends BaseEntity<CfgRulePackingActionE
      */
     @TableField("out_stock_mode")
     private String outStockMode;
+    /**
+     * 排序
+     */
+    @TableField("index")
+    private Integer index;
 
 
     public static final String RULE_ID = "rule_id";
@@ -51,6 +56,8 @@ public class CfgRulePackingActionEntity extends BaseEntity<CfgRulePackingActionE
     public static final String WAREHOUSE_AREA_ID = "warehouse_area_id";
 
     public static final String OUT_STOCK_MODE = "out_stock_mode";
+
+    public static final String INDEX = "index";
 
     @Override
     public Serializable pkVal() {

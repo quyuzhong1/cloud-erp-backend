@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.common.business.service.SuperService;
 
@@ -20,4 +21,17 @@ public interface CfgRuleConditionService extends SuperService<CfgRuleConditionEn
      * @param ids 规则id
      */
     void removeByRuleIds(List<String> ids);
+
+    /**
+     * 保存规则条件
+     * @param ruleId 规则主表id
+     * @param conditionList 条件
+     */
+    void saveRuleCondition(String ruleId, List<CfgRuleConditionDTO.Add> conditionList);
+    /**
+     * 编辑规则条件
+     * @param ruleId 规则主表id
+     * @param conditionList 条件
+     */
+    void updateRuleCondition(String ruleId, List<CfgRuleConditionDTO.Update> conditionList);
 }

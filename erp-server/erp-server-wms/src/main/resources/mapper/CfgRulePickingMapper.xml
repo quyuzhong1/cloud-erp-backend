@@ -29,7 +29,7 @@
         from cfg_rule_picking as cfp
         where ${params.sqlMap.default}
           and is_deleted = false
-        order by cfp.id desc
+        order by cfp.create_time desc ,cfp.id desc
     </select>
 
 </mapper>
