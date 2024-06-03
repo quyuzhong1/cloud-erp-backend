@@ -406,8 +406,13 @@ public class WarehouseLocationDTO implements Serializable {
          * 仓库ID
          */
         private String warehouseId;
+
         /**
-         * 所属仓库名称
+         * 仓库编码
+         */
+        private String warehouseCode;
+        /**
+         * 仓库名称
          */
         private String warehouseName;
 
@@ -415,8 +420,13 @@ public class WarehouseLocationDTO implements Serializable {
          * 库区ID
          */
         private String warehouseAreaId;
+
         /**
-         * 所属库区名称
+         * 库区编码
+         */
+        private String warehouseAreaCode;
+        /**
+         * 库区名称
          */
         private String warehouseAreaName;
 

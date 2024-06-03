@@ -251,4 +251,6 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @author: tanmujin
      */
     void update(WarehouseLocationDTO.updateDto dto);
+
+    List<WarehouseLocationDTO.ViewDto> listAreaByWarehouseId(String warehouseId);
 }

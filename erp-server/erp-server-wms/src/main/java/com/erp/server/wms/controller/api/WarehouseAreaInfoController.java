@@ -11,12 +11,14 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.server.wms.service.WarehouseLocationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * <p>
@@ -104,5 +106,15 @@ public class WarehouseAreaInfoController extends BaseController {
     public ApiResult<String> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         warehouseLocationService.updateStatusArea(dto);
         return success();
+    }
+
+    /**
+     * 库区下拉
+     * 根据仓库ID查询库区信息：id，code，name
+     * @param warehouseId 仓库ID
+     */
+    @GetMapping("listAreaByWarehouseId")
+    public ApiResult<List<WarehouseLocationDTO.ViewDto>> listAreaByWarehouseId(@RequestParam @Validated String warehouseId){
+        return success(warehouseLocationService.listAreaByWarehouseId(warehouseId));
     }
 }

@@ -681,4 +681,10 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "名称", name);
         }
     }
+
+    @Override
+    public List<WarehouseLocationDTO.ViewDto> listAreaByWarehouseId(String warehouseId) {
+        List<WarehouseLocationDTO.ViewDto> list = baseMapper.listAreaByWarehouseId(warehouseId);
+        return null;
+    }
 }
