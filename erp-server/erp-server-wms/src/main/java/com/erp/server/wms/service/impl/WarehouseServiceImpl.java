@@ -738,7 +738,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         ThirdMappingDTO.ViewParamDTO viewParamDTO=new ThirdMappingDTO.ViewParamDTO();
         viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
         viewParamDTO.setSysId(warehouseId);
-        Boolean hasThirdMapping = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
+        Boolean hasThirdMapping = dmpThirdMappingFeign.getWhetherBind(viewParamDTO);
         if (!hasThirdMapping){
             throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING,warehouseName);
         }

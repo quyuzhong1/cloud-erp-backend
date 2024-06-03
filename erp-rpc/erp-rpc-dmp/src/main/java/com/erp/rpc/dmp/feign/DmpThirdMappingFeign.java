@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 /**
  * DMP远程调用ThirdMapping接口
  *
@@ -29,8 +31,14 @@ public interface DmpThirdMappingFeign {
     /**
      * 查询绑定关系
      */
+    @PostMapping("/getWhetherBind")
+    Boolean getWhetherBind(@RequestBody ThirdMappingDTO.ViewParamDTO viewParamDTO);
+
+    /**
+     * 查询绑定关系
+     */
     @PostMapping("/getByThirdId")
-    Boolean getByThirdId(@RequestBody ThirdMappingDTO.ViewParamDTO viewParamDTO);
+    List<ThirdMappingEntity> getByThirdId(@RequestBody ThirdMappingDTO.ViewParamDTO viewParamDTO);
 
     /**
      * 店铺id查询绑定关系
