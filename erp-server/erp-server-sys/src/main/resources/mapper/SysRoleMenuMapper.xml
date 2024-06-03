@@ -23,7 +23,7 @@
                 AND sm.type=#{type}
             </if>
             <if test="userType != null and userType != ''">
-                AND sm.user_type=#{userType}
+                AND sm.system=#{userType}
             </if>
     </select>
 
