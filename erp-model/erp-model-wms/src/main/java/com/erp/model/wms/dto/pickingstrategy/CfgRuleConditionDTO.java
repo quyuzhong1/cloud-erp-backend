@@ -15,7 +15,7 @@ public class CfgRuleConditionDTO {
     public static class View {
         private String id;
         private String leftBracket;
-        @Dict(serviceCode = ServiceCodeNameEnum.OMS, tableName = "dict_rule_condition", queryFieldName = "key", returnFieldName = "value")
+        @Dict(tableName = "cfg_condition", queryFieldName = "condition_field", returnFieldName = "condition_field_name")
         private String field;
         @Dict(serviceCode = ServiceCodeNameEnum.OMS, tableName = "dict_rule_condition", queryFieldName = "key", returnFieldName = "value")
         private String compare;
@@ -31,7 +31,6 @@ public class CfgRuleConditionDTO {
     @Getter
     @Setter
     public static class Common {
-        @NotBlank(message = "左括号不能为空")
         private String leftBracket;
         @NotBlank(message = "条件的字段不能为空")
         private String field;
@@ -39,7 +38,6 @@ public class CfgRuleConditionDTO {
         private String compare;
         @NotBlank(message = "值不能为空")
         private String value;
-        @NotBlank(message = "右括号不能为空")
         private String rightBracket;
         private String logic;
         private String name;

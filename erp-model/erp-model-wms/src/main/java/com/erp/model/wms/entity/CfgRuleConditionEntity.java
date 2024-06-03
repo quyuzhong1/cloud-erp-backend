@@ -76,6 +76,11 @@ public class CfgRuleConditionEntity extends BaseEntity<CfgRuleConditionEntity> {
      */
     @TableField("name")
     private String name;
+    /**
+     * 所属类型
+     */
+    @TableField("source_type")
+    private String sourceType;
 
 
     public static final String LEFT_BRACKET = "left_bracket";
@@ -95,6 +100,8 @@ public class CfgRuleConditionEntity extends BaseEntity<CfgRuleConditionEntity> {
     public static final String INDEX = "index";
 
     public static final String NAME = "name";
+
+    public static final String SOURCE_TYPE = "source_type";
 
     @Override
     public Serializable pkVal() {

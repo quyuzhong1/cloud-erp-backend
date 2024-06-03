@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.pickingstrategy;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Getter;
@@ -77,7 +78,9 @@ public class CfgRulePickingDTO {
     @Setter
     public static class View {
 
+        @Dict
         private List<CfgRuleActionDTO.View> actions;
+        @Dict
         private List<CfgRuleConditionDTO.View> conditionList;
         private String description;
         private String name;

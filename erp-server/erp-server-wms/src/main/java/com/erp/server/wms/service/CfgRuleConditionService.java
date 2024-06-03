@@ -24,14 +24,17 @@ public interface CfgRuleConditionService extends SuperService<CfgRuleConditionEn
 
     /**
      * 保存规则条件
-     * @param ruleId 规则主表id
+     *
+     * @param ruleId        规则主表id
      * @param conditionList 条件
+     * @param sourceType
      */
-    void saveRuleCondition(String ruleId, List<CfgRuleConditionDTO.Add> conditionList);
+    void saveRuleCondition(String ruleId, List<CfgRuleConditionDTO.Add> conditionList, String sourceType);
     /**
      * 编辑规则条件
-     * @param ruleId 规则主表id
+     *
+     * @param ruleId        规则主表id
      * @param conditionList 条件
      */
-    void updateRuleCondition(String ruleId, List<CfgRuleConditionDTO.Update> conditionList);
+    void updateRuleCondition(String ruleId, List<CfgRuleConditionDTO.Update> conditionList, String moduleType, String sourceType);
 }

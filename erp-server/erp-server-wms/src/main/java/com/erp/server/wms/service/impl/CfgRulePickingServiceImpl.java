@@ -63,7 +63,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "拣货策略规则", entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PICKING_STRATEGY.getCode(), entity.getId(), "新增操作");
-        cfgRuleConditionService.saveRuleCondition(entity.getId(), dto.getConditionList());
+        cfgRuleConditionService.saveRuleCondition(entity.getId(), dto.getConditionList(), "PICKING_STRATEGY");
         cfgRulePackingActionService.saveRuleAction(entity.getId(), dto.getActions());
     }
 
@@ -76,7 +76,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         updateById(entity);
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dto.getId(), "拣货策略规则");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PICKING_STRATEGY.getCode(), dto.getId(), msg);
-        cfgRuleConditionService.updateRuleCondition(dto.getId(), dto.getConditionList());
+        cfgRuleConditionService.updateRuleCondition(dto.getId(), dto.getConditionList(), ModuleTypeEnum.PICKING_STRATEGY.getCode(), "");
         cfgRulePackingActionService.updateRuleAction(dto.getId(), dto.getActions());
     }
 
