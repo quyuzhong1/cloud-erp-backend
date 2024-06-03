@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.VirtualTransFlowMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.VirtualTransFlowEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="virtual_inventory_id" property="virtualInventoryId" />
+       <result column="org_id" property="orgId" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="dict_inventory_status" property="dictInventoryStatus" />
+       <result column="bill_date" property="billDate" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="dict_biz_type" property="dictBizType" />
+       <result column="user_id" property="userId" />
+       <result column="trade_time" property="tradeTime" />
+       <result column="qty" property="qty" />
+       <result column="cur_inventory_qty" property="curInventoryQty" />
+       <result column="virtual_trans_rule_id" property="virtualTransRuleId" />
+       <result column="operation_mode" property="operationMode" />
+       <result column="transaction_no" property="transactionNo" />
+       <result column="is_unapproved" property="isUnapproved" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        virtual_inventory_id, org_id, warehouse_id, virtual_warehouse_id, dict_inventory_status, bill_date, sku_id, sku_no, source_type, source_id, source_code, source_detail_id, dict_biz_type, user_id, trade_time, qty, cur_inventory_qty, virtual_trans_rule_id, operation_mode, transaction_no, is_unapproved
+    </sql>
+
+    <!-- 虚拟库存流水分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDTO$ListDTO">
+
+    </select>
+
+
+</mapper>
