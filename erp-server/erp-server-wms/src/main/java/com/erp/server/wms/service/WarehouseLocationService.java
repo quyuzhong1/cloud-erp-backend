@@ -269,4 +269,6 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @author: tanmujin
      */
     List<WarehouseLocationDTO.tabDto> tabList();
+
+    void downloadTemplate(HttpServletResponse response);
 }

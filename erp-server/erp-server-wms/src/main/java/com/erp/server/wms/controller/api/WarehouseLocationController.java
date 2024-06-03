@@ -1066,4 +1066,9 @@ public class WarehouseLocationController extends BaseController {
         return ApiResult.success(warehouseLocationService.tabList());
     }
 
+    @PostMapping("/downloadTemplate")
+    public void downloadTemplate(HttpServletResponse response){
+        warehouseLocationService.downloadTemplate(response);
+    }
+
 }
