@@ -459,7 +459,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         dto -> dto,
                         (dto1, dto2) -> {
                             dto1.setPickingQty(dto1.getPickingQty() + dto2.getPickingQty());
-                            dto1.setRemark(dto1.getRemark() + ";" + dto2.getRemark());
+                            dto1.setRemark(StringUtils.isNotBlank(dto2.getRemark())?StringUtils.isNotBlank(dto1.getRemark())?dto1.getRemark() + ";" + dto2.getRemark():dto2.getRemark():dto1.getRemark());
                             return dto1;
                         }
                 ));
