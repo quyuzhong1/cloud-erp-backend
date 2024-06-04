@@ -1,12 +1,16 @@
 package com.erp.server.wms.service;
 
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * <p>
@@ -27,7 +31,9 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      * @date: 2024-06-02
      */
     BaseResultDTO.AddDTO add(VirtualWarehouseDTO.AddDTO dto);
-
+    //绑定信息
+    void bindInfo(List<String> warehouseIdList, List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList,
+                          List<ThirdMappingDTO.AddDTO> thirdMappingList, String virtualWarehouseEntityId);
     /**
      * 修改
      *

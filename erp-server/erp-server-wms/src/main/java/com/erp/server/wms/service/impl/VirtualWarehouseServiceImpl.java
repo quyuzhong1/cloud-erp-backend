@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -22,6 +23,7 @@ import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.VirtualWarehouseMapper;
 import com.erp.server.wms.service.VirtualWarehouseChannelService;
 import com.erp.server.wms.service.VirtualWarehouseRelationService;
@@ -90,8 +92,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓", virtualWarehouseEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), "新增操作");
-        //绑定信息
-        bindInfo(addDTO.getWarehouseIdList(), addDTO.getChannelList(), addDTO.getThirdMappingList(), virtualWarehouseEntity.getId());
+
 
         return new BaseResultDTO.AddDTO(virtualWarehouseEntity.getId(), code);
     }
@@ -104,7 +105,10 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      * @param thirdMappingList
      * @param virtualWarehouseEntityId
      */
-    private void bindInfo(List<String> warehouseIdList, List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList,
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void bindInfo(List<String> warehouseIdList, List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList,
                           List<ThirdMappingDTO.AddDTO> thirdMappingList, String virtualWarehouseEntityId) {
         //新增关联渠道
         bindChannel(channelList, virtualWarehouseEntityId);
@@ -123,11 +127,15 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         ThirdMappingDTO.AddDTO addDTO = new ThirdMappingDTO.AddDTO();
         addDTO.setSysId(virtualWarehouseEntityId);
         addDTO.setType(ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode());
-        ThirdMappingDTO.ThirdAddDTO thirdAddDTO = new ThirdMappingDTO.ThirdAddDTO();
-        thirdAddDTO.setSysType(PlatformDictEnum.WDT.getCode());
-        thirdAddDTO.setThirdId(virtualWarehouseEntityId);
         List<ThirdMappingDTO.ThirdAddDTO> thirdList = new ArrayList<>();
-        thirdList.add(thirdAddDTO);
+        if (CollectionUtils.isNotEmpty(thirdMappingList)) {
+            thirdMappingList.forEach(thirdMapping -> {
+                ThirdMappingDTO.ThirdAddDTO thirdAddDTO = new ThirdMappingDTO.ThirdAddDTO();
+                thirdAddDTO.setSysType(PlatformDictEnum.WDT.getCode());
+                thirdAddDTO.setThirdId(thirdMapping.getThirdId());
+                thirdList.add(thirdAddDTO);
+            });
+        }
         addDTO.setThirdList(thirdList);
         dmpThirdMappingFeign.add(addDTO);
     }
@@ -181,8 +189,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         log.info("编辑 开始记录虚拟仓日志数据，单号：【{}】", virtualWarehouseEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseEntity.getCode(), "虚拟仓");
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), msg);
-        //绑定信息
-        bindInfo(updateDTO.getWarehouseIdList(), updateDTO.getChannelList(), updateDTO.getThirdMappingList(), virtualWarehouseEntity.getId());
+
         return Boolean.TRUE;
     }
 
@@ -217,10 +224,15 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         //校验实体仓是否被别的虚拟仓绑定--当前只绑定一个实体仓库
         if (CollectionUtils.isNotEmpty(warehouseIdList)) {
             List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
-            if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
-                List<VirtualWarehouseRelationEntity> collect = warehouseRelationList.stream().filter(relationEntity -> !Objects.equals(relationEntity.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(collect)) {
-                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(virtualWarehouseEntity.getId());
+            if (StringUtils.isNotBlank(virtualWarehouseEntity.getId())){
+                if (CollectionUtils.isNotEmpty(warehouseRelationList)){
+                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+                }
+            }else{
+                List<VirtualWarehouseRelationEntity> existBind = warehouseRelationList.stream().filter(relationEntity -> !Objects.equals(relationEntity.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(existBind)) {
+                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(existBind.get(0).getVirtualWarehouseId());
                     throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
                 }
             }
