@@ -144,6 +144,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                 ThirdMappingDTO.ThirdAddDTO thirdAddDTO = new ThirdMappingDTO.ThirdAddDTO();
                 thirdAddDTO.setSysType(PlatformDictEnum.WDT.getCode());
                 thirdAddDTO.setThirdId(thirdMapping.getThirdId());
+                thirdAddDTO.setSysName(virtualWarehouseEntity.getName());
                 thirdList.add(thirdAddDTO);
             });
         }
@@ -237,14 +238,14 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         if (CollectionUtils.isNotEmpty(warehouseIdList)) {
             List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
             if (StringUtils.isNotBlank(virtualWarehouseEntity.getId())) {
-                if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
+                List<VirtualWarehouseRelationEntity> collect = warehouseRelationList.stream().filter(item -> !Objects.equals(item.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(collect)) {
                     VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
                     throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
                 }
             } else {
-                List<VirtualWarehouseRelationEntity> existBind = warehouseRelationList.stream().filter(relationEntity -> !Objects.equals(relationEntity.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(existBind)) {
-                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(existBind.get(0).getVirtualWarehouseId());
+                if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
+                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
                     throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
                 }
             }
@@ -267,7 +268,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         if (CollectionUtils.isNotEmpty(thirdList)) {
             long count = thirdList.stream().filter(item -> !Objects.equals(item.getSysId(), virtualWarehouseId)).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING, virtualWarehouseName);
+                throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING, thirdList.stream().map(ThirdMappingEntity::getSysName).collect(Collectors.joining()));
             }
         }
     }

@@ -8,6 +8,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.wms.mapper.VirtualWarehouseChannelMapper;
 import com.erp.server.wms.service.VirtualWarehouseChannelService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -80,20 +81,38 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 //删除原始数据
                 baseMapper.deleteBatchIds(existChannelList.stream().map(VirtualWarehouseChannelEntity::getId).collect(Collectors.toList()));
             }
-        }else {
+        } else {
             //删除原始绑定
             if (CollectionUtils.isNotEmpty(existChannelList)) {
                 baseMapper.deleteBatchIds(existChannelList.stream().map(VirtualWarehouseChannelEntity::getId).collect(Collectors.toList()));
-                //新增绑定
-                dtoList.forEach(dto -> {
-                    VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = new VirtualWarehouseChannelEntity();
-                    BeanUtils.copyProperties(dto, virtualWarehouseChannelEntity);
-                    virtualWarehouseChannelEntity.setVirtualWarehouseId(batchAddDTO.getVirtualWarehouseId());
-                    super.save(virtualWarehouseChannelEntity);
-                });
             }
+            addInfo(batchAddDTO, dtoList);
         }
         return new BaseResultDTO.AddDTO();
+    }
+
+    private void addInfo(VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO, List<VirtualWarehouseChannelDTO.ChannelAddDTO> dtoList) {
+        List<VirtualWarehouseChannelEntity> batchSaveDTOList = new ArrayList<>();
+        //新增数据
+        dtoList.forEach(dto -> {
+            if (Objects.equals(dto.getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())) {
+                dto.getRelationList().forEach(relationId -> {
+                    VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = new VirtualWarehouseChannelEntity();
+                    BeanUtils.copyProperties(dto, virtualWarehouseChannelEntity);
+                    virtualWarehouseChannelEntity.setRelationId(relationId);
+                    virtualWarehouseChannelEntity.setVirtualWarehouseId(batchAddDTO.getVirtualWarehouseId());
+                    batchSaveDTOList.add(virtualWarehouseChannelEntity);
+                });
+            } else {
+                VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = new VirtualWarehouseChannelEntity();
+                BeanUtils.copyProperties(dto, virtualWarehouseChannelEntity);
+                virtualWarehouseChannelEntity.setVirtualWarehouseId(batchAddDTO.getVirtualWarehouseId());
+                batchSaveDTOList.add(virtualWarehouseChannelEntity);
+            }
+        });
+        if (CollectionUtils.isNotEmpty(batchSaveDTOList)) {
+            this.saveBatch(batchSaveDTOList);
+        }
     }
 
     /**
@@ -122,6 +141,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseChannelEntity, null, virtualWarehouseChannelEntity.getId(), msg);
         return Boolean.TRUE;
     }
+
     /**
      * 通过虚拟仓id获取关联渠道
      *
@@ -129,7 +149,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      */
     @Override
     public List<VirtualWarehouseChannelEntity> getByVirtualWarehouseId(String virtualWarehouseId) {
-        return baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>().eq(VirtualWarehouseChannelEntity::getVirtualWarehouseId,virtualWarehouseId));
+        return baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>().eq(VirtualWarehouseChannelEntity::getVirtualWarehouseId, virtualWarehouseId));
     }
 
 

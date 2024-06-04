@@ -148,7 +148,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
             //获取实体仓绑定关系
             List<VirtualWarehouseRelationEntity> existWarehouseList = baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseRelationEntity>().in(VirtualWarehouseRelationEntity::getWarehouseId, batchAddDTO.getWarehouseIdList()));
             if (CollectionUtils.isNotEmpty(existRelationList)) {
-                List<VirtualWarehouseRelationEntity> warehouseRelationEntityList = existWarehouseList.stream().filter(item -> Objects.equals(batchAddDTO.getVirtualWarehouseId(), item.getVirtualWarehouseId())).collect(Collectors.toList());
+                List<VirtualWarehouseRelationEntity> warehouseRelationEntityList = existWarehouseList.stream().filter(item -> !Objects.equals(batchAddDTO.getVirtualWarehouseId(), item.getVirtualWarehouseId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(warehouseRelationEntityList)){
                     VirtualWarehouseEntity vmEntity = virtualWarehouseService.getById(warehouseRelationEntityList.get(0).getVirtualWarehouseId());
                     throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());

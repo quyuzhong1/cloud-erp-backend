@@ -236,7 +236,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
         }
         if (save <= 0) {
             throw new ServiceException("第三方系统映射关系单保存失败");
-        } 
+        }
         // 操作日志
         String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()),
                 Objects.isNull(existMapping) ? "" : existMapping.getThirdName(), thirdMappingEntity.getThirdName());
@@ -247,29 +247,13 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
      * 新增修改处理数据
      */
     private void handleData(ThirdMappingEntity thirdMappingEntity) {
-        String thirdName = thirdMappingEntity.getThirdName();
-        String sysName = thirdMappingEntity.getSysName();
-        if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
-            //校验第三方仓库是否存在
-            ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByIdOpt(thirdMappingEntity.getThirdId())
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
-            thirdName = thirdWarehouseEntity.getName();
-            sysName = thirdMappingEntity.getSysName();
-            thirdMappingEntity.setThirdInfoId(thirdWarehouseEntity.getWarehouseId());
-            thirdMappingEntity.setThirdCode(thirdWarehouseEntity.getCode());
-        }
-        if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
-            OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
-            feignDTO.setCode(thirdMappingEntity.getThirdSysType());
-            feignDTO.setOverseasProviderWarehouseId(thirdMappingEntity.getThirdId());
-            //校验第三方仓库是否存在
-            OverseasProviderDTO.FeignDTO overseasWarehouse = Optional.ofNullable(overseasProviderFeign.getOverseasWarehouse(feignDTO))
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
-            thirdName = overseasWarehouse.getPlatformWarehouseName();
-            sysName = overseasWarehouse.getWarehouseName();
-            thirdMappingEntity.setThirdInfoId(overseasWarehouse.getOverseasProviderWarehouseId());
-            thirdMappingEntity.setThirdCode(overseasWarehouse.getPlatformWarehouseCode());
-        }
+        //校验第三方仓库是否存在
+        ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByIdOpt(thirdMappingEntity.getThirdId())
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+       String thirdName = thirdWarehouseEntity.getName();
+       String sysName = thirdMappingEntity.getSysName();
+        thirdMappingEntity.setThirdInfoId(thirdWarehouseEntity.getWarehouseId());
+        thirdMappingEntity.setThirdCode(thirdWarehouseEntity.getCode());
         thirdMappingEntity.setThirdName(thirdName);
         thirdMappingEntity.setSysName(sysName);
 

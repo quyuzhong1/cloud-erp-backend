@@ -187,15 +187,11 @@ public class VirtualWarehouseChannelDTO implements Serializable {
         /**
          * 平台的dict值
          */
-        @NotBlank(message = "平台的dict值不能为空")
-        @Size(max = 30,message = "平台的dict值最大长度不能超过30位")
         private String dictPlatform;
 
         /**
          * 关联类型：  platform 按平台 shop 按店铺
          */
-        @NotBlank(message = "关联类型：  platform 按平台 shop 按店铺不能为空")
-        @Size(max = 20,message = "关联类型：  platform 按平台 shop 按店铺最大长度不能超过20位")
         private String type;
 
         /**
