@@ -457,7 +457,7 @@ public enum GoodCangEnums {
                     .findFirst()
                     .map(OrderStatusEnum::getErpSoStatus)
                     .map(SoB2cBillStatusEnum::getCode)
-                    .orElse(code);
+                    .orElse("");
         }
 
         public static String getName(String code){
