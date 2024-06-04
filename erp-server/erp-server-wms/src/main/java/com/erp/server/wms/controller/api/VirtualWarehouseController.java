@@ -53,10 +53,7 @@ public class VirtualWarehouseController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseDTO.AddDTO addDTO) {
-        BaseResultDTO.AddDTO add = virtualWarehouseService.add(addDTO);
-        //绑定信息
-        virtualWarehouseService.bindInfo(addDTO.getWarehouseIdList(), addDTO.getChannelList(), addDTO.getThirdMappingList(), add.getId());
-        return success();
+        return success(virtualWarehouseService.add(addDTO));
     }
 
     /**
@@ -76,8 +73,6 @@ public class VirtualWarehouseController extends BaseController {
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated VirtualWarehouseDTO.UpdateDTO dto) {
         virtualWarehouseService.update(dto);
-        //绑定信息
-        virtualWarehouseService.bindInfo(dto.getWarehouseIdList(), dto.getChannelList(), dto.getThirdMappingList(), dto.getId());
         return success();
     }
 

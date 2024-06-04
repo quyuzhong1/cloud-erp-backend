@@ -126,6 +126,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     @Override
     public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
         ThirdMappingStrategy strategy = getStrategy(addDTO.getType());
+
         return strategy.add(addDTO);
     }
 

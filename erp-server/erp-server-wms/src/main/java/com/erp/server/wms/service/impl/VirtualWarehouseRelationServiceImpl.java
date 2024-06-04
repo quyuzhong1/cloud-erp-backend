@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.server.wms.mapper.VirtualWarehouseRelationMapper;
 import com.erp.server.wms.service.VirtualWarehouseRelationService;
@@ -12,6 +13,9 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.VirtualWarehouseService;
+import com.erp.server.wms.service.WarehouseService;
+import com.sdk.wangdian.sdk.impl.Api;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +30,8 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 虚拟仓实体仓关联关系 服务实现类
@@ -37,8 +43,12 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<VirtualWarehouseRelationMapper, VirtualWarehouseRelationEntity> implements VirtualWarehouseRelationService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private WarehouseService warehouseService;
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -133,7 +143,16 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                 baseMapper.deleteBatchIds(existRelationList.stream().map(VirtualWarehouseRelationEntity::getId).collect(Collectors.toList()));
             }
         } else {
+            //校验实体仓库是否存在
+            Optional.ofNullable(warehouseService.getById(warehouseIdList.get(0))).orElseThrow(()->new ServiceException(ApiError.ERROR_WAREHOUSE_NOTFOUND));
+            //获取实体仓绑定关系
+            List<VirtualWarehouseRelationEntity> existWarehouseList = baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseRelationEntity>().in(VirtualWarehouseRelationEntity::getWarehouseId, batchAddDTO.getWarehouseIdList()));
             if (CollectionUtils.isNotEmpty(existRelationList)) {
+                List<VirtualWarehouseRelationEntity> warehouseRelationEntityList = existWarehouseList.stream().filter(item -> Objects.equals(batchAddDTO.getVirtualWarehouseId(), item.getVirtualWarehouseId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(warehouseRelationEntityList)){
+                    VirtualWarehouseEntity vmEntity = virtualWarehouseService.getById(warehouseRelationEntityList.get(0).getVirtualWarehouseId());
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+                }
                 //判断原始绑定与变更数据是否相同
                 String existWarehouseId = existRelationList.get(0).getWarehouseId();
                 if (!Objects.equals(warehouseIdList.get(0), existWarehouseId)) {
@@ -145,6 +164,10 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                     baseMapper.updateById(virtualWarehouseRelationEntity);
                 }
             } else {
+                if (CollectionUtils.isNotEmpty(existWarehouseList)){
+                    VirtualWarehouseEntity vmEntity = virtualWarehouseService.getById(existWarehouseList.get(0).getVirtualWarehouseId());
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+                }
                 VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = new VirtualWarehouseRelationEntity();
                 virtualWarehouseRelationEntity.setWarehouseId(warehouseIdList.get(0));
                 virtualWarehouseRelationEntity.setVirtualWarehouseId(batchAddDTO.getVirtualWarehouseId());

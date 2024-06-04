@@ -57,12 +57,6 @@
         from third_warehouse tw
         where  tw.is_deleted = FALSE
         and tw.disabled=false
-        <if test="params.category!=null and params.category!=''">
-            and tw.category = #{params.category}
-        </if>
-        <if test="params.category=null">
-            and tw.category = 'warehouse'
-        </if>
         <if test="params.sysType!=null and params.sysType!=''">
             and tw.sys_type = #{params.sysType}
         </if>
