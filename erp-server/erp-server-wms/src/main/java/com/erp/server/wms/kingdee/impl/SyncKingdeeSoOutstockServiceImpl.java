@@ -59,6 +59,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -579,6 +580,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity = this.outStockDataConvert(entity);
         resultMap.put("entity", dmpDeliveryDetailInfoEntity);
 
+        //无需推送
+        if (ObjectUtils.isEmpty(dmpDeliveryDetailInfoEntity)) {
+            return;
+        }
 
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
@@ -624,74 +629,82 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
         if (OrderTypeEnum.B2B.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soOutstockEntity.getSoId());
-            if (Objects.isNull(soInfoEntity)) {
+            if (Objects.isNull(soInfoEntity) || SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(soOutstockEntity.getSourceType())) {
                 log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2B订单异常:[" + soOutstockEntity.getSourceId() + "]");
+                return null;
             }
 
-            soId = soInfoEntity.getId();
-            soCode = soInfoEntity.getCode();
-            receiveAddress = soInfoEntity.getReceiveAddress();
-            currency = soInfoEntity.getCurrency();
-            remark = soInfoEntity.getRemark();
-            shippingFee = soInfoEntity.getShippingFee();
-            //详情
+            if (Objects.nonNull(soInfoEntity)) {
+                soId = soInfoEntity.getId();
+                soCode = soInfoEntity.getCode();
+                receiveAddress = soInfoEntity.getReceiveAddress();
+                currency = soInfoEntity.getCurrency();
+                remark = soInfoEntity.getRemark();
+                shippingFee = soInfoEntity.getShippingFee();
 
-            List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
-            if (CollectionUtil.isNotEmpty(soDetailEntities)) {
-                SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
-                if (Objects.nonNull(detailEntity) && Objects.nonNull(detailEntity.getExchangeRate())) {
-                    exchangeRate = detailEntity.getExchangeRate();
-                } else {
-                    exchangeRate = BigDecimal.ONE;
-                }
-                entity.setCurrencyRate(exchangeRate);
 
-                //TODO 暂时设置为0等tms接通后补充
-                //先计算运费收入（原币）
+                //详情
+                List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
+                if (CollectionUtil.isNotEmpty(soDetailEntities)) {
+                    SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
+                    if (Objects.nonNull(detailEntity) && Objects.nonNull(detailEntity.getExchangeRate())) {
+                        exchangeRate = detailEntity.getExchangeRate();
+                    } else {
+                        exchangeRate = BigDecimal.ONE;
+                    }
+                    entity.setCurrencyRate(exchangeRate);
+
+                    //TODO 暂时设置为0等tms接通后补充
+                    //先计算运费收入（原币）
 //                if (Optional.ofNullable(soInfoEntity.getIsCollectShippingFee()).isPresent()) {
 //                    //运费收入（本位币）
 //                    entity.setShippingFee(soInfoEntity.getShippingFee().multiply(exchangeRate));
 //                } else {
-                //运费收入（本位币）
-                entity.setShippingFee(BigDecimal.ZERO);
+                    //运费收入（本位币）
+                    entity.setShippingFee(BigDecimal.ZERO);
 //                }
 
-                BigDecimal itemTotalCost = BigDecimal.ZERO;
-                BigDecimal orderTotalCost = BigDecimal.ZERO;
-                soDetailEntities.stream().forEach(
-                        soDetailEntity -> {
-                            itemTotalCost.add(Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO));
-                            orderTotalCost.add(Optional.ofNullable(soDetailEntity.getAmount()).orElse(BigDecimal.ZERO));
-                        }
-                );
-                entity.setItemTotalCost(itemTotalCost);
-                entity.setOrderTotalCost(orderTotalCost);
+                    BigDecimal itemTotalCost = BigDecimal.ZERO;
+                    BigDecimal orderTotalCost = BigDecimal.ZERO;
+                    soDetailEntities.stream().forEach(
+                            soDetailEntity -> {
+                                itemTotalCost.add(Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO));
+                                orderTotalCost.add(Optional.ofNullable(soDetailEntity.getAmount()).orElse(BigDecimal.ZERO));
+                            }
+                    );
+                    entity.setItemTotalCost(itemTotalCost);
+                    entity.setOrderTotalCost(orderTotalCost);
 
-                CustomerInfoEntity customerInfo = customerFeign.getCustomerById(soOutstockEntity.getCustomerId());
-                if (Objects.nonNull(customerInfo)) {
-                    entity.setShopName("B2B");
-                    entity.setShopNo("B2B");
-                    entity.setCustomerName(customerInfo.getName());
+                    CustomerInfoEntity customerInfo = customerFeign.getCustomerById(soOutstockEntity.getCustomerId());
+                    if (Objects.nonNull(customerInfo)) {
+                        entity.setShopName("B2B");
+                        entity.setShopNo("B2B");
+                        entity.setCustomerName(customerInfo.getName());
+                    }
                 }
             }
-        } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
+        } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType()) ) {
             SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSoId());
-            if (Objects.isNull(view)) {
+            if (Objects.isNull(view) || SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(soOutstockEntity.getSourceType())) {
                 log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2C订单异常:[" + soOutstockEntity.getSourceId() + "]");
+                return null;
             }
-            soId = view.getId();
-            soCode = view.getCode();
-            receiveAddress = view.getReceiverDTO().getFirstAddress();
-            currency = view.getCurrency();
-            remark = view.getRemark();
 
-            List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
-            BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            entity.setItemTotalCost(itemTotalCost);
-            entity.setOrderTotalCost(view.getAmount());
-            entity.setShopName(view.getShopName());
-            entity.setShopNo(view.getShopId());
-            entity.setCustomerName(view.getReceiverDTO().getReceiverName());
+            if (Objects.nonNull(view)) {
+                soId = view.getId();
+                soCode = view.getCode();
+                receiveAddress = view.getReceiverDTO().getFirstAddress();
+                currency = view.getCurrency();
+                remark = view.getRemark();
+
+                List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
+                BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                entity.setItemTotalCost(itemTotalCost);
+                entity.setOrderTotalCost(view.getAmount());
+                entity.setShopName(view.getShopName());
+                entity.setShopNo(view.getShopId());
+                entity.setCustomerName(view.getReceiverDTO().getReceiverName());
+            }
 
         }
 
