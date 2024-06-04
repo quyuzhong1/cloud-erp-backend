@@ -44,11 +44,9 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
@@ -166,12 +164,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private InventoryFeign inventoryFeign;
 
+    @Lazy
     @Autowired
     private SoB2cDetailService soB2cDetailService;
 
+    @Lazy
     @Autowired
     private SoB2cLogisticsService soB2cLogisticsService;
 
+    @Lazy
     @Autowired
     private SoB2cReceiverService soB2cReceiverService;
 
@@ -193,6 +194,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private WmsTaskFeign wmsTaskFeign;
 
+    @Lazy
     @Autowired
     private SoB2cRefService soB2cRefService;
 
@@ -217,6 +219,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private RuleLogisticsService ruleLogisticsService;
 
+    @Lazy
     @Autowired
     private SoB2cFinanceService soB2cFinanceService;
 
@@ -243,6 +246,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
 
+    @Lazy
     @Autowired
     private SoB2cErrorService soB2cErrorService;
 
@@ -294,6 +298,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private SoB2cQueryHandler soB2cQueryHandler;
 
+    @Lazy
     @Resource
     private CustomerB2cService customerB2cService;
 
@@ -305,7 +310,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     @Lazy
-    private SoB2cServiceImpl service;
+    private SoB2cService soB2cService;
     @Resource
     private SoB2cDeclareProductService soB2cDeclareProductService;
     @Resource
@@ -877,7 +882,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private void approveProcess(SoB2cEntity entity, ApproveOneDTO dto, Boolean isMatch) {
         //无需流程则直接更新状态
         if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && !dto.getIsNeedProcess()) {
-            approveEnd(dto, entity, isMatch);
+            soB2cService.approveEnd(dto, entity, isMatch);
             return;
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -900,7 +905,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity, isMatch);
+            soB2cService.approveEnd(dto, entity, isMatch);
         }
     }
 
@@ -974,7 +979,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         updateForApprove(entity.getId(), approveStatus.getStatus(), isMatch);
 
         //推送到DMP
-        this.syncOrderToDmp(entity.getId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
+        soB2cService.syncOrderToDmp(entity.getId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         return Boolean.TRUE;
     }
@@ -3710,6 +3715,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date: 2023/8/24 15:18
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         Map<String, Boolean> resultMap = new HashMap<>();
         SoB2cEntity entity = super.getById(id);
@@ -3729,7 +3735,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //更新流转状态和分类信息
             soB2cRefCategoryService.update(ruleOrderMatchResult.getCategoryDetailIdList(), id);
             //自动提交
-            BatchResultDTO submit = this.submit(id, Boolean.FALSE);
+            BatchResultDTO submit = soB2cService.submit(id, Boolean.FALSE);
             if (!submit.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_1042);
             }
@@ -3740,7 +3746,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 approveMsg = "自动审核通过";
             }
             //自动审核通过
-            BatchResultDTO approve = this.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg, Boolean.FALSE), isMatch, ruleOrderMatchResult.getRuleName());
+            BatchResultDTO approve = soB2cService.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg, Boolean.FALSE), isMatch, ruleOrderMatchResult.getRuleName());
             if (!approve.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_94006);
             }
@@ -5974,12 +5980,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cDTO.RuleResultDTO orderRule(String id) {
         Map<String, Object> map = new HashMap<>();
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
         //自动匹配订单规则
-        Map<String, Boolean> orderRule = approveRule(id, detailList, map);
+        Map<String, Boolean> orderRule = soB2cService.approveRule(id, detailList, map);
         SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
         ruleResult.setId(id);
         ruleResult.setIsRuleMatch(orderRule.getOrDefault("isMatch", Boolean.FALSE));
@@ -5998,7 +6004,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cDTO.RuleResultDTO warehouseRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
@@ -6024,22 +6030,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //        Map<String, Boolean> orderRule = this.approveRule(id, detailList, map);
 //        Boolean isMatch = orderRule.getOrDefault("isMatch", Boolean.FALSE);
 //        Boolean isPass = orderRule.getOrDefault("isPass", Boolean.FALSE);
-        SoB2cDTO.RuleResultDTO ruleResultDTO = orderRule(id);
+        SoB2cDTO.RuleResultDTO ruleResultDTO = soB2cService.orderRule(id);
         Boolean isMatch = ruleResultDTO.getIsRuleMatch();
         Boolean isPass = ruleResultDTO.getIsPass();
         if (isMatch && isPass) {
-            SoB2cDTO.RuleResultDTO warehouseRuleResult = warehouseRule(id, detailList, map);
+            SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, detailList, map);
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = logisticsRule(id, new HashMap<>());
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
                 if(logisticsRuleResult.getIsRuleMatch()){
-                    checkProductRegistrationAndUpdate(id, "");
+                    soB2cService.checkProductRegistrationAndUpdate(id, "");
                     //申报信息规则
                     declareRule(id, new HashMap<>(), Boolean.FALSE);
                 }
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
-                    this.getLogisticsCode(id, autoGetTrackNo);
+                    soB2cService.getLogisticsCode(id, autoGetTrackNo);
                 }
             }
         }
@@ -6288,10 +6294,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //未备案的sku
         List<String> notRegistrationSkuNoList = resultDTO.getNotRegistrationSkuNoList();
         Boolean isRegistration = CollectionUtils.isEmpty(notRegistrationSkuNoList);
-        updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration,true);
+        soB2cService.updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration,true);
         //表示未备案
         if (!isRegistration) {
-            String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
+            String skuStr = String.join(",", notRegistrationSkuNoList);
             throw new ServiceException(ApiError.NOT_PRODUCT_REGISTRATION, skuStr, resultDTO.getDeclarePlatformName());
         }
     }
@@ -6303,6 +6309,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param packageStatus
      * @param transferStatus
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration,Boolean isUpdateTransferStatus) {
         if (isRegistration) {
@@ -6778,6 +6785,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     /**
      * 同步订单到DMP
      */
+    @Async("omsErpExecutor")
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -7095,7 +7103,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
 
         //更新操作同个事务
-        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,updateLogisticList);
+        soB2cService.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,updateLogisticList);
 
         return resultDTOList;
     }
@@ -7233,7 +7241,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //更新操作同个事务
-        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,new ArrayList<>());
+        soB2cService.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,new ArrayList<>());
 
         //更新入库预报单详情的上传状态
         transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
@@ -7284,8 +7292,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultDTOList;
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public void orderForecastUpdateSoAndError(List<SoB2cEntity> updateB2cList , List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors, List<SoB2cLogisticsEntity> updateLogisticList){
+    public void orderForecastUpdateSoAndError(List<SoB2cEntity> updateB2cList, List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors, List<SoB2cLogisticsEntity> updateLogisticList){
         //更新或添加异常记录
         if (CollectionUtils.isNotEmpty(addOrUpdateErrors)){
             soB2cErrorService.saveOrUpdateBatch(addOrUpdateErrors);
@@ -7393,7 +7402,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         operateLogService.addModuleOperateLog("平台订单取消后自动取消订单预报", ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "取消预报");
         //更新操作同个事务
-        service.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,new ArrayList<>());
+        soB2cService.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,new ArrayList<>());
 
         //更新入库预报单详情的上传状态
         transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
@@ -7913,7 +7922,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(CollectionUtils.isNotEmpty(updateList)){
             List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】操作不出库发货",UserContext.getDefaultLoginUser().getUserName()), ModuleTypeEnum.SO_B2C.getCode(), pairList, "不出库发货");
-            service.updateBatchById(updateList);
+            soB2cService.updateBatchById(updateList);
         }
         return resultDTOList;
     }
