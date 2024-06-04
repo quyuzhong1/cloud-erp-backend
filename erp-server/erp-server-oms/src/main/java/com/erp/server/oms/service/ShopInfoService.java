@@ -321,4 +321,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @date 2024-05-23 16:39
      */
     List<ShopInfoEntity> addIntenal(ShopDTO.AddInternalDTO dto);
+
+    PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
+
 }

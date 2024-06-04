@@ -214,6 +214,18 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
+     * 获取店铺--showByAuth true已授权 false所有数据
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
+     * @author hyj
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
+        PagingVO<ShopDTO.ListDTO> list = shopInfoService.pagingSelect(dto);
+        return success(list);
+    }
+
+    /**
      * 获取店铺列表(树状级联)
      */
     @GetMapping("/listTree")
