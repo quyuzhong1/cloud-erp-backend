@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -29,10 +30,7 @@ import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
@@ -139,6 +137,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
+    @Resource
+    private KingdeeReceiptConditionService kingdeeReceiptConditionService;
+
     /**
      * 添加店铺
      *
@@ -241,7 +242,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //币种
         customer.setCurrency(currency);
         customer.setSellerId(shop.getChargeId());
-        customer.setConditionDict(DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode());
+        KingdeeReceiptConditionEntity one = kingdeeReceiptConditionService.getOne(new LambdaQueryWrapper<KingdeeReceiptConditionEntity>().eq(KingdeeReceiptConditionEntity::getCode, DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode()));
+        customer.setConditionDict(Objects.nonNull(one) ? one.getId() : "");
         customer.setSourceId(shop.getId());
         customer.setSourceType(SourceTypeEnum.SHOP.getCode());
         CustomerInfoEntity customerInfoEntity = customerInfoService.addOrGetCustom(customer);
