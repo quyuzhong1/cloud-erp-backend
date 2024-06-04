@@ -11,6 +11,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +21,13 @@ public class CfgRulePickingDTO {
     @Getter
     @Setter
     public static class PagingView {
+        private String description;
+        private String name;
+        private Integer priority;
+        private String id;
+        private Boolean disabled;
+        private String updateUserName;
+        private LocalDateTime updateTime;
     }
     @Getter
     @Setter
@@ -86,6 +94,6 @@ public class CfgRulePickingDTO {
         private String name;
         private Integer priority;
         private String id;
-        private String disabled;
+        private Boolean disabled;
     }
 }
