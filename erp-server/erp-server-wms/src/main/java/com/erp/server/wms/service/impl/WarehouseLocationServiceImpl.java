@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -361,6 +362,17 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         List<WarehouseLocationDTO.LocationListDTO> records = pagResult.getRecords();
         handleSelect(records);
         return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public List<WarehouseLocationEntity> findByWarehouseIdsAndCode(List<String> warehouseIds, String warehouseLocation) {
+        if (CollectionUtils.isEmpty(warehouseIds) && StringUtils.isBlank(warehouseLocation)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .in(CollectionUtils.isNotEmpty(warehouseIds), WarehouseLocationEntity::getWarehouseId,warehouseIds)
+                .eq(StrUtil.isNotBlank(warehouseLocation), WarehouseLocationEntity::getCode, warehouseLocation)
+                .list();
     }
 
 

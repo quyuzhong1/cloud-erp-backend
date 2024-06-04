@@ -979,12 +979,12 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         warehouseDTOList.sort(Comparator.nullsLast(Comparator.comparing(InventoryDTO.PdaInventoryWarehouseDTO::getIndex)));
         pdaInventorySearch.setWarehouseDTOList(new PagingVO<>(warehouseDTOPage));
         //汇总仓位实际库存/可用库存/冻结库存数量
-        List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList1 = baseMapper.listInventoryWarehouseByParam(paramDTO);
-        pdaInventorySearch.setRealTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getRealQty)
+        List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseDTOList1 = baseMapper.listInventoryWarehouseByParam(paramDTO);
+        pdaInventorySearch.setRealTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseLocationDTO::getRealQty)
                 .filter(Objects::nonNull).reduce(0, Integer::sum));
-        pdaInventorySearch.setFrozenTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getFrozenQty)
+        pdaInventorySearch.setFrozenTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseLocationDTO::getFrozenQty)
                 .filter(Objects::nonNull).reduce(0, Integer::sum));
-        pdaInventorySearch.setUsableTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getUsableQty)
+        pdaInventorySearch.setUsableTotalQty(warehouseDTOList1.stream().map(InventoryDTO.PdaInventoryWarehouseLocationDTO::getUsableQty)
                 .filter(Objects::nonNull).reduce(0, Integer::sum));
         return pdaInventorySearch;
     }
@@ -1082,7 +1082,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         paramDTO.setFilterSelfAddFlag(params.isFilterSelfAddFlag());
         IPage<InventoryDTO.PdaInventoryPageDTO> page = baseMapper.pageInventoryWarehouseBySkuId(query,paramDTO);
         //填充基础信息
-        buildWarehouseInfo(page.getRecords(), paramDTO);
+        buildWarehouseInfo(page.getRecords(), paramDTO,params.getWarehouseLocation());
         InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> result = new InventoryDTO.PdaInventoryWarehousePageDTO<>(page);
         //仓位信息回填
         result.setWarehouseLocation(params.getWarehouseLocation());
@@ -1098,8 +1098,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
      *
      * @param records
      * @param paramDTO
+     * @param warehouseLocation
      */
-    private void buildWarehouseInfo(List<InventoryDTO.PdaInventoryPageDTO> records, InventoryDTO.InventoryBySkuNoDTO paramDTO) {
+    private void buildWarehouseInfo(List<InventoryDTO.PdaInventoryPageDTO> records, InventoryDTO.InventoryBySkuNoDTO paramDTO, String warehouseLocation) {
         if (CollectionUtils.isEmpty(records)){
             return;
         }
@@ -1111,24 +1112,33 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 //        List<String> warehouseIds = records.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
         paramDTO.setSkuId(null);
         paramDTO.setSkuIds(skuIds);
-        List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList = baseMapper.listInventoryWarehouseByParam(paramDTO);
+        List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseDTOList = baseMapper.listInventoryWarehouseByParam(paramDTO);
         if (CollectionUtils.isEmpty(warehouseDTOList)){
             return;
         }
-        List<String> warehouseIds = warehouseDTOList.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> warehouseIds = warehouseDTOList.stream().map(InventoryDTO.PdaInventoryWarehouseLocationDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.findByWarehouseIdsAndCode(warehouseIds, warehouseLocation);
+        //仓库信息整理
         warehouseDTOList.forEach(pdaInventoryWarehouseDTO -> {
             WarehouseEntity warehouseEntity = warehouseList.stream().filter(e -> StringUtils.isNotBlank(pdaInventoryWarehouseDTO.getWarehouseId()) && pdaInventoryWarehouseDTO.getWarehouseId().equals(e.getId()))
                     .findFirst().orElse(new WarehouseEntity());
+            pdaInventoryWarehouseDTO.setOrgId(warehouseEntity.getOrgId());
             pdaInventoryWarehouseDTO.setWarehouseName(warehouseEntity.getName());
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> StringUtils.isNotBlank(pdaInventoryWarehouseDTO.getWarehouseId())
+                            && pdaInventoryWarehouseDTO.getWarehouseId().equals(e.getWarehouseId()) && StrUtil.isNotBlank(warehouseLocation) && warehouseLocation.equals(e.getCode()))
+                    .findFirst().orElse(new WarehouseLocationEntity());
+            pdaInventoryWarehouseDTO.setWarehouseLocation(warehouseLocationEntity.getCode());
+            pdaInventoryWarehouseDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
         });
+        //结果汇总
         records.forEach(pdaInventoryWarehouseDTO -> {
             String skuId = pdaInventoryWarehouseDTO.getSkuId();
             SkuVO skuVO = skuVOList.stream().filter(e -> StringUtils.isNotBlank(skuId) && skuId.equals(e.getSkuId()))
                     .findFirst().orElse(new SkuVO());
             pdaInventoryWarehouseDTO.setSkuName(skuVO.getSkuName());
             pdaInventoryWarehouseDTO.setSkuNo(skuVO.getSkuNo());
-            List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOS = warehouseDTOList.stream().filter(e -> StringUtils.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuId)).collect(Collectors.toList());
+            List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseDTOS = warehouseDTOList.stream().filter(e -> StringUtils.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuId)).collect(Collectors.toList());
             pdaInventoryWarehouseDTO.setWarehouseLocationDTOList(warehouseDTOS);
         });
     }

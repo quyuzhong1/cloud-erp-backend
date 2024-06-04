@@ -608,7 +608,7 @@
         <include refid="inventoryWarehouseBySkuId"/>
     </select>
     <select id="listInventoryWarehouseByParam"
-            resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
+            resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">
         <include refid="inventoryWarehouseByParam"/>
     </select>
     <select id="listInventoryWarehouseLocationByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">

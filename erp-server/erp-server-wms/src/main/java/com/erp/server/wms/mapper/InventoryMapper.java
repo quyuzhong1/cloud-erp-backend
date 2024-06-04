@@ -115,7 +115,7 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * @param params
      * @return
      */
-    List<InventoryDTO.PdaInventoryWarehouseDTO> listInventoryWarehouseByParam(@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
+    List<InventoryDTO.PdaInventoryWarehouseLocationDTO> listInventoryWarehouseByParam(@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
 
     /**
      * 根据条件查询仓库信息（分页）

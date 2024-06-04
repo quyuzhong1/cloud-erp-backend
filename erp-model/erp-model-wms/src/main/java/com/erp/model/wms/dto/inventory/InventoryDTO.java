@@ -1573,7 +1573,7 @@ public class InventoryDTO implements Serializable {
         /**
          * 仓位信息
          */
-        private List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseLocationDTOList;
+        private List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList;
 
         private Integer index;
     }
@@ -1589,6 +1589,10 @@ public class InventoryDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
         /**
          * skuId
          */
