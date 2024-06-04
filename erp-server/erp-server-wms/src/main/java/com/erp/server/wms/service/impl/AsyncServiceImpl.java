@@ -57,6 +57,7 @@ public class AsyncServiceImpl implements AsyncService {
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soId);
         platformShipOrderDTO.setDictPlatform(dictPlatform);
+        platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
         try {
             List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
             //更新销售明细标识
