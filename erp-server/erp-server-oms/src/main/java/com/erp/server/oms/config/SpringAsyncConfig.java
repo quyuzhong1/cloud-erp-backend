@@ -1,4 +1,4 @@
-package com.erp.server.wms.config;
+package com.erp.server.oms.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +34,7 @@ public class SpringAsyncConfig {
 	@Value("${openApi.download.pool.poolName}")
 	private String poolName = "";
 
-	@Bean("wmsErpExecutor")
+	@Bean("omsErpExecutor")
 	public ThreadPoolTaskExecutor asyncServiceErpExecutor() {
 		ThreadPoolTaskExecutor executor = createExecutor();
 		printThreadPoolStatus(executor);
