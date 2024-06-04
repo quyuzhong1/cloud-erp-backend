@@ -109,9 +109,6 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setShopId(dto.getShopId());
         // 平台订单原始状态
         orderDTO.setPlatformOrderStatus(sourceOrder.getFulfillmentStatus());
-        // 平台订单原始取消状态(已退款,部分退款)
-        orderDTO.setIsCancel(sourceOrder.convertIsCancel());
-
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(sourceOrder.convertInvalidStatus());
         // 作废类型（manual手动作废，automatic自动作废）
@@ -175,15 +172,6 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setSourceId(sourceOrder.getOrderId());
         // 来源编码
         orderDTO.setSourceCode("");
-        // 标签json
-        Map<String, Object> lableMap = new HashMap<>();
-        if (sourceOrder.convertIsCancel()) {
-            lableMap.put("isRefunded", true);
-        } else {
-            lableMap.put("isRefunded", false);
-        }
-        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
-
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
@@ -194,6 +182,23 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(sourceOrder);
         orderDTO.setDetails(details);
+
+        // 明细是否退款
+        boolean detailRefund = details.stream().anyMatch(PlatformOrderDetailDTO::getIsDetailRefund);
+        // 平台是否取消(全退款/明细退款视为平台取消(暂不包含部分退款)
+        Boolean isCancel = sourceOrder.convertIsCancel(detailRefund);
+        // 平台订单原始取消状态(已退款,部分退款)
+        orderDTO.setIsCancel(isCancel);
+
+        // 标签json
+        Map<String, Object> lableMap = new HashMap<>();
+        if (isCancel) {
+            lableMap.put("isRefunded", true);
+        } else {
+            lableMap.put("isRefunded", false);
+        }
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
 
         // 订单买家信息
         ShopifyCustomer customer = dto.getShopifyOrder().getCustomer();
@@ -326,6 +331,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         Map<String, Object> lableMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(item.getLineItemId())) {
             lableMap.put("isRefunded", true);
+            detailDTO.setIsDetailRefund(true);
         } else {
             lableMap.put("isRefunded", false);
         }
