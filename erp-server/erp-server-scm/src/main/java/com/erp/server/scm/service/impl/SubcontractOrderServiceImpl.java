@@ -784,7 +784,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
             //付款条件
             SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(generatePoAddDTO.getSupplierId()) ).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(supplierEntity)) {
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
                 supplierDTO.setPayMethodId(supplierEntity.getPayMethodId());
             }
 

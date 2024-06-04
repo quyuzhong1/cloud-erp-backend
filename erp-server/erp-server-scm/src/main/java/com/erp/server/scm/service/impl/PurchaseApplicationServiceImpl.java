@@ -453,7 +453,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
             //付款条件
             SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(supplierEntity)) {
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
                 supplierDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
                 supplierDTO.setPayMethodId(supplierEntity.getPayMethodId());
             }
