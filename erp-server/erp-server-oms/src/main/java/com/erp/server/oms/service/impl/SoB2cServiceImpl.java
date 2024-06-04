@@ -3732,15 +3732,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY, deliveryEntity.getCode());
             }
         }
-        // 前端显示的异常类型
-        String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        //修改状态为虚假发货
-        List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-        soB2cDeliveryFeign.updateStatus(ids, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setType(type);
-        deleteDTO.setMainId(entity.getSourceId());
-        soB2cErrorService.delete(deleteDTO);
 
         String msg = StrUtil.format("操作单据【{}】虚假发货", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "虚假发货");
@@ -3752,6 +3743,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 List<String> deliveryIds = deliveryEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
                 soB2cDeliveryFeign.falseDeliveryBatch(deliveryIds);
             }
+            // 前端显示的异常类型
+            String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
+            //修改状态为虚假发货
+            List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+            soB2cDeliveryFeign.updateStatus(ids, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
+            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+            deleteDTO.setType(type);
+            deleteDTO.setMainId(entity.getSourceId());
+            soB2cErrorService.delete(deleteDTO);
         } catch (Exception e) {
             log.error("OMS 销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
         }
