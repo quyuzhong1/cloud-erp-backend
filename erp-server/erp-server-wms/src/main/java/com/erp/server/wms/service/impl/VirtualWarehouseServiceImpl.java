@@ -32,6 +32,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import com.sdk.wangdian.sdk.impl.Api;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -173,6 +174,13 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      * @param virtualWarehouseEntityId
      */
     private void bindChannel(List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList, String virtualWarehouseEntityId) {
+        //校验一个渠道只能绑定一种类型
+        Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> collect = channelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform));
+        collect.forEach((k, v) -> {
+            if (v.size() > 1) {
+                throw new ServiceException(ApiError.ERROR_ONLYONE);
+            }
+        });
         VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO = new VirtualWarehouseChannelDTO.BatchAddDTO();
         batchAddDTO.setVirtualWarehouseId(virtualWarehouseEntityId);
         batchAddDTO.setChannelList(channelList);

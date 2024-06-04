@@ -187,11 +187,13 @@ public class VirtualWarehouseChannelDTO implements Serializable {
         /**
          * 平台的dict值
          */
+        @NotBlank(message = "渠道不能为空")
         private String dictPlatform;
 
         /**
          * 关联类型：  platform 按平台 shop 按店铺
          */
+        @NotBlank(message = "渠道类型不能为空")
         private String type;
 
         /**
