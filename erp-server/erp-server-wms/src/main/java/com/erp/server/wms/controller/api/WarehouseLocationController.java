@@ -7,6 +7,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -1005,16 +1006,16 @@ public class WarehouseLocationController extends BaseController {
     @PostMapping("/deleteBatch")
     public ApiResult<List<String>> deleteBatch(@RequestBody WarehouseLocationDTO.IdsDto idsDto){
         List<String> errorList = warehouseLocationService.deleteBatch(idsDto);
-        return ApiResult.success(errorList);
+        return errorList.isEmpty() ? ApiResult.success() : new ApiResult(500, "部分数据删除失败", errorList);
     }
 
     /**
      * 导入仓位Excel
      */
     @PostMapping("/importExcel")
-    public ApiResult< List<String>> importExcel(@RequestParam("file") MultipartFile file){
-        List<String> errorMsgList = warehouseLocationService.importExcel(file);
-        return ApiResult.success(errorMsgList);
+    public ApiResult<Void> importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response){
+        warehouseLocationService.importExcel(file, response);
+        return ApiResult.success();
     }
 
     /**
@@ -1032,7 +1033,7 @@ public class WarehouseLocationController extends BaseController {
     @PostMapping("/recycle")
     public ApiResult<List<String>> recycle(@RequestBody @Validated WarehouseLocationDTO.IdsDto idsDto){
         List<String> errorMsgList = warehouseLocationService.recycle(idsDto);
-        return ApiResult.success(errorMsgList);
+        return errorMsgList.isEmpty() ? ApiResult.success() : new ApiResult<>(500, "部分仓位回收失败", errorMsgList);
     }
 
     /**
