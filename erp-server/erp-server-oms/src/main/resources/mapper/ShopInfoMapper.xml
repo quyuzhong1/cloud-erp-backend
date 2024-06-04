@@ -132,7 +132,10 @@
         FROM shop_info si
         WHERE si.is_deleted=FALSE
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            and ((si.account = #{params.searchKeyword}) or (wh.id = #{params.searchKeyword})  or si.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            and ((si.account = #{params.searchKeyword}) or (si.id = #{params.searchKeyword})  or si.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.dictPlatform != null and params.dictPlatform != ''">
+            and si.dict_platform = #{params.dictPlatform}
         </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
