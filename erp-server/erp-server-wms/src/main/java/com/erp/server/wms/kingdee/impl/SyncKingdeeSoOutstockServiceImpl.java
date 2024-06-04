@@ -634,6 +634,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2B订单异常:[" + soOutstockEntity.getSourceId() + "]");
                 return null;
             }
+            CustomerInfoEntity customerInfo = customerFeign.getCustomerById(soOutstockEntity.getCustomerId());
+            if (Objects.nonNull(customerInfo)) {
+                entity.setShopName("B2B");
+                entity.setShopNo("B2B");
+                entity.setCustomerName(customerInfo.getName());
+            }
 
             if (Objects.nonNull(soInfoEntity)) {
                 soId = soInfoEntity.getId();
@@ -675,15 +681,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                     );
                     entity.setItemTotalCost(itemTotalCost);
                     entity.setOrderTotalCost(orderTotalCost);
-
-                    CustomerInfoEntity customerInfo = customerFeign.getCustomerById(soOutstockEntity.getCustomerId());
-                    if (Objects.nonNull(customerInfo)) {
-                        entity.setShopName("B2B");
-                        entity.setShopNo("B2B");
-                        entity.setCustomerName(customerInfo.getName());
-                    }
                 }
             }
+
         } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType()) ) {
             SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSoId());
             if (Objects.isNull(view) || SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(soOutstockEntity.getSourceType())) {
