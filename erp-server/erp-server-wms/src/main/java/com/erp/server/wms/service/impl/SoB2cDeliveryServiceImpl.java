@@ -330,23 +330,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Arrays.asList(soB2cEntity.getId()));
-        if(soB2cDetailEntityList.stream().anyMatch(v->StringUtils.isNotBlank(v.getSplitDetailId()))){
-            throw new ServiceException("捆绑拆分的订单不允许虚假发货");
-        }
-
-        //调用第三方平台SDK发货
-//        try {
-//            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-//                //调用第三方平台SDK发货
-//                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-//                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-//                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-//                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-//            }
-//        } catch (Exception e) {
-//            log.error("【虚假标记发货】销售单【{}】标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-//            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-//        }
         //修改状态为虚假发货
         this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
         //修改订单状态待发货
