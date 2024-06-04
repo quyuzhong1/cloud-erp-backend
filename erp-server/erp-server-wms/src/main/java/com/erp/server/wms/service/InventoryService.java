@@ -277,5 +277,5 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param searchDTO
      * @return
      */
-    InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryWarehouseDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO);
+    InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO);
 }
