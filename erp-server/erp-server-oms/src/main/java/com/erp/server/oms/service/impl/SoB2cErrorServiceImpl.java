@@ -22,6 +22,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,7 @@ import java.util.Objects;
 @Service
 public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cErrorEntity> implements SoB2cErrorService {
 
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
     @Resource

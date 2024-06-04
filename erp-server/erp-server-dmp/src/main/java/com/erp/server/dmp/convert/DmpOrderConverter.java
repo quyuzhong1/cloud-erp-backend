@@ -159,7 +159,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "isReturned", constant = "2"),
             @Mapping(target = "isRefund", constant = "2"),
             @Mapping(target = "paidTime", source = "payTime"),
-            @Mapping(target = "salesRecordNumber", source = "viewDTO.code"),
+            @Mapping(target = "salesRecordNumber", source = "viewDTO.platformCode"),
             @Mapping(target = "platformOrderStatus", source = "approveStatus"),
             @Mapping(target = "orderFee", source = "amount"),
             @Mapping(target = "sourcePlatform", constant = "soB2c"),
