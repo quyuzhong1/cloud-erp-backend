@@ -162,11 +162,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, String name) {
+    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, LogisticsSupplierDTO.PagingParamDTO params) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, name);
+        List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, params);
 //        List<LogisticsChannelEntity> list = this.lambdaQuery().
 //                in(LogisticsChannelEntity::getMainId, mainIdList).
 //                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).

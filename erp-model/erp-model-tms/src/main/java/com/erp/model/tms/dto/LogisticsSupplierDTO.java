@@ -93,7 +93,14 @@ public class LogisticsSupplierDTO implements Serializable {
          */
         private List<LocalDate> updateTimeList;
 
-
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+        /**
+         * 渠道代码
+         */
+        private String channelCode;
     }
 
     @Data
@@ -179,6 +186,10 @@ public class LogisticsSupplierDTO implements Serializable {
          * 是否能打印官方面单
          */
         private Boolean isPrintPlatform;
+        /**
+         * 渠道列表
+         */
+        private List<LogisticsSupplierDTO.ChannelViewDTO> channelViewDTOList;
     }
 
 

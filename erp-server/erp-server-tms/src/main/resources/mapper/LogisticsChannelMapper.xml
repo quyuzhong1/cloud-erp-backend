@@ -160,8 +160,11 @@
                 #{item}
             </foreach>
         </if>
-        <if test="name != null and name != ''">
-            and lc.name ILIKE concat('%',#{name}::text,'%')
+        <if test="params.channelName != null and params.channelName != ''">
+            and lc.name ILIKE concat('%',#{params.channelName}::text,'%')
+        </if>
+        <if test="params.channelCode != null and params.channelCode != ''">
+            and lc.code ILIKE concat('%',#{channelCode}::text,'%')
         </if>
         order by  lc.disabled asc,lc.create_time desc
     </select>
