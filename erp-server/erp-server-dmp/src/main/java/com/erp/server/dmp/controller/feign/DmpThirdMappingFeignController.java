@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.feign;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
@@ -36,6 +38,7 @@ public class DmpThirdMappingFeignController {
     public Boolean getWhetherBind(@RequestBody ThirdMappingDTO.ViewParamDTO viewParamDTO) {
         return thirdMappingService.getWhetherBind(viewParamDTO);
     }
+
     @PostMapping("/getByThirdId")
     public List<ThirdMappingEntity> getByThirdId(@RequestBody ThirdMappingDTO.ViewParamDTO viewParamDTO) {
         return thirdMappingService.getByThirdId(viewParamDTO);
@@ -49,5 +52,10 @@ public class DmpThirdMappingFeignController {
     @PostMapping("/add")
     public BaseResultDTO.AddDTO add(@RequestBody @Validated ThirdMappingDTO.AddDTO dto) {
         return thirdMappingService.add(dto);
+    }
+
+    @PostMapping("/view")
+    public ThirdMappingDTO.MappingViewDTO view(@RequestBody @Validated ThirdMappingDTO.ViewParamDTO viewParamDTO) {
+        return thirdMappingService.view(viewParamDTO);
     }
 }

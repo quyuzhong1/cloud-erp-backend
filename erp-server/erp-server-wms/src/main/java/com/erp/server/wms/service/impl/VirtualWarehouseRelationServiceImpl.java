@@ -123,21 +123,33 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO batchAdd(VirtualWarehouseRelationDTO.BatchAddDTO batchAddDTO) {
         List<String> warehouseIdList = batchAddDTO.getWarehouseIdList();
-        if (CollectionUtils.isEmpty(warehouseIdList)) {
-            throw new ServiceException(ApiError.ERROR_400);
-        }
         List<VirtualWarehouseRelationEntity> existRelationList = baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseRelationEntity>().in(VirtualWarehouseRelationEntity::getVirtualWarehouseId, batchAddDTO.getVirtualWarehouseId()));
-        if (CollectionUtils.isNotEmpty(existRelationList)) {
-            //判断原始绑定与变更数据是否相同
-            String existWarehouseId = existRelationList.get(0).getWarehouseId();
-            if (!Objects.equals(warehouseIdList.get(0), existWarehouseId)) {
-                //删除原有绑定关系
+        if (CollectionUtils.isEmpty(warehouseIdList)) {
+            if (CollectionUtils.isNotEmpty(existRelationList)) {
+                //删除原始数据
+                baseMapper.deleteBatchIds(existRelationList.stream().map(VirtualWarehouseRelationEntity::getId).collect(Collectors.toList()));
+            }
+        } else {
+            if (CollectionUtils.isNotEmpty(existRelationList)) {
+                //判断原始绑定与变更数据是否相同
+                String existWarehouseId = existRelationList.get(0).getWarehouseId();
+                if (!Objects.equals(warehouseIdList.get(0), existWarehouseId)) {
+                    //更新原有绑定关系
+                    VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = new VirtualWarehouseRelationEntity();
+                    virtualWarehouseRelationEntity.setWarehouseId(warehouseIdList.get(0));
+                    virtualWarehouseRelationEntity.setVirtualWarehouseId(batchAddDTO.getVirtualWarehouseId());
+                    virtualWarehouseRelationEntity.setId(existRelationList.get(0).getId());
+                    baseMapper.updateById(virtualWarehouseRelationEntity);
+                }
+            } else {
                 VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = new VirtualWarehouseRelationEntity();
                 virtualWarehouseRelationEntity.setWarehouseId(warehouseIdList.get(0));
-                virtualWarehouseRelationEntity.setId(existRelationList.get(0).getId());
-                baseMapper.updateById(virtualWarehouseRelationEntity);
+                virtualWarehouseRelationEntity.setVirtualWarehouseId(batchAddDTO.getVirtualWarehouseId());
+                virtualWarehouseRelationEntity.setId(warehouseIdList.get(0));
+                baseMapper.insert(virtualWarehouseRelationEntity);
             }
         }
         return new BaseResultDTO.AddDTO();

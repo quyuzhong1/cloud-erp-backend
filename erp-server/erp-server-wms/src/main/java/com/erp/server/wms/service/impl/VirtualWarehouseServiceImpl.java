@@ -13,6 +13,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
@@ -29,7 +30,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.jgoodies.common.bean.Bean;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -76,7 +76,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         BeanMapperUtils.copy(addDTO, virtualWarehouseEntity);
 
         // 数据处理
-        handleData(virtualWarehouseEntity, addDTO.getWarehouseIdList());
+        handleData(virtualWarehouseEntity, addDTO.getWarehouseIdList(), addDTO.getThirdMappingList());
 
         log.info("开始新增虚拟仓");
         // 生成单号
@@ -171,7 +171,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         VirtualWarehouseEntity virtualWarehouseEntity = BeanMapperUtils.map(VirtualWarehouseEntity.class, updateDTO);
 
         // 数据处理
-        handleData(virtualWarehouseEntity, updateDTO.getWarehouseIdList());
+        handleData(virtualWarehouseEntity, updateDTO.getWarehouseIdList(), updateDTO.getThirdMappingList());
         log.info("编辑 开始修改虚拟仓数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(virtualWarehouseEntity);
         if (!save) {
@@ -208,7 +208,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     /**
      * 新增修改处理数据
      */
-    private void handleData(VirtualWarehouseEntity virtualWarehouseEntity, List<String> warehouseIdList) {
+    private void handleData(VirtualWarehouseEntity virtualWarehouseEntity, List<String> warehouseIdList, List<ThirdMappingDTO.AddDTO> thirdMappingList) {
         //校验名称全局唯一
         VirtualWarehouseEntity existVm = baseMapper.selectOne(new LambdaQueryWrapper<VirtualWarehouseEntity>().eq(VirtualWarehouseEntity::getName, virtualWarehouseEntity.getName()));
         if (Objects.nonNull(existVm) && !Objects.equals(existVm.getId(), virtualWarehouseEntity.getId())) {
@@ -220,23 +220,31 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
                 List<VirtualWarehouseRelationEntity> collect = warehouseRelationList.stream().filter(relationEntity -> !Objects.equals(relationEntity.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(collect)) {
-                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(collect.get(0).getVirtualWarehouseId());
+                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(virtualWarehouseEntity.getId());
                     throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
                 }
             }
         }
-        //校验关联外部仓
-        checkDmpThirdMapping(virtualWarehouseEntity.getId(), virtualWarehouseEntity.getName());
-        virtualWarehouseEntity.setDisabled(true);
+        if (CollectionUtils.isNotEmpty(thirdMappingList)) {
+            //校验关联外部仓
+            checkDmpThirdMapping(virtualWarehouseEntity.getId(), virtualWarehouseEntity.getName(), thirdMappingList);
+        }
+
+        virtualWarehouseEntity.setDisabled(false);
     }
 
-    private void checkDmpThirdMapping(String virtualWarehouseId, String virtualWarehouseName) {
+    private void checkDmpThirdMapping(String virtualWarehouseId, String virtualWarehouseName, List<ThirdMappingDTO.AddDTO> thirdMappingList) {
+        ThirdMappingDTO.AddDTO addDTO = thirdMappingList.get(0);
         ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
         viewParamDTO.setType(ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode());
-        viewParamDTO.setSysId(virtualWarehouseId);
-        Boolean hasThirdMapping = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
-        if (!hasThirdMapping) {
-            throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING, virtualWarehouseName);
+        viewParamDTO.setSysType(PlatformDictEnum.WDT.getCode());
+        viewParamDTO.setThirdId(addDTO.getThirdId());
+        List<ThirdMappingEntity> thirdList = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
+        if (CollectionUtils.isNotEmpty(thirdList)) {
+            long count = thirdList.stream().filter(item -> !Objects.equals(item.getSysId(), virtualWarehouseId)).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING, virtualWarehouseName);
+            }
         }
     }
 
@@ -280,7 +288,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         viewParamDTO.setSysId(id);
         viewParamDTO.setType(ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode());
         ThirdMappingDTO.MappingViewDTO view = dmpThirdMappingFeign.view(viewParamDTO);
-        if (Objects.nonNull(view)){
+        if (Objects.nonNull(view)) {
             viewDTO.setThirdMappingList(view.getThirdList());
         }
         return viewDTO;
