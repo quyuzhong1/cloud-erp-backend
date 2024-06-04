@@ -1,7 +1,10 @@
 package com.erp.server.dmp.push.consumer.erp;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -20,7 +23,10 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * ERP的b2c订单推送到金蝶消费者
@@ -54,15 +60,21 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        SoB2cDTO.ViewDTO viewDTO = JSON.parseObject(ext.toString(), SoB2cDTO.ViewDTO.class);
-        this.cleanOrderField(viewDTO);
+        Map<String, Object> map = JSONUtil.parseObj(ext);
+
+        //操作项
+        String operate = String.valueOf(map.get("operate"));
+        String entity = String.valueOf(map.get("entity"));
+
+        SoB2cDTO.ViewDTO viewDTO = JSON.parseObject(entity, SoB2cDTO.ViewDTO.class);
+        this.cleanOrderField(viewDTO, operate);
         return ApiResult.success();
     }
 
     /**
      * 清洗订单
      */
-    private void cleanOrderField(SoB2cDTO.ViewDTO viewDTO) {
+    private void cleanOrderField(SoB2cDTO.ViewDTO viewDTO, String operate) {
         DmpOrderInfoEntity dmpOrderInfoEntity = DmpOrderConverter.INSTANCE.soB2cToDmpOrder(viewDTO);
         String billStatus = viewDTO.getBillStatus();
 
@@ -78,8 +90,25 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
         }
 
         List<DmpOrderItemSplitEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cToDmpOrderItem(viewDTO.getDetailList());
-        itemEntityList.forEach(i -> i.setAmountAfter(i.getSellPrice()));
         dmpOrderInfoEntity.setItemList(itemEntityList);
-        dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
+
+
+        //根据操作类型进行操作
+        if (Objects.equals(operate, SyncOperateEnum.OPERATE_APPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_UPDATE.getCode())) {
+            //审核
+            dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
+
+        } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_DELETE.getCode())) {
+            //反审核
+            dmpOrderInfoService.removeOrderByCode(Collections.singletonList(dmpOrderInfoEntity.getPlatformOrderId()));
+
+        } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_INVALID.getCode())) {
+            //作废 不处理
+            log.info("作废状态，直接忽略同步dmp订单操作");
+//            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(String.valueOf(code));
+//            if (Objects.nonNull(dmpOrderInfoEntity)) {
+//                dmpOrderInfoEntity.setOrderStatus(5);
+//            }
+        }
     }
 }

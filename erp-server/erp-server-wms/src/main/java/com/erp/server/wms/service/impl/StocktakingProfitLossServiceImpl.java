@@ -21,6 +21,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
@@ -35,6 +36,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -53,6 +55,8 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -112,6 +116,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     /**
      * tab list
@@ -450,8 +457,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             return Boolean.FALSE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        Boolean result = updateForApprove(entity.getId(), approveStatus);
-        if (result) {
+        Boolean result;
             if (ApproveType.PASS.equals(dto.getType())) {
                 //盘盈单
                 BillTypeEnum profit = BillTypeEnum.PROFIT;
@@ -482,17 +488,30 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                     //扣减库存
                     inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
                 }
+                // 扣除库存后才更新状态
+                result = updateForApprove(entity.getId(), approveStatus);
 
+                DmpPushTaskEntity pushTaskEntity = new DmpPushTaskEntity();
                 //盘盈单同步金蝶
                 if (isProfit) {
-                    syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                     pushTaskEntity = syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 }
                 //盘亏单同步金蝶
                 if (isLoss) {
-                    syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                     pushTaskEntity = syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 }
+                //推送金蝶
+                DmpPushTaskEntity finalPushTaskEntity = pushTaskEntity;
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        dmpMqFeign.sendTask(Arrays.asList(finalPushTaskEntity));
+                    }
+                });
+            } else {
+                // 更新状态
+                result = updateForApprove(entity.getId(), approveStatus);
             }
-        }
         return result;
     }
 
@@ -900,14 +919,17 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     }
 
     @Override
-    public List<StocktakingProfitLossDTO.LastDTO> listByOrgIdAndSkuIds(List<String> orgIds, List<String> skuIds) {
+    public List<StocktakingProfitLossDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(warehouseIds)){
+            throw new ServiceException("仓库IDS 不能为空");
+        }
         if (CollectionUtils.isEmpty(orgIds)){
-            throw new ServiceException("组织IDS不能为空");
+            throw new ServiceException("组织IDS 不能为空");
         }
         if (CollectionUtils.isEmpty(skuIds)){
             throw new ServiceException("SKU IDS不能为空");
         }
-        return baseMapper.listByOrgIdAndSkuIds(orgIds, skuIds);
+        return baseMapper.maxDateByParams(warehouseIds, orgIds, skuIds);
     }
 
     @Override
@@ -917,16 +939,15 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     }
 
     @Override
-    public boolean checkClosed(List<String> orgIds, List<String> skuIds, LocalDate billDate) {
+    public boolean checkClosed(List<String> warehouseIds, List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate) {
         // 最新盘盈盘亏单有效单据日期列表
-        List<StocktakingProfitLossDTO.LastDTO> lastStocktakingProfitLossList = this.listByOrgIdAndSkuIds(orgIds, skuIds);
+        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = this.maxDateByParams(warehouseIds, orgIds, skuIds);
         if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
-            for (StocktakingProfitLossDTO.LastDTO lastDTO : lastStocktakingProfitLossList) {
-                if (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate())){
-                    // 已有日期之前已审核的盘盈盘亏单
-                    return true;
-                }
-            }
+            // 已有日期之前对应仓位已审核的盘盈盘亏单
+            return lastStocktakingProfitLossList.stream()
+                    .anyMatch(e-> warehourseLocationList.contains(e.getWarehouseLocation()) &&
+                            (billDate.isBefore(e.getBillDate()) || billDate.equals(e.getBillDate()))
+                    );
         }
         return false;
     }

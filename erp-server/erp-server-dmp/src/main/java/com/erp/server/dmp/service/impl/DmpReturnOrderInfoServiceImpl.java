@@ -16,6 +16,7 @@ import com.erp.server.dmp.service.DmpReturnOrderInfoService;
 import com.erp.server.dmp.service.DmpReturnOrderItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     private static Integer pageIndex = 1;
 
     @Resource
+    @Lazy
     private DmpOrderInfoService dmpOrderInfoService;
 
     @Resource

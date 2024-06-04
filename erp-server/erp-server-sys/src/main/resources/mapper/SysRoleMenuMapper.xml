@@ -22,7 +22,9 @@
             <if test="type != null and type != '' and type != 0">
                 AND sm.type=#{type}
             </if>
-
+            <if test="userType != null and userType != ''">
+                AND sm.system=#{userType}
+            </if>
     </select>
 
     <select id="findMenuCodeByRoleIds" resultType="String">
@@ -37,6 +39,9 @@
         <if test="type != null and type != '' and type != 0">
             AND sm.type=#{type}
         </if>
+        <if test="userType != null and userType != ''">
+            AND sm.system=#{userType}
+        </if>
 
     </select>
 
@@ -45,6 +50,9 @@
         SELECT  DISTINCT menu_code  FROM sys_menu WHERE disabled = false
             <if test="type != null and type != '' and type != 0">
                 AND type=#{type}
+            </if>
+            <if test="userType != null and userType != ''">
+                and system = #{userType}
             </if>
     </select>
 

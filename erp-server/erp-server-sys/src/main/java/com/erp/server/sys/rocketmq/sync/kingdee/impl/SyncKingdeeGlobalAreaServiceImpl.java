@@ -4,11 +4,11 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
@@ -45,7 +45,7 @@ public class SyncKingdeeGlobalAreaServiceImpl implements SyncKingdeeGlobalAreaSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(DictGlobalAreaEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(DictGlobalAreaEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         boolean isExistParent = false;
         resultMap.put("isExistParent", isExistParent);
@@ -69,16 +69,14 @@ public class SyncKingdeeGlobalAreaServiceImpl implements SyncKingdeeGlobalAreaSe
         String fNumber = AssistantDataEnum.GLOBAL_AREA.getCode();
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
         resultMap.put("moduleType",moduleType);
         resultMap.put("fNumber", fNumber);
-        sendMqAndSaveTask(entity,operate,resultMap);
-
+        return saveTask(entity,operate,resultMap);
     }
 
-    private void sendMqAndSaveTask(DictGlobalAreaEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask(DictGlobalAreaEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -90,6 +88,6 @@ public class SyncKingdeeGlobalAreaServiceImpl implements SyncKingdeeGlobalAreaSe
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

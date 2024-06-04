@@ -16,6 +16,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -55,17 +56,17 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
         if (sourceData instanceof PlatformAmazonFulfilledShipmentsDTO){
             return (List<PlatformAmazonFulfilledShipmentsDTO>) genericDataList;
         }
-        if (!(sourceData instanceof ReportFulfilledShipmentsCsvEntity)) {
+        if (!(sourceData instanceof ReportFulfilledShipmentsMongoDTO)) {
             throw new ServiceException(" 亚马逊物流销售:sourceData类型异常:error=" + genericDataList.getClass().toGenericString());
         }
-        List<ReportFulfilledShipmentsCsvEntity> sourceDataList = (List<ReportFulfilledShipmentsCsvEntity>) genericDataList;
+        List<ReportFulfilledShipmentsMongoDTO> sourceDataList = (List<ReportFulfilledShipmentsMongoDTO>) genericDataList;
 
         // 返回下载源数据
         return sourceDataList.stream()
                 .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e,
-                        data.getPlatformApiId(),
-                        data.getShopId(),
-                        StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), data.getShopId()),
+                        e.getReportId(),
+                        e.getShopId(),
+                        StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), e.getShopId()),
                         AmazonHandleStatusEnum.NONE.getCode(),
                         CleanStatusEnum.UNCLEAN.getCode()
                 ))
