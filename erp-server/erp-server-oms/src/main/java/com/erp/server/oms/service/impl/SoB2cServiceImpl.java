@@ -3835,7 +3835,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ) {
             throw new ServiceException(ApiError.APPROVE_IS_FALSE_DELIVERY);
         }
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(id);
         List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(id));
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         String code = logisticsEntity.getCode();
