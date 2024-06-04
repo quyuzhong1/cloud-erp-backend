@@ -78,9 +78,9 @@ public class PdaInventoryController extends BaseController {
      * @Date 2024/6/4 11:39
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventorySearch>
      **/
-    @PostMapping(value = "/getInventoryByWarehouse")
-    public ApiResult<InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryWarehouseDTO>> getInventoryByWarehouse(@RequestBody PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
-        InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryWarehouseDTO> inventory = inventoryService.getInventoryByWarehouse(searchDTO);
+    @PostMapping(value = "/pageInventoryByWarehouse")
+    public ApiResult<InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO>> getInventoryByWarehouse(@RequestBody PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
+        InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> inventory = inventoryService.getInventoryByWarehouse(searchDTO);
         return success(inventory);
     }
 }
