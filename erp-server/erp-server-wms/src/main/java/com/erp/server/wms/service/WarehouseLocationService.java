@@ -5,7 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
@@ -189,12 +188,13 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     /**
      * 导入仓位Excel
      *
-     * @param file 上传的文件
+     * @param file     上传的文件
+     * @param response
      * @return 上传失败的条目信息
      * @date: 2024-05-31
      * @author: tanmujin
      */
-    List<String> importExcel(MultipartFile file);
+    void importExcel(MultipartFile file, HttpServletResponse response);
 
     /**
      * 回收仓位

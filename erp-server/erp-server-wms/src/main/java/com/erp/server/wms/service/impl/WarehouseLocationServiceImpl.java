@@ -504,7 +504,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<String> importExcel(MultipartFile file) {
+    public void importExcel(MultipartFile file, HttpServletResponse response) {
         LoginUser user = UserContext.getNonLoginUser();
         //读取Excel
         WarehouseLocationExcelListener listener = new WarehouseLocationExcelListener();
@@ -514,7 +514,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             throw new ServiceException(ApiError.ERROR_95124);
         }
 
-        List<String> errorMsgList = listener.getErrorMsgList();
+        List<WarehouseLocationExcelDto> errorList = listener.getErrorList();
         //通过必填校验的行
         List<WarehouseLocationExcelDto> verifyList = listener.getSuccessList();
         List<String> excelWarehouseNameList = verifyList.stream().map(WarehouseLocationExcelDto::getWarehouseName).collect(Collectors.toList());
@@ -524,9 +524,10 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             String warehouseId = warehouseName2IdMap.get(row.getWarehouseName());
 
             //当前仓库下必须存在对应的库区
-            WarehouseLocationEntity areaEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", warehouseId).eq("type", "area").eq("code", row.getWarehouseAreaCode()).eq("is_deleted", false).eq("disabled", false));
+            WarehouseLocationEntity areaEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", warehouseId).eq("type", "area").eq("name", row.getWarehouseAreaName()).eq("is_deleted", false).eq("disabled", false));
             if (areaEntity == null) {
-                errorMsgList.add(String.format("当前【%s】仓库下没有【%s】库区", row.getWarehouseName(), row.getWarehouseAreaCode()));
+//                errorMsgList.add(String.format("当前【%s】仓库下没有【%s】库区", row.getWarehouseName(), row.getWarehouseAreaCode()));
+                errorList.add(row);
                 continue;
             }
 
@@ -550,10 +551,14 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             }
 
             //仓位重复
-            errorMsgList.add(String.format("仓位【%s】已存在", row.getWarehouseLocationCode()));
+//            errorMsgList.add(String.format("仓位【%s】已存在", row.getWarehouseLocationCode()));
+            errorList.add(row);
         }
 
-        return errorMsgList;
+        if(! errorList.isEmpty()){
+            ExcelUtil.export("错误数据", "sheet1", errorList, WarehouseLocationExcelDto.class, response);
+        }
+
     }
 
     private static WarehouseLocationEntity buildAddEntity(WarehouseLocationExcelDto row, WarehouseLocationEntity areaEntity, String warehouseId) {
