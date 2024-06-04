@@ -11,10 +11,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
-import com.erp.model.tms.vo.request.ChanelQueryVO;
-import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
-import com.erp.model.tms.vo.request.LogisticsOrderVO;
-import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
@@ -25,13 +22,18 @@ import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.tms.tongyou.dto.request.TongYouCreateOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouGetOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouPrintLabelRequest;
+import com.sdk.tms.tongyou.dto.request.TongYouUpdateWeightRequest;
 import com.sdk.tms.tongyou.dto.response.*;
 import com.sdk.tms.tongyou.server.TongYouService;
+import com.sdk.tms.weishi.dto.request.WeiShiUpdateWeightRequest;
+import com.sdk.tms.weishi.dto.response.WeiShiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 
@@ -203,6 +205,40 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
         }
         return isSuccess ? success(responseList) : failure(responseList);
+    }
+
+    /**
+     * 更新重量
+     *
+     * @return
+     */
+    @Override
+    public ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO) {
+        try {
+            TongYouUpdateWeightRequest request = TongYouUpdateWeightRequest.builder()
+                    .orderNo(logisticsUpdateWeightVO.getDeliveryNo())
+                    .trackNo(logisticsUpdateWeightVO.getTransportNo())
+                    .weight(logisticsUpdateWeightVO.getWeight().divide(new BigDecimal(1000),4, RoundingMode.HALF_UP))
+                    .build();
+            ValidatorUtil.validateEntity(request);
+            TongYouResponse<String> response = tongYouService.updateWeight(request, logisticsUpdateWeightVO.getAuthMap());
+
+            if (!response.getSuccess()) {
+                logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                        logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getMsg());
+            }
+            logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                    logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
+            return success();
+        }catch (Exception e){
+            logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                    logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.TONG_YOU.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(e),true);
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }
     }
 
     /**

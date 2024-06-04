@@ -99,6 +99,12 @@ public class DeliveryOrderDetailEntity extends BaseEntity<DeliveryOrderDetailEnt
     @TableField("plan_delivery_date")
     private LocalDate planDeliveryDate;
 
+    /**
+     * 收货状态
+     */
+    @TableField("receipt_status")
+    private String receiptStatus;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";

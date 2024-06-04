@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -197,4 +198,12 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/listBySoOutStockIdList")
     List<LogisticsBillEntity> listBySoOutStockIdList(@RequestBody List<String> outstockIdList);
+
+    /**
+     * 更新物流单重量
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/updateLogisticWeight")
+    ApiResult<String> updateLogisticWeight(@RequestBody LogisticsBillDTO.UpdateWeight dto);
 }

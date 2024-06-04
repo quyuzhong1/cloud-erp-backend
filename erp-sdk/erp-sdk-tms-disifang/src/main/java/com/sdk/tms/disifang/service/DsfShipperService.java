@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,14 +32,14 @@ import java.util.Map;
 @Component
 public class DsfShipperService {
     //生产环境
-    static String host = "https://open.4px.com/router/api/service";
-    static String appKey = "fad2854e-93a7-4598-95ff-cb60557dbc0a";
-    static String appSecret = "0e91ca81-22f8-4fce-95d1-18ed6269604b";
+//    static String host = "https://open.4px.com/router/api/service";
+//    static String appKey = "fad2854e-93a7-4598-95ff-cb60557dbc0a";
+//    static String appSecret = "0e91ca81-22f8-4fce-95d1-18ed6269604b";
 
     //测试环境
-//    static String host = "https://open-test.4px.com/router/api/service";
-//    static String appKey = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
-//    static String appSecret = "b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad";
+    static String host = "https://open-test.4px.com";
+    static String appKey = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
+    static String appSecret = "b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad";
     private void validate(String appKey,String appSecret,String method,String url){
         if (StringUtils.isEmpty(appKey) || StringUtils.isEmpty(appSecret) || StringUtils.isEmpty(method) || StringUtils.isEmpty(url) ) {
             throw new ServiceException("授权信息不能为空");
@@ -285,7 +286,24 @@ public class DsfShipperService {
         return responseMsg;
     }
 
-
+    public ResponseMsg updateWeight(Map<String, String> authMap, DsfUpdateWeightReq dsfUpdateWeightReq) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String url = authMap.get("url");
+        String method = "ds.xms.order.updateweight";
+        validate(appKey,appSecret,method,url);
+        AffterentParam param = AffterentParam.builder()
+                .version("1.0")
+                .format("json")
+                .language("cn")
+                .appKey(appKey)
+                .appSecret(appSecret)
+                .method(method)
+                .build();
+        String s = ApiHttpClientUtils.apiJsonPostUrl(param, JSONUtil.toJsonStr(dsfUpdateWeightReq), url);
+        ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
+        return responseMsg;
+    }
     public static void main(String[] args) {
         DsfShipperService dsfShipperService = new DsfShipperService();
 //        String token = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
@@ -293,8 +311,27 @@ public class DsfShipperService {
         Map<String, String> map = new HashMap<>();
         map.put("clientId",appKey);
         map.put("clientSecret",appSecret);
-        ChanelRequest chanelRequest = ChanelRequest.builder().transport_mode("1").build();
-        ResponseMsg chanelList = dsfShipperService.getChanelList(map, chanelRequest);
+        map.put("url", host);
+        DsfUpdateWeightReq dsfUpdateWeightReq = DsfUpdateWeightReq.builder()
+                        .requestNo("304364437899")
+                                .weight("1.12").
+                build();
+        ResponseMsg chanelList = dsfShipperService.updateWeight(map, dsfUpdateWeightReq);
+        System.out.println(chanelList);
+//        ResponseMsg chanelList = dsfShipperService.getChanelList(map, ChanelRequest.builder().transport_mode("1").build());
+//        System.out.println(chanelList);
+//                LabelRequest labelRequest = LabelRequest.builder()
+//                .requestNo(Collections.singletonList("304364437899"))
+//                .logisticsProductCode("E4")
+//                .isPrintBuyerId("N")
+//                .isPrintCustomerWeight("N")
+//                .isPrintDeclarationList("N")
+//                .isPrintTime("N")
+//                .isPrintPickInfo("N")
+//                .isPrintPickBarcode("N")
+//                .build();
+//        ResponseMsg responseMsg = dsfShipperService.getLabelList(map, labelRequest);
+//        System.out.println(responseMsg);
 //        String str = "app_key16081f05-e8fc-4250-b9c4-0660d1ecbb28" +
 //                "formatjson" +
 //                "methodds.xms.order.create" +
@@ -307,17 +344,7 @@ public class DsfShipperService {
 //        String md52 = DigestUtil.md5Hex(str, Charset.defaultCharset());
         //timestamp1698823437409
         //timestamp1532592413187
-//        LabelRequest labelRequest = LabelRequest.builder()
-//                .requestNo(Collections.singletonList("304364437899"))
-//                .logisticsProductCode("E4")
-//                .isPrintBuyerId("N")
-//                .isPrintCustomerWeight("N")
-//                .isPrintDeclarationList("N")
-//                .isPrintTime("N")
-//                .isPrintPickInfo("N")
-//                .isPrintPickBarcode("N")
-//                .build();
-//        dsfShipperService.getLabelList(appKey, appSecret, labelRequest);
+
 
 //        AffterentParam param = AffterentParam.builder()
 ////                .accessToken()
