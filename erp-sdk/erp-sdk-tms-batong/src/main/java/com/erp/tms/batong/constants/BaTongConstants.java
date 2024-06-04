@@ -49,4 +49,10 @@ public class BaTongConstants {
      * 获取运输方式
      */
     public static final String GET_SHIPPING_METHOD="getshippingmethod";
+
+
+    /**
+     * 更新重量
+     */
+    public static final String UPDATE_ORDER="updateorder";
 }
