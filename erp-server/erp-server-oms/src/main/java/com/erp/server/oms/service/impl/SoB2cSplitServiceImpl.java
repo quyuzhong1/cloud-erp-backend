@@ -333,7 +333,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 for (SoB2cEntity notPassMain : notPassMainList) {
                     List<SoB2cDetailEntity> notPassDetailList = otherDetailList.stream().filter(v->v.getMainId().equals(notPassMain.getId())).collect(Collectors.toList());
                     for(SoB2cDetailEntity soB2cDetailEntity : notPassDetailList){
-                        sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
+                        sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
                     }
                 }
                 batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),sb.toString()));
@@ -451,7 +451,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             for (SoB2cEntity notPassMain : notPassMainList) {
                 List<SoB2cDetailEntity> notPassDetailList = sameSplitDetailList.stream().filter(v->v.getMainId().equals(notPassMain.getId())).collect(Collectors.toList());
                 for(SoB2cDetailEntity soB2cDetailEntity : notPassDetailList){
-                    sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
+                    sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
                 }
             }
             throw new ServiceException(sb.toString());
