@@ -46,9 +46,9 @@
         from virtual_warehouse vw
         where ${params.sqlMap.default}
         and vw.is_deleted=false
-        <if test="params.disabled!=null">
-            and vm.disabled=#{params.disabled}
-        </if>
+<!--        <if test="params.disabled!=null">-->
+<!--            and vm.disabled=#{params.disabled}-->
+<!--        </if>-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
