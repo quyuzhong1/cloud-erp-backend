@@ -1274,6 +1274,14 @@ public class WarehouseReceiveDTO {
     @NoArgsConstructor
     public static class PoReturnDetailDTO{
         /**
+         * 采购明细id来源
+         */
+        private String purchaseOrderDetailId;
+        /**
+         * 采购id来源
+         */
+        private String purchaseOrderId;
+        /**
          * 收货明细id来源
          */
         private String receiveDetailId;

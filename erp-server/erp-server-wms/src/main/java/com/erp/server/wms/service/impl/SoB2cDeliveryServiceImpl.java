@@ -429,14 +429,31 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         // 合并处理数量不相同的行
-        Map<SoB2cDeliveryDTO.PrintPickingViewDTO, Integer> mergedMap = printPickingViewList.stream()
-                .collect(Collectors.toMap(dto -> dto, SoB2cDeliveryDTO.PrintPickingViewDTO::getPickingQty, Integer::sum));
-        printPickingViewList =  mergedMap.entrySet().stream()
-                .map(entry -> {
-                    SoB2cDeliveryDTO.PrintPickingViewDTO dto = entry.getKey();
-                    dto.setPickingQty(entry.getValue());
-                    return dto;
-                })
+//        Map<SoB2cDeliveryDTO.PrintPickingViewDTO, Integer> mergedMap = printPickingViewList.stream()
+//                .collect(Collectors.toMap(dto -> dto, SoB2cDeliveryDTO.PrintPickingViewDTO::getPickingQty, Integer::sum));
+        // 合并处理数量不相同的行，并拼接remark
+        Map<SoB2cDeliveryDTO.PrintPickingViewDTO, SoB2cDeliveryDTO.PrintPickingViewDTO> mergedMap = printPickingViewList.stream()
+                .collect(Collectors.toMap(
+                        dto -> dto,
+                        dto -> dto,
+                        (dto1, dto2) -> {
+                            dto1.setPickingQty(dto1.getPickingQty() + dto2.getPickingQty());
+                            dto1.setRemark(StringUtils.isNotBlank(dto2.getRemark())?StringUtils.isNotBlank(dto1.getRemark())?dto1.getRemark() + ";" + dto2.getRemark():dto2.getRemark():dto1.getRemark());
+                            return dto1;
+                        }
+                ));
+
+         printPickingViewList = mergedMap.values().stream()
+                .map(dto -> new SoB2cDeliveryDTO.PrintPickingViewDTO(
+                        dto.getSkuId(),
+                        dto.getSkuNo(),
+                        dto.getProductName(),
+                        dto.getPickingQty(),
+                        dto.getWarehouseId(),
+                        dto.getWarehouseName(),
+                        dto.getWarehouseLocation(),
+                        dto.getRemark()
+                ))
                 .collect(Collectors.toList());
 
         // 仓库+仓位排序
@@ -1555,6 +1572,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
         taskFeignDTO.setSyncOperate(view.getStatus());
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

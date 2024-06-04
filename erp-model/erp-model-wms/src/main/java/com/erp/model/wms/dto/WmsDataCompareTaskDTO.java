@@ -610,7 +610,7 @@ public class WmsDataCompareTaskDTO implements Serializable {
     	 *  销售单号查询条件
     	 */
     	 @ExcelIgnore
-    	private List<String> customerNameList;
+    	private List<String> customerIdList;
      }
      
      /**

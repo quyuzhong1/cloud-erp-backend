@@ -330,6 +330,10 @@ public class ProductDetailDTO implements Serializable {
          * 分类
          */
         private String category;
+        /**
+         * 分类id
+         */
+        private String categoryId;
 
         /**
          * 属性

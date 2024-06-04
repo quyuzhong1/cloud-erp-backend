@@ -1,10 +1,12 @@
 package com.erp.model.dmp.dto;
 
-import com.common.core.anno.Panno;
-import com.common.core.enums.PannoEnum;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
+import java.util.Map;
 
 /**
  * 亚马逊 店铺 DTO
@@ -86,5 +88,37 @@ public class AmazonShopInfoDTO {
      * <a href="https://api.amazon.com/auth/o2/token"></a>
      */
     private String authUrl;
+
+    /**
+     * 平台店铺编码/卖家编码
+     * 亚马逊平台=卖家ID
+     */
+    private String platformShopCode;
+
+    /**
+     * 当前亚马逊账号所有已授权的站点map
+     * Map<marketplaceId, shopId>
+     * 包含自身
+     */
+    private Map<String, ShopNameDTO> marketplaceShopIdMap;
+
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShopNameDTO {
+
+        /**
+         * id
+         */
+        private String shopId;
+
+        /**
+         * 数量
+         */
+        private String shopName;
+
+    }
 
 }

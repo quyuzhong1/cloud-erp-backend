@@ -100,4 +100,10 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
      * @return
      */
     List<CategoryControllerDTO.CategoryDropDownDTO> listCategoryDropDown(Integer grade);
+
+    /**
+     * 获取二级分类的列表 拼接一级名称
+     * @return
+     */
+    List<BasicCategoryTreeDTO> categoryGradeDown();
 }

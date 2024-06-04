@@ -108,20 +108,6 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
     List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuInfoSimpleVO> skuList);
 
     /**
-     * 通过platformSkuNo查询关联关系
-     *
-     * @Author Jim
-     * @since 2023-11-28
-     * @param platformSkuList 平台SKU列表
-     * @param dictPlatform 平台代码
-     * @param shopId 店铺ID
-     * @param platformOrderCreateTime 生效日期（查询所有=传空）
-     * @param isExpire 是否过期（查询所有=传空）
-     * @return
-     */
-    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, List<String> platformSpuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire);
-
-    /**
      * 消费处理明细
      *
      * @Author Jim
@@ -168,14 +154,6 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      **/
     Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO);
 
-    /**
-     * 检查和获取映射关系
-     *
-     * @Author Jim
-     * @since 2023-11-28
-     **/
-    ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform);
-
     List<SoB2cDetailEntity> listContainDeleted(List<String> ids);
 
     void updateContainDeleted(List<String> revertDetailIds);
@@ -190,5 +168,12 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      */
     Boolean updatePlatformPackageIdByMainId(String platformPackageId, String mainId);
 
+    /**
+     * 根据匹配规则进行明细更新
+     * @param entity
+     * @param detail
+     * @param warehouseId
+     */
+    void updateWarehouse(SoB2cEntity entity, SoB2cDetailEntity detail, String warehouseId);
     void updateSignShippedByDetailId(List<String> detailIdList);
 }

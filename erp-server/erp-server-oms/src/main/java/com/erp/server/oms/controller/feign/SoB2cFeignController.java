@@ -567,7 +567,7 @@ public class SoB2cFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getTransferDeclareProductBySoIds")
-    public List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) {
+    public List<SplitSkuDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) {
         return soB2cService.getTransferDeclareProductBySoIds(soIds);
     }
 

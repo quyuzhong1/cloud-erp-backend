@@ -34,12 +34,7 @@ public interface SoB2cSplitService extends SuperService<SoB2cEntity> {
      */
     List<BatchResultDTO> bomRestoreAndSave(List<String> ids);
 
-    /**
-     * 查询捆绑拆分后相同原始明细行
-     * @param detailId
-     * @return
-     */
-    SoB2cDTO.CombinationDTO listRefBomSplit(String detailId);
+    List<SoB2cEntity> listRefBomSplit(String detailId);
 
     /**
      * 按照仓库进行订单拆分

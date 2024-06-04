@@ -666,7 +666,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(dataList)) {
             return Collections.EMPTY_LIST;
         }
-        List<String> skuNoList = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuNoList = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         if (CollectionUtils.isEmpty(skuList)) {
             return Collections.EMPTY_LIST;
@@ -681,7 +681,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         //根据ERP仓库查询绑定的海外仓
-        List<String> warehouseIds = dataList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<String> warehouseIds = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<OverseasProviderWarehouseDTO.ViewDTO> providerWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIds);
 
         //库存
@@ -1186,4 +1186,54 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 list();
     }
 
+    @Override
+    public Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, List<String> platformSpuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire) {
+        if (CollectionUtils.isEmpty(platformSkuList)) {
+            return Collections.emptyMap();
+        }
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(dictPlatform);
+        paramDTO.setShopIdList(Collections.singletonList(shopId));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setPlatformSkuNoList(platformSkuList);
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
+        paramDTO.setMatchResult(true);
+        paramDTO.setLastExpireDate(platformOrderCreateTime);
+        paramDTO.setIsExpire(isExpire);
+        // 查询ListingInfo和skuMapping的关系
+        List<ListingInfoWithSkuMappingDTO> listDto = this.findListDto(paramDTO);
+        if (CollectionUtils.isEmpty(listDto)){
+            return Collections.emptyMap();
+        }
+        return listDto.stream()
+                .collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
+    }
+
+    /**
+     * 检查或获取映射关系
+     */
+    @Override
+    public ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform) {
+        if (CollectionUtils.isEmpty(mappingDTOList)) {
+            return null;
+        }
+        if (1 == mappingDTOList.size()){
+            return mappingDTOList.get(0);
+        }
+        // 美客多同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (StringUtils.isBlank(platformSpuNo) && (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform))){
+            throw new ServiceException("来源平台SPU为空");
+        }
+        // 查询相同SPU记录
+        return mappingDTOList.stream()
+                .filter(e->e.getPlatformSpuNo().equalsIgnoreCase(platformSpuNo))
+                .findFirst()
+                .orElse(null);
+    }
 }

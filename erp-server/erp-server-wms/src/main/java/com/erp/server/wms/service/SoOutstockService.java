@@ -516,15 +516,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void updateRemarkBySoId(String id,String remark);
 
     /**
-     * @description: 物流单生成数据修复
-     * @author Will
-     * @date: 2024/5/20 15:55
-     * @param codeList
-     * @return List<String>
-     */
-    List<String> recoveryLogisticsBill(List<String> codeList);
-
-    /**
      * 检查销售订单是否已生成销售出库单
      * @param soCode 销售单号
      * @param sourceType 来源类型
