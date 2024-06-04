@@ -382,5 +382,9 @@ public class ThirdWarehouseDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 分类
+         */
+        private String category;
     }
 }
