@@ -7,6 +7,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -1005,7 +1006,7 @@ public class WarehouseLocationController extends BaseController {
     @PostMapping("/deleteBatch")
     public ApiResult<List<String>> deleteBatch(@RequestBody WarehouseLocationDTO.IdsDto idsDto){
         List<String> errorList = warehouseLocationService.deleteBatch(idsDto);
-        return ApiResult.success(errorList);
+        return errorList.isEmpty() ? ApiResult.success() : new ApiResult(500, "部分数据删除失败", errorList);
     }
 
     /**
