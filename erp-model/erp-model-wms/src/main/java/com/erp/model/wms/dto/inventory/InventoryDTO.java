@@ -1484,9 +1484,9 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class PdaInventoryWarehousePageDTO<T> extends PagingVO implements Serializable{
         /**
-         * 库位
+         * 仓库编码
          */
-        private String warehouseLocation;
+        private String warehouseCode;
         /**
          * 实际库存
          */
