@@ -1033,7 +1033,7 @@ public class WarehouseLocationController extends BaseController {
     @PostMapping("/recycle")
     public ApiResult<List<String>> recycle(@RequestBody @Validated WarehouseLocationDTO.IdsDto idsDto){
         List<String> errorMsgList = warehouseLocationService.recycle(idsDto);
-        return ApiResult.success(errorMsgList);
+        return errorMsgList.isEmpty() ? ApiResult.success() : new ApiResult<>(500, "部分仓位回收失败", errorMsgList);
     }
 
     /**
