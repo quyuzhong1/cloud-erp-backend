@@ -323,6 +323,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             List<String> splitIds = detailList.stream().map(SoB2cDetailEntity::getSplitDetailId).distinct().collect(Collectors.toList());
             //判断有没有不同订单 otherDetailList: 不同订单相同明细
             List<SoB2cDetailEntity> otherDetailList = sameSplitDetailList.stream().filter(v->splitIds.contains(v.getSplitDetailId()) && !v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(otherDetailList)){
+                //一开始可以不同订单做还原捆绑，现在不允许，所以下面对不同订单的处理逻辑不会走
+                batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"还原捆绑失败，因为需要的明细不在同个订单下"));
+                continue;
+            }
             List<String> otherMainIds = otherDetailList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
             List<SoB2cEntity> otherMainList = sameMainList.stream().filter(v->otherMainIds.contains(v.getId())).collect(Collectors.toList());
             //校验别的订单的状态
@@ -441,8 +446,13 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<String> allMainIds = sameSplitDetailList.stream().map(SoB2cDetailEntity::getMainId).collect(Collectors.toList());
         //相同明细对应的订单
         List<SoB2cEntity> allMainList = CollectionUtils.isEmpty(allMainIds)?new ArrayList<>():this.listByIds(sameSplitDetailList.stream().map(SoB2cDetailEntity::getMainId).collect(Collectors.toList()));
-        //排除当前订单和自动作废
-        List<SoB2cEntity> otherMainList = allMainList.stream().filter(v->!soB2cEntity.getId().equals(v.getId()) || !SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode().equals(v.getInvalidType())).collect(Collectors.toList());
+        //排除原单和自动作废
+        List<SoB2cEntity> otherMainList = allMainList.stream().filter(v->!soB2cEntity.getId().equals(v.getId()) && !SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode().equals(v.getInvalidType())).collect(Collectors.toList());
+        //大于1说明这个待还原明细在不同订单下
+        if(otherMainList.size() > 1){
+            //一开始可以不同订单做还原捆绑，现在不允许，所以下面对不同订单的处理逻辑不会走
+            throw new ServiceException("还原捆绑失败，因为需要的明细不在同个订单下");
+        }
         //校验别的订单的状态
         List<SoB2cEntity> notPassMainList = otherMainList.stream().filter(v->v.getIsFrozen() || v.getInvalidStatus() || (!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(v.getBillStatus()) && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(v.getBillStatus()))).collect(Collectors.toList());
         //不通过，封装错误信息返回
