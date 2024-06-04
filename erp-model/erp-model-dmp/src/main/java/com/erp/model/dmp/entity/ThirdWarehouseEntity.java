@@ -125,6 +125,11 @@ public class ThirdWarehouseEntity extends BaseEntity<ThirdWarehouseEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 分类
+     */
+    @TableField("category")
+    private String category;
 
     public static final String DISABLED = "disabled";
 
