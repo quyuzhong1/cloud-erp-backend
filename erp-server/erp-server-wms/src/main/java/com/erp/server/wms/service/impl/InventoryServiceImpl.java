@@ -38,6 +38,7 @@ import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
+import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -440,7 +441,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public PagingVO<InventoryDTO.PagingViewDTO> paging(PagingDTO<InventoryDTO.SearchParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<InventoryDTO.PagingViewDTO> pageData = this.baseMapper.page(query, pagingParamDTO.getParams());
+        IPage<InventoryDTO.PagingViewDTO> pageData = new Page<>();
+        if(pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())){
+            pageData = this.baseMapper.page(query, pagingParamDTO.getParams());
+        }
+        if(pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())){
+            pageData = this.baseMapper.pageByArea(query, pagingParamDTO.getParams());
+        }
+        if(pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())){
+            pageData = this.baseMapper.pageByLocation(query, pagingParamDTO.getParams());
+        }
         // 填充名称
         fillInventoryPageData(pageData.getRecords());
         return new PagingVO<>(pageData);
@@ -458,12 +468,45 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             param.setOrgIdList(orgIds);
             param.setSkuIdList(skuIds);
         }
-        List<InventoryDTO.PagingViewDTO> dataList = inventoryMapper.exportInv(param);
+        InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, param);
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append("即时库存导出");
+        String excelPath = "";
+        List<InventoryDTO.PagingViewDTO> dataList = Collections.emptyList();
+        if(param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())){
+            IPage<InventoryDTO.PagingViewDTO> page = inventoryMapper.page(null, searchParamDTO);
+            dataList = page.getRecords();
+            excelPath = "excel/inventory.xlsx";
+        }
+        if(param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())){
+            IPage<InventoryDTO.PagingViewDTO> page = inventoryMapper.pageByArea(null, searchParamDTO);
+            dataList = page.getRecords();
+            excelPath = "excel/inventory_area.xlsx";
+        }
+        if(param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())){
+            IPage<InventoryDTO.PagingViewDTO> page = inventoryMapper.pageByLocation(null, searchParamDTO);
+            dataList = page.getRecords();
+            excelPath = "excel/inventory_location.xlsx";
+        }
+
         if (CollUtil.isEmpty(dataList)) {
             return;
         }
-        // 填充名称
         fillInventoryPageData(dataList);
+        try {
+            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+//        List<InventoryDTO.PagingViewDTO> dataList = inventoryMapper.exportInv(param);
+//        if (CollUtil.isEmpty(dataList)) {
+//            return;
+//        }
+
+        // 填充名称
+        /*fillInventoryPageData(dataList);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/inventory.xlsx";
         String name = "即时库存导出";
@@ -474,7 +517,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
-        }
+        }*/
     }
 
     @Override
@@ -694,11 +737,21 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 data.setSpecType(skuVO.getSpecType());
             }
 
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
-                    .filter(req -> req.getCode().equals(data.getWarehouseLocation())
-                            && req.getWarehouseId().equals(data.getWarehouseId())
-                    ).findFirst().orElse(new WarehouseLocationEntity());
-            data.setWarehouseLocationName(warehouseLocationEntity.getName());
+            if(! "".equals(data.getWarehouseLocation())){
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
+                        .filter(req -> req.getCode().equals(data.getWarehouseLocation())
+                                && req.getWarehouseId().equals(data.getWarehouseId())
+                        ).findFirst().orElse(new WarehouseLocationEntity());
+                data.setWarehouseLocationName(warehouseLocationEntity.getName());
+            }
+
+            //库区名称赋值
+            if(! "".equals(data.getWarehouseArea())){
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
+                        .filter(req -> req.getCode().equals(data.getWarehouseLocation()) && req.getWarehouseId().equals(data.getWarehouseId()) && "area".equals(req.getType()))
+                        .findFirst().orElse(new WarehouseLocationEntity());
+                data.setWarehouseAreaName(warehouseLocationEntity.getName());
+            }
 
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));

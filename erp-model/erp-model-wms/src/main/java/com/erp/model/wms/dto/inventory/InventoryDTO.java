@@ -2,10 +2,7 @@ package com.erp.model.wms.dto.inventory;
 
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -68,6 +65,22 @@ public class InventoryDTO implements Serializable {
          */
         private Boolean hideZeroInventory;
 
+        /**
+         * 查询维度：warehouse仓库，warehouseArea库区，warehouseLocation仓位<br/>
+         * 接口地址：/wms/dict/drop/down?type=inventoryDimension
+         */
+        @NotBlank
+        private String dimension;
+
+        /**
+         * 仓位编码
+         */
+        private String warehouseLocationCode;
+
+        /**
+         * 库区编码
+         */
+        private String warehouseAreaCode;
     }
 
     /**
@@ -140,17 +153,22 @@ public class InventoryDTO implements Serializable {
         @NotEmpty(message = "sku不能为空")
         private String skuId;
 
+        /**
+         * 导出维度：
+         */
+        private String dimension;
     }
 
     /**
      * 即时库存导出查询条件
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class ExportSearchParamDTO extends SortDTO {
 
         /**
-         * 勾选行数据（仅传该字段，其他字段不要传输）
+         * 勾选行数据（仅传该字段和dimension，其他字段不要传输）
          */
         private List<ExportInvParamDTO> checkData;
 
@@ -191,6 +209,20 @@ public class InventoryDTO implements Serializable {
          */
         private Boolean hideZeroInventory;
 
+        /**
+         * 查询维度：warehouse仓库，warehouseArea库区，warehouseLocation仓位
+         */
+        private String dimension;
+
+        /**
+         * 仓位编码
+         */
+        private String warehouseLocationCode;
+
+        /**
+         * 库区编码
+         */
+        private String warehouseAreaCode;
     }
 
     /**
@@ -311,6 +343,16 @@ public class InventoryDTO implements Serializable {
          * 仓位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 库区编码
+         */
+        private String warehouseArea;
+
+        /**
+         * 库区名称
+         */
+        private String warehouseAreaName;
 
     }
 
