@@ -73,9 +73,9 @@ public class PdaInventoryController extends BaseController {
     }
 
     /**
-     * PDA:库存查询（仓库）
-     * @Author Luo_WG
-     * @Date 2023/8/30 11:39
+     * PDA:库存查询（仓位）
+     * @Author zdy
+     * @Date 2024/6/4 11:39
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventorySearch>
      **/
     @PostMapping(value = "/getInventoryByWarehouse")
