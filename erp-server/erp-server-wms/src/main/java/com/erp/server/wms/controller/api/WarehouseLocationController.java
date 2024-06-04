@@ -1012,14 +1012,15 @@ public class WarehouseLocationController extends BaseController {
      * 导入仓位Excel
      */
     @PostMapping("/importExcel")
-    public ApiResult<Void> importExcel(@RequestParam("file") MultipartFile file){
-        warehouseLocationService.importExcel(file);
-        return ApiResult.success();
+    public ApiResult< List<String>> importExcel(@RequestParam("file") MultipartFile file){
+        List<String> errorMsgList = warehouseLocationService.importExcel(file);
+        return ApiResult.success(errorMsgList);
     }
 
     /**
      * 导出仓位Excel
      */
+    @WebAdvanceQuery(handler = WarehouseLocationInfoQueryHandler.class)
     @PostMapping("/exportExcel")
     public void exportExcel(@RequestBody @Validated WarehouseLocationDTO.exportParamDto dto, HttpServletResponse response){
         warehouseLocationService.exportExcel(dto, response);

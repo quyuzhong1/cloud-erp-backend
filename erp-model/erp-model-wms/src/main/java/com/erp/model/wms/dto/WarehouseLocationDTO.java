@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import lombok.AllArgsConstructor;
@@ -472,11 +473,18 @@ public class WarehouseLocationDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
-    public static class exportParamDto extends SearchParamDTO{
+    public static class exportParamDto extends PermissionsDTO {
         /**
-         * 仓位ID集合
+         * 页面高级查询
          */
-        private List<String> ids;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        private Boolean isHaveFieldPower;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 
     @Data

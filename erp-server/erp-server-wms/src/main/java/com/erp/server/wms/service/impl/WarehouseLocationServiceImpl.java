@@ -20,6 +20,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FilterUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -610,20 +611,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public void exportExcel(WarehouseLocationDTO.exportParamDto dto, HttpServletResponse response) {
-        List<WarehouseLocationExportVo> list;
-        if(! dto.getIds().isEmpty()){
-            list = baseMapper.listByIds(dto.getIds());
-        }else {
-            list = baseMapper.selectAllByParam(dto);
-        }
-        try {
-            EasyExcel.write(response.getOutputStream(), WarehouseLocationExportVo.class)
-                    .sheet("导出数据")
-                    .doWrite(list);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new ServiceException(e.getMessage());
-        }
+        List<WarehouseLocationExportVo> list = baseMapper.listAllByParam(dto);
+        ExcelUtil.export("仓位数据导出", "导出", list, WarehouseLocationExportVo.class, response);
     }
 
     @Transactional(rollbackFor = Exception.class)
