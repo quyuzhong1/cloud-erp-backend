@@ -112,6 +112,19 @@ public class LogisticsBillFeignController {
     public LogisticsBillDTO.GenerateBillResultDTO generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
         return logisticsBillService.generateBill(dto);
     }
+
+    /**
+     * 调用物流商接口更新重量
+     *
+     * @return
+     * @parms
+     * @author yl
+     * @date 2023-11-23
+     */
+    @PostMapping("/updateLogisticWeight")
+    public ApiResult<String > updateLogisticWeight(@RequestBody @Valid LogisticsBillDTO.UpdateWeight dto) {
+        return logisticsBillService.updateLogisticWeight(dto);
+    }
     
     /**
      * 取消物流单

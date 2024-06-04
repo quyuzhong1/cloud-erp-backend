@@ -7798,6 +7798,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(UnitEnum.WeightUnitEnum.KG.getCode().equals(scanDTO.getWeightUnit())){
                 weightByG = scanDTO.getWeight().multiply(BigDecimal.valueOf(1000));
             }
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+            //更新物流商重量
+            if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode()) && StringUtils.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
+                soB2cLogisticsEntity.setWeight(weightByG);
+                LogisticsBillDTO.UpdateWeight updateWeight = LogisticsBillDTO.UpdateWeight.builder()
+                        .soB2cEntity(entity)
+                        .soB2cLogisticsEntity(soB2cLogisticsEntity)
+                        .build();
+                ApiResult<String> updateLogisticResult = logisticsBillFeign.updateLogisticWeight(updateWeight);
+                if(!updateLogisticResult.isSuccess() && updateLogisticResult.getCode() != -1){
+                    throw new ServiceException(StrUtil.format("向物流商更新重量异常:{}",updateLogisticResult.getMsg()));
+                }
+            }
             // 更新订单重量
             if(StringUtils.isNotBlank(scanResult.getLogisticsId())){
                 soB2cLogisticsService.updateWeight(scanResult.getSoId(),scanResult.getLogisticsId(),weightByG);
