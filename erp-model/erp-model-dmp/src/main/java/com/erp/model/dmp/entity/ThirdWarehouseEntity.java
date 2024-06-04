@@ -131,7 +131,6 @@ public class ThirdWarehouseEntity extends BaseEntity<ThirdWarehouseEntity> {
     @TableField("category")
     private String category;
 
-
     public static final String DISABLED = "disabled";
 
     public static final String SYS_TYPE = "sys_type";
