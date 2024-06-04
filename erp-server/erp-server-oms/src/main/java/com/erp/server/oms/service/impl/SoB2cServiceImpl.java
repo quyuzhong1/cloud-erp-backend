@@ -831,7 +831,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
             this.updateIntercept(interceptUpdateOrderDTO);
         }
-
+        //如果有第三方仓出库异常，清除该异常
+        if(SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode().equals(entity.getSignOrderError())){
+            soB2cErrorService.removeErrorOrder(entity.getId(),SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode());
+        }
 
         // 记录操作日志
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
