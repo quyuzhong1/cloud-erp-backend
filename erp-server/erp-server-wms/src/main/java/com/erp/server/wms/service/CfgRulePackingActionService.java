@@ -34,4 +34,10 @@ public interface CfgRulePackingActionService extends SuperService<CfgRulePacking
      * @param actions 动作
      */
     void updateRuleAction(String ruleId, List<CfgRuleActionDTO.Update> actions);
+
+    /**
+     * 根据规则id获取拣货动作
+     * @param cfgRuleIds 规则id
+     */
+    List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds);
 }

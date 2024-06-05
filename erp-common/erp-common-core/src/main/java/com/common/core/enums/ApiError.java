@@ -832,6 +832,7 @@ public enum ApiError implements Serializable {
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
     ERROR_99083(99083,"退货入库单不存在"),
     ERROR_99084(99084,"采购订单的执行状态是待确认，不允许新增收货单"),
+    ERROR_99085(99084,"只允许审核通过的销售订单下推销售出库单"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -1005,6 +1006,8 @@ public enum ApiError implements Serializable {
     WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
     POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除或禁用"),
     WAREHOUSE_LOCATION_EXIST(92144, "仓位{}已存在"),
+
+    SKU_INVENTORY_SHORTAGE(92150, "【{}】下的【{}】仓位库存不足，生成拣货单失败"),
 
 
 

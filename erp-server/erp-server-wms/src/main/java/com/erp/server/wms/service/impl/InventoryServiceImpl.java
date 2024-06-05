@@ -1074,7 +1074,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public List<InventoryDTO.LocationInventoryResult> listLocationInventoryBySkus(List<InventoryDTO.LocationInventoryParam> param) {
-        List<WarehouseLocationEntity> locations = warehouseLocationService.list();
+        List<String> warehouseIds = param.stream().map(InventoryDTO.LocationInventoryParam::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseLocationEntity> locations = warehouseLocationService.listByWarehouseIds(warehouseIds);
         List<InventoryDTO.LocationInventoryResult> results = new ArrayList<>();
         for (InventoryDTO.LocationInventoryParam inventoryParam : param) {
             List<InventoryEntity> inventoryEntities = list(Wrappers.<InventoryEntity>lambdaQuery()

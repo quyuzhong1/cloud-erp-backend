@@ -37,4 +37,10 @@ public interface CfgRuleConditionService extends SuperService<CfgRuleConditionEn
      * @param conditionList 条件
      */
     void updateRuleCondition(String ruleId, List<CfgRuleConditionDTO.Update> conditionList, String moduleType, String sourceType);
+
+    /**
+     * 根据规则id集合查询规则条件
+     * @param cfgRuleIds 规则id
+     */
+    List<CfgRuleConditionEntity> listByRuleIds(List<String> cfgRuleIds);
 }

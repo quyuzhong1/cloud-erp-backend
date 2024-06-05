@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -43,9 +42,11 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
+import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -136,6 +137,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private CfgRulePickingService cfgRulePickingService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -681,6 +685,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
+        List<String> soIds = list.stream().map(SoDeliveryNoticeEntity::getSourceId).collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntities = soInfoFeign.listSoInfoByIds(soIds);
+        long soCount = soInfoEntities.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approve)).count();
+        if (soCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98063);
+        }
         //获取到销售退货单 下推列表
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(idList, soDeliveryNotice);
@@ -719,8 +729,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<String> warehouseIds = list.stream().map(SoDeliveryNoticeEntity::getWarehouseId).collect(Collectors.toList());
         //获取仓库信息
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
-        List<String> orgIdList = warehouseEntityList.stream().map(WarehouseEntity::getOrgId).distinct().collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
         //获取sku的id集合
         List<String> skuIdList = detailList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //根据ids查询sku信息
@@ -738,31 +746,41 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
                 ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
             }
-
             for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
-
-                BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(req -> req.getId().equals(warehouseEntity.getOrgId())).findFirst().orElse(new BaseIdDTO.CodeDTO());
-                //查询可用库存生成拣货明细
-                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(), codeDTO.getName(), entity.getWarehouseId(),
-                        entity.getWarehouseName(), detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getDeliveryQty());
-
-                List<InventoryEntity> inventoryList = Lists.newArrayList();
+                List<PickingDetailDTO.CommonDTO> pickingDetailList  = new ArrayList<>();
                 if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
-                    InventoryEntity inventoryEntity = new InventoryEntity();
-                    inventoryEntity.setWarehouseId(dto.getWarehouseId());
-                    inventoryEntity.setOrgId(dto.getOrgId());
-                    inventoryEntity.setWarehouseLocation("");
-                    inventoryEntity.setQty(dto.getQty());
-                    inventoryEntity.setSkuId(dto.getSkuId());
-                    inventoryEntity.setSkuNo(dto.getSkuNo());
-                    inventoryEntity.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-                    inventoryList.add(inventoryEntity);
-                } else {
-                    inventoryList = inventoryService.listPickingDetailInventory(dto);
+                    PickingDetailDTO.CommonDTO addDto = new PickingDetailDTO.CommonDTO();
+                    addDto.setWarehouseId(entity.getWarehouseId());
+                    addDto.setOrgId(warehouseEntity.getOrgId());
+                    addDto.setWarehouseLocation("");
+                    addDto.setQty(detailEntity.getDeliveryQty());
+                    addDto.setSkuId(detailEntity.getSkuId());
+                    addDto.setSkuNo(detailEntity.getSkuNo());
+                    pickingDetailList.add(addDto);
+                }else {
+                    Map<String, Integer> sku = new HashMap<>();
+                    sku.put(detailEntity.getSkuId(), detailEntity.getDeliveryQty());
+                    Map<String, String> skuMap = new HashMap<>();
+                    skuMap.put(detailEntity.getSkuId(), detailEntity.getSkuNo());
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("billType", PickingBillTypeEnum.B2B.getCode());
+                    map.put("customerId",entity.getCustomerId());
+                    map.put("deliveryWarehouseId",entity.getWarehouseId());
+                    map.put("sku", sku);
+                    map.put("skuMap", skuMap);
+                    map.put("billCode",entity.getCode());
+                    List<LocationInventoryResultDTO> result = cfgRulePickingService.getRuleOrderMatchResult(map);
+                    for (LocationInventoryResultDTO resultDTO : result) {
+                        PickingDetailDTO.CommonDTO addDto = new PickingDetailDTO.CommonDTO();
+                        addDto.setWarehouseId(entity.getWarehouseId());
+                        addDto.setOrgId(warehouseEntity.getOrgId());
+                        addDto.setWarehouseLocation(resultDTO.getWarehouseLocation());
+                        addDto.setQty(resultDTO.getQuantity());
+                        addDto.setSkuId(detailEntity.getSkuId());
+                        addDto.setSkuNo(detailEntity.getSkuNo());
+                        pickingDetailList.add(addDto);
+                    }
                 }
-
-                List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
-
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
                 List<InOutStockDTO> inOutStockList = new ArrayList<>();
                 for (PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {

@@ -73,4 +73,9 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
                 }).collect(Collectors.toList());
         saveOrUpdateBatch(actions);
     }
+
+    @Override
+    public List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds) {
+        return list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().in(CfgRulePackingActionEntity::getRuleId, cfgRuleIds));
+    }
 }

@@ -141,4 +141,9 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
         }
         saveOrUpdateBatch(ruleConditionEntities);
     }
+
+    @Override
+    public List<CfgRuleConditionEntity> listByRuleIds(List<String> cfgRuleIds) {
+        return list(Wrappers.<CfgRuleConditionEntity>lambdaQuery().in(CfgRuleConditionEntity::getRuleId, cfgRuleIds));
+    }
 }
