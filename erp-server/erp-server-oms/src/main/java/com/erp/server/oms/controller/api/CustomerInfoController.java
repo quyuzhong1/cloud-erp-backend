@@ -311,7 +311,6 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/pagingSelect")
     public ApiResult<PagingVO<CustomerDTO.PageSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<CustomerDTO.SelectDTO> dto) {
-        dto.setPageSize(100);
         PagingVO<CustomerDTO.PageSelectDTO> pagingVO = customerInfoService.pagingSelect(dto);
         return success(pagingVO);
     }
