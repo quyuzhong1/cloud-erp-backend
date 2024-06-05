@@ -1002,6 +1002,11 @@ public class InventoryDTO implements Serializable {
          * 可用库存
          */
         private Integer usableQty;
+
+        /**
+         * 冻结库存数量
+         */
+        private Integer frozenQty;
     }
 
 
