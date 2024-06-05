@@ -6046,7 +6046,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         // 映射关系
                         List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingMap.get(deliveryDetailDTO.getPlatformSkuId());
                         // 检查和获取映射关系
-                        ListingInfoWithSkuMappingDTO mappingDTO = soB2cDetailService.checkAndMappingDTO(mappingDTOList, deliveryDetailDTO.getItemId(), entity.getDictPlatform());
+                        ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, deliveryDetailDTO.getItemId(), entity.getDictPlatform());
                         if (Objects.isNull(mappingDTO) || StringUtils.isBlank(mappingDTO.getProductSkuId())) {
                             throw new ServiceException(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系,平台产品ID:【{}】", deliveryDetailDTO.getItemId()));
                         }

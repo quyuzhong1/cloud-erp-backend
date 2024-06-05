@@ -67,7 +67,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
     private WarehouseMappingFeign warehouseMappingFeign;
 
     @Resource
-    private SkuMappingFeign skuMappingFeign;
+    private SkuMappingService skuMappingService;
 
     @Resource
     private SoB2cDetailService soB2cDetailService;
@@ -164,7 +164,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                     // 映射关系
                     List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingMap.get(deliveryDetailDTO.getPlatformSkuId());
                     // 检查和获取映射关系
-                    ListingInfoWithSkuMappingDTO mappingDTO = soB2cDetailService.checkAndMappingDTO(mappingDTOList, deliveryDetailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform());
+                    ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, deliveryDetailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform());
 
                     if(Objects.isNull(mappingDTO) || StringUtils.isBlank(mappingDTO.getProductSkuId())){
                         SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
