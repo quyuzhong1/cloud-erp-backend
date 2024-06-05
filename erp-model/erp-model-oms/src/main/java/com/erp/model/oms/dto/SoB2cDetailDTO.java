@@ -413,6 +413,14 @@ public class SoB2cDetailDTO implements Serializable {
         private String sourcePlatform;
 
         private String warehouseSkuNo;
+        /**
+         * 平台sku编号
+         */
+        private String platformSkuNo;
+        /**
+         * 平台 产品id
+         */
+        private String platformSpuNo;
     }
 
 
