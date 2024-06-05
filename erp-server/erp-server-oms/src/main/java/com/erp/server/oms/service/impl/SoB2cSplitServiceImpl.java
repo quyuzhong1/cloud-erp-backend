@@ -401,10 +401,15 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         for (SoB2cDTO.SplitSaveDTO dto : splitDTOS){
             BatchResultDTO result;
             try {
-                SoB2cDTO.SplitSaveResultDTO resultDTO = service.splitSave(dto);
                 SoB2cEntity entity = soB2cService.getById(dto.getId());
-                result = BatchResultDTO.success(dto.getId(),entity.getCode(),"订单拆分成功");
-                allSoIdList.addAll(resultDTO.getSoB2cIds());
+                //订单下的明细仓库一致，无法按仓库拆分
+                if (dto.getGroupList().size() < 2){
+                    result = BatchResultDTO.fail(dto.getId(),entity.getCode(),ApiError.ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE.msg);
+                }else {
+                    SoB2cDTO.SplitSaveResultDTO resultDTO = service.splitSave(dto);
+                    result = BatchResultDTO.success(dto.getId(),entity.getCode(),"订单拆分成功");
+                    allSoIdList.addAll(resultDTO.getSoB2cIds());
+                }
             } catch (Exception e) {
                 log.error("B2C销售订单取消拆分失败", e);
                 SoB2cEntity entity = soB2cService.getById(dto.getId());
@@ -527,10 +532,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 groupSplitSaveDTO.setDetailList(B2cOrderConverter.INSTANCE.convertViewToSplitDto(list));
                 groupSplitSaveDTOS.add(groupSplitSaveDTO);
             }
-        }
-        //订单下的明细仓库一致，无法按仓库拆分
-        if (groupSplitSaveDTOS.size() <= 1){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE);
         }
         return groupSplitSaveDTOS;
     }
