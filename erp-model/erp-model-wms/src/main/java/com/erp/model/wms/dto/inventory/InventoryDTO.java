@@ -1551,6 +1551,10 @@ public class InventoryDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * sku缩略图
+         */
+        private String skuImagesUrl;
+        /**
          * sku品名名称
          */
         private String skuName;
