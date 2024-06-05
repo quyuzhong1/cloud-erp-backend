@@ -31,6 +31,7 @@ import com.erp.model.sys.enums.UserRangeTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
@@ -1080,9 +1081,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
         paramDTO.setFilterSelfAddFlag(params.isFilterSelfAddFlag());
+        paramDTO.setWarehouseLocation(params.getWarehouseLocation());
         IPage<InventoryDTO.PdaInventoryPageDTO> page = baseMapper.pageInventoryWarehouseBySkuId(query,paramDTO);
         //填充基础信息
-        buildWarehouseInfo(page.getRecords(), paramDTO,params.getWarehouseLocation());
+        buildWarehouseInfo(page.getRecords(), paramDTO);
         InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> result = new InventoryDTO.PdaInventoryWarehousePageDTO<>(page);
         //仓位信息回填
         result.setWarehouseLocation(params.getWarehouseLocation());
@@ -1098,9 +1100,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
      *
      * @param records
      * @param paramDTO
-     * @param warehouseLocation
      */
-    private void buildWarehouseInfo(List<InventoryDTO.PdaInventoryPageDTO> records, InventoryDTO.InventoryBySkuNoDTO paramDTO, String warehouseLocation) {
+    private void buildWarehouseInfo(List<InventoryDTO.PdaInventoryPageDTO> records, InventoryDTO.InventoryBySkuNoDTO paramDTO) {
+        String warehouseLocation = paramDTO.getWarehouseLocation();
         if (CollectionUtils.isEmpty(records)){
             return;
         }
@@ -1112,13 +1114,14 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 //        List<String> warehouseIds = records.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
         paramDTO.setSkuId(null);
         paramDTO.setSkuIds(skuIds);
-        List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseDTOList = baseMapper.listInventoryWarehouseByParam(paramDTO);
+        List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseDTOList = baseMapper.listInventoryWarehouseBySkuId(paramDTO);
         if (CollectionUtils.isEmpty(warehouseDTOList)){
             return;
         }
         List<String> warehouseIds = warehouseDTOList.stream().map(InventoryDTO.PdaInventoryWarehouseLocationDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
-        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.findByWarehouseIdsAndCode(warehouseIds, warehouseLocation);
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = warehouseIds.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj, warehouseLocation)).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         //仓库信息整理
         warehouseDTOList.forEach(pdaInventoryWarehouseDTO -> {
             WarehouseEntity warehouseEntity = warehouseList.stream().filter(e -> StringUtils.isNotBlank(pdaInventoryWarehouseDTO.getWarehouseId()) && pdaInventoryWarehouseDTO.getWarehouseId().equals(e.getId()))
@@ -1138,7 +1141,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                     .findFirst().orElse(new SkuVO());
             pdaInventoryWarehouseDTO.setSkuName(skuVO.getSkuName());
             pdaInventoryWarehouseDTO.setSkuNo(skuVO.getSkuNo());
-            List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseDTOS = warehouseDTOList.stream().filter(e -> StringUtils.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuId)).collect(Collectors.toList());
+            pdaInventoryWarehouseDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
+            List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseDTOS = warehouseDTOList.stream().filter(e -> StringUtils.isNotBlank(e.getWarehouseLocation())
+                    && StringUtils.isNotBlank(e.getWarehouseLocationName()) && StringUtils.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuId)).collect(Collectors.toList());
             pdaInventoryWarehouseDTO.setWarehouseLocationDTOList(warehouseDTOS);
         });
     }
