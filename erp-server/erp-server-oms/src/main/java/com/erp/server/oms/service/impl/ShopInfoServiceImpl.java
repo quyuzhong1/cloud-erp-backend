@@ -186,6 +186,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 chargeName = user.getUserName();
             }
         }
+        //设置用户信息
+        setCustom(dto.getCustomerId(), shop);
         shop.setChargeName(chargeName);
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
@@ -496,17 +498,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopInfo.setWarehouseName(updateDTO.getName());
             shopInfo.setWarehouseId(dto.getWarehouseId());
         }
-        if (StringUtils.isNotBlank(dto.getCustomerId())) {
-            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(dto.getCustomerId());
-            if (ObjectUtil.isEmpty(customerInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92011);
-            }
-            shopInfo.setCustomerId(customerInfoEntity.getId());
-            shopInfo.setCustomerCode(customerInfoEntity.getCode());
-        } else {
-            shopInfo.setCustomerId(null);
-            shopInfo.setCustomerCode(null);
-        }
+        //设置用户信息
+        setCustom(dto.getCustomerId(), shopInfo);
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
@@ -555,18 +548,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setSalesOrgId(dto.getSalesOrgId());
         shopInfo.setSalesOrgName(orgName);
         shopInfo.setChargeId(dto.getChargeId());
-
-        if (StringUtils.isNotBlank(dto.getCustomerId())) {
-            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(dto.getCustomerId());
-            if (ObjectUtil.isEmpty(customerInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92011);
-            }
-            shopInfo.setCustomerId(customerInfoEntity.getId());
-            shopInfo.setCustomerCode(customerInfoEntity.getCode());
-        }else{
-            shopInfo.setCustomerId(null);
-            shopInfo.setCustomerCode(null);
-        }
+        String customerId = dto.getCustomerId();
+        //设置用户信息
+        setCustom(customerId, shopInfo);
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
@@ -577,6 +561,25 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(), dto.getChargeId()));
         }
         return shopInfo;
+    }
+
+    /**
+     * 设置用户信息
+     * @param customerId
+     * @param shopInfo
+     */
+    private void setCustom(String customerId, ShopInfoEntity shopInfo) {
+        if (StringUtils.isNotBlank(customerId)) {
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
+            if (ObjectUtil.isEmpty(customerInfoEntity)) {
+                throw new ServiceException(ApiError.ERROR_92011);
+            }
+            shopInfo.setCustomerId(customerInfoEntity.getId());
+            shopInfo.setCustomerCode(customerInfoEntity.getCode());
+        }else{
+            shopInfo.setCustomerId("");
+            shopInfo.setCustomerCode("");
+        }
     }
 
     private void checkInternalShopName(String dto, String id) {
@@ -1550,6 +1553,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
         }
         shop.setChargeName(chargeName);
+        //设置用户信息
+        setCustom(dto.getCustomerId(), shop);
         shop.setType(ShopTypeEnum.INTERNAL.getCode());
         shop.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shop.setAuthTime(LocalDateTime.now());
