@@ -33,6 +33,7 @@ import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.sdk.wangdian.sdk.impl.Api;
+import org.apache.bcel.generic.IF_ACMPEQ;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -307,11 +308,19 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         BeanUtils.copyProperties(vmEntity, viewDTO);
         //获取关联渠道
         List<VirtualWarehouseChannelEntity> vmChannelEntityList = virtualWarehouseChannelService.getByVirtualWarehouseId(id);
-        List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList = vmChannelEntityList.stream().map(item -> {
+        Map<String, List<VirtualWarehouseChannelEntity>> collect = vmChannelEntityList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
+        List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList = new ArrayList<>();
+        collect.forEach((key, list) -> {
             VirtualWarehouseChannelDTO.ChannelAddDTO channelAddDTO = new VirtualWarehouseChannelDTO.ChannelAddDTO();
-            BeanUtils.copyProperties(item, channelAddDTO);
-            return channelAddDTO;
-        }).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(list)) {
+                channelAddDTO.setDictPlatform(key);
+            } else {
+                channelAddDTO.setDictPlatform(key);
+                channelAddDTO.setType(list.get(0).getType());
+                channelAddDTO.setRelationList(list.stream().map(VirtualWarehouseChannelEntity::getRelationId).filter(Objects::isNull).collect(Collectors.toList()));
+            }
+            channelList.add(channelAddDTO);
+        });
         viewDTO.setChannelList(channelList);
         //获取关联仓库
         List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByVirtualWarehouseId(id);
