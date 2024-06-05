@@ -1,5 +1,6 @@
 package com.erp.model.srm.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -104,6 +105,28 @@ public class DeliveryOrderDetailEntity extends BaseEntity<DeliveryOrderDetailEnt
      */
     @TableField("receipt_status")
     private String receiptStatus;
+
+    /**
+     * 确认收货日期
+     */
+    @TableField(value = "confirm_receive_date",updateStrategy = FieldStrategy.IGNORED)
+    private LocalDate confirmReceiveDate;
+    /**
+     * 收货员id
+     */
+    @TableField("receive_user_id")
+    private String receiveUserId;
+    /**
+     * 收货员名
+     */
+    @TableField("receive_user_name")
+    private String receiveUserName;
+
+    /**
+     * 收货单号
+     */
+    @TableField("receive_code")
+    private String receiveCode;
 
     public static final String MAIN_ID = "main_id";
 

@@ -184,10 +184,17 @@ public class DeliveryOrderExportExcelDTO implements Serializable {
     private String receiveUserName;
 
     /**
+     * 明细收货状态
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "明细收货状态", index = 20)
+    private String detailReceiptStatus;
+
+    /**
      * 创建人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建人", index = 20)
+    @ExcelProperty(value = "创建人", index = 21)
     private String createUserName;
 
 
@@ -195,6 +202,6 @@ public class DeliveryOrderExportExcelDTO implements Serializable {
      * 创建时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 21,converter = LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 22,converter = LocalDateStringConverter.class)
     private LocalDateTime createTime;
 }

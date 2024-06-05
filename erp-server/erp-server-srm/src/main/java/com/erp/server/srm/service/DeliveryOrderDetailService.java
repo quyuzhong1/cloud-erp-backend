@@ -52,4 +52,12 @@ public interface DeliveryOrderDetailService extends SuperService<DeliveryOrderDe
     List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(List<String> purchaseDetailIds);
 
     List<DeliveryOrderDetailDTO.ListDTO> listDetailDTOByDetailSourceIds(List<String> purchaseDetailIds);
+
+    Boolean updateDeliveryDetail(List<DeliveryOrderDetailEntity> detailEntityGroupList);
+
+    Boolean confirmReceiveStatus(List<String> detailIds);
+
+    Boolean unConfirmReceiveStatus(List<String> detailIds);
+
+    Boolean cancelReceive(List<String> detailIds);
 }
