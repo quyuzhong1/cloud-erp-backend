@@ -1570,6 +1570,10 @@ public class InventoryDTO implements Serializable {
          */
         private String warehouseLocation;
         /**
+         * 库位名字
+         */
+        private String warehouseLocationName;
+        /**
          * 可用库存
          */
         private Integer usableQty;
