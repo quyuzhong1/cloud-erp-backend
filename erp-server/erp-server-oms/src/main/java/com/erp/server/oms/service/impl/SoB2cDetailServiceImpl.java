@@ -604,7 +604,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Override
     public void updateSignShippedByDetailId(List<String> detailIdList) {
-        this.lambdaUpdate().in(SoB2cDetailEntity::getId, detailIdList).set(SoB2cDetailEntity::getIsSignShipped, true);
+        if(CollectionUtils.isEmpty(detailIdList)){
+            return;
+        }
+        this.lambdaUpdate().in(SoB2cDetailEntity::getId, detailIdList).set(SoB2cDetailEntity::getIsSignShipped, true).update();
     }
 
     @Override

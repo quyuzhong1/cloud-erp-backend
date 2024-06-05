@@ -237,14 +237,14 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                     } else {
                         log.warn("【{}】非正式环境不带test域名的店铺：不请求Shopify接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(request));
                     }
-                    return signShippedDetailList;
-                }
-                log.warn("[Shopify标记发货]platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
-                // Creates a fulfillment for one or many fulfillment orders
-                final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);
-                log.warn("[Shopify标记发货] platformCode={},创建Fulfillment结果：{}", platformOrderId, JSONUtil.toJsonStr(actualShopifyFulfillment));
-                if (null == actualShopifyFulfillment) {
-                    throw new ServiceException("Shopify创建Fulfillment失败");
+                }else{
+                    log.warn("[Shopify标记发货]platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
+                    // Creates a fulfillment for one or many fulfillment orders
+                    final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);
+                    log.warn("[Shopify标记发货] platformCode={},创建Fulfillment结果：{}", platformOrderId, JSONUtil.toJsonStr(actualShopifyFulfillment));
+                    if (null == actualShopifyFulfillment) {
+                        throw new ServiceException("Shopify创建Fulfillment失败");
+                    }
                 }
             }
         }
