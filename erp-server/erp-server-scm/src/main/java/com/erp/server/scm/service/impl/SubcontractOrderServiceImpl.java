@@ -764,6 +764,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> supplierIds = list.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSupplierId).collect(Collectors.toList());
         List<SupplierContactEntity> defaultSupplierContactList = supplierContactService.getDefaultBySupplierIdList(supplierIds);
 
+        //供应商
+        List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
+
         List<String> poIds = new ArrayList<>();
         Map<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getSupplierId()).concat(obj.getDeliveryWarehouseId()).concat(obj.getIsParent().toString())));
         for (Map.Entry<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> entry : map.entrySet()) {
@@ -785,6 +788,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
             supplierDTO.setSupplierId(generatePoAddDTO.getSupplierId());
             supplierDTO.setPaymentCondition(generatePoAddDTO.getPaymentCondition());
+
+            //付款条件
+            SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(generatePoAddDTO.getSupplierId()) ).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                supplierDTO.setPayMethodId(supplierEntity.getPayMethodId());
+            }
+
             //供应商默认联系人
             if (CollectionUtils.isNotEmpty(defaultSupplierContactList)) {
                 SupplierContactEntity supplierContactEntity = defaultSupplierContactList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
