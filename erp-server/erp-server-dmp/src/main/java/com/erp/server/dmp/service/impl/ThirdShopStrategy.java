@@ -257,14 +257,14 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
         ThirdMappingEntity existSysMapping = thirdMappingService.getByTypeAndSysIdAndSysType(thirdMappingEntity);
         if (Objects.nonNull(existSysMapping)) {
             if (!Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) {
-                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, sysName);
+                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existSysMapping.getSysName());
             } else {
                 thirdMappingEntity.setId(existSysMapping.getId());
             }
         }
         ThirdMappingEntity existThirdMapping = thirdMappingService.getByTypeAndThirdId(thirdMappingEntity);
         if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping) && !Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) || Objects.isNull(existSysMapping))) {
-            throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), sysName, thirdName);
+            throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existThirdMapping.getSysName());
         }
     }
 
@@ -279,7 +279,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
         thirdList.stream().collect(groupingBy(ThirdMappingDTO.ThirdAddDTO::getSysType,
                 collectingAndThen(Collectors.toList(), list -> {
                             if (list.size() > 1) {
-                                throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, EnumMessage.getNameByCode(PlatformDictEnum.class, type));
+                                throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
                             }
                             return list;
                         }
