@@ -81,6 +81,11 @@ public class InventoryDTO implements Serializable {
          * 库区编码
          */
         private String warehouseAreaCode;
+
+        /**
+         * SKU ID编码集合
+         */
+        private List<String> skuIdList;
     }
 
     /**
@@ -168,7 +173,7 @@ public class InventoryDTO implements Serializable {
     public static class ExportSearchParamDTO extends SortDTO {
 
         /**
-         * 勾选行数据（仅传该字段和dimension，其他字段不要传输）
+         * 勾选行数据（仅传该字段，其他字段不要传输）
          */
         private List<ExportInvParamDTO> checkData;
 

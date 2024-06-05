@@ -469,33 +469,31 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             param.setSkuIdList(skuIds);
         }
         InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, param);
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append("即时库存导出");
+        IPage<InventoryDTO.PagingViewDTO> iPage = new Page<>();
         String excelPath = "";
-        List<InventoryDTO.PagingViewDTO> dataList = Collections.emptyList();
+        Page page = new Page(1, 999999);
         if(param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())){
-            IPage<InventoryDTO.PagingViewDTO> page = inventoryMapper.page(null, searchParamDTO);
-            dataList = page.getRecords();
+            iPage = inventoryMapper.page(page, searchParamDTO);
             excelPath = "excel/inventory.xlsx";
         }
         if(param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())){
-            IPage<InventoryDTO.PagingViewDTO> page = inventoryMapper.pageByArea(null, searchParamDTO);
-            dataList = page.getRecords();
+            iPage = inventoryMapper.pageByArea(page, searchParamDTO);
             excelPath = "excel/inventory_area.xlsx";
         }
         if(param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())){
-            IPage<InventoryDTO.PagingViewDTO> page = inventoryMapper.pageByLocation(null, searchParamDTO);
-            dataList = page.getRecords();
+            iPage = inventoryMapper.pageByLocation(page, searchParamDTO);
             excelPath = "excel/inventory_location.xlsx";
         }
 
+        List<InventoryDTO.PagingViewDTO> dataList = iPage.getRecords();
         if (CollUtil.isEmpty(dataList)) {
             return;
         }
         fillInventoryPageData(dataList);
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        String fileName = date + "即时库存导出";
         try {
-            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
+            new ExcelPrintUtils().patchExport(dataList, response, fileName, excelPath);
         } catch (IOException e) {
             e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_1015);
@@ -737,7 +735,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 data.setSpecType(skuVO.getSpecType());
             }
 
-            if(! "".equals(data.getWarehouseLocation())){
+            //仓位名称
+            if(org.apache.commons.lang3.StringUtils.isNotBlank(data.getWarehouseLocation())){
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
                         .filter(req -> req.getCode().equals(data.getWarehouseLocation())
                                 && req.getWarehouseId().equals(data.getWarehouseId())
@@ -746,9 +745,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
 
             //库区名称赋值
-            if(! "".equals(data.getWarehouseArea())){
+            if(org.apache.commons.lang3.StringUtils.isNotBlank(data.getWarehouseArea())){
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
-                        .filter(req -> req.getCode().equals(data.getWarehouseLocation()) && req.getWarehouseId().equals(data.getWarehouseId()) && "area".equals(req.getType()))
+                        .filter(req -> req.getCode().equals(data.getWarehouseArea()) && req.getWarehouseId().equals(data.getWarehouseId()) && "area".equals(req.getType()))
                         .findFirst().orElse(new WarehouseLocationEntity());
                 data.setWarehouseAreaName(warehouseLocationEntity.getName());
             }
