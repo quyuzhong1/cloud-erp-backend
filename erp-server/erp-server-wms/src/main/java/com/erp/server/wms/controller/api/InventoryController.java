@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 库存报表管理
@@ -254,8 +253,8 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/listLocationInventoryBySkus")
     public ApiResult<List<InventoryDTO.LocationInventoryResult>> listLocationInventoryBySkus(@RequestBody List<InventoryDTO.LocationInventoryParam> param){
-        Map<String, List<InventoryDTO.LocationInventoryResult>> locationInventoryMap = inventoryService.listLocationInventoryBySkus(param);
-        return ApiResult.success(locationInventoryMap);
+        List<InventoryDTO.LocationInventoryResult> results = inventoryService.listLocationInventoryBySkus(param);
+        return ApiResult.success(results);
     }
 
 }
