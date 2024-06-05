@@ -64,7 +64,7 @@ public interface SkuMappingFeign {
      * @date 2023/11/2
      */
     @PostMapping("feign/skuMapping/listByErpSkuIdAndType")
-    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList,@RequestParam(value = "provideCode") String provideCode,@RequestParam(value = "warehouseId") String warehouseId);
+    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList,@RequestParam(value = "provideCode") String provideCode,@RequestParam(value = "warehouseId") String warehouseId,@RequestParam(value = "shopId") String shopId);
 
     /**
      * 高级查询

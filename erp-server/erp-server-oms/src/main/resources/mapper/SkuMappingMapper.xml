@@ -616,7 +616,8 @@
         li.platform_update_time,
         li.platform_spu_no,
         li.platform_spu_name,
-        li.platform_fn_sku
+        li.platform_fn_sku,
+        li.platform_sku_id as platformSkuId
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
@@ -640,7 +641,13 @@
                 #{platformSpuNo}
             </foreach>
         </if>
-
+        <!--平台sku id 列表-->
+        <if test="params.platformSkuIdList !=null and params.platformSkuIdList.size>0">
+            AND li.platform_sku_id IN
+            <foreach collection="params.platformSkuIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <!--sku no 列表-->
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND sm.product_sku_no IN
@@ -719,6 +726,9 @@
             <foreach collection="erpSkuIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
+        </if>
+        <if test="shopId != null and shopId != ''">
+            AND sm.shop_id = #{shopId}
         </if>
         <if test="provideCode != null and provideCode != ''">
             AND li.platform = #{provideCode}

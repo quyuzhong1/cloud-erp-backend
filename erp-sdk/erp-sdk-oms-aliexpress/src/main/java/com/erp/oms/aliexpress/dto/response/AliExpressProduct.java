@@ -1,6 +1,8 @@
 package com.erp.oms.aliexpress.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -91,13 +93,15 @@ public class AliExpressProduct implements Serializable {
 
 
     @JSONField(name = "aeop_ae_product_s_k_us")
-   private List<AliExpressProductDetail>  productDetailList;
+    private ProductSku productSku;
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class ProductSku {
 
-
-
-
-
-
-
+        @JSONField(name = "aeop_ae_product_sku")
+        private List<AliExpressProductDetail>  productDetailList;
+    }
 }

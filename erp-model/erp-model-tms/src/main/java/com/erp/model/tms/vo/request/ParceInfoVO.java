@@ -5,6 +5,7 @@ import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 @Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class ParceInfoVO {
 
     //是否带电 1:是 0:否

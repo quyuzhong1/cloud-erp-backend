@@ -166,13 +166,12 @@ public enum ImlEnums {
         FIRST_JOURNEY_ON_THE_WAY("W","待发货", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
         INITIAL_RECEIVING("D","已发货", SoB2cBillStatusEnum.ENUM_SHIPPED),
         IN_TRANSIT("H","暂存", null),
-        RECEIVING_DESTINATION_WAREHOUSE("N","异常订单", null),
+        RECEIVING_DESTINATION_WAREHOUSE("N","异常订单", SoB2cBillStatusEnum.ENUM_EXCEPTION),
         COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("P","问题件", null),
         ABANDONMENT("X","废弃", null)
         ;
         private final String code;
         private final String name;
-        //本来应该是引用枚举SoB2cBillStatusEnum，但是枚举不在common包下，引包会导致循环依赖
         private final SoB2cBillStatusEnum erpSoStatus;
 
 
@@ -187,7 +186,7 @@ public enum ImlEnums {
                     .findFirst()
                     .map(OrderStatusEnum::getErpSoStatus)
                     .map(SoB2cBillStatusEnum::getCode)
-                    .orElse(code);
+                    .orElse("");
         }
 
         public static String getName(String code){
