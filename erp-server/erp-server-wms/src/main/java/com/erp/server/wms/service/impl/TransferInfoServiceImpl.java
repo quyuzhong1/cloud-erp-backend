@@ -620,10 +620,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_95107);
         }
 
-        //其他入库单
+        //调出仓的其他入库单
         HashMap<String, BigDecimal> inSkuMap = new HashMap<>();
         transferDetailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getInWarehouseLocation()))
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getOutWarehouseLocation()))
                 .forEach((key, list) -> {
                     int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
                     inSkuMap.put(key, BigDecimal.valueOf(collect));
@@ -641,7 +641,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //其他出库单
         HashMap<String, BigDecimal> outSkuMap = new HashMap<>();
         transferDetailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getOutWarehouseLocation()))
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getInWarehouseLocation()))
                 .forEach((key, list) -> {
                     int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
                     outSkuMap.put(key, BigDecimal.valueOf(collect));
@@ -663,8 +663,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
 
         //推送其他出库单给旺店通
-        String outWarehouseId = transferDetailList.get(0).getInWarehouseId();
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+        String outWarehouseId = transferDetailList.get(0).getInWarehouseId();
         OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
         DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
 
