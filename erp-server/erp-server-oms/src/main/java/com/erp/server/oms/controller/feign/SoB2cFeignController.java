@@ -130,8 +130,21 @@ public class SoB2cFeignController extends BaseController {
     }
 
     @GetMapping("/listRefBomSplit")
-    public List<SoB2cEntity> listRefBomSplit(@RequestParam("detailId") String detailId){
+    public SoB2cDTO.CombinationDTO listRefBomSplit(@RequestParam("detailId") String detailId){
         return soB2cSplitService.listRefBomSplit(detailId);
+    }
+
+    /**
+     * 更新标记发货标识
+     * @param detailIdList
+     * @return
+     */
+    @PostMapping("/updateSignShippedByDetailId")
+    public void updateSignShippedByDetailId(@RequestBody List<String> detailIdList) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return ;
+        }
+        soB2cDetailService.updateSignShippedByDetailId(detailIdList);
     }
     /**
      * 根据主表id查询B2C订单主表信息

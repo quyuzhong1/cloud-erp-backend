@@ -77,8 +77,8 @@ public class SkuMappingFeignController extends BaseController {
      * @date 2023/11/2
      */
     @PostMapping("/listByErpSkuIdAndType")
-    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList,@RequestParam(value = "provideCode") String provideCode,@RequestParam(value = "warehouseId") String warehouseId) {
-        return skuMappingService.listByErpSkuIdAndType(erpSkuIdList,provideCode,warehouseId);
+    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList,@RequestParam(value = "provideCode") String provideCode,@RequestParam(value = "warehouseId") String warehouseId,@RequestParam(value = "shopId") String shopId) {
+        return skuMappingService.listByErpSkuIdAndType(erpSkuIdList,provideCode,warehouseId,shopId);
     }
 
     /**

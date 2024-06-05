@@ -728,7 +728,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         // 发货单ID
         List<String> deliveryIds = records.stream()
-                .filter(e -> SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode().equals(e.getSourceType()))
+                .filter(e -> SourceTypeEnum.DELIVERY_PLAN.getCode().equals(e.getSourceType()))
                 .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getDeliveryId)
                 .distinct()
                 .collect(Collectors.toList());

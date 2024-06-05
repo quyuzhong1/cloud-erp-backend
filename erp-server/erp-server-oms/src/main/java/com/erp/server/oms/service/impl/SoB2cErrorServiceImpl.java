@@ -260,6 +260,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soB2cId);
         platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
+        platformShipOrderDTO.setFalseDeliveryFlag(true);
         try {
             soB2cDeliveryFeign.shipOrder(platformShipOrderDTO);
             return BatchResultDTO.success(soB2cId, soCode, "重新标记发货成功");

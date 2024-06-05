@@ -156,6 +156,18 @@
         si.country_name as countryName,
         sbrc.categoryNames
     </sql>
+    <update id="updateBatchApproveById">
+        <foreach collection="updateList" item="item" index="index" separator=";">
+            UPDATE so_b2c
+            SET
+            <trim suffixOverrides=",">
+                <if test="item.approveTime != null">approve_time = #{item.approveTime},</if>
+                <if test="item.approveUserId != null">approve_user_id = #{item.approveUserId},</if>
+                <if test="item.approveUserName != null">approve_user_name = #{item.approveUserName},</if>
+            </trim>
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
 
     <!-- 列表分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">

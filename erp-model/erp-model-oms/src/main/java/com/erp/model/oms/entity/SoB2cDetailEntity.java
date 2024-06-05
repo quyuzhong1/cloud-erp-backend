@@ -178,6 +178,17 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField(exist = false)
     private String operateDetailId;
 
+    /**
+     * 是否已标记发货
+     */
+    @TableField("is_sign_shipped")
+    private Boolean isSignShipped;
+
+    /**
+     * 还原id
+     */
+    @TableField(exist = false)
+    private String revertId;
 
     public static final String MAIN_ID = "main_id";
 

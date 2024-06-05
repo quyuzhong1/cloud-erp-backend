@@ -7,8 +7,8 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
+import org.apache.xpath.operations.Bool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,11 +48,14 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
 
     private String warehouseId;
 
+    private Boolean isFba;
 
-    public DeliveryPlanDetailExcelListener(List<String> thirdSkuNoList,List<ListingInfoWithSkuMappingDTO> allThirdWarehouseSkuList,String warehouseId) {
+
+    public DeliveryPlanDetailExcelListener(List<String> thirdSkuNoList,List<ListingInfoWithSkuMappingDTO> allThirdWarehouseSkuList,String warehouseId,Boolean isFba) {
         this.thirdSkuNoList = CollectionUtils.isNotEmpty(thirdSkuNoList) ? thirdSkuNoList : new ArrayList<>();
         this.allThirdWarehouseSkuList = allThirdWarehouseSkuList;
         this.warehouseId = warehouseId;
+        this.isFba = isFba;
     }
 
 
@@ -71,8 +74,9 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
         if (CollectionUtils.isEmpty(allThirdWarehouseSkuList)) {
             errorMsgList.add("系统中第三方仓sku为空");
         } else {
+            //fba 不需要匹配仓库
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = allThirdWarehouseSkuList.stream().filter(
-                    v->v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getSkuNo()) && (v.getHasMappingAll() || v.getWarehouseId().equals(this.warehouseId))
+                    v->v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getSkuNo()) && (isFba || v.getHasMappingAll() || v.getWarehouseId().equals(this.warehouseId))
                     )
                     .findFirst().orElse(null);
             if (Objects.nonNull(listingInfoWithSkuMappingDTO)) {
@@ -87,6 +91,7 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
                         viewDTO = ListingInfoDTO.PageDTO.builder()
                                 .id(listingInfoWithSkuMappingDTO.getTableId())
                                 .platformSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo())
+                                .mSKU(listingInfoWithSkuMappingDTO.getPlatformSkuNo())
                                 .platformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName())
                                 .skuId(listingInfoWithSkuMappingDTO.getProductSkuId())
                                 .skuNo(listingInfoWithSkuMappingDTO.getProductSkuNo())
@@ -102,7 +107,7 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
             }
         }
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             deliveryPlanDetailExportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(deliveryPlanDetailExportExcelDTO);
             return;

@@ -14,7 +14,7 @@ import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.service.IPlatformService;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
@@ -64,7 +64,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
     private ShopInfoFeign shopInfoFeign;
 
     @Override
-    public void shipOrder(PlatformShipOrderDTO dto) {
+    public List<String> shipOrder(PlatformShipOrderDTO dto) {
         List<SoB2cEntity> sourceOrderList;
         Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = new HashMap<>();
         Map<String, SoB2cLogisticsEntity> logisticsEntityMap= new HashMap<>();
@@ -114,6 +114,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
             soB2cDetailEntityListMap = allDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
         }
 
+        List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
@@ -128,7 +129,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
 //            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
 //                throw new ServiceException("平台来源详情ID为空");
 //            }
-            detailEntityList = super.handleBomSplit(detailEntityList);
+            detailEntityList = super.handleSplit(detailEntityList, dto.isFalseDeliveryFlag());
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
                 continue;
@@ -227,12 +228,14 @@ public class AmazonShipOrder extends AbstractShipOrder {
                 log.warn("【{}】亚马逊标记发货:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
                 ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, mainEntity.getPlatformCode());
                 log.warn("【{}】亚马逊标记发货:响应结果={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(voidApiResponse));
+                signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (ApiException e){
                 confirmShipmentApiExceptionHandle(e, mainEntity.getPlatformCode(), api);
             } catch (Exception e) {
                 throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
             }
         }
+        return signShippedDetailList;
     }
 
 

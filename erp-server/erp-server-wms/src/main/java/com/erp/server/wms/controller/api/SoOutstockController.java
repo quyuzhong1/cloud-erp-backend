@@ -304,9 +304,9 @@ public class SoOutstockController extends BaseController {
      * @create 2023-12-28 19:43
      */
     @PostMapping("afreshGenerateB2cOutstock")
-    public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
-          soOutstockService.afreshGenerateB2cOutstock(dto.getIds());
-        return success();
+    public ApiResult<String> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean result =  soOutstockService.afreshGenerateB2cOutstock(dto.getIds());
+        return result?success():failure("重新生成销售出库单失败");
     }
 
     /**
