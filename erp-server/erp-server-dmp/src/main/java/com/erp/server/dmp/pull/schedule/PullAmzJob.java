@@ -13,12 +13,15 @@ import com.common.business.dto.*;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.RedisUtil;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ShopInfoDTO;
@@ -64,6 +67,7 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -124,6 +128,9 @@ public class PullAmzJob {
     @Resource
     private RedisUtil redisUtil;
 
+    @Resource
+    private CfgTimezoneService cfgTimezoneService;
+
     /**
      * 拉取亚马逊任务
      */
@@ -136,7 +143,7 @@ public class PullAmzJob {
             groupIds = JSONUtil.toList(jobParamStr, String.class);
         }
         XxlJobHelper.log("[拉取亚马逊任务] 任务开始：param={} =====", groupIds);
-        if (CollectionUtils.isEmpty(groupIds)){
+        if (CollectionUtils.isEmpty(groupIds)) {
             // 分组查询
             groupIds = platformApiTaskService.findGroupIdByPlatform(PlatformDictEnum.AMAZON.getCode());
             if (CollectionUtils.isEmpty(groupIds)) {
@@ -177,12 +184,17 @@ public class PullAmzJob {
             XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
+        // 根据状态查询
+        ShopInfoDTO.ListParamDTO conditionDTO = new ShopInfoDTO.ListParamDTO();
+        conditionDTO.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        conditionDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+        List<ShopInfoEntity> list = shopInfoFeign.listByParams(conditionDTO);
+
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 开始,预计分组线程数量={}", taskGroupMap.size());
         String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
         String platform = PlatformDictEnum.AMAZON.getCode();
-        String business = BusinessTypeEnum.ORDER.getCode();
 
         CountDownLatch latch = new CountDownLatch(taskGroupMap.size());
 
@@ -191,7 +203,7 @@ public class PullAmzJob {
 //                    List<PlatformApiTaskEntity> value = entry.getValue();
         taskGroupMap.forEach((key, value) -> threadPoolTaskExecutor.execute(() -> {
             // 处理下载详情
-            handlerDetailDownload(key, value, size, platform, category, business);
+            handlerDetailDownload(key, value, size, platform, category, list);
             latch.countDown();
             log.info("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 当前线程执行完毕");
             XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 当前线程执行完毕");
@@ -216,22 +228,24 @@ public class PullAmzJob {
      * @param size
      * @param platform
      * @param category
-     * @param business
+     * @param list
      */
-    private void handlerDetailDownload(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
-        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+    private void handlerDetailDownload(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, List<ShopInfoEntity> list) {
+        // 需要查询的店铺
+        List<String> queryShopIds = convertQueryShopIds(value, list);
+
         // 查询当前分组未下载的mongo订单
-        List<PlatformAmazonOrderDTO> orderEntityList = this.findDownloadStatusAnShopId(0, shopIds, 1, size);
+        List<PlatformAmazonOrderDTO> orderEntityList = this.findDownloadStatusAnShopId(0, queryShopIds, 1, size);
         if (CollectionUtil.isEmpty(orderEntityList)) {
-            XxlJobHelper.log("[拉取亚马逊订单详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(shopIds));
+            XxlJobHelper.log("[拉取亚马逊订单详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(queryShopIds));
             return;
         }
         for (PlatformAmazonOrderDTO dto : orderEntityList) {
-            singleHandlerDetailDownload(key, platform, category, business, dto);
+            singleHandlerDetailDownload(key, platform, category, dto);
         }
     }
 
-    public void singleHandlerDetailDownload(String key, String platform, String category, String business, PlatformAmazonOrderDTO dto) {
+    public void singleHandlerDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto) {
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
         try {
             // 动态请求配置
@@ -243,11 +257,21 @@ public class PullAmzJob {
             PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, extentJsonObj);
 
             newDto.setDownloadStatus(1);
-            newDto.setDownloadAddressStatus(0);
             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
             newDto.setRedissonKey(null);
-            List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
-            businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
+            List<PlatformOrderDTO> convertDtoList = amazonOrderHandler.convert(Collections.singletonList(newDto));
+            PlatformOrderDTO convertDto = convertDtoList.get(0);
+            newDto.setDownloadAddressStatus(dto.getDownloadAddressStatus());
+            String business = BusinessTypeEnum.ORDER.getCode();
+
+            // 区分多渠道订单
+            if (SourceTypeEnum.SO_MULTI_CHANNEL.getCode().equalsIgnoreCase(convertDto.getSourceType())) {
+                // 不需要下载地址
+                newDto.setDownloadAddressStatus(-1);
+                business = BusinessTypeEnum.SO_MULTI_CHANNEL.getCode();
+            }
+
+            businessService.pullDetailProcess(newDto, convertDto, category, platform, business);
             log.info("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
             XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
         } catch (Exception error) {
@@ -285,6 +309,9 @@ public class PullAmzJob {
             XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
+        // 根据状态查询
+        List<ShopInfoEntity> list = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
+
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
         XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 开始,预计分组线程数量={}", taskGroupMap.size());
@@ -297,7 +324,7 @@ public class PullAmzJob {
                     // 异步任务的逻辑
                     String key = entry.getKey();
                     List<PlatformApiTaskEntity> value = entry.getValue();
-                    handlerAddressDetail(key, value, size, platform, category, business);
+                    handlerAddressDetail(key, value, size, platform, category, business, list);
                     log.info("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 当前线程执行完毕");
                     XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 当前线程执行完毕");
                 })).toArray(CompletableFuture[]::new));
@@ -317,17 +344,19 @@ public class PullAmzJob {
      * @param platform
      * @param category
      * @param business
+     * @param list
      */
-    private void handlerAddressDetail(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
-        // 店铺IDS
-        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+    private void handlerAddressDetail(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business, List<ShopInfoEntity> list) {
+        // 需要查询的店铺
+        List<String> queryShopIds = convertQueryShopIds(value, list);
+
         // 查出下MFN订单
-        List<PlatformAmazonOrderDTO> orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.MFN.getValue(), shopIds, 1, size);
+        List<PlatformAmazonOrderDTO> orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.MFN.getValue(), queryShopIds, 1, size);
         if (CollectionUtil.isEmpty(orderEntityList)) {
             // 查询AFN订单
-            orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.AFN.getValue(), shopIds, 1, size);
+            orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.AFN.getValue(), queryShopIds, 1, size);
             if (CollectionUtil.isEmpty(orderEntityList)) {
-                XxlJobHelper.log("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(shopIds));
+                XxlJobHelper.log("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(queryShopIds));
                 return;
             }
         }
@@ -352,20 +381,20 @@ public class PullAmzJob {
                 List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
                 // 保存和发送mq
                 businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
-                log.info("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(shopIds));
+                log.info("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(queryShopIds));
                 XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载成功, groupId={}, uniqueId={}", key, dto.getUniqueId());
 
                 // 缓存移除结果
                 String addressKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getBusinessTypeName(), dto.getUniqueId());
                 String buyerKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.BUYER_INFO.getBusinessTypeName(), dto.getUniqueId());
                 List<String> delKeys = new LinkedList<>();
-                if (redisUtil.hasKey(addressKey)){
+                if (redisUtil.hasKey(addressKey)) {
                     delKeys.add(addressKey);
                 }
-                if (redisUtil.hasKey(buyerKey)){
+                if (redisUtil.hasKey(buyerKey)) {
                     delKeys.add(buyerKey);
                 }
-                if (!delKeys.isEmpty()){
+                if (!delKeys.isEmpty()) {
                     redisUtil.del(delKeys.toArray(new String[0]));
                 }
 
@@ -383,6 +412,20 @@ public class PullAmzJob {
                 dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
             }
         }
+    }
+
+    private List<String> convertQueryShopIds(List<PlatformApiTaskEntity> value, List<ShopInfoEntity> list) {
+        // 店铺IDS
+        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+        // 所有关联的店铺
+        List<String> platformCodeList = list.stream().filter(e -> shopIds.contains(e.getId())).map(ShopInfoEntity::getPlatformShopCode).distinct().collect(Collectors.toList());
+        // 需要查询的店铺
+        return list.stream()
+                .filter(e -> platformCodeList.contains(e.getPlatformShopCode()))
+                .map(BaseEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+
     }
 
     private List<PlatformAmazonOrderDTO> findGroupByFulfillmentChannel(String value,
@@ -405,6 +448,7 @@ public class PullAmzJob {
 
     /**
      * 根据条件查询mongo亚马逊订单
+     *
      * @param downloadStatus
      * @param shopIds
      * @param currentPage
@@ -424,6 +468,7 @@ public class PullAmzJob {
 
     /**
      * 根据条件查询mongo亚马逊商品
+     *
      * @param downloadStatus
      * @param shopIds
      * @param currentPage
@@ -495,7 +540,7 @@ public class PullAmzJob {
         // 指定店铺
         List<String> finalShopIdList = jobParamDTO.getShopIdList();
         taskList = taskList.stream()
-                .filter(e-> CollectionUtils.isEmpty(finalShopIdList) || finalShopIdList.contains(e.getShopId()))
+                .filter(e -> CollectionUtils.isEmpty(finalShopIdList) || finalShopIdList.contains(e.getShopId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(taskList)) {
             XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,未找到指定店铺需执行的任务");
@@ -519,7 +564,8 @@ public class PullAmzJob {
                         handlerProductDetail(key, value, size, platform, category, business);
                     } catch (Exception e) {
                         log.info("[拉取亚马逊商品详情任务] amazonProductDetail 执行异常: groupId={}, error={}", entry.getKey(), ExceptionUtil.stacktraceToString(e, 1000));
-                        XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 执行异常: groupId={}, error={}", entry.getKey(), ExceptionUtil.stacktraceToString(e, 1000));;
+                        XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 执行异常: groupId={}, error={}", entry.getKey(), ExceptionUtil.stacktraceToString(e, 1000));
+                        ;
                     }
                     log.info("[拉取亚马逊商品详情任务] amazonProductDetail 当前线程执行完毕");
                     XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 当前线程执行完毕");
@@ -558,7 +604,7 @@ public class PullAmzJob {
             AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
             // 过滤亚马逊异常数据或无法查询明细的数据
             List<PlatformAmazonListingDTO> currentListingDTOList = this.filterAndGetEnableList(entry.getValue(), marketPlaceEnum);
-            if (CollectionUtils.isEmpty(currentListingDTOList)){
+            if (CollectionUtils.isEmpty(currentListingDTOList)) {
                 XxlJobHelper.log("[拉取亚马逊商品详情任务] 当前店铺无有效数据需下载，shopId={}", entry.getKey());
                 continue;
             }
@@ -609,23 +655,23 @@ public class PullAmzJob {
         Class<?> tClass = PlatformAmazonListingDTO.class;
         String tableName = MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT;
         for (PlatformAmazonListingDTO dto : listingDTOList) {
-            if ("1".equalsIgnoreCase(dto.getProductIdType()) && AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(dto.getStatus())){
+            if ("1".equalsIgnoreCase(dto.getProductIdType()) && AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(dto.getStatus())) {
                 dto.setDownloadStatus(-1);
                 dto.setDownloadDesc("ProductIdType=ASIN,停售无法更新明细");
                 //更新mongo
                 UniqueDto updateDto = UniqueDto.getUniqId(dto.getUniqueId());
-                MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
+                MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
                 mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
                 continue;
             }
             // 日本异常数据
             if (AmazonMarketplaceEnum.JP.equals(marketPlaceEnum)) {
-                if ("4".equals(dto.getProductIdType())){
+                if ("4".equals(dto.getProductIdType())) {
                     dto.setDownloadStatus(-1);
                     dto.setDownloadDesc("日本站点ProductIdType=4无法更新明细");
                     //更新mongo
                     UniqueDto updateDto = UniqueDto.getUniqId(dto.getUniqueId());
-                    MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
+                    MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
                     mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
                     continue;
                 }
@@ -784,12 +830,13 @@ public class PullAmzJob {
     private Boolean checkSkipList(String uniqueId) {
         String listStr = cfgSettingService.getValue(SettingEnum.AMAZON_FBA_SHIPMENT_SKIP_LIST);
         // 无配置
-        if (StringUtils.isBlank(listStr)){
+        if (StringUtils.isBlank(listStr)) {
             return false;
         }
         List<String> skipList;
-        if (listStr.contains(",")){
-            skipList = Arrays.stream(listStr.split(",")).collect(Collectors.toList());;
+        if (listStr.contains(",")) {
+            skipList = Arrays.stream(listStr.split(",")).collect(Collectors.toList());
+            ;
         } else {
             skipList = Collections.singletonList(listStr);
         }
@@ -802,9 +849,9 @@ public class PullAmzJob {
         String jobParamStr = XxlJobHelper.getJobParam();
         XxlJobHelper.log("[清洗【亚马逊相关待清洗】(mongo->ERP)] amazonCleanExecute 任务开始,param={}", JSONUtil.toJsonStr(jobParamStr));
         List<CleanDataTableEnum> platforms = new LinkedList<>();
-        if (StringUtils.isNotBlank(jobParamStr)){
+        if (StringUtils.isNotBlank(jobParamStr)) {
             CleanDataTableEnum table = CleanDataTableEnum.getByName(jobParamStr);
-            if (null != table){
+            if (null != table) {
                 platforms = Collections.singletonList(table);
             }
         } else {
@@ -824,7 +871,7 @@ public class PullAmzJob {
             if (CleanDataTableEnum.AMAZON_ORDER.equals(cleanDataTableEnum)
                     || CleanDataTableEnum.AMAZON_FBA_SHIPMENT.equals(cleanDataTableEnum)
                     || CleanDataTableEnum.AMAZON_PRODUCT.equals(cleanDataTableEnum)
-            ){
+            ) {
                 // 清洗时检查明细下载状态:DownloadStatus=1
                 jobTaskDTO.setClearCheckDownloadStatus(true);
             }
@@ -873,7 +920,7 @@ public class PullAmzJob {
             } catch (Exception e) {
                 XxlJobHelper.log("[检查亚马逊店铺/市场任务]检查失败：account={},msg={}, json={}",
                         entry.getKey(),
-                        ExceptionUtil.stacktraceToString(e,2000),
+                        ExceptionUtil.stacktraceToString(e, 2000),
                         JSONUtil.toJsonStr(e));
             }
         }
@@ -887,9 +934,9 @@ public class PullAmzJob {
     private String getGroupBySellerIdAndMarketPlace(ShopInfoEntity entity) {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(entity.getDictCountryCode());
         if (AmazonMarketplaceEnum.SA.equals(marketplaceEnum) ||
-            AmazonMarketplaceEnum.SG.equals(marketplaceEnum) ||
-            AmazonMarketplaceEnum.AU.equals(marketplaceEnum) ||
-            AmazonMarketplaceEnum.JP.equals(marketplaceEnum)
+                AmazonMarketplaceEnum.SG.equals(marketplaceEnum) ||
+                AmazonMarketplaceEnum.AU.equals(marketplaceEnum) ||
+                AmazonMarketplaceEnum.JP.equals(marketplaceEnum)
         ) {
             return StrUtil.format("{}_{}", entity.getPlatformShopCode(), marketplaceEnum.getMarketplaceId());
         } else {
@@ -917,6 +964,15 @@ public class PullAmzJob {
             XxlJobHelper.log("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
+        // 时区配置
+        List<CfgTimezoneEntity> timeZoneList = cfgTimezoneService.listAndCache();
+        // 店铺信息
+        // 查询指定或所有已授权店铺
+        Map<String, ShopInfoEntity> shopMap = shopInfoFeign.listByParams(
+                        new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null))
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
         XxlJobHelper.log("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 开始,预计分组线程数量={}", taskGroupMap.size());
@@ -925,7 +981,7 @@ public class PullAmzJob {
         String business = BusinessTypeEnum.ORDER.getCode();
 
         taskGroupMap.forEach((key, value) -> {
-            handlerFulfilledCheckOrder(key, value, size, platform, category, business);
+            handlerFulfilledCheckOrder(key, value, size, platform, category, business, timeZoneList, shopMap);
             log.info("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 当前线程执行完毕");
             XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonFulfilledCheckOrder 当前线程执行完毕");
         });
@@ -945,73 +1001,105 @@ public class PullAmzJob {
         return ReturnT.SUCCESS;
     }
 
-    public void handlerFulfilledCheckOrder(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
-        // 拉取未存在的主订单
-        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+    public void handlerFulfilledCheckOrder(String groupId, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business, List<CfgTimezoneEntity> timeZoneList, Map<String, ShopInfoEntity> shopMap) {
+        // 亚马逊账号
+        String platformShopCode = StringUtils.substringBetween(groupId, ":", ":");
         // 查询当前分组未下载的mongo订单
-        List<PlatformAmazonFulfilledShipmentsDTO> dtoList = this.findHandleStatusAndShopId(AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode(), shopIds, 1, size);
+        List<PlatformAmazonFulfilledShipmentsDTO> dtoList = this.findHandleStatusAndPlatformShopCode(AmazonHandleStatusEnum.WAIT_DOWNLOAD.getCode(), platformShopCode, 1, size);
 
-        if (CollectionUtils.isEmpty(dtoList)){
-            XxlJobHelper.log("不存在需要补充的订单,店铺ID={}", shopIds);
+        if (CollectionUtils.isEmpty(dtoList)) {
+            XxlJobHelper.log("不存在需要补充的订单,店铺ID={}", groupId);
             return;
         }
 
         List<String> allOrderIds = dtoList.stream().map(PlatformAmazonFulfilledShipmentsDTO::getAmazonOrderId).distinct().collect(Collectors.toList());
-        List<String> existOrderIds = this.findMongoOrderByIds(allOrderIds);
+        List<PlatformAmazonOrderDTO> existOrderList = this.findMongoOrderByIds(allOrderIds);
+        // 已存在IDS
+        Map<String, PlatformAmazonOrderDTO> existOrderMap = existOrderList.stream()
+                .filter(e -> null != e.getOrder())
+                .distinct()
+                .collect(Collectors.toMap(e -> e.getOrder().getAmazonOrderId(), Function.identity()));
+        Set<String> existOrderIds = existOrderMap.keySet();
 
-        // 根据shopId分组
-        Map<String, List<PlatformAmazonFulfilledShipmentsDTO>> dtoGroupList = dtoList.stream().collect(Collectors.groupingBy(PlatformAmazonFulfilledShipmentsDTO::getShopId));
-        for (Map.Entry<String, List<PlatformAmazonFulfilledShipmentsDTO>> entry : dtoGroupList.entrySet()) {
-            Map<Boolean, List<PlatformAmazonFulfilledShipmentsDTO>> groupMap = entry.getValue().stream().collect(Collectors.groupingBy(e -> existOrderIds.contains(e.getAmazonOrderId())));
+        // 任意店铺ID
+        String shopId = value.get(0).getShopId();
 
-            List<PlatformAmazonFulfilledShipmentsDTO> existList = groupMap.get(true);
-            List<PlatformAmazonFulfilledShipmentsDTO> queryList = groupMap.get(false);
+        Map<Boolean, List<PlatformAmazonFulfilledShipmentsDTO>> groupMap = dtoList.stream().collect(Collectors.groupingBy(e -> existOrderIds.contains(e.getAmazonOrderId())));
 
-            if (!CollectionUtils.isEmpty(queryList)){
-                List<String> orderIds = queryList.stream()
-                        .map(PlatformAmazonFulfilledShipmentsDTO::getAmazonOrderId)
-                        .distinct()
-                        .collect(Collectors.toList());
-                try {
-                    // 根据订单ID下载分组查询
-                    List<PlatformAmazonOrderDTO> newOrderDTOList = amazonOrderHandler.downloadByOrderIds(orderIds, entry.getKey(), key);
-                    // 订单主体保存倒mongo
-                    businessService.handleSaveOrUpdateMongo(newOrderDTOList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformAmazonOrderDTO.class, new ArrayList<>());
-                    // 更新物流销售记录mongo
-                    queryList.forEach(e-> e.setHandleStatus(AmazonHandleStatusEnum.WAIT_HANDLE.getCode()));
-                    businessService.handleSaveOrUpdateMongo(queryList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
-                } catch (Exception e) {
-                    XxlJobHelper.log("补充的订单失败,店铺ID={}, orderIds={}, error={}", entry.getKey(), orderIds, e.getMessage());
-                }
-            }
-            if (!CollectionUtils.isEmpty(existList)){
+        List<PlatformAmazonFulfilledShipmentsDTO> existList = groupMap.get(true);
+        List<PlatformAmazonFulfilledShipmentsDTO> queryList = groupMap.get(false);
+
+        if (!CollectionUtils.isEmpty(queryList)) {
+            List<String> orderIds = queryList.stream()
+                    .map(PlatformAmazonFulfilledShipmentsDTO::getAmazonOrderId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            try {
+
+                // 根据订单ID下载分组查询
+                List<PlatformAmazonOrderDTO> newOrderDTOList = amazonOrderHandler.downloadByOrderIds(orderIds, shopId, groupId, timeZoneList);
+                // 订单主体保存倒mongo
+                businessService.handleSaveOrUpdateMongo(newOrderDTOList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformAmazonOrderDTO.class, new ArrayList<>());
                 // 更新物流销售记录mongo
-                existList.forEach(e-> e.setHandleStatus(AmazonHandleStatusEnum.WAIT_HANDLE.getCode()));
-                businessService.handleSaveOrUpdateMongo(existList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
-
+                Map<String, PlatformAmazonOrderDTO> orderMap = newOrderDTOList.stream().collect(Collectors.toMap(e -> e.getOrder().getAmazonOrderId(), Function.identity()));
+                fillDataAndSetHandleStatus(queryList, orderMap, timeZoneList, shopMap);
+                businessService.handleSaveOrUpdateMongo(queryList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
+            } catch (Exception e) {
+                XxlJobHelper.log("补充的订单失败,店铺ID={}, orderIds={}, error={}", shopId, orderIds, e.getMessage());
             }
-            XxlJobHelper.log("补充的订单成功,店铺ID={}", entry.getKey());
         }
+        if (!CollectionUtils.isEmpty(existList)) {
+            // 更新物流销售记录mongo
+            fillDataAndSetHandleStatus(existList, existOrderMap, timeZoneList, shopMap);
+            businessService.handleSaveOrUpdateMongo(existList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
+
+        }
+        XxlJobHelper.log("补充的订单成功,店铺ID={}", shopId);
     }
 
-    private List<String> findMongoOrderByIds(List<String> allOrderIds) {
+    private static void fillDataAndSetHandleStatus(List<PlatformAmazonFulfilledShipmentsDTO> existList,
+                                                   Map<String, PlatformAmazonOrderDTO> existOrderMap,
+                                                   List<CfgTimezoneEntity> timeZoneList,
+                                                   Map<String, ShopInfoEntity> shopMap) {
+        existList.forEach(e -> {
+            e.setHandleStatus(AmazonHandleStatusEnum.WAIT_HANDLE.getCode());
+            PlatformAmazonOrderDTO orderDTO = existOrderMap.get(e.getAmazonOrderId());
+            if (null == orderDTO) {
+                return;
+            }
+            e.setShopId(orderDTO.getShopId());
+            ShopInfoEntity shopInfoEntity = shopMap.get(orderDTO.getShopId());
+            if (null == shopInfoEntity) {
+                return;
+            }
+            CfgTimezoneEntity timeZoneEntity = timeZoneList.stream()
+                    .filter(t -> t.getCountry().equalsIgnoreCase(shopInfoEntity.getDictCountryCode()))
+                    .findFirst()
+                    .orElse(null);
+            if (null == timeZoneEntity) {
+                // 配置找不到
+                return;
+            }
+            // 设置所有本地时区
+            e.checkAndSetAllDateLocale(timeZoneEntity.getUtcDiffHour());
+
+        });
+    }
+
+    private List<PlatformAmazonOrderDTO> findMongoOrderByIds(List<String> allOrderIds) {
         Query query = new Query();
         query.addCriteria(Criteria.where("order.amazonOrderId").in(allOrderIds)
         );
         List<PlatformAmazonOrderDTO> orderDTOList = mongoTemplate.find(query, PlatformAmazonOrderDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER);
-        if (CollectionUtils.isEmpty(orderDTOList)){
+        if (CollectionUtils.isEmpty(orderDTOList)) {
             return Collections.emptyList();
         }
-        return orderDTOList.stream()
-                .filter(e -> null != e.getOrder())
-                .map(e->e.getOrder().getAmazonOrderId())
-                .distinct()
-                .collect(Collectors.toList());
+        return orderDTOList;
     }
 
-    private List<PlatformAmazonFulfilledShipmentsDTO> findHandleStatusAndShopId(String handleStatus, List<String> shopIds, int currentPage, Integer pageSize) {
+    private List<PlatformAmazonFulfilledShipmentsDTO> findHandleStatusAndPlatformShopCode(String handleStatus, String platformShopCode, int currentPage, Integer pageSize) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("shopId").in(shopIds)
+        query.addCriteria(Criteria.where("platformShopCode").is(platformShopCode)
                 .and("handleStatus").is(handleStatus)
                 .and("isClean").is(-10)
         );

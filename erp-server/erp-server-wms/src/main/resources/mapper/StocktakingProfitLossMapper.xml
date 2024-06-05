@@ -139,17 +139,38 @@
         </if>
     </select>
 
-    <select id="listByOrgIdAndSkuIds" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$LastDTO">
+    <select id="maxDateByParams" resultType="com.erp.model.wms.dto.StocktakingProfitLossDetailDTO$LastDTO">
         SELECT
-        wh.org_id AS inventoryOrgId,
-        MAX(spl.bill_date) AS billDate,
-        spld.sku_id
-        FROM stocktaking_profit_loss_detail spld
-        LEFT JOIN stocktaking_profit_loss spl
-        ON spld.main_id=spl.id
-        LEFT JOIN warehouse wh on spld.warehouse_id = wh.id
-        WHERE spld.is_deleted=FALSE AND spl.is_deleted=FALSE
+        warehouseOrgId,
+        billDate,
+        skuId,
+        warehouseId,
+        warehouseLocation,
+        code
+        FROM
+        (
+        SELECT
+        wh.org_id AS warehouseOrgId,
+        spld.warehouse_id AS warehouseId,
+        spld.warehouse_location AS warehouseLocation,
+        spl.bill_date AS billDate,
+        spld.sku_id AS skuId,
+        spl.code,
+        ROW_NUMBER ( ) OVER ( PARTITION BY wh.org_id, spld.warehouse_id, spld.warehouse_location, spld.sku_id ORDER BY spl.bill_date DESC ) AS row_num
+        FROM
+        stocktaking_profit_loss_detail spld
+        LEFT JOIN stocktaking_profit_loss spl ON spld.main_id = spl.
+        ID LEFT JOIN warehouse wh ON spld.warehouse_id = wh.ID
+        WHERE
+        spld.is_deleted = FALSE
+        AND spl.is_deleted = FALSE
         AND spl.approve_status = 'approve'
+        <if test="warehouseIdList!=null and warehouseIdList.size>0">
+            AND spld.warehouse_id IN
+            <foreach collection="warehouseIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
         <if test="orgIdList!=null and orgIdList.size>0">
             AND wh.org_id IN
             <foreach collection="orgIdList" item="id" open="(" separator="," close=")">
@@ -162,7 +183,9 @@
                 #{id}
             </foreach>
         </if>
-        GROUP BY wh.org_id,spld.sku_id
+        ) subquery
+        WHERE
+        row_num = 1
     </select>
 
     <select id="findLastOneCode" resultType="java.lang.String">

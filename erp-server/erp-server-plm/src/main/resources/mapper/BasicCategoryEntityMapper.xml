@@ -32,6 +32,18 @@
           </if>
 
     </select>
+    <select id="categoryGradeDown" resultType="com.erp.model.plm.dto.BasicCategoryTreeDTO">
+        SELECT
+            CONCAT_WS('/', parent.name, child.name) AS name,
+            child.pid AS pid,
+            child.id AS id
+        FROM
+            basic_category AS child
+                JOIN
+            basic_category AS parent ON child.pid = parent.id and parent.is_deleted = false
+        WHERE
+            child.is_deleted = false and child.pid != '0'
+    </select>
 
 
 </mapper>

@@ -31,4 +31,9 @@ public interface BasicCategoryMapper extends BaseMapper<BasicCategoryEntity> {
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      */
     List<SkuCategoryDTO> getSkuByCategoryIds(@Param("categoryIds") List<String> categoryIds);
+    /**
+     * 获取二级分类的列表 拼接一级名称
+     * @return
+     */
+    List<BasicCategoryTreeDTO> categoryGradeDown();
 }

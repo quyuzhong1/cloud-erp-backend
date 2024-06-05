@@ -861,7 +861,9 @@ public class SoB2cDTO implements Serializable {
      * 订单规则结果
      */
     @Data
+    @Builder
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class RuleResultDTO{
 
         private Boolean isRuleMatch;
@@ -2603,5 +2605,15 @@ public class SoB2cDTO implements Serializable {
         private LocalDate startTime;
 
         private List<String> ids;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CombinationDTO{
+        private List<SoB2cEntity> soB2cEntityList;
+        private List<SoB2cDetailEntity> soB2cDetailEntityList;
     }
 }

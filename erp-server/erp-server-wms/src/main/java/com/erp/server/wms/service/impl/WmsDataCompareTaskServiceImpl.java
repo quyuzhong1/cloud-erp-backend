@@ -811,7 +811,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 		
 		if(CollUtil.isNotEmpty(systemDataMapList)) {
 			systemDataMapList.forEach(d -> {
-				Map<String, String> tempData = new HashMap();
+				Map<String, String> tempData = new HashMap<>();
 				StringBuffer sb = new StringBuffer();
 				for(ImportDataMappingDTO importDataMappingDTO : notPkImportDataMappingDTOList) {
 					String excelValue = d.get(importDataMappingDTO.getSystemField());
@@ -1079,7 +1079,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					
 					List<ImportDataMappingDTO> importDataMappingDTOList = JSON.parseArray(wmsDataCompareTaskEntity.getImportDataMapping() , WmsDataComparePlanDTO.ImportDataMappingDTO.class);
 					
-					String fileName = System.getProperty("java.io.tmpdir") + "对比结果"+ UUID.fastUUID().toString() +".xlsx";
+					String fileName = System.getProperty("java.io.tmpdir") + File.separator + "对比结果"+ UUID.fastUUID().toString() +".xlsx";
 					ExcelWriter excelWriter = EasyExcel.write(fileName).build();
 				    List<List<String>> headList = new ArrayList<>();
 				    List<String> firstHead = new ArrayList<>();
@@ -1146,7 +1146,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					excelWriter.write(headList, writeSheet);
 				    excelWriter.finish();
 				    
-					resultReportUrl = FastDFSClientUtil.uploadFile(new File(fileName), fileName);
+					File file = new File(fileName);
+					resultReportUrl = FastDFSClientUtil.uploadFile(file, fileName);
+					file.delete();
 				}
 			}
 				wmsDataCompareTaskService.dealFinishData(id , resultReportUrl , resultSameCount, resultExceedCount, resultMissCount, resultDiffCount);

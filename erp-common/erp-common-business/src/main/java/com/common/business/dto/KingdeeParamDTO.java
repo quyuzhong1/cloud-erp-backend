@@ -1,0 +1,46 @@
+package com.common.business.dto;
+
+import cn.hutool.json.JSONObject;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+
+/**
+ * 金蝶对接保存数据DTO
+ * @author Will
+ * @version 1.0
+ * @date 2024/5/24 21:57
+ */
+@Data
+@NoArgsConstructor
+public class KingdeeParamDTO {
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SaveParamDTO {
+
+        /**
+         * 需要返回的字段
+         */
+        private  ArrayList<String> NeedReturnFields = new ArrayList();
+
+        /**
+         * 需要更新的字段
+         */
+        private ArrayList<String> NeedUpDateFields = new ArrayList();
+
+        /**
+         * 需要新增的字段
+         */
+        private JSONObject Model;
+
+
+        public SaveParamDTO(JSONObject Model) {
+            this.Model = Model;
+        }
+
+    }
+
+}

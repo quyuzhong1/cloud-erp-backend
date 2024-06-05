@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -14,6 +15,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
@@ -25,6 +27,7 @@ import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.convert.SdkListingConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonIdentifiersTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
@@ -40,6 +43,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -76,10 +81,10 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         }
 
         Object sourceData = data.getSourceList().stream().findFirst().orElse(null);
-        if (!(sourceData instanceof ReportListingCsvEntity)) {
+        if (!(sourceData instanceof ReportListingMongoDTO)) {
             throw new ServiceException("sourceData类型异常:error=" + genericDataList.getClass().toGenericString());
         }
-        List<ReportListingCsvEntity> sourceDataList = (List<ReportListingCsvEntity>) genericDataList;
+        List<ReportListingMongoDTO> sourceDataList = (List<ReportListingMongoDTO>) genericDataList;
         // 过滤异常数据
         sourceDataList = sourceDataList.stream()
                 .filter(e -> StringUtils.isNotBlank(e.getSellerSku()))
@@ -90,7 +95,10 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
         // 返回下载源数据
         return sourceDataList.stream()
-                .map(e -> SdkListingConverter.INSTANCE.sourceDtoToListingDto(e, data.getShopId(), data.getUpdateTime()))
+                .map(e -> SdkListingConverter.INSTANCE.sourceDtoToListingDto(e,
+                        e.getRequestShopId(),
+                        LocalDateTimeUtil.parse(e.getReportDataEndTime(), DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                )
                 .collect(Collectors.toList());
 
     }

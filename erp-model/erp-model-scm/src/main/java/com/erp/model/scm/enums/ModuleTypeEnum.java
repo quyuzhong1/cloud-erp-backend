@@ -83,6 +83,8 @@ public enum ModuleTypeEnum {
     RULE_DECLARE("72", "申报规则"),
     CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
     SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
+    SO_MULTI_CHANNEL("75", "多渠道订单"),
+
     ;
 
 

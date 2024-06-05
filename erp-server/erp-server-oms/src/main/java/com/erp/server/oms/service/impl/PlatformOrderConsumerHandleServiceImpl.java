@@ -7,6 +7,7 @@ import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
@@ -25,7 +26,6 @@ import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -81,6 +81,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private DictBasicService dictBasicService;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private SkuMappingService skuMappingService;
 
 
 
@@ -164,7 +166,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 .count();
         if (0 == count) {
             //推送到DMP
-            soB2cService.syncOrderToDmp(mainEntity.getId());
+            soB2cService.syncOrderToDmp(mainEntity.getId(), SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
 
     }
@@ -224,25 +226,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Transactional(rollbackFor = Exception.class)
     public SoB2cDTO.PullOrderResultDTO checkAndSaveAll(PlatformOrderDTO dto) {
         // 查询关联关系
-        List<String> platformSkuList = dto.getDetails()
-                .stream()
-                .map(PlatformOrderDetailDTO::getPlatformSkuNo)
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> platformSkuList = dto.convertPlatformSkuList();
 
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
-            platformSpuList = dto.getDetails()
-                    .stream()
-                    .map(PlatformOrderDetailDTO::getPlatformSpuNo)
-                    .distinct()
-                    .collect(Collectors.toList());
+            platformSpuList = dto.convertPlatformSpuList();
         }
 
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, platformSpuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), null);
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = skuMappingService.mapListingByPlatformSkuNo(platformSkuList, platformSpuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), null);
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
@@ -295,7 +289,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         BigDecimal totalHeight = BigDecimal.ZERO;
         if (CollectionUtils.isNotEmpty(skuList)){
             //拆分明细
-            List<SplitSkuDTO> splitSkuDTOS = soB2cService.splitBySoDetail(detailList, skuList);
+            List<SplitSkuDTO> splitSkuDTOS = soB2cService.splitBySoDetail(detailList, skuIds, mainEntity.getCode());
             //根据sku进行计算
             List<String> keyList = new ArrayList<>();
             keyList.add(CalculateSizeEnum.LENGTH.getCode());
@@ -303,9 +297,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             keyList.add(CalculateSizeEnum.HEIGHT.getCode());
             List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
             Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-            maxLength = soB2cService.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
-            maxWidth = soB2cService.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
-            totalHeight = soB2cService.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
+            maxLength = SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
+            maxWidth = SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
+            totalHeight = SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
             allNetWeight = SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS, collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode()));
         }
         //物流信息更新保存

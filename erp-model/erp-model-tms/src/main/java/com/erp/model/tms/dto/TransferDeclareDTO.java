@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
@@ -80,7 +81,7 @@ public class TransferDeclareDTO implements Serializable {
         private ShopInfoEntity shopInfoEntity;
 
         @NotEmpty(message = "b2c销售订单商品信息不能为空")
-        private List<TransferDeclareProductDTO> transferDeclareProductDTOList;
+        private List<SplitSkuDTO> transferDeclareProductDTOList;
 
     }
 

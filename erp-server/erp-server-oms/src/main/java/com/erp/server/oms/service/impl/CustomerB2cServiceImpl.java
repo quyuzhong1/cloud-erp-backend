@@ -27,6 +27,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -1412,7 +1413,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             customerB2cEntity.setCode(code);
             customerB2cEntity.setSourceId(mainEntity.getId());
             customerB2cEntity.setSourceType(SourceTypeEnum.SO_B2C.getCode());
-            customerB2cEntity.setName(receiverEntity.getName());
+            customerB2cEntity.setName(dto.getReceiver().getName());
             customerB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
             customerB2cEntity.setPlatformType(dto.getDictPlatform());
             customerB2cEntity.setCountryId(dictCountryCode);

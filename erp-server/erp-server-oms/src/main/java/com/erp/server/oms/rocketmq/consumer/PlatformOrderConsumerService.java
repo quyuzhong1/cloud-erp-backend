@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -43,6 +44,8 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
+    @Resource
+    private PlatformSoMultiChannelConsumerService platformSoMultiChannelConsumerService;
 
 
     @Override
@@ -63,6 +66,11 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     public ApiResult<?> handle(Object ext) {
         log.info("[B2C订单消费] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
+        // 多渠道订单处理(兼容清洗)
+        if (SourceTypeEnum.SO_MULTI_CHANNEL.getCode().equalsIgnoreCase(dto.getSourceType())){
+            platformSoMultiChannelConsumerService.handle(ext);
+            return ApiResult.success();
+        }
         platformOrderConsumerHandleService.handleAll(dto);
         return ApiResult.success();
     }
