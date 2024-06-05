@@ -29,4 +29,11 @@ public interface TransferDeclareDetailMapper extends BaseMapper<TransferDeclareD
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.ViewDTO>
      **/
     List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(@Param("params") TransferDeclareDTO.ViewDetailParamDTO dto);
+    /**
+     * 用于分页查询 子查询关联过滤
+     * @param mainIds
+     * @param params
+     * @return
+     */
+    List<TransferDeclareDetailEntity> listByCondition(@Param("mainIds") List<String> mainIds, @Param("params") TransferDeclareDTO.PagingParamDTO params);
 }

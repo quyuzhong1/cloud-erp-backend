@@ -11,6 +11,7 @@ import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -464,6 +465,10 @@ public class TransferDeclareDTO implements Serializable {
          * 创建时间[可排序]
          */
         private LocalDateTime createTime;
+        /**
+         * 明细记录
+         */
+        private List<TransferDeclareDetailEntity> detailEntityList;
     }
 
     /**

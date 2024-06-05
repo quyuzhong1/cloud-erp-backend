@@ -69,7 +69,13 @@
             td.create_time AS createTime
         FROM transfer_declare td
         LEFT JOIN transfer_declare_detail tdd ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
-        WHERE ${params.sqlMap.default} and ${params.sqlMap.detail} and td.is_deleted = FALSE
+        WHERE td.is_deleted = FALSE
+            <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+                and ${params.sqlMap.default}
+            </if>
+            <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+                and ${params.sqlMap.detail}
+            </if>
         <!--单据编号-->
         <if test="params.code!=null and params.code!='' ">
             AND td.code ILIKE concat('%',#{params.code}::text,'%')
