@@ -11,7 +11,6 @@ import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -293,17 +292,6 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return com.common.business.vo.PagingVO<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>>
      **/
      List<WarehouseReceiveDTO.WaitInStockCountDTO> waitInStockListCount(PermissionsDTO dto);
-
-    /**
-     * 修改金蝶同步状态
-     * @Author Luo_WG
-     * @Date 2023/4/24 15:29
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @return java.lang.Boolean
-     **/
-    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId, String syncOperate);
 
     /**
      *更改金蝶同步状态

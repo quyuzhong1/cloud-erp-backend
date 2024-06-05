@@ -51,48 +51,6 @@ public interface AmzReportHandleService {
      **/
     void handlerNotifications(JSONObject textMessage) throws Exception;
 
-    /**
-     * 保存亚马逊报告信息并处理
-     *
-     * @Author Jim
-     * @since 2023-11-22
-     **/
-    void saveMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, AmzReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException;
-
-    /**
-     * 更新亚马逊报告信息并处理
-     *
-     * @Author Jim
-     * @since 2023-11-22
-     **/
-    void updateMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, AmzReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException;
-
-
-    /**
-     * 查询CSV实体并下载
-     *
-     * @Author Jim
-     * @since 2023-12-20
-     **/
-
-    public List<?> handleDownloadAndParse(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws IOException ;
-
-    /**
-     * 库存状态报告保存或更新
-     *
-     * @Author Jim
-     * @since 2023-11-22
-     **/
-    void saveOrUpdateAllReportFbaInventoryPlanning(ReportInfoMongoDTO mongoDTO, List<ReportFbaInventoryPlanningMongoDTO> planningMongoDTOList);
-
-    /**
-     * 通用处理
-     * 处理和下载报告
-     *
-     * @Author Jim
-     * @since 2023-12-04
-     **/
-    void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws Exception;
 
     /**
      * 请求创建亚马逊报告

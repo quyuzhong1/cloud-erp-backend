@@ -68,7 +68,9 @@
             resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PoReturnDetailDTO">
         SELECT
             prd."id" as receiveDetailId,
+            pord."purchase_order_detail_id" as purchaseOrderDetailId,
             pr."id" as receiveId,
+            por."purchase_order_id" as purchaseOrderId,
             qi."id" as qcId,
             por."id" as returnId,
             por.approve_status as approveStatus,

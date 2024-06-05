@@ -8,9 +8,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -23,6 +21,7 @@ import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -352,7 +351,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean  orderShipped(String  id);
 
-    /** 
+    /**
      * @description 运费测算后选择物流渠道
      * @param dto
      * @author Lambda
@@ -908,7 +907,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 同步订单到DMP
      */
-    void syncOrderToDmp(String id);
+    void syncOrderToDmp(String id, String syncOperate);
     /**
      * 获取目的国申报信息
      * @param country
@@ -931,4 +930,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
                             List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
                             String skuId, String warehouseId, Integer qty);
+
+
+    void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration,Boolean isUpdateTransferStatus);
+
+
+
+    void orderForecastUpdateSoAndError(List<SoB2cEntity> updateB2cList, List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors, List<SoB2cLogisticsEntity> updateLogisticList);
+
 }

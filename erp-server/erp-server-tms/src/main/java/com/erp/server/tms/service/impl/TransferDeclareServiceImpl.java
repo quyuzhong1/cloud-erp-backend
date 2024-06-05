@@ -743,7 +743,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 continue;
             }
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
-            ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(detailEntity.getShippingOrderNo(), authEntity.getId());
+            ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(detailEntity.getSoCode(), authEntity.getId());
             if (result.getCode() == 200) {
                 transferDeclareDetailService.updateTransferStatus(detailEntity.getId(), result.getData().getOrderStatusEnum().getCode());
             }

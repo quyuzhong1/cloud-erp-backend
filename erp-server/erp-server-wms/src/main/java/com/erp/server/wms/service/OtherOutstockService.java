@@ -212,4 +212,13 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * {@code @date:} 2024/03/21
      */
     void importBatchSave(List<OtherOutstockEntity> saveList);
+
+
+    /**
+     * 检查并新增
+     *
+     * @author Jim
+     * {@code @date:} 2024/05/31
+     */
+    void checkAndAdd(OtherOutstockDTO.AddDTO generateDTO);
 }

@@ -1,7 +1,7 @@
 package com.erp.server.sys.rocketmq.sync.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
 
 /**
  * @author Will
@@ -18,5 +18,5 @@ public interface SyncKingdeeSysDeptService {
      * @param entity
      * @param operate
      */
-    void syncDataToKingdee(KingdeeDepartmentEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(KingdeeDepartmentEntity entity, String operate);
 }

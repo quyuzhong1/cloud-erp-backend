@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -206,11 +205,9 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(ProductBomHistoryEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductBomHistoryEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductBomHistoryEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), ProductBomHistoryEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
