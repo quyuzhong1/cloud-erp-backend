@@ -35,6 +35,7 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -132,7 +133,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Resource
     private DmpMqFeign dmpMqFeign;
 
-
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -285,13 +287,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             throw new ServiceException(ApiError.ERROR_99044);
         }
         List<MachineDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(MachineDetailDTO.ViewDTO.class, detailList);
-
         //查询明细子件
         List<String> detailIdList = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIdList);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
             throw new ServiceException(ApiError.ERROR_99056);
         }
+        //库位信息查询
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = machineSubComponentsList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         //子件仓库id集合
         List<String> warehouseIdList = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).distinct().collect(Collectors.toList());
         warehouseIdList.add(viewDTO.getWarehouseId());
@@ -353,6 +357,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                     throw new ServiceException(ApiError.ERROR_95173,viewDetailDTO.getSkuNo());
                 }
                 subComponentsDTO.setItemQty(quantity);
+                //仓位信息
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> Objects.nonNull(e) && e.getWarehouseId().equals(subComponentsDTO.getWarehouseId())
+                        && e.getCode().equals(subComponentsDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+                subComponentsDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
             }
             viewDetailDTO.setSubComponentsList(subComponentsDTOList);
         }

@@ -998,10 +998,12 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public InventoryDTO.InventoryQtyDTO getInventoryQty(InventoryDTO.InventoryBySkuNoDTO dto) {
         InventoryDTO.InventoryQtyDTO result = new InventoryDTO.InventoryQtyDTO();
-        List<InventoryEntity> list = this.lambdaQuery().eq(InventoryEntity::getSkuId, dto.getSkuId()).
-                eq(InventoryEntity::getOrgId, dto.getOrgId()).
-                eq(InventoryEntity::getWarehouseId, dto.getWarehouseId()).
-                eq(StringUtils.isNotBlank(dto.getWarehouseLocation()), InventoryEntity::getWarehouseLocation, dto.getWarehouseLocation()).list();
+        List<InventoryEntity> list = this.lambdaQuery()
+                .eq(StringUtils.isNotBlank(dto.getWarehouseId()),InventoryEntity::getSkuId, dto.getSkuId())
+                .eq(StringUtils.isNotBlank(dto.getOrgId()),InventoryEntity::getOrgId, dto.getOrgId())
+                .eq(StringUtils.isNotBlank(dto.getWarehouseId()),InventoryEntity::getWarehouseId, dto.getWarehouseId())
+                .eq(StringUtils.isNotBlank(dto.getWarehouseLocation()), InventoryEntity::getWarehouseLocation, dto.getWarehouseLocation())
+                .list();
         result.setOrgId(dto.getOrgId());
         result.setSkuId(dto.getSkuId());
         result.setWarehouseId(dto.getWarehouseId());
