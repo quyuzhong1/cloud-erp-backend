@@ -2281,7 +2281,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
 
     }
-
     @Override
     public PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());

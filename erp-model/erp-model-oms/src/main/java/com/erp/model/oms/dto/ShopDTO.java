@@ -762,6 +762,12 @@ public class ShopDTO implements Serializable {
     }
     @Data
     @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+
+        private List<String> ids;
+    }
+    @Data
+    @NoArgsConstructor
     public static class SelectDTO {
 
         /**
@@ -806,12 +812,7 @@ public class ShopDTO implements Serializable {
         private String authStatus;
 
     }
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
 
-        private List<String> ids;
-    }
     @Data
     @NoArgsConstructor
     public static class AddInternalDTO {
