@@ -18,6 +18,9 @@ public enum SoB2cBillStatusEnum implements EnumMessage {
     ENUM_SHIPPED("shipped",  "已发货"),
     ENUM_PARTIAL_SHIPPED("partialShipped",  "部分发货"),
     ENUM_FROZEN("frozen",  "冻结中"),
+
+    //目前只有海外仓出库会用来判断，数据库不会更新这个状态
+    ENUM_EXCEPTION("exception",  "异常订单"),
     ;
     /**
      * 类型

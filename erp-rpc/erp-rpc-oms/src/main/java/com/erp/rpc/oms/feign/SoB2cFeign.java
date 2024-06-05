@@ -562,5 +562,8 @@ public interface SoB2cFeign {
     SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode);
 
     @GetMapping("/feign/soB2c/listRefBomSplit")
-    List<SoB2cEntity> listRefBomSplit(@RequestParam("detailId") String detailId);
+    SoB2cDTO.CombinationDTO listRefBomSplit(@RequestParam("detailId") String detailId);
+
+    @PostMapping("/feign/soB2c/updateSignShippedByDetailId")
+    void updateSignShippedByDetailId(@RequestBody List<String> detailIds);
 }

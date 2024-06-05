@@ -19,9 +19,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
@@ -93,7 +91,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     private SoB2cErrorService soB2cErrorService;
 
     @Resource
-    private SoB2cDetailService soB2cDetailService;
+    @Lazy
+    private SoB2cDetailService service;
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
@@ -141,7 +140,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         //处理明细中的数据id
         handleDetailList(list,soB2cEntity,Boolean.FALSE);
-        return this.saveOrUpdateBatch(list);
+        return service.saveOrUpdateBatch(list);
     }
 
     @Override
@@ -470,8 +469,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public List<SoB2cDetailEntity> listBySplitId(String detailId) {
-        return lambdaQuery().eq(SoB2cDetailEntity::getSplitDetailId, detailId).list();
+    public List<SoB2cDetailEntity> listBySplitId(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(SoB2cDetailEntity::getSplitDetailId, detailIds).list();
     }
 
     /**
@@ -601,6 +603,14 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
+    public void updateSignShippedByDetailId(List<String> detailIdList) {
+        if(CollectionUtils.isEmpty(detailIdList)){
+            return;
+        }
+        this.lambdaUpdate().in(SoB2cDetailEntity::getId, detailIdList).set(SoB2cDetailEntity::getIsSignShipped, true).update();
+    }
+
+    @Override
     public void updateWarehouse(SoB2cEntity entity, SoB2cDetailEntity detail, String warehouseId) {
         String soId = Objects.nonNull(entity) ? entity.getId() : null;
         String detailId = Objects.nonNull(detail) ? detail.getId() : null;
@@ -672,9 +682,35 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
      * @param isAdd
      */
     private void handleDetailList (List<SoB2cDetailEntity> list,SoB2cEntity soB2cEntity,Boolean isAdd) {
-        //如果是还原捆绑商品，需要将删除的明细还原
-        List<String> detailIds = list.stream().map(SoB2cDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        this.updateContainDeleted(detailIds);
+        // 如果 revertId 不为空，分两种情况，第一种是要还原的订单ID与当前订单id一致，则将删除的明细还原，
+        // 第二种是要还原的订单ID与当前订单id不一致，则是原订单捆绑拆分拆单后，当前订单做还原，需要将不是当前订单的明细删除 ，并将id清空，MainID设置为当前订单ID
+        List<String> restoreIds = new ArrayList<>();
+        List<String> revertDetailIdList = new ArrayList<>();
+        for (SoB2cDetailEntity soB2cDetailEntity : list) {
+            if(StringUtils.isNotBlank(soB2cDetailEntity.getRevertId())){
+                if(soB2cEntity.getId().equals(soB2cDetailEntity.getMainId())){
+                    restoreIds.add(soB2cDetailEntity.getId());
+                }else{
+                    revertDetailIdList.add(soB2cDetailEntity.getId());
+                    soB2cDetailEntity.setId(null);
+                    soB2cDetailEntity.setMainId(soB2cEntity.getId());
+                    soB2cDetailEntity.setIsDeleted(false);
+                }
+            }
+        }
+        this.updateContainDeleted(restoreIds);
+        List<SoB2cDetailEntity> needDeleteDetailList = this.listBySplitId(revertDetailIdList);
+        needDeleteDetailList = needDeleteDetailList.stream().filter(v->!v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(needDeleteDetailList)){
+            //过滤掉主表是自动作废的
+            List<String> allMainIds = needDeleteDetailList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+            List<SoB2cEntity> allMains = soB2cService.listByIds(allMainIds);
+            allMains = allMains.stream().filter(v->!SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode().equals(v.getInvalidType())).collect(Collectors.toList());
+            List<String> filterMainIds = allMains.stream().map(SoB2cEntity::getId).distinct().collect(Collectors.toList());
+            needDeleteDetailList = needDeleteDetailList.stream().filter(v->filterMainIds.contains(v.getMainId())).collect(Collectors.toList());
+            List<String> needDeleteDetailIds = needDeleteDetailList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
+            service.removeByIds(needDeleteDetailIds);
+        }
 
         //产品信息
         List<String> skuIds = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
@@ -753,7 +789,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 //                detailEntity.setPlatformSpuNo("");
 //            }
             // 手工单不记录平台SKU和平台SPU
-           if (!SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
+           if (!SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode().equalsIgnoreCase(detailEntity.getSourcePlatform())) {
                // 非平台下载的订单不记录SKU
                detailEntity.setPlatformSkuNo("");
                detailEntity.setPlatformSpuNo("");

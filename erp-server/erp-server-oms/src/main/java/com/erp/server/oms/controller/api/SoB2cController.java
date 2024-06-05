@@ -837,7 +837,7 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/viewSplit")
     public ApiResult<List<SoB2cDTO.ViewSplitDTO>> viewSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(soB2cService.viewSplit(dto.getIds()));
+        return success(soB2cSplitService.viewSplit(dto.getIds()));
     }
 
     /**
@@ -855,7 +855,7 @@ public class SoB2cController extends BaseController {
         for (SoB2cDTO.SplitSaveDTO dto : list) {
             BatchResultDTO result;
             try {
-                SoB2cDTO.SplitSaveResultDTO resultDTO = soB2cService.splitSave(dto);
+                SoB2cDTO.SplitSaveResultDTO resultDTO = soB2cSplitService.splitSave(dto);
                 SoB2cEntity entity = soB2cService.getById(dto.getId());
                 result = BatchResultDTO.success(dto.getId(),entity.getCode(),"订单拆分成功");
                 allSoIdList.addAll(resultDTO.getSoB2cIds());
@@ -895,7 +895,7 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/checkCancelSplit")
     public ApiResult<List<SoB2cDTO.CheckCancelSplitDTO>> checkCancelSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(soB2cService.checkCancelSplit(dto.getIds()));
+        return success(soB2cSplitService.checkCancelSplit(dto.getIds()));
     }
 
     /**
@@ -911,7 +911,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cService.cancelSplit(id);
+                result = soB2cSplitService.cancelSplit(id);
             } catch (Exception e) {
                 log.error("B2C销售订单取消拆分失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -1142,7 +1142,7 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/getBomSplitInfo")
     public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomSplitInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
-        return success(soB2cService.getBomSplitInfo(idDTO.getIds()));
+        return success(soB2cSplitService.getBomSplitInfo(idDTO.getIds()));
     }
 
     /**
@@ -1151,7 +1151,7 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/getBomRestoreInfo")
     public ApiResult<List<SoB2cDetailDTO.ViewDTO>> getBomRestoreInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
-        return success(soB2cService.getBomRestoreInfo(idDTO.getIds()));
+        return success(soB2cSplitService.getBomRestoreInfo(idDTO.getIds()));
     }
 
     /**
@@ -1183,5 +1183,15 @@ public class SoB2cController extends BaseController {
     public ApiResult<List<BatchResultDTO>> splitOrderByWarehouse(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO){
         List<BatchResultDTO> batchResultDTOList = soB2cSplitService.splitOrderByWarehouse(idDTO.getIds());
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
+
+    /**
+     * 同步处理历史审核订单数据到订单表
+     * @return
+     */
+    @PostMapping("/processOrderApproveData")
+    public ApiResult processOrderApproveData(){
+        soB2cService.processOrderApproveData();
+        return ApiResult.success();
     }
 }
