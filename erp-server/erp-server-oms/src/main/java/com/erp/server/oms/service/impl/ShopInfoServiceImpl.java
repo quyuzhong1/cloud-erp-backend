@@ -498,6 +498,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopInfo.setWarehouseName(updateDTO.getName());
             shopInfo.setWarehouseId(dto.getWarehouseId());
         }
+        shopInfo.setIsHaveWarehouse(dto.getIsHaveWarehouse());
+        if (!dto.getIsHaveWarehouse()){
+            shopInfo.setWarehouseName("");
+            shopInfo.setWarehouseId("");
+        }
         //设置用户信息
         setCustom(dto.getCustomerId(), shopInfo);
         Boolean result = this.updateById(shopInfo);
