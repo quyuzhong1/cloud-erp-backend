@@ -148,11 +148,11 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
             //获取实体仓绑定关系
             List<VirtualWarehouseRelationEntity> existWarehouseList = baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseRelationEntity>().in(VirtualWarehouseRelationEntity::getWarehouseId, batchAddDTO.getWarehouseIdList()));
             if (CollectionUtils.isNotEmpty(existRelationList)) {
-                List<VirtualWarehouseRelationEntity> warehouseRelationEntityList = existWarehouseList.stream().filter(item -> !Objects.equals(batchAddDTO.getVirtualWarehouseId(), item.getVirtualWarehouseId())).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(warehouseRelationEntityList)){
-                    VirtualWarehouseEntity vmEntity = virtualWarehouseService.getById(warehouseRelationEntityList.get(0).getVirtualWarehouseId());
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
-                }
+//                List<VirtualWarehouseRelationEntity> warehouseRelationEntityList = existWarehouseList.stream().filter(item -> !Objects.equals(batchAddDTO.getVirtualWarehouseId(), item.getVirtualWarehouseId())).collect(Collectors.toList());
+//                if (CollectionUtils.isNotEmpty(warehouseRelationEntityList)){
+//                    VirtualWarehouseEntity vmEntity = virtualWarehouseService.getById(warehouseRelationEntityList.get(0).getVirtualWarehouseId());
+//                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+//                }
                 //判断原始绑定与变更数据是否相同
                 String existWarehouseId = existRelationList.get(0).getWarehouseId();
                 if (!Objects.equals(warehouseIdList.get(0), existWarehouseId)) {
@@ -164,10 +164,10 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                     baseMapper.updateById(virtualWarehouseRelationEntity);
                 }
             } else {
-                if (CollectionUtils.isNotEmpty(existWarehouseList)){
-                    VirtualWarehouseEntity vmEntity = virtualWarehouseService.getById(existWarehouseList.get(0).getVirtualWarehouseId());
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
-                }
+//                if (CollectionUtils.isNotEmpty(existWarehouseList)){
+//                    VirtualWarehouseEntity vmEntity = virtualWarehouseService.getById(existWarehouseList.get(0).getVirtualWarehouseId());
+//                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+//                }
                 VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = new VirtualWarehouseRelationEntity();
                 virtualWarehouseRelationEntity.setWarehouseId(warehouseIdList.get(0));
                 virtualWarehouseRelationEntity.setVirtualWarehouseId(batchAddDTO.getVirtualWarehouseId());

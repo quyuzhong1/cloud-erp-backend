@@ -102,16 +102,6 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         return new BaseResultDTO.AddDTO(virtualWarehouseEntity.getId(), code);
     }
 
-//    @Override
-//    @GlobalTransactional(rollbackFor = Exception.class)
-//    @Transactional(rollbackFor = Exception.class)
-//    public BaseResultDTO.AddDTO addAndBind(VirtualWarehouseDTO.AddDTO addDTO) {
-//        BaseResultDTO.AddDTO add = add(addDTO);
-//        //绑定信息
-//        bindInfo(addDTO.getWarehouseIdList(), addDTO.getChannelList(), addDTO.getThirdMappingList(), add.getId());
-//        return add;
-//    }
-
     /**
      * 绑定信息
      *
@@ -244,21 +234,21 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             throw new ServiceException(ApiError.ERROR_VMNAME_EXIST);
         }
         //校验实体仓是否被别的虚拟仓绑定--当前只绑定一个实体仓库
-        if (CollectionUtils.isNotEmpty(warehouseIdList)) {
-            List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
-            if (StringUtils.isNotBlank(virtualWarehouseEntity.getId())) {
-                List<VirtualWarehouseRelationEntity> collect = warehouseRelationList.stream().filter(item -> !Objects.equals(item.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(collect)) {
-                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
-                }
-            } else {
-                if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
-                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
-                }
-            }
-        }
+//        if (CollectionUtils.isNotEmpty(warehouseIdList)) {
+//            List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
+//            if (StringUtils.isNotBlank(virtualWarehouseEntity.getId())) {
+//                List<VirtualWarehouseRelationEntity> collect = warehouseRelationList.stream().filter(item -> !Objects.equals(item.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
+//                if (CollectionUtils.isNotEmpty(collect)) {
+//                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
+//                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+//                }
+//            } else {
+//                if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
+//                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
+//                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+//                }
+//            }
+//        }
         if (CollectionUtils.isNotEmpty(thirdMappingList)) {
             //校验关联外部仓
             checkDmpThirdMapping(virtualWarehouseEntity.getId(), virtualWarehouseEntity.getName(), thirdMappingList);

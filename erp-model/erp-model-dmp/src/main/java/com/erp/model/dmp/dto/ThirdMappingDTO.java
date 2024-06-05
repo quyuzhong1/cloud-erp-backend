@@ -109,6 +109,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 第三方id
          */
+        @NotBlank(message = "第三方id不能为空")
         private String thirdId;
 
         /**
