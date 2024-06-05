@@ -93,6 +93,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -213,6 +214,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+
+    @Lazy
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -2139,11 +2144,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //待提交
             if (ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)) {
-                this.submit(Arrays.asList(id));
+                soOutstockService.submit(Arrays.asList(id));
             }
             //审核中
             if (ApproveStatusEnum.APPROVE_ING.equals(approveStatus)) {
-                this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
+                soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
             }
             return Boolean.TRUE;
         }
@@ -2247,9 +2252,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class)
     public void submitAndApprove(String id) {
         //提交
-        Boolean submitResult = this.submit(Arrays.asList(id));
+        Boolean submitResult = soOutstockService.submit(Arrays.asList(id));
         if (submitResult) {
-            this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
+            soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
         }
     }
 
@@ -3029,11 +3034,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //待提交
             if (ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)) {
-                this.submit(Arrays.asList(id));
+                soOutstockService.submit(Arrays.asList(id));
             }
             //审核中
             if (ApproveStatusEnum.APPROVE_ING.equals(approveStatus)) {
-                this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
+                soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
             }
             return Boolean.TRUE;
         }
