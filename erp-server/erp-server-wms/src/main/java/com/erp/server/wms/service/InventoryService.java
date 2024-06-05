@@ -15,7 +15,6 @@ import com.erp.model.wms.entity.StocktakingPlanEntity;
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Classname: InventoryService
@@ -276,7 +275,8 @@ public interface InventoryService extends SuperService<InventoryEntity> {
 
     /**
      * 根据sku获取sku对应库位库存
+     *
      * @param skus sku集合
      */
-    Map<String, List<InventoryDTO.LocationInventory>> listLocationInventoryBySkus(List<String> skus);
+    List<InventoryDTO.LocationInventoryResult> listLocationInventoryBySkus(List<InventoryDTO.LocationInventoryParam> skus);
 }

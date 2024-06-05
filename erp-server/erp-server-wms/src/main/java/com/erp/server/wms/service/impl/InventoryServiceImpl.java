@@ -1074,20 +1074,24 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public Map<String, List<InventoryDTO.LocationInventory>> listLocationInventoryBySkus(List<String> skus) {
-        if (CollectionUtils.isEmpty(skus)) {
-            return Collections.emptyMap();
+    public List<InventoryDTO.LocationInventoryResult> listLocationInventoryBySkus(List<InventoryDTO.LocationInventoryParam> param) {
+        List<InventoryDTO.LocationInventoryResult> results = new ArrayList<>();
+        for (InventoryDTO.LocationInventoryParam inventoryParam : param) {
+            List<InventoryEntity> inventoryEntities = list(Wrappers.<InventoryEntity>lambdaQuery()
+                    .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                    .eq(InventoryEntity::getWarehouseId, inventoryParam.getWarehouseId())
+                    .in(InventoryEntity::getSkuNo, inventoryParam.getSkuNo()));
+            InventoryDTO.LocationInventoryResult result = new InventoryDTO.LocationInventoryResult();
+            result.setSkuNo(inventoryParam.getSkuNo());
+            List<InventoryDTO.LocationInventory> inventories = inventoryEntities.stream().map(e -> {
+                InventoryDTO.LocationInventory inventory = new InventoryDTO.LocationInventory();
+                inventory.setWarehouseLocation(e.getWarehouseLocation());
+                inventory.setUsableQty(e.getQty());
+                return inventory;
+            }).collect(Collectors.toList());
+            result.setLocationInventory(inventories);
+            results.add(result);
         }
-        List<InventoryEntity> inventoryEntities = list(Wrappers.<InventoryEntity>lambdaQuery()
-                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
-                .in(InventoryEntity::getSkuNo, skus));
-        return inventoryEntities.stream()
-                .collect(Collectors.groupingBy(InventoryEntity::getSkuNo, Collectors.collectingAndThen(Collectors.toList(), e -> e.stream()
-                        .map(v -> {
-                            InventoryDTO.LocationInventory inventory = new InventoryDTO.LocationInventory();
-                            inventory.setWarehouseLocation(v.getWarehouseLocation());
-                            inventory.setUsableQty(v.getQty());
-                            return inventory;
-                        }).collect(Collectors.toList()))));
+        return results;
     }
 }

@@ -250,11 +250,11 @@ public class InventoryController extends BaseController {
 
     /**
      * 通过sku获取库位库存（推荐库位）
-     * @param skus sku
+     * @param param param
      */
     @PostMapping("/listLocationInventoryBySkus")
-    public ApiResult<Map<String, List<InventoryDTO.LocationInventory>>> listLocationInventoryBySkus(@RequestBody List<String> skus){
-        Map<String, List<InventoryDTO.LocationInventory>> locationInventoryMap = inventoryService.listLocationInventoryBySkus(skus);
+    public ApiResult<List<InventoryDTO.LocationInventoryResult>> listLocationInventoryBySkus(@RequestBody List<InventoryDTO.LocationInventoryParam> param){
+        Map<String, List<InventoryDTO.LocationInventoryResult>> locationInventoryMap = inventoryService.listLocationInventoryBySkus(param);
         return ApiResult.success(locationInventoryMap);
     }
 
