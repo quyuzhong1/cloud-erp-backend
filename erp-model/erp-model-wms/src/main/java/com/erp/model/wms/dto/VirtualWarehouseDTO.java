@@ -101,7 +101,7 @@ public class VirtualWarehouseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public class UpdateStateDTO {
+    public static class UpdateStateDTO {
 
         @NotBlank(message = "id不能为空")
         private String id;
