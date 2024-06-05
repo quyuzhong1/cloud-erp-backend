@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -11,6 +12,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -52,55 +54,15 @@ public class LogisticsSupplierDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 物流商类型
+         * sqlMap 默认key default
          */
-        @NotBlank(message = "物流类型不能为空")
-        private String type;
-
-        /**
-         * 物流商
-         */
-        private String name;
-        /**
-         * 物流商名
-         */
-        private String shortName;
-        /**
-         * 授权状态集合
-         */
-        private List<String> authStatusList;
-
-        /**
-         * 启用状态集合
-         */
-        private List<Boolean> disabledList;
-
-
-        /**
-         * 创建人
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 更新时间
-         */
-        private List<LocalDate> updateTimeList;
-
-        /**
-         * 渠道名称
-         */
-        private String channelName;
-        /**
-         * 渠道代码
-         */
-        private String channelCode;
+        private Map<String,String> sqlMap;
     }
 
     @Data
