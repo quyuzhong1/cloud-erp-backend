@@ -23,6 +23,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -438,6 +439,9 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         .eq(ThirdMappingEntity::getThirdSysType, feignMappingDTO.getThirdSysType())
                         .eq(ThirdMappingEntity::getIsDeleted, false));
                 if (Objects.nonNull(thirdMappingEntity)) {
+                    thirdMappingEntity.setSysName(addDto.getSysName());
+                    thirdMappingEntity.setThirdName(addDto.getThirdName());
+                    thirdMappingEntity.setThirdCode(addDto.getThirdCode());
                     //绑定过则修改
                     boolean save = super.updateById(thirdMappingEntity);
                     if (!save) {
