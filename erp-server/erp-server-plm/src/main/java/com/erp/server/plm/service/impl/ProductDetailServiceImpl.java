@@ -2281,7 +2281,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
 
     }
+    @Override
+    public PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        SkuVO.SelectDTO params = dto.getParams();
+        IPage<SkuVO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
 
+    }
     private void customDataProcess(List<ProductDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)){
             return;

@@ -233,4 +233,13 @@ public class SkuVO implements Serializable {
         }
         return this.skuImagesUrl;
     }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
 }

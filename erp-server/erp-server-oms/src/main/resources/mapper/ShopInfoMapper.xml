@@ -20,6 +20,12 @@
 
     <!--店铺分页查询-->
     <select id="paging" resultType="com.erp.model.oms.dto.ShopDTO$PagingViewDTO">
+        <include refid="list"/>
+    </select>
+    <select id="listExport" resultType="com.erp.model.oms.dto.ShopDTO$PagingViewDTO">
+        <include refid="list"/>
+    </select>
+    <sql id="list">
         SELECT
         id,
         account,
@@ -99,6 +105,38 @@
         </if>
         ORDER BY
         si.update_time DESC
+    </sql>
+    <select id="pagingSelect" resultType="com.erp.model.oms.dto.ShopDTO$ListDTO">
+        select
+        id,
+        account,
+        name,
+        auth_status,
+        disabled
+        from
+        (
+        SELECT
+        id,
+        account,
+        name,
+        auth_status,
+        disabled
+        FROM shop_info si
+        WHERE si.is_deleted=FALSE
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((si.account = #{params.searchKeyword}) or (si.id = #{params.searchKeyword})  or si.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.dictPlatform != null and params.dictPlatform != ''">
+            and si.dict_platform = #{params.dictPlatform}
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when si.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when si.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when si.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , si.name,
+        </if>
+        si.disabled asc
+        ) shop
     </select>
-
 </mapper>
