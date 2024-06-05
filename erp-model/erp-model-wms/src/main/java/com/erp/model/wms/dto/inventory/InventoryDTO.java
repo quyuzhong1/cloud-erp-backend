@@ -1578,6 +1578,10 @@ public class InventoryDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * sku
+         */
+        private String warehouseId;
+        /**
          * 库位
          */
         private List<LocationInventory> locationInventory;

@@ -1083,6 +1083,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                     .in(InventoryEntity::getSkuNo, inventoryParam.getSkuNo()));
             InventoryDTO.LocationInventoryResult result = new InventoryDTO.LocationInventoryResult();
             result.setSkuNo(inventoryParam.getSkuNo());
+            result.setWarehouseId(inventoryParam.getWarehouseId());
             List<InventoryDTO.LocationInventory> inventories = inventoryEntities.stream().map(e -> {
                 InventoryDTO.LocationInventory inventory = new InventoryDTO.LocationInventory();
                 inventory.setWarehouseLocation(e.getWarehouseLocation());
