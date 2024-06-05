@@ -528,6 +528,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 groupSplitSaveDTOS.add(groupSplitSaveDTO);
             }
         }
+        //订单下的明细仓库一致，无法按仓库拆分
+        if (groupSplitSaveDTOS.size() <= 1){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE);
+        }
         return groupSplitSaveDTOS;
     }
 
