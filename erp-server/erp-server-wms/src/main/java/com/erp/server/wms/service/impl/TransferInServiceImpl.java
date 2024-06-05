@@ -27,12 +27,14 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -53,6 +55,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -84,7 +87,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Resource
     private WarehouseService warehouseService;
-
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
@@ -612,6 +616,17 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         viewDTO.setInOrgName(inOrgName);
         List<TransferInDetailDTO.ViewDTO> detailList = transferInDetailService.listByMainId(id);
+        //增加仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList1 = detailList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(inWarehouseId, obj.getInWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList2 = detailList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(outWarehouseId, obj.getOutWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = Stream.concat(paramList1.stream(), paramList2.stream()).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+        detailList.forEach(viewDTO1 -> {
+            WarehouseLocationEntity inWarehouseLocation = warehouseLocationEntityList.stream().filter(e -> StringUtils.isNotBlank(inWarehouseId) && inWarehouseId.equals(e.getWarehouseId()) && viewDTO1.getInWarehouseLocation().equals(e.getCode())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDTO1.setInWarehouseLocationName(inWarehouseLocation.getName());
+            WarehouseLocationEntity outWarehouseLocation = warehouseLocationEntityList.stream().filter(e -> StringUtils.isNotBlank(outWarehouseId) && outWarehouseId.equals(e.getWarehouseId()) && viewDTO1.getOutWarehouseLocation().equals(e.getCode())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDTO1.setOutWarehouseLocationName(outWarehouseLocation.getName());
+        });
         viewDTO.setDetailList(detailList);
         return viewDTO;
     }
