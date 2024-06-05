@@ -160,6 +160,35 @@
         (SELECT id FROM dict_basic WHERE is_deleted= FALSE AND type=#{type} AND value=#{value} )
         ORDER BY  create_time DESC
     </select>
+    <select id="pagingSelect" resultType="com.common.business.dto.base.BaseDropDownDTO$RemarkDTO">
+        select id,name as value,code,disabled,payment_condition
+        from
+        (
+        select
+        sup.id,
+        sup.name,
+        sup.code,
+        sup.payment_condition,
+        sup.disabled
+        from supplier sup
+        where
+        sup.is_deleted = false
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((sup.code = #{params.searchKeyword}) or (sup.id = #{params.searchKeyword})  or sup.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.disabled != null">
+            and sup.disabled=#{params.disabled}
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when sup.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when sup.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when sup.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , sup.name,
+        </if>
+        sup.code asc,sup.disabled asc
+        ) supplier
+    </select>
 
 
 </mapper>

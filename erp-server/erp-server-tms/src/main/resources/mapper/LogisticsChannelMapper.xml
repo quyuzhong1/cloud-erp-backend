@@ -165,6 +165,35 @@
         </if>
         order by  lc.disabled asc,lc.create_time desc
     </select>
+    <select id="pagingSelect" resultType="com.common.business.dto.base.BaseDropDownDTO$DisabledDTO">
+        select id,name as value,code,disabled
+        from
+        (
+        select
+        lc.id,
+        lc.name,
+        lc.code,
+        lc.disabled
+        from logistics_channel lc
+        where
+        lc.is_deleted = false
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((lc.code = #{params.searchKeyword}) or (lc.id = #{params.searchKeyword})  or lc.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.disabled != null">
+            and lc.disabled=#{params.disabled}
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when lc.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when lc.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when lc.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , lc.name,
+        </if>
+        code asc,lc.disabled asc
+        ) wls
+
+    </select>
 
 
 </mapper>

@@ -878,7 +878,17 @@ public class ProductDetailController extends BaseController {
         List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
         return success(skuList);
     }
-
+    /**
+     * 获取已授权店铺
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
+     * @author hyj
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<SkuVO>> pagingSelect(@RequestBody @Validated PagingDTO<SkuVO.SelectDTO> dto) {
+        PagingVO<SkuVO> list = productDetailService.pagingSelect(dto);
+        return success(list);
+    }
     /**
      * 远程搜索包装辅料SKU
      * @author Will

@@ -125,7 +125,17 @@ public class DictCountryController extends BaseController {
                 .collect(Collectors.toList());
         return success(resultList);
     }
-
+    /**
+     * 获取国家列表
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<DictCountryDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<DictCountryDTO.SelectDTO> dto) {
+        PagingVO<DictCountryDTO.ListDTO> list = dictCountryService.pagingSelect(dto);
+        return success(list);
+    }
     @GetMapping("/country")
     public void addCountry(@RequestParam("country") String country) {
         dictCountryService.initRegionList(country);

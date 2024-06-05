@@ -866,4 +866,51 @@ public class ShopDTO implements Serializable {
 
         private List<String> ids;
     }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 是否已授权
+         */
+        private Boolean showByAuth = false;
+        /**
+         * 平台
+         */
+        private List<String> shopIdList;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主键
+         */
+        private String id;
+        /**
+         * 关键词
+         */
+        private String name;
+        /**
+         * 账号
+         */
+        private String account;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+
+    }
+
 }

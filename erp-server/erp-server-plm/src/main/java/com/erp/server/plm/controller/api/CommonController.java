@@ -70,7 +70,6 @@ public class CommonController extends BaseController {
      */
     @PostMapping("/pagingSelect")
     public ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto) {
-        dto.setPageSize(100);
         return sysUserFeign.pagingSelect(dto);
     }
 
