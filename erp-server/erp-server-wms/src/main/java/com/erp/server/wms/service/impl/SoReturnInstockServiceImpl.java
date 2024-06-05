@@ -1192,6 +1192,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     viewChildDTO.setHandleType(MachineHandleTypeEnum.RETURN_SUPPLIER.getCode());
                     viewChildDTO.setChildWarehouseId(viewDTO.getWarehouseId());
                     viewChildDTO.setChildWarehouseLocation(viewDTO.getWarehouseLocation());
+                    viewChildDTO.setChildWarehouseLocationName(viewDTO.getWarehouseLocationName());
                     viewChildDTO.setChildSupplierId(childSkuVO.getSupplierId());
                     resultList.add(viewChildDTO);
                 }
