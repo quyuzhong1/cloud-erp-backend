@@ -317,7 +317,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             } else {
                 channelAddDTO.setDictPlatform(key);
                 channelAddDTO.setType(list.get(0).getType());
-                channelAddDTO.setRelationList(list.stream().map(VirtualWarehouseChannelEntity::getRelationId).filter(Objects::isNull).collect(Collectors.toList()));
+                channelAddDTO.setRelationList(list.stream().map(VirtualWarehouseChannelEntity::getRelationId).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
             }
             channelList.add(channelAddDTO);
         });
