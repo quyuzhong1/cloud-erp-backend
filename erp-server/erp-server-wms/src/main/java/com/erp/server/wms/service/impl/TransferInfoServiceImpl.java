@@ -656,17 +656,17 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             outGoodsList.add(goods);
         });
 
+        //推送其他入库单给旺店通
+        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+        String inWarehouseId = transferDetailList.get(0).getOutWarehouseId();
+        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
+        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
+
         //推送其他出库单给旺店通
         String outWarehouseId = transferDetailList.get(0).getInWarehouseId();
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
         DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
-
-        //推送其他入库单给旺店通
-        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
-        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
