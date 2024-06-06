@@ -1,19 +1,18 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
-import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
+import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.server.wms.service.VirtualInventoryTransCoreService;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +22,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 虚拟库存交易流水表
@@ -39,6 +42,9 @@ public class VirtualTransFlowController extends BaseController {
     @Resource
     private VirtualTransFlowService virtualTransFlowService;
 
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+
     /**
      * 虚拟库存交易流水列表
      * @author will
@@ -53,4 +59,79 @@ public class VirtualTransFlowController extends BaseController {
     }
 
 
+    /**
+     * 虚拟库存交易流水导出
+     * @author will
+     * @date 2024/6/6 15:30
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping("/exportExcel")
+    @WebAdvanceQuery
+    public ApiResult exportExcel(@RequestBody VirtualTransFlowDTO.SearchParamDTO dto, HttpServletResponse response) {
+        Boolean flag = virtualTransFlowService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 测试
+     * @author will
+     * @date 2024/6/6 16:38
+     * @return ApiResult
+     */
+    @PostMapping("/test")
+    public ApiResult test() {
+        VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
+        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setSourceId("1798605941281656834");
+        outInStockDTO.setSourceCode("QTRK24060600002");
+        outInStockDTO.setSourceType(InventorySourceTypeEnum.OTHER_INSTOCK);
+        outInStockDTO.setSourceDetailId("1798605946956550146");
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setSkuId("1777913262612942850");
+        outInStockDTO.setSkuNo("HU01");
+        outInStockDTO.setWarehouseId("1683286797712363522");
+        outInStockDTO.setVirtualWarehouseId("1797906126839144449");
+        outInStockDTO.setQty(10);
+        List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
+        paramList.add(outInStockDTO);
+        dto.setParamList(paramList);
+        virtualInventoryTransCoreService.approve(dto);
+        return success();
+    }
+    /**
+     * 测试
+     * @author will
+     * @date 2024/6/6 16:38
+     * @return ApiResult
+     */
+    @PostMapping("/test1")
+    public ApiResult test1() {
+/*        VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
+        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setSourceId("1798605941281656834");
+        outInStockDTO.setSourceCode("QTRK24060600002");
+        outInStockDTO.setSourceType(InventorySourceTypeEnum.OTHER_INSTOCK);
+        outInStockDTO.setSourceDetailId("1798605946956550146");
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setSkuId("1777913262612942850");
+        outInStockDTO.setSkuNo("HU01");
+        outInStockDTO.setWarehouseId("1683286797712363522");
+        outInStockDTO.setVirtualWarehouseId("1797906126839144449");
+        outInStockDTO.setQty(10);
+        List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
+        paramList.add(outInStockDTO);
+        dto.setParamList(paramList);*/
+        InventoryUnApproveDTO dto = new InventoryUnApproveDTO();
+        dto.setBillId("1798605941281656834");
+        dto.setSourceType(InventorySourceTypeEnum.OTHER_INSTOCK);
+        virtualInventoryTransCoreService.unApprove(dto);
+        return success();
+    }
 }

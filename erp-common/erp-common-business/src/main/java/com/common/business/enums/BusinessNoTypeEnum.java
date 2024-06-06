@@ -77,6 +77,8 @@ public enum BusinessNoTypeEnum {
     CODE_BGZD(61, "bgzd","报关账单","BGZD"),
     CODE_TCZD(62, "tczd","头程账单","TCZD"),
     CODE_XNC(63, "xnc","虚拟仓", BusinessNoConstant.XNC),
+    CODE_XLS(64, "xls","虚拟仓库存流水", BusinessNoConstant.XLS),
+
     ;
 
 

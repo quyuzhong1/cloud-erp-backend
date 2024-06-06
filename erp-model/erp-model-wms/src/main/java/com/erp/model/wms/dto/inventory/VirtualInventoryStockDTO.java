@@ -129,7 +129,7 @@ public class VirtualInventoryStockDTO implements Serializable {
              * 业务类型
              */
             @NotNull(message = "业务类型不能为空")
-            @StateEnumValue(clazz = InventoryBusinessTypeEnum.class,message = "业务类型有误")
+            @StateEnumValue(clazz = VirtualInventoryBusinessTypeEnum.class,message = "业务类型有误")
             private String businessType;
 
             /**

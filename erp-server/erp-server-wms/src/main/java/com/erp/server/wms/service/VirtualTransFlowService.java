@@ -6,6 +6,7 @@ import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -70,4 +71,13 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @return PagingVO<InventoryDetailDTO>
      */
     PagingVO<VirtualTransFlowDTO.InventoryDetailDTO> detailPaging(PagingDTO<VirtualTransFlowDTO.InventoryDetailParamDTO> dto);
+    /**
+     * 虚拟库存交易流水导出
+     * @author will
+     * @date 2024/6/6 15:31
+     * @param dto
+     * @param response 
+     * @return Boolean
+     */
+    Boolean exportExcel(VirtualTransFlowDTO.SearchParamDTO dto, HttpServletResponse response);
 }

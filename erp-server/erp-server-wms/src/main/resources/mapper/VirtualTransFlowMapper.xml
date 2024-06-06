@@ -52,7 +52,38 @@
 
     <!-- 虚拟库存流水分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDTO$ListDTO">
-
+        select
+            vtf.transaction_no as transactionNo,
+            vtf.trade_time as tradeTime,
+            vtf.source_type as sourceType,
+            vtf.source_code as sourceCode,
+            vtf.operation_mode as operationMode,
+            vtf.org_id as orgId,
+            vtf.warehouse_id as warehouseId,
+            vtf.virtual_warehouse_id as virtualWarehouseId,
+            vw.code as virtualWarehouseCode,
+            vw.name as virtualWarehouseName,
+            vtf.sku_id as skuId,
+            vtf.sku_no as skuNo,
+            vtf.dict_inventory_status as dictInventoryStatus,
+            vtf.qty ,
+            vtf.cur_inventory_qty as curInventoryQty
+        from virtual_trans_flow vtf
+        left join virtual_warehouse vw on vtf.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+             ${params.sqlMap.default}
+            and vtf.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vtf.id desc
     </select>
 
     <!-- 虚拟库库存明细分页查询 -->

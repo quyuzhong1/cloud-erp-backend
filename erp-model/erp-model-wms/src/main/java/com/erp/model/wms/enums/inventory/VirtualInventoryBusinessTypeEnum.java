@@ -11,11 +11,17 @@ import java.util.Objects;
 public enum VirtualInventoryBusinessTypeEnum {
 
     /**
-     * 调用方请传输code，不要传输type
+     * 调拨
      */
-
-    SO_OUTSTOCK_USABLE("so_outstock_usable", "35","销售出库扣可用库存"),
-
+    TRANSFER_USABLE("transfer_usable", "01","调拨，当前仓可用减少，目的仓增加"),
+    /**
+     * 出库
+     */
+    OUT_USABLE("out_usable", "02","出库，当前仓可用减少"),
+    /**
+     * 入库
+     */
+    IN_USABLE("in_usable", "03","入库，当前仓可用增加"),
     ;
 
     private String code;

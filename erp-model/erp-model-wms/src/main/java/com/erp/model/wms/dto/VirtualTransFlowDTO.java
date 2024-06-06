@@ -3,8 +3,8 @@ package com.erp.model.wms.dto;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -73,11 +73,8 @@ public class VirtualTransFlowDTO implements Serializable {
         /**
          * 操作类型【可排序】
          */
+        @Dict(enumClass = InventoryOperationModeEnum.class)
         private String operationMode;
-        /**
-         * 操作类型名称
-         */
-        private String operationModeName;
         /**
          * 库存组织【可排序】
          */
@@ -107,6 +104,10 @@ public class VirtualTransFlowDTO implements Serializable {
          */
         private String virtualWarehouseName;
         /**
+         * SKUId【可排序】
+         */
+        private String skuId;
+        /**
          * SKU编码【可排序】
          */
         private String skuNo;
@@ -117,11 +118,8 @@ public class VirtualTransFlowDTO implements Serializable {
         /**
          * 库存状态，usable可用、frozen冻结【可排序】
          */
+        @Dict(enumClass = InventoryStatusEnum.class)
         private String dictInventoryStatus;
-        /**
-         * 库存状态名称
-         */
-        private String dictInventoryStatusName;
         /**
          * 操作数量，出库用负数，入库用正数【可排序】
          */
@@ -173,6 +171,14 @@ public class VirtualTransFlowDTO implements Serializable {
          */
         private LocalDateTime billDate;
         /**
+         * 实体仓Id
+         */
+        private String warehouseId;
+        /**
+         * 实体仓名称
+         */
+        private String warehouseName;
+        /**
          * 来源单据类型【可排序】
          */
         private String sourceType;
@@ -192,7 +198,7 @@ public class VirtualTransFlowDTO implements Serializable {
         /**
          * 库存状态，usable可用、frozen冻结【可排序】
          */
-        @Dict(queryTypeField = "dictInventoryStatus")
+        @Dict(enumClass = InventoryStatusEnum.class)
         private String dictInventoryStatus;
         /**
          * 操作数量，出库用负数，入库用正数【可排序】
@@ -210,7 +216,7 @@ public class VirtualTransFlowDTO implements Serializable {
         /**
          * 实时库存表id
          */
-        private String inventoryId;
+        private String virtualInventoryId;
 
         /**
          * 组织id

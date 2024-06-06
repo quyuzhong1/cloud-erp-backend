@@ -5,6 +5,8 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -23,8 +25,8 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.RedissonMultiLock;
 import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +43,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInventoryStockService {
     @Autowired
-    private RedissonClient redisson;
+    private DocNoGenHelper docNoGenHelper;
 
     @Autowired
     private VirtualWarehouseService virtualWarehouseService;
@@ -73,14 +75,14 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         log.warn("》》》库存交易按【{}】，入参：{}，业务类型：{}", Objects.equals(byType, Boolean.TRUE) ? "业务类型" : "自定义规则", JSON.toJSONString(paramList), businessType.getName());
 
         List<RLock> rLockList = handleLockKey(paramList);
-        RLock rLock = null;
-        boolean isLock;
+        RedissonMultiLock multiLock = null;
+        boolean isLock = false;
         try {
             RLock[] arrayLock = rLockList.stream().toArray(RLock[]::new);
             //将多个RLock整合为一个大锁对象
-            rLock = redisson.getMultiLock(arrayLock);
+            multiLock = new RedissonMultiLock(arrayLock);
             // 设置最大等待锁时间
-            isLock = rLock.tryLock(20, TimeUnit.SECONDS);
+            isLock = multiLock.tryLock(60, TimeUnit.SECONDS);
             if (!isLock) {
                 log.error("加锁失败,rLockList = {}", rLockList);
                 throw new ServiceException(ApiError.ERROR_1026);
@@ -93,17 +95,16 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             }
             this.checkParam(paramList, businessType, stockParamList);
             // 2.业务处理，同一个操作产生的交易流水使用同一个关联交易号
-            // 关联交易号
-            String transactionNo = IdUtil.getSnowflake().nextIdStr();
+            String transactionNo =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XLS);
             this.stockHandler(paramList, businessType, stockParamList, transactionNo);
         } catch (Exception e) {
             log.error("交易业务：{}，数据：{}，库存操作异常：{}", businessType.getName(), paramList,e );
             throw new ServiceException(10000,e.getMessage());
         } finally {
-            //释放锁  锁是否存在，是当前执行线程的锁
-            if(rLock.isLocked() && rLock.isHeldByCurrentThread()){
+            //释放锁  锁是否存在
+            if(isLock && multiLock != null){
                 // 释放锁
-                rLock.unlock();
+                multiLock.unlock();
             }
         }
         stopwatch.stop();
@@ -243,6 +244,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         // 登记交易流水
         VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, virtualInventoryEntity, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
         transactionFlowDTO.setTransactionNo(transactionNo);
+        transactionFlowDTO.setVirtualTransRuleId(transRuleId);
         virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
     }
 
@@ -402,8 +404,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         virtualTransFlowDTO.setSourceId(param.getSourceId());
         virtualTransFlowDTO.setSourceCode(param.getSourceCode());
         virtualTransFlowDTO.setSourceDetailId(param.getSourceDetailId());
-
-        virtualTransFlowDTO.setInventoryId(virtualInventoryEntity.getId());
+        virtualTransFlowDTO.setVirtualInventoryId(virtualInventoryEntity.getId());
         virtualTransFlowDTO.setDictInventoryStatus(inventoryStatusEnum.getCode());
         virtualTransFlowDTO.setDictBizType(businessType.getCode());
         virtualTransFlowDTO.setBillDate(param.getBillDate());

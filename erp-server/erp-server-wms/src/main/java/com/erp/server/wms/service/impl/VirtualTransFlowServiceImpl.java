@@ -2,31 +2,45 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowMapper;
 import com.erp.server.wms.service.VirtualTransFlowService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -39,6 +53,12 @@ import java.util.Objects;
 @Slf4j
 @Service
 public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFlowMapper, VirtualTransFlowEntity> implements VirtualTransFlowService {
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public PagingVO<VirtualTransFlowDTO.ListDTO> paging(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
@@ -120,6 +140,33 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         return new PagingVO<>(pageData);
     }
 
+    @Override
+    public Boolean exportExcel(VirtualTransFlowDTO.SearchParamDTO dto, HttpServletResponse response) {
+        PagingDTO<VirtualTransFlowDTO.SearchParamDTO> pagingParamDTO = new PagingDTO<>();
+        pagingParamDTO.setParams(dto);
+        pagingParamDTO.setPageSize(-1);
+        PagingVO<VirtualTransFlowDTO.ListDTO> resultList = this.paging(pagingParamDTO);
+        List<VirtualTransFlowDTO.ListDTO> list = (List<VirtualTransFlowDTO.ListDTO>)resultList.getList();
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //数据赋值处理
+        fillPageData(list);
+        String name = "虚拟库存流水列表信息";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/virtualTransFlow.xlsx";
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("虚拟库存流水列表信息导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
     /**
      * 分页数据处理
      * @author will
@@ -129,6 +176,27 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     private void fillPageData (List<VirtualTransFlowDTO.ListDTO> list) {
         if (CollectionUtil.isEmpty(list)) {
             return;
+        }
+        //实体仓库
+        List<String> warehouseIdList = list.stream().map(VirtualTransFlowDTO.ListDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+
+        //组织信息
+        List<String> orgIdList = list.stream().map(VirtualTransFlowDTO.ListDTO::getOrgId).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+
+        for (VirtualTransFlowDTO.ListDTO listDTO : list) {
+
+            //来源类型名称
+            listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
+            //实体仓库名称
+            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            listDTO.setWarehouseName(warehouseName);
+
+            //组织名称
+            String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+            listDTO.setOrgName(orgName);
         }
     }
 
@@ -143,9 +211,16 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
+        //实体仓库
+        List<String> warehouseIdList = list.stream().map(VirtualTransFlowDTO.InventoryDetailDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         for (VirtualTransFlowDTO.InventoryDetailDTO inventoryDetailDTO : list) {
             //来源类型名称
             inventoryDetailDTO.setSourceTypeName(SourceTypeEnum.getName(inventoryDetailDTO.getSourceType()));
+            //实体仓库名称
+            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), inventoryDetailDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            inventoryDetailDTO.setWarehouseName(warehouseName);
+
         }
     }
 }

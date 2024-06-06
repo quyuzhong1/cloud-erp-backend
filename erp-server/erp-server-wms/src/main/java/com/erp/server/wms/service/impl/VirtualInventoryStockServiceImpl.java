@@ -9,13 +9,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ValidatorUtil;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualTransRuleDTO;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.annotation.InventoryHandler;
 import com.erp.server.wms.service.WarehouseService;
-import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -23,7 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -58,7 +59,6 @@ public class VirtualInventoryStockServiceImpl extends AbstractVirtualInventorySe
 
     @Override
     public <T extends VirtualInventoryStockDTO.StockBaseDTO> void checkParam(List<T> paramList, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> ruleList) {
-        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         // 判断是否需要忽略计算库存的sku
         List<String>  ignoreInventorySkuIds = this.getIgnoreSkuIds();
         for(VirtualInventoryStockDTO.StockBaseDTO baseParam : paramList) {
@@ -77,11 +77,6 @@ public class VirtualInventoryStockServiceImpl extends AbstractVirtualInventorySe
                 if(ignoreInventorySkuIds.contains(param.getSkuId())) {
                     log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", param.getSkuId(), param.getSkuNo());
                     continue;
-                }
-
-                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getVirtualWarehouseId(), v -> warehouseService.detailWithCache(v));
-                if (Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99002);
                 }
 
                 VirtualInventoryStockDTO.InventoryDTO inventoryDTO = new VirtualInventoryStockDTO.InventoryDTO();
