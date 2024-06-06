@@ -33,10 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -158,6 +155,11 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         // 获取参数中sku及数量
         Map<String, Integer> skuMap = (Map<String, Integer>) map.get("sku");
         Map<String, String> skuNameMap = (Map<String, String>) map.get("skuMap");
+        Map<String, Object> detailMap = new HashMap<>();
+        detailMap.put("billType", map.get("billType"));
+        detailMap.put("customerId",map.get("customerId"));
+        detailMap.put("deliveryWarehouseId",map.get("deliveryWarehouseId"));
+        map.put("detailList", Collections.singletonList(detailMap));
         for (Map.Entry<String, Integer> entry : skuMap.entrySet()) {
             String skuId = entry.getKey();
             Integer quantity = entry.getValue();
