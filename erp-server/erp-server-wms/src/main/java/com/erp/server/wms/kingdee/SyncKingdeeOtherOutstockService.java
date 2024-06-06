@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 
 /**
@@ -13,5 +14,5 @@ public interface SyncKingdeeOtherOutstockService {
     /**
      * 直接调拨单推送金蝶
      */
-    void syncDataToKingdee(OtherOutstockEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(OtherOutstockEntity entity, String operate);
 }

@@ -26,6 +26,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -187,6 +188,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             } else {
                 transferDeclareEntity.setPlanTransferDate(LocalDate.now().plusDays(1));
             }
+        }
+
+        if (StringUtils.isBlank(transferDeclareEntity.getTransferLogisticsSupplierId())) {
+            throw new ServiceException("未找到订单的中转物流商，请检查是否无需中转，无需中转不需要入库预报");
         }
 
         // 数据处理
@@ -737,7 +742,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 continue;
             }
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
-            ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(detailEntity.getShippingOrderNo(), authEntity.getId());
+            ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(detailEntity.getSoCode(), authEntity.getId());
             if (result.getCode() == 200) {
                 transferDeclareDetailService.updateTransferStatus(detailEntity.getId(), result.getData().getOrderStatusEnum().getCode());
             }
@@ -749,7 +754,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         SoB2cEntity soB2cEntity = b2cOrderForecastDTO.getSoB2cEntity();
         SoB2cLogisticsEntity soB2cLogisticsEntity = b2cOrderForecastDTO.getSoB2cLogisticsEntity();
         SoB2cReceiverEntity soB2cReceiverEntity = b2cOrderForecastDTO.getSoB2cReceiverEntity();
-        List<TransferDeclareProductDTO> transferDeclareProductDTOList = b2cOrderForecastDTO.getTransferDeclareProductDTOList();
+        List<SplitSkuDTO> transferDeclareProductDTOList = b2cOrderForecastDTO.getTransferDeclareProductDTOList();
         ShopInfoEntity shopInfoEntity = b2cOrderForecastDTO.getShopInfoEntity();
         try {
             //查询授权信息
@@ -967,6 +972,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(transferDeclareEntity.getDeliveryLogisticsSupplierId());
         if (ObjectUtil.isNotEmpty(logisticsSupplierEntity)) {
             transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+        }
+
+        if (StringUtils.isBlank(transferDeclareEntity.getTransferLogisticsSupplierId())) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
         }
         //中转物流商名称
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(transferDeclareEntity.getTransferLogisticsSupplierId());

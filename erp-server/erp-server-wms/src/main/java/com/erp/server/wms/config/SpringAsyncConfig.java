@@ -55,7 +55,7 @@ public class SpringAsyncConfig {
 		executor.setThreadNamePrefix(this.poolName+"-");
 		// 等待所有任务结束后再关闭线程池
 		executor.setWaitForTasksToCompleteOnShutdown(true);
-		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
 		//执行初始化
 		executor.initialize();
 		return executor;

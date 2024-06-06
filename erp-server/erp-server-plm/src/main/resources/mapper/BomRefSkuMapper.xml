@@ -92,8 +92,6 @@
             pbi.type,
             pbi.state,
             pbi.remark,
-            pbi.sync_kingdee_status,
-            pbi.sync_kingdee_time,
             pbi.sync_kingdee_id,
             pbs.parent_sku_id
         from product_bom_info pbi
@@ -114,8 +112,6 @@
         pbi.type,
         pbi.state,
         pbi.remark,
-        pbi.sync_kingdee_status,
-        pbi.sync_kingdee_time,
         pbi.sync_kingdee_id,
         pbs.parent_sku_id,
         pbs.parent_sku_no
@@ -140,8 +136,6 @@
         pbi.type,
         pbi.state,
         pbi.remark,
-        pbi.sync_kingdee_status,
-        pbi.sync_kingdee_time,
         pbi.sync_kingdee_id,
         pbs.parent_sku_id,
         pbs.parent_sku_no

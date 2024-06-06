@@ -108,7 +108,7 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * @param params
      * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
      **/
-    List<InventoryDTO.PdaInventoryWarehouseDTO> listInventoryWarehouseByParam(@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
+    IPage<InventoryDTO.PdaInventoryWarehouseDTO> listInventoryWarehouseByParam(Page query,@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
 
     /**
      * 根据条件查询仓库下的仓位库存信息

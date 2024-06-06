@@ -8,11 +8,12 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProductCustomsEntity;
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -20,6 +21,8 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -229,38 +232,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO cancelMerge(String id);
-    /**
-     * @description: 拆分显示
-     * @author Will
-     * @date: 2023/8/21 9:18
-     * @param ids
-     * @return ViewSplitDTO
-     */
-    List<SoB2cDTO.ViewSplitDTO> viewSplit(List<String> ids);
-    /**
-     * @description: 拆分保存
-     * @author Will
-     * @date: 2023/8/21 9:23
-     * @param dto
-     * @return Boolean
-     */
-    SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto);
-    /**
-     * @description: 取消合并前数据展示
-     * @author Will
-     * @date: 2023/8/24 11:48
-     * @param ids
-     * @return List<CheckCancelSplitDTO>
-     */
-    List<SoB2cDTO.CheckCancelSplitDTO> checkCancelSplit(List<String> ids);
-    /**
-     * @description: 取消合并
-     * @author Will
-     * @date: 2023/8/21 9:24
-     * @param id
-     * @return BatchResultDTO
-     */
-    BatchResultDTO cancelSplit(String id);
+
+    void deleteById(List<String> ids);
 
     void handleData(SoB2cEntity soB2cEntity, Boolean exchangeRateThrow, Boolean checkPayTime);
 
@@ -268,11 +241,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 匹配审核规则
      */
     Map<String,Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
-
-    /**
-     * 匹配配货规则
-     */
-    Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
     /**
      * 报表管理 销售统计
@@ -354,7 +322,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean  orderShipped(String  id);
 
-    /** 
+    /**
      * @description 运费测算后选择物流渠道
      * @param dto
      * @author Lambda
@@ -733,27 +701,17 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
-
-    /**
-     * 计算长度
-     * @param skuList
-     * @return
-     */
-    BigDecimal calculateSplitSkuDTOLength(List<SplitSkuDTO> skuList,String length);
-    BigDecimal calculateSplitSkuDTOWidth(List<SplitSkuDTO> skuList,String width);
-    BigDecimal calculateSplitSkuDTOHeight(List<SplitSkuDTO> skuList,String Height);
-
     /**
      * 根据订单拆分sku
      */
-    List<TransferDeclareProductDTO> getTransferDeclareProductBySoInfo(String soId);
+    List<SplitSkuDTO> getTransferDeclareProductBySoInfo(String soId);
 
     /**
      * 根据销售订单id批量拆分
      * @param soIds
      * @return
      */
-    List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(List<String> soIds);
+    List<SplitSkuDTO> getTransferDeclareProductBySoIds(List<String> soIds);
 
     /**
      * 修改速卖通订单仓库
@@ -814,9 +772,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
 
     /**
-     * 计算明细重量
+     * 根据sku拆分订单
+     * @param soB2cDetailEntities
+     * @param skuIds
+     * @param soCode
+     * @return
      */
-    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList);
+    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities,List<String> skuIds, String soCode);
 
     /**
      * 根据条件获取数据对比系统数据
@@ -835,14 +797,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return Boolean
      */
     Boolean exportExcel(SoB2cDTO.ExportParamDTO dto, HttpServletResponse response);
-    /**
-     * @description: 更新主表仓库匹配规则
-     * @author Will
-     * @date: 2024/4/24 12:02
-     * @param id
-     * @return Boolean
-     */
-    Boolean updateIsMatchWarehouseRuleById(String id);
 
     List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto);
 
@@ -917,12 +871,42 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     SoB2cEntity getByCode(String soCode);
 
-    List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> id);
-
-    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> id);
-
     /**
      * 同步订单到DMP
      */
-    void syncOrderToDmp(String id);
+    void syncOrderToDmp(String id, String syncOperate);
+    /**
+     * 获取目的国申报信息
+     * @param country
+     * @param skuId
+     * @param productCustomsList
+     * @return
+     */
+    ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id,String warehouseId);
+
+    /**
+     * 校验是否缺货状态
+     * @param inventoryList
+     * @param waitDeliveryQtyList
+     * @param ignoreInventorySkuIds
+     * @param skuId
+     * @param warehouseId
+     * @param qty
+     * @return
+     */
+    Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
+                            List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
+                            String skuId, String warehouseId, Integer qty);
+
+
+    void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration,Boolean isUpdateTransferStatus);
+
+
+
+    void orderForecastUpdateSoAndError(List<SoB2cEntity> updateB2cList, List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors, List<SoB2cLogisticsEntity> updateLogisticList);
+    /**
+     * 同步处理历史审核订单数据到订单表
+     */
+    void processOrderApproveData();
 }

@@ -1215,6 +1215,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_NOT_EXIST(92146,"申报信息SKU【{}】目的国申报价币种不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_SYM_NOT_EXIST(92147,"申报信息SKU【{}】目的国申报价币种符号不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_WEIGHT_NOT_EXIST(92148,"申报信息SKU【{}】重量不能为0"),
+    ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE(92149,"订单下的明细仓库一致，无法按仓库拆分"),
 
     /**
      * TMS 错误

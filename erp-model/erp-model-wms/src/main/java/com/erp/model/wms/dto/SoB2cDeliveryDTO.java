@@ -532,12 +532,12 @@ public class SoB2cDeliveryDTO implements Serializable {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             PrintPickingViewDTO that = (PrintPickingViewDTO) o;
-            return Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) && Objects.equals(remark, that.remark);
+            return Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) ;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation, remark);
+            return Objects.hash(skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation);
         }
     }
 

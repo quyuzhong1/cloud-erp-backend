@@ -31,7 +31,7 @@ public class MQConsumerBroadcastService {
     /**
      * 订单审核通过后同步dmp
      */
-    @Service
+/*    @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SO_INFO_ORDER_TO_DMP_TOPIC,
             selectorExpression = "approved_so_info_order_to_dmp_tag",
             consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
@@ -42,12 +42,12 @@ public class MQConsumerBroadcastService {
             //处理订单同步
             dmpPullTaskService.syncOmsOrderToDmp(resultMap);
         }
-    }
+    }*/
 
     /**
      * 销售出库单 outstock 同步dmp
      */
-    @Service
+/*    @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SO_OUTSTOCK_ORDER_TO_DMP_TOPIC,
             selectorExpression = "approved_so_outstock_order_to_dmp_tag",
             consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
@@ -58,13 +58,13 @@ public class MQConsumerBroadcastService {
             //处理订单同步
             dmpPullTaskService.syncWmsOutStockToDmp(resultMap);
         }
-    }
+    }*/
 
 
     /**
      * 退货入库单 soReturnInstock 同步dmp
      */
-    @Service
+/*    @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC,
             selectorExpression = "approved_return_order_to_dmp_tag",
             consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
@@ -75,5 +75,5 @@ public class MQConsumerBroadcastService {
             //处理订单同步
             dmpPullTaskService.syncOmsReturnToDmp(resultMap);
         }
-    }
+    }*/
 }

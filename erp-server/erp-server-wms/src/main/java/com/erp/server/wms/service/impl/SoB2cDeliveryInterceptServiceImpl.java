@@ -3,16 +3,15 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -58,6 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,6 +118,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     private SoOutstockDetailServiceImpl soOutstockDetailServiceImpl;
     @Resource
     private PickingDetailService pickingDetailService;
+    @Lazy
+    @Resource
+    private AsyncService asyncService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -408,13 +411,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 soB2cDeliveryService.updateById(soB2cDelivery);
                 interceptUpdateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
                 SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
-                if(!soB2cEntity.getIsCancel() && !SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())){
-                    //调用第三方平台SDK发货
-                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                    platformShipOrderDTO.setSoB2cId(soB2cEntity.getId());
-                    platformShipOrderDTO.setDictPlatform(soB2cEntity.getDictPlatform());
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                }
+//                if(!soB2cEntity.getIsCancel() && !SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())){
+//                    //调用第三方平台SDK发货
+//                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+//                    platformShipOrderDTO.setSoB2cId(soB2cEntity.getId());
+//                    platformShipOrderDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+//                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+//                }
                 //在这里修改拦截状态，冻结状态，因为下面生成销售出库单依赖这个状态
                 interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
                 interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
@@ -424,6 +427,18 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 soOutstockService.generateB2cSoOutstock(soB2cEntity.getId());
                 //更新备注
                 soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
+
+                if (!soB2cEntity.getIsCancel() && !SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
+                    // 调用第三方平台SDK标记发货(独立事务)
+                    String businessDesc = "称重出库";
+                    asyncService.asyncShipOrder(soB2cEntity.getId(),
+                            soB2cEntity.getCode(),
+                            soB2cEntity.getDictPlatform(),
+                            JSONUtil.toJsonStr(dto),
+                            businessDesc, false);
+                } else {
+                    log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+                }
             }else{
                 //修改拦截状态，冻结状态
                 interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
