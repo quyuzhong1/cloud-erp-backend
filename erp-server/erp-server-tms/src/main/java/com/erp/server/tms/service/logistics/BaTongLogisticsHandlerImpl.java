@@ -141,7 +141,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 return success(list);
             }
             list = LogisticsChannelConverter.INSTANCE.channelConvertByBaTong(baseList);
-            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseList));
             return success(list);
@@ -267,7 +267,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
                     response.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), result.getCnMessage());
                     responseList.add(response);
-                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                             logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(result));
                     isSuccess = false;
@@ -290,13 +290,13 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 String base64 = FileUtil.convertPdfUrlToBase64(labelUrl);
                 labelResponse.setBase64(base64);
                 response.setBase64(base64);
-                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));
 
                 responseList.add(response);
             } catch (Exception e) {
-                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(e));
                 return failure(getPlatForm().getName() + ":" + e.getMessage());
@@ -331,7 +331,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         trackNo(trackBase.getShippingMethodNo()).build();
                 resultList.add(responseVO);
             } catch (Exception e) {
-                logisticsOperateService.pullOperateLog(item.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(item.getOrderId(),
                         item.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(e));
                 return failure(getPlatForm().getName() + ":" + e.getMessage());

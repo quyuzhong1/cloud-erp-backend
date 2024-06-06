@@ -1155,7 +1155,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             List<LogisticsGetLabelVO> labelVOArrayList = new ArrayList<>();
             LogisticsGetLabelVO getLabelVO = new LogisticsGetLabelVO();
             getLabelVO.setDeliveryNo(dto.getDeliveryNo());
-
+            getLabelVO.setOrderId(dto.getB2cSoId());
             //平台
             String logisticsPlatform = auth.getLogisticsPlatform();
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);

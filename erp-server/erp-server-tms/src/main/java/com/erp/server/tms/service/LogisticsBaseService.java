@@ -1,10 +1,7 @@
 package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 
@@ -65,9 +62,10 @@ public interface LogisticsBaseService {
      * 同步虾皮渠道
      *
      * @param platform
+     * @param map
      * @return
      */
-    List<BatchResultDTO> syncAliExpressChannel(String platform);
+    List<BatchResultDTO> syncAliExpressChannel(String platform, Map<String, String> map);
 
     /**
      * 同步单一渠道
