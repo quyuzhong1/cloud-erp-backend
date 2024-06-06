@@ -518,7 +518,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
 
         ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
-        Boolean hasBattery = productVOS.stream().anyMatch(LogisticsProductVO::getIsElectric);
+        Boolean hasBattery = productVOS.stream().filter(e -> Objects.nonNull(e.getIsElectric())).anyMatch(LogisticsProductVO::getIsElectric);
         //是否带电
         parceInfo.setHasBattery(hasBattery);
         Integer totalQuantity = productVOS.stream().filter(e -> Objects.nonNull(e.getQuantity())).mapToInt(LogisticsProductVO::getQuantity).sum();
