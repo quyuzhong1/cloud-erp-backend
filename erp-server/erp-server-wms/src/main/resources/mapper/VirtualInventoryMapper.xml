@@ -34,6 +34,20 @@
         warehouse_id, virtual_warehouse_id, sku_id, sku_no, dict_inventory_status, qty
     </sql>
 
+    <!-- 虚拟库存分页总数 -->
+    <select id="pagingCount" resultType="java.lang.Integer">
+        select
+            count(0)
+        from virtual_inventory vi
+        <where>
+            ${params.sqlMap.default}
+            and vi.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
     <!-- 虚拟库存分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListDTO">
         select
@@ -94,6 +108,7 @@
     <select id="diffDetailPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDetailDTO">
 
     </select>
+
 
 
 </mapper>

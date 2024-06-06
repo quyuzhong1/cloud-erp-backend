@@ -73,8 +73,11 @@ public class VirtualTransFlowDTO implements Serializable {
         /**
          * 操作类型【可排序】
          */
-        @Dict(enumClass = InventoryOperationModeEnum.class)
         private String operationMode;
+        /**
+         * 操作类型名称
+         */
+        private String operationModeName;
         /**
          * 库存组织【可排序】
          */
@@ -118,8 +121,11 @@ public class VirtualTransFlowDTO implements Serializable {
         /**
          * 库存状态，usable可用、frozen冻结【可排序】
          */
-        @Dict(enumClass = InventoryStatusEnum.class)
         private String dictInventoryStatus;
+        /**
+         * 库存状态名称
+         */
+        private String dictInventoryStatusName;
         /**
          * 操作数量，出库用负数，入库用正数【可排序】
          */
