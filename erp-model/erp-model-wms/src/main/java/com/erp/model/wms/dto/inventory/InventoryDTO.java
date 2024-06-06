@@ -1465,6 +1465,18 @@ public class InventoryDTO implements Serializable {
          */
         private String variantProperty;
         /**
+         * 总计实际库存
+         */
+        private Integer realTotalQty;
+        /**
+         * 总计可用库存
+         */
+        private Integer usableTotalQty;
+        /**
+         * 总计冻结库存
+         */
+        private Integer frozenTotalQty;
+        /**
          * 仓库信息
          */
         private PagingVO<PdaInventoryWarehouseDTO> warehouseDTOList;
