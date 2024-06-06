@@ -152,5 +152,5 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @param warehouseLocation
      * @return
      */
-    WarehouseLocationEntity findByWarehouseCodeOrName(String warehouseLocation);
+    WarehouseLocationEntity findByWarehouseCode(String warehouseLocation);
 }

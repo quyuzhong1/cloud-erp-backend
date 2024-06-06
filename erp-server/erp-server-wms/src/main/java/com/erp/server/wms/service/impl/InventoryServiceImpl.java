@@ -1070,7 +1070,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if(StringUtils.isBlank(params.getWarehouseLocation())){
             throw new ServiceException("仓位不存在");
         }
-        WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCodeOrName(params.getWarehouseLocation());
+        WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCode(params.getWarehouseLocation());
         if (Objects.nonNull(entity) && StringUtils.isNotBlank(entity.getCode())){
             paramDTO.setWarehouseLocation(entity.getCode());
         }else {
