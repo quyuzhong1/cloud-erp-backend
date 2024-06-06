@@ -21,6 +21,7 @@ import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.service.ThirdMappingStrategy;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -57,6 +58,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
         //校验系统店铺是否存在
         ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(addDTO.getSysId());
