@@ -97,7 +97,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交虚拟仓分货单信息")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id,seller_id",
+            tableField = "create_user_id",
             menuCode = "wms:virtualWarehouseAllocation:submit",
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
@@ -107,10 +107,10 @@ public class VirtualWarehouseAllocationController extends BaseController {
         return submit.stream().anyMatch(BatchResultDTO::getSuccess) ? success(submit) : failure(submit);
     }
 
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交虚拟仓分货单信息")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "作废虚拟仓分货单信息")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id,seller_id",
+            tableField = "create_user_id",
             menuCode = "wms:virtualWarehouseAllocation:submit",
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
@@ -120,4 +120,22 @@ public class VirtualWarehouseAllocationController extends BaseController {
         return submit.stream().anyMatch(BatchResultDTO::getSuccess) ? success(submit) : failure(submit);
     }
 
+    /**
+     * 手动完结
+     *
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "手动完结虚拟仓分货单信息")
+    @PostMapping("/manualFinish")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:manualFinish",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<BatchResultDTO> manualFinish(@RequestBody @Validated VirtualWarehouseAllocationDTO.ManualFinishDto dto) {
+        BatchResultDTO submit = virtualWarehouseAllocationService.manualFinish(dto);
+        return success(submit);
+    }
 }

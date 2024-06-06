@@ -100,6 +100,11 @@ public class VirtualWarehouseAllocationDetailEntity extends BaseEntity<VirtualWa
     @TableField("third_code")
     private String thirdCode;
 
+    /**
+     * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
+     */
+    @TableField("sync_status")
+    private String syncStatus;
 
     public static final String DISABLED = "disabled";
 

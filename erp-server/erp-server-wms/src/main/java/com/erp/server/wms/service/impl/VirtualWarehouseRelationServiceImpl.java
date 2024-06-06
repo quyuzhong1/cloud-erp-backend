@@ -171,7 +171,6 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                 VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = new VirtualWarehouseRelationEntity();
                 virtualWarehouseRelationEntity.setWarehouseId(warehouseIdList.get(0));
                 virtualWarehouseRelationEntity.setVirtualWarehouseId(batchAddDTO.getVirtualWarehouseId());
-                virtualWarehouseRelationEntity.setId(warehouseIdList.get(0));
                 baseMapper.insert(virtualWarehouseRelationEntity);
             }
         }

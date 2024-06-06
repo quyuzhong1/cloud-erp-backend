@@ -75,4 +75,11 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * @return
      */
     BatchResultDTO updateStatus(VirtualWarehouseAllocationEntity allocationEntity, String status, String invalidDescription);
+    /**
+     * 手动完结
+     *
+     * @param dto
+     * @return
+     */
+    BatchResultDTO manualFinish(VirtualWarehouseAllocationDTO.ManualFinishDto dto);
 }

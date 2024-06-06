@@ -136,4 +136,6 @@ public interface BusinessNoConstant {
     String DQDD = "DQDD";
     //虚拟仓
     String XNC = "XNC";
+    //虚拟仓分货单
+    String FH = "FH";
 }

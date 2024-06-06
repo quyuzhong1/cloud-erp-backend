@@ -48,7 +48,7 @@ public enum VirtualWarehouseAllocationSyncStatusEnum {
     }
 
     /**
-     * 根据代码获取名称
+     * 根据code获取名称
      *
      * @param code
      * @return

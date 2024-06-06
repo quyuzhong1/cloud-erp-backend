@@ -79,7 +79,8 @@ public enum BusinessNoTypeEnum {
 
     CODE_DQDD(53, "DQDD","多渠道订单(平台)",BusinessNoConstant.DQDD),
 
-    CODE_XNC(63, "xnc","虚拟仓", BusinessNoConstant.XNC),
+    CODE_XNC(63, "XNC","虚拟仓", BusinessNoConstant.XNC),
+    CODE_FH(64, "FH","虚拟仓分货单", BusinessNoConstant.FH),
     ;
 
 
