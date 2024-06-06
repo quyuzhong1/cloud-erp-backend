@@ -221,7 +221,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         String filterStr = String.join(" and ",  queryFilters );
 
         String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId," +
-                "FDocumentStatus,FCustId.FName,FCustId.FNumber,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone," +
+                "FDocumentStatus,FCustId.FName,FCustId.FNumber,FSaleDeptId.FName,FSalerId.FName,FSalerId.FNumber,FReceiveAddress,FLinkMan,FLinkPhone," +
                 "FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId," +
                 "FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId," +
                 "FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifierId.FName," +
@@ -300,6 +300,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         dmpOrderInfoEntity.setShopNo(kingdeeOrderEntity.getCustomerCode());
         //店铺名称
         dmpOrderInfoEntity.setShopName(kingdeeOrderEntity.getFCustId());
+
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal totalCost = BigDecimal.ZERO;
         BigDecimal orderFee = BigDecimal.ZERO;
