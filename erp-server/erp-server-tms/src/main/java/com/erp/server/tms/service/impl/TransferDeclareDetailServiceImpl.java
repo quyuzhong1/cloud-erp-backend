@@ -274,6 +274,19 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         }
         return lambdaQuery().in(TransferDeclareDetailEntity::getMainId, mainIds).list();
     }
+    /**
+     * 用于分页查询 子查询关联过滤
+     * @param mainIds
+     * @param params
+     * @return
+     */
+    @Override
+    public List<TransferDeclareDetailEntity> listByCondition(List<String> mainIds, TransferDeclareDTO.PagingParamDTO params) {
+        if (CollectionUtils.isEmpty(mainIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByCondition(mainIds,params);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
