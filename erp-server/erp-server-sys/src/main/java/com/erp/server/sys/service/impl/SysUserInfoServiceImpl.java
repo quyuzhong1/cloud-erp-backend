@@ -831,7 +831,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             resultList.add(user);
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName);
+        queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName,SysUserInfoEntity::getUserState);
         queryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         queryWrapper.eq(SysUserInfoEntity::getUserType, UserTypeEnum.ERP.getCode());
         if (flag) {
