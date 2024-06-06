@@ -252,9 +252,19 @@ public class InventoryController extends BaseController {
      * @param param param
      */
     @PostMapping("/listLocationInventoryBySkus")
-    public ApiResult<List<InventoryDTO.LocationInventoryResult>> listLocationInventoryBySkus(@RequestBody List<InventoryDTO.LocationInventoryParam> param){
+    public ApiResult<List<InventoryDTO.LocationInventoryResult>> listLocationInventoryBySkus(@RequestBody @Validated List<InventoryDTO.LocationInventoryParam> param){
         List<InventoryDTO.LocationInventoryResult> results = inventoryService.listLocationInventoryBySkus(param);
         return ApiResult.success(results);
+    }
+
+    /**
+     * 根据仓库id sku 数量获取最优仓位
+     * @param param param
+     */
+    @PostMapping("/recommendedLocation")
+    public ApiResult<InventoryDTO.LocationInventory> recommendedLocation(@RequestBody @Validated InventoryDTO.RecommendedLocationParam param){
+        InventoryDTO.LocationInventory inventory = inventoryService.recommendedLocation(param);
+        return ApiResult.success(inventory);
     }
 
 }

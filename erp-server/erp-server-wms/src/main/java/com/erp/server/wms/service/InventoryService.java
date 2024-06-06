@@ -279,4 +279,10 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param skus sku集合
      */
     List<InventoryDTO.LocationInventoryResult> listLocationInventoryBySkus(List<InventoryDTO.LocationInventoryParam> skus);
+
+    /**
+     * 根据仓库id sku 数量获取最优仓位
+     * @param param param
+     */
+    InventoryDTO.LocationInventory recommendedLocation(InventoryDTO.RecommendedLocationParam param);
 }

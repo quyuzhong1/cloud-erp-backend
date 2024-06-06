@@ -104,32 +104,38 @@
 
     <!-- 分页远程下拉 -->
     <select id="pagingSelect" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$LocationListDTO">
-        select id,code,name,status,disabled from
+        select id,code,name,status,disabled,usableQty from
         (
         select
-            wl.id,
-            wl.code,
-            wl.name,
-            wl.status,
-            wl.disabled
+        wl.id,
+        wl.code,
+        wl.name,
+        wl.status,
+        wl.disabled,
+        COALESCE ( i.qty, 0 ) as usableQty
         from warehouse_location wl
+        left join inventory i on wl.warehouse_id = i.warehouse_id and wl.code = i.warehouse_location
+        AND sku_no = #{params.skuNo}
+        AND wl.code = i.warehouse_location
+        AND i.dict_inventory_status = 'usable'
+        AND i.is_deleted = FALSE
         where
-            wl.is_deleted = false and wl.type = 'location'
-            <if test="params.warehouseId != null and params.warehouseId != ''">
-                and wl.warehouse_id = #{params.warehouseId}
-            </if>
-            <if test="params.searchKeyword != null and params.searchKeyword != ''">
-                and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
-            </if>
-            order by
-            <if test="params.searchKeyword != null and params.searchKeyword != ''">
-                case when wl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
-                when wl.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
-                when wl.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
-                end , wl.name,
-            </if>
-            wl.code asc
-        ) wls
+        wl.is_deleted = false and wl.type = 'location'
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and wl.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        order by usableQty desc,
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when wl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when wl.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when wl.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , wl.name,
+        </if>
+        wl.code
+        ) ws
     </select>
     <select id="areaPaging" resultType="com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO$PagingView">
         SELECT wl.id,

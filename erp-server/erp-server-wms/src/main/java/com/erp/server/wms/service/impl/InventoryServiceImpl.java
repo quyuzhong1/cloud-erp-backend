@@ -442,13 +442,13 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.PagingViewDTO> pageData = new Page<>();
-        if(pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())){
+        if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
             pageData = this.baseMapper.page(query, pagingParamDTO.getParams());
         }
-        if(pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())){
+        if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())) {
             pageData = this.baseMapper.pageByArea(query, pagingParamDTO.getParams());
         }
-        if(pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())){
+        if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
             pageData = this.baseMapper.pageByLocation(query, pagingParamDTO.getParams());
         }
         // 填充名称
@@ -472,15 +472,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         IPage<InventoryDTO.PagingViewDTO> iPage = new Page<>();
         String excelPath = "";
         Page page = new Page(1, 999999);
-        if(param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())){
+        if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
             iPage = inventoryMapper.page(page, searchParamDTO);
             excelPath = "excel/inventory.xlsx";
         }
-        if(param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())){
+        if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())) {
             iPage = inventoryMapper.pageByArea(page, searchParamDTO);
             excelPath = "excel/inventory_area.xlsx";
         }
-        if(param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())){
+        if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
             iPage = inventoryMapper.pageByLocation(page, searchParamDTO);
             excelPath = "excel/inventory_location.xlsx";
         }
@@ -736,7 +736,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
 
             //仓位名称
-            if(org.apache.commons.lang3.StringUtils.isNotBlank(data.getWarehouseLocation())){
+            if (org.apache.commons.lang3.StringUtils.isNotBlank(data.getWarehouseLocation())) {
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
                         .filter(req -> req.getCode().equals(data.getWarehouseLocation())
                                 && req.getWarehouseId().equals(data.getWarehouseId())
@@ -745,7 +745,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
 
             //库区名称赋值
-            if(org.apache.commons.lang3.StringUtils.isNotBlank(data.getWarehouseArea())){
+            if (org.apache.commons.lang3.StringUtils.isNotBlank(data.getWarehouseArea())) {
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
                         .filter(req -> req.getCode().equals(data.getWarehouseArea()) && req.getWarehouseId().equals(data.getWarehouseId()) && "area".equals(req.getType()))
                         .findFirst().orElse(new WarehouseLocationEntity());
@@ -758,22 +758,22 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     /**
-     * @description: 获取金蝶库存数据
-     * @author Will
-     * @date: 2023/10/17 18:24
      * @param skuNoList
      * @param warehouseCodeList
      * @param orgCodeList
-     * @return List<Map<Object>>
+     * @return List<Map < Object>>
+     * @description: 获取金蝶库存数据
+     * @author Will
+     * @date: 2023/10/17 18:24
      */
-    private List<Map<String, Object>> listKingdeeInventory (List<String> skuNoList,List<String> warehouseCodeList,List<String> orgCodeList) {
+    private List<Map<String, Object>> listKingdeeInventory(List<String> skuNoList, List<String> warehouseCodeList, List<String> orgCodeList) {
         DmpSyncKingdeeDTO.ParamDTO paramDTO = new DmpSyncKingdeeDTO.ParamDTO();
         paramDTO.setFormId("STK_Inventory");
         paramDTO.setFieldKeys("FMaterialId.FNumber,FStockId.FNumber,FStockOrgId.FNumber,FBASEQTY,FMaterialid.FSTOREURNOM,FMaterialid.FSTOREURNUM");
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(StrUtil.format(" FMaterialId.FNumber in ({})", skuNoList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
-        queryFilters.add(StrUtil.format(" FStockId.FNumber in ({})", warehouseCodeList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
-        queryFilters.add(StrUtil.format(" FStockOrgId.FNumber in ({})", orgCodeList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
+        queryFilters.add(StrUtil.format(" FMaterialId.FNumber in ({})", skuNoList.stream().map(obj -> "'" + obj + "'").collect(Collectors.joining(","))));
+        queryFilters.add(StrUtil.format(" FStockId.FNumber in ({})", warehouseCodeList.stream().map(obj -> "'" + obj + "'").collect(Collectors.joining(","))));
+        queryFilters.add(StrUtil.format(" FStockOrgId.FNumber in ({})", orgCodeList.stream().map(obj -> "'" + obj + "'").collect(Collectors.joining(","))));
         String filterStr = String.join(" and ", queryFilters);
         paramDTO.setFilterString(filterStr);
 
@@ -788,9 +788,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             paramDTO.setStartRow(pageIndex);
             paramDTO.setTopRowCount(MathUtil.ZERO);
             //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
-            List<Map<String, Object>> result =  dmpSyncFeign.listKingdeeData(paramDTO);
+            List<Map<String, Object>> result = dmpSyncFeign.listKingdeeData(paramDTO);
             log.info("获取金蝶直接调拨订单数据第[{}]页 有{}条记录", pageIndex, pageSize);
-            if (result.size() < pageSize){
+            if (result.size() < pageSize) {
                 dataSign = false;
             }
             if (CollectionUtil.isEmpty(result)) {
@@ -915,24 +915,24 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
-        if (Objects.isNull(dto.getWarehouseId())){
+        if (Objects.isNull(dto.getWarehouseId())) {
             return new ArrayList<>();
         }
         String warehouseId = dto.getWarehouseId();
         List<String> warehouseLocations = dto.getWarehouseLocations();
         List<String> skuIds = dto.getSkuIds();
-        if (CollectionUtils.isEmpty(warehouseLocations)||CollectionUtils.isEmpty(skuIds)){
+        if (CollectionUtils.isEmpty(warehouseLocations) || CollectionUtils.isEmpty(skuIds)) {
             return baseMapper.getInventoryByParam(dto);
         }
 
-        List<InventoryDTO.PdaInventoryDTO> inventoryDTOList=new ArrayList<>();
-        for (int i = 0; i <skuIds.size() ; i++) {
+        List<InventoryDTO.PdaInventoryDTO> inventoryDTOList = new ArrayList<>();
+        for (int i = 0; i < skuIds.size(); i++) {
             InventoryDTO.PdaSearchParamDTO pdaSearchParamDTO = new InventoryDTO.PdaSearchParamDTO();
             pdaSearchParamDTO.setSkuIds(Collections.singletonList(skuIds.get(i)));
             pdaSearchParamDTO.setWarehouseId(warehouseId);
             pdaSearchParamDTO.setWarehouseLocations(Collections.singletonList(warehouseLocations.get(i)));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParam = baseMapper.getInventoryByParam(pdaSearchParamDTO);
-            if (CollectionUtils.isNotEmpty(inventoryByParam)){
+            if (CollectionUtils.isNotEmpty(inventoryByParam)) {
                 inventoryDTOList.add(inventoryByParam.get(0));
             }
         }
@@ -1081,7 +1081,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             List<InventoryEntity> inventoryEntities = list(Wrappers.<InventoryEntity>lambdaQuery()
                     .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
                     .eq(InventoryEntity::getWarehouseId, inventoryParam.getWarehouseId())
-                    .in(InventoryEntity::getSkuNo, inventoryParam.getSkuNo()));
+                    .eq(InventoryEntity::getSkuNo, inventoryParam.getSkuNo())
+                    .gt(InventoryEntity::getQty, 0)
+                    .orderByDesc(InventoryEntity::getQty));
             InventoryDTO.LocationInventoryResult result = new InventoryDTO.LocationInventoryResult();
             result.setSkuNo(inventoryParam.getSkuNo());
             result.setWarehouseId(inventoryParam.getWarehouseId());
@@ -1098,5 +1100,58 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             results.add(result);
         }
         return results;
+    }
+
+    @Override
+    public InventoryDTO.LocationInventory recommendedLocation(InventoryDTO.RecommendedLocationParam param) {
+        InventoryEntity inventory = getRecommendedInventory(param);
+        WarehouseLocationEntity entity = warehouseLocationService.getOne(Wrappers.<WarehouseLocationEntity>lambdaQuery()
+                .eq(WarehouseLocationEntity::getWarehouseId, param.getWarehouseId())
+                .eq(WarehouseLocationEntity::getCode, inventory.getWarehouseLocation())
+        );
+        InventoryDTO.LocationInventory locationInventory = new InventoryDTO.LocationInventory();
+        locationInventory.setWarehouseLocation(inventory.getWarehouseLocation());
+        locationInventory.setUsableQty(inventory.getQty());
+        locationInventory.setWarehouseLocationName(entity.getName());
+        return locationInventory;
+    }
+
+
+    /**
+     * 获取最接近传入数量的仓位
+     * @param param param
+     */
+    private InventoryEntity getRecommendedInventory(InventoryDTO.RecommendedLocationParam param) {
+        // 首先获取库存相等的库位
+        InventoryEntity inventory = getOne(Wrappers.<InventoryEntity>lambdaQuery()
+                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                .eq(InventoryEntity::getWarehouseId, param.getWarehouseId())
+                .eq(InventoryEntity::getSkuNo, param.getSkuNo())
+                .eq(InventoryEntity::getQty, param.getUsableQty())
+                .last("LIMIT 1")
+        );
+        if (ObjectUtil.isEmpty(inventory)) {
+            // 不存在库存相等的则升序获取大于对应数量的最小库存
+            inventory = getOne(Wrappers.<InventoryEntity>lambdaQuery()
+                    .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                    .eq(InventoryEntity::getWarehouseId, param.getWarehouseId())
+                    .eq(InventoryEntity::getSkuNo, param.getSkuNo())
+                    .gt(InventoryEntity::getQty, param.getUsableQty())
+                    .orderByAsc(InventoryEntity::getQty)
+                    .last("LIMIT 1")
+            );
+        }
+        if (ObjectUtil.isEmpty(inventory)) {
+            // 不存在库存大于的则升序获取小于对应数量的最大库存
+            inventory = getOne(Wrappers.<InventoryEntity>lambdaQuery()
+                    .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                    .eq(InventoryEntity::getWarehouseId, param.getWarehouseId())
+                    .eq(InventoryEntity::getSkuNo, param.getSkuNo())
+                    .lt(InventoryEntity::getQty, param.getUsableQty())
+                    .orderByDesc(InventoryEntity::getQty)
+                    .last("LIMIT 1")
+            );
+        }
+        return inventory;
     }
 }

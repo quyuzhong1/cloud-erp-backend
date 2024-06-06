@@ -3,7 +3,6 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,7 +12,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -142,6 +140,8 @@ public class WarehouseLocationDTO implements Serializable {
          */
         private Boolean canCheck;
 
+
+        private Integer usableQty;
     }
 
 
@@ -278,6 +278,8 @@ public class WarehouseLocationDTO implements Serializable {
          */
         @NotBlank(message = "仓库ID不能为空")
         private String warehouseId;
+        @NotBlank(message = "sku不能为空")
+        private String skuNo;
 
         /**
          * 关键词

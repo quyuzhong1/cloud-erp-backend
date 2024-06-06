@@ -1604,4 +1604,15 @@ public class InventoryDTO implements Serializable {
         @NotBlank(message = "仓库不能空")
         private String warehouseId;
     }
+
+    @Getter
+    @Setter
+    public static class RecommendedLocationParam {
+        @NotBlank(message = "sku不能为空")
+        private String skuNo;
+        @NotBlank(message = "仓库不能空")
+        private String warehouseId;
+        @NotBlank(message = "数量不能空")
+        private Integer usableQty;
+    }
 }
