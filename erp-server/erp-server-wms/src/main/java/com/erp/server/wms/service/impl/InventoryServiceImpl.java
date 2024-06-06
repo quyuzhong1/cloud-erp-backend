@@ -1068,13 +1068,13 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         //库存信息
         InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
         if(StringUtils.isBlank(params.getWarehouseLocation())){
-            return new InventoryDTO.PdaInventoryWarehousePageDTO<>();
+            throw new ServiceException("仓位不存在");
         }
         WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCodeOrName(params.getWarehouseLocation());
         if (Objects.nonNull(entity) && StringUtils.isNotBlank(entity.getCode())){
             paramDTO.setWarehouseLocation(entity.getCode());
         }else {
-            return new InventoryDTO.PdaInventoryWarehousePageDTO<>();
+            throw new ServiceException("仓位不存在");
         }
 
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
