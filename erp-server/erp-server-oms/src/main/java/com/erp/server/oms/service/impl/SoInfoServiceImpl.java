@@ -1818,10 +1818,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return viewList;
     }
 
+    /**
+     * 下推退货单预览
+     * @param detailIds detailIds 订单详情id
+     */
     @Override
-    public List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> ids) {
-        checkIfPushDown(ids);
-        List<SoInfoDTO.GenerateSoReturnView> viewList = baseMapper.generateSoReturnView(ids);
+    public List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> detailIds) {
+        List<SoDetailEntity> soDetailEntities = soDetailService.listByIds(detailIds);
+        //获取订单主表id
+        List<String> mainIds = soDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+
+        checkIfPushDown(mainIds);
+        List<SoInfoDTO.GenerateSoReturnView> viewList = baseMapper.generateSoReturnView(detailIds);
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
