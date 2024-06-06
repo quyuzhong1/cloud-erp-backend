@@ -1065,11 +1065,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
         InventoryDTO.PdaSearchParamDTO params = searchDTO.getParams();
+        //库存信息
+        InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
         if(StringUtils.isBlank(params.getWarehouseLocation())){
             return new InventoryDTO.PdaInventoryWarehousePageDTO<>();
         }
-        //库存信息
-        InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
+        WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCodeOrName(params.getWarehouseLocation());
+        if (Objects.nonNull(entity) && StringUtils.isNotBlank(entity.getCode())){
+            paramDTO.setWarehouseLocation(entity.getCode());
+        }else {
+            return new InventoryDTO.PdaInventoryWarehousePageDTO<>();
+        }
+
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         //查询配置过滤对应组织仓库
         if(params.isFilterOrgFlag()){
@@ -1081,7 +1088,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
         paramDTO.setFilterSelfAddFlag(params.isFilterSelfAddFlag());
-        paramDTO.setWarehouseLocation(params.getWarehouseLocation());
+
         IPage<InventoryDTO.PdaInventoryPageDTO> page = baseMapper.pageInventoryWarehouseBySkuId(query,paramDTO);
         //填充基础信息
         buildWarehouseInfo(page.getRecords(), paramDTO);
