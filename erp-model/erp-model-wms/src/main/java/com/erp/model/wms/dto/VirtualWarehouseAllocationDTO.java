@@ -97,9 +97,9 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private List<String> attachUrlList;
         /**
-         * 附件url集合
+         * 明细集合
          */
-        private List<String> detailList;
+        private List<DetailDto> detailList;
 
     }
 
@@ -125,7 +125,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private List<String> attachUrlList;
 
-
+        /**
+         * 明细集合
+         */
+        private List<DetailDto> detailList;
     }
 
     @Data

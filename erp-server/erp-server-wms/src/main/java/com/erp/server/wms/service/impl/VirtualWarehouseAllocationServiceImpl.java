@@ -4,24 +4,16 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.PlatformTaskDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.ShopTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
@@ -30,22 +22,16 @@ import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
 import com.erp.server.wms.service.VirtualWarehouseAllocationService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -91,8 +77,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓分货单", virtualWarehouseAllocationEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-//        virtualWarehouseAllocationDetailService.add()
+        // 新增明细
+        virtualWarehouseAllocationDetailService.batchAdd(addDTO, virtualWarehouseAllocationEntity.getId());
         return new BaseResultDTO.AddDTO(virtualWarehouseAllocationEntity.getId(), code);
     }
 
@@ -113,12 +99,12 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (!save) {
             throw new ServiceException("虚拟仓分货单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         // 记录主单操作日志
         log.info("编辑 开始记录虚拟仓分货单日志数据，单号：【{}】", virtualWarehouseAllocationEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationEntity.getCode(), "虚拟仓分货单");
-        operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationEntity,  ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), msg);
+        // 新增明细
+        virtualWarehouseAllocationDetailService.batchUpdate(updateDTO, virtualWarehouseAllocationEntity.getId());
         return Boolean.TRUE;
     }
 
@@ -176,9 +162,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         //todo 创建中台任务数据进行同步
         //todo
         //todo
-        if (CollectionUtils.isNotEmpty(resultDTOS)){
-            resultDTOS.forEach(resultDTO->{
-                if (resultDTO.getSuccess()){
+        if (CollectionUtils.isNotEmpty(resultDTOS)) {
+            resultDTOS.forEach(resultDTO -> {
+                if (resultDTO.getSuccess()) {
 
                 }
             });
@@ -287,7 +273,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     private void handleData(VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity) {
         // TODO 校验库存数量
         //获取调转方向：调拨方向-1
-        if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(virtualWarehouseAllocationEntity.getType())){
+        if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(virtualWarehouseAllocationEntity.getType())) {
             virtualWarehouseAllocationEntity.setDirection(-1);
         }
     }

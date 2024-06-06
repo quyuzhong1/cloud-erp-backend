@@ -1012,9 +1012,9 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_BINDED(92202,"当前实体仓已被虚拟仓【{}】绑定"),
     ERROR_SAME_DISABLED(92203,"存在相同状态"),
     ERROR_WAREHOUSE_NOTFOUND(92204,"仓库不存在"),
-    ERROR_ONLYONE(92206,"一个渠道只能关联一种类型"),
+    ERROR_ONLYONE(92205,"一个渠道只能关联一种类型"),
 
-
+    ERROR_VMALLOCATION_DETAIL_ADD(92206 , "虚拟仓分货单明细保存失败"),
 
 
 

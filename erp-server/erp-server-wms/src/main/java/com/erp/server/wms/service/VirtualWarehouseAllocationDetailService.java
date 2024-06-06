@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -21,7 +22,7 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(VirtualWarehouseAllocationDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO batchAdd(VirtualWarehouseAllocationDetailDTO.AddDTO dto);
 
     /**
     * 修改
@@ -30,7 +31,10 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
     * @param dto
     * @return
     */
-    Boolean update(VirtualWarehouseAllocationDetailDTO.UpdateDTO dto);
+    Boolean batchUpdate(VirtualWarehouseAllocationDetailDTO.UpdateDTO dto);
 
 
+    void batchAdd(VirtualWarehouseAllocationDTO.AddDTO addDTO, String id);
+
+    Boolean batchUpdate(VirtualWarehouseAllocationDTO.UpdateDTO updateDTO, String id);
 }
