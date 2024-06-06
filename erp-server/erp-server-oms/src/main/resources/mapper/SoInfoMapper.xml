@@ -183,6 +183,7 @@
             </foreach>
         </if>
             si.create_time DESC,sod.id  ASC
+        limit 50000
     </select>
 
     <select id="viewGenerateSalesDemand"
