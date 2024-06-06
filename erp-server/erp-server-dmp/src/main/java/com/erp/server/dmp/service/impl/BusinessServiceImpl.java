@@ -75,6 +75,7 @@ public class BusinessServiceImpl {
     @Transactional(rollbackFor = Exception.class)
     public <T extends CleanBaseDTO,R extends UniqueDto> void pullProcessBusiness(String category, String platform, String business, JobTaskDTO data, PlatformApiEnum platformApiEnum) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
+        log.info("获取到Handler：{}", JSONUtil.toJsonStr(handler));
         if (handler != null) {
             PlatformDataDTO<T, R> platformData = handler.pullHandle(data);
 
@@ -171,6 +172,7 @@ public class BusinessServiceImpl {
     }
 
     private <R extends UniqueDto, T extends CleanBaseDTO> List<R> compareAndSaveMongo(Boolean isSendMq, String category, String platform, String business, String targetPlatform, PlatformDataDTO<T, R> platformData, String topic, PlatformApiEnum platformApiEnum) {
+        log.info("compareAndSaveMongo准备推送到MQ：{} {} {} {} {} {}", isSendMq, category, platform, business, platformApiEnum);
         // 保存数据到mongodb 并推送到mq
         List<T> sourceData = platformData.getSourceData();
         if(CollectionUtil.isEmpty(sourceData)){
@@ -185,6 +187,7 @@ public class BusinessServiceImpl {
             tableName = platformApiEnum.getMongoTableName();
         }
         String tag = StrUtil.format("{}_{}", category, business) + "_tag";
+        log.info("拼接后的TAG：{}", tag);
         // 保存或更新到mongo
         handleSaveOrUpdateMongo(sourceData, tableName, tClass, uniqueIds);
         // 不发送MQ
@@ -213,6 +216,7 @@ public class BusinessServiceImpl {
             }
             String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, sourceType.getCode(), targetPlatform, topic, tag, msg));
             msg.setDmpSyncTaskId(modelTaskId);
+            log.info("准备异步推送到MQ：{} {} {} {}", topic, tag, msg, msg.getUniqueId());
             SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
