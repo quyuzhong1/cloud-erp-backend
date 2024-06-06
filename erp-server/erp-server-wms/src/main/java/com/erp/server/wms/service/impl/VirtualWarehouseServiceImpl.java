@@ -131,8 +131,9 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         addDTO.setSysName(virtualWarehouseEntity.getName());
         addDTO.setType(ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode());
         List<ThirdMappingDTO.ThirdAddDTO> thirdList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(thirdMappingList)) {
-            thirdMappingList.forEach(thirdMapping -> {
+        List<ThirdMappingDTO.AddDTO> collect = thirdMappingList.stream().filter(item -> StringUtils.isNotBlank(item.getThirdId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(collect)) {
+            collect.forEach(thirdMapping -> {
                 ThirdMappingDTO.ThirdAddDTO thirdAddDTO = new ThirdMappingDTO.ThirdAddDTO();
                 thirdAddDTO.setSysType(PlatformDictEnum.WDT.getCode());
                 thirdAddDTO.setThirdId(thirdMapping.getThirdId());

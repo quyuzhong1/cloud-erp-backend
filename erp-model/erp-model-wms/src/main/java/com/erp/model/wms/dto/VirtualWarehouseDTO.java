@@ -76,7 +76,7 @@ public class VirtualWarehouseDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
         @Valid
         private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
-        @Valid
+//        @Valid
         private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
     }
