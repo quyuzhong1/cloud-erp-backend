@@ -74,10 +74,12 @@ import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -96,6 +98,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.*;
 import com.erp.rpc.wms.feign.*;
+import com.erp.rpc.wms.feign.CfgSettingFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
@@ -111,6 +114,8 @@ import com.sdk.oms.tiktok.dto.tiktok.split.PlatformSplitViewDTO;
 import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesBean;
 import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -316,7 +321,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private SoB2cDeclareProductService soB2cDeclareProductService;
     @Resource
     private CfgRuleDeclareService cfgRuleDeclareService;
-
+    @Resource
+    private CfgSettingFeign cfgSettingFeign;
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -1965,7 +1971,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (entity.getIsIntercept()) {
             throw new ServiceException(ApiError.IS_EXIST_NOT_INTERCEPT);
         }
-
+        //根据wms是否勾选组包后不允许拦截按钮 进行校验  //若系统配置勾选则中转状态为非无需中转(包含待中转，预报成功。预报失败)
+        if (PackageStatusEnum.ALREADY.getCode().equals(entity.getPackageStatus()) && (TransferStatusEnum.WAIT.getCode().equals(entity.getTransferStatus())
+                || TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())
+                ||TransferStatusEnum.FAILURE.getCode().equals(entity.getTransferStatus()))){
+            //已组包 配置已勾选
+            CfgSettingEntity cfgSettingEntity = cfgSettingFeign.getByKey(CfgSettingEnum.DELIVERY_INTERCEPT.getCode());
+            if (ObjectUtil.isNotEmpty(cfgSettingEntity) && ObjectUtil.isNotEmpty(cfgSettingEntity.getDataJson())) {
+                CfgSettingValueDTO.B2cDeliveryInterceptDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.B2cDeliveryInterceptDTO.class);
+                if (Objects.nonNull(dto) && Objects.nonNull(dto.getB2cDeliveryIntercept()) && dto.getB2cDeliveryIntercept()){
+                    throw new ServiceException(ApiError.ERROR_DELIVERY_INTERCEPT_READY_PACKAGED,entity.getCode());
+                }
+            }
+        }
         //平台仓不支持拦截
         if (entity.hasPlatformWarehouseOrder()) {
             throw new ServiceException(ApiError.PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT);
@@ -2015,10 +2033,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
         List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
         addDTO.setDetailList(detailList);
-
+        if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST.msg + logisticsEntity.getLogisticsChannelId());
+        }
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(logisticsEntity.getLogisticsChannelId());
         if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST.msg + logisticsEntity.getLogisticsChannelId());
         }
 
         //1、新增拦截单
