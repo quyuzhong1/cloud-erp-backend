@@ -138,6 +138,7 @@ public class WdtWarehouseHandler implements IBusinessHandler<WdtWarehouseDto, Er
             target.setModified(source.getModified());
             target.setRemark(source.getRemark());
             targetList.add(target);
+            log.info("仓库Target：{}", target);
         }
         return targetList;
     }
