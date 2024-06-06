@@ -10,16 +10,15 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
+import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.TransactionFlowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -265,6 +264,24 @@ public class InventoryController extends BaseController {
     public ApiResult<InventoryDTO.LocationInventory> recommendedLocation(@RequestBody @Validated InventoryDTO.RecommendedLocationParam param){
         InventoryDTO.LocationInventory inventory = inventoryService.recommendedLocation(param);
         return ApiResult.success(inventory);
+    }
+
+    /**
+     * 查询Tab
+     */
+    @GetMapping("/tabList")
+    public ApiResult<List<InventoryDTO.tabDto>> tabList(){
+        List<InventoryDTO.tabDto> list = new ArrayList<>(3);
+
+        long countWarehouse = inventoryService.countByWarehouse();
+        long countArea = inventoryService.countByArea();
+        long countLocation = inventoryService.countByLocation();
+
+        list.add(new InventoryDTO.tabDto("warehouse", countWarehouse));
+        list.add(new InventoryDTO.tabDto("warehouseArea", countArea));
+        list.add(new InventoryDTO.tabDto("warehouseLocation", countLocation));
+
+        return ApiResult.success(list);
     }
 
 }

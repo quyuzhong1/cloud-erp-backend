@@ -1615,4 +1615,18 @@ public class InventoryDTO implements Serializable {
         @NotBlank(message = "数量不能空")
         private Integer usableQty;
     }
+
+    @AllArgsConstructor
+    @Data
+    public static class tabDto{
+        /**
+         * 类型：warehouse仓库，warehouseArea库区，warehouseLocation仓位
+         */
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private long count;
+    }
 }

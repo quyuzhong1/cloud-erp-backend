@@ -285,4 +285,10 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param param param
      */
     InventoryDTO.LocationInventory recommendedLocation(InventoryDTO.RecommendedLocationParam param);
+
+    long countByWarehouse();
+
+    long countByArea();
+
+    long countByLocation();
 }
