@@ -406,6 +406,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO batchAdd(ThirdMappingDTO.FeignMappingDTO feignMappingDTO) {
         //查询当前类型下所有的绑定数据
         List<ThirdMappingDTO.ThirdAddDTO> bindedList = baseMapper.getByThirdSysCode(feignMappingDTO.getThirdSysType(), feignMappingDTO.getType());
@@ -440,6 +442,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         .eq(ThirdMappingEntity::getIsDeleted, false));
                 if (Objects.nonNull(thirdMappingEntity)) {
                     thirdMappingEntity.setSysName(addDto.getSysName());
+                    thirdMappingEntity.setThirdId(addDto.getThirdId());
                     thirdMappingEntity.setThirdName(addDto.getThirdName());
                     thirdMappingEntity.setThirdCode(addDto.getThirdCode());
                     //绑定过则修改
