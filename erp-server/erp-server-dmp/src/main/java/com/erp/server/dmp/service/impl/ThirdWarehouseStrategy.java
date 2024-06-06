@@ -329,6 +329,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
             if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
                 ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getById(thirdMappingEntity.getThirdId());
                 if (Objects.isNull(thirdWarehouseEntity)) {
+                    viewDTOList.add(viewDTO);
                     continue;
                 }
                 viewDTO.setName(thirdWarehouseEntity.getName());
@@ -341,6 +342,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                 feignDTO.setOverseasProviderWarehouseId(thirdMappingEntity.getThirdId());
                 OverseasProviderDTO.FeignDTO overseasWarehouse = overseasProviderFeign.getOverseasWarehouse(feignDTO);
                 if (Objects.isNull(overseasWarehouse)) {
+                    viewDTOList.add(viewDTO);
                     continue;
                 }
                 viewDTO.setName(overseasWarehouse.getPlatformWarehouseName());

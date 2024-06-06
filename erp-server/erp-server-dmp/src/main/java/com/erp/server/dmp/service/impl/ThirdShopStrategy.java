@@ -117,11 +117,12 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
     }
 
     static void getViewVo(ThirdMappingDTO.MappingViewDTO mappingViewDTO, ShopInfoEntity shopInfo, ThirdShopService thirdShopService, List<ThirdMappingDTO.ViewDTO> viewDTOList, List<ThirdMappingEntity> thirdMappingEntityList) {
-        thirdMappingEntityList.forEach(thirdMappingEntity -> {
+        for (ThirdMappingEntity thirdMappingEntity : thirdMappingEntityList) {
             ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
             ThirdShopEntity thirdShopEntity = thirdShopService.getById(thirdMappingEntity.getThirdId());
             if (Objects.isNull(thirdShopEntity)) {
                 viewDTOList.add(viewDTO);
+                continue;
             }
             viewDTO.setName(thirdShopEntity.getName());
             viewDTO.setThirdId(thirdMappingEntity.getThirdId());
@@ -130,7 +131,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
             viewDTO.setSysType(thirdMappingEntity.getThirdSysType());
             viewDTO.setSysTypeName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));
             viewDTOList.add(viewDTO);
-        });
+        }
         mappingViewDTO.setSalesOrgId(shopInfo.getSalesOrgId());
         mappingViewDTO.setSalesOrgName(shopInfo.getSalesOrgName());
         mappingViewDTO.setSysName(shopInfo.getName());
