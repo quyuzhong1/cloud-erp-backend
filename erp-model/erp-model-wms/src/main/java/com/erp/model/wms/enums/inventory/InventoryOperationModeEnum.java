@@ -1,5 +1,7 @@
 package com.erp.model.wms.enums.inventory;
 
+import com.common.core.constant.EnumMessage;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -9,7 +11,7 @@ import java.util.Objects;
  * @CreateTime: 2023-04-25  11:25
  * @Author: zhangchunlin
  */
-public enum InventoryOperationModeEnum {
+public enum InventoryOperationModeEnum implements EnumMessage {
     APPROVE("approve", "审核"),
     UN_APPROVE("unApprove", "反审核"),
     // AMEND("amend", "后补单"),

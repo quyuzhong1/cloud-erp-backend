@@ -4,7 +4,6 @@ package com.erp.server.wms.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
@@ -27,8 +26,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Slf4j
 @RestController
-@LogSystemModule("虚拟库存表")
-@RequestMapping("/virtualInventory")
+@RequestMapping("/virtualInventoryDiff")
 public class VirtualInventoryDiffController extends BaseController {
 
     @Resource
@@ -55,7 +53,6 @@ public class VirtualInventoryDiffController extends BaseController {
      * @return ApiResult<PagingVO<ListDetailDTO>>
      */
     @PostMapping("/diffDetailPaging")
-    @WebAdvanceQuery
     public ApiResult<PagingVO<VirtualInventoryDiffDTO.ListDetailDTO>> diffDetailPaging(@RequestBody @Validated PagingDTO<VirtualInventoryDiffDTO.SearchParamDetailDTO> dto) {
         return success(virtualInventoryDiffService.diffDetailPaging(dto));
     }

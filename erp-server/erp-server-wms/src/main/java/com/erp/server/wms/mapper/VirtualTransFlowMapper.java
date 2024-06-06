@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
+
 
 /**
  * <p>
@@ -28,4 +30,26 @@ public interface VirtualTransFlowMapper extends BaseMapper<VirtualTransFlowEntit
      * @return IPage<ListDTO>
      */
     IPage<VirtualTransFlowDTO.ListDTO> paging(Page query,@Param("params") VirtualTransFlowDTO.SearchParamDTO params);
+    /**
+     * 更新流水状态为反审核
+     * @author will
+     * @date 2024/6/5 10:13
+     * @param id
+     * @param version
+     * @param updateTime
+     * @param updateUserId
+     * @param updateUserName
+     * @return Boolean
+     */
+    Boolean updateUnapprovedById(@Param("id")String id, @Param("version")Integer version, @Param("updateTime")LocalDateTime updateTime
+            , @Param("updateUserId")String updateUserId, @Param("updateUserName")String updateUserName);
+    /**
+     * 虚拟库存明细列表
+     * @author will
+     * @date 2024/6/5 16:09
+     * @param query
+     * @param params
+     * @return IPage<InventoryDetailDTO>
+     */
+    IPage<VirtualTransFlowDTO.InventoryDetailDTO> detailPaging(Page query,@Param("params") VirtualTransFlowDTO.InventoryDetailParamDTO params);
 }

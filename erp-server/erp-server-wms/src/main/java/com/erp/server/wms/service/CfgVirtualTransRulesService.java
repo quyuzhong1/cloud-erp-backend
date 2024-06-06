@@ -1,8 +1,10 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.CfgVirtualTransRulesEntity;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.CfgVirtualTransRulesDTO;
+import com.erp.model.wms.entity.CfgVirtualTransRulesEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +34,12 @@ public interface CfgVirtualTransRulesService extends SuperService<CfgVirtualTran
     */
     Boolean update(CfgVirtualTransRulesDTO.UpdateDTO dto);
 
-
+    /**
+     * 根据业务类型查询
+     * @author will
+     * @date 2024/6/4 11:18
+     * @param dictBizType
+     * @return List<CfgVirtualTransRulesEntity>
+     */
+    List<CfgVirtualTransRulesEntity> findByDictBizType(String dictBizType);
 }

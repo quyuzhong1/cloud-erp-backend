@@ -28,10 +28,6 @@ public class VirtualInventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
-         * 主键id
-         */
-        private String id;
-        /**
          * skuId
          */
         private String skuId;
@@ -78,9 +74,29 @@ public class VirtualInventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDetailDTO {
         /**
-         * 主键id
+         * skuId
          */
-        private String id;
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 虚拟仓库【可排序】
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓库编号
+         */
+        private String virtualWarehouseCode;
+        /**
+         * 虚拟仓库名称
+         */
+        private String virtualWarehouseName;
         /**
          * 实体仓库【可排序】
          */
@@ -115,6 +131,43 @@ public class VirtualInventoryDTO implements Serializable {
         private Integer virtualFrozenQty;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryDTO {
+
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+
+        /**
+         * 虚拟仓库Id
+         */
+        private String virtualWarehouseId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 仓库状态
+         */
+        private String dictInventoryStatus;
+
+        /**
+         * 实体仓数量
+         */
+        private Integer qty;
+
+        /**
+         * 虚拟仓数量
+         */
+        private Integer virtualQty;
+    }
+
+
     /**
      * 详情
      */

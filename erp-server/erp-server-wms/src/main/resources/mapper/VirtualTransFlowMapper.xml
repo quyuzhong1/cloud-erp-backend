@@ -37,22 +37,61 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_time,
-        update_time,
-        create_user_name,
-        create_user_id,
-        update_user_name,
-        update_user_id,
-        version,
-        is_deleted,
-        virtual_inventory_id, org_id, warehouse_id, virtual_warehouse_id, dict_inventory_status, bill_date, sku_id, sku_no, source_type, source_id, source_code, source_detail_id, dict_biz_type, user_id, trade_time, qty, cur_inventory_qty, virtual_trans_rule_id, operation_mode, transaction_no, is_unapproved
+        vtf.id,
+        vtf.create_time,
+        vtf.update_time,
+        vtf.create_user_name,
+        vtf.create_user_id,
+        vtf.update_user_name,
+        vtf.update_user_id,
+        vtf.version,
+        vtf.is_deleted,
+        vtf.virtual_inventory_id, vtf.org_id, vtf.warehouse_id, vtf.virtual_warehouse_id, vtf.dict_inventory_status, vtf.bill_date, vtf.sku_id, vtf.sku_no, vtf.source_type, vtf.source_id, vtf.source_code, vtf.source_detail_id, vtf.dict_biz_type, vtf.user_id, vtf.trade_time, vtf.qty, vtf.cur_inventory_qty, vtf.virtual_trans_rule_id, vtf.operation_mode, vtf.transaction_no, vtf.is_unapproved
     </sql>
+
 
     <!-- 虚拟库存流水分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDTO$ListDTO">
 
     </select>
 
+    <!-- 虚拟库库存明细分页查询 -->
+    <select id="detailPaging" resultType="com.erp.model.wms.dto.VirtualTransFlowDTO$InventoryDetailDTO">
+        select
+            <include refid="Base_Column_List"></include>
+        from virtual_trans_flow vtf
+        <where>
+            and vtf.is_deleted = false
+            <if test="params.skuId != null and params.skuId != ''">
+                and vtf.sku_id = #{params.skuId}
+            </if>
+            <if test="params.warehouseId != null and params.warehouseId != ''">
+                and vtf.warehouse_id = #{params.warehouseId}
+            </if>
+            <if test="params.virtualWarehouseId != null and params.virtualWarehouseId != ''">
+                and vtf.virtual_warehouse_id = #{params.virtualWarehouseId}
+            </if>
+            <if test="params.dictInventoryStatus != null and params.dictInventoryStatus != ''">
+                and vtf.dict_inventory_status = #{params.dictInventoryStatus}
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vtf.id desc
+    </select>
+
+    <!-- 更新流水状态为反审核 -->
+    <update id="updateUnapprovedById">
+        update virtual_trans_flow set is_unapproved = true,version = version + 1,
+        update_time = #{updateTime}, update_user_id = #{updateUserId}, update_user_name = #{updateUserName}
+        where id = #{id} and is_deleted = false
+    </update>
 
 </mapper>

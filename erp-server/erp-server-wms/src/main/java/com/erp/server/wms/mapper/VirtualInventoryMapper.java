@@ -33,23 +33,14 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      */
     IPage<VirtualInventoryDTO.ListDTO> paging(Page query,@Param("params") VirtualInventoryDTO.SearchParamDTO params);
     /**
-     *  虚拟库存分页明细查询
-     * @author will
-     * @date 2024/6/3 16:59
-     * @param query
-     * @param params
-     * @return IPage<ListDetailDTO>
-     */
-    IPage<VirtualInventoryDTO.ListDetailDTO> detailPaging(Page query,@Param("params") VirtualInventoryDTO.SearchParamDTO params);
-    /**
      * 根据SKU和虚拟仓库查询
      * @author will
      * @date 2024/6/3 15:46
      * @param skuIdList
      * @param virtualWarehouseIdList
-     * @return List<VirtualInventoryEntity>
+     * @return List<VirtualInventoryDTO.ListInventoryDTO>
      */
-    List<VirtualInventoryEntity> listVirtualWarehouseIdListAndSkuIdList(@Param("skuIdList") List<String> skuIdList,@Param("virtualWarehouseIdList") List<String> virtualWarehouseIdList);
+    List<VirtualInventoryDTO.ListInventoryDTO> listVirtualWarehouseIdListAndSkuIdList(@Param("skuIdList") List<String> skuIdList,@Param("virtualWarehouseIdList") List<String> virtualWarehouseIdList);
     /**
      * 库存差异分页查询
      * @author will

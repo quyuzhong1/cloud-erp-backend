@@ -8,7 +8,9 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.server.wms.service.VirtualInventoryService;
+import com.erp.server.wms.service.VirtualTransFlowService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +36,9 @@ public class VirtualInventoryController extends BaseController {
     @Resource
     private VirtualInventoryService virtualInventoryService;
 
+    @Resource
+    private VirtualTransFlowService virtualTransFlowService;
+
    /**
     * 虚拟库存列表
     * @author will
@@ -54,8 +59,8 @@ public class VirtualInventoryController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/detailPaging")
-    public ApiResult<PagingVO<VirtualInventoryDTO.ListDetailDTO>> detailPaging(@RequestBody @Validated PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
-        return success(virtualInventoryService.detailPaging(dto));
+    public ApiResult<PagingVO<VirtualTransFlowDTO.InventoryDetailDTO>> detailPaging(@RequestBody @Validated PagingDTO<VirtualTransFlowDTO.InventoryDetailParamDTO> dto) {
+        return success(virtualTransFlowService.detailPaging(dto));
     }
 
     /**
@@ -66,7 +71,6 @@ public class VirtualInventoryController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody VirtualInventoryDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = virtualInventoryService.exportExcel(dto, response);
         return flag == true ? success() : failure();

@@ -25,14 +25,6 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      */
     PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
     /**
-     * 库存差异明细列表
-     * @author will
-     * @date 2024/6/3 16:56
-     * @param dto
-     * @return PagingVO<ListDetailDTO>
-     */
-    PagingVO<VirtualInventoryDTO.ListDetailDTO> detailPaging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
-    /**
      * 库存差异明细导出
      * @author will
      * @date 2024/6/3 17:17
@@ -41,4 +33,38 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @return Boolean
      */
     Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto, HttpServletResponse response);
+    /**
+     * 根据仓库、sku、库存状态查询
+     * @author will
+     * @date 2024/6/4 12:19
+     * @param virtualWarehouseId
+     * @param warehouseId
+     * @param skuId
+     * @param inventoryStatus
+     * @return VirtualInventoryEntity
+     */
+    VirtualInventoryEntity findVirtualInventoryStock(String virtualWarehouseId,String warehouseId, String skuId, String inventoryStatus);
+    /**
+     * 保存虚拟库存数据
+     * @author will
+     * @date 2024/6/4 14:14
+     * @param virtualWarehouseId
+     * @param warehouseId
+     * @param skuId
+     * @param skuNo
+     * @param inventoryStatus
+     * @param qty
+     * @return VirtualInventoryEntity
+     */
+    VirtualInventoryEntity addOrUpdate(String virtualWarehouseId,String warehouseId , String skuId, String skuNo, String inventoryStatus, Integer qty);
+
+    /**
+     * 更新库存数量
+     * @author will
+     * @date 2024/6/4 14:37
+     * @param id
+     * @param qty
+     * @return boolean
+     */
+    boolean updateQtyById(String id, Integer qty);
 }
