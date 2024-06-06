@@ -167,6 +167,7 @@
             </foreach>
         </if>
         do2.plan_delivery_date ASC
+        limit 100000
     </select>
     <select id="listGenerateReceive"
             resultType="com.erp.model.srm.dto.DeliveryOrderDTO$GenerateReceiveListDTO">

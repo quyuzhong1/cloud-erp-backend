@@ -91,6 +91,7 @@
             </foreach>
         </if>
         <include refid="query_list_sql"/>
+        limit 100000
     </select>
 
 </mapper>

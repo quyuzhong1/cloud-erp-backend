@@ -542,6 +542,7 @@
         sb.dict_platform,
         sb.shop_id,
         sbd.platform_spu_no
+        limit 100000
     </select>
     <!--获取标记发货信息-->
     <select id="getSignShipParam" resultType="com.erp.model.oms.dto.SoB2cDTO$SignShipOrderDTO">
@@ -782,6 +783,7 @@
             </if>
         </where>
         order by sb2c.id desc
+        limit 100000
     </select>
 
     <!-- B2C销售订单导出总数量查询 -->
@@ -884,6 +886,7 @@
             </if>
         </where>
         order by sb2c.id desc
+        limit 100000
     </select>
 
 </mapper>

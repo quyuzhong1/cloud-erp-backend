@@ -123,6 +123,7 @@
         </if>
         tbdr.id desc
         </where>
+        limit 100000
     </select>
 
     <!-- tab列表 -->

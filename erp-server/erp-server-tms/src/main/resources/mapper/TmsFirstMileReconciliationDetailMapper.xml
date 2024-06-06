@@ -199,6 +199,7 @@
             WHEN 'diff' THEN 3
             END
         </where>
+        limit 100000
     </select>
 
     <select id="getCurrencyById" resultType="java.lang.String">

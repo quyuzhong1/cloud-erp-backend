@@ -362,6 +362,7 @@
             </foreach>
         </if>
         lb.create_time DESC
+        limit 100000
     </select>
 
     <select id="getBaseByTrackNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$BaseDTO">
@@ -620,6 +621,7 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        limit 100000
     </select>
     <select id="hasWarnPaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
         SELECT lb.id,

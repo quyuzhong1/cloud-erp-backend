@@ -109,6 +109,7 @@
             </foreach>
         </if>
         srr.create_time desc
+        limit 100000
     </select>
 
     <select id="receiveGenerateQcView" resultType="com.erp.model.wms.dto.QcInfoDTO$ReceiveGenerateQcView">

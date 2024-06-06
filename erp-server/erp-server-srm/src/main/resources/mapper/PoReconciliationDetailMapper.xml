@@ -117,6 +117,7 @@
             </if>
             prd.id desc
         </where>
+        limit 100000
     </select>
 
     <!-- 查看详情信息 -->

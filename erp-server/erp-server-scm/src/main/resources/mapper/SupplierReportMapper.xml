@@ -85,5 +85,6 @@
             </foreach>
         </if>
         purchaseAmount desc NULLS LAST
+        limit 100000
     </select>
 </mapper>

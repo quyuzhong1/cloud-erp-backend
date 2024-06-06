@@ -330,6 +330,7 @@
             </foreach>
         </if>
         ORDER BY pi.create_time DESC
+        limit 100000
     </select>
 
     <select id="taskDetailView" resultType="com.erp.model.plm.dto.ProjectReportFormsDTO$TaskDetail">

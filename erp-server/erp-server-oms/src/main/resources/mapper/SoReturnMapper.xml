@@ -96,6 +96,7 @@
             </foreach>
         </if>
         sr.create_time desc
+        limit 100000
     </select>
 
     <select id="generateSoReturnNoticeView" resultType="com.erp.model.oms.dto.SoReturnDTO$GenerateSoReturnNoticeView">
