@@ -82,14 +82,24 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
             //如果当前平台没有绑定第三方数据，直接添加
             if (CollectionUtils.isEmpty(existMappingList)) {
                 for (ThirdMappingDTO.ThirdAddDTO item : thirdList) {
-                    makeThirdMappingDto(addDTO, item);
+                    makeThirdMappingDto(addDTO, item, null);
                 }
             } else {
                 List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList = new ArrayList<>();
                 //判断当前平台是否绑定第三方数据,已绑定的更新，未绑定的删除
                 checkSysBinding(addDTO, existMappingList, thirdList, resultUpdatedList);
                 //保存新增数据
-                saveAddDto(addDTO, thirdList, resultUpdatedList);
+//                saveAddDto(addDTO, thirdList, resultUpdatedList);
+                thirdList.forEach(thirdAddDTO -> {
+                    if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
+                        ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
+                        if (Objects.isNull(updatedDto)) {
+                            makeThirdMappingDto(addDTO, thirdAddDTO, null);
+                        }
+                    } else {
+                        makeThirdMappingDto(addDTO, thirdAddDTO, null);
+                    }
+                });
             }
         }
         return new BaseResultDTO.AddDTO();
@@ -106,6 +116,11 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
         }
         makeShopViewDto(viewParamDTO, sysId, mappingViewDTO, shopInfo);
         return mappingViewDTO;
+    }
+
+    @Override
+    public void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
+        return;
     }
 
     private void makeShopViewDto(ThirdMappingDTO.ViewParamDTO viewParamDTO, String sysId, ThirdMappingDTO.MappingViewDTO mappingViewDTO, ShopInfoEntity shopInfo) {
@@ -139,25 +154,28 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
         mappingViewDTO.setThirdList(viewDTOList);
     }
 
-    /**
-     * 保存新增数据
-     *
-     * @param addDTO
-     * @param thirdList
-     * @param resultUpdatedList
-     */
-    private void saveAddDto(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingDTO.ThirdAddDTO> thirdList, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList) {
-        thirdList.forEach(thirdAddDTO -> {
-            if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
-                ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
-                if (Objects.isNull(updatedDto)) {
-                    makeThirdMappingDto(addDTO, thirdAddDTO);
-                }
-            } else {
-                makeThirdMappingDto(addDTO, thirdAddDTO);
-            }
-        });
-    }
+//    /**
+//     * 保存新增数据
+//     *
+//     * @param addDTO
+//     * @param thirdList
+//     * @param resultUpdatedList
+//     */
+//    @Override
+//    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
+//    public void saveAddDto(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingDTO.ThirdAddDTO> thirdList, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList) {
+//        thirdList.forEach(thirdAddDTO -> {
+//            if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
+//                ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
+//                if (Objects.isNull(updatedDto)) {
+//                    makeThirdMappingDto(addDTO, thirdAddDTO);
+//                }
+//            } else {
+//                makeThirdMappingDto(addDTO, thirdAddDTO);
+//            }
+//        });
+//    }
 
     /**
      * 判断当前平台是否绑定第三方数据
@@ -199,7 +217,10 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
      *
      * @param existMappingList
      */
-    private void deleteBinded(List<ThirdMappingEntity> existMappingList) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
         existMappingList.forEach(existMapping -> {
             // 操作日志
             String msg = StrUtil.format("编辑了【{}】的店铺由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
@@ -207,10 +228,12 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
         });
         thirdMappingMapper.deleteBatchIds(existMappingList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
-
     }
 
-    private void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO, WarehouseDTO.ListDTO warehouse) {
         ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
         BeanMapperUtils.copy(addDTO, thirdMappingEntity);
         thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
@@ -220,7 +243,9 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
         addOrUpdate(thirdMappingEntity, null, null);
     }
 
-    private void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping, WarehouseDTO.ListDTO warehouse) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping, WarehouseDTO.ListDTO warehouse) {
         // 数据处理
         handleData(thirdMappingEntity);
         log.info("开始新增第三方系统映射关系单");
