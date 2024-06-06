@@ -1492,6 +1492,10 @@ public class InventoryDTO implements Serializable {
          */
         private String warehouseLocation;
         /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+        /**
          * 实际库存
          */
         private Integer realTotalQty;

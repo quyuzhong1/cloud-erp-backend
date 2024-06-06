@@ -1094,7 +1094,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         buildWarehouseInfo(page.getRecords(), paramDTO);
         InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> result = new InventoryDTO.PdaInventoryWarehousePageDTO<>(page);
         //仓位信息回填
-        result.setWarehouseLocation(params.getWarehouseLocation());
+        result.setWarehouseLocation(entity.getCode());
+        result.setWarehouseLocationName(entity.getName());
         //汇总仓位实际库存/可用库存/冻结库存数量
         result.setRealTotalQty(page.getRecords().stream().map(InventoryDTO.PdaInventoryPageDTO::getRealQty)
                 .filter(Objects::nonNull).reduce(0, Integer::sum));
