@@ -51,6 +51,11 @@ public class VirtualWarehouseController extends BaseController {
      * @date: 2024-06-02
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouse:add",
+            serviceClass = VirtualWarehouseService.class,
+            keyIdName = "id")
     @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseDTO.AddDTO addDTO) {
         return success(virtualWarehouseService.add(addDTO));
@@ -113,6 +118,11 @@ public class VirtualWarehouseController extends BaseController {
      * 详情
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouse:view",
+            serviceClass = VirtualWarehouseService.class,
+            keyIdName = "id")
     @LogViewService
     public ApiResult<?> view(@RequestParam(value = "id") String id) {
         return success(virtualWarehouseService.view(id));

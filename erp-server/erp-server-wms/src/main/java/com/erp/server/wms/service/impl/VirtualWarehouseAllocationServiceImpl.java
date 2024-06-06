@@ -4,13 +4,25 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.ShopTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
+import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationMapper;
 import com.erp.server.wms.service.VirtualWarehouseAllocationService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -20,6 +32,8 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -124,6 +139,127 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return new PagingVO(pageData);
     }
 
+    @Override
+    public List<BatchResultDTO> submit(List<String> ids) {
+        //获取原始数据
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        //待提交
+        String waitSubmitStatus = VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            String flagCode = id;
+            try {
+                VirtualWarehouseAllocationEntity allocationEntity = this.getById(id);
+                if (Objects.isNull(allocationEntity)) {
+                    submit = BatchResultDTO.fail(id, id, "分货单不存在");
+                } else {
+                    //只有待提交状态可以修改
+                    if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
+                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.IS_SUBMIT_IN_SUBMIT.msg);
+                    } else {
+                        flagCode = allocationEntity.getCode();
+                        submit = updateStatus(allocationEntity, VirtualWarehouseAllocationStatusEnum.HANDLE.getCode(), "");
+                    }
+                }
+            } catch (Exception e) {
+                log.error("提交分货单失败>>>>{}", e);
+                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS;
+    }
+
+    @Override
+    public List<BatchResultDTO> invalid(BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds();
+        //获取原始数据
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        //待提交
+        String waitSubmitStatus = VirtualWarehouseAllocationStatusEnum.INVALID.getCode();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            String flagCode = id;
+            try {
+                VirtualWarehouseAllocationEntity allocationEntity = this.getById(id);
+                if (Objects.isNull(allocationEntity)) {
+                    submit = BatchResultDTO.fail(id, id, "分货单不存在");
+                } else {
+                    //只有待提交状态可以修改
+                    if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
+                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.ERROR_98009.msg);
+                    } else {
+                        flagCode = allocationEntity.getCode();
+                        submit = updateStatus(allocationEntity, VirtualWarehouseAllocationStatusEnum.INVALID.getCode(), dto.getRemark());
+                    }
+                }
+            } catch (Exception e) {
+                log.error("作废分货单失败>>>>{}", e);
+                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS;
+    }
+
+//    @Override
+//    public List<BatchResultDTO> manualFinish(VirtualWarehouseAllocationDTO.ManualFinishDto dto) {
+//        String id = dto.getId();
+//        //待提交
+//        String waitSubmitStatus = VirtualWarehouseAllocationStatusEnum.INVALID.getCode();
+//        BatchResultDTO submit;
+//        String flagCode = id;
+//        try {
+//            VirtualWarehouseAllocationEntity allocationEntity = this.getById(id);
+//            if (Objects.isNull(allocationEntity)) {
+//                submit = BatchResultDTO.fail(id, id, "分货单不存在");
+//            } else {
+//                //只有待提交状态可以修改
+//                if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
+//                    submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.ERROR_98009.msg);
+//                } else {
+//                    flagCode = allocationEntity.getCode();
+//                    submit = updateStatus(allocationEntity, VirtualWarehouseAllocationStatusEnum.INVALID.getCode(), dto.getRemark());
+//                }
+//            }
+//        } catch (Exception e) {
+//            log.error("作废分货单失败>>>>{}", e);
+//            submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
+//        }
+//        return submit;
+//    }
+
+    /**
+     * 变更状态
+     *
+     * @param allocationEntity
+     * @param status
+     * @param invalidDescription
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateStatus(VirtualWarehouseAllocationEntity allocationEntity, String status, String invalidDescription) {
+        if (Objects.nonNull(allocationEntity)) {
+            //数据库的禁用状态
+            String existStatus = allocationEntity.getStatus();
+            if (existStatus.equals(status)) {
+                throw new ServiceException("存在相同的状态");
+            }
+            allocationEntity.setStatus(status);
+            allocationEntity.setInvalidDescription(invalidDescription);
+            this.updateById(allocationEntity);
+            return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.DISABLED);
+        }
+        return BatchResultDTO.fail(allocationEntity.getId(), allocationEntity.getCode(), "分货单不存在");
+    }
 
     /**
      * 新增修改处理数据
