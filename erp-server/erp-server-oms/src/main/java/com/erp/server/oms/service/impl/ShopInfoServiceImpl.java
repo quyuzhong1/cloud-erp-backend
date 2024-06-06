@@ -1449,7 +1449,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             //只有禁用的店铺允许删除
             if (Objects.equals(shopInfoEntity.getDisabled(), false)) {
-                deleteResult = BatchResultDTO.fail(id, id, ApiError.ERROR_SHOP_UNDISABLED.msg);
+                deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), ApiError.ERROR_SHOP_UNDISABLED.msg);
                 resultDTOS.add(deleteResult);
                 continue;
             }
