@@ -644,7 +644,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         List<String> skuIds = list.stream().map(InitStockDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOs =  plmTaskFeign.getSkuInfoByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuVOs.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
-
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         list.stream().forEach(data->{
             // 单据状态
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -674,6 +675,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 data.setSaleState(skuVO.getSaleState());
                 data.setSaleStateName(SaleStateEnum.getNameByCode(skuVO.getSaleState()));
             }
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(data.getWarehouseId()) && e.getCode().equals(data.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            data.setWarehouseLocationName(warehouseLocationEntity.getName());
         });
     }
 }

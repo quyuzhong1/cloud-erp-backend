@@ -71,6 +71,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 加工单
@@ -294,7 +295,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             throw new ServiceException(ApiError.ERROR_99056);
         }
         //库位信息查询
-        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = machineSubComponentsList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList1 = detailList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(entity.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList2 = machineSubComponentsList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = Stream.concat(paramList1.stream(), paramList2.stream())
+                .collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         //子件仓库id集合
         List<String> warehouseIdList = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).distinct().collect(Collectors.toList());
@@ -331,7 +335,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                             && StrUtil.equals(obj.getWarehouseLocationId(),viewDetailDTO.getWarehouseLocation()))
                     .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
-
+            //仓位信息
+            WarehouseLocationEntity warehouseLocationEntity1 = warehouseLocationEntityList.stream().filter(e -> Objects.nonNull(e) && e.getWarehouseId().equals(entity.getWarehouseId())
+                    && e.getCode().equals(viewDetailDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDetailDTO.setWarehouseLocationName(warehouseLocationEntity1.getName());
             //明细子件
             List<MachineSubComponentsEntity> subComponentsList = machineSubComponentsList.stream().filter(obj -> StrUtil.equals(viewDetailDTO.getId(), obj.getDetailId())).collect(Collectors.toList());
             List<MachineSubComponentsDTO.ViewDTO> subComponentsDTOList = BeanMapperUtils.copyList(MachineSubComponentsDTO.ViewDTO.class, subComponentsList);

@@ -64,6 +64,10 @@ public class StocktakingPlanDetailDTO implements Serializable {
         * 仓位
         */
         private String warehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
 
         /**
         * skuid
