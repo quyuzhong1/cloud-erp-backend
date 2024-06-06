@@ -298,5 +298,57 @@ public class VirtualInventoryDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewQtyDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 调出仓
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 调入仓
+         */
+        private String toVirtualWarehouseId;
+        /**
+         * 实际库存
+         */
+        private Integer realQty = 0;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty = 0;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty = 0;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class QtySearchDTO {
 
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 调出仓
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 调入仓
+         */
+        private String toVirtualWarehouseId;
+    }
 }

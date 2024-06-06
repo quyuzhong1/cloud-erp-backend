@@ -9,8 +9,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -21,6 +23,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -33,6 +36,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -159,6 +164,17 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         }
         return flag;
     }
+    /**
+     * 根据条件查询库存信息
+     *
+     * @param list
+     * @author hyj
+     * @date 2024/6/6
+     */
+    @Override
+    public List<VirtualInventoryDTO.ViewQtyDTO> getInventoryQty(List<VirtualInventoryDTO.QtySearchDTO> list) {
+        return null;
+    }
 
     /**
      * 虚拟库存分页查询数据处理
@@ -245,4 +261,6 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             listDTO.setDetailList(detailList);
         }
     }
+
+
 }

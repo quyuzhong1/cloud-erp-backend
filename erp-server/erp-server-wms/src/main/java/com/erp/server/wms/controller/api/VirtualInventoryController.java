@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 虚拟库存表
@@ -76,4 +78,15 @@ public class VirtualInventoryController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 根据条件查询库存信息
+     *
+     * @param dtos
+     * @author hyj
+     * @date 2024/6/6
+     */
+    @PostMapping(value = "/getQty")
+    public ApiResult<List<VirtualInventoryDTO.ViewQtyDTO>> getInventoryByParam(@RequestBody ValidList<VirtualInventoryDTO.QtySearchDTO> dtos) {
+        return success(virtualInventoryService.getInventoryQty(dtos.getList()));
+    }
 }
