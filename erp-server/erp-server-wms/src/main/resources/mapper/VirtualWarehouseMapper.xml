@@ -44,14 +44,21 @@
         vw.code,
         vw.name
         from virtual_warehouse vw
-        where vw.is_deleted=false
-        <if test="params.disabled!=null">
-            and vm.disabled=#{params.disabled}
-        </if>
+        where ${params.sqlMap.default}
+        and vw.is_deleted=false
+        <!--        <if test="params.disabled!=null">-->
+        <!--            and vm.disabled=#{params.disabled}-->
+        <!--        </if>-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by id desc
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vw.id desc
     </select>
 
 

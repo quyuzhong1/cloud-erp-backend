@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.WmsDeliveryPlanMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.WmsDeliveryPlanEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="delivery_status" property="deliveryStatus" />
+       <result column="to_warehouse_id" property="toWarehouseId" />
+       <result column="to_warehouse_name" property="toWarehouseName" />
+       <result column="country" property="country" />
+       <result column="country_name" property="countryName" />
+       <result column="plan_delivery_date" property="planDeliveryDate" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        code, approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, delivery_status, to_warehouse_id, to_warehouse_name, country, country_name, plan_delivery_date, remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$ListDTO">
+        SELECT
+            odp.id,
+            odpd.id AS detailId,
+            odp.code,
+            odp.approve_status AS approveStatus,
+            odp.invalid_status AS invalidStatus,
+            odp.delivery_status AS deliveryStatus,
+            odp.to_warehouse_id AS toWarehouseId,
+            odp.to_warehouse_name AS toWarehouseName,
+            odp.country,
+            odp.country_name AS countryName,
+            odpd.sku_id AS skuId,
+            odpd.sku_no AS skuNo,
+            odpd.is_combination AS isCombination,
+            odpd.qty AS planQty,
+            odp.create_user_id AS createUserId,
+            odp.create_user_name AS createUserName,
+            odp.approve_user_id AS approveUserId,
+            odp.approve_user_name AS approveUserName,
+            odp.create_time AS createTime,
+            odp.approve_time AS  approveTime,
+            op.code AS sourcePlatformCode,
+            odpd.platform_sku as thirdWarehouseSku,
+            odpd.platform_sku as  platformSku,
+            odpd.platform_spu as platformProductId,
+            odpd.platform_fn_sku as platformFnSku,
+            odp.type,
+            odp.shop_id as shopId,
+            odp.shop_name as shopName
+        FROM wms_delivery_plan_detail odpd
+        INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
+        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false
+        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and  odp.is_deleted = FALSE
+
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        odp.create_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from wms_delivery_plan where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$ListDTO">
+        SELECT
+        odp.id,
+        odp.code,
+        odp.approve_status,
+        odp.invalid_status,
+        odp.delivery_status,
+        odp.to_warehouse_id,
+        odp.to_warehouse_name,
+        odp.country,
+        odp.country_name,
+        odpd.sku_id,
+        odpd.sku_no,
+        odpd.is_combination,
+        odpd.qty AS planQty,
+        odp.create_user_id,
+        odp.create_user_name,
+        odp.approve_user_id,
+        odp.approve_user_name,
+        odp.create_time,
+        odp.approve_time,
+        op.code AS sourcePlatformCode,
+        odpd.platform_sku as thirdWarehouseSku,
+        odpd.platform_sku as  platformSku,
+        odpd.platform_spu as platformProductId,
+        odpd.platform_fn_sku as platformFnSku,
+        odp.type,
+        odp.shop_id as shopId,
+        odp.shop_name as shopName
+        FROM wms_delivery_plan_detail odpd
+        INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
+        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false
+        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+         and odp.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        odp.create_time desc
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  wms_delivery_plan
+        WHERE is_deleted=FALSE
+        GROUP BY approve_status
+    </select>
+
+    <!--下推要货申请列表查询-->
+    <select id="generateRequisitionApplicationView" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$GenerateRequisitionApplicationViewDTO">
+        SELECT
+            odp.id AS sourceId,
+            odpd.id AS sourceDetailId,
+            odp.code AS sourceCode,
+            odp.to_warehouse_id AS channelId,
+            odp.to_warehouse_name AS channelName,
+            odp.approve_status AS approveStatus,
+            odpd.sku_id,
+            odpd.sku_no,
+            odpd.is_combination,
+            odpd.qty AS planQty,
+            odpd.qty AS requisitionQty,
+            odpd.platform_sku as platformSku,
+            odpd.platform_sku_name as platformSkuName,
+            odpd.platform_spu as asin,
+            odpd.platform_fn_sku as fnSku,
+            odpd.box_qty as boxQty,
+            odp.type as deliveryPlanType,
+            odp.shop_id as shopId,
+            odp.shop_name as shopName
+        FROM wms_delivery_plan_detail odpd
+        INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
+        WHERE odp.is_deleted = FALSE
+        <if test="ids!=null and ids.size>0 ">
+            AND odp.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <!--下推发货单列表查询-->
+    <select id="generateDeliverView" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$GenerateDeliverViewDTO">
+        SELECT
+        odp.id AS sourceId,
+        odpd.id AS sourceDetailId,
+        odp.code AS sourceCode,
+        odp.country,
+        odp.country_name,
+        odp.to_warehouse_id,
+        odp.to_warehouse_name,
+        odp.approve_status AS approveStatus,
+        odpd.sku_id,
+        odpd.sku_no,
+        odpd.is_combination,
+        odpd.qty AS planQty,
+        odpd.qty AS deliveryQty,
+        odpd.platform_sku as platformSku,
+        odpd.platform_sku_name as platformSkuName,
+        odp.type
+        FROM wms_delivery_plan_detail odpd
+        INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
+        WHERE odp.is_deleted = FALSE
+        <if test="ids!=null and ids.size>0 ">
+            AND odp.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+</mapper>

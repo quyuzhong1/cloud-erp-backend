@@ -49,6 +49,9 @@ public enum ApiModuleTypeEnum {
     GLOBAL_AREA(37, "globalArea", "区域","sys"),
     COUNTRY(38, "country", "国家","sys"),
     PROVINCE_CITY(39, "provinceCity", "省市","sys"),
+    WDT_PRODUCT(40, "wdtProduct", "旺店通产品资料","plm")
+    , WDT_OTHER_IN_STOCK(41, "wdtOtherInStock", "旺店通其他入库单", "wms"),
+    WDT_OTHER_OUT_STOCK(42, "wdtOtherOutStock", "旺店通其他出库单", "wms"),
 
     ;
     private Integer code;

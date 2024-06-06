@@ -6,10 +6,12 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.oms.dto.OmsMongoDTO;
+import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.server.dmp.enums.CleanDataTableEnum;
@@ -37,7 +39,7 @@ import java.util.Objects;
 @Slf4j
 @RestController
 @RequestMapping("feign/mongodb")
-public class DmpMongoDbFeignController {
+public class DmpMongoDbFeignController{
 
     @Resource
     private MongoService mongoService;
@@ -69,6 +71,7 @@ public class DmpMongoDbFeignController {
         mongoService.updateMongoData(updateDto, mapUtil, dto.getTableName(), tClass);
     }
 
+
     /**
      * 查询mongodb是否有销售出库单
      *
@@ -99,5 +102,18 @@ public class DmpMongoDbFeignController {
     @PostMapping("/checkSoOutStock")
     public Boolean checkSoOutStock(@RequestBody DmpPullSoOutStockDTO resultDTO){
         return amzBusinessHandleService.checkAndSendSoOutStock(resultDTO);
+    }
+
+
+
+    /**
+     * 查询mongodb生成其他出库单
+     *
+     * @Author Jim
+     * @since 2024-02-14
+     **/
+    @PostMapping("/checkOtherOutStock")
+    Boolean checkOtherOutStock(@RequestBody DmpPullOtherOutStockDTO resultDTO){
+        return amzBusinessHandleService.checkAndSendOtherOutStock(resultDTO);
     }
 }

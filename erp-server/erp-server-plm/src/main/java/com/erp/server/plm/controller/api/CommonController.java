@@ -1,6 +1,9 @@
 package com.erp.server.plm.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.common.business.dto.UserSelectDto;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.enums.LogActionEnum;
@@ -58,6 +61,17 @@ public class CommonController extends BaseController {
     @PostMapping("/findUserList")
     public ApiResult<List<FindUserDTO>> findUserList(@RequestBody BaseSearchDTO dto) {
         return sysUserFeign.userList(dto);
+    }
+    /**
+     * 获取用户
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto) {
+        dto.setPageSize(100);
+        return sysUserFeign.pagingSelect(dto);
     }
 
 

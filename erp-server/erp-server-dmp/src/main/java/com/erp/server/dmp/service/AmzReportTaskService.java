@@ -1,11 +1,17 @@
 package com.erp.server.dmp.service;
 
+import com.common.business.dto.CleanBaseDTO;
+import com.common.business.dto.MongoSuperDTO;
+import com.common.business.dto.UniqueDto;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.erp.model.dmp.enums.AmzReportTaskStatusEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
+import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
+import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -199,4 +205,13 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @date: 2024-01-31
      */
     boolean stopRetryCount(Integer retryCount);
+
+
+    /**
+     * 记录处理行数和保存mongo公用事务
+     *
+     * @author Jim
+     * @date: 2024-05-07
+     */
+    <T extends MongoSuperDTO> AmzReportTaskEntity saveMongoAndUpdateRowIndex(String mongoTableName, List<T> mongoList, AmzReportTaskEntity currentEntity);
 }

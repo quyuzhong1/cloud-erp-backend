@@ -1,6 +1,5 @@
 package com.erp.server.dmp.pull.service.kingdee;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -35,7 +34,6 @@ import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.MapCountUtils;
 import com.xxl.job.core.util.GsonTool;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;

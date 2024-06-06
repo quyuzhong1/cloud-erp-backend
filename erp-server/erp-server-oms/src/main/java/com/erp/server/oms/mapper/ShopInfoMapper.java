@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 店铺表 Mapper 接口
@@ -27,4 +29,9 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
       * @return com.baomidou.mybatisplus.core.metadata.IPage
       */
     IPage<ShopDTO.PagingViewDTO> paging(Page query, @Param("params")ShopDTO.PagingParamDTO params);
+
+    List<ShopDTO.PagingViewDTO> listExport(@Param("params") ShopDTO.ExportDTO dto);
+
+    IPage<ShopDTO.ListDTO> pagingSelect(Page query,@Param("params") ShopDTO.SelectDTO params);
+
 }

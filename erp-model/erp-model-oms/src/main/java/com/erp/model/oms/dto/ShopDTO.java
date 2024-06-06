@@ -1,6 +1,9 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.base.SortDTO;
@@ -17,6 +20,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -157,6 +161,16 @@ public class ShopDTO implements Serializable {
         private LocalDateTime updateTime;
 
         /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
          * 平台店铺类型
          */
         @Dict(enumClass = ShopTypeEnum.class)
@@ -228,7 +242,18 @@ public class ShopDTO implements Serializable {
          * 修改时间
          */
         private List<LocalDateTime> updateTimeList;
-
+        /**
+         * 销售组织id
+         */
+        private List<String> salesOrgIdList;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
 
     }
 
@@ -302,6 +327,53 @@ public class ShopDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+
+
+    }
+    @Data
+    @NoArgsConstructor
+    public static class AddInternalDTO {
+
+
+        /**
+         * 平台
+         */
+        @NotBlank(message = "平台不能为空")
+        private String dictPlatform;
+
+
+        /**
+         * 店铺名称
+         */
+        @NotBlank(message = "店铺名称不能为空")
+        @Size(max = 100, message = "店铺名称最大100字符")
+        private String name;
+
+
+        /**
+         * 店铺账号
+         */
+        @NotBlank(message = "店铺账号不能为空")
+        @Size(max = 100, message = "店铺账号最大100字符")
+        private String account;
+
+
+        /**
+         * 店铺负责人
+         */
+        @NotBlank(message = "负责人不能为空")
+        private String chargeId;
+
+        /**
+         * 销售组织
+         */
+        @NotBlank(message = "销售组织不能为空")
+        private String salesOrgId;
+
+        /**
+         * 是否包含平台仓 true 包含
+         */
+        private Boolean  isHaveWarehouse;
 
 
     }
@@ -550,7 +622,37 @@ public class ShopDTO implements Serializable {
          * 客户的id
          * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
          */
-        @NotBlank(message = "客户的id不能为空")
+//        @NotBlank(message = "客户的id不能为空")
+        private String customerId;
+
+    }
+    @Data
+    @NoArgsConstructor
+    public static class UpdateInternalDTO {
+
+        @NotBlank(message = "店铺表不能为空")
+        private String id;
+
+        @NotBlank(message = "店铺名称不能为空")
+        @Size(max = 100, message = "店铺名称最大100字符")
+        private String name;
+
+        /**
+         * 店铺负责人
+         */
+        @NotBlank(message = "负责人不能为空")
+        private String chargeId;
+
+        /**
+         * 销售组织
+         */
+        @NotBlank(message = "销售组织不能为空")
+        private String salesOrgId;
+
+        /**
+         * 客户的id
+         * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
+         */
         private String customerId;
 
     }
@@ -758,6 +860,59 @@ public class ShopDTO implements Serializable {
 
         private String baseUrl;
 
+
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+
+        private List<String> ids;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 是否已授权
+         */
+        private Boolean showByAuth = false;
+        /**
+         * 平台
+         */
+        private List<String> shopIdList;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主键
+         */
+        private String id;
+        /**
+         * 关键词
+         */
+        private String name;
+        /**
+         * 账号
+         */
+        private String account;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
 
     }
 }

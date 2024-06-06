@@ -7,7 +7,10 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
+
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -40,42 +43,51 @@ public class VirtualWarehouseController extends BaseController {
     private VirtualWarehouseService virtualWarehouseService;
 
     /**
-    * 新增
-    * @author hyj
-    * @date:  2024-06-02
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 新增
+     *
+     * @param addDTO
+     * @return ApiResult<String>
+     * @author hyj
+     * @date: 2024-06-02
+     */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouse:add",
+            serviceClass = VirtualWarehouseService.class,
+            keyIdName = "id")
     @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseDTO.AddDTO dto) {
-        return success(virtualWarehouseService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseDTO.AddDTO addDTO) {
+        return success(virtualWarehouseService.add(addDTO));
     }
 
     /**
-    * 修改
-    * @author hyj
-    * @date:  2024-06-02
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author hyj
+     * @date: 2024-06-02
+     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "虚拟仓修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:virtualWarehouse:update",
-        serviceClass = VirtualWarehouseService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouse:update",
+            serviceClass = VirtualWarehouseService.class,
+            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated VirtualWarehouseDTO.UpdateDTO dto) {
         virtualWarehouseService.update(dto);
         return success();
     }
+
     /**
      * 列表查询
-     * @author hyj
-     * @date:  2024-06-02
+     *
      * @param dto
      * @return ApiResult
+     * @author hyj
+     * @date: 2024-06-02
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -88,5 +100,31 @@ public class VirtualWarehouseController extends BaseController {
         return success(virtualWarehouseService.paging(dto));
     }
 
+    /**
+     * 修改状态
+     */
+    @PostMapping("/updateState")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "虚拟仓修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouse:updateState",
+            serviceClass = VirtualWarehouseService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateState(@RequestBody @Validated VirtualWarehouseDTO.UpdateStateDTO updateStateDTO) {
+        return success(virtualWarehouseService.updateState(updateStateDTO));
+    }
 
+    /**
+     * 详情
+     */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouse:view",
+            serviceClass = VirtualWarehouseService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<?> view(@RequestParam(value = "id") String id) {
+        return success(virtualWarehouseService.view(id));
+    }
 }

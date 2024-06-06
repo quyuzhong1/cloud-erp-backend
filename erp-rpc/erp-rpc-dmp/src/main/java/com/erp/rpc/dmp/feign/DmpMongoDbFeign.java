@@ -2,6 +2,7 @@ package com.erp.rpc.dmp.feign;
 
 
 import com.common.business.dto.PlatformOrderDTO;
+import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -46,4 +47,13 @@ public interface DmpMongoDbFeign {
      **/
     @PostMapping("/checkSoOutStock")
     Boolean checkSoOutStock(@RequestBody DmpPullSoOutStockDTO resultDTO);
+
+    /**
+     * 查询mongodb是生成其他出库单
+     *
+     * @Author Jim
+     * @since 2024-02-14
+     **/
+    @PostMapping("/checkOtherOutStock")
+    Boolean checkOtherOutStock(@RequestBody DmpPullOtherOutStockDTO resultDTO);
 }

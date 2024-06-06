@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -61,7 +63,9 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String name;
 
-
+        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+        private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
+        private List<String> warehouseIdList;
     }
 
     /**
@@ -70,8 +74,10 @@ public class VirtualWarehouseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        @Valid
         private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
-        private List<String> thirdMappingList;
+//        @Valid
+        private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
     }
 
@@ -88,6 +94,25 @@ public class VirtualWarehouseDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+        private List<ThirdMappingDTO.AddDTO> thirdMappingList;
+        private List<String> warehouseIdList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStateDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * true 禁用
+         * false 启用
+         */
+        @NotNull(message = "状态不能为空")
+        private Boolean disabled;
     }
 
     @Data
@@ -97,7 +122,6 @@ public class VirtualWarehouseDTO implements Serializable {
         /**
          * 是否失效 true 失效 false 未失效
          */
-        @NotNull(message = "是否失效 true 失效 false 未失效不能为空")
         private Boolean disabled;
 
         /**
@@ -186,9 +210,9 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String name;
 
-//        public String getDisabledName() {
-//            return Objects.equals(disabled, Boolean.TRUE) ? "停用" : "启用";
-//        }
+        public String getDisabledName() {
+            return Objects.equals(disabled, Boolean.TRUE) ? "停用" : "启用";
+        }
     }
 
 }

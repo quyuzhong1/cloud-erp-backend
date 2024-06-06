@@ -110,10 +110,9 @@ public enum ApiError implements Serializable {
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
     LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
     LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
-    ERROR_NAME_EXIST(1060,"名称【{}】已存在"),
+    ERROR_NAME_EXIST(1062,"名称【{}】已存在"),
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
-
 
     /**
      * 警告信息 从800 开始
@@ -187,7 +186,12 @@ public enum ApiError implements Serializable {
     ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA(80006,"未找到上级辅助资料"),
     ERROR_NOT_EXIST_DMP_PUSH_TASK(80007,"未找到中台推送任务"),
     ERROR_STATUS_NO_NEED_SYNC(80008,"只有同步失败状态才可更新为无需同步"),
-
+    ERROR_THIRD_BINDED(80009,"第三方{}【{}】已经被【{}】绑定"),
+    ERROR_SYS_BINDED(80009,"{}【{}】已经被第三方【{}】绑定"),
+    ERROR_THIRD_SHOP_NOTFOUND(80010,"第三方店铺不存在"),
+    ERROR_THIRD_WAREHOUSE_NOTFOUND(80011,"第三方仓库不存在"),
+    ERROR_THIRD_SYS_TYPE_BINDING(80012,"同一个第三方平台只能绑定一个{}"),
+    ERROR_SYS_TYPE_NOTFOUND(80013,"{}不存在"),
 
     /**
      * 工作流错误 workflow
@@ -1001,10 +1005,17 @@ public enum ApiError implements Serializable {
     SO_OUTSTOCK_NOT_PACKING(92137,"出库单报关单已生成，不支持修改"),
     TRANSFER_DECLARE_SO_EXISTS(92138,"订单【{}】已存在入库预报单，请不要重复新增"),
     PAPER_SIZE_INCONSISTENT_NOT_PRINT(92139,"纸张大小不一致，不支持批量打印"),
-    ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST(92140,"未找到虚拟仓库"),
+    EXIST_THIRD_WAREHOUSE_MAPPING(99140,"仓库【{}】已存在第三方仓库映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
     ERROR_VIRTUAL_INVENTORY_INSUFFICIENT(92141,"虚拟库存不足，SKU:[{}],虚拟仓库：[{}],实物仓库:[{}],库存状态:[{}],库存数量[{}],交易数量[{}]"),
-
-
+    ERROR_BINDING(99141,"绑定失败"),
+    ERROR_VMNAME_EXIST(92200,"虚拟仓名称已存在"),
+    ERROR_VM_NOTFOUND(92201,"虚拟仓不存在"),
+    ERROR_WAREHOUSE_BINDED(92202,"当前实体仓已被虚拟仓【{}】绑定"),
+    ERROR_SAME_DISABLED(92203,"存在相同状态"),
+    ERROR_WAREHOUSE_NOTFOUND(92204,"仓库不存在"),
+    ERROR_ONLYONE(92205,"一个渠道只能关联一种类型"),
+    ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST(92140,"未找到虚拟仓库"),
+    ERROR_VMALLOCATION_DETAIL_ADD(92206 , "虚拟仓分货单明细保存失败"),
 
 
 
@@ -1204,6 +1215,11 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_TIKTOK_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
     ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
     ERROR_TIKTOK_SPLIT(92081,"订单【{}】TikTok拆分订单失败"),
+    ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING(92083,"同步旺店通B2C销售出库单未找到对应的仓库映射【{}】"),
+    ERROR_WDT_NOT_FOUND_SHOP_MAPPING(92084,"同步旺店通B2C销售出库单未找到对应的店铺映射【{}】"),
+    ERROR_WDT_NOT_FOUND_SKU(92085,"同步旺店通退货入库单未找到对应的SKU【{}】"),
+
+    ERROR_SHOP_UNDISABLED(92142,"只有禁用的店铺允许删除"),
     ERROR_SO_B2C_ORDER_DECLARE_SKU_NO_NOT_EXIST(92142,"销售订单【{}】申报信息SKU不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_CN_NAME_NOT_EXIST(92143,"申报信息SKU【{}】报关中文名不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_EN_NAME_NOT_EXIST(92144,"申报信息SKU【{}】报关英文名不存在"),
@@ -1211,6 +1227,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_NOT_EXIST(92146,"申报信息SKU【{}】目的国申报价币种不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_SYM_NOT_EXIST(92147,"申报信息SKU【{}】目的国申报价币种符号不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_WEIGHT_NOT_EXIST(92148,"申报信息SKU【{}】重量不能为0"),
+    EXIST_THIRD_SHOP_MAPPING(99140,"店铺【{}】已存在第三方映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
 
     /**
      * TMS 错误
@@ -1317,6 +1334,9 @@ public enum ApiError implements Serializable {
     ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
 
+    //旺店通异常
+    ERROR_3000(3000, "请求旺店通接口异常"),
+    ERROR_WDT_CANCEL_PUSH(3001, "该单据的前序推送任务未完成, 此任务取消执行"),
 
 
     // 亚马逊公用异常

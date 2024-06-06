@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -62,7 +63,12 @@ public class VirtualWarehouseRelationDTO implements Serializable {
 
 
     }
-
+    @Data
+    @NoArgsConstructor
+    public static class BatchAddDTO{
+        private List<String> warehouseIdList;
+        private String virtualWarehouseId;
+    }
     /**
     * 修改
     */

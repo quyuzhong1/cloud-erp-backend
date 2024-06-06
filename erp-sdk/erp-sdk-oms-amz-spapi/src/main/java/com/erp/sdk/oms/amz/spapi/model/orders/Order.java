@@ -44,7 +44,6 @@ public class Order {
     @SerializedName("LastUpdateDate")
     private String lastUpdateDate = null;
 
-
     /**
      * The current order status.
      */
@@ -1576,13 +1575,11 @@ public class Order {
     }
 
 
-    public static void main(String[] args) {
-        String time = "2023-10-12T06:57:50Z";
-        LocalDateTime parse = LocalDateTime.parse(time, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                .atZone(ZoneOffset.UTC)
-                .withZoneSameInstant(ZoneId.systemDefault())
-                .toLocalDateTime();
-        System.out.println(parse);
+    /**
+     * 是否是多渠道订单
+     */
+    public boolean hasMultiChannel() {
+        return this.salesChannel.contains("Non") || this.getAmazonOrderId().contains("S");
     }
 
 }

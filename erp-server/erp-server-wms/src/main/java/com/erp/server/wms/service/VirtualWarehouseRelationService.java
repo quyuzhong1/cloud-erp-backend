@@ -1,8 +1,12 @@
 package com.erp.server.wms.service;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,22 +19,46 @@ import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 public interface VirtualWarehouseRelationService extends SuperService<VirtualWarehouseRelationEntity> {
 
     /**
-    * 新增
-    * @author hyj
-    * @date: 2024-06-02
-    * @param dto
-    * @return
-    */
+     * 新增
+     *
+     * @param dto
+     * @return
+     * @author hyj
+     * @date: 2024-06-02
+     */
     BaseResultDTO.AddDTO add(VirtualWarehouseRelationDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author hyj
-    * @date: 2024-06-02
-    * @param dto
-    * @return
-    */
+     * 修改
+     *
+     * @param dto
+     * @return
+     * @author hyj
+     * @date: 2024-06-02
+     */
     Boolean update(VirtualWarehouseRelationDTO.UpdateDTO dto);
 
+    /**
+     * 根据仓库id获取关联关系
+     *
+     * @param warehouseIdList
+     * @return
+     */
+    List<VirtualWarehouseRelationEntity> getByWarehouseId(List<String> warehouseIdList);
+    /**
+     * 根据虚拟仓库id获取关联关系
+     *
+     * @param virtualWarehouseId
+     * @return
+     */
+    List<VirtualWarehouseRelationEntity> getByVirtualWarehouseId(String virtualWarehouseId);
+
+    /**
+     * 批量新增
+     *
+     * @param batchAddDTO
+     * @return
+     */
+    BaseResultDTO.AddDTO batchAdd(VirtualWarehouseRelationDTO.BatchAddDTO batchAddDTO);
 
 }

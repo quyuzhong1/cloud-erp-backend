@@ -49,6 +49,19 @@ public class VirtualWarehouseRelationController extends BaseController {
     }
 
     /**
+    * 新增
+    * @author hyj
+    * @date:  2024-06-02
+    * @param batchAddDTO
+    * @return ApiResult<String>
+    */
+    @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓实体仓关联关系新增")
+    public ApiResult<BaseResultDTO.AddDTO> batchAdd(@RequestBody @Validated VirtualWarehouseRelationDTO.BatchAddDTO batchAddDTO) {
+        return success(virtualWarehouseRelationService.batchAdd(batchAddDTO));
+    }
+
+    /**
     * 修改
     * @author hyj
     * @date:  2024-06-02

@@ -331,12 +331,17 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         List<String> skuIdList = StringUtils.isNotEmpty(skuId) ? Collections.singletonList(skuId) : null;
         List<String> detailIdList = StringUtils.isNotEmpty(detailId) ? Collections.singletonList(detailId) : null;
         //即时库存数据
-        InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-        skuInventoryDTO.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
-        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
-        skuInventoryDTO.setSkuIdList(skuIdList);
-        //即时库存的数据
-        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = null;
+        if (CollectionUtils.isNotEmpty(skuIdList) && CollectionUtils.isNotEmpty(warehouseIdList)){
+            InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+            skuInventoryDTO.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
+            skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+            skuInventoryDTO.setSkuIdList(skuIdList);
+            //即时库存的数据
+            inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
+        }
+
+
         /**
          *  已付款且未提交发货且未作废的订单SKU的发货数量
          *  根据SKU、仓库、仓位查询SKU数量

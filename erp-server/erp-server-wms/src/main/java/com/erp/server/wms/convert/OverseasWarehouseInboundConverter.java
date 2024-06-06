@@ -179,6 +179,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "city",  source = "receiverInfo.city"),
             @Mapping(target = "address1",  source = "receiverInfo.address1"),
             @Mapping(target = "address2",  source = "receiverInfo.address2"),
+            @Mapping(target = "zipcode",  source = "receiverInfo.zipcode"),
             @Mapping(target = "itemList",  source = "items"),
     })
     GoodCangCreateOutboundReq outboundDtoToGoodCang(ThirdWarehouseCreateOutboundReq createOutboundReq);
@@ -203,6 +204,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "address1",  source = "receiverInfo.address1"),
             @Mapping(target = "address2",  source = "receiverInfo.address2"),
             @Mapping(target = "address3",  source = "receiverInfo.address3"),
+            @Mapping(target = "zipcode",  source = "receiverInfo.zipcode"),
             @Mapping(target = "items",  source = "items"),
     })
     ImlCreateOutboundReq outboundDtoToIml(ThirdWarehouseCreateOutboundReq createOutboundReq);
