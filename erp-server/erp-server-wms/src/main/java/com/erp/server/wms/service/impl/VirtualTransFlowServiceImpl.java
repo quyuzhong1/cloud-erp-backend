@@ -12,19 +12,20 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowMapper;
 import com.erp.server.wms.service.VirtualTransFlowService;
@@ -142,6 +143,11 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
 
     @Override
     public Boolean exportExcel(VirtualTransFlowDTO.SearchParamDTO dto, HttpServletResponse response) {
+        //总数
+        Integer count = baseMapper.pagingCount(dto);
+        if (count > MathUtil.EXPORT_MAX_COUNT) {
+            throw new ServiceException(ApiError.ERROR_EXCEL_EXPORT_SIZE);
+        }
         PagingDTO<VirtualTransFlowDTO.SearchParamDTO> pagingParamDTO = new PagingDTO<>();
         pagingParamDTO.setParams(dto);
         pagingParamDTO.setPageSize(-1);
@@ -177,6 +183,11 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
+        //产品信息
+        List<String> skuIdList = list.stream().map(VirtualTransFlowDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+
+
         //实体仓库
         List<String> warehouseIdList = list.stream().map(VirtualTransFlowDTO.ListDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
@@ -188,6 +199,10 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
 
         for (VirtualTransFlowDTO.ListDTO listDTO : list) {
 
+            //产品信息
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
+            listDTO.setProductName(productDetailEntity.getName());
+
             //来源类型名称
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             //实体仓库名称
@@ -197,6 +212,11 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
             //组织名称
             String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
             listDTO.setOrgName(orgName);
+
+            //操作状态名称
+            listDTO.setOperationModeName(EnumMessage.getNameByCode(InventoryOperationModeEnum.class,listDTO.getOperationMode()));
+            //库存状态名称
+            listDTO.setDictInventoryStatusName(EnumMessage.getNameByCode(InventoryStatusEnum.class,listDTO.getDictInventoryStatus()));
         }
     }
 

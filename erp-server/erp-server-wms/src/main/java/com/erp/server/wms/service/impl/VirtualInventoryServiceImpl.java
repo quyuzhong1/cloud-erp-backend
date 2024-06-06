@@ -74,6 +74,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
     @Override
     public Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto, HttpServletResponse response) {
+        //总数
+        Integer count = baseMapper.pagingCount(dto);
+        if (count > MathUtil.EXPORT_MAX_COUNT) {
+            throw new ServiceException(ApiError.ERROR_EXCEL_EXPORT_SIZE);
+        }
         PagingDTO<VirtualInventoryDTO.SearchParamDTO> pagingParamDTO = new PagingDTO<>();
         pagingParamDTO.setParams(dto);
         pagingParamDTO.setPageSize(-1);
@@ -171,7 +176,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             return;
         }
         //产品信息
-        List<String> skuIdList = list.stream().map(VirtualInventoryDTO.ListDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(VirtualInventoryDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
         //虚拟仓库

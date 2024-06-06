@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
@@ -163,8 +162,8 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         List<String> warehouseIdList = virtualTransFlowList.stream().map(VirtualTransFlowEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
 
-        // 关联交易号
-        String transactionNo = IdUtil.getSnowflake().nextIdStr();
+        // 业务处理，同一个操作产生的交易流水使用同一个关联交易号
+        String transactionNo =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XLS);
         // 通过对sku id顺序执行, 避免多线程死锁
         Comparator<VirtualTransFlowEntity> comparing = Comparator.comparing(VirtualTransFlowEntity::getSkuId)
                 .thenComparing(VirtualTransFlowEntity::getWarehouseId)

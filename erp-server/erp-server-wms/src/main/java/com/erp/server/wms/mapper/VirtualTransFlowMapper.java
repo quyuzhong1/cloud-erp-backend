@@ -21,6 +21,16 @@ import java.time.LocalDateTime;
  */
 @Mapper
 public interface VirtualTransFlowMapper extends BaseMapper<VirtualTransFlowEntity> {
+
+    /**
+     * 查询列表数据总数
+     * @author will
+     * @date 2024/6/6 18:07
+     * @param params
+     * @return Integer
+     */
+    Integer pagingCount(@Param("params") VirtualTransFlowDTO.SearchParamDTO params);
+
     /**
      * 虚拟库存流水分页查询
      * @author will

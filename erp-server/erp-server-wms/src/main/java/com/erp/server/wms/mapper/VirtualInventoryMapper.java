@@ -24,6 +24,16 @@ import java.util.List;
 public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntity> {
 
     /**
+     * 查询列表数据总数
+     * @author will
+     * @date 2024/6/6 18:10
+     * @param dto
+     * @return Integer
+     */
+    Integer pagingCount(VirtualInventoryDTO.SearchParamDTO dto);
+
+
+    /**
      * 虚拟库存分页查询
      * @author will
      * @date 2024/6/3 15:15
@@ -59,4 +69,5 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @return IPage<ListDetailDTO>
      */
     IPage<VirtualInventoryDiffDTO.ListDetailDTO> diffDetailPaging(Page query,@Param("params") VirtualInventoryDiffDTO.SearchParamDetailDTO params);
+
 }
