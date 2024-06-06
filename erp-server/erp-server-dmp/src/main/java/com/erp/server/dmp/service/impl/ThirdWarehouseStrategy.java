@@ -94,7 +94,17 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                 //判断当前平台是否绑定第三方数据
                 checkSysBinding(addDTO, existMappingList, thirdList, warehouse, resultUpdatedList);
                 //保存新增数据
-                saveAddDto(addDTO, thirdList, resultUpdatedList, warehouse);
+//                saveAddDto(addDTO, thirdList, resultUpdatedList, warehouse);
+                for (ThirdMappingDTO.ThirdAddDTO thirdAddDTO : thirdList) {
+                    if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
+                        ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
+                        if (Objects.isNull(updatedDto)) {
+                            makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
+                        }
+                    } else {
+                        makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
+                    }
+                }
             }
         }
         return new BaseResultDTO.AddDTO();
@@ -122,18 +132,21 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
      * @param resultUpdatedList
      * @param warehouse
      */
-    private void saveAddDto(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingDTO.ThirdAddDTO> thirdList, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList, WarehouseDTO.ListDTO warehouse) {
-        thirdList.forEach(thirdAddDTO -> {
-            if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
-                ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
-                if (Objects.isNull(updatedDto)) {
-                    makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
-                }
-            } else {
-                makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
-            }
-        });
-    }
+//    @Override
+//    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
+//    public void saveAddDto(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingDTO.ThirdAddDTO> thirdList, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList, WarehouseDTO.ListDTO warehouse) {
+//        thirdList.forEach(thirdAddDTO -> {
+//            if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
+//                ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
+//                if (Objects.isNull(updatedDto)) {
+//                    makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
+//                }
+//            } else {
+//                makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
+//            }
+//        });
+//    }
 
     /**
      * 判断当前平台是否绑定第三方数据
@@ -176,7 +189,10 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
      *
      * @param existMappingList
      */
-    private void deleteBinded(List<ThirdMappingEntity> existMappingList) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
         existMappingList.forEach(existMapping -> {
             // 操作日志
             String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
@@ -199,7 +215,10 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
      * @param warehouseName
      * @param disabled
      */
-    private void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
         if (PlatformDictEnum.IML.getCode().equals(existMapping.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(existMapping.getThirdSysType())) {
             OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
             feignDTO.setCode(existMapping.getThirdSysType());
@@ -214,7 +233,15 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
         }
     }
 
-    private void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO, WarehouseDTO.ListDTO warehouse) {
+    /**
+     * 保存数据
+     *
+     * @param addDTO
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO, WarehouseDTO.ListDTO warehouse) {
         ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
         BeanMapperUtils.copy(addDTO, thirdMappingEntity);
         thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
@@ -224,7 +251,9 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
         addOrUpdate(thirdMappingEntity, null, warehouse);
     }
 
-    private void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping, WarehouseDTO.ListDTO warehouse) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping, WarehouseDTO.ListDTO warehouse) {
         // 数据处理
         handleData(thirdMappingEntity);
         log.info("开始新增第三方系统映射关系单");
