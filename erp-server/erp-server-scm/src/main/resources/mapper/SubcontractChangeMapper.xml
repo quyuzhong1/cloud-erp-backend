@@ -121,7 +121,7 @@
             </foreach>
         </if>
         sc.create_time desc
-        limit 100000
+        limit 50000
     </select>
 
 </mapper>

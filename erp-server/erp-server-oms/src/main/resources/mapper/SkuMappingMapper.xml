@@ -244,7 +244,7 @@
             </otherwise>
         </choose>
         ORDER BY sm.create_time DESC
-        limit 100000
+        limit 50000
     </select>
     <!--统计-->
     <select id="listMatchCount" resultType="com.erp.model.oms.dto.SkuMappingDTO$MatchCountDTO">
@@ -497,7 +497,7 @@
         </choose>
 
         ORDER BY sm.create_time DESC
-        limit 100000
+        limit 50000
     </select>
     <select id="listByPlatformSkuNoList" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
         SELECT li.id AS listingId,

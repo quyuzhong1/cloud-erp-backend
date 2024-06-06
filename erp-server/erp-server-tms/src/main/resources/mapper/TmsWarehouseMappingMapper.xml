@@ -75,7 +75,7 @@
             </if>
             twm.id desc
         </where>
-        limit 100000
+        limit 50000
     </select>
 
 

@@ -95,7 +95,7 @@
             </foreach>
         </if>
             sc.create_time DESC
-        limit 100000
+        limit 50000
     </select>
     <select id="listSoRefSoChangeBySoId" resultType="com.erp.model.oms.dto.SoChangeDTO$SoRefDTO">
        SELECT

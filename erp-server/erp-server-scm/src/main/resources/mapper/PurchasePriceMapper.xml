@@ -86,7 +86,7 @@
             </foreach>
         </if>
         pp.create_time DESC,ppd.id DESC
-        limit 100000
+        limit 50000
     </select>
 
     <select id="listSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">

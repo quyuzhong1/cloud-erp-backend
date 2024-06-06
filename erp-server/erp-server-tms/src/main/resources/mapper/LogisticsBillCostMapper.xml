@@ -166,7 +166,7 @@
             </foreach>
         </if>
         lbc.id desc
-        limit 100000
+        limit 50000
     </select>
     <select id="listBillCostByOutstockIds" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$OutStockDTO">
         SELECT

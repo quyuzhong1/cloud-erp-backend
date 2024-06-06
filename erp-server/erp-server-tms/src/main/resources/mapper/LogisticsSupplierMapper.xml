@@ -203,7 +203,7 @@
             </foreach>
         </if>
         ls.create_time DESC
-        limit 100000
+        limit 50000
     </select>
     <select id="getLogisticsSupplierAuthById" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$AuthDTO">
         SELECT

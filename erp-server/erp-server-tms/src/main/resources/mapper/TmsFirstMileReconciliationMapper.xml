@@ -147,7 +147,7 @@
             </if>
             tfmr.id desc
         </where>
-        limit 100000
+        limit 50000
     </select>
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$TabListDTO">
         SELECT
