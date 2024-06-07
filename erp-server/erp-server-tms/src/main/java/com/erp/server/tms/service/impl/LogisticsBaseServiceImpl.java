@@ -458,8 +458,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 return batchResultDTOS;
             }
             //先暂停该渠道数据，然后进行更新动作
-            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
-
+//            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE); 速卖通需要进行渠道增量
             for (ShopAuthEntity shopAuthEntity : data) {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
                 Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
