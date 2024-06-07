@@ -1,9 +1,18 @@
 package com.erp.server.wms.sdk.delivery;
 
+import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.IPlatformService;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -83,4 +93,58 @@ public abstract class AbstractShipOrder implements IPlatformService {
         return allDetailList;
     }
 
+    /**
+     * 合并前的所有源订单
+     */
+    public Tuple allSourceOrderInfo(PlatformShipOrderDTO dto) {
+        List<SoB2cEntity> sourceOrderList;
+        Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = new HashMap<>();
+        Map<String, SoB2cLogisticsEntity> logisticsEntityMap= new HashMap<>();
+
+        // 查询合并来源关系
+        List<SoB2cRefEntity> refEntityList = soB2cFeign.findMergeByTargetId(dto.getSoB2cId());
+        if (CollectionUtils.isEmpty(refEntityList)){
+            // 无合并
+            //检查销售订单是否存在
+            SoB2cEntity mainEntity = soB2cFeign.getById(dto.getSoB2cId());
+            if (ObjectUtil.isEmpty(mainEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            }
+            sourceOrderList = Collections.singletonList(mainEntity);
+            //检查销售订单物流信息是否存在
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(mainEntity.getId()));
+            if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            }
+            logisticsEntityMap.put(dto.getSoB2cId(), soB2cLogisticsEntities.get(0));
+            //检查销售订单详情是否存在
+            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
+            if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            }
+            soB2cDetailEntityListMap.put(dto.getSoB2cId(),soB2cDetailEntityList);
+        } else {
+            // 有合并
+            List<String> mainIds = refEntityList.stream().map(SoB2cRefEntity::getSourceId).distinct().collect(Collectors.toList());
+            List<String> detailIds = refEntityList.stream().map(SoB2cRefEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+            sourceOrderList = soB2cFeign.listByIds(mainIds);
+            //检查销售订单是否存在
+            if (CollectionUtils.isEmpty(sourceOrderList)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            }
+            sourceOrderList = sourceOrderList.stream()
+                    .filter(e-> SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(e.getSourceType()) && PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(e.getDictPlatform()))
+                    .collect(Collectors.toList());
+            //检查销售订单物流信息是否存在
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(mainIds);
+            if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            }
+            logisticsEntityMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
+            // 查询所有明细
+            List<SoB2cDetailEntity> allDetailList = soB2cFeign.listDetailByIds(detailIds);
+            soB2cDetailEntityListMap = allDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
+        }
+        return new Tuple(sourceOrderList, soB2cDetailEntityListMap, logisticsEntityMap);
+    }
 }

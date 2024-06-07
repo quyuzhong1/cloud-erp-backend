@@ -232,7 +232,9 @@ public class AliExpressOrderService {
         request.addApiParameter("out_ref", declareDeliverRequest.getOutRef());
         request.addApiParameter("service_name", declareDeliverRequest.getServiceName());
         request.setApiName(apiName);
+        log.warn("【{}】速卖通标记发货:请求参数={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(request));
         IopResponse response = client.execute(request, token, Protocol.TOP);
+        log.warn("【{}】速卖通标记发货:响应结果={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(response));
         String body = response.getBody();
         JSONObject jsonObject = JSONUtil.parseObj(body);
         Boolean success = jsonObject.getBool("result_success", Boolean.FALSE);
