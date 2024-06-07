@@ -124,10 +124,20 @@ public class AliExpressProductService {
         //表示成功
         if (Objects.nonNull(jsonObject)) {
             JSONObject json = jsonObject.getJSONObject("aliexpress_offer_product_query_response");
+            if (null == json){
+                log.error("【速卖通】获取到具体的产品信息异常：productId={}, response={}", productId, JSONUtil.toJsonStr(response.getBody()));
+                // 临时跳过
+                return null;
+            }
             JSONObject json2 = json.getJSONObject("result");
-            AliExpressProduct product = JSONObject.parseObject(json2.toJSONString(), AliExpressProduct.class);
-            return product;
+            if (null == json2){
+                log.error("【速卖通】获取到具体的产品信息异常：productId={}, response={}", productId, JSONUtil.toJsonStr(response.getBody()));
+                // 临时跳过
+                return null;
+            }
+            return JSONObject.parseObject(json2.toJSONString(), AliExpressProduct.class);
         }
+        log.error("【速卖通】获取到具体的产品信息异常：productId={}, response={}", productId, JSONUtil.toJsonStr(response.getBody()));
         return null;
     }
 
