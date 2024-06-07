@@ -27,6 +27,11 @@ public class VirtualInventoryDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+
+        /**
+         * 序号
+         */
+        private Integer index;
         /**
          * skuId
          */

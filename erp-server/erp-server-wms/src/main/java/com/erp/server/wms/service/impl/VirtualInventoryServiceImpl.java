@@ -201,7 +201,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         List<String> warehouseIdList = virtualInventoryList.stream().map(VirtualInventoryDTO.ListInventoryDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
 
+        Integer index = MathUtil.ONE;
         for (VirtualInventoryDTO.ListDTO listDTO : list) {
+            //序号
+            listDTO.setIndex(index);
+            index ++;
             //产品信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
             listDTO.setProductName(productDetailEntity.getName());
