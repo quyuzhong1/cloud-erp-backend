@@ -23,6 +23,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +62,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     private ThirdShopService thirdShopService;
     @Resource
     private ThirdWarehouseService thirdWarehouseService;
+//    @Resource
+//    private ThirdMappingService thirdMappingService;
 
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
@@ -159,60 +162,63 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         });
     }
 
-    /**
-     * 判断当前平台是否绑定第三方数据
-     *
-     * @param addDTO
-     * @param existMappingList
-     * @param thirdList
-     * @param warehouse
-     * @param resultUpdatedList
-     */
-    private void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdMappingDTO.ThirdAddDTO> thirdList, WarehouseDTO.ListDTO warehouse, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList) {
-        existMappingList.forEach(existMapping -> {
-            ThirdMappingDTO.ThirdAddDTO thirdAddDTO = thirdList.stream().filter(item ->
-                    Objects.equals(item.getSysType(), existMapping.getThirdSysType())).findFirst().orElse(null);
-            //如果新增的第三方类型数据在原始数据中不存在，删除原始数据
-            if (Objects.isNull(thirdAddDTO)) {
-                // 操作日志
-                String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                        existMapping.getThirdName(), "");
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
-                baseMapper.deleteById(existMapping.getId());
-                saveOrDeleteFeignBind(existMapping, "", "", "", true);
-            } else {
-                //如果新增的第三方类型数据在原始数据中存在，判断第三方数据是否绑定
-                //绑定则进行更新
-                ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
-                BeanMapperUtils.copy(addDTO, thirdMappingEntity);
-                thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
-                thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
-                thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
-                thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
-                addOrUpdate(thirdMappingEntity, existMapping, warehouse);
-                resultUpdatedList.add(thirdAddDTO);
-            }
-        });
-    }
+//    /**
+//     * 判断当前平台是否绑定第三方数据
+//     *
+//     * @param addDTO
+//     * @param existMappingList
+//     * @param thirdList
+//     * @param warehouse
+//     * @param resultUpdatedList
+//     */
+//    private void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdMappingDTO.ThirdAddDTO> thirdList, WarehouseDTO.ListDTO warehouse, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList) {
+//        existMappingList.forEach(existMapping -> {
+//            ThirdMappingDTO.ThirdAddDTO thirdAddDTO = thirdList.stream().filter(item ->
+//                    Objects.equals(item.getSysType(), existMapping.getThirdSysType())).findFirst().orElse(null);
+//            //如果新增的第三方类型数据在原始数据中不存在，删除原始数据
+//            if (Objects.isNull(thirdAddDTO)) {
+//                // 操作日志
+//                String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+//                        existMapping.getThirdName(), "");
+//                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+//                baseMapper.deleteById(existMapping.getId());
+//                saveOrDeleteFeignBind(existMapping, "", "", "", true);
+//            } else {
+//                //如果新增的第三方类型数据在原始数据中存在，判断第三方数据是否绑定
+//                //绑定则进行更新
+//                ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
+//                BeanMapperUtils.copy(addDTO, thirdMappingEntity);
+//                thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
+//                thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
+//                thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
+//                thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
+//                addOrUpdate(thirdMappingEntity, existMapping, warehouse);
+//                resultUpdatedList.add(thirdAddDTO);
+//            }
+//        });
+//    }
 
-    /**
-     * 删除绑定数据
-     *
-     * @param existMappingList
-     */
-    private void deleteBinded(List<ThirdMappingEntity> existMappingList) {
-        existMappingList.forEach(existMapping -> {
-            // 操作日志
-            String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                    existMapping.getThirdName(), "");
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
-        });
-        baseMapper.deleteBatchIds(existMappingList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
-        //如果包含iml谷仓 需要通知海外仓解除绑定
-        existMappingList.forEach(thirdMappingEntity -> {
-            saveOrDeleteFeignBind(thirdMappingEntity, "", "", "", true);
-        });
-    }
+//    /**
+//     * 删除绑定数据
+//     *
+//     * @param existMappingList
+//     */
+//    @Override
+//    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
+//    public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
+//        existMappingList.forEach(existMapping -> {
+//            // 操作日志
+//            String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+//                    existMapping.getThirdName(), "");
+//            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+//        });
+//        baseMapper.deleteBatchIds(existMappingList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
+//        //如果包含iml谷仓 需要通知海外仓解除绑定
+//        existMappingList.forEach(existMapping -> {
+//            thirdMappingService.saveOrDeleteFeignBind(existMapping, "", "", "", true);
+//        });
+//    }
 
     /**
      * 删除海外仓绑定数据
@@ -406,6 +412,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO batchAdd(ThirdMappingDTO.FeignMappingDTO feignMappingDTO) {
         //查询当前类型下所有的绑定数据
         List<ThirdMappingDTO.ThirdAddDTO> bindedList = baseMapper.getByThirdSysCode(feignMappingDTO.getThirdSysType(), feignMappingDTO.getType());
@@ -439,6 +447,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         .eq(ThirdMappingEntity::getThirdSysType, feignMappingDTO.getThirdSysType())
                         .eq(ThirdMappingEntity::getIsDeleted, false));
                 if (Objects.nonNull(thirdMappingEntity)) {
+                    thirdMappingEntity.setSysName(addDto.getSysName());
+                    thirdMappingEntity.setThirdId(addDto.getThirdId());
+                    thirdMappingEntity.setThirdName(addDto.getThirdName());
+                    thirdMappingEntity.setThirdCode(addDto.getThirdCode());
                     //绑定过则修改
                     boolean save = super.updateById(thirdMappingEntity);
                     if (!save) {

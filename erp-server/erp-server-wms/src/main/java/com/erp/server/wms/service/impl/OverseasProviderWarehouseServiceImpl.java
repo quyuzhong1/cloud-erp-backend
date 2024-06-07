@@ -235,6 +235,8 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     }
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean feignBind(OverseasProviderDTO.FeignDTO feignDTO) {
         OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = new OverseasProviderWarehouseEntity();
         overseasProviderWarehouseEntity.setWarehouseId(feignDTO.getWarehouseId());

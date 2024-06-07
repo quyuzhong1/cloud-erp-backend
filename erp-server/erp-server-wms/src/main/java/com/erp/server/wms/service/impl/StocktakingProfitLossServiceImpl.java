@@ -553,7 +553,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
                 .forEach((key, list) -> {
                     int collect = list.stream().mapToInt(StocktakingProfitLossDetailDTO.ViewDTO::getDiffQty).sum();
-                    skuMap.put(key, BigDecimal.valueOf(collect));
+                    skuMap.put(key, BigDecimal.valueOf(Math.abs(collect)));
                 });
 
         //填充SKU明细
@@ -593,7 +593,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
                 .forEach((key, list) -> {
                     int collect = list.stream().mapToInt(StocktakingProfitLossDetailDTO.ViewDTO::getDiffQty).sum();
-                    skuMap.put(key, BigDecimal.valueOf(collect));
+                    skuMap.put(key, BigDecimal.valueOf(Math.abs(collect)));
                 });
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
         skuMap.forEach((key, value) -> {

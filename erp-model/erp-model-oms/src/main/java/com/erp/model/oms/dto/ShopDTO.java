@@ -290,7 +290,10 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "负责人不能为空")
         private String chargeId;
-
+        /**
+         * 金蝶客户编码
+         */
+        private String customerId;
         /**
          * 销售组织
          */
@@ -363,6 +366,10 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "负责人不能为空")
         private String chargeId;
+        /**
+         * 金蝶客户编码
+         */
+        private String customerId;
 
         /**
          * 销售组织
@@ -595,7 +602,6 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "负责人不能为空")
         private String chargeId;
-
         /**
          * 是否包含平台仓  true 包含
          */

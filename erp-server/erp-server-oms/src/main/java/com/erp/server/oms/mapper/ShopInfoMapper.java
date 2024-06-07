@@ -29,6 +29,15 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
       * @return com.baomidou.mybatisplus.core.metadata.IPage
       */
     IPage<ShopDTO.PagingViewDTO> paging(Page query, @Param("params")ShopDTO.PagingParamDTO params);
+    /**
+     * 远程搜索
+     *
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<ShopDTO.ListDTO> pagingSelect(Page query,@Param("params") ShopDTO.SelectDTO params);
+
 
     List<ShopDTO.PagingViewDTO> listExport(@Param("params") ShopDTO.ExportDTO dto);
 

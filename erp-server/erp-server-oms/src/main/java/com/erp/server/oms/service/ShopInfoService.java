@@ -322,6 +322,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     List<ShopInfoEntity> addIntenal(ShopDTO.AddInternalDTO dto);
 
+    /**
+     * 远程搜索
+     * @param dto
+     * @return
+     */
     PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
 
 }

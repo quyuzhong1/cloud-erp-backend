@@ -39,7 +39,7 @@ public enum BusinessTypeEnum implements EnumMessage {
     WDT_SO_OUT_STOCK("wdt_so_out_stock","旺店通销售出库单", SourceTypeEnum.WDT_OUT_STOCK),
     WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", SourceTypeEnum.WDT_WAREHOUSE),
     WDT_RETURN_ORDER("wdt_return_order","旺店通退货入库单", SourceTypeEnum.WDT_RETURN_ORDER),
-    WDT_SHOP("wdt_shop", "旺店通店铺基础数据", SourceTypeEnum.WDT_WAREHOUSE),
+    WDT_SHOP("wdt_shop", "旺店通店铺基础数据", SourceTypeEnum.WDT_SHOP),
 
     WAREHOUSE("warehouse","仓库", SourceTypeEnum.THIRD_WAREHOUSE_GET_WAREHOUSE),
     CITY_DICT("city_dict","区域数据", SourceTypeEnum.THIRD_WAREHOUSE_GET_BASE_ADDRESS),
