@@ -1,5 +1,6 @@
 package com.erp.oms.aliexpress.handler;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -66,7 +67,8 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(data.getShopId());
         if (null == shopInfoDTO) {
             log.error("[速卖通订单下载]  获取 token 失败: shopId={}", data.getShopId());
-            return Collections.emptyList();
+            String msg = StrUtil.format("[速卖通订单下载]  获取 token 失败: shopId={}", data.getShopId());
+            throw new ServiceException(msg);
         }
         // 上次执行时间
         LocalDateTime lastTime = data.getLastTime();
