@@ -2,15 +2,12 @@ package com.erp.model.wms.dto.inventory;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import jnr.ffi.annotations.In;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1635,7 +1632,7 @@ public class InventoryDTO implements Serializable {
         private String skuNo;
         @NotBlank(message = "仓库不能空")
         private String warehouseId;
-        @NotBlank(message = "数量不能空")
+        @NotNull(message = "数量不能空")
         private Integer usableQty;
     }
 
