@@ -390,7 +390,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public PagingVO<WarehouseLocationDTO.LocationListDTO> pagingSelect(PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO) {
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         WarehouseLocationDTO.SelectDTO params = searchDTO.getParams();
-        IPage<WarehouseLocationDTO.LocationListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        IPage<WarehouseLocationDTO.LocationListDTO> pagResult;
+        if (StringUtils.hasText(params.getSkuNo())){
+            pagResult = baseMapper.pagingSelectBySku(query, params);
+        }else {
+            pagResult = baseMapper.pagingSelect(query, params);
+        }
         List<WarehouseLocationDTO.LocationListDTO> records = pagResult.getRecords();
         handleSelect(records);
         return new PagingVO<>(pagResult);

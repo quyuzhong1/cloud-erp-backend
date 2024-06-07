@@ -278,8 +278,10 @@ public class WarehouseLocationDTO implements Serializable {
          */
         @NotBlank(message = "仓库ID不能为空")
         private String warehouseId;
-        @NotBlank(message = "sku不能为空")
+
         private String skuNo;
+
+        private Boolean filterZero;
 
         /**
          * 关键词

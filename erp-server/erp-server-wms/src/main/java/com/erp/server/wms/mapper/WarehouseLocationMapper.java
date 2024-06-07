@@ -65,4 +65,6 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
     int update(@Param("id") String id);
 
     List<WarehouseLocationExportVo> listAllByParam(@Param("dto") WarehouseLocationDTO.exportParamDto dto);
+
+    IPage<WarehouseLocationDTO.LocationListDTO> pagingSelectBySku(Page query, WarehouseLocationDTO.SelectDTO params);
 }
