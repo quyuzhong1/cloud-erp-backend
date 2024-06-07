@@ -174,7 +174,7 @@ public class AliExpressOrderService {
             if (tokenObj instanceof AliExpressShopInfoDTO) {
                 return (AliExpressShopInfoDTO) tokenObj;
             }
-        } else {
+        }
             ShopAuthEntity shopAuthEntity = shopInfoFeign.getShopAuthByShopId(shopId);
             CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
             AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_TOKEN;
@@ -183,7 +183,8 @@ public class AliExpressOrderService {
             findDTO.setPlatformType(appClientEnum.getPlatformType());
             CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
             if (Objects.isNull(cfgAppClient)) {
-                return null;
+                String msg = StrUtil.format("速卖通获取授权信息为空:{}", JSONUtil.toJsonStr(findDTO));
+                throw new ServiceException(msg);
             }
             AliExpressShopInfoDTO result = new AliExpressShopInfoDTO();
             result.setBaseUrl(cfgAppClient.getUrl());
@@ -196,9 +197,6 @@ public class AliExpressOrderService {
             }
 
             return result;
-        }
-        return null;
-
     }
 
 
