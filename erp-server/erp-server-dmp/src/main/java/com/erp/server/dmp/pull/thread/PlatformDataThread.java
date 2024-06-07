@@ -55,7 +55,6 @@ public class PlatformDataThread {
 
     @Async("pullErpOpenApi")
     public void pullOrder(JobTaskDTO jobTaskDTO) {
-        log.info("异步执行任务：{}", jobTaskDTO.toString());
         PlatformApiEnum enumByType = PlatformApiEnum.getEnumByType(jobTaskDTO.getApiCode());
         RequestDTO dto = new RequestDTO();
         dto.setPlatformApiEnum(enumByType);

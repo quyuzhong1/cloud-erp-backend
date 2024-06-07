@@ -213,7 +213,6 @@ public class BusinessServiceImpl {
             }
             String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, sourceType.getCode(), targetPlatform, topic, tag, msg));
             msg.setDmpSyncTaskId(modelTaskId);
-            log.info("准备异步推送到MQ：{} {} {} {}", topic, tag, msg, msg.getUniqueId());
             SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, msg, msg.getUniqueId());
             log.info("MQ消息发送成功：{} {} {} {}", topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
