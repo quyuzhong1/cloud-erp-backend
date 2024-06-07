@@ -478,7 +478,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
                 log.info("获取渠道结果：{}",JSONObject.toJSON(channels));
 
-                if (channels.isSuccess()) {
+                if (channels.isSuccess() && Objects.nonNull(channels.getData())) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                         logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
