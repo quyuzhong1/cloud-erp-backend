@@ -153,8 +153,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @DataIdempotent(keyIdName = "addDTO.soCode")
     public Boolean add(SoB2cDeliveryDTO.AddDTO addDTO) {
         SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(addDTO.getSourceId());
-        if(ObjectUtil.isEmpty(existEntity)){
-            throw new ServiceException("已生成发货单");
+        if(ObjectUtil.isNotEmpty(existEntity)){
+            throw new ServiceException(StrUtil.format("已生成发货单，发货单号：{}", existEntity.getCode()));
         }
         SoB2cDeliveryEntity soB2cDeliveryEntity = new SoB2cDeliveryEntity();
         BeanMapperUtils.copy(addDTO, soB2cDeliveryEntity);
