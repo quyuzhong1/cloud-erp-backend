@@ -345,14 +345,14 @@
         from warehouse_location wl
         left join inventory i on wl.warehouse_id = i.warehouse_id and wl.code = i.warehouse_location
         AND sku_no = #{params.skuNo}
-        <if test="params.filterZero != null and params.filterZero">
-            AND i.qty > 0
-        </if>
         AND wl.code = i.warehouse_location
         AND i.dict_inventory_status = 'usable'
         AND i.is_deleted = FALSE
         where
         wl.is_deleted = false and wl.type = 'location'
+        <if test="params.filterZero != null and params.filterZero">
+            AND i.qty > 0
+        </if>
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and wl.warehouse_id = #{params.warehouseId}
         </if>
