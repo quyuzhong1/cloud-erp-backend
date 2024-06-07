@@ -1,11 +1,13 @@
 package com.erp.oms.aliexpress.service;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -65,11 +67,16 @@ public class AliExpressProductService {
         IopResponse response = client.execute(request, token, Protocol.TOP);
         JSONObject jsonObject = JSONObject.parseObject(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("result");
-        Boolean success = resultJsONObject.getBooleanValue("success");
+        if (null == resultJsONObject) {
+            String msg = StrUtil.format("拉取速卖通商品失败:无result, response={}", JSONUtil.toJsonStr(response));
+            throw new ServiceException(msg);
+        }
+        boolean success = resultJsONObject.getBooleanValue("success");
         //失败
         if (!success) {
             log.error("拉取速卖通商品失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
-            return;
+            String msg = StrUtil.format("拉取速卖通商品失败: response={}", JSONUtil.toJsonStr(response));
+            throw new ServiceException(msg);
         }
         JSONArray jsonArray = (JSONArray) resultJsONObject.get("aeop_a_e_product_display_d_t_o_list");
         if (Objects.isNull(jsonArray) || jsonArray.isEmpty()) {

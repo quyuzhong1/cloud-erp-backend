@@ -1,6 +1,7 @@
 package com.erp.oms.aliexpress.handler;
 
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -79,7 +80,8 @@ public class AliExpressListingHandler extends AbstractProductHandler<PlatformAli
         try {
             aliExpressProductService.listProduct(productRequest, productList);
         } catch (Exception e) {
-            log.error("获取速卖通商品数据异常:{}", e.getMessage());
+            log.error("获取速卖通商品数据异常:{}", ExceptionUtil.stacktraceToString(e));
+            throw new RuntimeException(e);
         }
         if (CollectionUtils.isEmpty(productList)) {
             return Collections.emptyList();

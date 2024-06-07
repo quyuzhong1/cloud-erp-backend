@@ -90,6 +90,7 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
             aliExpressOrderService.listOrder(orderRequest,orderList);
         } catch (Exception e) {
             log.error("获取速卖通订单数据异常:{}", ExceptionUtil.stacktraceToString(e));
+            throw new RuntimeException(e);
         }
         if (CollectionUtils.isEmpty(orderList)) {
             return Collections.emptyList();

@@ -96,11 +96,16 @@ public class AliExpressOrderService {
         log.info("拉取速卖通订单>>>>>>>{}", JSONUtil.toJsonStr(response));
         JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("result");
+        if (null == resultJsONObject) {
+            String msg = StrUtil.format("拉取速卖通订单失败:无result, response={}", JSONUtil.toJsonStr(response));
+            throw new ServiceException(msg);
+        }
         Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
         //失败
         if (!success) {
             log.error("拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
-            return;
+            String msg = StrUtil.format("拉取速卖通订单失败:response={}", JSONUtil.toJsonStr(response));
+            throw new ServiceException(msg);
         }
         //目录列表
         List<AliExpressOrder> orderInfoList = resultJsONObject.getBeanList("target_list", AliExpressOrder.class);
