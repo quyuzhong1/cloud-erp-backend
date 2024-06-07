@@ -50,8 +50,8 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
     private OperateLogService operateLogService;
     @Resource
     private ThirdMappingMapper thirdMappingMapper;
-    @Resource
-    private ThirdMappingStrategy thirdMappingStrategy;
+//    @Resource
+//    private ThirdMappingStrategy thirdMappingStrategy;
 
     @Override
     public boolean supports(String type) {
@@ -77,25 +77,25 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
             if (CollectionUtils.isEmpty(existMappingList)) {
                 return new BaseResultDTO.AddDTO();
             }
-            thirdMappingStrategy.deleteBinded(existMappingList);
+            deleteBinded(existMappingList);
         } else {
             //查看当前平台sysId绑定的第三方信息
             List<ThirdMappingEntity> existMappingList = thirdMappingService.getList(addDTO.getType(), addDTO.getSysId());
             //如果当前平台没有绑定第三方数据，直接添加
             if (CollectionUtils.isEmpty(existMappingList)) {
                 for (ThirdMappingDTO.ThirdAddDTO item : thirdList) {
-                    thirdMappingStrategy.makeThirdMappingDto(addDTO, item, null);
+                    makeThirdMappingDto(addDTO, item, null);
                 }
             } else {
                 List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList = new ArrayList<>();
                 //判断当前平台是否绑定第三方数据,已绑定的更新，未绑定的删除
-                thirdMappingStrategy.checkSysBinding(addDTO, existMappingList, thirdList, null,resultUpdatedList);
+                checkSysBinding(addDTO, existMappingList, thirdList, null,resultUpdatedList);
                 //保存新增数据
 //                saveAddDto(addDTO, thirdList, resultUpdatedList);
                 thirdList.forEach(thirdAddDTO -> {
                     ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
                     if (CollectionUtils.isEmpty(resultUpdatedList) || (CollectionUtils.isNotEmpty(resultUpdatedList) && Objects.isNull(updatedDto))) {
-                        thirdMappingStrategy.makeThirdMappingDto(addDTO, thirdAddDTO, null);
+                        makeThirdMappingDto(addDTO, thirdAddDTO, null);
                     }
                 });
             }
@@ -208,7 +208,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
                 thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
                 thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
                 thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
-                thirdMappingStrategy.addOrUpdate(thirdMappingEntity, existMapping, null);
+                addOrUpdate(thirdMappingEntity, existMapping, null);
                 resultUpdatedList.add(thirdAddDTO);
             }
         });
@@ -243,7 +243,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
         thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
         thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
         thirdMappingEntity.setThirdInfoId(thirdAddDTO.getThirdId());
-        thirdMappingStrategy.addOrUpdate(thirdMappingEntity, null, null);
+        addOrUpdate(thirdMappingEntity, null, null);
     }
 
     @Override

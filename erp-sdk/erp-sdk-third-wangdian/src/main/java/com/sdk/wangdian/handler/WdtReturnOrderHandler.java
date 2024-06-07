@@ -144,6 +144,7 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
         detail.setSkuNo(infoDto.getSpecNo());
         detail.setMustQty(infoDto.getExpectNum().intValue());
         detail.setReceiveQty(infoDto.getStockinNum().intValue());
+        detail.setRealQty(infoDto.getStockinNum().intValue());
         detail.setReturnReasonDict(orderEntity.getReason());
         detail.setWarehouseLocation(infoDto.getPositionNo());
         detail.setIsSubContract(false);
