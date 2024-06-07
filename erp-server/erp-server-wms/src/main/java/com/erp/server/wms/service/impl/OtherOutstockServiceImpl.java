@@ -357,7 +357,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 viewDetailDTO.setVariantProperty(skuVO.getVariantProperty());
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId()) && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus()))
+            Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId())
+                            && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus())
+                    && obj.getWarehouseLocation().equals(viewDetailDTO.getWarehouseLocation()))
                     .map(InventoryEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(viewDetailDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
