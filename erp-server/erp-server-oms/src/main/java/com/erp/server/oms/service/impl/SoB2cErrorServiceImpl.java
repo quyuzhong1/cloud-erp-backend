@@ -22,6 +22,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,7 @@ import java.util.Objects;
 @Service
 public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cErrorEntity> implements SoB2cErrorService {
 
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
     @Resource
@@ -258,6 +260,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soB2cId);
         platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
+        platformShipOrderDTO.setFalseDeliveryFlag(true);
         try {
             soB2cDeliveryFeign.shipOrder(platformShipOrderDTO);
             return BatchResultDTO.success(soB2cId, soCode, "重新标记发货成功");

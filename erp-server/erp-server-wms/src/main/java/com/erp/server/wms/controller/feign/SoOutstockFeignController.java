@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -149,7 +150,7 @@ public class SoOutstockFeignController {
      * @return
      */
     @PostMapping("/generateB2cSoOutstockByPlatformData")
-    Boolean generateB2cSoOutstockByPlatformData(@RequestBody List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO) {
+    Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformDeliveryDetailDTO) {
         return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO);
     }
     /**

@@ -5,20 +5,18 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
+import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-import com.erp.model.wms.entity.OverseasDeliveryPlanDetailEntity;
+import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
-import com.erp.server.wms.mapper.OverseasDeliveryPlanDetailMapper;
-import com.erp.server.wms.service.OverseasDeliveryPlanDetailService;
+import com.erp.server.wms.convert.DeliveryPlanConverter;
+import com.erp.server.wms.mapper.WmsDeliveryPlanDetailMapper;
+import com.erp.server.wms.service.WmsDeliveryPlanDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
@@ -31,7 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
+import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,7 +45,7 @@ import com.common.core.enums.ApiError;
  */
 @Slf4j
 @Service
-public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<OverseasDeliveryPlanDetailMapper, OverseasDeliveryPlanDetailEntity> implements OverseasDeliveryPlanDetailService {
+public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDeliveryPlanDetailMapper, WmsDeliveryPlanDetailEntity> implements WmsDeliveryPlanDetailService {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -62,9 +60,8 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void add(OverseasDeliveryPlanDTO.AddDTO addDTO, String mainId) {
-        List<OverseasDeliveryPlanDetailEntity> list = BeanMapper.copyList(addDTO.getDetailList(), OverseasDeliveryPlanDetailEntity.class);
-
+    public void add(WmsDeliveryPlanDTO.AddDTO addDTO, String mainId) {
+        List<WmsDeliveryPlanDetailEntity> list = DeliveryPlanConverter.INSTANCE.generateDeliveryDetailAdd(addDTO.getDetailList());
         // 数据处理
         handleData(list, mainId, Boolean.FALSE, addDTO.getToWarehouseId());
 
@@ -81,22 +78,21 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void update(OverseasDeliveryPlanDTO.UpdateDTO updateDTO, String mainId) {
-        List<OverseasDeliveryPlanDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
+    public void update(WmsDeliveryPlanDTO.UpdateDTO updateDTO, String mainId) {
+        List<WmsDeliveryPlanDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
         //原明细数据
-        List<OverseasDeliveryPlanDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<WmsDeliveryPlanDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
         List<String> deleteIds = getDeleteIds(detailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            List<OverseasDeliveryPlanDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            List<WmsDeliveryPlanDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(),pairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.DELIVERY_PLAN.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
 
         //映射字段
-        List<OverseasDeliveryPlanDetailEntity> list = BeanMapperUtils.copyList(OverseasDeliveryPlanDetailEntity.class, detailList);
-
+        List<WmsDeliveryPlanDetailEntity> list = DeliveryPlanConverter.INSTANCE.generateDeliveryDetailUpdate(updateDTO.getDetailList());
         // 数据处理
         handleData(list, mainId, Boolean.TRUE, updateDTO.getToWarehouseId());
 
@@ -108,8 +104,8 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
     }
 
     @Override
-    public List<OverseasDeliveryPlanDetailEntity> listByMainIds(List<String> mainIds) {
-        return lambdaQuery().in(OverseasDeliveryPlanDetailEntity::getMainId, mainIds).list();
+    public List<WmsDeliveryPlanDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(WmsDeliveryPlanDetailEntity::getMainId, mainIds).list();
     }
 
     @Override
@@ -117,15 +113,15 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
         if (CollectionUtils.isEmpty(mainIds)) {
             return Boolean.FALSE;
         }
-        return lambdaUpdate().in(OverseasDeliveryPlanDetailEntity::getMainId,mainIds).remove();
+        return lambdaUpdate().in(WmsDeliveryPlanDetailEntity::getMainId,mainIds).remove();
     }
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<OverseasDeliveryPlanDetailEntity> list, String mainId, Boolean isUpdate, String toWarehouseId) {
+    private void handleData(List<WmsDeliveryPlanDetailEntity> list, String mainId, Boolean isUpdate, String toWarehouseId) {
         //需要新增的数据
-        List<OverseasDeliveryPlanDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<WmsDeliveryPlanDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -134,12 +130,8 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
-        //获取库存sku信息
-        List<SkuMappingDTO.ListSkuParamDTO> paramDTOS = new ArrayList<>();
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIds);
-        List<OverseasProviderWarehouseDTO.ViewDTO> providerWarehouseList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(toWarehouseId));
         //设置详情字段
-        for (OverseasDeliveryPlanDetailEntity detailEntity : list) {
+        for (WmsDeliveryPlanDetailEntity detailEntity : list) {
             detailEntity.setMainId(mainId);
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
@@ -152,55 +144,30 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             detailEntity.setSkuNo(skuVO.getSkuNo());
 
-            //获取库存sku
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
-                    .filter(req -> StringUtils.isNotBlank(req.getProductSkuId())
-                            && req.getProductSkuId().equals(detailEntity.getSkuId())
-                            && (req.getHasMappingAll() || req.getWarehouseId().equals(toWarehouseId)))
-                    .distinct().findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(listStockSkuNoByProductSkuIdView)) {
-
-                OverseasProviderWarehouseDTO.ViewDTO viewDTO = providerWarehouseList.stream().filter(req -> req.getWarehouseId().equals(toWarehouseId)).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(viewDTO)) {
-                    throw new ServiceException(ApiError.SKU_NOT_MAPPING_PLATFORM_SKU, detailEntity.getSkuNo());
-                } else {
-                    //查询库存sku映射
-                    listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
-                            .filter(req -> StringUtils.isNotBlank(req.getProductSkuId())
-                                    && req.getProductSkuId().equals(detailEntity.getSkuId())
-                                    && req.getDictPlatform().equals(viewDTO.getProviderCode()))
-
-                    .findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(listStockSkuNoByProductSkuIdView)) {
-                        throw new ServiceException(ApiError.SKU_NOT_MAPPING_PLATFORM_SKU, detailEntity.getSkuNo());
-                    }
-                }
-            }
-
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(detailEntity.getId())) {
-                OverseasDeliveryPlanDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
+                WmsDeliveryPlanDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_OVERSEAS_DELIVERY_PLAN);
                 }
-                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), detailEntity.getId(),"", String.format("【%s】", old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.DELIVERY_PLAN.getCode(), detailEntity.getId(),"", String.format("【%s】", old.getSkuNo()));
             }
         }
 
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), addPairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.DELIVERY_PLAN.getCode(), addPairList, "编辑操作");
         }
     }
 
     /**
      * 查询需要删除的数据
      */
-    private List<String> getDeleteIds(List<OverseasDeliveryPlanDetailDTO.UpdateDTO> newList, List<OverseasDeliveryPlanDetailEntity> oldList) {
+    private List<String> getDeleteIds(List<WmsDeliveryPlanDetailDTO.UpdateDTO> newList, List<WmsDeliveryPlanDetailEntity> oldList) {
         List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(OverseasDeliveryPlanDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(OverseasDeliveryPlanDetailEntity
+                map(WmsDeliveryPlanDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(WmsDeliveryPlanDetailEntity
                 ::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }

@@ -310,7 +310,7 @@ public interface WmsTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/wmsWorkOption/overseasDeliveryPlanApprove")
-    Boolean overseasDeliveryPlanApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+    Boolean deliveryPlanApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * 统计供应商周期内已审核订单数量

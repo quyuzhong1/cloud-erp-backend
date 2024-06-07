@@ -24,8 +24,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("overseas_delivery_plan")
-public class OverseasDeliveryPlanEntity extends BaseEntity<OverseasDeliveryPlanEntity> {
+@TableName("wms_delivery_plan")
+public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
 
     /**
     * code
@@ -103,6 +103,24 @@ public class OverseasDeliveryPlanEntity extends BaseEntity<OverseasDeliveryPlanE
     @TableField("remark")
     private String remark;
 
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
+     * 店铺名称
+     */
+    @TableField("shop_name")
+    private String shopName;
+
+    /**
+     * 单据类型:fba,thirdWarehouse
+     * {@link com.erp.model.wms.enums.DeliveryPlanTypeEnum}
+     */
+    @TableField("type")
+    private String type;
 
     public static final String CODE = "code";
 

@@ -7,6 +7,9 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
+import com.erp.model.tms.vo.request.LogisticsOrderRuleVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 
 import java.util.Map;
 
@@ -64,13 +67,16 @@ public interface CfgRuleOrderHandleService extends SuperService<CfgRuleOrderHand
     Boolean updateStatus(UpdateStateDTO dto);
 
 
+    /**
+     * @param jsonObject
+     * @return RuleMatchDTO
+     * @description: 返回规则匹配结果
+     * @author Will
+     * @date: 2024/5/9 16:23
+     */
+    CfgRuleOrderHandleDTO.RuleMatchDTO getRuleOrderHandleMatchResult(Map<String, Object> jsonObject);
 
-  /**
-   * @description: 返回规则匹配结果
-   * @author Will
-   * @date: 2024/5/9 16:23
-   * @param jsonObject
-   * @return RuleMatchDTO
-   */
-  CfgRuleOrderHandleDTO.RuleMatchDTO getRuleOrderHandleMatchResult(Map<String,Object> jsonObject);
+    LogisticsOrderVO handleRuleOrderLogistic(LogisticsOrderRuleVO logisticsOrderRuleVO);
+
+    ThirdWarehouseCreateOutboundReq handleRuleOrderThirdWarehouse(ThirdWarehouseCreateOutboundReq createOutboundReq, Map<String, Object> map);
 }

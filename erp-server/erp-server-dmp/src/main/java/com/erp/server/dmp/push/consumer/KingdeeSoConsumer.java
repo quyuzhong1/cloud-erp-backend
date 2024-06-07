@@ -52,7 +52,7 @@ public class KingdeeSoConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
         queryFilters.add(StrUtil.format("FBillNo in ({})", "'XSD24053100007'"));
         String filterStr = String.join(" and ", queryFilters);
 
-        String fieldKeys = "F_ulz_Decimal,FSOStockId.FNumber,FSOStockId.FName,FDeliveryDate,F_SHGJ1.FNumber,fSettleId.FCOUNTRY,FExchangeRate,FSalerId.FName,FSalerId.FNumber,FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId," +
+        String fieldKeys = "FSalerId.FName,FSalerId.FNumber,FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId," +
                 "FDocumentStatus,FCustId.FName,FCustId.FNumber,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone," +
                 "FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId," +
                 "FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId," +

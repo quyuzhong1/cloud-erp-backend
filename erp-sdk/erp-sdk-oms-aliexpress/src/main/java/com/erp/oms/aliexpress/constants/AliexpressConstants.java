@@ -67,4 +67,9 @@ public interface AliexpressConstants {
      */
     String ALIEXPRESS_ASCP_FFO_ITEM_QUERY="aliexpress.ascp.ffo.item.query";
 
+    /**
+     * 产品明细查询
+     */
+    String ALIEXPRESS_OFFER_PRODUCT_QUERY="aliexpress.offer.product.query";
+
 }

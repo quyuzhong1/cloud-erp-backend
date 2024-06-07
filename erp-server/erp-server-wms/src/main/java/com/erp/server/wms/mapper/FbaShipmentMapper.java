@@ -69,4 +69,6 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
     List<Map<String, String>> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.FbaShipmentDTO params);
     
     Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.FbaShipmentDTO params);
+
+    IPage<FbaShipmentDTO.SearchResultDTO> search(Page query, @Param("params") FbaShipmentDTO.SearchDTO params);
 }

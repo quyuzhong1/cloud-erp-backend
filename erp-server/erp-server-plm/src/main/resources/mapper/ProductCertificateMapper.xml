@@ -191,6 +191,7 @@
             </foreach>
         </if>
         pc.update_time desc
+        limit 50000
     </select>
 
 </mapper>

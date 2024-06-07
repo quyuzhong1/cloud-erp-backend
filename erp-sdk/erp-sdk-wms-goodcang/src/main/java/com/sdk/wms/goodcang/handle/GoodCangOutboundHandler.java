@@ -77,9 +77,9 @@ public class GoodCangOutboundHandler extends AbstractPullThirdWarehouseHandler<G
             }
             page++;
         }
-        //过滤代发货状态单据
+        //过滤待发货状态单据
         respList = respList.stream().filter(v->!v.getOrderStatus().equals(GoodCangEnums.OrderStatusEnum.TO_BE_SHIPPED.getCode())).collect(Collectors.toList());
-        respList.forEach(v->v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+v.getOrderCode())));
+        respList.forEach(v->v.setUniqueId(v.getOrderCode()));
         return respList;
     }
 

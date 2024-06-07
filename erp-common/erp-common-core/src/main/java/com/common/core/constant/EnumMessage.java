@@ -1,6 +1,10 @@
 package com.common.core.constant;
 
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,6 +42,21 @@ public interface EnumMessage {
     	}
         return null;
     }
+
+	// 默认方法，通过code获取name实例
+	static <T extends EnumMessage> List<String> listNameByCodes(Class<T> enumType, List<?> codeList) {
+		List<String> result = new ArrayList<>();
+		if(CollectionUtils.isEmpty(codeList)){
+			return result;
+		}
+		for (Object code : codeList) {
+			T enumMessage = getByCode(enumType, code);
+			if(enumMessage != null) {
+				result.add(enumMessage.getName());
+			}
+		}
+		return result;
+	}
 
     // 默认方法，通过name获取枚举实例
     static <T extends EnumMessage> T getByName(Class<T> enumType, String name) {

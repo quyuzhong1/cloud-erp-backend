@@ -7,7 +7,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -21,8 +20,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("overseas_delivery_plan_detail")
-public class OverseasDeliveryPlanDetailEntity extends BaseEntity<OverseasDeliveryPlanDetailEntity> {
+@TableName("wms_delivery_plan_detail")
+public class WmsDeliveryPlanDetailEntity extends BaseEntity<WmsDeliveryPlanDetailEntity> {
 
     /**
     * 主表id
@@ -57,11 +56,28 @@ public class OverseasDeliveryPlanDetailEntity extends BaseEntity<OverseasDeliver
     private String platformSku;
 
     /**
-     * 平台sku
+     * 平台sku名称
      */
     @TableField("platform_sku_name")
     private String platformSkuName;
 
+    /**
+     * 平台spu
+     */
+    @TableField("platform_spu")
+    private String platformSpu;
+
+    /**
+     * fnSku
+     */
+    @TableField("platform_fn_sku")
+    private String platformFnSku;
+
+    /**
+     * 单箱数量
+     */
+    @TableField("box_qty")
+    private Integer boxQty;
 
     public static final String MAIN_ID = "main_id";
 

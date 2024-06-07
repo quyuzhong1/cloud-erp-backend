@@ -18,7 +18,9 @@ import com.erp.server.oms.service.SoB2cRefCategoryService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -42,6 +44,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
     @Resource
     private OperateLogService operateLogService;
 
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
 
@@ -58,6 +61,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(List<String> categoryIdList, String mainId) {
         List<SoB2cRefCategoryEntity> categoryList = this.listByMainIds(Arrays.asList(mainId));
         //删除原有分类
