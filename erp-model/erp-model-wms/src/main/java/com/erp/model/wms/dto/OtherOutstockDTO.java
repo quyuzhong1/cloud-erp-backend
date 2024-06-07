@@ -54,7 +54,7 @@ public class OtherOutstockDTO implements Serializable {
         private String customerName;
 
         /**
-         * 业务类型
+         * 业务类型 sys/dictKingdee/drop/down?typeName=其他出库单业务类型
          */
         private String type;
 
@@ -64,7 +64,7 @@ public class OtherOutstockDTO implements Serializable {
         private String typeName;
 
         /**
-         * 出库类型
+         * 出库类型 sys/dictKingdee/drop/down?typeName=出库类型
          */
         private String outType;
         /**
