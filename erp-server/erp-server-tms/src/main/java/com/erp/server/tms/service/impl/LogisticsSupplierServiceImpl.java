@@ -432,7 +432,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierIds(supplierIds);
         //渠道列表
         List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(supplierIds, params);
-
+        List<LogisticsAuthEntity> authList = logisticsAuthService.listByMainIds(supplierIds);
         for (LogisticsSupplierDTO.PagingViewDTO item : list) {
             LogisticsSupplierTypeEnum type = item.getType();
             item.setTypeName(type.getName());
@@ -442,10 +442,9 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             String authStatus = item.getAuthStatus();
             String authStatusName = LogisticsAuthStatusEnum.getName(authStatus);
             item.setAuthStatusName(authStatusName);
-
             //获取服务商编号
-            LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getId());
-            if (ObjectUtil.isNotEmpty(authEntity)) {
+            LogisticsAuthEntity authEntity = authList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(item.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(authEntity)) {
                 String logisticsPlatform = authEntity.getLogisticsPlatform();
                 item.setLogisticsPlatform(logisticsPlatform);
                 String printDelivery = Objects.requireNonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform)).getPrintDelivery();
