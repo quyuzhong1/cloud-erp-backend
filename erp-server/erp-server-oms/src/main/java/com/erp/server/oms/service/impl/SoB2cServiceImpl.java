@@ -499,7 +499,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(logisticsDTO) || CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        if (Objects.nonNull(logisticsDTO.getLength()) && Objects.nonNull(logisticsDTO.getWidth()) && Objects.nonNull(logisticsDTO.getHeight())) {
+        if ((Objects.nonNull(logisticsDTO.getLength()) && logisticsDTO.getLength().compareTo(BigDecimal.ZERO) != 0)
+                && (Objects.nonNull(logisticsDTO.getWidth()) && logisticsDTO.getWidth().compareTo(BigDecimal.ZERO) != 0)
+                && (Objects.nonNull(logisticsDTO.getHeight()) && logisticsDTO.getHeight().compareTo(BigDecimal.ZERO) != 0)
+                && (Objects.nonNull(logisticsDTO.getWeight()) && logisticsDTO.getWeight().compareTo(BigDecimal.ZERO) != 0)) {
             return;//存在则不重算
         }
         List<String> skuIds = detailList.stream().map(SoB2cDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
@@ -510,12 +513,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         keyList.add(CalculateSizeEnum.LENGTH.getCode());
         keyList.add(CalculateSizeEnum.WIDTH.getCode());
         keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+        keyList.add(CalculateSizeEnum.GROSS_WEIGHT.getCode());
         List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
         Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-        logisticsDTO.setLength(SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS, collect.get(CalculateSizeEnum.LENGTH.getCode())));
-        logisticsDTO.setWidth(SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS, collect.get(CalculateSizeEnum.WIDTH.getCode())));
-        logisticsDTO.setHeight(SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS, collect.get(CalculateSizeEnum.HEIGHT.getCode())));
-        logisticsDTO.setWeight(SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS, collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode())));
+        if (Objects.isNull(logisticsDTO.getLength()) || logisticsDTO.getLength().compareTo(BigDecimal.ZERO) == 0){
+            logisticsDTO.setLength(SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS, collect.get(CalculateSizeEnum.LENGTH.getCode())));
+        }
+        if (Objects.isNull(logisticsDTO.getWidth()) || logisticsDTO.getWidth().compareTo(BigDecimal.ZERO) == 0){
+            logisticsDTO.setWidth(SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS, collect.get(CalculateSizeEnum.WIDTH.getCode())));
+        }
+        if (Objects.isNull(logisticsDTO.getHeight()) || logisticsDTO.getHeight().compareTo(BigDecimal.ZERO) == 0){
+            logisticsDTO.setHeight(SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS, collect.get(CalculateSizeEnum.HEIGHT.getCode())));
+        }
+        if (Objects.isNull(logisticsDTO.getWeight()) || logisticsDTO.getWeight().compareTo(BigDecimal.ZERO) == 0){
+            logisticsDTO.setWeight(SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS, collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode())));
+        }
     }
 
     /**
@@ -528,7 +540,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(logisticsDTO) || CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        if (Objects.nonNull(logisticsDTO.getLength()) && Objects.nonNull(logisticsDTO.getWidth()) && Objects.nonNull(logisticsDTO.getHeight())) {
+        if ((Objects.nonNull(logisticsDTO.getLength()) && logisticsDTO.getLength().compareTo(BigDecimal.ZERO) != 0)
+                && (Objects.nonNull(logisticsDTO.getWidth()) && logisticsDTO.getWidth().compareTo(BigDecimal.ZERO) != 0)
+                && (Objects.nonNull(logisticsDTO.getHeight()) && logisticsDTO.getHeight().compareTo(BigDecimal.ZERO) != 0)
+                && (Objects.nonNull(logisticsDTO.getWeight()) && logisticsDTO.getWeight().compareTo(BigDecimal.ZERO) != 0)) {
             return;//存在则不重算
         }
         List<String> skuIds = detailList.stream().map(SoB2cDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
@@ -539,12 +554,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         keyList.add(CalculateSizeEnum.LENGTH.getCode());
         keyList.add(CalculateSizeEnum.WIDTH.getCode());
         keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+        keyList.add(CalculateSizeEnum.GROSS_WEIGHT.getCode());
         List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
         Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-        logisticsDTO.setLength(SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS, collect.get(CalculateSizeEnum.LENGTH.getCode())));
-        logisticsDTO.setWidth(SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS, collect.get(CalculateSizeEnum.WIDTH.getCode())));
-        logisticsDTO.setHeight(SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS, collect.get(CalculateSizeEnum.HEIGHT.getCode())));
-        logisticsDTO.setWeight(SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS, collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode())));
+        if (Objects.isNull(logisticsDTO.getLength()) || logisticsDTO.getLength().compareTo(BigDecimal.ZERO) == 0){
+            logisticsDTO.setLength(SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS, collect.get(CalculateSizeEnum.LENGTH.getCode())));
+        }
+        if (Objects.isNull(logisticsDTO.getWidth()) || logisticsDTO.getWidth().compareTo(BigDecimal.ZERO) == 0){
+            logisticsDTO.setWidth(SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS, collect.get(CalculateSizeEnum.WIDTH.getCode())));
+        }
+        if (Objects.isNull(logisticsDTO.getHeight()) || logisticsDTO.getHeight().compareTo(BigDecimal.ZERO) == 0){
+            logisticsDTO.setHeight(SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS, collect.get(CalculateSizeEnum.HEIGHT.getCode())));
+        }
+        if (Objects.isNull(logisticsDTO.getWeight()) || logisticsDTO.getWeight().compareTo(BigDecimal.ZERO) == 0){
+            logisticsDTO.setWeight(SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS, collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode())));
+        }
     }
     @Override
     public List<SplitSkuDTO> getTransferDeclareProductBySoInfo(String soId) {
@@ -5006,13 +5030,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         handleDetailEntity.setCurrentNetWeight(simpleVO.getGrossWeight());
         // 设置其他处理
         soB2cDetailService.consumerHandleDetailList(detailList, entity, skuList);
-
-        // 净重
-        BigDecimal allNetWeight = detailList.stream().map(SoB2cDetailEntity::getCurrentNetWeight).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         //长宽高计算
         BigDecimal maxLength = BigDecimal.ZERO;
         BigDecimal maxWidth = BigDecimal.ZERO;
         BigDecimal totalHeight = BigDecimal.ZERO;
+        BigDecimal allNetWeight = BigDecimal.ZERO;
         if (CollectionUtils.isNotEmpty(skuList)) {
             //拆分明细
             List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList, skuIds, entity.getCode());
@@ -5021,11 +5043,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             keyList.add(CalculateSizeEnum.LENGTH.getCode());
             keyList.add(CalculateSizeEnum.WIDTH.getCode());
             keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+            keyList.add(CalculateSizeEnum.GROSS_WEIGHT.getCode());
             List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
             Map<String, String> cfgCollect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
             maxLength = SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.LENGTH.getCode()));
             maxWidth = SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.WIDTH.getCode()));
             totalHeight = SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.HEIGHT.getCode()));
+            allNetWeight = SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS,cfgCollect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode()));
         }
         //物流信息更新保存
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
@@ -6487,7 +6511,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         // 设置其他处理
         soB2cDetailService.consumerHandleDetailList(detailList, entity, skuList);
-
+        Boolean needRecalSize = Boolean.FALSE;//是否重算尺寸
         for (SoB2cDetailEntity detailEntity : detailList) {
             SoB2cDetailEntity old = new SoB2cDetailEntity();
             BeanMapper.copy(detailEntity, old);
@@ -6498,6 +6522,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             //校验对照表是否有对照关系
             if (ObjectUtil.isNotEmpty(skuDTO)) {
+                if (StringUtils.isNotBlank(skuDTO.checkAndGetProductSkuId()) && !Objects.equals(skuDTO.checkAndGetProductSkuId(),detailEntity.getSkuId())){
+                    needRecalSize = Boolean.TRUE;
+                }
                 detailEntity.setSkuNo(skuDTO.checkAndGetProductSkuNo());
                 detailEntity.setSkuId(skuDTO.checkAndGetProductSkuId());
                 detailEntity.setImageUrl(skuDTO.checkAndGetProductImageUrl());
@@ -6514,36 +6541,36 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 return BatchResultDTO.fail(detailEntity.getId(), detailEntity.getPlatformSkuNo(), "更新失败，无对照关系！");
             }
         }
+        if (needRecalSize){
+            //长宽高计算
+            BigDecimal maxLength = BigDecimal.ZERO;
+            BigDecimal maxWidth = BigDecimal.ZERO;
+            BigDecimal totalHeight = BigDecimal.ZERO;
+            BigDecimal allNetWeight = BigDecimal.ZERO;
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                //拆分明细
+                List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList, skuIds, entity.getCode());
+                //根据sku进行计算
+                List<String> keyList = new ArrayList<>();
+                keyList.add(CalculateSizeEnum.LENGTH.getCode());
+                keyList.add(CalculateSizeEnum.WIDTH.getCode());
+                keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+                List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
+                Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
+                maxLength = SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
+                maxWidth = SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
+                totalHeight = SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
+                allNetWeight = SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS,collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode()));
+            }
 
-        // 净重
-        BigDecimal allNetWeight = detailList.stream().map(SoB2cDetailEntity::getCurrentNetWeight).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        //长宽高计算
-        BigDecimal maxLength = BigDecimal.ZERO;
-        BigDecimal maxWidth = BigDecimal.ZERO;
-        BigDecimal totalHeight = BigDecimal.ZERO;
-        if (CollectionUtils.isNotEmpty(skuList)) {
-            //拆分明细
-            List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList, skuIds, entity.getCode());
-            //根据sku进行计算
-            List<String> keyList = new ArrayList<>();
-            keyList.add(CalculateSizeEnum.LENGTH.getCode());
-            keyList.add(CalculateSizeEnum.WIDTH.getCode());
-            keyList.add(CalculateSizeEnum.HEIGHT.getCode());
-            List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
-            Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-            maxLength = SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
-            maxWidth = SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
-            totalHeight = SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
+            //物流信息更新保存
+            SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+            logisticsEntity.setWeight(allNetWeight);
+            logisticsEntity.setLength(maxLength);
+            logisticsEntity.setWidth(maxWidth);
+            logisticsEntity.setHeight(totalHeight);
+            soB2cLogisticsService.updateById(logisticsEntity);
         }
-
-        //物流信息更新保存
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
-        logisticsEntity.setWeight(allNetWeight);
-        logisticsEntity.setLength(maxLength);
-        logisticsEntity.setWidth(maxWidth);
-        logisticsEntity.setHeight(totalHeight);
-        soB2cLogisticsService.updateById(logisticsEntity);
-
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
     }
 

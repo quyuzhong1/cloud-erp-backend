@@ -295,6 +295,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             keyList.add(CalculateSizeEnum.LENGTH.getCode());
             keyList.add(CalculateSizeEnum.WIDTH.getCode());
             keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+            keyList.add(CalculateSizeEnum.GROSS_WEIGHT.getCode());
             List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
             Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
             maxLength = SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
