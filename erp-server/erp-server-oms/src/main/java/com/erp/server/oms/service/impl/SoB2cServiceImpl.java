@@ -7654,7 +7654,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                 .skuNo(bomChildrenSkuDTO.getSkuNo())
                                 .soDetailId(soB2cDetailEntity.getId())
                                 .qty(soB2cDetailEntity.getQty() * bomChildrenSkuDTO.getQuantity())
-                                .weight(Objects.nonNull(bomProduct) ? bomProduct.getWeight() : null)
+                                .weight(Objects.nonNull(bomProduct) ? bomProduct.getWeight() : 0)
                                 .grossWeight(Objects.nonNull(bomProduct) ? bomProduct.getGrossWeight() : BigDecimal.ZERO)
                                 .fromCurrency(Objects.nonNull(bomProduct) ? bomProduct.getDeclareCurrency() : "")
                                 .fromCurrencySymbol(Objects.nonNull(bomProduct) ? bomProduct.getDeclareCurrencySymbol() : "")
@@ -7701,8 +7701,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .skuNo(soB2cDetailEntity.getSkuNo())
                         .soDetailId(soB2cDetailEntity.getId())
                         .qty(soB2cDetailEntity.getQty())
-                        .weight(Objects.nonNull(productDTO) ? productDTO.getWeight() : null)
-                        .grossWeight(Objects.nonNull(productDTO) ? productDTO.getGrossWeight() : null)
+                        .weight(Objects.nonNull(productDTO) ? productDTO.getWeight() : 0)
+                        .grossWeight(Objects.nonNull(productDTO) ? productDTO.getGrossWeight() : BigDecimal.ZERO)
                         .fromCurrency(Objects.nonNull(productDTO) ? productDTO.getDeclareCurrency() : "")
                         .fromCurrencySymbol(Objects.nonNull(productDTO) ? productDTO.getDeclareCurrencySymbol() : "")
                         .isElectric(Objects.nonNull(productDTO) ? productDTO.getIsElectric() : Boolean.FALSE)
@@ -7738,6 +7738,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             declareProductDTO.setToCustomsCode(customs.getCustomsCode());
                         }
                     }
+                }
+                //是速卖通销售平台，sku是组合品时 需要重算申报重量
+                if (isAliExpress && Objects.nonNull(skuDTO) && BomTypeEnum.COMBINATION.getType().equals(skuDTO.getType()) && isCombination){
+                    List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(soB2cDetailEntity.getSkuId());
+                    List<LogisticsDeclareProductDTO> dtoList = new ArrayList<>();
+                    bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
+                        LogisticsProductDTO.ProductDTO bomProduct = skuMap.get(bomChildrenSkuDTO.getSkuId());
+                        if (Objects.nonNull(bomProduct.getWeight())){
+                            LogisticsDeclareProductDTO dto = LogisticsDeclareProductDTO.builder()
+                                    .weight(Objects.nonNull(bomProduct) ? bomProduct.getWeight() : 0)
+                                    .grossWeight(Objects.nonNull(bomProduct) ? bomProduct.getGrossWeight() : BigDecimal.ZERO)
+                                    .build();
+                            dtoList.add(dto);
+                        }
+                    });
+                    declareProductDTO.setGrossWeight(dtoList.stream().map(LogisticsDeclareProductDTO::getGrossWeight).reduce(BigDecimal.ZERO,BigDecimal::add));
+                    declareProductDTO.setWeight(dtoList.stream().mapToInt(LogisticsDeclareProductDTO::getWeight).sum());
                 }
                 declareProductDTOS.add(declareProductDTO);
             }
