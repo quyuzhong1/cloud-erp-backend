@@ -220,7 +220,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 "FSettleCurrId.FCode," +
                 "FDelTime," +
                 "FHeadNote," +
-                "FReturnReason," +
+                "FReturnReason.FDataValue," +
                 "FSaledeptid.FNumber," +
                 "FSaledeptid.FName," +
                 "FOrderNo," +
