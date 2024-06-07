@@ -1244,16 +1244,25 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     }
 
     private String getTypeNameByCode(String code){
+        if(StringUtils.isBlank(code)){
+            return "";
+        }
         DictKingdeeDTO.ListDTO listDTO =  sysDictFeign.getByCode(DictKindgeeConstant.OTHER_TYPE_NAME,code);
         return listDTO.getName();
     }
 
     private List<DictKingdeeDTO.ListDTO> kingdeeTypeListByTypeName(String typeName){
+        if(StringUtils.isBlank(typeName)){
+            return new ArrayList<>();
+        }
         List<DictKingdeeDTO.ListDTO> list = sysDictFeign.listByTypeName(typeName);
         return list;
     }
 
     private String getOutTypeNameByCode(String code){
+        if(StringUtils.isBlank(code)){
+            return "";
+        }
         DictKingdeeDTO.ListDTO listDTO =  sysDictFeign.getByCode(DictKindgeeConstant.OTHER_OUT_TYPE_NAME,code);
         return listDTO.getName();
     }
