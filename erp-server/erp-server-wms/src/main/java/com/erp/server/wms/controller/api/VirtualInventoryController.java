@@ -73,6 +73,7 @@ public class VirtualInventoryController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/exportExcel")
+    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody VirtualInventoryDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = virtualInventoryService.exportExcel(dto, response);
         return flag == true ? success() : failure();

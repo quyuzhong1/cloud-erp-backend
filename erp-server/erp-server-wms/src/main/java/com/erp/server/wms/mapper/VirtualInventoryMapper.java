@@ -27,10 +27,10 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * 查询列表数据总数
      * @author will
      * @date 2024/6/6 18:10
-     * @param dto
+     * @param params
      * @return Integer
      */
-    Integer pagingCount(VirtualInventoryDTO.SearchParamDTO dto);
+    Integer pagingCount(@Param("params") VirtualInventoryDTO.SearchParamDTO params);
 
 
     /**

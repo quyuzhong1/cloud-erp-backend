@@ -91,7 +91,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         fillPageData(list);
 
         //明细数据
-        List<VirtualInventoryDTO.ListDTO> detailList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().toArray(VirtualInventoryDTO.ListDTO[]::new))).collect(Collectors.toList());
+        List<VirtualInventoryDTO.ListDetailDTO> detailList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().toArray(VirtualInventoryDTO.ListDetailDTO[]::new))).collect(Collectors.toList());
         List<Pair<Integer,List<?>>> pairList = new ArrayList<>();
         pairList.add(new Pair<>(MathUtil.ZERO,list));
         pairList.add(new Pair<>(MathUtil.ONE,detailList));

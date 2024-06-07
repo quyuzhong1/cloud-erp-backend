@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.server.wms.query.VirtualTransFlowQueryHandler;
 import com.erp.server.wms.service.VirtualInventoryTransCoreService;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +54,7 @@ public class VirtualTransFlowController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = VirtualTransFlowQueryHandler.class)
     public ApiResult<PagingVO<VirtualTransFlowDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
         return success(virtualTransFlowService.paging(dto));
     }
@@ -68,7 +69,7 @@ public class VirtualTransFlowController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = VirtualTransFlowQueryHandler.class)
     public ApiResult exportExcel(@RequestBody VirtualTransFlowDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = virtualTransFlowService.exportExcel(dto, response);
         return flag == true ? success() : failure();
