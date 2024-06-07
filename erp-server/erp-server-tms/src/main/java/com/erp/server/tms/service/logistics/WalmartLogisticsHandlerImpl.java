@@ -115,14 +115,14 @@ public class WalmartLogisticsHandlerImpl extends AbstractLogisticsHandler {
             WalmartCarriersDTO resultDTO = JSONUtil.toBean(jsonResult, WalmartCarriersDTO.class);
 
             List<WalmartCarriersDTO.Carrier> carrierList = resultDTO.getCarriers();
-            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.WALMART.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(jsonResult));
             return success(LogisticsChannelConverter.INSTANCE.channelConvertByWalmart(carrierList));
 
         } catch (Exception e) {
             log.error("沃尔玛getChannel接口调用失败：{}", e.getMessage());
-            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.WALMART.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(e));
             return failure(e.getMessage());

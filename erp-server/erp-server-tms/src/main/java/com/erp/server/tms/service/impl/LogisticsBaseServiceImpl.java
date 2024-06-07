@@ -43,7 +43,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -81,7 +80,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platform)) {
             return syncShoppeeChannel(platform);
         } else if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform)) {
-            return syncAliExpressChannel(platform);
+            return syncAliExpressChannel(platform, new HashMap<>());
         } else if (LogisticsPlatformEnum.SHOPIFY.getCode().equalsIgnoreCase(platform)) {
             return syncShopifyChannel(platform);
         } else if (LogisticsPlatformEnum.TIK_TOK.getCode().equalsIgnoreCase(platform)) {
@@ -442,7 +441,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
-    public List<BatchResultDTO> syncAliExpressChannel(String platform) {
+    public List<BatchResultDTO> syncAliExpressChannel(String platform, Map<String, String> map1) {
         log.info("{}渠道同步开始", platform);
         ApiResult<List<ShopAuthEntity>> result = null;
         try {
@@ -459,8 +458,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 return batchResultDTOS;
             }
             //先暂停该渠道数据，然后进行更新动作
-            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
-
+//            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE); 速卖通需要进行渠道增量
             for (ShopAuthEntity shopAuthEntity : data) {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
                 Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
@@ -468,12 +466,19 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     continue;
                 }
                 map.put("token", shopAuthEntity.getToken());
+                //覆盖配置
+                if (Objects.nonNull(map1.get("orderId"))){
+                    map.put("orderId", map1.get("orderId"));
+                }
+                if (Objects.nonNull(map1.get("childOrderId"))){
+                    map.put("childOrderId", map1.get("childOrderId"));
+                }
                 chanelQueryVO.setAuthMap(map);
                 log.info("授权信息：{}",JSONObject.toJSON(chanelQueryVO));
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
                 log.info("获取渠道结果：{}",JSONObject.toJSON(channels));
 
-                if (channels.isSuccess()) {
+                if (channels.isSuccess() && Objects.nonNull(channels.getData())) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                         logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
