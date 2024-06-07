@@ -93,6 +93,7 @@ public class AliExpressOrderService {
         request.addApiParameter("param_aeop_order_query", JSONUtil.toJsonStr(paramMap));
         String token = orderRequest.getToken();
         IopResponse response = client.execute(request, token, Protocol.TOP);
+        log.info("拉取速卖通订单>>>>>>>{}", JSONUtil.toJsonStr(response));
         JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("result");
         Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);

@@ -1,4 +1,5 @@
 package com.erp.oms.aliexpress.handler;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -88,7 +89,7 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         try {
             aliExpressOrderService.listOrder(orderRequest,orderList);
         } catch (Exception e) {
-            log.error("获取速卖通订单数据异常:{}", e.getMessage());
+            log.error("获取速卖通订单数据异常:{}", ExceptionUtil.stacktraceToString(e));
         }
         if (CollectionUtils.isEmpty(orderList)) {
             return Collections.emptyList();
