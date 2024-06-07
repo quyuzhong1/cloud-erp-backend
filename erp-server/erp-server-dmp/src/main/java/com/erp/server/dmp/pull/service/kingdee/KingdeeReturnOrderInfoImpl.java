@@ -227,6 +227,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 "FAmount," +
                 "FMustqty," +
                 "FUnitID.FName," +
+                "FEntity_FEntryId," +
                 "FMaterialId," +
                 "FMaterialId.FNumber," +
                 "FMaterialName," +
@@ -392,9 +393,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             dmpReturnOrderItemEntity.setSkuNo(skuNo);
             //商品名称
             dmpReturnOrderItemEntity.setItemName(orderItemBean.getFMaterialName());
-            if (StringUtils.isNotBlank(orderItemBean.getFSalUnitQty())) {
+            if (StringUtils.isNotBlank(orderItemBean.getFRealQty())) {
                 //买家购买数量
-                dmpReturnOrderItemEntity.setQuantity(Double.valueOf(orderItemBean.getFSalUnitQty()).intValue());
+                dmpReturnOrderItemEntity.setQuantity(Double.valueOf(orderItemBean.getFRealQty()).intValue());
             }
             //商品单位
             dmpReturnOrderItemEntity.setProductUnit(orderItemBean.getFUnitName());
