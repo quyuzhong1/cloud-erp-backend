@@ -53,8 +53,8 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
 
     @Resource
     private OperateLogService operateLogService;
-    @Resource
-    private ThirdMappingStrategy thirdMappingStrategy;
+//    @Resource
+//    private ThirdMappingStrategy thirdMappingStrategy;
 
     @Override
     public boolean supports(String type) {
@@ -82,24 +82,24 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
             if (CollectionUtils.isEmpty(existMappingList)) {
                 return new BaseResultDTO.AddDTO();
             }
-            thirdMappingStrategy.deleteBinded(existMappingList);
+            deleteBinded(existMappingList);
         } else {
             //查看当前平台sysId绑定的第三方信息
             List<ThirdMappingEntity> existMappingList = thirdMappingService.getList(addDTO.getType(), addDTO.getSysId());
             //如果当前平台没有绑定第三方数据，直接添加
             if (CollectionUtils.isEmpty(existMappingList)) {
                 for (ThirdMappingDTO.ThirdAddDTO item : thirdList) {
-                    thirdMappingStrategy.makeThirdMappingDto(addDTO, item, warehouse);
+                    makeThirdMappingDto(addDTO, item, warehouse);
                 }
             } else {
                 List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList = new ArrayList<>();
                 //判断当前平台是否绑定第三方数据
-                thirdMappingStrategy.checkSysBinding(addDTO, existMappingList, thirdList, warehouse, resultUpdatedList);
+                checkSysBinding(addDTO, existMappingList, thirdList, warehouse, resultUpdatedList);
                 //保存新增数据
                 for (ThirdMappingDTO.ThirdAddDTO thirdAddDTO : thirdList) {
                     ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
                     if (CollectionUtils.isEmpty(resultUpdatedList) || (CollectionUtils.isNotEmpty(resultUpdatedList) && Objects.isNull(updatedDto))) {
-                        thirdMappingStrategy.makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
+                        makeThirdMappingDto(addDTO, thirdAddDTO, warehouse);
                     }
                 }
             }
@@ -168,7 +168,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                         existMapping.getThirdName(), "");
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 thirdMappingMapper.deleteById(existMapping.getId());
-                thirdMappingStrategy.saveOrDeleteFeignBind(existMapping, "", "", "", true);
+                saveOrDeleteFeignBind(existMapping, "", "", "", true);
             } else {
                 //如果新增的第三方类型数据在原始数据中存在，判断第三方数据是否绑定
                 //绑定则进行更新
@@ -179,7 +179,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                 thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
                 thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
                 thirdMappingEntity.setThirdInfoId(thirdAddDTO.getThirdId());
-                thirdMappingStrategy.addOrUpdate(thirdMappingEntity, existMapping, warehouse);
+                addOrUpdate(thirdMappingEntity, existMapping, warehouse);
                 resultUpdatedList.add(thirdAddDTO);
             }
         });
@@ -203,7 +203,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
         thirdMappingMapper.deleteBatchIds(existMappingList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
         //如果包含iml谷仓 需要通知海外仓解除绑定
         existMappingList.forEach(thirdMappingEntity -> {
-            thirdMappingStrategy.saveOrDeleteFeignBind(thirdMappingEntity, "", "", "", true);
+            saveOrDeleteFeignBind(thirdMappingEntity, "", "", "", true);
         });
     }
 
@@ -249,7 +249,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
         thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
         thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
         thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
-        thirdMappingStrategy.addOrUpdate(thirdMappingEntity, null, warehouse);
+        addOrUpdate(thirdMappingEntity, null, warehouse);
     }
 
     @Override
@@ -269,7 +269,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
             throw new ServiceException("第三方系统映射关系单保存失败");
         } else {
             //保存海外仓设置
-            thirdMappingStrategy.saveOrDeleteFeignBind(thirdMappingEntity, thirdMappingEntity.getSysId(), warehouse.getKingdeeWarehouseCode(), thirdMappingEntity.getSysName(), false);
+            saveOrDeleteFeignBind(thirdMappingEntity, thirdMappingEntity.getSysId(), warehouse.getKingdeeWarehouseCode(), thirdMappingEntity.getSysName(), false);
         }
         // 操作日志
         String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()),
