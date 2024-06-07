@@ -137,4 +137,19 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * @date 2024/06/04
      */
     IPage<InventoryDTO.PagingViewDTO> pageByLocation(@Param("query") Page query, @Param("params") InventoryDTO.SearchParamDTO params);
+
+    /**
+     * 按仓库统计数量
+     */
+    Long countByWarehouse();
+
+    /**
+     * 按库区统计数量
+     */
+    Long countByArea();
+
+    /**
+     * 按仓位统计数量
+     */
+    Long countByLocation();
 }

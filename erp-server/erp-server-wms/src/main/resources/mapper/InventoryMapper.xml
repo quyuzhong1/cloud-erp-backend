@@ -942,4 +942,116 @@
             </if>
         t.warehouse_id, t.sku_no
     </select>
+    <select id="countByWarehouse" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM (SELECT max(m.warehouse_id)                   AS warehouse_id,
+                     max(m.org_id)                         AS org_id,
+                     max(m.sku_id)                         AS sku_id,
+                     max(m.sku_no)                         AS sku_no,
+                     max(m.product_name)                   AS product_name,
+                     max(m.product_img_url)                AS product_img_url,
+                     max(m.spu_no)                         AS spu_no,
+                     max(m.sale_state)                     AS sale_state,
+                     sum(m.usable_qty)                     AS usable_qty,
+                     sum(m.frozen_qty)                     AS frozen_qty,
+                     sum(m.intransit_qty)                  AS intransit_qty,
+                     sum(m.waitqc_qty)                     AS waitqc_qty,
+                     sum(m.usable_qty) + sum(m.frozen_qty) AS real_qty
+              FROM (SELECT max(it.warehouse_id) AS warehouse_id,
+                           max(it.org_id)       AS org_id,
+                           max(it.sku_id)       AS sku_id,
+                           max(it.sku_no)       AS sku_no,
+                           max(pd.name)         AS product_name,
+                           max(pd.images_url)   AS product_img_url,
+                           max(pi.spu_no)       AS spu_no,
+                           max(ps.sale_state)   AS sale_state,
+                           sum(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END)             AS usable_qty,
+                           sum(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END)             AS frozen_qty,
+                           sum(CASE WHEN it.dict_inventory_status = 'inTransit' THEN it.qty ELSE 0 END)             AS intransit_qty,
+                           sum(CASE WHEN it.dict_inventory_status = 'waitQc' THEN it.qty ELSE 0 END)             AS waitqc_qty
+                    FROM inventory it
+                             LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
+                             LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
+                             LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
+                    WHERE it.is_deleted = false
+                    GROUP BY it.warehouse_id,
+                             it.org_id,
+                             it.sku_id,
+                             it.dict_inventory_status) m
+              GROUP BY m.warehouse_id,
+                       m.org_id,
+                       m.sku_id) t
+    </select>
+    <select id="countByArea" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM (SELECT max(m.warehouse_id)                   AS warehouse_id,
+                     max(m.org_id)                         AS org_id,
+                     max(m.sku_id)                         AS sku_id,
+                     max(m.sku_no)                         AS sku_no,
+                     max(m.product_name)                   AS product_name,
+                     max(m.product_img_url)                AS product_img_url,
+                     max(m.spu_no)                         AS spu_no,
+                     max(m.sale_state)                     AS sale_state,
+                     max(m.area_code)                      AS area_code,
+                     sum(m.usable_qty)                     AS usable_qty,
+                     sum(m.frozen_qty)                     AS frozen_qty,
+                     sum(m.usable_qty) + sum(m.frozen_qty) AS real_qty
+              FROM (SELECT max(it.warehouse_id) AS warehouse_id,
+                           max(it.org_id)       AS org_id,
+                           max(it.sku_id)       AS sku_id,
+                           max(it.sku_no)       AS sku_no,
+                           max(pd.name)         AS product_name,
+                           max(pd.images_url)   AS product_img_url,
+                           max(pi.spu_no)       AS spu_no,
+                           max(ps.sale_state)   AS sale_state,
+                           max(wl.area_code)    AS area_code,
+                           sum(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END)             AS usable_qty,
+                           sum(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END)             AS frozen_qty
+                    FROM inventory it
+                             LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
+                             LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
+                             LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
+                             LEFT JOIN (SELECT DISTINCT s.code  AS location_code,
+                                                        wa.code AS area_code,
+                                                        s.warehouse_id
+                                        FROM warehouse_location s
+                                                 LEFT JOIN warehouse_location wa ON s.parent_id = wa.id AND s.is_deleted = false AND wa.is_deleted = false) wl
+                                       ON it.warehouse_location = wl.location_code AND it.warehouse_id = wl.warehouse_id
+                    WHERE it.is_deleted = false
+                    GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.dict_inventory_status, wl.area_code) m
+              GROUP BY m.warehouse_id, m.org_id, m.sku_id, m.area_code) t
+    </select>
+    <select id="countByLocation" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM (SELECT max(m.warehouse_location)             AS warehouse_location,
+                     max(m.warehouse_id)                   AS warehouse_id,
+                     max(m.org_id)                         AS org_id,
+                     max(m.sku_id)                         AS sku_id,
+                     max(m.sku_no)                         AS sku_no,
+                     max(m.product_name)                   AS product_name,
+                     max(m.product_img_url)                AS product_img_url,
+                     max(m.spu_no)                         AS spu_no,
+                     max(m.sale_state)                     AS sale_state,
+                     sum(m.usable_qty)                     AS usable_qty,
+                     sum(m.frozen_qty)                     AS frozen_qty,
+                     sum(m.usable_qty) + sum(m.frozen_qty) AS real_qty
+              FROM (SELECT max(it.warehouse_id)       AS warehouse_id,
+                           max(it.org_id)             AS org_id,
+                           max(it.sku_id)             AS sku_id,
+                           max(it.sku_no)             AS sku_no,
+                           max(pd.name)               AS product_name,
+                           max(pd.images_url)         AS product_img_url,
+                           max(pi.spu_no)             AS spu_no,
+                           max(ps.sale_state)         AS sale_state,
+                           max(it.warehouse_location) AS warehouse_location,
+                           sum(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END)                   AS usable_qty,
+                           sum(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END)                   AS frozen_qty
+                    FROM inventory it
+                             LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
+                             LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
+                             LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
+                    WHERE it.is_deleted = false
+                    GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.dict_inventory_status, it.warehouse_location) m
+              GROUP BY m.warehouse_id, m.org_id, m.sku_id, m.warehouse_location) t
+    </select>
 </mapper>

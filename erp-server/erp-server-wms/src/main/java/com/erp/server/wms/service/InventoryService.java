@@ -285,9 +285,18 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      */
     InventoryDTO.LocationInventory recommendedLocation(InventoryDTO.RecommendedLocationParam param);
 
+    /**
+     * 按仓库统计数量
+     */
     long countByWarehouse();
 
+    /**
+     * 按库区统计数量
+     */
     long countByArea();
 
+    /**
+     * 按仓位统计数量
+     */
     long countByLocation();
 }

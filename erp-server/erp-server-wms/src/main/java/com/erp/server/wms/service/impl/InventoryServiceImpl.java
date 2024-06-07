@@ -1187,25 +1187,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public long countByWarehouse() {
-        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
-        searchParamDTO.setDimension(InventorySearchDimensionEnum.WAREHOUSE.getCode());
-        IPage<InventoryDTO. PagingViewDTO> iPage = inventoryMapper.page(new Page(1, 10), searchParamDTO);
-        return iPage.getTotal();
+        return inventoryMapper.countByWarehouse();
     }
 
     @Override
     public long countByArea() {
-        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
-        searchParamDTO.setDimension(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode());
-        IPage<InventoryDTO. PagingViewDTO> iPage = inventoryMapper.pageByArea(new Page(1, 10), searchParamDTO);
-        return iPage.getTotal();
+        return inventoryMapper.countByArea();
     }
 
     @Override
     public long countByLocation() {
-        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
-        searchParamDTO.setDimension(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode());
-        IPage<InventoryDTO. PagingViewDTO> iPage = inventoryMapper.pageByLocation(new Page(1, 10), searchParamDTO);
-        return iPage.getTotal();
+        return inventoryMapper.countByLocation();
     }
 }
