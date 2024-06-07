@@ -25,4 +25,10 @@ public class DictKindgeeConstant {
      * 其他出库单接收差异
      */
     public static final String OTHER_OUT_RECEIVE_THE_DIFFERENCE = "接收差异";
+
+
+    /**
+     * 其他出库单库存调整
+     */
+    public static final String OTHER_OUT_INVENTORY_ADJUSTMENTS = "库存调整";
 }

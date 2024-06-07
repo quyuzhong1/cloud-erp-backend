@@ -18,6 +18,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -620,6 +621,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             obj.setProductName(productName);
 
             obj.setTypeName(typeList.stream().filter(v->v.getCode().equals(obj.getType())).findFirst().orElse(new DictKingdeeDTO.ListDTO()).getName());
+            if(StringUtils.isBlank(obj.getTypeName())){
+                //历史数据
+                obj.setTypeName(EnumMessage.getNameByCode(OutstockTypeEnum.class,obj.getType()));
+            }
             obj.setOutTypeName(outTypeList.stream().filter(v->v.getCode().equals(obj.getOutType())).findFirst().orElse(new DictKingdeeDTO.ListDTO()).getName());
             //库存方向名称
             obj.setInventoryDirectionName(InventoryDirectionEnum.getName(obj.getInventoryDirection()));
@@ -832,7 +837,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //处理类型
         List<DictKingdeeDTO.ListDTO> typeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
         List<DictKingdeeDTO.ListDTO> outTypeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
-        DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_REPORT_LOSSES)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+        DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_INVENTORY_ADJUSTMENTS)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
         // 业务类型
         addDTO.setType(typeDTO.getCode());
         addDTO.setTypeName(typeDTO.getName());
@@ -1248,6 +1253,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             return "";
         }
         DictKingdeeDTO.ListDTO listDTO =  sysDictFeign.getByCode(DictKindgeeConstant.OTHER_TYPE_NAME,code);
+        if(StringUtils.isBlank(listDTO.getName())){
+            //历史数据
+            return EnumMessage.getNameByCode(OutstockTypeEnum.class,code);
+        }
         return listDTO.getName();
     }
 
