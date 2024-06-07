@@ -226,7 +226,9 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         AmzReportTaskEntity taskEntity = getByIdOpt(id).orElseThrow(() -> new ServiceException("未找任务记录：id=" + id));
         return AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus()) ||
                 AmzReportTaskStatusEnum.STOP.getCode().equalsIgnoreCase(taskEntity.getStatus()) ||
-                AmzReportTaskStatusEnum.MANUAL_STOP.getCode().equalsIgnoreCase(taskEntity.getStatus());
+                AmzReportTaskStatusEnum.MANUAL_STOP.getCode().equalsIgnoreCase(taskEntity.getStatus()) ||
+                AmzReportTaskStatusEnum.CANCELLED.getCode().equalsIgnoreCase(taskEntity.getStatus())
+                ;
     }
 
     @Override
@@ -272,6 +274,13 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             }
             return;
         }
+
+        if (Report.ProcessingStatusEnum.CANCELLED.equals(processingStatus)){
+            // 亚马逊报告自动取消=完成(亚马逊报告数据为空状态是取消)
+            this.updateStatus("", entity, AmzReportTaskStatusEnum.CANCELLED, null, null, null, null, LocalDateTime.now(), true);
+            return;
+        }
+
         // 报告创建方式
         AmzReportCreatedMethodEnum createdMethodEnum = AmzReportCreatedMethodEnum.getBySubscribedType(recordTypeConfig.getSubscribedType());
 
@@ -282,7 +291,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         }
 
         // 报告创建失败
-        if (Report.ProcessingStatusEnum.FATAL.equals(processingStatus) || Report.ProcessingStatusEnum.CANCELLED.equals(processingStatus)) {
+        if (Report.ProcessingStatusEnum.FATAL.equals(processingStatus)) {
             // 检查是否停止:并更新状态
             boolean stop = this.checkStopAndUpdateTask(entity);
             if (stop) {
