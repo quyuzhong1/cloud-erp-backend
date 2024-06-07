@@ -82,7 +82,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<String> warehouseIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getWarehouseId).collect(Collectors.toList());
             warehouseIds.add(dto.getWarehouseId());
             //获取仓库信息
-            List<WarehouseDTO.UpdateDTO> warehouseList += warehouseService.listWarehouseByIds(warehouseIds);
+            List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
 
             List<SoReturnInstockDetailEntity> list = new ArrayList<>();
             for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
