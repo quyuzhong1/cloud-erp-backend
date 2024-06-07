@@ -46,5 +46,17 @@ public interface ThirdMappingStrategy {
 //     * @param resultUpdatedList
 //     */
 //    void saveAddDto(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingDTO.ThirdAddDTO> thirdList, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList);
+
+    /**
+     * 判断当前平台是否绑定第三方数据
+     *
+     * @param addDTO
+     * @param existMappingList
+     * @param thirdList
+     * @param warehouse
+     * @param resultUpdatedList
+     */
+    void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdMappingDTO.ThirdAddDTO> thirdList, WarehouseDTO.ListDTO warehouse, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList);
+
 }
 
