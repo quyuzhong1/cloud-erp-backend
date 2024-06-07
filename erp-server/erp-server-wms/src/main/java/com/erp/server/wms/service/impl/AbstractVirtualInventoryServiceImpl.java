@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
@@ -320,12 +321,13 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         }
         // 直接过滤得到出库类型的数据
         List<VirtualTransRuleDTO.StockParamDTO>  outTransactionRules = ruleList.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)).collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(outTransactionRules)) {
-            for (VirtualTransRuleDTO.StockParamDTO rule : outTransactionRules) {
-                InventoryStatusEnum ruleInventoryStatusEnum = rule.getInventoryStatus();
-                ValidatorUtil.isTrue(Objects.nonNull(ruleInventoryStatusEnum),()->new ServiceException(ApiError.ERROR_99036));
-                this.checkStockQtyByWareLocalSkuStatus( param, ruleInventoryStatusEnum);
-            }
+        if (CollectionUtil.isEmpty(outTransactionRules)) {
+            return;
+        }
+        for (VirtualTransRuleDTO.StockParamDTO rule : outTransactionRules) {
+            InventoryStatusEnum ruleInventoryStatusEnum = rule.getInventoryStatus();
+            ValidatorUtil.isTrue(Objects.nonNull(ruleInventoryStatusEnum),()->new ServiceException(ApiError.ERROR_99036));
+            this.checkStockQtyByWareLocalSkuStatus( param, ruleInventoryStatusEnum);
         }
     }
 

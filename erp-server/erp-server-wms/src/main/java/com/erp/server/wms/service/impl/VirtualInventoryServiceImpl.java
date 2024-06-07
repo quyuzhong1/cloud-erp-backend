@@ -246,6 +246,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 //实体仓库名称
                 String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), warehouseId))
                         .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
+                listDetailDTO.setIndex(warehouseId);
                 listDetailDTO.setWarehouseId(warehouseId);
                 listDetailDTO.setWarehouseName(warehouseName);
                 //可用数据

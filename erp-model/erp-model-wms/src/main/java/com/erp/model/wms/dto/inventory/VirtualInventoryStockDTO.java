@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -33,25 +34,25 @@ public class VirtualInventoryStockDTO implements Serializable {
             /**
              * sku id
              */
-            @NotEmpty(message = "sku id不能为空")
+            @NotBlank(message = "sku id不能为空")
             private String skuId;
 
             /**
              * sku编码
              */
-            @NotEmpty(message = "sku编码不能为空")
+            @NotBlank(message = "sku编码不能为空")
             private String skuNo;
 
             /**
              * 虚拟仓库id
              */
-            @NotEmpty(message = "虚拟仓库id不能为空", groups = {ValidGroup.Update.class})
+            @NotBlank(message = "虚拟仓库id不能为空", groups = {ValidGroup.Update.class})
             private String virtualWarehouseId;
 
             /**
              * 实物仓库id
              */
-            @NotEmpty(message = "实物仓库id不能为空", groups = {ValidGroup.Update.class})
+            @NotBlank(message = "实物仓库id不能为空", groups = {ValidGroup.Update.class})
             private String warehouseId;
 
             /**
@@ -120,7 +121,7 @@ public class VirtualInventoryStockDTO implements Serializable {
             /**
              * 虚拟库存交易信息
              */
-            @NotNull(message = "【出入库】业务参数不能为空")
+            @NotEmpty(message = "【出入库】业务参数不能为空")
             @Size(min = 1, message = "请至少传输一行【出入库】业务参数")
             @Valid
             private List<OutInStockDTO> paramList;
@@ -128,7 +129,7 @@ public class VirtualInventoryStockDTO implements Serializable {
             /**
              * 业务类型
              */
-            @NotNull(message = "业务类型不能为空")
+            @NotBlank(message = "业务类型不能为空")
             @StateEnumValue(clazz = VirtualInventoryBusinessTypeEnum.class,message = "业务类型有误")
             private String businessType;
 
@@ -155,13 +156,13 @@ public class VirtualInventoryStockDTO implements Serializable {
             /**
              * 单据id
              */
-            @NotEmpty(message = "单据id不能为空")
+            @NotBlank(message = "单据id不能为空")
             private String sourceId;
 
             /**
              * 单据编号
              */
-            @NotEmpty(message = "单据编号不能为空")
+            @NotBlank(message = "单据编号不能为空")
             private String sourceCode;
 
             /**
@@ -173,7 +174,7 @@ public class VirtualInventoryStockDTO implements Serializable {
             /**
              * 原单明细id
              */
-            @NotEmpty(message = "原单明细id不能为空")
+            @NotBlank(message = "原单明细id不能为空")
             private String sourceDetailId;
 
             /**
@@ -267,7 +268,7 @@ public class VirtualInventoryStockDTO implements Serializable {
             /**
              * 调拨业务数据
              */
-            @NotNull(message = "【调拨】业务参数不能为空")
+            @NotEmpty(message = "【调拨】业务参数不能为空")
             @Size(min = 1, message = "请至少传输一行【调拨】业务参数")
             @Valid
             private List<TransferStockDTO> paramList;
@@ -275,7 +276,7 @@ public class VirtualInventoryStockDTO implements Serializable {
             /**
              * 业务类型
              */
-            @NotNull(message = "业务类型不能为空")
+            @NotBlank(message = "业务类型不能为空")
             @StateEnumValue(clazz = InventoryBusinessTypeEnum.class,message = "业务类型有误")
             private String businessType;
 
@@ -303,13 +304,13 @@ public class VirtualInventoryStockDTO implements Serializable {
             /**
              * 单据id
              */
-            @NotEmpty(message = "单据id不能为空")
+            @NotBlank(message = "单据id不能为空")
             private String sourceId;
 
             /**
              * 单据编号
              */
-            @NotEmpty(message = "单据编号不能为空")
+            @NotBlank(message = "单据编号不能为空")
             private String sourceCode;
 
             /**
@@ -325,16 +326,16 @@ public class VirtualInventoryStockDTO implements Serializable {
             private String sourceDetailId;
 
             /**
-             * 当前仓库
+             * 虚拟当前仓库
              */
-            @NotEmpty(message = "当前仓库不能为空")
-            private String curWarehouseId;
+            @NotBlank(message = "当前虚拟仓库不能为空")
+            private String virtualCurWarehouseId;
 
             /**
-             * 目的仓库
+             * 虚拟目的仓库
              */
-            @NotEmpty(message = "目的仓库不能为空")
-            private String targetWarehouseId;
+            @NotBlank(message = "目的虚拟仓库不能为空")
+            private String virtualTargetWarehouseId;
 
             /**
              * 库存交易数量

@@ -9,13 +9,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ValidatorUtil;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualTransRuleDTO;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.annotation.InventoryHandler;
 import com.erp.server.wms.service.WarehouseService;
-import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -23,7 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,7 +61,6 @@ public class VirtualInventoryTransferServiceImpl extends AbstractVirtualInventor
 
     @Override
     public <T extends VirtualInventoryStockDTO.StockBaseDTO> void checkParam(List<T> paramList, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> transactionRules) {
-        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         // 判断是否需要忽略计算库存的sku
         List<String>  ignoreInventorySkuIds = this.getIgnoreSkuIds();
 
@@ -83,24 +83,14 @@ public class VirtualInventoryTransferServiceImpl extends AbstractVirtualInventor
                     continue;
                 }
                 //调拨：当前仓和目的仓必须 不一样
-                ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()), () -> new ServiceException(ApiError.ERROR_99039));
-
-                // 当前仓仓库和仓位信息
-                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(), v -> warehouseService.detailWithCache(v));
-                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99002);
-                }
-                // 目的仓仓库
-                warehouseDetail = warehouseMap.computeIfAbsent(param.getTargetWarehouseId(), v ->warehouseService.detailWithCache(v));
-                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99002);
-                }
+                ValidatorUtil.isTrue(!Objects.equals(param.getVirtualCurWarehouseId(), param.getVirtualTargetWarehouseId()), () -> new ServiceException(ApiError.ERROR_99039));
 
                 VirtualInventoryStockDTO.InventoryDTO currInventoryDTO = new VirtualInventoryStockDTO.InventoryDTO();
                 currInventoryDTO.setSourceType(param.getSourceType());
                 currInventoryDTO.setBillDate(param.getBillDate());
                 currInventoryDTO.setSourceId(param.getSourceId());
-                currInventoryDTO.setWarehouseId(param.getCurWarehouseId());
+                currInventoryDTO.setWarehouseId(param.getWarehouseId());
+                currInventoryDTO.setVirtualWarehouseId(param.getVirtualCurWarehouseId());
                 currInventoryDTO.setSkuId(param.getSkuId());
                 currInventoryDTO.setSkuNo(param.getSkuNo());
                 currInventoryDTO.setQty(param.getQty());
@@ -114,7 +104,8 @@ public class VirtualInventoryTransferServiceImpl extends AbstractVirtualInventor
                 targetInventoryDTO.setSourceType(param.getSourceType());
                 targetInventoryDTO.setBillDate(param.getBillDate());
                 targetInventoryDTO.setSourceId(param.getSourceId());
-                targetInventoryDTO.setWarehouseId(param.getTargetWarehouseId());
+                targetInventoryDTO.setWarehouseId(param.getWarehouseId());
+                targetInventoryDTO.setVirtualWarehouseId(param.getVirtualTargetWarehouseId());
                 targetInventoryDTO.setSkuId(param.getSkuId());
                 targetInventoryDTO.setSkuNo(param.getSkuNo());
                 targetInventoryDTO.setQty(param.getQty());
@@ -229,9 +220,9 @@ public class VirtualInventoryTransferServiceImpl extends AbstractVirtualInventor
         VirtualInventoryStockDTO.TransferDTO transferDTO = new VirtualInventoryStockDTO.TransferDTO();
 
         if(Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT)) {
-            transferDTO.setWarehouseId(param.getCurWarehouseId());
+            transferDTO.setWarehouseId(param.getVirtualCurWarehouseId());
         } else if (Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET)) {
-            transferDTO.setWarehouseId(param.getTargetWarehouseId());
+            transferDTO.setWarehouseId(param.getVirtualTargetWarehouseId());
         }
         transferDTO.setSourceType(param.getSourceType());
         transferDTO.setSourceId(param.getSourceId());
