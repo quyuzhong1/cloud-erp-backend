@@ -68,6 +68,7 @@ public class WdtRefundOrderConsumer<T extends DmpSyncTaskIdDTO> extends Abstract
 
     @Override
     public ApiResult<?> handle(Object ext) {
+        log.error("销售退货入库单参数：{}", ext.toString());
         WdtReturnOrderDTO dto = JSONUtil.toBean(ext.toString(), WdtReturnOrderDTO.class);
         syncSoReturnService.syncWdtReturnOrderToSoReturn(dto);
         return ApiResult.success();
