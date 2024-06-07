@@ -436,7 +436,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         long count = poReconciliationDetailList.stream().filter(obj -> !StrUtil.equals(obj.getSupplierId(),poReconciliationEntity.getSupplierId())
                         || !StrUtil.equals(obj.getSettleOrgId(),poReconciliationEntity.getSettleOrgId()))
                 .map(PoReconciliationDetailEntity::getSupplierId).distinct().count();
-        if (count > MathUtil.ONE) {
+        if (count > MathUtil.ZERO) {
             throw new ServiceException("单据单号【{}】与选择对账单供应商或结算组织不一致");
         }
         //更新对账明细
