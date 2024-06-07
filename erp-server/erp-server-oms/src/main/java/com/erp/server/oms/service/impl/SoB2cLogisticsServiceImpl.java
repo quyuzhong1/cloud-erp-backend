@@ -189,11 +189,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (CollectionUtils.isEmpty(logisticsList)) {
             if (null == oldEntity) {
                 SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId(), allNetWeight, maxLength, maxWidth, totalHeight);
-                entity.setMainId(mainEntity.getId());
-                entity.setWeight(allNetWeight);
-                entity.setLength(maxLength);
-                entity.setWidth(maxWidth);
-                entity.setHeight(totalHeight);
                 handleLogisticsData(entity);
                 // 无信息新增空表
                 if (!this.save(entity)) {
