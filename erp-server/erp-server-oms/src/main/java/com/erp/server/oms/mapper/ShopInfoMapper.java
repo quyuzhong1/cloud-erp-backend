@@ -41,6 +41,4 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
 
     List<ShopDTO.PagingViewDTO> listExport(@Param("params") ShopDTO.ExportDTO dto);
 
-    IPage<ShopDTO.ListDTO> pagingSelect(Page query,@Param("params") ShopDTO.SelectDTO params);
-
 }

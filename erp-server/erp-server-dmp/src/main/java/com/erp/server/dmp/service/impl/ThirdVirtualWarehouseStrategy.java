@@ -54,8 +54,8 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
 
     @Resource
     private OperateLogService operateLogService;
-    @Resource
-    private ThirdMappingStrategy thirdMappingStrategy;
+//    @Resource
+//    private ThirdMappingStrategy thirdMappingStrategy;
 
     @Override
     public boolean supports(String type) {

@@ -888,36 +888,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         return this.listByIds(shopIdList);
     }
-    @Override
-    public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
-        ShopDTO.SelectDTO params = dto.getParams();
-        if (params.getShowByAuth()){
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
-            List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-            if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-                return new PagingVO<>();
-            }
-
-            ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-            List<String> shopIdList;
-            if (StringUtils.isNotBlank(params.getDictPlatform())) {
-                shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(params.getDictPlatform()))
-                        .map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            } else {
-                shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            }
-            if (CollectionUtils.isEmpty(shopIdList)) {
-                return new PagingVO<>();
-            }
-            params.setShopIdList(shopIdList);
-        }
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<ShopDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
-        List<ShopDTO.ListDTO> records = pagResult.getRecords();
-        //排序
-        pagResult.setRecords(records);
-        return new PagingVO<>(pagResult);
-    }
 
     @Override
     public Boolean getShopeeReturn(ShopAuthDTO.ReturnDTO dto) {
