@@ -9,10 +9,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -23,7 +21,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -36,8 +33,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -233,6 +228,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             Integer virtualFrozenQty = virtualInventoryDetailList.stream().filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode()))
                     .map(VirtualInventoryDTO.ListInventoryDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             listDTO.setVirtualFrozenQty(virtualFrozenQty);
+            //虚拟库存总数
+            listDTO.setVirtualQty(MathUtil.add(virtualUsableQty,virtualFrozenQty));
 
             List<VirtualInventoryDTO.ListDetailDTO> detailList = new ArrayList<>();
             //根据实物仓库分组
@@ -241,21 +238,22 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 String warehouseId = entry.getKey();
                 List<VirtualInventoryDTO.ListInventoryDTO> value = entry.getValue();
                 //明细数据
-                VirtualInventoryDTO.ListDetailDTO listDetailDTO = BeanMapperUtils.map(VirtualInventoryDTO.ListDetailDTO.class, value.get(0));
+                VirtualInventoryDTO.ListDetailDTO listDetailDTO = BeanMapperUtils.map(VirtualInventoryDTO.ListDetailDTO.class, listDTO);
                 //实体仓库名称
                 String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), warehouseId))
                         .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
+                listDetailDTO.setWarehouseId(warehouseId);
                 listDetailDTO.setWarehouseName(warehouseName);
                 //可用数据
                 VirtualInventoryDTO.ListInventoryDTO usableInventory = value.stream().filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())).findFirst().orElse(null);
-                listDetailDTO.setUsableQty(usableInventory.getQty());
-                listDetailDTO.setVirtualUsableQty(usableInventory.getVirtualQty());
+                listDetailDTO.setUsableQty(ObjectUtil.isEmpty(usableInventory) ?  MathUtil.ZERO :  usableInventory.getQty());
+                listDetailDTO.setVirtualUsableQty(ObjectUtil.isEmpty(usableInventory) ? MathUtil.ZERO : usableInventory.getVirtualQty());
                 //冻结数据
                 VirtualInventoryDTO.ListInventoryDTO frozenInventory = value.stream().filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode())).findFirst().orElse(null);
-                listDetailDTO.setVirtualFrozenQty(frozenInventory.getVirtualQty());
+                listDetailDTO.setVirtualFrozenQty(ObjectUtil.isEmpty(frozenInventory) ? MathUtil.ZERO : frozenInventory.getVirtualQty());
 
                 //实体仓分配数量
-                Integer distributionQty = MathUtil.add(usableInventory.getQty(), usableInventory.getVirtualQty());
+                Integer distributionQty = MathUtil.add(listDetailDTO.getVirtualUsableQty(), listDetailDTO.getVirtualFrozenQty());
                 listDetailDTO.setDistributionQty(distributionQty);
                 listDetailDTO.setVirtualQty(distributionQty);
                 //未分配数量

@@ -63,7 +63,7 @@
                 ${params.permissionSql}
             </if>
         </where>
-        group by vi.sku_id,vi.sku_no,vi.warehouse_id,i.virtual_warehouse_id
+        group by vi.sku_id,vi.sku_no,vi.warehouse_id,vi.virtual_warehouse_id
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -77,18 +77,21 @@
     <select id="listVirtualWarehouseIdListAndSkuIdList"
             resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListInventoryDTO">
         select
-            inv.warehouse_id,
-            inv.sku_id,
-            inv.dict_inventory_status,
-            COALESCE(inv.qty,0),
-            COALESCE(vi.qty,0) as virtualQty,
-            vi.virtual_warehouse_id
-        from inventory inv
-        left join virtual_inventory vi on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
-        and vi.dict_inventory_status = inv.dict_inventory_status and vi.is_deleted = false
+               vi.warehouse_id,
+               vi.sku_id,
+               vi.dict_inventory_status,
+               COALESCE(inv.qty,0) as qty,
+               COALESCE(vi.qty,0) as virtualQty,
+               vi.virtual_warehouse_id
+        from virtual_inventory vi
+        left join (
+            select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
+            group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
+        ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
+              and vi.dict_inventory_status = inv.dict_inventory_status
         <where>
-            inv.is_deleted = false
-            and inv.sku_id in
+            vi.is_deleted = false
+            and vi.sku_id in
             <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>

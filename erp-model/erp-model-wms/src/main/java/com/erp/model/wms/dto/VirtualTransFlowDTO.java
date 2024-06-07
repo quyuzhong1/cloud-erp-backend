@@ -8,6 +8,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -142,6 +143,7 @@ public class VirtualTransFlowDTO implements Serializable {
         /**
          * skuId
          */
+        @NotBlank(message = "skuId不能为空")
         private String skuId;
         /**
          * 仓库Id
@@ -150,6 +152,7 @@ public class VirtualTransFlowDTO implements Serializable {
         /**
          * 虚拟仓库
          */
+        @NotBlank(message = "虚拟仓库Id不能为空")
         private String virtualWarehouseId;
         /**
          * 库存状态，usable可用、frozen冻结
@@ -175,7 +178,7 @@ public class VirtualTransFlowDTO implements Serializable {
         /**
          *  业务日期【可排序】
          */
-        private LocalDateTime billDate;
+        private LocalDate billDate;
         /**
          * 实体仓Id
          */
