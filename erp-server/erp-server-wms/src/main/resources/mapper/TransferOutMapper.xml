@@ -75,6 +75,7 @@
             </foreach>
         </if>
         tfo.id desc,tod.id asc
+        limit 50000
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

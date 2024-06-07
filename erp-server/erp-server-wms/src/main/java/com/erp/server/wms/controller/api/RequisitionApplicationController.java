@@ -7,7 +7,6 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
-import com.erp.server.wms.service.OverseasDeliveryPlanService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -343,4 +342,18 @@ public class RequisitionApplicationController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 绑定货件
+     * @Author Luo_WG
+     **/
+    @PostMapping("/bindShipment")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:requisitionApplication:bindShipment",
+            serviceClass = RequisitionApplicationService.class,
+            keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> bindShipment(@RequestBody @Validated List<RequisitionApplicationDTO.BindShipment> dto) {
+        List<BatchResultDTO> resultDTOS = requisitionApplicationService.bindShipment(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

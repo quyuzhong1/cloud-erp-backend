@@ -1,7 +1,6 @@
 package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
