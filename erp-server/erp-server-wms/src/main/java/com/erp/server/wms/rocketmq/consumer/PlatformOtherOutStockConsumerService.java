@@ -3,6 +3,7 @@ package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.DictKindgeeConstant;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOtherOutStockDTO;
@@ -16,6 +17,7 @@ import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
@@ -25,6 +27,7 @@ import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.OtherOutstockService;
 import com.erp.server.wms.service.SoOutstockService;
@@ -65,6 +68,9 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
     private OtherOutstockService otherOutstockService;
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SysDictFeign sysDictFeign;
 
 
     @Override
@@ -191,10 +197,18 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
         addDTO.setWarehouseId(shopInfo.getWarehouseId());
         // 领料组织id
         addDTO.setReceiveOrgId(shopInfo.getSalesOrgId());
-        // 出库类型
-        addDTO.setType(OutstockTypeEnum.SO_MULTI_CHANNEL.getCode());
-        // 出库类型名称
-        addDTO.setTypeName(OutstockTypeEnum.SO_MULTI_CHANNEL.getName());
+        //处理类型
+        List<DictKingdeeDTO.ListDTO> typeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
+        List<DictKingdeeDTO.ListDTO> outTypeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
+        DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_SO_MULTI_CHANNEL)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+        // 业务类型
+        addDTO.setType(typeDTO.getCode());
+        addDTO.setTypeName(typeDTO.getName());
+        //出库类型
+        DictKingdeeDTO.ListDTO outTypeDTO = outTypeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_SO_MULTI_CHANNEL)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+        addDTO.setOutType(outTypeDTO.getCode());
+        addDTO.setOutTypeName(outTypeDTO.getName());
+
         // 部门ID
         addDTO.setDeptId(deptDTO.getDepartmentId());
         // 流程申请单号

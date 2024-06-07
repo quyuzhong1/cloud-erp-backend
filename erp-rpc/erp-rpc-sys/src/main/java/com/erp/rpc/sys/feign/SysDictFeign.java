@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign;
 
 import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -78,4 +79,11 @@ public interface SysDictFeign {
      */
     @PostMapping("/feign/city/listImlCityByDictIdList")
     List<ImlDictCityEntity> listImlCityByDictIdList(List<String> dictIds);
+
+
+    @GetMapping("/feign/dict/kingdee/getByCode")
+    DictKingdeeDTO.ListDTO getByCode(@RequestParam(value = "typeName") String typeName, @RequestParam(value = "code") String code);
+
+    @GetMapping("/feign/dict/kingdee/listByTypeName")
+    List<DictKingdeeDTO.ListDTO> listByTypeName(@RequestParam(value = "typeName")String typeName);
 }
