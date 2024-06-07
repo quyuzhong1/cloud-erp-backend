@@ -13,10 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
 
 /**
  * <p>
@@ -28,7 +25,7 @@ import javax.validation.constraints.NotEmpty;
 */
 @Data
 @NoArgsConstructor
-public class OverseasDeliveryPlanDTO implements Serializable {
+public class WmsDeliveryPlanDTO implements Serializable {
 
 
      /**
@@ -126,6 +123,11 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private String deliveryCode;
 
         /**
+         * 货件/入库单号
+         */
+        private String refCode;
+
+        /**
          * 目的仓库
          */
         private String toWarehouseId;
@@ -149,7 +151,20 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 第三方仓SKU
          */
         private String thirdWarehouseSku;
+        /**
+         * 平台产品id
+         */
+        private String platformProductId;
 
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+
+        /**
+         * FNSKU
+         */
+        private String platformFnSku;
         /**
          * 产品id
          */
@@ -219,6 +234,26 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 来源平台
          */
         private String provideCode;
+
+        /**
+         * 单据类型
+         */
+        private String type;
+
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
     }
 
     /**
@@ -243,6 +278,21 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         * 主键id
         */
         private String id;
+
+        /**
+         * 类型
+         */
+        private String type;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
 
         /**
         * 单据编号
@@ -292,7 +342,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
         * 详情
         */
-        private List<OverseasDeliveryPlanDetailDTO.ViewDTO> detailList;
+        private List<WmsDeliveryPlanDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -305,7 +355,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
          * 详情
          */
-        private List<OverseasDeliveryPlanDetailDTO.AddDTO> detailList;
+        private List<WmsDeliveryPlanDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -324,7 +374,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
          * 详情
          */
-        private List<OverseasDeliveryPlanDetailDTO.UpdateDTO> detailList;
+        private List<WmsDeliveryPlanDetailDTO.UpdateDTO> detailList;
 
     }
 
@@ -333,10 +383,20 @@ public class OverseasDeliveryPlanDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+         * 类型 /wms/dict/drop/down?type=deliveryPlanType
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+
+        /**
         * 目的仓id
         */
-        @NotBlank(message = "目的仓不能为空")
         private String toWarehouseId;
+
+        /**
+         * 店铺Id
+         */
+        private String shopId;
 
         /**
         * 计划发货时间
@@ -486,12 +546,12 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private Boolean isCombination;
 
         /**
-         * 平台sku
+         * 平台(第三方仓)sku（msku）
          */
         private String platformSku;
 
         /**
-         * 平台spu（asin）
+         * 平台产品id（asin）
          */
         private String asin;
 
@@ -505,6 +565,25 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          */
         private String platformSkuName;
 
+        /**
+         * 单箱数量
+         */
+        private Integer boxQty;
+
+        /**
+         * 发货计划类型
+         */
+        private String deliveryPlanType;
+
+        /**
+         * 店铺Id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
     }
 
     /**
@@ -608,6 +687,10 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 平台产品名称
          */
         private String platformSkuName;
+        /**
+         * 类型
+         */
+        private String type;
     }
 
 

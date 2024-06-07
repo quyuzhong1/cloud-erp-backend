@@ -1,13 +1,9 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.PlatformDeliveryInterceptDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.UnitEnum;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
@@ -213,7 +209,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                         soB2cEntity.getCode(),
                         soB2cEntity.getDictPlatform(),
                         JSONUtil.toJsonStr(dto),
-                        businessDesc);
+                        businessDesc, false);
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }

@@ -108,6 +108,10 @@ public class PlatformOrderDetailDTO {
      *来源平台
      */
     private String sourcePlatform = "thirdPlatform";
+    /**
+     * 明细是否退款
+     */
+    private Boolean isDetailRefund = false;
 
 
 }

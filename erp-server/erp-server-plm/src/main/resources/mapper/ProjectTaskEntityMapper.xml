@@ -204,7 +204,7 @@
         </if>
         pt.id asc,
         pt.create_time asc
-
+        limit 50000
     </select>
 
     <select id="pagingCount" resultType="java.lang.Integer">
@@ -419,7 +419,7 @@
         </if>
         pt.id asc,
         pt.create_time asc
-
+        limit 50000
     </select>
 
 
@@ -623,6 +623,7 @@
         </if>
         pt.id asc,
         pt.create_time asc
+        limit 50000
     </select>
 
     <select id="allPagingCount" resultType="java.lang.Integer">
@@ -657,6 +658,7 @@
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
+        limit 50000
     </select>
 
     <select id="getTaskDetails" resultType="com.erp.model.plm.dto.ProjectTaskDetailsDTO">
@@ -921,6 +923,7 @@
             </foreach>
         </if>
         pt.create_time asc
+        limit 50000
     </select>
 
     <select id="myApprovalPagingCount" resultType="java.lang.Integer">

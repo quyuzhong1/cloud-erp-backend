@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class MercadoShipOrder implements IPlatformService {
     private MercadoSdkClientService mercadoSdkClientService;
 
     @Override
-    public void shipOrder(PlatformShipOrderDTO dto) {
+    public List<String> shipOrder(PlatformShipOrderDTO dto) {
         SoB2cEntity entity = soB2cFeign.getById(dto.getSoB2cId());
 
         //映射发货需要的字段，如果合并的订单拆分返回
@@ -51,6 +52,7 @@ public class MercadoShipOrder implements IPlatformService {
 
         //标记发货
         mercadoSdkClientService.shipOrder(shipOrderDTO);
+        return new ArrayList<>();
     }
 
     @Override

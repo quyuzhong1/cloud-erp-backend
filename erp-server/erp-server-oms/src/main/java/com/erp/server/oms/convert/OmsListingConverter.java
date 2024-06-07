@@ -34,6 +34,7 @@ public interface OmsListingConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "platformSpuNo", source = "platformProductNo"),
+            @Mapping(target = "platformSkuId", source = "platformSkuId"),
             @Mapping(target = "platformSpuName", source = "platformProductName"),
             @Mapping(target = "platformSkuName", source = "platformSkuName"),
             @Mapping(target = "platformUpdateTime", source = "platformUpdateTime"),

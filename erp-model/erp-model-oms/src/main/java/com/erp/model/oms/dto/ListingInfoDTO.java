@@ -1,22 +1,15 @@
 package com.erp.model.oms.dto;
 
-import cn.hutool.core.util.ReflectUtil;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
@@ -121,6 +114,11 @@ public class ListingInfoDTO implements Serializable {
          * 计划发货数量
          */
         private Integer qty;
+
+        /**
+         * 单箱数量
+         */
+        private Integer boxQty;
 
         /**
          * 对照关系是否映射到服务商平台所有仓库: f=否, t=是
