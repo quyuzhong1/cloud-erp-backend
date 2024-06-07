@@ -36,7 +36,7 @@ import java.util.Objects;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
         selectorExpression = "third_system_wdt_warehouse_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_warehouse_consumer",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_wdt_warehouse_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class WdtWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
@@ -80,7 +80,7 @@ public class WdtWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPl
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        log.info("监听到旺店通仓库数据消息：{}", JSONUtil.parse(ext).toString());
+        log.info("旺店通仓库数据处理：{}", JSONUtil.parse(ext).toString());
         ErpWarehouseDto entity = JSONUtil.toBean(ext.toString(), ErpWarehouseDto.class);
         //入库
         ThirdWarehouseDTO.AddDTO addDTO = new ThirdWarehouseDTO.AddDTO();
