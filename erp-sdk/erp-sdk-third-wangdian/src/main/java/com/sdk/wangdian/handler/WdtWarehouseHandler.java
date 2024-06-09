@@ -119,6 +119,7 @@ public class WdtWarehouseHandler implements IBusinessHandler<WdtWarehouseDto, Er
         for (WdtWarehouseDto source : sourceDataList) {
             source.setUniqueId(String.valueOf(source.getWarehouse_id()));
             ErpWarehouseDto target = new ErpWarehouseDto();
+            target.setUniqueId(source.getUniqueId());
             target.setDisabled(source.getIs_disabled());
             target.setSysType(PlatformDictEnum.WDT.getCode());
             target.setWarehouseId(String.valueOf(source.getWarehouse_id()));

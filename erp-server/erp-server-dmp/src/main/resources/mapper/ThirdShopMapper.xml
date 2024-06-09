@@ -83,7 +83,6 @@
         from third_shop ts
         where  ts.is_deleted = FALSE
         and ts.disabled=false
-        and ts.auth_state=1
         <if test="params.sysType!=null and params.sysType!=''">
             and ts.sys_type = #{params.sysType}
         </if>

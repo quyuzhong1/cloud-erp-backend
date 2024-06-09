@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
@@ -53,6 +54,8 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
 
     @Resource
     private OperateLogService operateLogService;
+//    @Resource
+//    private ThirdMappingStrategy thirdMappingStrategy;
 
     @Override
     public boolean supports(String type) {
@@ -87,12 +90,12 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
             //如果当前平台没有绑定第三方数据，直接添加
             if (CollectionUtils.isEmpty(existMappingList)) {
                 for (ThirdMappingDTO.ThirdAddDTO item : thirdList) {
-                    makeThirdMappingDto(addDTO, item);
+                    makeThirdMappingDto(addDTO, item,null);
                 }
             } else {
                 List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList = new ArrayList<>();
                 //判断当前平台是否绑定第三方数据
-                checkSysBinding(addDTO, existMappingList, thirdList, resultUpdatedList);
+                checkSysBinding(addDTO, existMappingList, thirdList, null,resultUpdatedList);
                 //保存新增数据
                 saveAddDto(addDTO, thirdList, resultUpdatedList);
             }
@@ -127,10 +130,10 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
             if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
                 ThirdMappingDTO.ThirdAddDTO updatedDto = resultUpdatedList.stream().filter(item -> Objects.equals(item.getSysType(), thirdAddDTO.getSysType())).findFirst().orElse(null);
                 if (Objects.isNull(updatedDto)) {
-                    makeThirdMappingDto(addDTO, thirdAddDTO);
+                    makeThirdMappingDto(addDTO, thirdAddDTO,null);
                 }
             } else {
-                makeThirdMappingDto(addDTO, thirdAddDTO);
+                makeThirdMappingDto(addDTO, thirdAddDTO,null);
             }
         });
     }
@@ -143,7 +146,11 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
      * @param thirdList
      * @param resultUpdatedList
      */
-    private void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdMappingDTO.ThirdAddDTO> thirdList,
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdMappingDTO.ThirdAddDTO> thirdList,
+             WarehouseDTO.ListDTO warehouse,
                                  List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList) {
         existMappingList.forEach(existMapping -> {
             ThirdMappingDTO.ThirdAddDTO thirdAddDTO = thirdList.stream().filter(item ->
@@ -165,7 +172,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
                 thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
                 thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
                 thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
-                addOrUpdate(thirdMappingEntity, existMapping);
+                addOrUpdate(thirdMappingEntity, existMapping,null);
                 resultUpdatedList.add(thirdAddDTO);
             }
         });
@@ -176,7 +183,10 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
      *
      * @param existMappingList
      */
-    private void deleteBinded(List<ThirdMappingEntity> existMappingList) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
         existMappingList.forEach(existMapping -> {
             // 操作日志
             String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
@@ -199,7 +209,10 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
      * @param warehouseName
      * @param disabled
      */
-    private void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
         if (PlatformDictEnum.IML.getCode().equals(existMapping.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(existMapping.getThirdSysType())) {
             OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
             feignDTO.setCode(existMapping.getThirdSysType());
@@ -214,17 +227,23 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
         }
     }
 
-    private void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO, WarehouseDTO.ListDTO warehouse) {
         ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
         BeanMapperUtils.copy(addDTO, thirdMappingEntity);
         thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
         thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
         thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
         thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
-        addOrUpdate(thirdMappingEntity, null);
+        addOrUpdate(thirdMappingEntity, null,null);
     }
 
-    private void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void addOrUpdate(ThirdMappingEntity thirdMappingEntity, ThirdMappingEntity existMapping, WarehouseDTO.ListDTO warehouse) {
         // 数据处理
         handleData(thirdMappingEntity);
         log.info("开始新增第三方系统映射关系单");

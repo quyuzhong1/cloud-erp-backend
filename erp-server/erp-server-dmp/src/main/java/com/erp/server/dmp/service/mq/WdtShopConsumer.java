@@ -36,7 +36,7 @@ import java.util.Objects;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
         selectorExpression = "third_system_wdt_shop_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_shop_consumer",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_wdt_shop_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class WdtShopConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 

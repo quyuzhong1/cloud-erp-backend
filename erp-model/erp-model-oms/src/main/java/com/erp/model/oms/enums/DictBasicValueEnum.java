@@ -9,7 +9,7 @@ package com.erp.model.oms.enums;
  */
 public enum DictBasicValueEnum {
 
-    ONLINE_STORE_PAYMENT("onlineStorePayment",  "网店销售收款","collectionTerms"),
+    ONLINE_STORE_PAYMENT("SKTJ05_SYS",  "网店销售收款","collectionTerms"),
     ;
 
 

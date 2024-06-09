@@ -277,6 +277,8 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return
      */
     List<ProductDetailEntity> getProductDetailByDestDeclarePrice();
+    IPage<SkuVO> pagingSelect(Page query, @Param("params")SkuVO.SelectDTO params);
+
 }
 
 

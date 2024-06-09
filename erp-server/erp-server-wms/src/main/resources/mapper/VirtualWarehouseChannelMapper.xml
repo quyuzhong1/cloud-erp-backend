@@ -36,6 +36,21 @@
         is_deleted,
         disabled, virtual_warehouse_id, virtual_warehouse_code, virtual_warehouse_name, dict_platform, type, relation_id, relation_name, dict_platform_type
     </sql>
+    <select id="getBindedDictPlatform" resultType="java.lang.String">
+        SELECT dict_platform FROM "virtual_warehouse_channel"
+        where is_deleted=false
+          and disabled=false
+        group by dict_platform
+    </select>
+    <select id="getBindedShopByDictPlatform" resultType="java.lang.String">
+        SELECT relation_id
+        FROM "virtual_warehouse_channel"
+        where is_deleted = false
+          and disabled = false
+          and type = 'shop'
+          and dict_platform = #{dictPlatform}
+        group by relation_id
+    </select>
 
 
 </mapper>

@@ -4,8 +4,6 @@ import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -54,4 +52,8 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
      * @param virtualWarehouseId
      */
     List<VirtualWarehouseChannelEntity> getByVirtualWarehouseId(String virtualWarehouseId);
+
+    List<String> getBindedDictPlatform();
+
+    List<String> getBindedShopByDictPlatform(String dictPlatform);
 }

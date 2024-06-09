@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -16,14 +17,17 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
+import com.erp.rpc.oms.feign.OmsDropDownFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseMapper;
 import com.erp.server.wms.service.VirtualWarehouseChannelService;
 import com.erp.server.wms.service.VirtualWarehouseRelationService;
@@ -32,14 +36,12 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.sdk.wangdian.sdk.impl.Api;
-import org.apache.bcel.generic.IF_ACMPEQ;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 
@@ -48,8 +50,6 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 
@@ -74,9 +74,14 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     private VirtualWarehouseChannelService virtualWarehouseChannelService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private OmsDropDownFeign omsDropDownFeign;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(VirtualWarehouseDTO.AddDTO addDTO) {
         VirtualWarehouseEntity virtualWarehouseEntity = new VirtualWarehouseEntity();
         BeanMapperUtils.copy(addDTO, virtualWarehouseEntity);
@@ -97,35 +102,23 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓", virtualWarehouseEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), "新增操作");
         //绑定信息
-        bindInfo(addDTO.getWarehouseIdList(), addDTO.getChannelList(), addDTO.getThirdMappingList(), virtualWarehouseEntity);
+        //新增关联渠道
+        virtualWarehouseChannelService.batchAdd(bindChannel(addDTO.getChannelList(), virtualWarehouseEntity.getId()));
+        //新增关联仓库
+        virtualWarehouseRelationService.batchAdd(bindRelation(addDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
+        //新增关联外部仓
+        dmpThirdMappingFeign.add(bindThirdMapping(addDTO.getThirdMappingList(), virtualWarehouseEntity));
 
         return new BaseResultDTO.AddDTO(virtualWarehouseEntity.getId(), code);
-    }
-
-    /**
-     * 绑定信息
-     *
-     * @param warehouseIdList
-     * @param channelList
-     * @param thirdMappingList
-     * @param virtualWarehouseEntity
-     */
-    private void bindInfo(List<String> warehouseIdList, List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList,
-                          List<ThirdMappingDTO.AddDTO> thirdMappingList, VirtualWarehouseEntity virtualWarehouseEntity) {
-        //新增关联渠道
-        bindChannel(channelList, virtualWarehouseEntity.getId());
-        //新增关联仓库
-        bindRelation(warehouseIdList, virtualWarehouseEntity.getId());
-        //新增关联外部仓
-        bindThirdMapping(thirdMappingList, virtualWarehouseEntity);
     }
 
     /**
      * 新增关联外部仓
      *
      * @param thirdMappingList
+     * @return
      */
-    private void bindThirdMapping(List<ThirdMappingDTO.AddDTO> thirdMappingList, VirtualWarehouseEntity virtualWarehouseEntity) {
+    private ThirdMappingDTO.AddDTO bindThirdMapping(List<ThirdMappingDTO.AddDTO> thirdMappingList, VirtualWarehouseEntity virtualWarehouseEntity) {
         ThirdMappingDTO.AddDTO addDTO = new ThirdMappingDTO.AddDTO();
         addDTO.setSysId(virtualWarehouseEntity.getId());
         addDTO.setSysName(virtualWarehouseEntity.getName());
@@ -142,7 +135,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             });
         }
         addDTO.setThirdList(thirdList);
-        dmpThirdMappingFeign.add(addDTO);
+        return addDTO;
     }
 
 
@@ -151,12 +144,13 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      *
      * @param warehouseIdList
      * @param virtualWarehouseEntityId
+     * @return
      */
-    private void bindRelation(List<String> warehouseIdList, String virtualWarehouseEntityId) {
+    private VirtualWarehouseRelationDTO.BatchAddDTO bindRelation(List<String> warehouseIdList, String virtualWarehouseEntityId) {
         VirtualWarehouseRelationDTO.BatchAddDTO batchAddDTO = new VirtualWarehouseRelationDTO.BatchAddDTO();
         batchAddDTO.setWarehouseIdList(warehouseIdList);
         batchAddDTO.setVirtualWarehouseId(virtualWarehouseEntityId);
-        virtualWarehouseRelationService.batchAdd(batchAddDTO);
+        return batchAddDTO;
     }
 
     /**
@@ -165,24 +159,41 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      * @param channelList
      * @param virtualWarehouseEntityId
      */
-    private void bindChannel(List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList, String virtualWarehouseEntityId) {
-        //校验一个渠道只能绑定一种类型
+    private VirtualWarehouseChannelDTO.BatchAddDTO bindChannel(List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList, String virtualWarehouseEntityId) {
+        //校验一个渠道只能绑定一种类型：平台、店铺
         Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> collect = channelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform));
         collect.forEach((k, v) -> {
             if (v.size() > 1) {
                 throw new ServiceException(ApiError.ERROR_ONLYONE);
             }
         });
+        //校验当前类型（平台、店铺）是否被其他虚拟仓占用
+        if (CollectionUtils.isNotEmpty(channelList)) {
+            Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> listMap = channelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getType));
+            listMap.forEach((type, list) -> {
+                if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(type)) {
+                    //todo 获取已经绑定的平台
+                    List<String> bindedDictPlatform = virtualWarehouseChannelService.getBindedDictPlatform();
+//                    List<VirtualWarehouseChannelDTO.CommonDTO> bindedInfoList = virtualWarehouseChannelService.getBindedInfoByDictPlatform();
+                    List<String> newDictPlatformList = list.stream().map(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform).collect(Collectors.toList());
+                    //校验是否存在过绑定关系
+                    bindedDictPlatform.retainAll(newDictPlatformList);
+                    if (CollectionUtils.isNotEmpty(bindedDictPlatform)){
+                    }
+                }
+            });
+        }
         VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO = new VirtualWarehouseChannelDTO.BatchAddDTO();
         batchAddDTO.setVirtualWarehouseId(virtualWarehouseEntityId);
         batchAddDTO.setChannelList(channelList);
-        virtualWarehouseChannelService.batchAdd(batchAddDTO);
+        return batchAddDTO;
     }
 
 
     /**
      * 修改
      */
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(VirtualWarehouseDTO.UpdateDTO updateDTO) {
@@ -202,7 +213,13 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseEntity.getCode(), "虚拟仓");
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), msg);
         //绑定信息
-        bindInfo(updateDTO.getWarehouseIdList(), updateDTO.getChannelList(), updateDTO.getThirdMappingList(), virtualWarehouseEntity);
+        //新增关联渠道
+        virtualWarehouseChannelService.batchAdd(bindChannel(updateDTO.getChannelList(), virtualWarehouseEntity.getId()));
+        //新增关联仓库
+        virtualWarehouseRelationService.batchAdd(bindRelation(updateDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
+        //新增关联外部仓
+        dmpThirdMappingFeign.add(bindThirdMapping(updateDTO.getThirdMappingList(), virtualWarehouseEntity));
+
         return Boolean.TRUE;
     }
 
@@ -325,5 +342,56 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             viewDTO.setThirdMappingList(view.getThirdList());
         }
         return viewDTO;
+    }
+
+    /**
+     * 获取关联渠道
+     *
+     * @param key
+     * @return
+     */
+    @Override
+    public List<BaseDropDownDTO.Tree> tree(String key) {
+        List<BaseDropDownDTO.Tree> tree = omsDropDownFeign.tree(key);
+        //获取当前已经绑定的所有渠道
+        List<String> bindedDictPlatform = virtualWarehouseChannelService.getBindedDictPlatform();
+        if (CollectionUtils.isEmpty(bindedDictPlatform)) {
+            return tree;
+        }
+        for (BaseDropDownDTO.Tree dictPlatform : tree) {
+            List<BaseDropDownDTO.ChildTree> childTreeList = dictPlatform.getChildTreeList();
+            if (CollectionUtils.isEmpty(childTreeList)) {
+                continue;
+            }
+            childTreeList.forEach(childTree -> {
+                if (bindedDictPlatform.contains(childTree.getCode())) {
+                    childTree.setDisabled(true);
+                } else {
+                    childTree.setDisabled(false);
+                }
+            });
+        }
+        return tree;
+    }
+
+    @Override
+    public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
+        PagingVO<ShopDTO.ListDTO> pagingSelect = shopInfoFeign.pagingSelect(dto);
+        if (CollectionUtils.isEmpty(pagingSelect.getList())) {
+            return new PagingVO<>();
+        }
+        //获取当前平台下绑定的店铺
+        List<String> bindedShopList = virtualWarehouseChannelService.getBindedShopByDictPlatform(dto.getParams().getDictPlatform());
+        if (CollectionUtils.isEmpty(bindedShopList)) {
+            return pagingSelect;
+        }
+        pagingSelect.getList().forEach(shop -> {
+            if (bindedShopList.contains(((ShopDTO.ListDTO) shop).getId())) {
+                ((ShopDTO.ListDTO) shop).setDisabled(true);
+            } else {
+                ((ShopDTO.ListDTO) shop).setDisabled(false);
+            }
+        });
+        return pagingSelect;
     }
 }

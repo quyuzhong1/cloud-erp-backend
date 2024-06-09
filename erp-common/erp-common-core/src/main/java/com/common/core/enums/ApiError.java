@@ -1215,9 +1215,9 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_TIKTOK_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
     ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
     ERROR_TIKTOK_SPLIT(92081,"订单【{}】TikTok拆分订单失败"),
-    ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING(92083,"同步旺店通B2C销售出库单未找到对应的仓库映射【{}】"),
-    ERROR_WDT_NOT_FOUND_SHOP_MAPPING(92084,"同步旺店通B2C销售出库单未找到对应的店铺映射【{}】"),
-    ERROR_WDT_NOT_FOUND_SKU(92085,"同步旺店通退货入库单未找到对应的SKU【{}】"),
+    ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING(92083,"同步旺店通B2C单据未找到对应的仓库映射【{}】"),
+    ERROR_WDT_NOT_FOUND_SHOP_MAPPING(92084,"同步旺店通B2C单据未找到对应的店铺映射【{}】"),
+    ERROR_WDT_NOT_FOUND_SKU(92085,"同步旺店通单据未找到对应的SKU【{}】"),
 
     ERROR_SHOP_UNDISABLED(92142,"只有禁用的店铺允许删除"),
     ERROR_SO_B2C_ORDER_DECLARE_SKU_NO_NOT_EXIST(92142,"销售订单【{}】申报信息SKU不存在"),

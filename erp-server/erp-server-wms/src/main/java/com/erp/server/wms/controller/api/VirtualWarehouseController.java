@@ -3,9 +3,12 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.Resource;
@@ -26,6 +29,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+
+import java.util.List;
 
 /**
  * 虚拟仓
@@ -124,7 +129,22 @@ public class VirtualWarehouseController extends BaseController {
             serviceClass = VirtualWarehouseService.class,
             keyIdName = "id")
     @LogViewService
-    public ApiResult<?> view(@RequestParam(value = "id") String id) {
+    public ApiResult<VirtualWarehouseDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
         return success(virtualWarehouseService.view(id));
+    }
+    /**
+     * 详情
+     */
+    @GetMapping("/tree")
+    @LogViewService
+    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam("key") String key) {
+        return success(virtualWarehouseService.tree(key));
+    }
+    /**
+     * 详情
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto){
+        return success(virtualWarehouseService.pagingSelect(dto));
     }
 }

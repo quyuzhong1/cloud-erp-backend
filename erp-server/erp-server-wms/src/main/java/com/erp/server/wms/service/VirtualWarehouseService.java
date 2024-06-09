@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -68,4 +69,8 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      * @return
      */
     VirtualWarehouseDTO.ViewDTO view(String id);
+
+    List<BaseDropDownDTO.Tree> tree(String key);
+
+    PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
 }

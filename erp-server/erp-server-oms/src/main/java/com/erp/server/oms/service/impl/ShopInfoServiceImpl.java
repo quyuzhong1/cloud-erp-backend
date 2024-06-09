@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -29,10 +30,7 @@ import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
@@ -139,6 +137,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
+    @Resource
+    private KingdeeReceiptConditionService kingdeeReceiptConditionService;
+
     /**
      * 添加店铺
      *
@@ -185,6 +186,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 chargeName = user.getUserName();
             }
         }
+        //设置用户信息
+        setCustom(dto.getCustomerId(), shop);
         shop.setChargeName(chargeName);
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
@@ -241,7 +244,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //币种
         customer.setCurrency(currency);
         customer.setSellerId(shop.getChargeId());
-        customer.setConditionDict(DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode());
+        KingdeeReceiptConditionEntity one = kingdeeReceiptConditionService.getOne(new LambdaQueryWrapper<KingdeeReceiptConditionEntity>().eq(KingdeeReceiptConditionEntity::getCode, DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode()));
+        customer.setConditionDict(Objects.nonNull(one) ? one.getId() : "");
         customer.setSourceId(shop.getId());
         customer.setSourceType(SourceTypeEnum.SHOP.getCode());
         CustomerInfoEntity customerInfoEntity = customerInfoService.addOrGetCustom(customer);
@@ -494,17 +498,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopInfo.setWarehouseName(updateDTO.getName());
             shopInfo.setWarehouseId(dto.getWarehouseId());
         }
-        if (StringUtils.isNotBlank(dto.getCustomerId())) {
-            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(dto.getCustomerId());
-            if (ObjectUtil.isEmpty(customerInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92011);
-            }
-            shopInfo.setCustomerId(customerInfoEntity.getId());
-            shopInfo.setCustomerCode(customerInfoEntity.getCode());
-        } else {
-            shopInfo.setCustomerId(null);
-            shopInfo.setCustomerCode(null);
+        shopInfo.setIsHaveWarehouse(dto.getIsHaveWarehouse());
+        if (!dto.getIsHaveWarehouse()){
+            shopInfo.setWarehouseName("");
+            shopInfo.setWarehouseId("");
         }
+        //设置用户信息
+        setCustom(dto.getCustomerId(), shopInfo);
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
@@ -553,18 +553,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setSalesOrgId(dto.getSalesOrgId());
         shopInfo.setSalesOrgName(orgName);
         shopInfo.setChargeId(dto.getChargeId());
-
-        if (StringUtils.isNotBlank(dto.getCustomerId())) {
-            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(dto.getCustomerId());
-            if (ObjectUtil.isEmpty(customerInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92011);
-            }
-            shopInfo.setCustomerId(customerInfoEntity.getId());
-            shopInfo.setCustomerCode(customerInfoEntity.getCode());
-        }else{
-            shopInfo.setCustomerId(null);
-            shopInfo.setCustomerCode(null);
-        }
+        String customerId = dto.getCustomerId();
+        //设置用户信息
+        setCustom(customerId, shopInfo);
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
@@ -575,6 +566,25 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(), dto.getChargeId()));
         }
         return shopInfo;
+    }
+
+    /**
+     * 设置用户信息
+     * @param customerId
+     * @param shopInfo
+     */
+    private void setCustom(String customerId, ShopInfoEntity shopInfo) {
+        if (StringUtils.isNotBlank(customerId)) {
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
+            if (ObjectUtil.isEmpty(customerInfoEntity)) {
+                throw new ServiceException(ApiError.ERROR_92011);
+            }
+            shopInfo.setCustomerId(customerInfoEntity.getId());
+            shopInfo.setCustomerCode(customerInfoEntity.getCode());
+        }else{
+            shopInfo.setCustomerId("");
+            shopInfo.setCustomerCode("");
+        }
     }
 
     private void checkInternalShopName(String dto, String id) {
@@ -877,36 +887,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             return Collections.EMPTY_LIST;
         }
         return this.listByIds(shopIdList);
-    }
-    @Override
-    public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
-        ShopDTO.SelectDTO params = dto.getParams();
-        if (params.getShowByAuth()){
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
-            List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-            if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-                return new PagingVO<>();
-            }
-
-            ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-            List<String> shopIdList;
-            if (StringUtils.isNotBlank(params.getDictPlatform())) {
-                shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(params.getDictPlatform()))
-                        .map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            } else {
-                shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            }
-            if (CollectionUtils.isEmpty(shopIdList)) {
-                return new PagingVO<>();
-            }
-            params.setShopIdList(shopIdList);
-        }
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<ShopDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
-        List<ShopDTO.ListDTO> records = pagResult.getRecords();
-        //排序
-        pagResult.setRecords(records);
-        return new PagingVO<>(pagResult);
     }
 
     @Override
@@ -1419,6 +1399,39 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 .eq(ShopInfoEntity::getDisabled, false)
                 .list();
     }
+    /**
+     * 远程搜索
+     */
+    @Override
+    public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
+        ShopDTO.SelectDTO params = dto.getParams();
+        if (params.getShowByAuth()){
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
+            List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
+            if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
+                return new PagingVO<>();
+            }
+
+            ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
+            List<String> shopIdList;
+            if (StringUtils.isNotBlank(params.getDictPlatform())) {
+                shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(params.getDictPlatform()))
+                        .map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+            } else {
+                shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+            }
+            if (CollectionUtils.isEmpty(shopIdList)) {
+                return new PagingVO<>();
+            }
+            params.setShopIdList(shopIdList);
+        }
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ShopDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<ShopDTO.ListDTO> records = pagResult.getRecords();
+        //排序
+        pagResult.setRecords(records);
+        return new PagingVO<>(pagResult);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1436,7 +1449,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             //只有禁用的店铺允许删除
             if (Objects.equals(shopInfoEntity.getDisabled(), false)) {
-                deleteResult = BatchResultDTO.fail(id, id, ApiError.ERROR_SHOP_UNDISABLED.msg);
+                deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), ApiError.ERROR_SHOP_UNDISABLED.msg);
                 resultDTOS.add(deleteResult);
                 continue;
             }
@@ -1545,6 +1558,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
         }
         shop.setChargeName(chargeName);
+        //设置用户信息
+        setCustom(dto.getCustomerId(), shop);
         shop.setType(ShopTypeEnum.INTERNAL.getCode());
         shop.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shop.setAuthTime(LocalDateTime.now());

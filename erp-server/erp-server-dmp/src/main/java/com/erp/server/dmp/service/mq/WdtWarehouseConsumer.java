@@ -36,7 +36,7 @@ import java.util.Objects;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
         selectorExpression = "third_system_wdt_warehouse_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_warehouse_consumer",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_wdt_warehouse_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class WdtWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
@@ -51,6 +51,7 @@ public class WdtWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPl
 
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
+        log.info("更新旺店通仓库数据拉取任务状态：{} {} {}", syncTaskId, code.getCode(), msg);
         try {
             dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
         }catch (Exception e){
@@ -79,6 +80,7 @@ public class WdtWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPl
 
     @Override
     public ApiResult<?> handle(Object ext) {
+        log.info("旺店通仓库数据处理：{}", JSONUtil.parse(ext).toString());
         ErpWarehouseDto entity = JSONUtil.toBean(ext.toString(), ErpWarehouseDto.class);
         //入库
         ThirdWarehouseDTO.AddDTO addDTO = new ThirdWarehouseDTO.AddDTO();
