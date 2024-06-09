@@ -2639,6 +2639,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //                throw new ServiceException(ApiError.ERROR_95084);
 //            }
             viewDTO.setProductName(null == skuVO ? "" : skuVO.getSkuName());
+            viewDTO.setProductLength(Objects.nonNull(skuVO) ? skuVO.getProductLength(): BigDecimal.ZERO);
+            viewDTO.setProductHeight(Objects.nonNull(skuVO) ? skuVO.getProductHeight(): BigDecimal.ZERO);
+            viewDTO.setProductWidth(Objects.nonNull(skuVO) ? skuVO.getProductWidth(): BigDecimal.ZERO);
+            viewDTO.setGrossWeight(Objects.nonNull(skuVO) ? skuVO.getGrossWeight(): BigDecimal.ZERO);
+            viewDTO.setNetWeight(Objects.nonNull(skuVO) ? skuVO.getNetWeight(): BigDecimal.ZERO);
         }
     }
 
