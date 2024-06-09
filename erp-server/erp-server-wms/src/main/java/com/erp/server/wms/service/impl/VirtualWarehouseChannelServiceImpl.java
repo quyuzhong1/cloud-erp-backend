@@ -5,20 +5,16 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.wrapper.FeignQuery;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
-import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.wms.mapper.VirtualWarehouseChannelMapper;
 import com.erp.server.wms.service.VirtualWarehouseChannelService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +25,8 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -41,7 +39,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<VirtualWarehouseChannelMapper, VirtualWarehouseChannelEntity> implements VirtualWarehouseChannelService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -76,25 +74,31 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         //查找原有绑定关系
         List<VirtualWarehouseChannelEntity> existChannelList = baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>()
                 .eq(VirtualWarehouseChannelEntity::getVirtualWarehouseId, batchAddDTO.getVirtualWarehouseId()));
-        if (CollectionUtils.isEmpty(dtoList)) {
-            if (CollectionUtils.isNotEmpty(existChannelList)) {
-                //删除原始数据
-                baseMapper.deleteBatchIds(existChannelList.stream().map(VirtualWarehouseChannelEntity::getId).collect(Collectors.toList()));
+        if (CollectionUtils.isNotEmpty(existChannelList)) {
+            //删除原始数据
+            baseMapper.deleteBatchIds(existChannelList.stream().map(VirtualWarehouseChannelEntity::getId).collect(Collectors.toList()));
+        }
+        //新增数据
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            List<VirtualWarehouseChannelEntity> batchSaveDTOList = handleData(batchAddDTO, dtoList);
+            if (CollectionUtils.isNotEmpty(batchSaveDTOList)) {
+                this.saveBatch(batchSaveDTOList);
             }
-        } else {
-            //删除原始绑定
-            if (CollectionUtils.isNotEmpty(existChannelList)) {
-                baseMapper.deleteBatchIds(existChannelList.stream().map(VirtualWarehouseChannelEntity::getId).collect(Collectors.toList()));
-            }
-            addInfo(batchAddDTO, dtoList);
         }
         return new BaseResultDTO.AddDTO();
     }
 
-    private void addInfo(VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO, List<VirtualWarehouseChannelDTO.ChannelAddDTO> dtoList) {
+    /**
+     * 封装数据
+     * @param batchAddDTO
+     * @param dtoList
+     * @return
+     */
+    private static List<VirtualWarehouseChannelEntity> handleData(VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO, List<VirtualWarehouseChannelDTO.ChannelAddDTO> dtoList) {
         List<VirtualWarehouseChannelEntity> batchSaveDTOList = new ArrayList<>();
         //新增数据
         dtoList.forEach(dto -> {
+            //封装数据店铺数据
             if (Objects.equals(dto.getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())) {
                 dto.getRelationList().forEach(relationId -> {
                     VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = new VirtualWarehouseChannelEntity();
@@ -104,15 +108,14 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                     batchSaveDTOList.add(virtualWarehouseChannelEntity);
                 });
             } else {
+                //封装平台数据
                 VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = new VirtualWarehouseChannelEntity();
                 BeanUtils.copyProperties(dto, virtualWarehouseChannelEntity);
                 virtualWarehouseChannelEntity.setVirtualWarehouseId(batchAddDTO.getVirtualWarehouseId());
                 batchSaveDTOList.add(virtualWarehouseChannelEntity);
             }
         });
-        if (CollectionUtils.isNotEmpty(batchSaveDTOList)) {
-            this.saveBatch(batchSaveDTOList);
-        }
+        return batchSaveDTOList;
     }
 
     /**
@@ -150,6 +153,17 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     @Override
     public List<VirtualWarehouseChannelEntity> getByVirtualWarehouseId(String virtualWarehouseId) {
         return baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>().eq(VirtualWarehouseChannelEntity::getVirtualWarehouseId, virtualWarehouseId));
+    }
+
+    @Override
+    public List<String> getBindedDictPlatform() {
+        return baseMapper.getBindedDictPlatform();
+    }
+
+
+    @Override
+    public List<String> getBindedShopByDictPlatform(String dictPlatform) {
+        return baseMapper.getBindedShopByDictPlatform(dictPlatform);
     }
 
 

@@ -660,6 +660,10 @@ public class WarehouseDTO implements Serializable {
         /**
          * 前端忽略
          */
+        private List<String> ids;
+        /**
+         * 前端忽略
+         */
         private String warehouseManageType;
     }
 

@@ -3,6 +3,9 @@ import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +19,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehouseChannelEntity> {
 
+    List<String> getBindedDictPlatform();
+
+    List<String> getBindedShopByDictPlatform(@Param("dictPlatform") String dictPlatform);
 }

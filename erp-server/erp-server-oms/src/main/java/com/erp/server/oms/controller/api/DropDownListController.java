@@ -78,27 +78,7 @@ public class DropDownListController extends BaseController {
      */
     @GetMapping("/dict/tree")
     public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam("key") String key) {
-        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
-        //list 根据sort排序
-        list = list.stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
-
-        Map<String, List<DictBasicDTO.ViewDTO>> map = list.stream().collect(Collectors.groupingBy(DictBasicDTO.ViewDTO::getSubType));
-        List<BaseDropDownDTO.Tree> treeList = new ArrayList<>();
-        map.forEach((subType, viewList) -> {
-            BaseDropDownDTO.Tree tree = new BaseDropDownDTO.Tree();
-            tree.setCode(subType);
-            tree.setValue(DictBasicTypeEnum.getName(subType));
-            List<BaseDropDownDTO.ChildTree> childTreeList = new ArrayList<>();
-            viewList.forEach(viewDTO -> {
-                BaseDropDownDTO.ChildTree childTree = new BaseDropDownDTO.ChildTree();
-                childTree.setCode(viewDTO.getValue());
-                childTree.setValue(viewDTO.getName());
-                childTreeList.add(childTree);
-            });
-            tree.setChildTreeList(childTreeList);
-            treeList.add(tree);
-        });
-        return success(treeList);
+        return success(dictBasicService.getTreeByKey(key));
     }
 
     /**
