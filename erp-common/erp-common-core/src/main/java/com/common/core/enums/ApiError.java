@@ -1012,12 +1012,22 @@ public enum ApiError implements Serializable {
     ERROR_VM_NOTFOUND(92201,"虚拟仓不存在"),
     ERROR_WAREHOUSE_BINDED(92202,"当前实体仓已被虚拟仓【{}】绑定"),
     ERROR_SAME_DISABLED(92203,"存在相同状态"),
-    ERROR_WAREHOUSE_NOTFOUND(92204,"仓库不存在"),
+    ERROR_WAREHOUSE_NOTFOUND(92204,"实体仓不存在"),
+    ERROR_WAREHOUSE_NOTACTIVE(92204,"实体仓是启用状态"),
     ERROR_ONLYONE(92205,"一个渠道只能关联一种类型"),
-    ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST(92140,"未找到虚拟仓库"),
+    ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST(92140,"虚拟仓不存在"),
     ERROR_VMALLOCATION_DETAIL_ADD(92206 , "虚拟仓分货单明细保存失败"),
+    ERROR_INVENTORY_INSUFFICIENT(92207,"实体仓库存不足，SKU:【{}】,实物仓:【{}】,实物仓可分配库存:【{}】"),
+    ERROR_SKU_NOTFOUND(92208,"SKU不存在【{}】"),
+    ERROR_FROM_TO_VM_BOTHEMPTY(92209,"调入虚拟仓和调出虚拟仓不能同时为空"),
+    ERROR_TOVM_NOTFOUND(92210,"调入虚拟仓不存在"),
+    ERROR_TOVM_NOTACTIVE(92210,"调入虚拟仓不是启用状态"),
+    ERROR_FROMVM_NOTFOUND(92211,"调出虚拟仓不存在"),
+    ERROR_FROMVM_NOTACTIVE(92211,"调出虚拟仓不是启用状态"),
 
-
+    ERROR_FROMVM_INVENTORY_INSUFFICIENT(92212,"调出虚拟仓库存不足，SKU:【{}】,虚拟仓:【{}】,虚拟仓可用库存:【{}】"),
+    ERROR_VMALLOCATION_NOTFOUND(92213,"分货单不存在【{}】"),
+    ERROR_MANUAL_STATUS_ERROR(92214,"只有已处理且同步失败时才可以手动完结"),
 
     /**
      * OMS 错误

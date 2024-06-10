@@ -1,6 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -61,4 +61,6 @@ public interface VirtualWarehouseRelationService extends SuperService<VirtualWar
      */
     BaseResultDTO.AddDTO batchAdd(VirtualWarehouseRelationDTO.BatchAddDTO batchAddDTO);
 
+    PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO> warehousePagingSelect(PagingDTO<VirtualWarehouseRelationDTO.SelectDTO> dto);
+    PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO> vmPagingSelect(PagingDTO<VirtualWarehouseRelationDTO.SelectDTO> dto);
 }

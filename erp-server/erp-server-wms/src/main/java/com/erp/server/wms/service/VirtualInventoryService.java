@@ -3,7 +3,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -73,9 +72,9 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
     /**
      * 根据条件查询库存信息
      *
-     * @param list
+     * @param qtyTypeDTO
      * @author hyj
      * @date 2024/6/6
      */
-    List<VirtualInventoryDTO.ViewQtyDTO> getInventoryQty(List<VirtualInventoryDTO.QtySearchDTO> list);
+    List<VirtualInventoryDTO.ViewQtyDTO> getQty(VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO);
 }

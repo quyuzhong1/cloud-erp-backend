@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import lombok.Data;
@@ -28,57 +29,6 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class VirtualWarehouseAllocationDTO implements Serializable {
-
-
-    /**
-     * 详情
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ViewDTO {
-
-        /**
-         * 主键id
-         */
-        private String id;
-
-        /**
-         * 是否失效 true 失效 false 未失效
-         */
-        private Boolean disabled;
-
-        /**
-         * code
-         */
-        private String code;
-
-        /**
-         * 类型：0新增分货，1虚拟仓调拨，2取消分货
-         */
-        private String type;
-
-        /**
-         * 状态 ：0待提交 1已处理 2已作废
-         */
-        private String status;
-
-        /**
-         * 备注
-         */
-        private String remark;
-
-        /**
-         * 方向
-         */
-        private Integer direction;
-
-        /**
-         * 作废说明
-         */
-        private String invalidDescription;
-
-
-    }
 
     /**
      * 新增
@@ -131,6 +81,92 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private List<DetailDto> detailList;
     }
 
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 是否失效 true 失效 false 未失效
+         */
+        private Boolean disabled;
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 状态 ：0待提交 1已处理 2已作废
+         */
+        private String status;
+        /**
+         * 状态 ：0待提交 1已处理 2已作废
+         */
+        private String statusName;
+        /**
+         * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
+         */
+        private String type;
+        /**
+         * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
+         */
+        private String typeName;
+//        /**
+//         * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
+//         */
+//        private String syncStatus;
+//        /**
+//         * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
+//         */
+//        private String syncStatusName;
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 方向
+         */
+        private Integer direction;
+
+        /**
+         * 作废说明
+         */
+        private String invalidDescription;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
+        /**
+         * 明细集合
+         */
+        private List<DetailDto> detailList;
+
+        public String getStatusName() {
+            return VirtualWarehouseAllocationStatusEnum.getNameByCode(status);
+        }
+
+        public String getTypeName() {
+            return VirtualWarehouseAllocationTypeEnum.getNameByCode(type);
+        }
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
@@ -142,7 +178,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private Boolean disabled;
 
         /**
-         * 类型：0新增分货，1虚拟仓调拨，2取消分货
+         * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
          */
         @NotBlank(message = "类型不能为空")
         @Size(max = 10, message = "类型最大长度不能超过10位")
@@ -223,11 +259,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String statusName;
         /**
-         * 类型：0新增分货，1虚拟仓调拨，2取消分货
+         * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
          */
         private String type;
         /**
-         * 类型：0新增分货，1虚拟仓调拨，2取消分货
+         * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
          */
         private String typeName;
 
@@ -245,7 +281,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String skuName;
         /**
-         * sku编号
+         * sku名称
+         */
+        private String productName;
+        /**
+         * sku图片
          */
         private String imageUrl;
 
@@ -255,7 +295,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private String warehouseId;
 
         /**
-         * 仓库名称
+         * 实体仓库名称
          */
         private String warehouseName;
 
@@ -280,7 +320,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private String toVirtualWarehouseId;
 
         /**
-         * 调出入虚拟仓名称
+         * 调入虚拟仓名称
          */
         private String toVirtualWarehouseName;
 
@@ -305,6 +345,22 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String syncStatusName;
         /**
+         * 同步平台名称（字符串 /n换行）
+         */
+        private String sysTypeNames;
+        /**
+         * 同步平台名称
+         */
+        private List<String> sysTypeNameList;
+        /**
+         * 同步平台单号（字符串 /n换行）
+         */
+        private String thirdCodes;
+        /**
+         * 同步平台单号
+         */
+        private List<String> thirdCodeList;
+        /**
          * 附件名集合
          */
         private List<String> attachNameList;
@@ -316,7 +372,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
 
 
         public String getStatusName() {
-            return VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(status);
+            return VirtualWarehouseAllocationStatusEnum.getNameByCode(status);
         }
 
         public String getTypeName() {
@@ -339,10 +395,15 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         /**
          * 主键id
          */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+//        @NotBlank(message = "主键id不能为空")
+//        private String id;
         /**
-         * 主键id
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+        /**
+         * 类型
          */
         @NotBlank(message = "类型不能为空")
         private String sysType;
@@ -363,20 +424,63 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class DetailDto {
+        /**
+         * id
+         */
         private String id;
+        /**
+         * id
+         */
         private String skuId;
+
         private String skuNo;
         private String productName;
+        private String imageUrl;
+        /**
+         * 实体仓
+         */
         private String warehouseId;
         private String warehouseName;
+        /**
+         * 调出仓
+         */
         private String fromVirtualWarehouseId;
         private String fromVirtualWarehouseName;
+        private String fromVirtualWarehouseCode;
+        /**
+         * 调入仓
+         */
         private String toVirtualWarehouseId;
         private String toVirtualWarehouseName;
-        private String qty;
-        private String warehouseUsableQty;
-        private String toVirtualWarehouseUsableQty;
-        private String fromVirtualWarehouseUsableQty;
+        private String toVirtualWarehouseCode;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        //        private String warehouseUsableQty;
+//        private String toVirtualWarehouseUsableQty;
+//        private String fromVirtualWarehouseUsableQty;
+        /**
+         * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
+         */
+        private String syncStatus;
+        /**
+         * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
+         */
+        private String syncStatusName;
+
+        public String getSyncStatusName() {
+            return VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(syncStatus);
+        }
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
     }
 
-}
+    }

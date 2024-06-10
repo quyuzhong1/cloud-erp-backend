@@ -210,7 +210,7 @@ public class VirtualInventoryDTO implements Serializable {
         private String  id;
 
         /**
-        * 仓库id 
+        * 仓库id
         */
         private String warehouseId;
 
@@ -272,7 +272,7 @@ public class VirtualInventoryDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 仓库id 
+        * 仓库id
         */
         @NotBlank(message = "仓库id 不能为空")
         @Size(max = 19,message = "仓库id 最大长度不能超过19位")
@@ -328,17 +328,21 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private String toVirtualWarehouseId;
         /**
-         * 实际库存
+         * 调入虚拟仓可用库存
          */
-        private Integer realQty = 0;
+        private Integer toVirtualWarehouseUsableQty = 0;
         /**
-         * 可用库存
+         * 调入虚拟仓实际库存
          */
-        private Integer usableQty = 0;
+        private Integer toVirtualWarehouseRealQty = 0;
         /**
-         * 冻结库存
+         * 实体仓可分配库存
          */
-        private Integer frozenQty = 0;
+        private Integer warehouseAllocationQty = 0;
+        /**
+         * 调出虚拟仓可用库存
+         */
+        private Integer fromVirtualWarehouseUsableQty = 0;
     }
     @Data
     @NoArgsConstructor
@@ -360,5 +364,46 @@ public class VirtualInventoryDTO implements Serializable {
          * 调入仓
          */
         private String toVirtualWarehouseId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QtyTypeDTO {
+
+        /**
+         * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
+         */
+        @NotNull(message = "类型不能为空")
+        private String type;
+
+        /**
+         * 调入仓
+         */
+        private List<QtySearchDTO> qtySearchList;
+    }
+    /**
+     * 即时库存查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO {
+
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+
+
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
+
+
+        /**
+         * 虚拟仓id
+         */
+        private List<String> virtualWarehouseIdList;
+
     }
 }

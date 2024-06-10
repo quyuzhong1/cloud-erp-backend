@@ -30,6 +30,53 @@
         is_deleted,
         disabled, virtual_warehouse_id, warehouse_id
     </sql>
+    <select id="warehousePagingSelect"
+            resultType="com.erp.model.wms.dto.VirtualWarehouseRelationDTO$SelectResultDTO">
+        select warehouseId,warehouseName
+        from (select w.id warehouseId,w.name warehouseName
+        from virtual_warehouse_relation vwr
+        inner join warehouse w on vwr.warehouse_id=w.id and w.is_deleted=false and w.disabled=false
+        where vwr.is_deleted=false and vwr.disabled=false
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ( (w.id = #{params.searchKeyword}) or w.name ilike
+            concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.virtualWarehouseId != null and params.virtualWarehouseId != ''">
+            and vwr.virtual_warehouse_id = #{params.virtualWarehouseId}
+        </if>
+        group by w.id
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when w.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when w.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when w.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , w.name,
+        </if>
+        w.id) warehouse
+    </select>
+    <select id="vmPagingSelect" resultType="com.erp.model.wms.dto.VirtualWarehouseRelationDTO$SelectResultDTO">
+        select virtualWarehouseId,virtualWarehouseName
+        from (select vw.id virtualWarehouseId,vw.name virtualWarehouseName
+        from virtual_warehouse_relation vwr
+        inner join virtual_warehouse vw on vwr.virtual_warehouse_id=vw.id and vw.is_deleted=false and vw.disabled=false
+        where vwr.is_deleted=false and vwr.disabled=false
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ( (vw.id = #{params.searchKeyword}) or vw.name ilike
+            concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and vwr.warehouse_id = #{params.warehouseId}
+        </if>
+        group by vw.id
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when vw.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when vw.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when vw.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , vw.name,
+        </if>
+        vw.id) virtualWarehouse
+    </select>
 
 
 </mapper>

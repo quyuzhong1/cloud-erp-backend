@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.util.List;
 import javax.validation.constraints.NotNull;
@@ -16,69 +17,69 @@ import javax.validation.constraints.Size;
  *
  * @author hyj
  * @since 2024-06-02
-*/
+ */
 @Data
 @NoArgsConstructor
 public class VirtualWarehouseRelationDTO implements Serializable {
 
 
-
-
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 是否失效 true 失效 false 未失效
-        */
+         * 是否失效 true 失效 false 未失效
+         */
         private Boolean disabled;
 
         /**
-        * 虚拟仓id
-        */
+         * 虚拟仓id
+         */
         private String virtualWarehouseId;
 
         /**
-        * 实体仓id
-        */
+         * 实体仓id
+         */
         private String warehouseId;
 
 
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
 
     }
+
     @Data
     @NoArgsConstructor
-    public static class BatchAddDTO{
+    public static class BatchAddDTO {
         private List<String> warehouseIdList;
         private String virtualWarehouseId;
     }
+
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
@@ -89,27 +90,63 @@ public class VirtualWarehouseRelationDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 是否失效 true 失效 false 未失效
-        */
+         * 是否失效 true 失效 false 未失效
+         */
         @NotNull(message = "是否失效 true 失效 false 未失效不能为空")
         private Boolean disabled;
 
         /**
-        * 虚拟仓id
-        */
+         * 虚拟仓id
+         */
         @NotBlank(message = "虚拟仓id不能为空")
-        @Size(max = 19,message = "虚拟仓id最大长度不能超过19位")
+        @Size(max = 19, message = "虚拟仓id最大长度不能超过19位")
         private String virtualWarehouseId;
 
         /**
-        * 实体仓id
-        */
+         * 实体仓id
+         */
         @NotBlank(message = "实体仓id不能为空")
-        @Size(max = 19,message = "实体仓id最大长度不能超过19位")
+        @Size(max = 19, message = "实体仓id最大长度不能超过19位")
         private String warehouseId;
 
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+    }   @Data
+    @NoArgsConstructor
+    public static class SelectResultDTO {
+
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+        /**
+         * 实体仓名称
+         */
+        private String warehouseName;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+    }
 
 }

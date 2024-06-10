@@ -3,7 +3,12 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
@@ -165,6 +170,25 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
             }
         }
         return new BaseResultDTO.AddDTO();
+    }
+
+    @Override
+    public PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO> warehousePagingSelect(PagingDTO<VirtualWarehouseRelationDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<VirtualWarehouseRelationDTO.SelectResultDTO> pagResult = baseMapper.warehousePagingSelect(query, dto.getParams());
+        List<VirtualWarehouseRelationDTO.SelectResultDTO> records = pagResult.getRecords();
+        //排序
+        pagResult.setRecords(records);
+        return new PagingVO<>(pagResult);
+    }
+    @Override
+    public PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO> vmPagingSelect(PagingDTO<VirtualWarehouseRelationDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<VirtualWarehouseRelationDTO.SelectResultDTO> pagResult = baseMapper.vmPagingSelect(query, dto.getParams());
+        List<VirtualWarehouseRelationDTO.SelectResultDTO> records = pagResult.getRecords();
+        //排序
+        pagResult.setRecords(records);
+        return new PagingVO<>(pagResult);
     }
 
 }

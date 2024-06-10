@@ -1,0 +1,117 @@
+package com.erp.server.wms.service.impl;
+
+
+import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.threadlocal.UserContext;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleEntity;
+import com.erp.server.wms.mapper.VirtualWarehouseAllocationHandleMapper;
+import com.erp.server.wms.service.VirtualWarehouseAllocationHandleDetailService;
+import com.erp.server.wms.service.VirtualWarehouseAllocationHandleService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.OperateLogService;
+import com.common.core.exception.ServiceException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleDTO;
+import java.util.*;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
+/**
+ * <p>
+ * 分货单拆单主表 服务实现类
+ * </p>
+ *
+ * @author hyj
+ * @since 2024-06-07
+ */
+@Slf4j
+@Service
+public class VirtualWarehouseAllocationHandleServiceImpl extends SuperServiceImpl<VirtualWarehouseAllocationHandleMapper, VirtualWarehouseAllocationHandleEntity> implements VirtualWarehouseAllocationHandleService {
+    @Resource
+    private OperateLogService operateLogService;
+    @Resource
+    private VirtualWarehouseAllocationHandleDetailService vmAllocationHandleDetailService;
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(VirtualWarehouseAllocationHandleDTO.AddDTO addDTO) {
+        VirtualWarehouseAllocationHandleEntity virtualWarehouseAllocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
+        BeanMapperUtils.copy(addDTO, virtualWarehouseAllocationHandleEntity);
+
+        // 数据处理
+        handleData(virtualWarehouseAllocationHandleEntity);
+
+        log.info("开始新增分货单拆单主单");
+        boolean save = super.save(virtualWarehouseAllocationHandleEntity);
+        if(!save) {
+            throw new ServiceException("分货单拆单主单保存失败");
+        }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单拆单主单" , virtualWarehouseAllocationHandleEntity.getId());
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, null, virtualWarehouseAllocationHandleEntity.getId(), "新增操作");
+        // TODO 新增明细（如果有明细的话）
+
+        return new BaseResultDTO.AddDTO(virtualWarehouseAllocationHandleEntity.getId(), virtualWarehouseAllocationHandleEntity.getId());
+    }
+
+    /**
+    * 修改
+    */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(VirtualWarehouseAllocationHandleDTO.UpdateDTO updateDTO) {
+        VirtualWarehouseAllocationHandleEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单主单"));
+        VirtualWarehouseAllocationHandleEntity virtualWarehouseAllocationHandleEntity =  BeanMapperUtils.map(VirtualWarehouseAllocationHandleEntity.class, updateDTO);
+
+        // 数据处理
+        handleData(virtualWarehouseAllocationHandleEntity);
+        log.info("编辑 开始修改分货单拆单主单数据，id：【{}】", old.getId());
+        boolean save = super.updateById(virtualWarehouseAllocationHandleEntity);
+        if(!save) {
+            throw new ServiceException("分货单拆单主单保存失败");
+        }
+        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        // 记录主单操作日志
+            log.info("编辑 开始记录分货单拆单主单日志数据，id：【{}】", virtualWarehouseAllocationHandleEntity.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationHandleEntity.getId(), "分货单拆单主单");
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationHandleEntity, null, virtualWarehouseAllocationHandleEntity.getId(), msg);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void handleData(VirtualWarehouseAllocationEntity allocationEntity) {
+        //保存拆单主表
+        VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
+        allocationHandleEntity.setAllocationId(allocationEntity.getId());
+        allocationHandleEntity.setAllocationCode(allocationEntity.getCode());
+        allocationHandleEntity.setType(allocationEntity.getType());
+        allocationHandleEntity.setStatus(allocationEntity.getStatus());
+        allocationHandleEntity.setDirection(allocationEntity.getDirection());
+        this.save(allocationHandleEntity);
+        //保存拆单明细表
+        vmAllocationHandleDetailService.handleDetail(allocationEntity,allocationHandleEntity);
+    }
+
+
+    /**
+    * 新增修改处理数据
+    */
+    private void handleData(VirtualWarehouseAllocationHandleEntity virtualWarehouseAllocationHandleEntity) {
+    // TODO 验证数据 & 数据赋值
+    }
+}

@@ -1,14 +1,11 @@
 package com.erp.model.wms.enums;
 
-import com.erp.model.dmp.enums.ThirdSysTypeEnum;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
 /**
- * 虚拟仓分货单类型：新增分货，1虚拟仓调拨，2取消分货
+ * 虚拟仓分货单类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
  *
  * @author hyj
  */
@@ -43,5 +40,13 @@ public enum VirtualWarehouseAllocationTypeEnum {
     public static String getNameByCode(String code) {
         VirtualWarehouseAllocationTypeEnum typeEnum = Arrays.stream(VirtualWarehouseAllocationTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
         return Optional.ofNullable(typeEnum).map(VirtualWarehouseAllocationTypeEnum::getName).orElse("");
+    }    /**
+     * 根据code获取名称
+     *
+     * @param code
+     * @return
+     */
+    public static VirtualWarehouseAllocationTypeEnum getEnum(String code) {
+        return Arrays.stream(VirtualWarehouseAllocationTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 }

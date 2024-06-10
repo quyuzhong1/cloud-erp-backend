@@ -7,73 +7,58 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
  * <p>
- * 虚拟仓分货单
+ * 分货单拆单主表
  * </p>
  *
  * @author hyj
- * @since 2024-06-05
+ * @since 2024-06-07
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("virtual_warehouse_allocation")
-public class VirtualWarehouseAllocationEntity extends BaseEntity<VirtualWarehouseAllocationEntity> {
+@TableName("virtual_warehouse_allocation_handle")
+public class VirtualWarehouseAllocationHandleEntity extends BaseEntity<VirtualWarehouseAllocationHandleEntity> {
 
     /**
-    * 是否失效 true 失效 false 未失效
+    * 分货单id
     */
-    @TableField("disabled")
-    private Boolean disabled;
+    @TableField("allocation_id")
+    private String allocationId;
     /**
-    * code
+    * 编号
     */
-    @TableField("code")
-    private String code;
+    @TableField("allocation_code")
+    private String allocationCode;
     /**
     * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
     */
     @TableField("type")
     private String type;
     /**
-    * 状态 ：0待提交 1已处理 2已作废
+    * 状态 ：waitSubmit待提交 handle已处理 invalid已作废
     */
     @TableField("status")
     private String status;
-    /**
-    * 备注
-    */
-    @TableField("remark")
-    private String remark;
     /**
     * 方向
     */
     @TableField("direction")
     private Integer direction;
-    /**
-    * 作废说明
-    */
-    @TableField("invalid_description")
-    private String invalidDescription;
 
 
-    public static final String DISABLED = "disabled";
+    public static final String ALLOCATION_ID = "allocation_id";
 
-    public static final String CODE = "code";
+    public static final String ALLOCATION_CODE = "allocation_code";
 
-    public static final String TYPE = "type";
+    public static final String TYPE = "ype";
 
     public static final String STATUS = "status";
 
-    public static final String REMARK = "remark";
-
     public static final String DIRECTION = "direction";
-
-    public static final String INVALID_DESCRIPTION = "invalid_description";
 
     @Override
     public Serializable pkVal() {

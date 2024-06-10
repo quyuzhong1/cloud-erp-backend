@@ -62,4 +62,8 @@ public interface WmsConstant {
      * 按筛选组织划分的仓库
      */
     String WAREHOUSE_BY_FILTER_ORG = "warehouseByFilterOrg";
+    /**
+     * 虚拟仓分货单
+     */
+    String VIRTUAL_WAREHOUSE_ALLOCATION = "virtualWarehouseAllocation";
 }

@@ -1,9 +1,22 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.core.enums.ApiError;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
+import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
+import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
+import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
+import com.erp.server.wms.service.VirtualWarehouseAllocationService;
+import com.erp.server.wms.service.WarehouseLocationMoveService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -19,6 +32,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 
+import java.util.Objects;
+
 /**
  * 虚拟仓分货单明细
  *
@@ -32,15 +47,18 @@ import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 public class VirtualWarehouseAllocationDetailController extends BaseController {
 
     @Resource
+    private VirtualWarehouseAllocationService virtualWarehouseAllocationService;
+    @Resource
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
 
     /**
-    * 新增
-    * @author hyj
-    * @date:  2024-06-05
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author hyj
+     * @date: 2024-06-05
+     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓分货单明细新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseAllocationDetailDTO.AddDTO dto) {
@@ -48,24 +66,71 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author hyj
-    * @date:  2024-06-05
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author hyj
+     * @date: 2024-06-05
+     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "虚拟仓分货单明细修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:virtualWarehouseAllocationDetail:update",
-        serviceClass = VirtualWarehouseAllocationDetailService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocationDetail:update",
+            serviceClass = VirtualWarehouseAllocationDetailService.class,
+            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated VirtualWarehouseAllocationDetailDTO.UpdateDTO dto) {
         virtualWarehouseAllocationDetailService.batchUpdate(dto);
         return success();
     }
 
+    /**
+     * 手动完结
+     *
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "手动完结虚拟仓分货单信息")
+    @PostMapping("/manualFinish")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocationDetail:manualFinish",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<BatchResultDTO> manualFinish(@RequestBody @Validated VirtualWarehouseAllocationDTO.ManualFinishDto dto) {
+        String id = dto.getDetailId();
+        //已处理状态且同步失败状态
+        String handleStatus = VirtualWarehouseAllocationStatusEnum.HANDLE.getCode();
+        String failedSyncStatus = VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode();
+        BatchResultDTO submit;
+        String flagCode = id;
+        try {
+            VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity = virtualWarehouseAllocationDetailService.getById(id);
+            if (Objects.isNull(vmAllocationDetailEntity)) {
+                submit = BatchResultDTO.fail(id, id, "分货单明细不存在");
+            } else {
+                VirtualWarehouseAllocationEntity vmAllocationEntity = virtualWarehouseAllocationService.getById(vmAllocationDetailEntity.getMainId());
+
+                if (Objects.isNull(vmAllocationEntity)) {
+                    submit = BatchResultDTO.fail(id, id, "分货单不存在");
+                } else {
+                    //只有已处理状态且同步失败状态可以手动完结
+                    if (Objects.equals(handleStatus, vmAllocationEntity.getStatus()) && Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
+                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_MANUAL_STATUS_ERROR.msg);
+                    } else {
+                        flagCode = vmAllocationEntity.getCode();
+                        submit = virtualWarehouseAllocationDetailService.manualFinish(vmAllocationDetailEntity, vmAllocationEntity, dto);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("手动完结分货单失败>>>>{}", e);
+            submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
+        }
+        return success(submit);
+    }
 
 
 }

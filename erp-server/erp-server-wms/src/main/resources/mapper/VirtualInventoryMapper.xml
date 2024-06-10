@@ -112,7 +112,43 @@
     <select id="diffDetailPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDetailDTO">
 
     </select>
-
-
+    <select id="getUsableQty" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ViewQtyDTO">
+        SELECT vi.warehouse_id,
+               vi.sku_id,
+               vi.virtual_warehouse_id,
+               sum(case when vi.dict_inventory_status = 'usable' then vi.qty else 0 end) as toVirtualWarehouseUsableQty
+        FROM virtual_inventory vi
+        WHERE vi.is_deleted = FALSE
+        and vi.sku_id in
+        <foreach collection="params.skuIdList" item="skuId" open="(" close=")" separator=",">
+            #{skuId}
+        </foreach>
+        and vi.warehouse_id in
+        <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        and vi.virtual_warehouse_id in
+        <foreach collection="params.virtualWarehouseIdList" item="virtualWarehouseId" open="(" close=")" separator=",">
+            #{virtualWarehouseId}
+        </foreach>
+        GROUP BY vi.warehouse_id, vi.sku_id, vi.virtual_warehouse_id
+    </select>
+    <select id="getRealQty" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ViewQtyDTO">
+        select
+            vi.warehouse_id,
+            vi.sku_id,
+            sum(vi.qty) as toVirtualWarehouseRealQty
+        from  virtual_inventory vi
+        WHERE vi.is_deleted = FALSE
+        and vi.sku_id in
+        <foreach collection="params.skuIdList" item="skuId" open="(" close=")" separator=",">
+            #{skuId}
+        </foreach>
+        and vi.warehouse_id in
+        <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        GROUP BY vi.warehouse_id, vi.sku_id
+    </select>
 
 </mapper>

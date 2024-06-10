@@ -70,4 +70,8 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      */
     IPage<VirtualInventoryDiffDTO.ListDetailDTO> diffDetailPaging(Page query,@Param("params") VirtualInventoryDiffDTO.SearchParamDetailDTO params);
 
+
+    List<VirtualInventoryDTO.ViewQtyDTO> getUsableQty(@Param("params")VirtualInventoryDTO.ParamDTO params);
+
+    List<VirtualInventoryDTO.ViewQtyDTO> getRealQty(@Param("params")VirtualInventoryDTO.ParamDTO params);
 }

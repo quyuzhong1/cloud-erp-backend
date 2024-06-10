@@ -3,7 +3,6 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -82,12 +81,12 @@ public class VirtualInventoryController extends BaseController {
     /**
      * 根据条件查询库存信息
      *
-     * @param dtos
+     * @param qtyTypeDTO
      * @author hyj
      * @date 2024/6/6
      */
     @PostMapping(value = "/getQty")
-    public ApiResult<List<VirtualInventoryDTO.ViewQtyDTO>> getInventoryByParam(@RequestBody ValidList<VirtualInventoryDTO.QtySearchDTO> dtos) {
-        return success(virtualInventoryService.getInventoryQty(dtos.getList()));
+    public ApiResult<List<VirtualInventoryDTO.ViewQtyDTO>> getQty(@RequestBody @Validated VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO) {
+        return success(virtualInventoryService.getQty(qtyTypeDTO));
     }
 }

@@ -5,10 +5,9 @@ import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -51,35 +50,32 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
     PagingVO<VirtualWarehouseAllocationDTO.ListDTO> paging(PagingDTO<VirtualWarehouseAllocationDTO.PagingParamDTO> dto);
 
     /**
+     * 预览
+     *
+     * @param id
+     * @return
+     */
+    VirtualWarehouseAllocationDTO.ViewDTO view(String id);
+
+    /**
      * 提交
      *
      * @param ids
      * @return
      */
-    List<BatchResultDTO> submit(List<String> ids);
+    BatchResultDTO submit(VirtualWarehouseAllocationEntity ids);
 
     /**
      * 作废
-     *
-     * @param dto
-     * @return
-     */
-    List<BatchResultDTO> invalid(BaseIdsDTO.RemarkDTO dto);
-
-    /**
-     * 变更状态
      *
      * @param allocationEntity
      * @param status
      * @param invalidDescription
      * @return
      */
-    BatchResultDTO updateStatus(VirtualWarehouseAllocationEntity allocationEntity, String status, String invalidDescription);
-    /**
-     * 手动完结
-     *
-     * @param dto
-     * @return
-     */
-    BatchResultDTO manualFinish(VirtualWarehouseAllocationDTO.ManualFinishDto dto);
+    BatchResultDTO invalid(VirtualWarehouseAllocationEntity allocationEntity, String status, String invalidDescription);
+
+    void export(VirtualWarehouseAllocationDTO.ExportDTO dto, HttpServletResponse response);
+
+    VirtualWarehouseAllocationDTO.DetailDto importFile(String type, MultipartFile excelFile, HttpServletResponse response);
 }

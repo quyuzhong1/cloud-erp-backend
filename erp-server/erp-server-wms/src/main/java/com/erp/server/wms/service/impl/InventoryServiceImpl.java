@@ -66,7 +66,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1048,5 +1047,19 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
         return viewList;
+    }
+
+    /**
+     * 根据skuId和仓库id获取可用数量
+     * @param paramDTO
+     * @return
+     */
+    @Override
+    public List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(InventoryDTO.ParamDTO paramDTO) {
+        if (Objects.isNull(paramDTO)) {
+            return new ArrayList<>();
+        }
+        List<InventoryDTO.InventoryViewQtyDTO> list=baseMapper.getUsableQtyBySkuIdsAndWarehouseIds(paramDTO);
+        return list;
     }
 }

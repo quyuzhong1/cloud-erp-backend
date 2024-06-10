@@ -3,11 +3,26 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
+import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
+import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
+import com.erp.server.wms.query.VirtualWarehouseAllocationQueryHandler;
+import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
+import com.erp.server.wms.service.VirtualWarehouseService;
+import com.erp.server.wms.service.WarehouseLocationMoveService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.collections4.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -23,8 +38,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 虚拟仓分货单
@@ -40,6 +61,8 @@ public class VirtualWarehouseAllocationController extends BaseController {
 
     @Resource
     private VirtualWarehouseAllocationService virtualWarehouseAllocationService;
+    @Resource
+    private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
 
     /**
      * 新增
@@ -89,9 +112,23 @@ public class VirtualWarehouseAllocationController extends BaseController {
             menuCode = "wms:virtualWarehouseAllocation:paging",
             tableAlias = "vwa"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
     public ApiResult<PagingVO<VirtualWarehouseAllocationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<VirtualWarehouseAllocationDTO.PagingParamDTO> dto) {
         return success(virtualWarehouseAllocationService.paging(dto));
+    }
+
+    /**
+     * 详情
+     */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:view",
+            serviceClass = VirtualWarehouseService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<VirtualWarehouseAllocationDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
+        return success(virtualWarehouseAllocationService.view(id));
     }
 
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交虚拟仓分货单信息")
@@ -103,39 +140,130 @@ public class VirtualWarehouseAllocationController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> submit = virtualWarehouseAllocationService.submit(dto.getIds());
-        return submit.stream().anyMatch(BatchResultDTO::getSuccess) ? success(submit) : failure(submit);
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        //待提交
+        String waitSubmitStatus = VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            String flagCode = id;
+            try {
+                VirtualWarehouseAllocationEntity allocationEntity = virtualWarehouseAllocationService.getById(id);
+                if (Objects.isNull(allocationEntity)) {
+                    submit = BatchResultDTO.fail(id, id, "分货单不存在");
+                } else {
+                    //只有待提交状态可以修改
+                    if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
+                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.IS_SUBMIT_IN_SUBMIT.msg);
+                    } else {
+                        flagCode = allocationEntity.getCode();
+                        submit = virtualWarehouseAllocationService.submit(allocationEntity);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("提交分货单失败>>>>{}", e);
+                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+
+//        //进行拆单并创建中台任务数据进行同步
+//        if (CollectionUtils.isNotEmpty(resultDTOS)) {
+//            virtualWarehouseAllocationDetailService.handleDetail(resultDTOS.stream().filter(BatchResultDTO::getSuccess).collect(Collectors.toList()));
+//        }
+        return resultDTOS.stream().anyMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     @LogAction(value = LogActionEnum.SUBMIT, desc = "作废虚拟仓分货单信息")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:virtualWarehouseAllocation:submit",
+            menuCode = "wms:virtualWarehouseAllocation:invalid",
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        List<BatchResultDTO> submit = virtualWarehouseAllocationService.invalid(dto);
-        return submit.stream().anyMatch(BatchResultDTO::getSuccess) ? success(submit) : failure(submit);
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        //待提交
+        String waitSubmitStatus = VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            String flagCode = id;
+            try {
+                VirtualWarehouseAllocationEntity allocationEntity = virtualWarehouseAllocationService.getById(id);
+                if (Objects.isNull(allocationEntity)) {
+                    submit = BatchResultDTO.fail(id, id, "分货单不存在");
+                } else {
+                    //只有待提交状态可以修改
+                    if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
+                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.ERROR_98009.msg);
+                    } else {
+                        flagCode = allocationEntity.getCode();
+                        submit = virtualWarehouseAllocationService.invalid(allocationEntity, VirtualWarehouseAllocationStatusEnum.INVALID.getCode(), dto.getRemark());
+                    }
+                }
+            } catch (Exception e) {
+                log.error("作废分货单失败>>>>{}", e);
+                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().anyMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
-     * 手动完结
+     * 导出明细
      *
      * @param dto
-     * @return
+     * @author hyj
+     * @date 2024/4/16 11:33
      */
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "手动完结虚拟仓分货单信息")
-    @PostMapping("/manualFinish")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货单")
+    @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:virtualWarehouseAllocation:manualFinish",
+            menuCode = "wms:virtualWarehouseAllocation:export",
             serviceClass = VirtualWarehouseAllocationService.class,
-            keyIdName = "ids"
-    )
-    public ApiResult<BatchResultDTO> manualFinish(@RequestBody @Validated VirtualWarehouseAllocationDTO.ManualFinishDto dto) {
-        BatchResultDTO submit = virtualWarehouseAllocationService.manualFinish(dto);
-        return success(submit);
+            keyIdName = "id")
+    @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
+    public void export(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto, HttpServletResponse response) {
+        virtualWarehouseAllocationService.export(dto, response);
+    }
+
+    /**
+     * 下载导入模板
+     *
+     * @param request
+     * @param response
+     * @author hyj
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载分货单导入模板")
+    @GetMapping("/exportTemplate")
+    public void exportTemplate(@RequestParam(value = "type") String type, HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/pdaMoveInfoTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    @LogAction(value = LogActionEnum.IMPORT, desc = "分货单导入")
+    @PostMapping("/importFile")
+    public ApiResult<VirtualWarehouseAllocationDTO.DetailDto> importFile(@RequestParam(value = "type") String type, @RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        return success(virtualWarehouseAllocationService.importFile(type,excelFile, response));
     }
 }
