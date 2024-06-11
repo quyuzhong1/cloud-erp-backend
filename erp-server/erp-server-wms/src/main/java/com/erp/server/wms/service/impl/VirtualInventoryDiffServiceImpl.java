@@ -13,15 +13,12 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.mapper.VirtualInventoryMapper;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.VirtualInventoryDiffService;
@@ -37,7 +34,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -187,31 +183,21 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         List<String> virtualWarehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
 
-        //实体仓库存查看
-        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
-        skuInventoryDTO.setSkuIdList(skuIdList);
-        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
-        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
-
-        //标识
+        //标识,用于判断是否需要赋值（相同sku、仓库只需要第一条赋值）
         List<String> flagList = new ArrayList<>();
 
         for (VirtualInventoryDiffDTO.ListDiffExportDataDTO listDTO : list) {
-
             //虚拟仓库
             VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             listDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
             listDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
-
+            //标识
             String flag = StrUtil.format("{}_{}",listDTO.getSkuId(),listDTO.getWarehouseId());
-
-            //实体库存
-            Integer curInventoryQty = skuInventoryList.stream().filter(r -> Objects.equals(r.getSkuId(), listDTO.getSkuId())
-                    && Objects.equals(r.getWarehouseId(), listDTO.getWarehouseId())
-            ).map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
-            listDTO.setUsableQty(curInventoryQty);
+            if (flagList.contains(flag)) {
+                continue;
+            }
+            flagList.add(flag);
 
             //产品信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId()))
