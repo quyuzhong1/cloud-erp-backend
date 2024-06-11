@@ -37,4 +37,6 @@ public interface ThirdWarehouseService extends SuperService<ThirdWarehouseEntity
     PagingVO<ThirdWarehouseDTO.PageDTO> paging(PagingDTO<ThirdWarehouseDTO.PagingParamDTO> dto);
 
     PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(PagingDTO<ThirdWarehouseDTO.SelectDTO> dto);
+
+    ThirdWarehouseEntity getByWarehouseId(String thirdId);
 }

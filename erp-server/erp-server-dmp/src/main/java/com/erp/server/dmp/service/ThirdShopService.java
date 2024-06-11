@@ -37,4 +37,6 @@ public interface ThirdShopService extends SuperService<ThirdShopEntity> {
     PagingVO<ThirdShopDTO.PageDTO> paging(PagingDTO<ThirdShopDTO.PagingParamDTO> dto);
 
     PagingVO<ThirdShopDTO.PageSelectDTO> pagingSelect(PagingDTO<ThirdShopDTO.SelectDTO> dto);
+
+    ThirdShopEntity getByShopId(String thirdId);
 }

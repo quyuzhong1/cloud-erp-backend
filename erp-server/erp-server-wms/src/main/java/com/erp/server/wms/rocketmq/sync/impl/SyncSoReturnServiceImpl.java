@@ -223,7 +223,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         List<ThirdMappingEntity> shop = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
-                .eq(ThirdMappingEntity::getThirdInfoId, dto.getShopId()));
+                .eq(ThirdMappingEntity::getThirdId, dto.getShopId()));
         if (CollectionUtils.isEmpty(shop)) {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, dto.getShopId());
         }
@@ -232,7 +232,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         List<ThirdMappingEntity> warehouseList = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.WAREHOUSE.getCode())
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
-                .eq(ThirdMappingEntity::getThirdInfoId, dto.getWarehouseId()));
+                .eq(ThirdMappingEntity::getThirdId, dto.getWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, dto.getWarehouseName());
         }

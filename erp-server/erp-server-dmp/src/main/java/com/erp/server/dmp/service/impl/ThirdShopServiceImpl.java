@@ -65,11 +65,11 @@ public class ThirdShopServiceImpl extends SuperServiceImpl<ThirdShopMapper, Thir
         if (StringUtils.isBlank(thirdShopEntity.getId())) {
             log.info("开始新增第三方系统店铺单");
             save = super.save(thirdShopEntity);
-            operationMsg="新增操作";
-        }else{
+            operationMsg = "新增操作";
+        } else {
             log.info("开始修改第三方系统店铺单");
             save = super.updateById(thirdShopEntity);
-            operationMsg="编辑操作";
+            operationMsg = "编辑操作";
         }
         if (!save) {
             throw new ServiceException("第三方系统店铺单保存失败");
@@ -125,6 +125,11 @@ public class ThirdShopServiceImpl extends SuperServiceImpl<ThirdShopMapper, Thir
             return new PagingVO(pageData);
         }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public ThirdShopEntity getByShopId(String thirdId) {
+        return baseMapper.getByShopId(thirdId);
     }
 
 
