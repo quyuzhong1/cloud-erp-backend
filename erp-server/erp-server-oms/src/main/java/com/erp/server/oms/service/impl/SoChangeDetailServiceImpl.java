@@ -491,6 +491,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         List<String> mainIds = list.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
         //这个就是变更的详情
         List<SoChangeDetailEntity> soChangeDetailList = this.listDetailByMainIds(mainIds);
+        List<String> soDetailIds = soChangeDetailList.stream().map(SoChangeDetailEntity::getSoDetailId).distinct().collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listSoDetailByIds(soDetailIds);
         if (CollectionUtils.isNotEmpty(soChangeDetailList)) {
             SoChangeTypeEnum deleteType = SoChangeTypeEnum.DELETE;
             //终止
@@ -540,6 +542,10 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 if (addType.equals(changeType)) {
                     soDetail.setId(null);
                 } else {
+                    SoDetailEntity dbEntity = soDetailEntityList.stream().filter(v->v.getId().equals(soDetailId)).findFirst().orElse(null);
+                    if(Objects.nonNull(dbEntity)){
+                        soDetail.setExchangeRate(dbEntity.getExchangeRate());
+                    }
                     soDetail.setId(soDetailId);
                 }
 
@@ -569,6 +575,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 }
             }
             soDetailService.saveOrUpdateBatch(saveOrUpdateList);
+            //更新销售出库单价
+            soOutstockFeign.updateSoOutPrice(saveOrUpdateList);
             //关闭关联单据的关闭状态
             wmsTaskFeign.closeBySoDetailIds(closeSoDetailIdList);
         }

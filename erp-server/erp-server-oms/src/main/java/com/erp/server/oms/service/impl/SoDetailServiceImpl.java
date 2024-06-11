@@ -136,6 +136,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      **/
     @Override
     public List<SoDetailEntity> listSoDetailByIds(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return new ArrayList<>();
+        }
         return lambdaQuery().in(SoDetailEntity::getId, detailIds).list();
     }
 
