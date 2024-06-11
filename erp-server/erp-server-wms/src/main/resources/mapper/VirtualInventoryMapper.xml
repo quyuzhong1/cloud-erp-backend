@@ -107,22 +107,24 @@
         select
             vi.warehouse_id as warehouseId,
             vi.sku_id as skuId,
-            COALESCE(inv.qty,0) as qty,
-            COALESCE(vi.qty,0) as virtualQty
+            COALESCE(sum(inv.qty),0) as usableQty,
+            COALESCE(sum(vi.qty),0) as virtualQty
         from virtual_inventory vi
                  left join (
             select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
+            and inv.dict_inventory_status = 'usable'
             group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
         ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
             and vi.dict_inventory_status = inv.dict_inventory_status
         <where>
             ${params.sqlMap.default}
-            and vi.is_deleted = false and COALESCE(inv.qty,0) != COALESCE(vi.qty,0)
+            and vi.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
         </where>
         group by vi.sku_id,vi.warehouse_id
+        having  COALESCE(sum(vi.qty),0) > COALESCE(sum(inv.qty),0)
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -136,19 +138,21 @@
     <select id="diffPagingCount" resultType="java.lang.Integer">
         select
             count(0)
+        from virtual_inventory vi
         left join (
         select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
+        and inv.dict_inventory_status = 'usable'
         group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
         ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
         and vi.dict_inventory_status = inv.dict_inventory_status
         <where>
-            ${params.sqlMap.default}
-            and vi.is_deleted = false and COALESCE(inv.qty,0) != COALESCE(vi.qty,0)
+           vi.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
         </where>
         group by vi.sku_id,vi.warehouse_id
+        having COALESCE(sum(vi.qty),0) > COALESCE(sum(inv.qty),0)
     </select>
 
     <!-- 库存差异明细分页查询 -->

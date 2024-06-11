@@ -65,10 +65,10 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * 库存差异数量
      * @author will
      * @date 2024/6/11 10:06
-     * @param dto
+     * @param params
      * @return Integer
      */
-    Integer diffPagingCount(PermissionsDTO dto);
+    Integer diffPagingCount(@Param("params") PermissionsDTO params);
     /**
      * 库存差异分页明细查询
      * @author will
