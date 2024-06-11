@@ -197,7 +197,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             isAliexpressPlatformWarehouseOrder = count > 0;
         }
         labelMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
-        labelMap.put("isAliexpressPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
+        labelMap.put("isPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
         String orderStatus = sourceOrder.getOrderStatus();
         if ("RISK_CONTROL".equals(orderStatus)
                 || "IN_CANCEL".equals(orderStatus)

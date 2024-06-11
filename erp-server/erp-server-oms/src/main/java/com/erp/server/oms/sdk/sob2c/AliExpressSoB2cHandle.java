@@ -199,32 +199,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                     soB2cService.removeSignError(mainEntity.getId(),SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 }
             });
-        } else {
-            //如果仓库名称为空表示没找到速卖通发货单，记录异常订单，这里的WarehouseName是速卖通仓库名称
-            if (StringUtils.isBlank(warehouseName)) {
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                addError.setParamJson("");
-                addError.setReturnJson("");
-                addError.setMainId(mainEntity.getId());
-                addError.setMessage("未查询到平台发货单或发货单未出库");
-                soB2cErrorService.add(addError);
-                return;
-            }
-
-            //是否匹配到仓库，是空表示未绑定速卖通仓库，记录异常订单
-            if (resultDTO.getIsWarehouseEmpty()) {
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                addError.setParamJson("");
-                addError.setReturnJson("");
-                addError.setMainId(mainEntity.getId());
-                addError.setMessage(StrUtil.format("发货单仓库【{}】未匹配系统仓库", resultDTO.getWarehouseName()));
-                soB2cErrorService.add(addError);
-                return;
-            }
         }
-        return;
     }
 
     /**
