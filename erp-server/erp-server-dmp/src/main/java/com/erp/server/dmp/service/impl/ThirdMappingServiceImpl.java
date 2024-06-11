@@ -703,15 +703,9 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         if (CollectionUtils.isEmpty(existMappingList)) {
             List<ThirdMappingEntity> saveDtoList = new ArrayList<>();
             for (ThirdMappingDTO.ThirdAddDTO thirdAddDTO : thirdList) {
-//                makeThirdMappingDto(addDTO, item, warehouse);
                 ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
                 BeanMapperUtils.copy(thirdAddDTO, thirdMappingEntity);
                 thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
-//                thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
-//                thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
-//                thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
-//                thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
-//                addOrUpdate(thirdMappingEntity, null, warehouse);
                 saveDtoList.add(thirdMappingEntity);
             }
             if (CollectionUtils.isNotEmpty(saveDtoList)) {
@@ -730,12 +724,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     //绑定则进行更新
                     ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
                     BeanMapperUtils.copy(thirdAddDTO, thirdMappingEntity);
-//                    thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
                     thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
-//                    thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
-//                    thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
-//                    thirdMappingEntity.setThirdInfoId(thirdAddDTO.getId());
-////                    addOrUpdate(thirdMappingEntity, existMapping, warehouse);
                     updateList.add(thirdMappingEntity);
                 }
             });
