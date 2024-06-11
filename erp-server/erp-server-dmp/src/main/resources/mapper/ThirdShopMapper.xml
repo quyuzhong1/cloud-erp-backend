@@ -99,6 +99,11 @@
         code desc
         ) shop
     </select>
+    <select id="getByShopId" resultType="com.erp.model.dmp.entity.ThirdShopEntity">
+        select id, shop_id,name,code
+            from third_shop
+        where shop_id=#{shopId}
+    </select>
 
 
 </mapper>

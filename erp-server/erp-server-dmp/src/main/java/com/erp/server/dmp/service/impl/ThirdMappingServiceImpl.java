@@ -745,6 +745,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 if (Objects.isNull(thirdMappingEntity)) {
                     ThirdMappingEntity newEntity = new ThirdMappingEntity();
                     BeanUtils.copyProperties(thirdAddDTO, newEntity);
+                    newEntity.setThirdSysType(thirdAddDTO.getSysType());
                     saveList.add(newEntity);
                 }
             });
@@ -783,14 +784,12 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     }
                     break;
                 case SHOP:
-                    //校验系统店铺是否存在
-                    ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(thirdAddDTO.getSysId());
-                    if (Objects.isNull(shopInfo)) {
-                        throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(thirdAddDTO.getType()));
-                    }
-                    thirdName = shopInfo.getName();
-                    thirdAddDTO.setThirdInfoId(shopInfo.getId());
-                    thirdAddDTO.setThirdCode(shopInfo.getAccount());
+                    //校验第三方店铺是否存在
+                    ThirdShopEntity thirdShopEntity = Optional.ofNullable(thirdShopService.getByShopId(thirdAddDTO.getThirdId()))
+                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_SHOP_NOTFOUND));
+                    thirdName = thirdShopEntity.getName();
+                    thirdAddDTO.setThirdInfoId(thirdShopEntity.getId());
+                    thirdAddDTO.setThirdCode(thirdShopEntity.getCode());
                     break;
                 default:
                     throw new ServiceException(ApiError.ERROR_400);

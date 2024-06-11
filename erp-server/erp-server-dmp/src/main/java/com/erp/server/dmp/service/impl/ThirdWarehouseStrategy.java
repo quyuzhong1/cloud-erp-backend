@@ -480,7 +480,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
             ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
 
             if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
-                ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getById(thirdMappingEntity.getThirdId());
+                ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByWarehouseId(thirdMappingEntity.getThirdId());
                 if (Objects.isNull(thirdWarehouseEntity)) {
                     viewDTOList.add(viewDTO);
                     continue;

@@ -132,7 +132,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
     static void getViewVo(ThirdMappingDTO.MappingViewDTO mappingViewDTO, ShopInfoEntity shopInfo, ThirdShopService thirdShopService, List<ThirdMappingDTO.ViewDTO> viewDTOList, List<ThirdMappingEntity> thirdMappingEntityList) {
         for (ThirdMappingEntity thirdMappingEntity : thirdMappingEntityList) {
             ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
-            ThirdShopEntity thirdShopEntity = thirdShopService.getById(thirdMappingEntity.getThirdId());
+            ThirdShopEntity thirdShopEntity = thirdShopService.getByShopId(thirdMappingEntity.getThirdId());
             if (Objects.isNull(thirdShopEntity)) {
                 viewDTOList.add(viewDTO);
                 continue;
