@@ -17,11 +17,13 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.SoB2cErrorService;
+import com.erp.server.oms.service.SoB2cLogisticsService;
 import com.erp.server.oms.service.SoB2cService;
 import com.erp.server.oms.service.SoB2cSplitService;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
@@ -56,6 +58,8 @@ public class SoB2cController extends BaseController {
     @Resource
     private SoB2cSplitService soB2cSplitService;
 
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
     /**
      * 获取状态统计
      *
@@ -1120,6 +1124,7 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/deliveryWithNotOutbound")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "不出库发货")
     public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -1159,6 +1164,7 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/bomSplitAndSave")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "捆绑拆分")
     public ApiResult<List<BatchResultDTO>> bomSplitAndSave(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
         List<BatchResultDTO> batchResultDTOList = soB2cSplitService.bomSplitAndSave(idDTO.getIds());
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
@@ -1169,6 +1175,7 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/bomRestoreAndSave")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "还原拆分信息")
     public ApiResult<List<BatchResultDTO>> bomRestoreAndSave(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
         List<BatchResultDTO> batchResultDTOList = soB2cSplitService.bomRestoreAndSave(idDTO.getIds());
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
@@ -1193,5 +1200,34 @@ public class SoB2cController extends BaseController {
     public ApiResult processOrderApproveData(){
         soB2cService.processOrderApproveData();
         return ApiResult.success();
+    }
+
+    /**
+     * 取消物流单
+     * @return
+     */
+    @PostMapping("/cancelLogistic")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消物流单：ids={ids}")
+    public ApiResult<List<BatchResultDTO>> cancelLogistic(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(idDTO.getIds().size());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(idDTO.getIds());
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(idDTO.getIds());
+        for (String id : idDTO.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cLogisticsService.cancelLogistic(id,soB2cEntityList,soB2cLogisticsEntityList);
+            } catch (Exception e) {
+                log.error("B2C销售订单取消物流单失败", e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 获取物流单号失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

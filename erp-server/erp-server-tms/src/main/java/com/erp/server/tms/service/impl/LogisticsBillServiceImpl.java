@@ -808,6 +808,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             if (Objects.nonNull(logisticsBillEntity)) {
                 logisticsBillCostService.invalidByLogisticsBillId(logisticsBillEntity.getId());
             }
+        }else{
+            if(thirdPartyResult.getCode()!=-1){
+                String msg = thirdPartyResult.getData().stream().map(v->v.getMessage()+";").collect(Collectors.toList()).toString();
+                thirdPartyResult.setMsg(msg);
+            }
         }
         ApiResult<CancelResponseVO> result = new ApiResult<>();
         result.setMsg(thirdPartyResult.getMsg());
