@@ -1,24 +1,25 @@
 package com.erp.server.dmp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.DmpCfgInputHistoryDTO;
 import com.erp.model.dmp.entity.DmpCfgInputHistoryEntity;
 import com.erp.server.dmp.mapper.DmpCfgInputHistoryMapper;
 import com.erp.server.dmp.service.DmpCfgInputHistoryService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+
+import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.DmpCfgInputHistoryDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 外部系统接口明细补偿 服务实现类
@@ -30,9 +31,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class DmpCfgInputHistoryServiceImpl extends SuperServiceImpl<DmpCfgInputHistoryMapper, DmpCfgInputHistoryEntity> implements DmpCfgInputHistoryService {
-    @Autowired
-    private OperateLogService operateLogService;
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -52,7 +50,6 @@ public class DmpCfgInputHistoryServiceImpl extends SuperServiceImpl<DmpCfgInputH
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "外部系统接口明细补偿" , dmpCfgInputHistoryEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, dmpCfgInputHistoryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(dmpCfgInputHistoryEntity.getId(), dmpCfgInputHistoryEntity.getId());
@@ -81,7 +78,6 @@ public class DmpCfgInputHistoryServiceImpl extends SuperServiceImpl<DmpCfgInputH
             log.info("编辑 开始记录外部系统接口明细补偿日志数据，id：【{}】", dmpCfgInputHistoryEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputHistoryEntity.getId(), "外部系统接口明细补偿");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, dmpCfgInputHistoryEntity, null, dmpCfgInputHistoryEntity.getId(), msg);
         return Boolean.TRUE;
     }
 

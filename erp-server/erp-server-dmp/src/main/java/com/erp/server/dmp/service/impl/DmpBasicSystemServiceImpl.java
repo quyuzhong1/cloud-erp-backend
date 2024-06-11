@@ -1,27 +1,27 @@
 package com.erp.server.dmp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.DmpBasicSystemDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.server.dmp.mapper.DmpBasicSystemMapper;
 import com.erp.server.dmp.service.DmpBasicSystemService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+
+import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.DmpBasicSystemDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 外部系统 服务实现类
@@ -33,8 +33,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMapper, DmpBasicSystemEntity> implements DmpBasicSystemService {
-    @Autowired
-    private OperateLogService operateLogService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
@@ -61,8 +59,6 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "外部系统" , dmpBasicSystemEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, dmpBasicSystemEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(dmpBasicSystemEntity.getId(), code);
     }
@@ -90,7 +86,6 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
             log.info("编辑 开始记录外部系统日志数据，单号：【{}】", dmpBasicSystemEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpBasicSystemEntity.getCode(), "外部系统");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, dmpBasicSystemEntity, null, dmpBasicSystemEntity.getId(), msg);
         return Boolean.TRUE;
     }
 

@@ -1,24 +1,25 @@
 package com.erp.server.dmp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.DmpCfgMqDTO;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
 import com.erp.server.dmp.mapper.DmpCfgMqMapper;
 import com.erp.server.dmp.service.DmpCfgMqService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+
+import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.DmpCfgMqDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 输入输出mq信息 服务实现类
@@ -30,9 +31,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class DmpCfgMqServiceImpl extends SuperServiceImpl<DmpCfgMqMapper, DmpCfgMqEntity> implements DmpCfgMqService {
-    @Autowired
-    private OperateLogService operateLogService;
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -52,7 +50,6 @@ public class DmpCfgMqServiceImpl extends SuperServiceImpl<DmpCfgMqMapper, DmpCfg
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "输入输出mq信息" , dmpCfgMqEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, dmpCfgMqEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(dmpCfgMqEntity.getId(), dmpCfgMqEntity.getId());
@@ -81,7 +78,6 @@ public class DmpCfgMqServiceImpl extends SuperServiceImpl<DmpCfgMqMapper, DmpCfg
             log.info("编辑 开始记录输入输出mq信息日志数据，id：【{}】", dmpCfgMqEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgMqEntity.getId(), "输入输出mq信息");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, dmpCfgMqEntity, null, dmpCfgMqEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
