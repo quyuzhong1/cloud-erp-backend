@@ -48,10 +48,10 @@
         disabled, sys_type, warehouse_id, type, sub_type, code, name, address, contacts, tel_number, telno, email, zip, website, province, city, district, created, modified, remark
     </sql>
     <select id="pagingSelect" resultType="com.erp.model.dmp.dto.ThirdWarehouseDTO$PageSelectDTO">
-        select id,warehouse_id, code, name from (
+        select id,infoId, code, name from (
         select
-        tw.id,
-        tw.warehouse_id,
+        tw.warehouse_id as id,
+        tw.id as infoId,
         tw.code,
         tw.name
         from third_warehouse tw
@@ -78,6 +78,10 @@
         </if>
         code desc
         ) shop
+    </select>
+    <select id="getByWarehouseId" resultType="com.erp.model.dmp.entity.ThirdWarehouseEntity">
+        select id, warehouse_id,name,code from third_warehouse tw where tw.is_deleted=false and tw.disabled=false
+        and tw.warehouse_id=#{warehouseId}
     </select>
 
 

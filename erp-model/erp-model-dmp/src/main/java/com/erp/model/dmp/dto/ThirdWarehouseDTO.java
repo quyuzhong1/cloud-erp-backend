@@ -353,6 +353,10 @@ public class ThirdWarehouseDTO implements Serializable {
          */
         private String id;
         /**
+         * 信息id
+         */
+        private String infoId;
+        /**
          * 系统类型：lingxing领星，wangdian旺店通
          */
         private String sysType;

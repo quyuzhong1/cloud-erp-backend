@@ -74,10 +74,10 @@
 
 
     <select id="pagingSelect" resultType="com.erp.model.dmp.dto.ThirdShopDTO$PageSelectDTO">
-        select id,shop_id, code, name from (
+        select id,infoId, code, name from (
         select
-        ts.id,
-        ts.shop_id,
+        ts.shop_id as id,
+        ts.id as infoId,
         ts.code,
         ts.name
         from third_shop ts
@@ -98,6 +98,11 @@
         </if>
         code desc
         ) shop
+    </select>
+    <select id="getByShopId" resultType="com.erp.model.dmp.entity.ThirdShopEntity">
+        select id, shop_id,name,code
+            from third_shop
+        where shop_id=#{shopId}
     </select>
 
 

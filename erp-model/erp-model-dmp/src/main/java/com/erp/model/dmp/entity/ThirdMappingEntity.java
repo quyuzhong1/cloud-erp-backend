@@ -2,6 +2,8 @@ package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.beans.Transient;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;

@@ -23,4 +23,6 @@ public interface ThirdShopMapper extends BaseMapper<ThirdShopEntity> {
     IPage<ThirdShopDTO.PageSelectDTO> pagingSelect(Page query, @Param("params") ThirdShopDTO.SelectDTO params);
 
     IPage<ThirdShopDTO.PageDTO> paging(Page query, @Param("params") ThirdShopDTO.PagingParamDTO params);
+
+    ThirdShopEntity getByShopId(String thirdId);
 }
