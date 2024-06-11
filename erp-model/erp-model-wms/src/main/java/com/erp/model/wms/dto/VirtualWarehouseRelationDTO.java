@@ -153,6 +153,10 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+        /**
+         * 禁用状态
+         */
+        private Boolean canCheck = true;
     }
 
 }
