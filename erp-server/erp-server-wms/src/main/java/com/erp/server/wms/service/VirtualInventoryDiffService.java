@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
@@ -29,9 +30,9 @@ public interface VirtualInventoryDiffService extends SuperService<VirtualInvento
      * @author will
      * @date 2024/6/3 16:45
      * @param dto
-     * @return PagingVO<ListDetailDTO>
+     * @return PagingVO<ListDetailQtyDTO>
      */
-    PagingVO<VirtualInventoryDiffDTO.ListDetailDTO> diffDetailPaging(PagingDTO<VirtualInventoryDiffDTO.SearchParamDetailDTO> dto);
+    PagingVO<VirtualInventoryDiffDTO.ListDetailQtyDTO> diffDetailPaging(PagingDTO<VirtualInventoryDiffDTO.SearchParamDetailDTO> dto);
     /**
      * 库存差异列表导出
      * @author will
@@ -41,4 +42,12 @@ public interface VirtualInventoryDiffService extends SuperService<VirtualInvento
      * @return Boolean
      */
     Boolean exportExcel(VirtualInventoryDiffDTO.SearchParamDTO dto, HttpServletResponse response);
+    /**
+     * 库存差异数量
+     * @author will
+     * @date 2024/6/11 10:03
+     * @param dto
+     * @return Integer
+     */
+    Integer diffPagingCount(PermissionsDTO dto);
 }

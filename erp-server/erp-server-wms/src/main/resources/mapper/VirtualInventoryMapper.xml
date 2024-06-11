@@ -52,7 +52,6 @@
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListDTO">
         select
             vi.sku_id as skuId,
-            vi.sku_no as skuNo,
             vi.warehouse_id as warehouseId,
             vi.virtual_warehouse_id as virtualWarehouseId
         from virtual_inventory vi
@@ -64,8 +63,8 @@
                 ${params.permissionSql}
             </if>
         </where>
-        group by vi.sku_id,vi.sku_no,vi.warehouse_id,vi.virtual_warehouse_id
-        ORDER BY
+        group by vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id
+        order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
@@ -105,13 +104,78 @@
 
     <!-- 库存差异分页查询 -->
     <select id="diffPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDTO">
+        select
+            vi.warehouse_id as warehouseId,
+            vi.sku_id as skuId,
+            COALESCE(inv.qty,0) as qty,
+            COALESCE(vi.qty,0) as virtualQty
+        from virtual_inventory vi
+                 left join (
+            select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
+            group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
+        ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
+            and vi.dict_inventory_status = inv.dict_inventory_status
+        <where>
+            ${params.sqlMap.default}
+            and vi.is_deleted = false and COALESCE(inv.qty,0) != COALESCE(vi.qty,0)
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by vi.sku_id,vi.warehouse_id
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vi.sku_id
+    </select>
 
+    <!-- 库存差异列表数量 -->
+    <select id="diffPagingCount" resultType="java.lang.Integer">
+        select
+            count(0)
+        left join (
+        select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
+        group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
+        ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
+        and vi.dict_inventory_status = inv.dict_inventory_status
+        <where>
+            ${params.sqlMap.default}
+            and vi.is_deleted = false and COALESCE(inv.qty,0) != COALESCE(vi.qty,0)
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by vi.sku_id,vi.warehouse_id
     </select>
 
     <!-- 库存差异明细分页查询 -->
-    <select id="diffDetailPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDetailDTO">
-
+    <select id="diffDetailPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDetailQtyDTO">
+        select
+            vi.virtual_warehouse_id as virtualWarehouseId,
+            COALESCE(sum(vi.qty),0) as virtualQty,
+            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
+            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false
+            and vi.sku_id = #{params.skuId} and vi.warehouse_id = #{params.warehouseId}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by vi.virtual_warehouse_id
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vi.virtual_warehouse_id
     </select>
+
     <select id="getUsableQty" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ViewQtyDTO">
         SELECT vi.warehouse_id,
                vi.sku_id,
@@ -150,5 +214,6 @@
         </foreach>
         GROUP BY vi.warehouse_id, vi.sku_id
     </select>
+
 
 </mapper>

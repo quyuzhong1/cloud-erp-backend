@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
@@ -61,17 +62,26 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      */
     IPage<VirtualInventoryDiffDTO.ListDTO> diffPaging(Page query,@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
     /**
+     * 库存差异数量
+     * @author will
+     * @date 2024/6/11 10:06
+     * @param dto
+     * @return Integer
+     */
+    Integer diffPagingCount(PermissionsDTO dto);
+    /**
      * 库存差异分页明细查询
      * @author will
      * @date 2024/6/3 16:47
      * @param query
      * @param params
-     * @return IPage<ListDetailDTO>
+     * @return IPage<ListDetailQtyDTO>
      */
-    IPage<VirtualInventoryDiffDTO.ListDetailDTO> diffDetailPaging(Page query,@Param("params") VirtualInventoryDiffDTO.SearchParamDetailDTO params);
+    IPage<VirtualInventoryDiffDTO.ListDetailQtyDTO> diffDetailPaging(Page query,@Param("params") VirtualInventoryDiffDTO.SearchParamDetailDTO params);
 
 
     List<VirtualInventoryDTO.ViewQtyDTO> getUsableQty(@Param("params")VirtualInventoryDTO.ParamDTO params);
 
     List<VirtualInventoryDTO.ViewQtyDTO> getRealQty(@Param("params")VirtualInventoryDTO.ParamDTO params);
+
 }

@@ -334,6 +334,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             index++;
             //产品信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
+            listDTO.setSkuNo(productDetailEntity.getSkuNo());
             listDTO.setProductName(productDetailEntity.getName());
 
             //虚拟仓库
@@ -352,11 +353,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             }
             //虚拟可用库存
             Integer virtualUsableQty = virtualInventoryDetailList.stream().filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
-                    .map(VirtualInventoryDTO.ListInventoryDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                    .map(VirtualInventoryDTO.ListInventoryDTO::getVirtualQty).reduce(MathUtil.ZERO, Integer::sum);
             listDTO.setVirtualUsableQty(virtualUsableQty);
             //虚拟冻结库存
             Integer virtualFrozenQty = virtualInventoryDetailList.stream().filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode()))
-                    .map(VirtualInventoryDTO.ListInventoryDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                    .map(VirtualInventoryDTO.ListInventoryDTO::getVirtualQty).reduce(MathUtil.ZERO, Integer::sum);
             listDTO.setVirtualFrozenQty(virtualFrozenQty);
             //虚拟库存总数
             listDTO.setVirtualQty(MathUtil.add(virtualUsableQty, virtualFrozenQty));
@@ -373,6 +374,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), warehouseId))
                         .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
                 listDetailDTO.setIndex(warehouseId);
+                listDetailDTO.setSkuNo(listDTO.getSkuNo());
                 listDetailDTO.setWarehouseId(warehouseId);
                 listDetailDTO.setWarehouseName(warehouseName);
                 //可用数据

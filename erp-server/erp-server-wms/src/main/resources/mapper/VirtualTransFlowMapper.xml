@@ -68,6 +68,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDTO$ListDTO">
         select
             vtf.transaction_no as transactionNo,
+            vtf.bill_date as billDate,
             vtf.trade_time as tradeTime,
             vtf.source_type as sourceType,
             vtf.source_code as sourceCode,

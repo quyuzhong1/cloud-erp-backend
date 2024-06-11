@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -46,6 +47,19 @@ public class VirtualInventoryDiffController extends BaseController {
     }
 
     /**
+     * 库存差异数量
+     * @author will
+     * @date 2024/6/11 10:03
+     * @param dto
+     * @return ApiResult<Integer>
+     */
+    @PostMapping("/diffPagingCount")
+    public ApiResult<Integer> diffPagingCount(@RequestBody PermissionsDTO dto) {
+        Integer count = virtualInventoryDiffService.diffPagingCount(dto);
+        return success(count);
+    }
+
+    /**
      * 库存差异明细列表
      * @author will
      * @date 2024/6/3 16:45
@@ -53,7 +67,7 @@ public class VirtualInventoryDiffController extends BaseController {
      * @return ApiResult<PagingVO<ListDetailDTO>>
      */
     @PostMapping("/diffDetailPaging")
-    public ApiResult<PagingVO<VirtualInventoryDiffDTO.ListDetailDTO>> diffDetailPaging(@RequestBody @Validated PagingDTO<VirtualInventoryDiffDTO.SearchParamDetailDTO> dto) {
+    public ApiResult<PagingVO<VirtualInventoryDiffDTO.ListDetailQtyDTO>> diffDetailPaging(@RequestBody @Validated PagingDTO<VirtualInventoryDiffDTO.SearchParamDetailDTO> dto) {
         return success(virtualInventoryDiffService.diffDetailPaging(dto));
     }
 

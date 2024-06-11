@@ -2,27 +2,37 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.server.wms.mapper.VirtualInventoryMapper;
 import com.erp.server.wms.service.VirtualInventoryDiffService;
+import com.erp.server.wms.service.VirtualWarehouseService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 库存差异 服务实现类
@@ -33,6 +43,12 @@ import java.util.List;
 @Slf4j
 @Service
 public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInventoryMapper, VirtualInventoryEntity> implements VirtualInventoryDiffService {
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
 
     @Override
     public PagingVO<VirtualInventoryDiffDTO.ListDTO> diffPaging(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
@@ -45,10 +61,10 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
     }
 
     @Override
-    public PagingVO<VirtualInventoryDiffDTO.ListDetailDTO> diffDetailPaging(PagingDTO<VirtualInventoryDiffDTO.SearchParamDetailDTO> dto) {
+    public PagingVO<VirtualInventoryDiffDTO.ListDetailQtyDTO> diffDetailPaging(PagingDTO<VirtualInventoryDiffDTO.SearchParamDetailDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<VirtualInventoryDiffDTO.ListDetailDTO> pageData = this.baseMapper.diffDetailPaging(query, dto.getParams());
+        IPage<VirtualInventoryDiffDTO.ListDetailQtyDTO> pageData = this.baseMapper.diffDetailPaging(query, dto.getParams());
         // 填充名称
         fillDetailPageData(pageData.getRecords());
         return new PagingVO<>(pageData);
@@ -81,12 +97,9 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         return Boolean.TRUE;
     }
 
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(VirtualInventoryEntity virtualInventoryEntity) {
-    // TODO 验证数据 & 数据赋值
+    @Override
+    public Integer diffPagingCount(PermissionsDTO dto) {
+        return baseMapper.diffPagingCount(dto);
     }
 
     /**
@@ -99,12 +112,50 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
+        //产品信息
+        List<String> skuIdList = list.stream().map(VirtualInventoryDiffDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
+        //实际仓库
+        List<String> warehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
+
+        for (VirtualInventoryDiffDTO.ListDTO listDTO : list) {
+            //产品信息
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId()))
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
+            listDTO.setSkuNo(productDetailEntity.getSkuNo());
+            listDTO.setProductName(productDetailEntity.getName());
+            //实体仓库名称
+            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getWarehouseId()))
+                    .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
+            listDTO.setWarehouseName(warehouseName);
+            //已分配数量
+            listDTO.setDistributionQty(listDTO.getVirtualQty());
+            //未分配数量
+            listDTO.setUnDistributionQty(listDTO.getUsableQty() - listDTO.getDistributionQty());
+        }
     }
 
-    private void fillDetailPageData (List<VirtualInventoryDiffDTO.ListDetailDTO> list) {
+    /**
+     * 虚拟库存差异数据处理
+     * @author will
+     * @date 2024/6/11 10:53
+     * @param list
+     */
+    private void fillDetailPageData (List<VirtualInventoryDiffDTO.ListDetailQtyDTO> list) {
         if (CollectionUtil.isEmpty(list)) {
             return;
+        }
+        //虚拟仓库
+        List<String> virtualWarehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDetailQtyDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
+        for (VirtualInventoryDiffDTO.ListDetailQtyDTO listDetailQtyDTO : list) {
+            //虚拟仓库
+            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDetailQtyDTO.getVirtualWarehouseId()))
+                    .findFirst().orElse(new VirtualWarehouseEntity());
+            listDetailQtyDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
+            listDetailQtyDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
         }
 
     }
