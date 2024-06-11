@@ -1686,18 +1686,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (CollectionUtils.isNotEmpty(childList)) {
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
                     //验证是否存在可用库存
-                    Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId()))
-                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(MathUtil.ZERO);
-                    if (MathUtil.compareTo(detailEntity.getQty() * bomChildrenSkuDTO.getQuantity(), useableQty) > MathUtil.ZERO) {
+                    Integer usableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId()))
+                            .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
+                    if (MathUtil.compareTo(detailEntity.getQty() * bomChildrenSkuDTO.getQuantity(), usableQty) > MathUtil.ZERO) {
                         throw new ServiceException(ApiError.ERROR_SO_B2C_SKU_CHILD_NOT_INVENTORY, entity.getCode(), detailEntity.getSkuNo(), bomChildrenSkuDTO.getSkuNo(), detailEntity.getWarehouseName());
                     }
                 }
                 continue;
             }
             //验证是否存在可用库存
-            Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(MathUtil.ZERO);
-            if (MathUtil.compareTo(detailEntity.getQty(), useableQty) > MathUtil.ZERO) {
+            Integer usableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId()))
+                    .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
+            if (MathUtil.compareTo(detailEntity.getQty(), usableQty) > MathUtil.ZERO) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_SKU_NOT_INVENTORY, entity.getCode(), detailEntity.getSkuNo(), detailEntity.getWarehouseName());
             }
         }
