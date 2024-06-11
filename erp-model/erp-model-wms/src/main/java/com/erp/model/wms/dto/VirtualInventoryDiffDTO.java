@@ -147,6 +147,70 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private String virtualWarehouseName;
         /**
+         * 虚拟仓库存【可排序】
+         */
+        private Integer virtualQty;
+        /**
+         * 虚拟仓可用库存【可排序】
+         */
+        private Integer virtualUsableQty;
+        /**
+         * 虚拟仓可用库存【可排序】
+         */
+        private Integer virtualFrozenQty;
+    }
+
+    /**
+     * 差异导出数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDiffExportDataDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 实体仓库
+         */
+        private String warehouseId;
+        /**
+         * 实体仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 实体仓可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 实体仓已分配数
+         */
+        private Integer distributionQty;
+        /**
+         * 实体仓未分配数
+         */
+        private Integer unDistributionQty;
+        /**
+         * 虚拟仓库
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓库编号
+         */
+        private String virtualWarehouseCode;
+        /**
+         * 虚拟仓库名称
+         */
+        private String virtualWarehouseName;
+        /**
          * 虚拟仓库存
          */
         private Integer virtualQty;
@@ -159,7 +223,6 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private Integer virtualFrozenQty;
     }
-
 
 
 

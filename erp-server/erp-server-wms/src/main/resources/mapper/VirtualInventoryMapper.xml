@@ -104,18 +104,12 @@
 
     <!-- 库存差异分页查询 -->
     <select id="diffPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDTO">
-        select
+        select warehouseId,skuId,virtualQty,usableQty from (select
             vi.warehouse_id as warehouseId,
             vi.sku_id as skuId,
-            COALESCE(sum(inv.qty),0) as usableQty,
-            COALESCE(sum(vi.qty),0) as virtualQty
+            COALESCE(sum(vi.qty),0) as virtualQty,
+            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty
         from virtual_inventory vi
-                 left join (
-            select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
-            and inv.dict_inventory_status = 'usable'
-            group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
-        ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
-            and vi.dict_inventory_status = inv.dict_inventory_status
         <where>
             ${params.sqlMap.default}
             and vi.is_deleted = false
@@ -124,14 +118,13 @@
             </if>
         </where>
         group by vi.sku_id,vi.warehouse_id
-        having  COALESCE(sum(vi.qty),0) > COALESCE(sum(inv.qty),0)
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        vi.sku_id
+        vi.sku_id) diff where virtualQty > usableQty
     </select>
 
     <!-- 库存差异列表数量 -->
@@ -179,6 +172,34 @@
         </if>
         vi.virtual_warehouse_id
     </select>
+
+    <!-- 虚拟库存数据 -->
+    <select id="listDiffExportData" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDiffExportDataDTO">
+        select
+        vi.sku_id as skuId,
+        vi.warehouse_id as warehouseId,
+        vi.virtual_warehouse_id as virtualWarehouseId,
+        COALESCE(sum(vi.qty),0) as virtualQty,
+        (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
+        (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty
+        from virtual_inventory vi
+        <where>
+            ${params.sqlMap.default}
+            and vi.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id
+    </select>
+
 
     <select id="getUsableQty" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ViewQtyDTO">
         SELECT vi.warehouse_id,
