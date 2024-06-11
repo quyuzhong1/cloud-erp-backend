@@ -132,5 +132,52 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
         return success(submit);
     }
 
+   /**
+     * 同步
+     *
+     * @param detailId
+     * @return
+     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "手动完结虚拟仓分货单信息")
+    @GetMapping("/sync")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocationDetail:sync",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<BatchResultDTO> sync(@RequestParam(value = "detailId") String detailId) {
+        String id = detailId;
+        //已处理状态且同步失败状态
+        String handleStatus = VirtualWarehouseAllocationStatusEnum.HANDLE.getCode();
+        String failedSyncStatus = VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode();
+        BatchResultDTO submit;
+        String flagCode = id;
+        try {
+            VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity = virtualWarehouseAllocationDetailService.getById(id);
+            if (Objects.isNull(vmAllocationDetailEntity)) {
+                submit = BatchResultDTO.fail(id, id, "分货单明细不存在");
+            } else {
+                VirtualWarehouseAllocationEntity vmAllocationEntity = virtualWarehouseAllocationService.getById(vmAllocationDetailEntity.getMainId());
+
+                if (Objects.isNull(vmAllocationEntity)) {
+                    submit = BatchResultDTO.fail(id, id, "分货单不存在");
+                } else {
+                    //只有已处理状态且同步失败状态可以同步
+                    if (Objects.equals(handleStatus, vmAllocationEntity.getStatus()) && Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
+                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_SYNC_ERROR.msg);
+                    } else {
+                        flagCode = vmAllocationEntity.getCode();
+                        submit = virtualWarehouseAllocationDetailService.sync(vmAllocationDetailEntity, vmAllocationEntity);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("手动完结分货单失败>>>>{}", e);
+            submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
+        }
+        return success(submit);
+    }
+
 
 }

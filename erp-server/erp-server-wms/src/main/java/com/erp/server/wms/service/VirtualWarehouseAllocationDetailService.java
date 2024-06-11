@@ -52,4 +52,5 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
 
     void updateByMainId(String mainId, String syncStatus);
 
+    BatchResultDTO sync(VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity, VirtualWarehouseAllocationEntity vmAllocationEntity);
 }

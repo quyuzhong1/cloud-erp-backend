@@ -127,7 +127,9 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 虚拟仓id
          */
         private String virtualWarehouseId;
-    }   @Data
+    }
+
+    @Data
     @NoArgsConstructor
     public static class SelectResultDTO {
 
@@ -147,6 +149,10 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 虚拟仓名称
          */
         private String virtualWarehouseName;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
     }
 
 }

@@ -50,6 +50,7 @@
         vma.type,
         vmad.sku_id as skuId,
         vmad.sku_no as skuNo,
+        vmad.product_name as productName,
         vmad.warehouse_id as warehouseId,
         vmad.warehouse_name,
         vmad.from_virtual_warehouse_id as fromVirtualWarehouseId,
@@ -59,7 +60,13 @@
         vmad.to_virtual_warehouse_name,
         vmad.finish_description,
         vma.invalid_description,
-        vmad.sync_status as syncStatus
+        vmad.sync_status as syncStatus,
+        vmad.create_user_id,
+        vmad.create_user_name,
+        vmad.create_time,
+        vmad.update_user_id,
+        vmad.update_user_name,
+        vmad.update_time
         FROM virtual_warehouse_allocation vma
         LEFT JOIN virtual_warehouse_allocation_detail vmad
         on vma.id = vmad.main_id and vmad.is_deleted = false

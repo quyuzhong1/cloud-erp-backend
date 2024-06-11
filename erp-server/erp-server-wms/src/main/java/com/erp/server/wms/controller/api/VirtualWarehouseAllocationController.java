@@ -5,16 +5,12 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
-import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
 import com.erp.server.wms.query.VirtualWarehouseAllocationQueryHandler;
 import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
 import com.erp.server.wms.service.VirtualWarehouseService;
-import com.erp.server.wms.service.WarehouseLocationMoveService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -45,7 +41,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * 虚拟仓分货单

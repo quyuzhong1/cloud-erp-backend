@@ -42,7 +42,7 @@ public class VirtualWarehouseAllocationQueryHandler extends AbstractQueryHandler
             super.buildDefaultDTO("vma.status", VirtualWarehouseAllocationStatusEnum.INVALID.getCode());
         }
         //同步失败
-        if ("failedSync".equals(value)) {
+        if (VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode().equals(value)) {
             super.buildDefaultDTO("vmad.sync_status", VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
         }
         return super.getSplicingSQL();

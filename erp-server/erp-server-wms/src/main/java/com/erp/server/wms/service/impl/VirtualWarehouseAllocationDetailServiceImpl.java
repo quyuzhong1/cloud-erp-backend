@@ -190,8 +190,9 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         vmAllocationDetailEntity.setFinishDescription(dto.getFinishDescription());
         vmAllocationDetailEntity.setThirdCode(dto.getThirdCode());
         this.updateById(vmAllocationDetailEntity);
-        //变更明细同步状态
-        virtualWarehouseAllocationDetailService.updateByMainId(vmAllocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.MANUAL_COMPLETION_SYNC.getCode());
+        //todo 变更同步表状态
+//        //变更明细同步状态
+//        virtualWarehouseAllocationDetailService.updateByMainId(vmAllocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.MANUAL_COMPLETION_SYNC.getCode());
         //todo 手动完结中台任务
         return BatchResultDTO.success(vmAllocationDetailEntity.getId(), vmAllocationEntity.getCode(), OperationTypeEnum.DISABLED);
     }
@@ -205,73 +206,15 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             String type = allocationEntity.getType();
             switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
                 case ALLOCATION:
-                    VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
-                    allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
-                    List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
-                    detailList.forEach(detailDto -> {
-                        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-                        outInStockDTO.setBillDate(LocalDate.now());
-                        outInStockDTO.setSourceId(allocationEntity.getId());
-                        outInStockDTO.setSourceCode(allocationEntity.getCode());
-                        outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
-                        outInStockDTO.setSourceDetailId(detailDto.getId());
-                        outInStockDTO.setBillDate(LocalDate.now());
-                        outInStockDTO.setSkuId(detailDto.getSkuId());
-                        outInStockDTO.setSkuNo(detailDto.getSkuNo());
-                        outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
-                        outInStockDTO.setVirtualWarehouseId(detailDto.getToVirtualWarehouseId());
-                        outInStockDTO.setQty(detailDto.getQty());
-                        allocationParamList.add(outInStockDTO);
-                    });
-                    allocationDto.setParamList(allocationParamList);
+                    VirtualInventoryStockDTO.StockParamDTO allocationDto = getAllocationDto(VirtualInventoryBusinessTypeEnum.IN_USABLE, detailList, allocationEntity);
                     virtualInventoryTransCoreService.approve(allocationDto);
                     break;
                 case TRANSFER:
-                    VirtualInventoryStockDTO.TransferParamDTO dto = new VirtualInventoryStockDTO.TransferParamDTO();
-                    dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_USABLE.getCode());
-                    List<VirtualInventoryStockDTO.TransferStockDTO> paramList = new ArrayList<>();
-
-                    detailList.forEach(detailDto -> {
-                        VirtualInventoryStockDTO.TransferStockDTO outInStockDTO = new VirtualInventoryStockDTO.TransferStockDTO();
-                        outInStockDTO.setBillDate(LocalDate.now());
-                        outInStockDTO.setSourceId(allocationEntity.getId());
-                        outInStockDTO.setSourceCode(allocationEntity.getCode());
-                        outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
-                        outInStockDTO.setSourceDetailId(detailDto.getId());
-                        outInStockDTO.setBillDate(LocalDate.now());
-                        outInStockDTO.setSkuId(detailDto.getSkuId());
-                        outInStockDTO.setSkuNo(detailDto.getSkuNo());
-                        outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
-                        outInStockDTO.setVirtualWarehouseId(detailDto.getFromVirtualWarehouseId());
-                        outInStockDTO.setVirtualCurWarehouseId(detailDto.getFromVirtualWarehouseId());
-                        outInStockDTO.setVirtualTargetWarehouseId(detailDto.getToVirtualWarehouseId());
-                        outInStockDTO.setQty(detailDto.getQty());
-                        paramList.add(outInStockDTO);
-                    });
-                    dto.setParamList(paramList);
+                    VirtualInventoryStockDTO.TransferParamDTO dto = getTransferDTO(allocationEntity, detailList);
                     virtualInventoryTransCoreService.approve(dto);
                     break;
                 case CANCEL:
-                    VirtualInventoryStockDTO.StockParamDTO cancelDto = new VirtualInventoryStockDTO.StockParamDTO();
-                    cancelDto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
-                    List<VirtualInventoryStockDTO.OutInStockDTO> cancelParamList = new ArrayList<>();
-
-                    detailList.forEach(detailDto -> {
-                        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-                        outInStockDTO.setBillDate(LocalDate.now());
-                        outInStockDTO.setSourceId(allocationEntity.getId());
-                        outInStockDTO.setSourceCode(allocationEntity.getCode());
-                        outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
-                        outInStockDTO.setSourceDetailId(detailDto.getId());
-                        outInStockDTO.setBillDate(LocalDate.now());
-                        outInStockDTO.setSkuId(detailDto.getSkuId());
-                        outInStockDTO.setSkuNo(detailDto.getSkuNo());
-                        outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
-                        outInStockDTO.setVirtualWarehouseId(detailDto.getToVirtualWarehouseId());
-                        outInStockDTO.setQty(detailDto.getQty());
-                        cancelParamList.add(outInStockDTO);
-                    });
-                    cancelDto.setParamList(cancelParamList);
+                    VirtualInventoryStockDTO.StockParamDTO cancelDto = getAllocationDto(VirtualInventoryBusinessTypeEnum.OUT_USABLE, detailList, allocationEntity);
                     virtualInventoryTransCoreService.approve(cancelDto);
                     break;
                 default:
@@ -280,10 +223,67 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         }
     }
 
+    private static VirtualInventoryStockDTO.TransferParamDTO getTransferDTO(VirtualWarehouseAllocationEntity allocationEntity, List<VirtualWarehouseAllocationDetailEntity> detailList) {
+        VirtualInventoryStockDTO.TransferParamDTO dto = new VirtualInventoryStockDTO.TransferParamDTO();
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_USABLE.getCode());
+        List<VirtualInventoryStockDTO.TransferStockDTO> paramList = new ArrayList<>();
+
+        detailList.forEach(detailDto -> {
+            VirtualInventoryStockDTO.TransferStockDTO outInStockDTO = new VirtualInventoryStockDTO.TransferStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(allocationEntity.getId());
+            outInStockDTO.setSourceCode(allocationEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
+            outInStockDTO.setSourceDetailId(detailDto.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailDto.getSkuId());
+            outInStockDTO.setSkuNo(detailDto.getSkuNo());
+            outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(detailDto.getFromVirtualWarehouseId());
+            outInStockDTO.setVirtualCurWarehouseId(detailDto.getFromVirtualWarehouseId());
+            outInStockDTO.setVirtualTargetWarehouseId(detailDto.getToVirtualWarehouseId());
+            outInStockDTO.setQty(detailDto.getQty());
+            paramList.add(outInStockDTO);
+        });
+        dto.setParamList(paramList);
+        return dto;
+    }
+
+    private static VirtualInventoryStockDTO.StockParamDTO getAllocationDto(VirtualInventoryBusinessTypeEnum inUsable, List<VirtualWarehouseAllocationDetailEntity> detailList, VirtualWarehouseAllocationEntity allocationEntity) {
+        VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+        allocationDto.setBusinessType(inUsable.getCode());
+        List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
+        detailList.forEach(detailDto -> {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(allocationEntity.getId());
+            outInStockDTO.setSourceCode(allocationEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
+            outInStockDTO.setSourceDetailId(detailDto.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailDto.getSkuId());
+            outInStockDTO.setSkuNo(detailDto.getSkuNo());
+            outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(detailDto.getToVirtualWarehouseId());
+            outInStockDTO.setQty(detailDto.getQty());
+            allocationParamList.add(outInStockDTO);
+        });
+        allocationDto.setParamList(allocationParamList);
+        return allocationDto;
+    }
+
     @Override
     public void updateByMainId(String mainId, String syncStatus) {
         this.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>().eq(VirtualWarehouseAllocationDetailEntity::getMainId, mainId)
                 .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus, syncStatus));
+    }
+
+    @Override
+    public BatchResultDTO sync(VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity, VirtualWarehouseAllocationEntity vmAllocationEntity) {
+        //todo 同步中台数据
+        //变更明细同步状态
+        virtualWarehouseAllocationDetailService.updateByMainId(vmAllocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
+        return null;
     }
 
     private void handleData(List<VirtualWarehouseAllocationDetailEntity> detailEntityList, String mainId) {
