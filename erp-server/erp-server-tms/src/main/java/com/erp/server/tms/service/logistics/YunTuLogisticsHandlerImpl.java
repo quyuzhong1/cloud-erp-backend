@@ -178,7 +178,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-        List<String> deliveryList = logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getDeliveryNo).collect(Collectors.toList());
+        List<String> deliveryList = logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getTransportNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         YunTuGetTrackingNumRequest request = YunTuGetTrackingNumRequest.builder()
                 .customerOrderNumber(String.join(",", deliveryList))
                 .build();
