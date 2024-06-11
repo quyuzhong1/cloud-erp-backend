@@ -5,6 +5,7 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -91,11 +92,13 @@ public class VirtualInventoryDiffDTO implements Serializable {
         /**
          * skuId
          */
+        @NotBlank(message = "skuId不能为空")
         private String skuId;
 
         /**
          * 仓库Id
          */
+        @NotBlank(message = "实体仓库Id不能为空")
         private String warehouseId;
     }
 
