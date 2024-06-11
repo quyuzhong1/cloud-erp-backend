@@ -214,6 +214,11 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
         });
     }
 
+    @Override
+    public void checkData(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> saveList, List<ThirdMappingEntity> deleteList, List<ThirdMappingEntity> updateList) {
+
+    }
+
     /**
      * 删除绑定数据
      *

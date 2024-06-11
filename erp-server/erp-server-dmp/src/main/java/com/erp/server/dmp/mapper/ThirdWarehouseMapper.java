@@ -20,4 +20,6 @@ import org.apache.ibatis.annotations.Mapper;
 public interface ThirdWarehouseMapper extends BaseMapper<ThirdWarehouseEntity> {
 
     IPage<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(Page query, ThirdWarehouseDTO.SelectDTO params);
+
+    ThirdWarehouseEntity getByWarehouseId(String thirdId);
 }

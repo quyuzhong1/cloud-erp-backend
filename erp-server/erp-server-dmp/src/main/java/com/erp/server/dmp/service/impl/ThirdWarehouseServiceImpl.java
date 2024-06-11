@@ -11,11 +11,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
-import com.erp.model.dmp.dto.ThirdShopDTO;
-import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.dmp.mapper.ThirdWarehouseMapper;
@@ -24,12 +20,8 @@ import com.erp.server.dmp.service.ThirdWarehouseService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -145,6 +137,11 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
             return pageData;
         }
         return new PagingVO<>();
+    }
+
+    @Override
+    public ThirdWarehouseEntity getByWarehouseId(String thirdId) {
+        return baseMapper.getByWarehouseId(thirdId);
     }
 
 

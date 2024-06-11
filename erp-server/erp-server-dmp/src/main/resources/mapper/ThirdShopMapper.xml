@@ -76,8 +76,8 @@
     <select id="pagingSelect" resultType="com.erp.model.dmp.dto.ThirdShopDTO$PageSelectDTO">
         select id,shop_id, code, name from (
         select
-        ts.id,
-        ts.shop_id,
+        ts.shop_id as id,
+        ts.id as infoId,
         ts.code,
         ts.name
         from third_shop ts

@@ -24,6 +24,7 @@ import com.erp.server.dmp.service.ThirdMappingStrategy;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -181,6 +182,127 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                 thirdMappingEntity.setThirdInfoId(thirdAddDTO.getThirdId());
                 addOrUpdate(thirdMappingEntity, existMapping, warehouse);
                 resultUpdatedList.add(thirdAddDTO);
+            }
+        });
+    }
+
+    @Override
+    public void checkData(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> saveList, List<ThirdMappingEntity> deleteList, List<ThirdMappingEntity> updateList) {
+        List<ThirdMappingDTO.ThirdAddDTO> thirdList = addDTO.getThirdList();
+        //获取仓库信息
+        WarehouseDTO.ListDTO warehouse = wmsWarehouseFeign.listByIds(Collections.singletonList(addDTO.getSysId())).stream().findFirst().orElse(null);
+        if (Objects.isNull(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+        }
+        String sysName = warehouse.getName();
+        addDTO.setSysName(sysName);
+
+        //如果第三方信息为空，删除绑定关系，不用校验数据
+        if (CollectionUtils.isEmpty(thirdList)) {
+            //根据sysId获取所有绑定关系
+            List<ThirdMappingEntity> existMappingList = thirdMappingService.getList(addDTO.getType(), addDTO.getSysId());
+            if (CollectionUtils.isNotEmpty(existMappingList)) {
+                deleteList.addAll(existMappingList);
+            }
+            return;
+        }
+        //校验第三方仓库
+        checkThirdAddList(thirdList, sysName);
+        //查看当前平台sysId绑定的第三方信息
+        List<ThirdMappingEntity> existMappingList = thirdMappingService.getList(addDTO.getType(), addDTO.getSysId());
+        //如果当前平台没有绑定第三方数据，直接添加
+        if (CollectionUtils.isEmpty(existMappingList)) {
+            List<ThirdMappingEntity> saveDtoList = new ArrayList<>();
+            for (ThirdMappingDTO.ThirdAddDTO thirdAddDTO : thirdList) {
+//                makeThirdMappingDto(addDTO, item, warehouse);
+                ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
+                BeanMapperUtils.copy(addDTO, thirdMappingEntity);
+                thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
+                thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
+                thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
+                thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
+//                addOrUpdate(thirdMappingEntity, null, warehouse);
+                saveDtoList.add(thirdMappingEntity);
+            }
+            if (CollectionUtils.isNotEmpty(saveDtoList)) {
+                saveList.addAll(saveList);
+            }
+        }else {
+            //判断当前平台是否绑定第三方数据
+            existMappingList.forEach(existMapping -> {
+                ThirdMappingDTO.ThirdAddDTO thirdAddDTO = thirdList.stream().filter(item ->
+                        Objects.equals(item.getSysType(), existMapping.getThirdSysType())).findFirst().orElse(null);
+                //如果新增的第三方类型数据在原始数据中不存在，删除原始数据
+                if (Objects.isNull(thirdAddDTO)) {
+                    deleteList.add(existMapping);
+                } else {
+                    //如果新增的第三方类型数据在原始数据中存在，判断第三方数据是否绑定
+                    //绑定则进行更新
+                    ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
+                    BeanMapperUtils.copy(addDTO, thirdMappingEntity);
+                    thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
+                    thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
+                    thirdMappingEntity.setThirdName(thirdAddDTO.getThirdName());
+                    thirdMappingEntity.setSysName(thirdAddDTO.getSysName());
+                    thirdMappingEntity.setThirdInfoId(thirdAddDTO.getId());
+//                    addOrUpdate(thirdMappingEntity, existMapping, warehouse);
+                    updateList.add(thirdMappingEntity);
+                }
+            });
+            //获取新增数据
+            thirdList.forEach(thirdAddDTO -> {
+                ThirdMappingEntity thirdMappingEntity = updateList.stream().filter(item -> !Objects.equals(item.getThirdId(), thirdAddDTO.getThirdId())).findFirst().orElse(null);
+                if (Objects.isNull(thirdMappingEntity)){
+                    ThirdMappingEntity newEntity=  new ThirdMappingEntity();
+                    BeanUtils.copyProperties(thirdAddDTO,newEntity);
+                    saveList.add(newEntity);
+                }
+            });
+        }
+    }
+
+    private void checkThirdAddList(List<ThirdMappingDTO.ThirdAddDTO> thirdList, String sysName) {
+        thirdList.forEach(thirdAddDTO -> {
+            String thirdName = null;
+            if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType())) {
+                //校验第三方仓库是否存在
+                ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId()))
+                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                thirdName = thirdWarehouseEntity.getName();
+                thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
+                thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
+            }
+            if (PlatformDictEnum.IML.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdAddDTO.getSysType())) {
+                OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
+                feignDTO.setCode(thirdAddDTO.getSysType());
+                feignDTO.setOverseasProviderWarehouseId(thirdAddDTO.getThirdId());
+                //校验第三方仓库是否存在
+                OverseasProviderDTO.FeignDTO overseasWarehouse = Optional.ofNullable(overseasProviderFeign.getOverseasWarehouse(feignDTO))
+                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                thirdName = overseasWarehouse.getPlatformWarehouseName();
+                thirdAddDTO.setThirdInfoId(overseasWarehouse.getOverseasProviderWarehouseId());
+                thirdAddDTO.setThirdCode(overseasWarehouse.getPlatformWarehouseCode());
+            }
+            thirdAddDTO.setThirdName(thirdName);
+            thirdAddDTO.setSysName(sysName);
+
+            //校验平台信息和第三方信息一对一关系
+            ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
+            thirdMappingEntity.setType(thirdAddDTO.getType());
+            thirdMappingEntity.setSysId(thirdAddDTO.getSysId());
+            thirdMappingEntity.setThirdSysType(thirdAddDTO.getSysType());
+            thirdMappingEntity.setThirdId(thirdAddDTO.getThirdId());
+            ThirdMappingEntity existSysMapping = thirdMappingService.getByTypeAndSysIdAndSysType(thirdMappingEntity);
+            if (Objects.nonNull(existSysMapping)) {
+                if (!Objects.equals(thirdAddDTO.getSysId(), existSysMapping.getSysId())) {
+                    throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existSysMapping.getSysName());
+                } else {
+                    thirdAddDTO.setId(existSysMapping.getId());
+                }
+            }
+            ThirdMappingEntity existThirdMapping = thirdMappingService.getByTypeAndThirdId(thirdMappingEntity);
+            if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping) && !Objects.equals(thirdAddDTO.getSysId(), existThirdMapping.getSysId())) || Objects.isNull(existSysMapping))) {
+                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdAddDTO.getType()), thirdName, existThirdMapping.getSysName());
             }
         });
     }

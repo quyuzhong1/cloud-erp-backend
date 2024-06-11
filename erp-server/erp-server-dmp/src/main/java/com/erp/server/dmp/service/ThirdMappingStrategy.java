@@ -4,8 +4,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -58,5 +56,6 @@ public interface ThirdMappingStrategy {
      */
     void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdMappingDTO.ThirdAddDTO> thirdList, WarehouseDTO.ListDTO warehouse, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList);
 
+    void checkData(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> saveList, List<ThirdMappingEntity> deleteList, List<ThirdMappingEntity> updateList);
 }
 

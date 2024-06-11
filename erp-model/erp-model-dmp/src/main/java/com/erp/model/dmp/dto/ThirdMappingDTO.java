@@ -1,9 +1,11 @@
 package com.erp.model.dmp.dto;
 
+import com.erp.model.dmp.entity.ThirdMappingEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -140,6 +142,10 @@ public class ThirdMappingDTO implements Serializable {
          * 第三方编码
          */
         private String thirdCode;
+        /**
+         * 第三方表id
+         */
+        private String thirdInfoId;
     }
 
 
@@ -196,6 +202,9 @@ public class ThirdMappingDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
         @Valid
         private List<ThirdAddDTO> thirdList;
+        private List<ThirdMappingEntity> deleteList = new ArrayList<>();
+        private List<ThirdMappingEntity> updateList = new ArrayList<>();
+        private List<ThirdMappingEntity> saveList = new ArrayList<>();
 
     }
 
@@ -277,7 +286,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 第三方信息ID
          */
-        @Size(max = 19,message = "第三方信息ID最大长度不能超过19位")
+        @Size(max = 19, message = "第三方信息ID最大长度不能超过19位")
         private String thirdInfoId;
     }
 
