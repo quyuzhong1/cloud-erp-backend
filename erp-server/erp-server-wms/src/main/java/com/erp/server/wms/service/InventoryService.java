@@ -240,10 +240,9 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     /**
      * PDA:库存查询
      *
-     * @param skuNo SKU编号
      * @return PDA即时库存
      **/
-    InventoryDTO.PdaInventorySearch getInventoryBySkuNo(String skuNo);
+    InventoryDTO.PdaInventorySearch getInventoryBySkuNo(PagingDTO<InventoryDTO.PdaSearchParamDTO> dto);
 
 
     /**
@@ -272,4 +271,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return java.util.List<com.erp.model.wms.entity.InventoryEntity>
      **/
     List<InventoryDTO.UsableInventoryViewDTO> listByParam(List<InventoryDTO.UsableInventoryParamDTO> list);
+
+    /**
+     * PDA:库存查询（仓库）
+     * @param searchDTO
+     * @return
+     */
+    InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO);
 }

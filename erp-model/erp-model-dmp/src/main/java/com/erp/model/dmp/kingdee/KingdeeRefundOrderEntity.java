@@ -5,10 +5,10 @@ import com.common.business.dto.CleanBaseDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
 public class KingdeeRefundOrderEntity extends CleanBaseDTO {
 
     private String _id;
@@ -64,6 +64,16 @@ public class KingdeeRefundOrderEntity extends CleanBaseDTO {
     private String fSaleErId;
     @Alias("FSALEERName")
     private String fSaleErName;
+
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
+    public KingdeeRefundOrderEntity() {
+        this.isValid = Boolean.TRUE;
+    }
+
     @Override
     public String toString() {
         return "KingdeeRefundOrderEntity{" +

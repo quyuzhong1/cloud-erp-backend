@@ -45,7 +45,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         }
         //bom管理
         if (ApiModuleTypeEnum.BOM_INFO.getCode().toString().equals(code)) {
-            productBomHistoryService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
+            productBomHistoryService.updateSyncKingdeeStatus(businessId,syncKingdeeId);
         }
         //产品管理
         if (ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode().toString().equals(code) || ApiModuleTypeEnum.SECOND_LEVEL_CATEGORY.getCode().toString().equals(code)) {

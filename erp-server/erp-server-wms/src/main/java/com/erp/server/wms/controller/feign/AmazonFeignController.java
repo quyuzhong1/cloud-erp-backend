@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.feign;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.PlatformFbaShipmentDTO;
+import com.common.business.dto.PlatformOtherOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -11,6 +12,7 @@ import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.server.wms.convert.FbaShipmentReceiveConverter;
 import com.erp.server.wms.rocketmq.consumer.PlatformFbaShipmentConsumerService;
+import com.erp.server.wms.rocketmq.consumer.PlatformOtherOutStockConsumerService;
 import com.erp.server.wms.rocketmq.consumer.PlatformSoOutStockConsumerService;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +39,8 @@ public class AmazonFeignController extends BaseController {
     private FbaShipmentReceiveService fbaShipmentReceiveService;
     @Resource
     private PlatformSoOutStockConsumerService<?> platformSoOutStockConsumerService;
+    @Resource
+    private PlatformOtherOutStockConsumerService<?> platformOtherOutStockConsumerService;
 
     /**
      * 直接消费销售出库单
@@ -45,6 +49,16 @@ public class AmazonFeignController extends BaseController {
     @PostMapping("/soOutStock/consumer")
     public ApiResult<?> consumerPullShipment(@RequestBody PlatformSoOutStockDTO platformSoOutStockDTO){
         return platformSoOutStockConsumerService.handle(new JSONObject(platformSoOutStockDTO));
+    }
+
+
+    /**
+     * 直接消费销售出库单
+     * @author Jim
+     */
+    @PostMapping("/otherOutStock/consumer")
+    public ApiResult<?> consumerPullShipment(@RequestBody PlatformOtherOutStockDTO dto){
+        return platformOtherOutStockConsumerService.handle(new JSONObject(dto));
     }
 
 }

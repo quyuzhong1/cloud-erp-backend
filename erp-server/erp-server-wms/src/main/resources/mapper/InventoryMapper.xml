@@ -25,7 +25,7 @@
                t.intransit_qty AS intransitQty,
                t.waitqc_qty AS waitqcQty,
                t.real_qty AS realQty,
-               t.warehouse_location AS warehouse_location
+               t.warehouse_location AS warehouseLocation
         from (
             select max(m.warehouse_location) AS warehouse_location, max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
                 sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
@@ -117,7 +117,7 @@
                t.intransit_qty AS intransitQty,
                t.waitqc_qty AS waitqcQty,
                t.real_qty AS realQty,
-               t.warehouse_location AS warehouse_location
+               t.warehouse_location AS warehouseLocation
         from (
         select max(m.warehouse_location) AS warehouse_location, max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
         sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
@@ -497,48 +497,176 @@
         GROUP BY it.warehouse_id, it.sku_id
     </select>
 
-    <select id="listInventoryWarehouseByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
+    <sql id="inventoryWarehouseByParam">
         SELECT
-            t.warehouse_id,
-            t.sku_id,
-            t.realQty,
-            t.usableQty,
-            t.frozenQty,
-            t.intransitQty,
-            t.waitqcQty
+        t.warehouse_id,
+        t.sku_id,
+        t.realQty,
+        t.usableQty,
+        t.frozenQty,
+        t.intransitQty,
+        t.waitqcQty
         FROM (
-            SELECT
-            it.warehouse_id,
-            it.sku_id,
-            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
-            +
-            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as realQty,
-            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
-            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
-            sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
-            sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
-            FROM "inventory" it
-            WHERE it.is_deleted = FALSE
-            <if test="params.skuId != null and params.skuId != ''">
-                and it.sku_id = #{params.skuId}
-            </if>
-            <if test="params.skuNo != null and params.skuNo != ''">
-                and it.sku_no = #{params.skuNo}
-            </if>
-            <if test="params.warehouseId != null and params.warehouseId != ''">
-                and it.warehouse_id = #{params.warehouseId}
-            </if>
-            <if test="params.orgId != null and params.orgId != ''">
-                and it.org_id in #{params.orgId}
-            </if>
-            <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
-                and it.warehouse_location = #{params.warehouseLocation}
-            </if>
-            GROUP BY it.warehouse_id, it.sku_id
+        SELECT
+        it.warehouse_id,
+        it.sku_id,
+        sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
+        +
+        sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as realQty,
+        sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
+        sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
+        sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
+        sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+        FROM "inventory" it
+        WHERE it.is_deleted = FALSE
+        <if test="params.skuId != null and params.skuId != ''">
+            and it.sku_id = #{params.skuId}
+        </if>
+        <if test="params.skuIds != null and params.skuIds.size>0">
+            AND it.sku_id IN
+            <foreach collection="params.skuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNo != null and params.skuNo != ''">
+            and it.sku_no = #{params.skuNo}
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and it.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.orgId != null and params.orgId != ''">
+            and it.org_id in #{params.orgId}
+        </if>
+        <if test="params.orgIds != null and params.orgIds.size > 0">
+            and it.org_id in
+            <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
+                #{orgId}
+            </foreach>
+        </if>
+        <if test="params.filterSelfAddFlag">
+            and exists (select 1 from warehouse wh where wh.id = it.warehouse_id and wh.warehouse_manage_type = 'selfBuild')
+        </if>
+        <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
+            and it.warehouse_location = #{params.warehouseLocation}
+        </if>
+        GROUP BY it.warehouse_id, it.sku_id
+        ) t
+        WHERE t.realQty > 0
+    </sql>
+    <select id="pageInventoryWarehouseByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
+        <include refid="inventoryWarehouseByParam"/>
+    </select>
+    <select id="listInventoryWarehouseByParam"
+            resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">
+        <include refid="inventoryWarehouseByParam"/>
+    </select>
+    <select id="pageInventoryWarehouseBySkuId" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryPageDTO">
+        SELECT
+        t.sku_id,
+        t.realQty,
+        t.usableQty,
+        t.frozenQty,
+        t.intransitQty,
+        t.waitqcQty
+        FROM (
+        SELECT
+        it.sku_id,
+        sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
+        +
+        sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as realQty,
+        sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
+        sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
+        sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
+        sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+        FROM "inventory" it
+        WHERE it.is_deleted = FALSE
+        and it.warehouse_location is not null and it.warehouse_location != ''
+        <if test="params.skuId != null and params.skuId != ''">
+            and it.sku_id = #{params.skuId}
+        </if>
+        <if test="params.skuNo != null and params.skuNo != ''">
+            and it.sku_no = #{params.skuNo}
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and it.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.orgId != null and params.orgId != ''">
+            and it.org_id in #{params.orgId}
+        </if>
+        <if test="params.orgIds != null and params.orgIds.size > 0">
+            and it.org_id in
+            <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
+                #{orgId}
+            </foreach>
+        </if>
+        <if test="params.filterSelfAddFlag">
+            and exists (select 1 from warehouse wh where wh.id = it.warehouse_id and wh.warehouse_manage_type = 'selfBuild')
+        </if>
+        <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
+            and it.warehouse_location = #{params.warehouseLocation}
+        </if>
+        GROUP BY it.sku_id
         ) t
         WHERE t.realQty > 0
     </select>
-
+    <select id="listInventoryWarehouseBySkuId"
+            resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">
+        SELECT
+        t.warehouse_id,
+        t.sku_id,
+        t.realQty,
+        t.usableQty,
+        t.frozenQty,
+        t.intransitQty,
+        t.waitqcQty
+        FROM (
+        SELECT
+        it.warehouse_id,
+        it.sku_id,
+        sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
+        +
+        sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as realQty,
+        sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
+        sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
+        sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
+        sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+        FROM "inventory" it
+        WHERE it.is_deleted = FALSE
+        and it.warehouse_location is not null and it.warehouse_location != ''
+        <if test="params.skuId != null and params.skuId != ''">
+            and it.sku_id = #{params.skuId}
+        </if>
+        <if test="params.skuIds != null and params.skuIds.size>0">
+            AND it.sku_id IN
+            <foreach collection="params.skuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNo != null and params.skuNo != ''">
+            and it.sku_no = #{params.skuNo}
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and it.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.orgId != null and params.orgId != ''">
+            and it.org_id in #{params.orgId}
+        </if>
+        <if test="params.orgIds != null and params.orgIds.size > 0">
+            and it.org_id in
+            <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
+                #{orgId}
+            </foreach>
+        </if>
+        <if test="params.filterSelfAddFlag">
+            and exists (select 1 from warehouse wh where wh.id = it.warehouse_id and wh.warehouse_manage_type = 'selfBuild')
+        </if>
+        <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
+            and it.warehouse_location = #{params.warehouseLocation}
+        </if>
+        GROUP BY it.warehouse_id, it.sku_id
+        ) t
+        WHERE t.realQty > 0
+    </select>
     <select id="listInventoryWarehouseLocationByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">
         SELECT
             t.warehouse_id,
@@ -577,6 +705,15 @@
             <if test="params.orgId != null and params.orgId != ''">
                 and it.org_id in #{params.orgId}
             </if>
+        <if test="params.orgIds != null and params.orgIds.size > 0">
+            and it.org_id in
+            <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
+                #{orgId}
+            </foreach>
+        </if>
+        <if test="params.filterSelfAddFlag">
+            and exists (select 1 from warehouse wh where wh.id = it.warehouse_id and wh.warehouse_manage_type = 'selfBuild')
+        </if>
             <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
                 and it.warehouse_location = #{params.warehouseLocation}
             </if>
@@ -633,4 +770,5 @@
         inv.sku_no,
         inv.dict_inventory_status
     </select>
+
 </mapper>

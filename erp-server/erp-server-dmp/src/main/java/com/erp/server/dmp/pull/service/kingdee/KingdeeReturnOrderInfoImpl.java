@@ -92,6 +92,10 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
+            //过滤无效数据
+            if (!mongoDatum.getIsValid()) {
+                continue;
+            }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(GsonTool.toJson(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
@@ -118,7 +122,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         //过滤oms 推送的订单数据
         KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils();
         if (kingdeeApiUtils.notNeedPushMQ(dto.getJobTaskDTO().getLastTime())){
-            pushToMqList = pushToMqList.stream().filter(e ->CommonConstants.SYSTEM.equals(e.getFULZDataSources())).collect(Collectors.toList());
+            pushToMqList = pushToMqList.stream().filter(e -> !CommonConstants.SYSTEM.equals(e.getFULZDataSources())).collect(Collectors.toList());
         }
         // 构造订单结构
         List<DmpReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()

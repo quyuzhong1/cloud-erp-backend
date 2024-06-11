@@ -31,9 +31,9 @@ public class PlatformSaveHandler extends AbstractSparrowAnnotationBeanMap<Platfo
         annotationBeanMap.forEach((pay, payment) -> PAY_MAP.put(pay.method(), payment));
     }
 
-    public static void shipOrder(PlatformShipOrderDTO dto) {
+    public static List<String> shipOrder(PlatformShipOrderDTO dto) {
         IPlatformService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getDictPlatform()));
-        service.shipOrder(dto);
+        return service.shipOrder(dto);
     }
 
     public static Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {

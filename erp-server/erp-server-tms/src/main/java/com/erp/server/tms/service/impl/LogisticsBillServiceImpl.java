@@ -32,6 +32,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.enums.RuleOrderHandleEnum;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
 import com.erp.model.tms.dto.*;
@@ -517,7 +518,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
 
         ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
-        Boolean hasBattery = productVOS.stream().anyMatch(LogisticsProductVO::getIsElectric);
+        Boolean hasBattery = productVOS.stream().filter(e -> Objects.nonNull(e.getIsElectric())).anyMatch(LogisticsProductVO::getIsElectric);
         //是否带电
         parceInfo.setHasBattery(hasBattery);
         Integer totalQuantity = productVOS.stream().filter(e -> Objects.nonNull(e.getQuantity())).mapToInt(LogisticsProductVO::getQuantity).sum();
@@ -539,19 +540,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         //根据订单处理规则，判断是否需要清空国家、省市数据
         Map<String,Object> map = getRuleOrderHandleMap(dto);
-        CfgRuleOrderHandleDTO.RuleMatchDTO ruleOrderHandleMatchResult = cfgRuleFeign.getRuleOrderHandleMatchResult(map);
-        Boolean approveSuccess = ruleOrderHandleMatchResult.getApproveSuccess();
-        //匹配审核规则通过,自动提交并审核
-        if (Objects.nonNull(approveSuccess) && approveSuccess) {
-            //清空城市
-            if (ruleOrderHandleMatchResult.getIsPushCity()) {
-                receiverInfo.setCity("");
-            }
-            //清空省份/州
-            if (ruleOrderHandleMatchResult.getIsPushProvince()) {
-                receiverInfo.setProvince("");
-            }
-        }
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
                 trackNo(dto.getTrackNo()).
@@ -568,6 +556,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsChannelEntity(logisticsChannel).
                 logisticsSaleChannel(saleChannel).
                 build();
+        //根据规则处理物流单请求参数
+        logisticsOrderVO = cfgRuleFeign.handleRuleOrderLogistic(LogisticsOrderRuleVO.builder().logisticsOrderVO(logisticsOrderVO).map(map).build());
         log.info("创建订单,参数:{}", JSONUtil.toJsonStr(logisticsOrderVO));
         ApiResult<LogisticsOrderResponseVO> orderResult = service.createOrder(logisticsOrderVO);
         //表示成功
@@ -1155,7 +1145,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             List<LogisticsGetLabelVO> labelVOArrayList = new ArrayList<>();
             LogisticsGetLabelVO getLabelVO = new LogisticsGetLabelVO();
             getLabelVO.setDeliveryNo(dto.getDeliveryNo());
-
+            getLabelVO.setOrderId(dto.getB2cSoId());
             //平台
             String logisticsPlatform = auth.getLogisticsPlatform();
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);

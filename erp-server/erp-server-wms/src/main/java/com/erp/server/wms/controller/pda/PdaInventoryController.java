@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.pda;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.server.wms.service.InventoryService;
 import org.springframework.web.bind.annotation.*;
@@ -59,17 +61,26 @@ public class PdaInventoryController extends BaseController {
     }
 
     /**
-     * PDA:库存查询
+     * PDA:库存查询（SKU搜索）
      * @Author Luo_WG
      * @Date 2023/8/30 11:39
-     * @param skuNo
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventorySearch>
      **/
-    @GetMapping(value = "/getInventoryBySkuNo")
-    public ApiResult<InventoryDTO.PdaInventorySearch> getInventoryBySkuNo(@RequestParam("skuNo") String skuNo) {
-        InventoryDTO.PdaInventorySearch inventory = inventoryService.getInventoryBySkuNo(skuNo);
+    @PostMapping(value = "/getInventoryBySkuNo")
+    public ApiResult<InventoryDTO.PdaInventorySearch> getInventoryBySkuNo(@RequestBody PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
+        InventoryDTO.PdaInventorySearch inventory = inventoryService.getInventoryBySkuNo(searchDTO);
         return success(inventory);
     }
 
-
+    /**
+     * PDA:库存查询（仓位）
+     * @Author zdy
+     * @Date 2024/6/4 11:39
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventorySearch>
+     **/
+    @PostMapping(value = "/pageInventoryByWarehouse")
+    public ApiResult<InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO>> getInventoryByWarehouse(@RequestBody PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
+        InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> inventory = inventoryService.getInventoryByWarehouse(searchDTO);
+        return success(inventory);
+    }
 }

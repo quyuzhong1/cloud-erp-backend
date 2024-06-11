@@ -125,15 +125,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      **/
     void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response);
 
-    /**  销售订单标记发货失败后从新标记发货
-     * @description
-     * @param soB2cId
-     * @author Lambda
-     * @return
-     * @create 2023-12-25 14:47
-     */
-    List<BatchResultDTO> retryFalseDelivery(String soB2cId);
-
     /**
      * 根据来源id查询发货单
      * @Author Luo_WG
@@ -209,15 +200,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     Boolean falseDeliveryBatch(List<String> ids);
 
     /**
-     * 添加发货单日志
-     * @Author Luo_WG
-     * @Date 2023/12/27 16:00
-     * @param deliveryEntities
-     * @return java.lang.Boolean
-     **/
-    Boolean addDeliveryLog(List<SoB2cDeliveryEntity> deliveryEntities);
-
-    /**
      * 合并组包发货
      * @Author Luo_WG
      * @Date 2024/4/24 19:29
@@ -252,4 +234,5 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     SoB2cDeliveryEntity getNotCancelBySoId(String soId);
 
     Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO);
+
 }

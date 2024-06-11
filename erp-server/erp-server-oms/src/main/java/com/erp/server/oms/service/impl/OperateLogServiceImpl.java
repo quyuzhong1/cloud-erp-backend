@@ -156,6 +156,17 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return resultList;
     }
+    /**
+     * 根据销售订单明细查询最新记录
+     * @param soIds
+     * @param operation
+     * @return
+     */
+    @Override
+    public List<OperateLogEntity> listLastLogBySoIds(List<String> soIds, String operation) {
+        return baseMapper.listLastLogBySoIds(soIds, operation);
+    }
+
     @Override
     public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String pid, String msg) {
 
@@ -242,6 +253,10 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                     .setContent(content)
                     .setOperation("编辑信息");
             list.add(entity);
+        }
+
+        if (CollectionUtils.isEmpty(list)) {
+            return true;
         }
         return this.saveBatch(list);
     }

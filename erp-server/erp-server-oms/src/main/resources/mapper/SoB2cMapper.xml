@@ -35,7 +35,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        sb2c.id,
+        DISTINCT sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         sb2c.platform_code as platformCode,
@@ -156,12 +156,25 @@
         si.country_name as countryName,
         sbrc.categoryNames
     </sql>
+    <update id="updateBatchApproveById">
+        <foreach collection="updateList" item="item" index="index" separator=";">
+            UPDATE so_b2c
+            SET
+            <trim suffixOverrides=",">
+                <if test="item.approveTime != null">approve_time = #{item.approveTime},</if>
+                <if test="item.approveUserId != null">approve_user_id = #{item.approveUserId},</if>
+                <if test="item.approveUserName != null">approve_user_name = #{item.approveUserName},</if>
+            </trim>
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
 
     <!-- 列表分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
         select
         <include refid="Base_Column_List"></include>
         from so_b2c sb2c
+        inner join so_b2c_detail sb2cd ON sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
@@ -529,6 +542,7 @@
         sb.dict_platform,
         sb.shop_id,
         sbd.platform_spu_no
+        limit 50000
     </select>
     <!--获取标记发货信息-->
     <select id="getSignShipParam" resultType="com.erp.model.oms.dto.SoB2cDTO$SignShipOrderDTO">
@@ -769,6 +783,7 @@
             </if>
         </where>
         order by sb2c.id desc
+        limit 50000
     </select>
 
     <!-- B2C销售订单导出总数量查询 -->
@@ -871,6 +886,7 @@
             </if>
         </where>
         order by sb2c.id desc
+        limit 50000
     </select>
 
 </mapper>

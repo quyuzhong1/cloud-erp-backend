@@ -224,4 +224,20 @@ public class ShopifyOrder {
         }
         return "waitSubmit";
     }
+
+    /**
+     * 退款/明细退款视为平台取消(暂不包含部分退款)
+     */
+    public Boolean convertIsCancel(boolean isDetailRefund) {
+        // 明细退款
+        if (isDetailRefund){
+            return true;
+        }
+        return "refunded".equalsIgnoreCase(this.fulfillmentStatus)
+//                || "partially_refunded".equalsIgnoreCase(this.fulfillmentStatus)
+                || "refunded".equalsIgnoreCase(this.financialStatus);
+//                || "partially_refunded".equalsIgnoreCase(this.financialStatus);
+    }
+
+
 }

@@ -2,11 +2,13 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
+import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -502,7 +504,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     List<SoOutstockEntity> listByCodes(List<String> codes);
 
-    Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
+    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
     /**
      * @description: 重新生成销售出库单
      * @author Will
@@ -515,15 +517,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void updateRemarkBySoId(String id,String remark);
 
     /**
-     * @description: 物流单生成数据修复
-     * @author Will
-     * @date: 2024/5/20 15:55
-     * @param codeList
-     * @return List<String>
-     */
-    List<String> recoveryLogisticsBill(List<String> codeList);
-
-    /**
      * 检查销售订单是否已生成销售出库单
      * @param soCode 销售单号
      * @param sourceType 来源类型
@@ -531,4 +524,10 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return true=已存在
      */
     boolean checkExist(String soCode, String sourceType, String orderType);
+
+    /**
+     * 第三方仓生成销售出库单
+     */
+    void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto);
+
 }

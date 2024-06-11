@@ -3,42 +3,40 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
 import com.erp.model.sys.entity.*;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeUserRefPostMapper;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeePostService;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
 import com.erp.server.sys.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.KingdeeUserRefPostDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.ws.rs.POST;
 
 /**
  * <p>
@@ -68,6 +66,11 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
     @Autowired
     private SyncKingdeeUserPostService syncKingdeeUserPostService;
 
+    @Autowired
+    private DmpMqFeign dmpMqFeign;
+
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -80,7 +83,14 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
         if (!save) {
             throw new ServiceException("金蝶员工任岗单保存失败");
         }
-        syncKingdeeUserPostService.syncDataToKingdee(kingdeeUserRefPostEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeUserPostService.syncDataToKingdee(kingdeeUserRefPostEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
         return save;
     }
 
@@ -108,7 +118,14 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
             throw new ServiceException("金蝶员工任岗单保存失败");
         }
         //金蝶推送
-        syncKingdeeUserPostService.syncDataToKingdee(kingdeeUserRefPostEntity, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeUserPostService.syncDataToKingdee(kingdeeUserRefPostEntity, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
         return Boolean.TRUE;
     }
 
@@ -288,10 +305,19 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
         KingdeeUserRefPostEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶员工任岗"));
         Boolean result = this.removeById(id);
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         if (result && StringUtils.isNotBlank(entity.getKingdeeId())) {
             //金蝶推送
-            syncKingdeeUserPostService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeUserPostService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+            resultList.add(pushTaskEntity);
         }
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
     }

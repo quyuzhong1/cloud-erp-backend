@@ -7,23 +7,19 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.OptChangeTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractChangeService;
@@ -60,9 +56,6 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
     private WmsTaskFeign wmsTaskFeign;
 
     @Resource
-    private PlmTaskFeign plmTaskFeign;
-
-    @Resource
     private SysUserFeign sysUserFeign;
 
     @Resource
@@ -80,7 +73,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(SubcontractChangeEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(SubcontractChangeEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //如果上游单据未发送成功则无需发送
@@ -101,8 +94,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
 
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         //采购日期
@@ -113,7 +105,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         //采购明细
         List<SubcontractChangeDetailEntity> details = subcontractChangeDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(details)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_98026);
         }
         //父级数据
         List<SubcontractChangeDetailEntity> parentList = details.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
@@ -215,7 +207,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         resultMap.put("list",list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -226,7 +218,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (SubcontractChangeEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (SubcontractChangeEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -239,6 +231,6 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
         dmpSyncTaskDTO.setParentId(entity.getSourceId());
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

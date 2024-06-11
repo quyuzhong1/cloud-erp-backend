@@ -42,4 +42,5 @@ public interface CfgTimezoneService extends SuperService<CfgTimezoneEntity> {
      */
 
     CfgTimezoneEntity getAndCacheByCountry(String country);
+
 }

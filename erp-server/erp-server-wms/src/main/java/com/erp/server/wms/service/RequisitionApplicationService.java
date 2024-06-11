@@ -162,4 +162,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.ChildViewDTO>
      **/
     List<RequisitionApplicationDTO.ChildViewDTO> listChildBySku(RequisitionApplicationDTO.ChildParamDTO dto);
+
+    List<BatchResultDTO> bindShipment(List<RequisitionApplicationDTO.BindShipment> dto);
 }

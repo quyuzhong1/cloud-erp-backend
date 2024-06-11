@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,7 @@ public class TikTokShipOrder implements IPlatformService {
     private TikTokSdkClientService tikTokSdkClientService;
 
     @Override
-    public void shipOrder(PlatformShipOrderDTO dto) {
+    public List<String> shipOrder(PlatformShipOrderDTO dto) {
         SoB2cDTO.ViewDTO view = soB2cFeign.view(dto.getSoB2cId());
         if (ObjectUtil.isEmpty(view)) {
             throw new ServiceException(ApiError.ERROR_92003);
@@ -89,7 +90,7 @@ public class TikTokShipOrder implements IPlatformService {
             paramDTO.setSelfShipment(selfShipmentBean);
             tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO, view.getLogisticsDTO().getPlatformPackageId(), paramDTO);
         }
-
+        return new ArrayList<>();
     }
 
     @Override

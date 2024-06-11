@@ -16,8 +16,6 @@
        <result column="disabled" property="disabled" />
        <result column="remark" property="remark" />
        <result column="priority" property="priority" />
-       <result column="is_push_city" property="isPushCity" />
-       <result column="is_push_province" property="isPushProvince" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -31,7 +29,7 @@
         croh.update_time as updateTime,
         croh.version,
         croh.is_deleted as isDeleted,
-        croh.name, croh.disabled, croh.remark, croh.priority, croh.is_push_city as isPushCity, croh.is_push_province as isPushProvince
+        croh.name, croh.disabled, croh.remark, croh.priority
     </sql>
 
     <!-- 分页查询 -->

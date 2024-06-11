@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -197,17 +196,6 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
 
     private List<CustomerB2cContactEntity> listBaseByMainId(String mainId) {
         return this.lambdaQuery().eq(CustomerB2cContactEntity::getMainId, mainId).list();
-    }
-
-    @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        return this.lambdaUpdate()
-                .eq(CustomerB2cContactEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cContactEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cContactEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerB2cContactEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), CustomerB2cContactEntity::getSyncOperate, syncOperate)
-                .update();
     }
 
     @Override

@@ -4,10 +4,13 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.dto.MongoSuperDTO;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -15,45 +18,54 @@ import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.MapUtil;
+import com.common.core.utils.ReflectUtils;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.entity.AmzReportInfoEntity;
+import com.erp.model.dmp.entity.AmzReportScheduleEntity;
+import com.erp.model.dmp.entity.AmzReportTaskEntity;
+import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.erp.model.dmp.enums.AmzReportCreatedMethodEnum;
 import com.erp.model.dmp.enums.AmzReportTaskStatusEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiExceptionUtils;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.convert.DmpReportConverter;
-import com.erp.server.dmp.factory.AmzReportHandlerFactory;
 import com.erp.server.dmp.mapper.AmzReportTaskMapper;
+import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
+import com.google.common.collect.Lists;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * <p>
@@ -85,6 +97,8 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     private PlatformApiTaskService platformApiTaskService;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private MongoService mongoService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -168,34 +182,13 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         if (!reportTypeConfig.getIsFullUpdate()) {
             // 间隔时间枚举
             CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
-            if (null != taskEntity){
-                if (!AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus())) {
-                    // 上次任务未完成
-                    log.info("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 增量报告：存在上一次未完成任务: group={}, shopId={}, reportType={}", groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
-                    XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 增量报告：存在上一次未完成任务:：group={}, shopId={}, reportType={}",
-                            groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
-                    return;
-                }
-                // 查询对应报告
-                AmzReportInfoEntity amzReportInfo = amzReportInfoService.getByReportId(taskEntity.getReportId(), Report.ProcessingStatusEnum.DONE.getValue());
-                if (null == amzReportInfo) {
-                    throw new ServiceException("未找到报告信息, reportId=" + taskEntity.getReportId());
-                }
-                // 解析开始时间
-                reqDataStartTime = amzReportInfo.getDataEndTime();
-                // utc 数据结束时间
-                OffsetDateTime formatUtcEndTime = periodEnum.plusPeriod(OffsetDateTime.parse(reqDataStartTime));
-                reqDataEndTime = formatUtcEndTime.toString();
-            } else {
-                // 增量报告首次执行
-                OffsetDateTime utcStartTime = reportSchedule.getFirstNextReportCreationTime().atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC);
-                // utc 数据开始时间
-                OffsetDateTime formatUtcStartTime = periodEnum.formatTime(utcStartTime);
-                reqDataStartTime = formatUtcStartTime.toString();
-                // utc 数据结束时间
-                OffsetDateTime formatUtcEndTime = periodEnum.plusPeriod(formatUtcStartTime);
-                reqDataEndTime = formatUtcEndTime.toString();
-            }
+            OffsetDateTime utcStartTime = reportSchedule.getFirstNextReportCreationTime().atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC);
+            // utc 数据开始时间
+            OffsetDateTime formatUtcStartTime = periodEnum.formatTime(utcStartTime);
+            reqDataStartTime = formatUtcStartTime.toString();
+            // utc 数据结束时间
+            OffsetDateTime formatUtcEndTime = periodEnum.plusPeriod(formatUtcStartTime);
+            reqDataEndTime = formatUtcEndTime.toString();
         }
 
         // 创建报告待请求记录
@@ -233,7 +226,9 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         AmzReportTaskEntity taskEntity = getByIdOpt(id).orElseThrow(() -> new ServiceException("未找任务记录：id=" + id));
         return AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus()) ||
                 AmzReportTaskStatusEnum.STOP.getCode().equalsIgnoreCase(taskEntity.getStatus()) ||
-                AmzReportTaskStatusEnum.MANUAL_STOP.getCode().equalsIgnoreCase(taskEntity.getStatus());
+                AmzReportTaskStatusEnum.MANUAL_STOP.getCode().equalsIgnoreCase(taskEntity.getStatus()) ||
+                AmzReportTaskStatusEnum.CANCELLED.getCode().equalsIgnoreCase(taskEntity.getStatus())
+                ;
     }
 
     @Override
@@ -279,6 +274,13 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             }
             return;
         }
+
+        if (Report.ProcessingStatusEnum.CANCELLED.equals(processingStatus)){
+            // 亚马逊报告自动取消=完成(亚马逊报告数据为空状态是取消)
+            this.updateStatus("", entity, AmzReportTaskStatusEnum.CANCELLED, null, null, null, null, LocalDateTime.now(), true);
+            return;
+        }
+
         // 报告创建方式
         AmzReportCreatedMethodEnum createdMethodEnum = AmzReportCreatedMethodEnum.getBySubscribedType(recordTypeConfig.getSubscribedType());
 
@@ -289,10 +291,10 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         }
 
         // 报告创建失败
-        if (Report.ProcessingStatusEnum.FATAL.equals(processingStatus) || Report.ProcessingStatusEnum.CANCELLED.equals(processingStatus)) {
+        if (Report.ProcessingStatusEnum.FATAL.equals(processingStatus)) {
             // 检查是否停止:并更新状态
             boolean stop = this.checkStopAndUpdateTask(entity);
-            if (stop){
+            if (stop) {
                 log.warn("亚马逊查询报告消费:因触发停止规则结束,taskId={}", entity.getId());
                 return;
             }
@@ -465,49 +467,82 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     @DataIdempotent(keyIdName = "reportRedissonKey")
     public void consumerReportParse(String reportRedissonKey, AmzReportTaskEntity entity) {
         // 检查当前记录是否已完成或终止?
-        boolean hasFinishOrStop = this.checkFinishOrStop(entity.getId());
+        AmzReportTaskEntity newQueryEntity = getByIdOpt(entity.getId()).orElseThrow(() -> new ServiceException("未找任务记录：id=" + entity.getId()));
+        boolean hasFinishOrStop = AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(newQueryEntity.getStatus()) ||
+                AmzReportTaskStatusEnum.STOP.getCode().equalsIgnoreCase(newQueryEntity.getStatus()) ||
+                AmzReportTaskStatusEnum.MANUAL_STOP.getCode().equalsIgnoreCase(newQueryEntity.getStatus());
         if (hasFinishOrStop) {
             log.warn("步骤4：报告解析消费结束:任务已完成或终止, id={}", entity.getId());
             return;
         }
+
         if (!AmzReportTaskStatusEnum.PARSE.getCode().equalsIgnoreCase(entity.getStatus())) {
             String msg = StrUtil.format("任务状态非parse:id={}, status={}", entity.getId(), entity.getStatus());
             throw new ServiceException(msg);
         }
+
         // 查询报告信息
         AmzReportInfoEntity reportInfo = amzReportInfoService.getByReportId(entity.getReportId(), Report.ProcessingStatusEnum.DONE.getValue());
         if (null == reportInfo) {
             throw new ServiceException("数据异常:未找到成功的报告信息: report=" + entity.getReportId());
         }
+
         // 查询报告配置map<报告列表名, mongo保存字段名>
         Map<String, String> columnMap = cfgAmzReportFieldService.mayByReportType(entity.getReportType());
         if (columnMap.isEmpty()) {
             throw new ServiceException("报告类型列表配置不存在, recordType=" + entity.getReportType());
         }
-        // 解析开始时间
-        LocalDateTime parseBeginTime = LocalDateTime.now(ZoneId.systemDefault());
+
+        // 查询报告类型配置
+        CfgAmzReportTypeEntity config = cfgAmzReportTypeService.checkCountryAndGetByRecordType(entity);
+        if (null == config) {
+            this.stopByErrorMsg(entity, "根据报告类型配置当前市场不支持停止");
+            return;
+        }
 
         // 下载和解析文件内容
         String fullFileUrl = reportInfo.getFilePath();
         if (StringUtils.isBlank(reportInfo.getFilePath())) {
             throw new ServiceException("解析失败, 文件路径为空=" + reportInfo.getFilePath());
         }
+        // 当前亚马逊账号
+        String platformShopCode = entity.parsePlatformShopCode();
+
         // 从FastDFS下载后解析
         JSONArray jsonArray = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(fullFileUrl, columnMap, entity.getReportType());
-        // 更新任务状态
-        AmzReportTaskEntity newEntity = this.updateStatus(null, entity, AmzReportTaskStatusEnum.FINISH, null, null, null, parseBeginTime, LocalDateTime.now(ZoneId.systemDefault()), false);
-        newEntity.setReqDataEndTime(reportInfo.getDataEndTime());
 
-        // 业务处理
-        AmzReportHandlerFactory.createHandler(reportInfo.getReportType())
-                .businessHandler(newEntity, reportInfo, jsonArray);
+        // 当前报告类型
+        AmazonReportRecordTypeEnum recordType = AmazonReportRecordTypeEnum.getByRecordType(entity.getReportType());
+        // 根据报告类型获取解析的实体
+        Class<? extends ReportSuperMongoDTO> mongoDTOClass = recordType.getAndCheckMongoDTOClass();
+        // 解析对应报告内容
+        List<? extends ReportSuperMongoDTO> mongoDTOList = JSONUtil.toList(jsonArray, mongoDTOClass);
+        // 填充报告信息和生成唯一键
+        List<? extends ReportSuperMongoDTO> allMongoDTOList = fillReportData(mongoDTOList, reportInfo, recordType, platformShopCode);
+        // 跳过已解析的数量
+        List<? extends ReportSuperMongoDTO> handleDTOList = allMongoDTOList.stream().skip(newQueryEntity.getParseRowIndex()).collect(Collectors.toList());
+        // 按配置数量分组
+        List<? extends List<? extends ReportSuperMongoDTO>> partitionList = Lists.partition(handleDTOList, config.getParseRowCount());
+
+        // 记录每次解析数量
+        AmzReportTaskEntity curTask = newQueryEntity;
+        for (List<? extends ReportSuperMongoDTO> curList : partitionList) {
+            // 记录首次解析开始时间
+            if (0 == curTask.getParseRowIndex()) {
+                curTask.setReportParseTime(LocalDateTime.now(ZoneId.systemDefault()));
+            }
+            // 保存mongo处理
+            curTask = this.saveMongoAndUpdateRowIndex(recordType.getMongoInfoEnum().getMongoTableName(), curList, curTask);
+        }
+
+        // 更新任务状态和完成时间
+        this.updateStatus(null, entity, AmzReportTaskStatusEnum.FINISH, null, null, null, null, LocalDateTime.now(ZoneId.systemDefault()), false);
 
         // 检查缓存是否已删除
-        this.checkAndDelHistory(newEntity);
+        this.checkAndDelHistory(entity);
     }
 
 
@@ -646,7 +681,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         if (null != completedTime) {
             oldEntity.setCompletedTime(completedTime);
         }
-        if (null != addCreatedRetryCount && addCreatedRetryCount){
+        if (null != addCreatedRetryCount && addCreatedRetryCount) {
             oldEntity.setCreatedRetryCount(oldEntity.getCreatedRetryCount() + 1);
         }
         boolean update = this.updateById(oldEntity);
@@ -777,7 +812,6 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void checkAndDelHistory(AmzReportTaskEntity entity) {
         // 检查缓存是否已删除
         String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_RESULT_PREFIX, entity.getId(), AmzReportTaskStatusEnum.CREATED.getCode());
@@ -798,7 +832,6 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void stopByErrorMsg(AmzReportTaskEntity entity, String errorMsg) {
         boolean update = this.lambdaUpdate()
                 .set(AmzReportTaskEntity::getErrorMsg, errorMsg)
@@ -861,11 +894,11 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         String stopCountStr = configMap.getOrDefault(SettingEnum.AMAZON_REPORT_STOP_COUNT, "4");
         int stopCount = Integer.parseInt(stopCountStr);
         // 符合检查历史的失败次数
-        if (entity.getCreatedRetryCount() >= checkCount && entity.getCreatedRetryCount() <= stopCount){
+        if (entity.getCreatedRetryCount() >= checkCount && entity.getCreatedRetryCount() <= stopCount) {
             // 请求亚马逊接口:检查历史是否有成功记录
             Report report = amzReportHandleService.directQueryAmzReportInfo(entity);
             // 无 停止所有
-            if (null == report){
+            if (null == report) {
                 // 当前任务停止
                 this.stopByErrorMsg(entity, StrUtil.format("超过配置的最大创建检查失败{}次数停止,并且亚马逊无历史成功报告停止", stopCount));
                 // 停止计划任务
@@ -874,7 +907,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             }
         }
         // 符合任务停止次数
-        if (entity.getCreatedRetryCount() >= stopCount){
+        if (entity.getCreatedRetryCount() >= stopCount) {
             // 当前任务停止
             this.stopByErrorMsg(entity, StrUtil.format("超过配置的最大创建失败{}次数停止", stopCount));
             return true;
@@ -885,7 +918,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void retryTask(AmzReportTaskEntity entity) {
-        if (!AmzReportTaskStatusEnum.notFinishOrStopList().contains(entity.getStatus())){
+        if (!AmzReportTaskStatusEnum.notFinishOrStopList().contains(entity.getStatus())) {
             log.info("[重试【亚马逊报告】任务] 当前任务执行完毕, taskId={},非运行中状态:{}", entity.getId(), entity.getStatus());
             XxlJobHelper.log("[重试【亚马逊报告】任务] 当前任务执行完毕, taskId={},非运行中状态:{}", entity.getId(), entity.getStatus());
             return;
@@ -902,16 +935,16 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             case QUERY:
                 // 报告查询处理
                 this.consumerReportQuery(reportRedissonKey, entity);
-                return ;
+                return;
             case DOWNLOAD:
                 this.consumerReportDownload(reportRedissonKey, entity);
-                return ;
+                return;
             case PARSE:
                 this.consumerReportParse(reportRedissonKey, entity);
-                return ;
+                return;
             case DIRECT_QUERY:
                 this.consumerReportDirectQuery(reportRedissonKey, entity);
-                return ;
+                return;
             default:
         }
 
@@ -947,4 +980,117 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
 
         return resultList;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public <T extends MongoSuperDTO> AmzReportTaskEntity saveMongoAndUpdateRowIndex(String mongoTableName, List<T> mongoList, AmzReportTaskEntity currentEntity) {
+        // 保存或更新mongo
+        Class<T> tClass = (Class<T>) mongoList.get(0).getClass();
+        List<T> insertList = new ArrayList<>();
+        for (T item : mongoList) {
+            MongoSuperDTO uniqueDto = MongoSuperDTO.getUniqId(item.getUniqueId());
+            List<T> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, mongoTableName, tClass);
+            item.setDownloadTime(LocalDateTime.now().toString());
+            if (CollectionUtil.isEmpty(mongoData)) {
+                insertList.add(item);
+                continue;
+            }
+            T mongoDatum = mongoData.get(0);
+            // 比较数据是否相同
+            if (mongoDatum.toString().equals(item.toString())) {
+                continue;
+            }
+            // 无指定字段更新所有
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(item), MapUtil.class);
+            mongoService.updateMongoData(uniqueDto, mapUtil, mongoTableName, tClass);
+        }
+        if (CollectionUtil.isNotEmpty(insertList)) {
+            mongoService.saveMongoDataMult(insertList, mongoTableName);
+        }
+        // 更新解析的行数
+        currentEntity.setParseRowIndex(currentEntity.getParseRowIndex() + mongoList.size());
+        if (!this.updateById(currentEntity)){
+            throw new ServiceException("[AmzReportTaskEntity] 更新解析的行数失败");
+        }
+        return currentEntity;
+    }
+
+    /**
+     * 填充报告信息
+     *
+     * @param sourceList     解析后的列表
+     * @param report         报告信息
+     * @param recordTypeEnum 报告类型
+     * @return 组合报告信息后的列表
+     */
+    public List<? extends ReportSuperMongoDTO> fillReportData(List<? extends ReportSuperMongoDTO> sourceList, AmzReportInfoEntity report, AmazonReportRecordTypeEnum recordTypeEnum, String platformShopCode) {
+        return IntStream.range(0, sourceList.size())
+                .mapToObj(i -> {
+                    try {
+                        Object o = sourceList.get(i);
+                        if (o instanceof ReportListingMongoDTO){
+                            // LISTING 填充ASIN
+                            ReportListingMongoDTO sourceDTO = (ReportListingMongoDTO) o;
+                            if (null != sourceDTO.getProductIdType()
+                                    && sourceDTO.getProductIdType().contains("1")
+                                    && StringUtils.isBlank(sourceDTO.getAsin1())) {
+                                sourceDTO.setAsin1(sourceDTO.getProductId());
+                            };
+                        }
+                        ReportSuperMongoDTO mongoDTO = (ReportSuperMongoDTO) (recordTypeEnum.getAndCheckMongoDTOClass().newInstance());
+                        BeanUtils.copyProperties(o, mongoDTO);
+                        mongoDTO.setReportDataStartTime(report.getDataStartTime());
+                        mongoDTO.setReportDataEndTime(report.getDataEndTime());
+                        mongoDTO.setReportMarketplaceIds(Arrays.stream(report.getMarketplaceIds().split(",")).collect(Collectors.toList()));
+                        mongoDTO.setReportId(report.getReportId());
+                        mongoDTO.setReportScheduleId(report.getReportScheduleId());
+                        mongoDTO.setPlatformShopCode(platformShopCode);
+                        mongoDTO.setReportRowNum(i + 1);
+                        mongoDTO.setRequestShopId(report.getShopId());
+                        String uniqueId = toUniqueMd5(mongoDTO);
+                        mongoDTO.setUniqueId(uniqueId);
+                        return mongoDTO;
+                    } catch (Exception e) {
+                        throw new ServiceException("转换mongoDTO失败, error=" + e.getMessage());
+                    }
+                }).collect(Collectors.toList());
+    }
+
+
+
+
+    /**
+     * 忽略其他信息：报告内容 + 行号 + 报告ID 生成唯一md5
+     * @param reportSuperMongoDTO 报告来源内容
+     * @return MD%
+     */
+    public String toUniqueMd5(ReportSuperMongoDTO reportSuperMongoDTO) {
+        // 忽略的字段列表
+        Set<String> ignoredFields = new HashSet<>(Arrays.asList(
+                "reportMarketplaceIds",
+                "reportDataStartTime",
+                "reportDataEndTime",
+                "reportScheduleId"
+        ));
+        Class<? extends ReportSuperMongoDTO> subClass = reportSuperMongoDTO.getClass();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(subClass.getSimpleName()).append("{");
+        // 遍历对象的所有字段
+        for (Field field : subClass.getDeclaredFields()) {
+            String fieldName = field.getName();
+            // 如果字段不在忽略列表中，则将其添加到字符串表示形式中
+            if (!ignoredFields.contains(fieldName)) {
+                Object value = ReflectUtils.getFieldValue(reportSuperMongoDTO, fieldName);
+                sb.append(fieldName).append("=").append(value).append(", ");
+            }
+        }
+        // 删除最后一个逗号和空格
+        if (sb.length() > 2) {
+            sb.setLength(sb.length() - 2);
+        }
+        sb.append("}");
+        return DigestUtil.md5Hex(sb.toString());
+    }
+
 }

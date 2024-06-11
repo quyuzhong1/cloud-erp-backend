@@ -57,5 +57,5 @@ public interface ProductBomHistoryService  extends IService<ProductBomHistoryEnt
      * @date: 2023/3/9 10:04
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId);
+    Boolean updateSyncKingdeeStatus(String id,String syncKingdeeId);
 }

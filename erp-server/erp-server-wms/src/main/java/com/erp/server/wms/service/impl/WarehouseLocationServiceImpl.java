@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -52,14 +53,20 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId) {
         // 根据仓库查询仓位
-        List<WarehouseLocationEntity> warehouseLocationList =  lambdaQuery().eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
-                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).list();
+        Page query = new Page(0, 10000);
+        WarehouseLocationDTO.SelectDTO params = new WarehouseLocationDTO.SelectDTO();
+        params.setWarehouseId(warehouseId);
+        IPage<WarehouseLocationDTO.LocationListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<WarehouseLocationDTO.LocationListDTO> warehouseLocationList = pagResult.getRecords();
+//        List<WarehouseLocationEntity> warehouseLocationList =  lambdaQuery().eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+//                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode())
+//                .orderByAsc(WarehouseLocationEntity::getCode).list();
         if(CollUtil.isEmpty(warehouseLocationList)) {
             return Lists.newArrayList();
         }
         List<WarehouseLocationDTO.LocationListDTO> dataList = Lists.newArrayListWithExpectedSize(warehouseLocationList.size());
         // 让空仓位排前面
-        warehouseLocationList = warehouseLocationList.stream().sorted(Comparator.comparing(WarehouseLocationEntity::getCode)).collect(Collectors.toList());
+//        warehouseLocationList = warehouseLocationList.stream().sorted(Comparator.comparing(WarehouseLocationEntity::getCode)).collect(Collectors.toList());
 
         warehouseLocationList.stream().forEach(warehouseLocation->{
             WarehouseLocationDTO.LocationListDTO data = new WarehouseLocationDTO.LocationListDTO();
@@ -355,6 +362,19 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         List<WarehouseLocationDTO.LocationListDTO> records = pagResult.getRecords();
         handleSelect(records);
         return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public WarehouseLocationEntity findByWarehouseCode(String warehouseLocation) {
+        if (StringUtils.isBlank(warehouseLocation)){
+            return null;
+        }
+        List<WarehouseLocationEntity> list = lambdaQuery().eq(WarehouseLocationEntity::getCode, warehouseLocation).list();
+        if (CollectionUtils.isNotEmpty(list)){
+            return list.get(0);
+        }else {
+            return null;
+        }
     }
 
 
