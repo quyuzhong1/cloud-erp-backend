@@ -28,27 +28,43 @@ public class WarehouseLocationExcelListener extends AnalysisEventListener<Linked
         dto.setWarehouseLocationCode(data.get(2));
         dto.setWarehouseLocationName(data.get(3));
         dto.setRemark(data.get(4));
-        if(verifyNotBlank(dto)){
-            successList.add(dto);
-        }else {
+        verifyField(dto);
+        if(StringUtils.isNotBlank(dto.getErrorMsg())){
             errorList.add(dto);
+        }else {
+            successList.add(dto);
         }
     }
 
-    private boolean verifyNotBlank(WarehouseLocationExcelDto dto) {
+    private void verifyField(WarehouseLocationExcelDto dto) {
         if(StringUtils.isBlank(dto.getWarehouseName())){
-            return false;
+            dto.setErrorMsg("仓库不能为空，");
+            return;
         }
         if(StringUtils.isBlank(dto.getWarehouseAreaName())){
-            return false;
+            dto.setErrorMsg("库区不能为空");
+            return;
         }
         if(StringUtils.isBlank(dto.getWarehouseLocationCode())){
-            return false;
+            dto.setErrorMsg("仓位编码不能为空");
+            return;
         }
         if(StringUtils.isBlank(dto.getWarehouseLocationName())){
-            return false;
+            dto.setErrorMsg("仓位名称不能为空");
+            return;
         }
-        return true;
+        if(dto.getWarehouseLocationCode().length() > 32){
+            dto.setErrorMsg("仓位编码过长");
+            return;
+        }
+        if(dto.getWarehouseLocationName().length() > 200){
+            dto.setErrorMsg("仓位名称过长");
+            return;
+        }
+        if(dto.getRemark() != null && dto.getRemark().length() > 200){
+            dto.setErrorMsg("备注过长");
+            return;
+        }
     }
 
     @Override

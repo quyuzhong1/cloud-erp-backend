@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -13,6 +14,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -39,6 +41,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.listener.WarehouseLocationExcelListener;
 import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.mapper.WarehouseLocationMapper;
+import com.erp.server.wms.mapper.WarehouseMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
@@ -81,6 +84,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     private InventoryMapper inventoryMapper;
     @Resource
     private WarehouseLocationMapper warehouseLocationMapper;
+    @Resource
+    private WarehouseMapper warehouseMapper;
 
     @Override
     public List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId) {
@@ -533,21 +538,53 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         Map<String, String> warehouseName2IdMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, WarehouseDTO.ListDTO::getId));
         for (WarehouseLocationExcelDto row : verifyList) {
             String warehouseId = warehouseName2IdMap.get(row.getWarehouseName());
-
-            //当前仓库下必须存在对应的库区
-            WarehouseLocationEntity areaEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", warehouseId).eq("type", "area").eq("name", row.getWarehouseAreaName()).eq("is_deleted", false).eq("disabled", false));
-            if (areaEntity == null) {
-//                errorMsgList.add(String.format("当前【%s】仓库下没有【%s】库区", row.getWarehouseName(), row.getWarehouseAreaCode()));
+            if(warehouseId == null){
+                row.setErrorMsg("仓库不存在");
+                errorList.add(row);
+                continue;
+            }
+            WarehouseEntity warehouseEntity = warehouseMapper.selectById(warehouseId);
+            if(warehouseEntity == null || warehouseEntity.getIsDeleted()) {
+                row.setErrorMsg("仓库不存在");
+                errorList.add(row);
+                continue;
+            }
+            if(warehouseEntity.getDisabled()){
+                row.setErrorMsg("仓库被禁用");
+                errorList.add(row);
+                continue;
+            }
+            if(warehouseEntity.getApproveStatus() != ApproveStatusEnum.APPROVE){
+                row.setErrorMsg("仓库未审核");
                 errorList.add(row);
                 continue;
             }
 
-            //当前库区下是否存在对应的仓位
-            WarehouseLocationEntity locationEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().in("parent_id", areaEntity.getId()).eq("type", "location").eq("code", row.getWarehouseLocationCode()).eq("is_deleted", false).eq("disabled", false));
+            //当前仓库下必须存在对应的库区
+            WarehouseLocationEntity areaEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", warehouseId).eq("type", "area").eq("name", row.getWarehouseAreaName()).eq("is_deleted", false));
+            if (areaEntity == null || areaEntity.getIsDeleted()) {
+                row.setErrorMsg("库区不存在");
+                errorList.add(row);
+                continue;
+            }
+            if(areaEntity.getDisabled()){
+                row.setErrorMsg("库区被禁用");
+                errorList.add(row);
+                continue;
+            }
+
+            WarehouseLocationEntity locationEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().in("parent_id", areaEntity.getId()).eq("type", "location").eq("code", row.getWarehouseLocationCode()).eq("is_deleted", false));
             if (locationEntity == null) {
                 WarehouseLocationEntity addEntity = buildAddEntity(row, areaEntity, warehouseId);
                 baseMapper.insert(addEntity);
-                operateLogService.addModuleOperateLog(String.format("Excel新增仓位【%s】", row.getWarehouseLocationCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), null, "新增", user.getUid(), user.getUserName());
+                WarehouseLocationEntity one = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", warehouseId).eq("code", row.getWarehouseLocationCode())
+                        .eq("type", "location").eq("is_deleted", false).eq("disabled", false));
+
+                WarehouseLocationEntity updateArea = new WarehouseLocationEntity();
+                updateArea.setId(one.getId());
+                updateArea.setOccupyStatus(true);
+                baseMapper.updateById(updateArea);
+                operateLogService.addModuleOperateLog(String.format("新增仓位【%s】", row.getWarehouseLocationCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), one.getId(), "新增", user.getUid(), user.getUserName());
                 continue;
             }
 
@@ -557,19 +594,18 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 updateEntity.setId(locationEntity.getId());
                 updateEntity.setName(row.getWarehouseLocationName());
                 baseMapper.updateById(updateEntity);
-                operateLogService.addModuleOperateLog(String.format("Excel更新仓位名称【%s】，【%s】->【%s】", locationEntity.getCode(), locationEntity.getName(), updateEntity.getName()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), locationEntity.getId(), "编辑操作", user.getUid(), user.getUserName());
+                operateLogService.addModuleOperateLog(String.format("更新仓位名称【%s】，【%s】->【%s】", locationEntity.getCode(), locationEntity.getName(), updateEntity.getName()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), locationEntity.getId(), "编辑操作", user.getUid(), user.getUserName());
                 continue;
             }
 
             //仓位重复
-//            errorMsgList.add(String.format("仓位【%s】已存在", row.getWarehouseLocationCode()));
+            row.setErrorMsg("仓位名称已存在");
             errorList.add(row);
         }
 
         if(! errorList.isEmpty()){
             ExcelUtil.export("错误数据", "sheet1", errorList, WarehouseLocationExcelDto.class, response);
         }
-
     }
 
     private static WarehouseLocationEntity buildAddEntity(WarehouseLocationExcelDto row, WarehouseLocationEntity areaEntity, String warehouseId) {
@@ -622,7 +658,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         entity.setId(dto.getId());
         entity.setDisabled(Boolean.valueOf(dto.getDisabled()));
         int i = baseMapper.updateById(entity);
-        operateLogService.addModuleOperateLog(String.format("更新仓位状态【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), entity.getId(), "编辑操作", user.getUid(), user.getUserName());
+        operateLogService.addModuleOperateLog(String.format("更新仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
     }
 
     @Override
@@ -635,9 +671,26 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public void add(WarehouseLocationDTO.AddDTO dto) {
         LoginUser user = UserContext.getNonLoginUser();
-        WarehouseLocationEntity entity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId()).eq("code", dto.getCode()).eq("type", "location").eq("is_deleted", false));
-        if(entity != null){
-            throw new ServiceException(ApiError.WAREHOUSE_LOCATION_EXIST, dto.getCode());
+        WarehouseLocationEntity codeEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
+                .eq("code", dto.getCode()).eq("type", "location").eq("is_deleted", false));
+        if(codeEntity != null){
+            throw new ServiceException("仓位编码重复");
+        }
+
+        WarehouseLocationEntity nameEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
+                .eq("name", dto.getName()).eq("type", "location").eq("is_deleted", false));
+        if(nameEntity != null){
+            throw new ServiceException("仓位名称重复");
+        }
+
+        if(dto.getCode().length() > 32){
+            throw new ServiceException("仓位编码过长");
+        }
+        if(dto.getName().length() > 200){
+            throw new ServiceException("仓位名称过长");
+        }
+        if(dto.getRemark() != null && dto.getRemark().length() > 200){
+            throw new ServiceException("备注过长");
         }
 
         WarehouseLocationEntity insertEntity = new WarehouseLocationEntity();
@@ -649,28 +702,58 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         insertEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
         insertEntity.setRemark(dto.getRemark());
         baseMapper.insert(insertEntity);
-        operateLogService.addModuleOperateLog(String.format("新增仓位【%s】", insertEntity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), null, "新增", user.getUid(), user.getUserName());
+        WarehouseLocationEntity one = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
+                .eq("code", dto.getCode()).eq("type", "location"));
+
+        WarehouseLocationEntity updateEntity = new WarehouseLocationEntity();
+        updateEntity.setId(dto.getWarehouseAreaId());
+        updateEntity.setOccupyStatus(true);
+        baseMapper.updateById(updateEntity);
+
+        operateLogService.addModuleOperateLog(String.format("新增仓位：%s", insertEntity), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), one.getId(), "新增", user.getUid(), user.getUserName());
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void update(WarehouseLocationDTO.updateDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
-        WarehouseLocationEntity entity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId()).eq("code", dto.getCode()).eq("type", "location").eq("is_deleted", false));
-        /*if(entity != null){
-            throw new ServiceException(ApiError.WAREHOUSE_LOCATION_EXIST, dto.getCode());
-        }*/
+        if(dto.getCode().length() > 32){
+            throw new ServiceException("仓位编码过长");
+        }
+        WarehouseLocationEntity codeEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
+                .eq("code", dto.getCode()).eq("type", "location").eq("is_deleted", false));
+        if(codeEntity != null && !codeEntity.getId().equals(dto.getId())){
+            throw new ServiceException("仓位编码重复");
+        }
 
-        WarehouseLocationEntity baseEntity = baseMapper.selectById(dto.getId());
+        if(dto.getName().length() > 200){
+            throw new ServiceException("仓位名称过长");
+        }
+        WarehouseLocationEntity nameEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
+                .eq("name", dto.getName()).eq("type", "location").eq("is_deleted", false));
+        if(nameEntity != null && !nameEntity.getId().equals(dto.getId())){
+            throw new ServiceException("仓位名称重复");
+        }
+
+        if(dto.getRemark() != null && dto.getRemark().length() > 200){
+            throw new ServiceException("备注过长");
+        }
+
         WarehouseLocationEntity newEntity = new WarehouseLocationEntity();
         newEntity.setId(dto.getId());
         newEntity.setCode(dto.getCode());
         newEntity.setName(dto.getName());
         newEntity.setWarehouseId(dto.getWarehouseId());
+        newEntity.setParentId(dto.getWarehouseAreaId());
         newEntity.setRemark(dto.getRemark());
         newEntity.setStatus(dto.getStatus());
-        operateLogService.addModuleOperateLog(String.format("更新仓位【%s】，【%s】->【%s】", baseEntity.getCode(), baseEntity, newEntity), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), newEntity.getId(), "新增", user.getUid(), user.getUserName());
         baseMapper.updateById(newEntity);
+
+        WarehouseLocationEntity areaEntity = new WarehouseLocationEntity();
+        areaEntity.setId(dto.getWarehouseAreaId());
+        areaEntity.setOccupyStatus(true);
+        baseMapper.updateById(areaEntity);
+        operateLogService.addModuleOperateLog(String.format("更新仓位：%s", newEntity), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), dto.getId(), "编辑操作", user.getUid(), user.getUserName());
     }
 
     private void existCode(String code, String id, String type) {

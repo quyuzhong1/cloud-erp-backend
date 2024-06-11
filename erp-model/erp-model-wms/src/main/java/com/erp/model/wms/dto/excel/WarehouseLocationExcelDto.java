@@ -42,7 +42,11 @@ public class WarehouseLocationExcelDto{
     /**
      * 备注
      */
-    @ColumnWidth(70)
+    @ColumnWidth(40)
     @ExcelProperty(value = "备注", index = 4)
     private String remark;
+
+    @ColumnWidth(30)
+    @ExcelProperty(value = "错误信息", index = 5)
+    private String errorMsg;
 }
