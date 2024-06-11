@@ -1029,6 +1029,10 @@ public enum ApiError implements Serializable {
     ERROR_VMALLOCATION_NOTFOUND(92213,"分货单不存在【{}】"),
     ERROR_MANUAL_STATUS_ERROR(92214,"只有已处理且同步失败时才可以手动完结"),
     ERROR_SYNC_ERROR(92214,"只有已处理且同步失败时才可以同步"),
+    ERROR_FROM_WAREHOUSE_INVENTORY_ERROR(92215,"调出仓库库存不足"),
+    ERROR_FROM_VM_INVENTORY_ERROR(92216,"调出虚拟仓库存不足"),
+    ERROR_APPROVEQTY_GT_VMUSABLEQTY_ERROR(92217,"批准数量不能大于虚拟仓可用库存"),
+    ERROR_APPROVEQTY_GT_MUSABLEQTY_ERROR(92218,"批准数量不能大于仓库可用库存"),
 
     /**
      * OMS 错误

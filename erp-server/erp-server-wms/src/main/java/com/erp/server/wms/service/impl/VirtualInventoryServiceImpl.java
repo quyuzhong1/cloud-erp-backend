@@ -219,11 +219,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         //获取调出虚拟仓可用数量
         List<String> fromVmIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         vmParamDto.setVirtualWarehouseIdList(fromVmIds);
-        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(fromVmIds)) {
-            vmParamDto.setVirtualWarehouseIdList(fromVmIds);
-            vmUsableQtyList = baseMapper.getUsableQty(vmParamDto);
-        }
+        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList = getVmUsableQty(vmParamDto, fromVmIds);
         for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {//获取调入仓、调出仓可用库存
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
@@ -241,11 +237,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         //获取调入、调出虚拟仓可用数量
         List<String> fromVmIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         vmIds.addAll(fromVmIds);
-        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(vmIds)) {
-            vmParamDto.setVirtualWarehouseIdList(vmIds);
-            vmUsableQtyList = baseMapper.getUsableQty(vmParamDto);
-        }
+        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList = getVmUsableQty(vmParamDto, vmIds);
         for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {//获取调入仓、调出仓可用库存
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
@@ -271,13 +263,10 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = baseMapper.getRealQty(vmParamDto);
         //获取调入虚拟仓可用数量
         List<String> toVmIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getToVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQty = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(toVmIds)) {
-            vmParamDto.setVirtualWarehouseIdList(toVmIds);
-            vmUsableQty = baseMapper.getUsableQty(vmParamDto);
-        }
+        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQty = getVmUsableQty(vmParamDto, toVmIds);
         //拼接返回数据
-        for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {//获取实体仓可分配库存：实体仓可用库存-虚拟仓实际库存（可用+冻结）
+        for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {
+            //获取实体仓可分配库存：实体仓可用库存-虚拟仓实际库存（可用+冻结）
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
             List<InventoryDTO.InventoryViewQtyDTO> inventoryViewQtyDTOS = inventoryUsableQtyList.stream()
@@ -299,6 +288,25 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             }
             resultList.add(viewQtyDTO);
         }
+    }
+
+    private List<VirtualInventoryDTO.ViewQtyDTO> getVmUsableQty(VirtualInventoryDTO.ParamDTO vmParamDto, List<String> toVmIds) {
+        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQty = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(toVmIds)) {
+            vmParamDto.setVirtualWarehouseIdList(toVmIds);
+            vmUsableQty = baseMapper.getUsableQty(vmParamDto);
+        }
+        return vmUsableQty;
+    }
+
+    /**
+     * 根据skuIds warehouseIds vmIds获取虚拟仓可用库存
+     * @param vmParamDto
+     * @return
+     */
+    @Override
+    public List<VirtualInventoryDTO.ViewQtyDTO> getVmUsableQtyBySkuIdsAndWIdsAndVmIds(VirtualInventoryDTO.ParamDTO vmParamDto) {
+        return baseMapper.getUsableQty(vmParamDto);
     }
 
     /**

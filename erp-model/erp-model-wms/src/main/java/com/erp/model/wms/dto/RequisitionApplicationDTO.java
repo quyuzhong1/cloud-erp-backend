@@ -551,6 +551,15 @@ public class RequisitionApplicationDTO implements Serializable {
          * 调出仓库名称
          */
         private String fromWarehouseName;
+        /**
+         * 调出虚拟仓库
+         */
+        private String fromVirtualWarehouseId;
+
+        /**
+         * 调出虚拟仓库名称
+         */
+        private String fromVirtualWarehouseName;
 
         /**
          * 调入仓库id
@@ -662,6 +671,14 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         @NotBlank(message = "调出仓库不能为空")
         private String fromWarehouseId;
+        /**
+         * 调出虚拟仓库Id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 调出虚拟仓库名称
+         */
+        private String fromVirtualWarehouseName;
         /**
          * 调出仓库仓位
          */

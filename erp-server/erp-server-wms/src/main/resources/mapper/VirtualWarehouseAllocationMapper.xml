@@ -41,6 +41,30 @@
     <select id="listExport" resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDTO$ListDTO">
         <include refid="list"/>
     </select>
+    <select id="listCount" resultType="integer">
+        select
+        count(distinct vmad.id)
+        FROM virtual_warehouse_allocation_detail vmad
+        inner JOIN virtual_warehouse_allocation vma
+        on vma.id = vmad.main_id and vma.is_deleted = false
+        where vmad.is_deleted = false
+        and vmad.status = #{params.status}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+    <select id="listCountBySyncStatus" resultType="integer">
+        select
+        count(distinct vmad.id)
+        FROM virtual_warehouse_allocation_detail vmad
+        inner JOIN virtual_warehouse_allocation vma
+        on vma.id = vmad.main_id and vma.is_deleted = false
+        where vmad.is_deleted = false
+        and vmad.sync_status= #{params.syncStatus}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
 
     <sql id="list">
         SELECT vma.id,
@@ -67,11 +91,11 @@
         vmad.update_user_id,
         vmad.update_user_name,
         vmad.update_time
-        FROM virtual_warehouse_allocation vma
-        LEFT JOIN virtual_warehouse_allocation_detail vmad
-        on vma.id = vmad.main_id and vmad.is_deleted = false
+        FROM virtual_warehouse_allocation_detail vmad
+        inner JOIN virtual_warehouse_allocation vma
+        on vma.id = vmad.main_id and vma.is_deleted = false
         where ${params.sqlMap.default}
-        and vma.is_deleted = false
+        and vmad.is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>

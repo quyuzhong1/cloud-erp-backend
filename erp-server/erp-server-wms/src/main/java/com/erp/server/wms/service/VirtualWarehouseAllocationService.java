@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -78,4 +79,6 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
     void export(VirtualWarehouseAllocationDTO.ExportDTO dto, HttpServletResponse response);
 
     VirtualWarehouseAllocationDTO.DetailDto importFile(String type, MultipartFile excelFile, HttpServletResponse response);
+
+    List<VirtualWarehouseAllocationDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

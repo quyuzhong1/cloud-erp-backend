@@ -13,8 +13,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -220,6 +218,8 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        private String status;
+        private String syncStatus;
         /**
          * 页面高级查询
          */
@@ -399,6 +399,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+
         public String getStatusName() {
             return VirtualWarehouseAllocationStatusEnum.getNameByCode(status);
         }
@@ -502,6 +503,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
             return VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(syncStatus);
         }
     }
+
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
@@ -511,4 +513,21 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private List<String> ids;
     }
 
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 状态: waitSubmit待提交 handle已处理 invalid已作废 failedSync
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
     }
+}

@@ -261,4 +261,18 @@ public class VirtualWarehouseAllocationController extends BaseController {
     public ApiResult<VirtualWarehouseAllocationDTO.DetailDto> importFile(@RequestParam(value = "type") String type, @RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         return success(virtualWarehouseAllocationService.importFile(type,excelFile, response));
     }
+
+    /**
+     * 获取状态统计
+     * @return
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:paging",
+            tableAlias = "vwa"
+    )
+    public ApiResult<List<VirtualWarehouseAllocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(virtualWarehouseAllocationService.tabList(dto));
+    }
 }

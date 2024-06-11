@@ -77,4 +77,12 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @date 2024/6/6
      */
     List<VirtualInventoryDTO.ViewQtyDTO> getQty(VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO);
+
+    /**
+     * 根据skuIds warehouseIds vmIds获取虚拟仓可用库存
+     *
+     * @param vmParamDto
+     * @return
+     */
+    List<VirtualInventoryDTO.ViewQtyDTO> getVmUsableQtyBySkuIdsAndWIdsAndVmIds(VirtualInventoryDTO.ParamDTO vmParamDto);
 }

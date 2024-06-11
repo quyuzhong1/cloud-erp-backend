@@ -5,13 +5,16 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.PdaTabFlagPcEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
@@ -290,6 +293,52 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 //        importDTO.setErrorUrl(url);
 //        return importDTO;
         return null;
+    }
+
+    @Override
+    public List<VirtualWarehouseAllocationDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        VirtualWarehouseAllocationStatusEnum[] values = VirtualWarehouseAllocationStatusEnum.values();
+        List<VirtualWarehouseAllocationDTO.TabListDTO> list = new ArrayList<>();
+        for (VirtualWarehouseAllocationStatusEnum item : values) {
+            VirtualWarehouseAllocationDTO.PagingParamDTO pagingParamDTO = new VirtualWarehouseAllocationDTO.PagingParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            VirtualWarehouseAllocationDTO.TabListDTO resultDTO = new VirtualWarehouseAllocationDTO.TabListDTO();
+            Integer count = MathUtil.ZERO;
+            if (VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setStatus(VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode());
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (VirtualWarehouseAllocationStatusEnum.HANDLE.getCode().equals(item.getCode())) {
+                pagingParamDTO.setStatus(VirtualWarehouseAllocationStatusEnum.HANDLE.getCode());
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (VirtualWarehouseAllocationStatusEnum.INVALID.getCode().equals(item.getCode())) {
+                pagingParamDTO.setStatus(VirtualWarehouseAllocationStatusEnum.INVALID.getCode());
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
+        }
+
+        //查询同步失败数量
+        VirtualWarehouseAllocationDTO.PagingParamDTO pagingParamDTO = new VirtualWarehouseAllocationDTO.PagingParamDTO();
+        pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+        pagingParamDTO.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
+        Integer count = this.baseMapper.listCount(pagingParamDTO);
+        VirtualWarehouseAllocationDTO.TabListDTO resultDTO = new VirtualWarehouseAllocationDTO.TabListDTO();
+        resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+        resultDTO.setTabFlag(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
+        list.add(resultDTO);
+        //查询所有的数量
+        VirtualWarehouseAllocationDTO.PagingParamDTO paramDTO = new VirtualWarehouseAllocationDTO.PagingParamDTO();
+        pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+        Integer totalCount = this.baseMapper.listCount(paramDTO);
+        VirtualWarehouseAllocationDTO.TabListDTO listDTO = new VirtualWarehouseAllocationDTO.TabListDTO();
+        listDTO.setTabFlag("all");
+        listDTO.setCount(totalCount);
+        list.add(listDTO);
+        return list;
     }
 
 

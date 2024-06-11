@@ -101,9 +101,12 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
-    public Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id) {
+    public Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String fromVirtualWarehouseId,
+                                           String fromVirtualWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id) {
         return lambdaUpdate().set(RequisitionApplicationDetailEntity::getFromWarehouseId, fromWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getFromWarehouseName, fromWarehouseName)
+                .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId, fromVirtualWarehouseId)
+                .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName, fromVirtualWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -27,4 +28,7 @@ public interface VirtualWarehouseAllocationMapper extends BaseMapper<VirtualWare
     IPage<VirtualWarehouseAllocationDTO.ListDTO> paging(Page query, @Param("params") VirtualWarehouseAllocationDTO.PagingParamDTO params);
 
     List<VirtualWarehouseAllocationDTO.ListDTO> listExport(@Param("params")VirtualWarehouseAllocationDTO.ExportDTO dto);
+
+    Integer listCount(@Param("params")VirtualWarehouseAllocationDTO.PagingParamDTO pagingParamDTO);
+    Integer listCountBySyncStatus(@Param("params")VirtualWarehouseAllocationDTO.PagingParamDTO pagingParamDTO);
 }
