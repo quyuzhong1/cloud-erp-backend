@@ -50,12 +50,14 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
     /**
      * 收货仓库id
      */
+    @Deprecated
     @TableField("warehouse_id")
     private String warehouseId;
 
     /**
      * 收货仓库名称
      */
+    @Deprecated
     @TableField("warehouse_name")
     private String warehouseName;
 
@@ -68,24 +70,28 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
     /**
      * 仓库组织id
      */
+    @Deprecated
     @TableField("org_id")
     private String orgId;
 
     /**
      * 仓库组织名称
      */
+    @Deprecated
     @TableField("org_name")
     private String orgName;
 
     /**
      * 来源id
      */
+    @Deprecated
     @TableField("source_id")
     private String sourceId;
 
     /**
      * 来源类型
      */
+    @Deprecated
     @TableField("source_type")
     private String sourceType;
 
@@ -98,9 +104,17 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
     /**
      * 来源单据号
      */
+    @Deprecated
     @TableField("source_code")
     private String sourceCode;
 
+    @TableField("main_id")
+    private String mainId;
+    /**
+     * 暂存仓位
+     */
+    @TableField("staging_location")
+    private String stagingLocation;
 
     public static final String SKU_ID = "sku_id";
 

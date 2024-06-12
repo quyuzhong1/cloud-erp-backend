@@ -134,4 +134,6 @@ public interface BusinessNoConstant {
     String ZB = "ZB";
     // 多渠道订单
     String DQDD = "DQDD";
+
+    String JHD = "JHD";
 }

@@ -193,33 +193,6 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
     Boolean generateRequisitionApplicationSaveAndSubmit(List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list);
 
     /**
-     * 下推发货单列表查询
-     * @Author Luo_WG
-     * @Date 2023/11/16 18:09
-     * @param ids
-     * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>
-     **/
-    List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids);
-
-    /**
-     * 下推发货单保存
-     * @Author Luo_WG
-     * @Date 2023/11/16 18:11
-     * @param list
-     * @return java.lang.Boolean
-     **/
-    Boolean generateDeliverSave(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list);
-
-    /**
-     * 下推发货单保存并提交
-     * @Author Luo_WG
-     * @Date 2023/11/20 9:51
-     * @param list
-     * @return java.lang.Boolean
-     **/
-    Boolean generateDeliverSaveAndSubmit(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list);
-
-    /**
      * 导入详情信息
      *
      * @param excelFile

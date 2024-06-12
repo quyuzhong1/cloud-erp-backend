@@ -41,17 +41,6 @@ public interface DeliveryPlanConverter {
     })
     RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto);
 
-    @Mappings({
-            @Mapping(target = "destWarehouseId", source = "toWarehouseId"),
-            @Mapping(target = "destWarehouseName", source = "toWarehouseName"),
-            @Mapping(target = "countryId", source = "country")
-    })
-    FirstMileDeliveryDTO.AddDTO generateDeliverFDD(WmsDeliveryPlanDTO.GenerateDeliverViewDTO dto);
-
-    @Mappings({
-            @Mapping(target = "platformSkuNo", source = "platformSku")
-    })
-    FirstMileDeliveryDetailDTO.AddDTO generateDeliverDetailFDD(WmsDeliveryPlanDTO.GenerateDeliverViewDTO dto);
 
     @Mappings({
             @Mapping(target = "platformSpu", source = "asin"),

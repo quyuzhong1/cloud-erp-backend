@@ -183,6 +183,17 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+
+        public static WarehouseLocationMoveDetailDTO.AddDTO getLocationMoveDTO(String skuId, String skuNo, String outWarehouseLocation, String inWarehouseLocation, Integer qty) {
+            WarehouseLocationMoveDetailDTO.AddDTO addDTO = new WarehouseLocationMoveDetailDTO.AddDTO();
+            addDTO.setSkuId(skuId);
+            addDTO.setSkuNo(skuNo);
+            addDTO.setOutWarehouseLocation(outWarehouseLocation);
+            addDTO.setInWarehouseLocation(inWarehouseLocation);
+            addDTO.setQty(qty);
+            return addDTO;
+        }
     }
 
     /**

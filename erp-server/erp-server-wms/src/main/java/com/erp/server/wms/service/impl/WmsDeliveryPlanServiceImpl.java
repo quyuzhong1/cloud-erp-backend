@@ -676,58 +676,6 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     }
 
     @Override
-    public List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
-        List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
-
-        List<String> fbaTypeCodes = list.stream().filter(v->v.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())).map(WmsDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceCode).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(fbaTypeCodes)){
-            throw new ServiceException(StrUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",fbaTypeCodes));
-        }
-
-        //审核通过才能下推
-        long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98063);
-        }
-
-        //根据skuId查询拥有的子sku
-        List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-
-        //查询skuId产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
-
-        for (WmsDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : list) {
-
-            //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                viewDTO.setIsCombination(Boolean.TRUE);
-            } else {
-                viewDTO.setIsCombination(Boolean.FALSE);
-            }
-
-            //设置产品编号
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(skuVO)) {
-                viewDTO.setSkuNo(skuVO.getSkuNo());
-                viewDTO.setProductName(skuVO.getSkuName());
-            }
-        }
-        return list;
-    }
-
-    @Override
-    public Boolean generateDeliverSave(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list) {
-        return generateDeliver(list, Boolean.FALSE);
-    }
-
-    @Override
-    public Boolean generateDeliverSaveAndSubmit(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list) {
-        return generateDeliver(list, Boolean.TRUE);
-    }
-
-    @Override
     public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response) {
 
         if(StringUtils.isBlank(warehouseId)&& StringUtils.isBlank(shopId)){
@@ -790,83 +738,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 .update();
     }
 
-    /**
-     * 下推发货单处理
-     * @Author Luo_WG
-     * @Date 2023/11/23 16:33
-     * @param list 数据集
-     * @param isSubmit 是否提交
-     * @return java.lang.Boolean
-     **/
-    private Boolean generateDeliver(List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list, Boolean isSubmit) {
-        //一个发货计划单，生成一个要发货单
-        Map<String, List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO>> map = list.stream().collect(Collectors.groupingBy(WmsDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceId));
-        List<String> ids = new ArrayList<>();
 
-        //查询仓库信息
-        List<String> requisitionWarehouseIds = list.stream().map(req -> req.getDeliveryWarehouseId()).distinct().collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(requisitionWarehouseIds);
-
-        //查询子件信息
-        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-
-        //获取sku信息
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-
-        for (Map.Entry<String, List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
-            List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> value = entry.getValue();
-            //映射主表信息
-            FirstMileDeliveryDTO.AddDTO addDTO = DeliveryPlanConverter.INSTANCE.generateDeliverFDD(value.get(MathUtil.ZERO));
-
-            //备货类型
-            addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
-            //来源类型
-            addDTO.setSourceType(SourceTypeEnum.DELIVERY_PLAN.getCode());
-
-            //映射详情信息
-            List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
-            for (WmsDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : value) {
-                if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getType())){
-                    throw new ServiceException(StrUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",viewDTO.getSourceCode()));
-                }
-                //发货仓库中文
-                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-                addDTO.setDeliveryWarehouseName(updateDTO.getName());
-                addDTO.setInventoryOrgId(updateDTO.getOrgId());
-
-                FirstMileDeliveryDetailDTO.AddDTO detailAddDto = DeliveryPlanConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
-
-                //查询sku是否存在子SKU
-                List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                    detailAddDto.setIsCombination(Boolean.TRUE);
-                } else {
-                    detailAddDto.setIsCombination(Boolean.FALSE);
-                }
-
-                //映射产品信息
-                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).distinct().findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(skuVO)) {
-                    detailAddDto.setSkuNo(skuVO.getSkuNo());
-                    detailAddDto.setNetWeight(skuVO.getNetWeight());
-                    detailAddDto.setProductSizeLength(skuVO.getProductLength());
-                    detailAddDto.setProductSizeWidth(skuVO.getProductWidth());
-                    detailAddDto.setProductSizeHeight(skuVO.getProductHeight());
-                }
-                //暂无仓位
-                detailAddDto.setWarehouseLocation("");
-                detailAddList.add(detailAddDto);
-            }
-            addDTO.setDetailList(detailAddList);
-
-            BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
-            if (isSubmit) {
-                firstMileDeliveryService.submit(add.getId());
-            }
-        }
-        return Boolean.TRUE;
-    }
 
     /**
      * 分页查询、导出 数据处理

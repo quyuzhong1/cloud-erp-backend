@@ -239,4 +239,18 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return
      */
     SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(String sourceId);
+    /**
+     * 生成拣货单
+     * @param picking 参数
+     */
+    void generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking);
+
+    /**
+     * 生成拣货单的弹窗
+     * @param id 要货单id
+     */
+    List<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(String id);
+
+
+    void writeBackData(List<String> sourceDetailIds);
 }

@@ -62,8 +62,6 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
      *         map.put("deliveryWarehouseId", detailEntity.getWarehouseId());<br/>
      *         key skuId value sku数量<br/>
      *         map.put("sku", sku);<br/>
-     *         单据号<br/>
-     *         map.put("billCode",soB2cDeliveryEntity.getCode());<br/>
      *         key skuId value skuNo<br/>
      *         map.put("skuMap", skuMap);<br/>
      *         </p>

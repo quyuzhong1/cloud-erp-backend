@@ -181,7 +181,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 }
             }
             if (0 != quantity) {
-                throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, map.get("billCode"), skuNameMap.get(skuId));
+                throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, skuNameMap.get(skuId));
             }
         }
         return result;
@@ -221,6 +221,8 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                     inventoryResultDTO.setSkuId(skuId);
                     WarehouseLocationEntity entity = locations.stream().filter(location -> location.getCode().equals(inventoryEntity.getWarehouseLocation()))
                             .findFirst().orElse(new WarehouseLocationEntity());
+                    inventoryResultDTO.setWarehouseId(action.getWarehouseId());
+                    inventoryResultDTO.setWarehouseAreaId(action.getWarehouseAreaId());
                     inventoryResultDTO.setWarehouseLocationId(entity.getId());
                     inventoryResultDTO.setWarehouseLocation(inventoryEntity.getWarehouseLocation());
                     if (inventoryEntity.getQty() >= quantity) {

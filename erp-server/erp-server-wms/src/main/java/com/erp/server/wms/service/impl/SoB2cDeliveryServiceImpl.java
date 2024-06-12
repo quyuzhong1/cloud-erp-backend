@@ -14,7 +14,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
-import com.common.business.dto.*;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
@@ -23,7 +22,6 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
@@ -43,7 +41,10 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -216,7 +217,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 sku.put(detailEntity.getSkuId(), detailEntity.getDeliveryQty());
                 skuMap.put(detailEntity.getSkuId(), detailEntity.getSkuNo());
             }
-            List<PickingDetailDTO.CommonDTO> pickingDetailList = handlerLocationInventoryBySku(soB2cDeliveryEntity, detailEntity, sku, warehouse, skuMap);
+            List<PickingDetailDTO.CommonDTO> pickingDetailList = handlerLocationInventoryBySku(detailEntity, sku, warehouse, skuMap);
             SkuVO productDetailEntity = skuVOList.stream().filter(vo -> vo.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             List<InOutStockDTO> inOutStockList = new ArrayList<>();
             for (PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {
@@ -256,19 +257,17 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     /**
      * 通过拣货策略获取对应sku拣货的对应sku
      *
-     * @param soB2cDeliveryEntity 发货单
      * @param detailEntity        发货单明细
      * @param sku                 sku map
      * @param warehouse           仓库
      * @param skuMap              sku
      */
-    private List<PickingDetailDTO.CommonDTO> handlerLocationInventoryBySku(SoB2cDeliveryEntity soB2cDeliveryEntity, SoB2cDeliveryDetailEntity detailEntity, Map<String, Integer> sku, WarehouseEntity warehouse, Map<String, String> skuMap) {
+    private List<PickingDetailDTO.CommonDTO> handlerLocationInventoryBySku(SoB2cDeliveryDetailEntity detailEntity, Map<String, Integer> sku, WarehouseEntity warehouse, Map<String, String> skuMap) {
         List<PickingDetailDTO.CommonDTO> pickingDetailList = new ArrayList<>();
         Map<String, Object> map = new HashMap<>();
         map.put("billType", PickingBillTypeEnum.B2C.getCode());
         map.put("deliveryWarehouseId", detailEntity.getWarehouseId());
         map.put("sku", sku);
-        map.put("billCode",soB2cDeliveryEntity.getCode());
         map.put("skuMap", skuMap);
         List<LocationInventoryResultDTO> result = cfgRulePickingService.getRuleOrderMatchResult(map);
         for (LocationInventoryResultDTO resultDTO : result) {

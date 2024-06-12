@@ -15,6 +15,14 @@ public class LocationInventoryResultDTO {
      */
     private String warehouseLocationId;
     /**
+     * 仓库id
+     */
+    private String warehouseId;
+    /**
+     * 仓库库区id
+     */
+    private String warehouseAreaId;
+    /**
      * sku
      */
     private String skuId;
