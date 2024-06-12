@@ -213,7 +213,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, id));
         List<PickingDetailDTO.View> detailList = pickingDetails.stream()
                 .map(detail -> {
-                    PickingDetailDTO.View detailView = BeanMapperUtils.map(PickingDetailDTO.View.class, entity);
+                    WarehouseLocationEntity location = locationAndAreaList.stream()
+                            .filter(v -> v.getCode().equals(detail.getWarehouseLocation()))
+                            .filter(v -> v.getWarehouseId().equals(entity.getWarehouseId()))
+                            .findFirst()
+                            .orElse(new WarehouseLocationEntity());
+                    PickingDetailDTO.View detailView = BeanMapperUtils.map(PickingDetailDTO.View.class, detail);
+                    detailView.setWarehouseLocationId(location.getId());
+                    detailView.setWarehouseAreaId(locationMap.get(detailView.getWarehouseLocation()));
                     detailView.setWarehouseAreaName(areaMap.get(locationMap.get(detailView.getWarehouseLocation())));
                     detailView.setStagingAreaName(areaMap.get(locationMap.get(detailView.getStagingLocation())));
                     return detailView;

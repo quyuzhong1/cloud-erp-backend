@@ -230,7 +230,15 @@ public class PickingDetailDTO implements Serializable {
         /**
          * 库区
          */
+        private String warehouseAreaId;
+        /**
+         * 库区
+         */
         private String warehouseAreaName;
+        /**
+         * 库位
+         */
+        private String warehouseLocationId;
         /**
          * 库位
          */
