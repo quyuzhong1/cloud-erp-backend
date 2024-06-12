@@ -34,6 +34,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -162,7 +163,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         map.put("detailList", Collections.singletonList(detailMap));
         for (Map.Entry<String, Integer> entry : skuMap.entrySet()) {
             String skuId = entry.getKey();
-            Integer quantity = entry.getValue();
+            AtomicInteger quantity = new AtomicInteger(entry.getValue());
             for (CfgRulePickingEntity picking : cfgRulePickings) {
                 List<CfgRuleConditionEntity> conditionList = conditions.stream().
                         filter(r -> r.getRuleId().equals(picking.getId())).
@@ -175,12 +176,12 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                             filter(r -> r.getRuleId().equals(picking.getId())).
                             sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex)).collect(Collectors.toList());
                     handlerAction(actionList, result, locationList, skuId, quantity);
-                    if (0 == quantity) {
+                    if (0 == quantity.get()) {
                         break;
                     }
                 }
             }
-            if (0 != quantity) {
+            if (0 != quantity.get()) {
                 throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, skuNameMap.get(skuId));
             }
         }
@@ -191,7 +192,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     private void handlerAction(List<CfgRulePackingActionEntity> actionList,
                                List<LocationInventoryResultDTO> result,
                                List<WarehouseLocationEntity> locationList,
-                               String skuId, Integer quantity) {
+                               String skuId, AtomicInteger quantity) {
 
         // 循环仓位分配规则
         for (CfgRulePackingActionEntity action : actionList) {
@@ -225,13 +226,14 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                     inventoryResultDTO.setWarehouseAreaId(action.getWarehouseAreaId());
                     inventoryResultDTO.setWarehouseLocationId(entity.getId());
                     inventoryResultDTO.setWarehouseLocation(inventoryEntity.getWarehouseLocation());
-                    if (inventoryEntity.getQty() >= quantity) {
-                        inventoryResultDTO.setQuantity(quantity);
+                    if (inventoryEntity.getQty() >= quantity.get()) {
+                        inventoryResultDTO.setQuantity(quantity.get());
                         result.add(inventoryResultDTO);
+                        quantity.set(0);
                         return;
                     } else {
                         inventoryResultDTO.setQuantity(inventoryEntity.getQty());
-                        quantity = quantity - inventoryEntity.getQty();
+                        quantity.set(quantity.get() - inventoryEntity.getQty());
                         result.add(inventoryResultDTO);
                     }
                 }
