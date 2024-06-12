@@ -2,9 +2,11 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -59,6 +61,11 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
     public PagingVO<VirtualInventoryDiffDTO.ListDTO> diffPaging(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        //库存差异
+        Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff")).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        if (ObjectUtil.isNotNull(isDiff)) {
+            dto.getParams().setIsDiff(Boolean.valueOf(isDiff.toString()));
+        }
         IPage<VirtualInventoryDiffDTO.ListDTO> pageData = this.baseMapper.diffPaging(query, dto.getParams());
         // 填充名称
         fillPageData(pageData.getRecords());

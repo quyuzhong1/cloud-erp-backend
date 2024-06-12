@@ -36,6 +36,11 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 库存差异,true是，false否
+         */
+        private Boolean isDiff;
     }
 
 

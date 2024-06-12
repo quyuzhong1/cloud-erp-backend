@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
+import com.erp.server.wms.query.VirtualInventoryDiffQueryHandler;
 import com.erp.server.wms.service.VirtualInventoryDiffService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -41,7 +42,7 @@ public class VirtualInventoryDiffController extends BaseController {
     * @return ApiResult<PagingVO<ListDTO>>
     */
     @PostMapping("/diffPaging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = VirtualInventoryDiffQueryHandler.class)
     public ApiResult<PagingVO<VirtualInventoryDiffDTO.ListDTO>> diffPaging(@RequestBody @Validated PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
         return success(virtualInventoryDiffService.diffPaging(dto));
     }
@@ -81,7 +82,7 @@ public class VirtualInventoryDiffController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = VirtualInventoryDiffQueryHandler.class)
     public ApiResult exportExcel(@RequestBody VirtualInventoryDiffDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = virtualInventoryDiffService.exportExcel(dto, response);
         return flag == true ? success() : failure();

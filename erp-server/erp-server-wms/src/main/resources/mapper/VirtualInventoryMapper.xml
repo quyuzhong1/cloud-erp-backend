@@ -126,10 +126,10 @@
         </if>
         vi.sku_id) diff
         where 1 = 1
-        <if test="isDiff != null and isDiff = true">
+        <if test="params.isDiff != null and params.isDiff == true">
             and  virtualQty > usableQty
         </if>
-        <if test="isDiff != null and isDiff = false">
+        <if test="params.isDiff != null and params.isDiff == false">
             and  usableQty >= virtualQty
         </if>
     </select>
@@ -161,7 +161,7 @@
             vi.virtual_warehouse_id as virtualWarehouseId,
             COALESCE(sum(vi.qty),0) as virtualQty,
             (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
-            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty,
+            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty
         from virtual_inventory vi
         <where>
             vi.is_deleted = false
