@@ -750,6 +750,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         if(dto.getRemark() != null && dto.getRemark().length() > 200){
             throw new ServiceException("备注过长");
         }
+        WarehouseLocationEntity one = baseMapper.selectById(dto.getId());
 
         WarehouseLocationEntity newEntity = new WarehouseLocationEntity();
         newEntity.setId(dto.getId());
@@ -758,14 +759,14 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         newEntity.setWarehouseId(dto.getWarehouseId());
         newEntity.setParentId(dto.getWarehouseAreaId());
         newEntity.setRemark(dto.getRemark());
-        newEntity.setStatus(dto.getStatus());
         baseMapper.updateById(newEntity);
 
         WarehouseLocationEntity areaEntity = new WarehouseLocationEntity();
         areaEntity.setId(dto.getWarehouseAreaId());
         areaEntity.setOccupyStatus(true);
         baseMapper.updateById(areaEntity);
-        operateLogService.addModuleOperateLog(String.format("更新仓位：%s", newEntity), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), dto.getId(), "编辑操作", user.getUid(), user.getUserName());
+
+        generateLog(user, one, newEntity);
     }
 
     private void existCode(String code, String id, String type) {
@@ -853,5 +854,24 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public void updateLocationStatus(String warehouseId, String warehouseLocation, String status) {
         baseMapper.updateLocationStatus(warehouseId, warehouseLocation, status);
+    }
+
+    private void generateLog(LoginUser user, WarehouseLocationEntity old, WarehouseLocationEntity young) {
+        if(StringUtils.compare(old.getWarehouseId(), young.getWarehouseId()) != 0) {
+            WarehouseEntity oldWarehouse = warehouseMapper.selectById(old.getWarehouseId());
+            WarehouseEntity youngWarehouse = warehouseMapper.selectById(young.getWarehouseId());
+            operateLogService.addModuleOperateLog(String.format("编辑仓库，由【%s】变更为【%s】", oldWarehouse.getName(), youngWarehouse.getName()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), old.getId(), "编辑操作", user.getUid(), user.getUserName());
+        }
+        if(StringUtils.compare(old.getParentId(), young.getParentId()) != 0) {
+            WarehouseLocationEntity oldLocation = warehouseLocationMapper.selectById(old.getParentId());
+            WarehouseLocationEntity youngLocation = warehouseLocationMapper.selectById(young.getParentId());
+            operateLogService.addModuleOperateLog(String.format("编辑库区，由【%s】变更为【%s】", oldLocation.getName(), youngLocation.getName()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), old.getId(), "编辑操作", user.getUid(), user.getUserName());
+        }
+        if(StringUtils.compare(old.getName(), young.getName()) != 0) {
+            operateLogService.addModuleOperateLog(String.format("编辑仓位名称，由【%s】变更为【%s】", old.getName(), young.getName()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), old.getId(), "编辑操作", user.getUid(), user.getUserName());
+        }
+        if(StringUtils.compare(old.getRemark(), young.getRemark()) != 0) {
+            operateLogService.addModuleOperateLog(String.format("编辑备注，由【%s】变更为【%s】", old.getRemark(), young.getRemark()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), old.getId(), "编辑操作", user.getUid(), user.getUserName());
+        }
     }
 }
