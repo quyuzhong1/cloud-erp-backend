@@ -205,11 +205,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 getCancelInfo(qtySearchDTOS, vmParamDto, qtySearchList, resultList);
                 break;
             default:
-                qtySearchList.stream().map(item -> {
+                resultList.addAll(qtySearchList.stream().map(item -> {
                     VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
                     BeanUtils.copyProperties(item, viewQtyDTO);
                     return viewQtyDTO;
-                });
+                }).collect(Collectors.toList()));
                 break;
         }
         return resultList;
