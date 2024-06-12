@@ -212,7 +212,7 @@
     <select id="getUsableQty" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ViewQtyDTO">
         SELECT vi.warehouse_id,
                vi.sku_id,
-               vi.virtual_warehouse_id,
+               vi.virtual_warehouse_id as toVirtualWarehouseId,
                sum(case when vi.dict_inventory_status = 'usable' then vi.qty else 0 end) as toVirtualWarehouseUsableQty
         FROM virtual_inventory vi
         WHERE vi.is_deleted = FALSE
