@@ -117,7 +117,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Autowired
     private SoOutstockDetailServiceImpl soOutstockDetailServiceImpl;
     @Resource
-    private PickingDetailService pickingDetailService;
+    private PickingListsService pickingListsService;
     @Lazy
     @Resource
     private AsyncService asyncService;
@@ -399,8 +399,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 List<String> ids = soB2cDeliveryEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
                 soB2cDeliveryService.rollbackInventory(ids);
                 soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-                //删除拣货详情
-                pickingDetailService.deleteBySourceId(ids);
+                //删除拣货单
+                pickingListsService.deleteBySourceId(ids);
             }
         } else {
             //拦截失败的订单正常自动出库流程

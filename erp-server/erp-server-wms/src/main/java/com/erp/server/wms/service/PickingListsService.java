@@ -62,4 +62,10 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @param dto 编辑参数
      **/
     void update(PickingListsDTO.Update dto);
+
+    /**
+     * 删除拣货单
+     * @param ids id
+     */
+    void deleteBySourceId(List<String> ids);
 }

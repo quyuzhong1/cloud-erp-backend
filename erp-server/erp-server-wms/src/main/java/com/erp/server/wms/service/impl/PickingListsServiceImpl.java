@@ -310,6 +310,23 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteBySourceId(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return;
+        }
+        List<PickingListsEntity> list = list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
+        List<String> idList = list.stream()
+                .map(PickingListsEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(idList)){
+            removeByIds(idList);
+            pickingDetailService.remove(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, idList));
+        }
+    }
+
     /**
      * 处理编辑的数据
      *
