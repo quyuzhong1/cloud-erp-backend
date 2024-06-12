@@ -130,7 +130,9 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                 ThirdMappingDTO.ThirdAddDTO thirdAddDTO = new ThirdMappingDTO.ThirdAddDTO();
                 thirdAddDTO.setSysType(PlatformDictEnum.WDT.getCode());
                 thirdAddDTO.setThirdId(thirdMapping.getThirdId());
-                thirdAddDTO.setSysName(virtualWarehouseEntity.getName());
+//                thirdAddDTO.setThirdName(virtualWarehouseEntity.getName());
+//                thirdAddDTO.setThirdCode(virtualWarehouseEntity.getCode());
+//                thirdAddDTO.setThirdInfoId(virtualWarehouseEntity.getId());
                 thirdList.add(thirdAddDTO);
             });
         }

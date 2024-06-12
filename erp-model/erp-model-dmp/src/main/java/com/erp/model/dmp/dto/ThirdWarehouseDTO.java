@@ -345,6 +345,7 @@ public class ThirdWarehouseDTO implements Serializable {
         @Size(max = 200, message = "名称最大长度不能超过200位")
         private String name;
     }
+
     @Data
     @NoArgsConstructor
     public static class PageSelectDTO {
@@ -368,6 +369,10 @@ public class ThirdWarehouseDTO implements Serializable {
          * 编号
          */
         private String code;
+        /**
+         * 是否可选
+         */
+        private Boolean canCheck = true;
     }
 
     /**

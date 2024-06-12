@@ -680,6 +680,9 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 }
                 sysName = shopInfo.getName();
                 break;
+            case VIRTUAL_WAREHOUSE:
+                sysName=addDTO.getSysName();
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_400);
         }
@@ -790,6 +793,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdShopEntity.getName();
                     thirdAddDTO.setThirdInfoId(thirdShopEntity.getId());
                     thirdAddDTO.setThirdCode(thirdShopEntity.getCode());
+                    break;
+                case VIRTUAL_WAREHOUSE:
+                    //校验第三方仓库是否存在
+                    ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId()))
+                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                    thirdName = thirdWarehouseEntity.getName();
+                    thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
+                    thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
                     break;
                 default:
                     throw new ServiceException(ApiError.ERROR_400);
