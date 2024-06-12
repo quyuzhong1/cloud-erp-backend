@@ -664,7 +664,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateStatus(WarehouseLocationDTO.updateStatusDto dto) {
+    public void updateDisabled(WarehouseLocationDTO.updateStatusDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
         WarehouseLocationEntity entity = new WarehouseLocationEntity();
         entity.setId(dto.getId());
@@ -848,5 +848,10 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void updateLocationStatus(String warehouseId, String warehouseLocation, String status) {
+        baseMapper.updateLocationStatus(warehouseId, warehouseLocation, status);
     }
 }

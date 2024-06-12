@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -173,4 +174,11 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * 按仓位统计数量
      */
     Long countByLocation();
+
+    /**
+     * 查询仓位下是否有库存
+     * @return 库存数量
+     */
+    @Select("select sum(qty) from inventory where warehouse_id = #{warehouseId} and warehouse_location = #{warehouseLocation}")
+    Integer getQtyByLocation(@Param("warehouseId") String warehouseId, @Param("warehouseLocation") String warehouseLocation);
 }

@@ -39,6 +39,7 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
+import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
 import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -237,6 +238,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
             inventorySaveDTO.setInventoryId(inventory.getId());
         }
+
+        //更新仓位状态
+        updateWarehouseLocationStatus(warehouseId, warehouseLocation);
 
         return inventorySaveDTO;
     }
@@ -1305,5 +1309,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                     && StringUtils.isNotBlank(e.getWarehouseLocationName()) && StringUtils.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuId)).collect(Collectors.toList());
             pdaInventoryWarehouseDTO.setWarehouseLocationDTOList(warehouseDTOS);
         });
+    }
+
+    private void updateWarehouseLocationStatus(String warehouseId, String warehouseLocation) {
+        Integer qty = inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation);
+        if(qty == 0){
+            //可回收
+            warehouseLocationService.updateLocationStatus(warehouseId, warehouseLocation, WarehouseLocationStatusEnum.RECYCLABLE.getCode());
+        }else {
+            //被占用
+            warehouseLocationService.updateLocationStatus(warehouseId, warehouseLocation, WarehouseLocationStatusEnum.OCCUPIED.getCode());
+        }
     }
 }

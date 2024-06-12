@@ -7,14 +7,12 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationAreaTypeEnum;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
-import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
 import com.erp.server.wms.query.WarehouseLocationInfoQueryHandler;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
@@ -1041,7 +1039,7 @@ public class WarehouseLocationController extends BaseController {
      */
     @PostMapping("/updateStatus")
     public ApiResult<Void> updateStatus(@RequestBody @Validated WarehouseLocationDTO.updateStatusDto dto){
-        warehouseLocationService.updateStatus(dto);
+        warehouseLocationService.updateDisabled(dto);
         return ApiResult.success();
     }
 

@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -65,4 +66,7 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
     List<WarehouseLocationExportVo> listAllByParam(@Param("dto") WarehouseLocationDTO.exportParamDto dto);
 
     IPage<WarehouseLocationDTO.LocationListDTO> pagingSelectBySku(Page query, WarehouseLocationDTO.SelectDTO params);
+
+    @Update("update warehouse_location set status = #{status} where type = 'location' and warehouse_id = #{warehouseId} and code = #{warehouseLocation}")
+    Integer updateLocationStatus(String warehouseId, String warehouseLocation, String status);
 }

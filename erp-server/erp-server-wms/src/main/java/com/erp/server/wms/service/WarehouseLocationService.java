@@ -10,6 +10,9 @@ import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -213,7 +216,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @date: 2024-05-31
      * @author: tanmujin
      */
-    void updateStatus(WarehouseLocationDTO.updateStatusDto dto);
+    void updateDisabled(WarehouseLocationDTO.updateStatusDto dto);
 
     /**
      * 查询操作日志
@@ -279,4 +282,6 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @return
      */
     WarehouseLocationEntity findByWarehouseCode(String warehouseLocation);
+
+    void updateLocationStatus(String warehouseId, String warehouseLocation, String status);
 }
