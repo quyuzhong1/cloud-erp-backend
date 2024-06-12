@@ -271,4 +271,12 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationDTO.tabDto> tabList();
 
     void downloadTemplate(HttpServletResponse response);
+
+
+    /**
+     * 根据名称或编号进行查询仓位
+     * @param warehouseLocation
+     * @return
+     */
+    WarehouseLocationEntity findByWarehouseCode(String warehouseLocation);
 }

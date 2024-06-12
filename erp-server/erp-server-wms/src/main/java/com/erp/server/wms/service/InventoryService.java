@@ -299,4 +299,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * 按仓位统计数量
      */
     long countByLocation();
+
+    /**
+     * PDA:库存查询（仓库）
+     * @param searchDTO
+     * @return
+     */
+    InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO);
 }

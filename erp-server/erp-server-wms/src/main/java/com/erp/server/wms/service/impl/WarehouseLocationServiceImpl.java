@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -467,6 +469,19 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         update(Wrappers.<WarehouseLocationEntity>lambdaUpdate()
                 .set(WarehouseLocationEntity::getDisabled, dto.getDisabled())
                 .in(WarehouseLocationEntity::getId, dto.getIds()));
+    }
+
+    @Override
+    public WarehouseLocationEntity findByWarehouseCode(String warehouseLocation) {
+        if (StringUtils.isBlank(warehouseLocation)){
+            return null;
+        }
+        List<WarehouseLocationEntity> list = lambdaQuery().eq(WarehouseLocationEntity::getCode, warehouseLocation).list();
+        if (CollectionUtils.isNotEmpty(list)){
+            return list.get(0);
+        }else {
+            return null;
+        }
     }
 
 

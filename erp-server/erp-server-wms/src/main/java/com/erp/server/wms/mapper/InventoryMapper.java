@@ -102,14 +102,35 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
     InventoryDTO.InventoryViewQtyDTO getInventoryInfoByParam(@Param("params") InventoryDTO.InventoryBySkuIdAndWarehouseDTO params);
 
     /**
-     * 根据条件查询仓库信息
+     * 根据条件查询仓库信息（分页）
      * @Author Luo_WG
      * @Date 2023/8/25 18:13
      * @param params
      * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
      **/
-    IPage<InventoryDTO.PdaInventoryWarehouseDTO> listInventoryWarehouseByParam(Page query,@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
+    IPage<InventoryDTO.PdaInventoryWarehouseDTO> pageInventoryWarehouseByParam(Page query,@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
 
+    /**
+     * 根据条件查询仓库信息（列表）
+     * @param params
+     * @return
+     */
+    List<InventoryDTO.PdaInventoryWarehouseLocationDTO> listInventoryWarehouseByParam(@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
+
+    /**
+     * 根据条件查询仓库信息（分页）
+     * @Author Luo_WG
+     * @Date 2023/8/25 18:13
+     * @param params
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
+     **/
+    IPage<InventoryDTO.PdaInventoryPageDTO> pageInventoryWarehouseBySkuId(Page query,@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
+    /**
+     * 根据条件查询仓库信息（列表）
+     * @param params
+     * @return
+     */
+    List<InventoryDTO.PdaInventoryWarehouseLocationDTO> listInventoryWarehouseBySkuId(@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
     /**
      * 根据条件查询仓库下的仓位库存信息
      * @Author Luo_WG

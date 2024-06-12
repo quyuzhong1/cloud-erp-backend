@@ -93,13 +93,19 @@ public class AliExpressOrderService {
         request.addApiParameter("param_aeop_order_query", JSONUtil.toJsonStr(paramMap));
         String token = orderRequest.getToken();
         IopResponse response = client.execute(request, token, Protocol.TOP);
+        log.info("拉取速卖通订单>>>>>>>{}", JSONUtil.toJsonStr(response));
         JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("result");
+        if (null == resultJsONObject) {
+            String msg = StrUtil.format("拉取速卖通订单失败:无result, response={}", JSONUtil.toJsonStr(response));
+            throw new ServiceException(msg);
+        }
         Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
         //失败
         if (!success) {
             log.error("拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
-            return;
+            String msg = StrUtil.format("拉取速卖通订单失败:response={}", JSONUtil.toJsonStr(response));
+            throw new ServiceException(msg);
         }
         //目录列表
         List<AliExpressOrder> orderInfoList = resultJsONObject.getBeanList("target_list", AliExpressOrder.class);
@@ -174,7 +180,7 @@ public class AliExpressOrderService {
             if (tokenObj instanceof AliExpressShopInfoDTO) {
                 return (AliExpressShopInfoDTO) tokenObj;
             }
-        } else {
+        }
             ShopAuthEntity shopAuthEntity = shopInfoFeign.getShopAuthByShopId(shopId);
             CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
             AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_TOKEN;
@@ -183,7 +189,8 @@ public class AliExpressOrderService {
             findDTO.setPlatformType(appClientEnum.getPlatformType());
             CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
             if (Objects.isNull(cfgAppClient)) {
-                return null;
+                String msg = StrUtil.format("速卖通获取授权信息为空:{}", JSONUtil.toJsonStr(findDTO));
+                throw new ServiceException(msg);
             }
             AliExpressShopInfoDTO result = new AliExpressShopInfoDTO();
             result.setBaseUrl(cfgAppClient.getUrl());
@@ -196,9 +203,6 @@ public class AliExpressOrderService {
             }
 
             return result;
-        }
-        return null;
-
     }
 
 
@@ -232,7 +236,9 @@ public class AliExpressOrderService {
         request.addApiParameter("out_ref", declareDeliverRequest.getOutRef());
         request.addApiParameter("service_name", declareDeliverRequest.getServiceName());
         request.setApiName(apiName);
+        log.warn("【{}】速卖通标记发货:请求参数={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(request));
         IopResponse response = client.execute(request, token, Protocol.TOP);
+        log.warn("【{}】速卖通标记发货:响应结果={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(response));
         String body = response.getBody();
         JSONObject jsonObject = JSONUtil.parseObj(body);
         Boolean success = jsonObject.getBool("result_success", Boolean.FALSE);
