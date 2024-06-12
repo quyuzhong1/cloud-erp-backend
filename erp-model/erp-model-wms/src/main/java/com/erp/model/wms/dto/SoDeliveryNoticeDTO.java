@@ -342,6 +342,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String sourceCode;
         /**
+         * 类型
+         */
+        private String sourceType;
+        /**
          * 单据编号
          */
         private String code;
