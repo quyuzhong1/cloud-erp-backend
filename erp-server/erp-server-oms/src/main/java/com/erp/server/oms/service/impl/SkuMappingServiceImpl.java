@@ -388,7 +388,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
-//        skuMaping.setIsDeleted(true);
+        if (StringUtils.isBlank(skuMaping.getProductSkuId())){
+            skuMaping.setIsDeleted(true);
+        }
         if (!this.updateById(skuMaping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }

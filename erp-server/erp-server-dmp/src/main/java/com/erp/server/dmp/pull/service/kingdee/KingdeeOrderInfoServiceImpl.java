@@ -225,7 +225,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
                 "FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId," +
                 "FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId," +
                 "FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifierId.FName," +
-                "FModifyDate,FSaleOrgId,FSaleOrgId.FName,FVersionNo,FSignStatus,FSOFrom,F_SK_Date,F_SHGJ1,FExchangeRate,FSettleCurrId.FCode";
+                "FModifyDate,FSaleOrgId,FSaleOrgId.FName,FVersionNo,FSignStatus,FSOFrom,F_SK_Date,F_SHGJ1.FNumber,F_SHGJ1,FExchangeRate,FSettleCurrId.FCode," +
+                "FDeliveryDate";
 
         Boolean dataSign = true;
         //当前页数
@@ -254,7 +255,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
                 String itemFieldKeys = "FSaleOrderEntry_FEntryID,FBillNo,FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialId.FNumber,FMaterialModel,FQty,FPriceUnitQty," +
                         "FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId," +
                         "FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus," +
-                        "F_ulz_Decimal,F_ulz_CGCB,FSOStockId.FName,FAllAmount";
+                        "F_ulz_Decimal,F_ulz_CGCB,FSOStockId.FNumber,FSOStockId.FName,FAllAmount";
                 List<Map<String, Object>> itemResult = kingdeeApiUtils.queryList(itemFilterStr, itemFieldKeys, pageSize, 1, 10000);
                 if (CollectionUtil.isEmpty(itemResult)) {
                     log.error("详情数据为空异常 itemFilterStr = {}  itemFieldKeys={} result ={}", itemFilterStr, itemFieldKeys, result);
@@ -335,6 +336,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         if (StringUtils.isNotBlank(kingdeeOrderEntity.getF_SK_Date()) && !"null".equals(kingdeeOrderEntity.getF_SK_Date())) {
             dmpOrderInfoEntity.setPaidTime(LocalDateTime.parse(kingdeeOrderEntity.getF_SK_Date()));
         }
+        //发货时间
+        if (StringUtils.isNotBlank(kingdeeOrderEntity.getFDeliveryDate()) && !"null".equals(kingdeeOrderEntity.getFDeliveryDate())) {
+            dmpOrderInfoEntity.setDeliveryTime(LocalDateTime.parse(kingdeeOrderEntity.getFDeliveryDate()));
+        }
         //平台订单时间
         if (StringUtils.isNotBlank(kingdeeOrderEntity.getFCreateDate()) && !"null".equals(kingdeeOrderEntity.getFCreateDate())) {
             dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(kingdeeOrderEntity.getFCreateDate()));
@@ -388,7 +393,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         //补贴金额
         dmpOrderInfoEntity.setSubsidyAmount(BigDecimal.ZERO);
         //国家英文名称
-        dmpOrderInfoEntity.setCountryNameEn("");
+        dmpOrderInfoEntity.setCountryNameEn(kingdeeOrderEntity.getCountryCode());
         //国家中文名称
         dmpOrderInfoEntity.setCountryNameCn(kingdeeOrderEntity.getFSHGJ1());
         //平台标识
