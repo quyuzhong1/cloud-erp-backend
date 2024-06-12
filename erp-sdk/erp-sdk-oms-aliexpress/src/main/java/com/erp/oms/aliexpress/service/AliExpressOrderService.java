@@ -1,5 +1,6 @@
 package com.erp.oms.aliexpress.service;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -67,8 +68,6 @@ public class AliExpressOrderService {
     /**
      * 拉取订单
      *
-     * @return
-     * @parms
      * @author yl
      * @date 2023-11-22
      */
@@ -112,14 +111,14 @@ public class AliExpressOrderService {
         if (CollectionUtils.isEmpty(orderInfoList)) {
             return;
         }
-        for (AliExpressOrder item : orderInfoList) {
-            //订单id
-            String orderId = item.getOrderId();
-            AliExpressOrderDetail orderDetail = this.getOrderDetail(orderId, orderRequest);
-            if (Objects.nonNull(orderDetail)) {
-                item.setDetail(orderDetail);
-            }
-        }
+//        for (AliExpressOrder item : orderInfoList) {
+//            //订单id
+//            String orderId = item.getOrderId();
+//            AliExpressOrderDetail orderDetail = this.getOrderDetail(orderId, orderRequest);
+//            if (Objects.nonNull(orderDetail)) {
+//                item.setDetail(orderDetail);
+//            }
+//        }
         orderList.addAll(orderInfoList);
         //总页数
         Integer totalPage = resultJsONObject.getInt("total_page", 0);
@@ -139,7 +138,7 @@ public class AliExpressOrderService {
      * @author yl
      * @date 2023-12-01 15:31
      */
-    private AliExpressOrderDetail getOrderDetail(String orderId, OrderRequest orderRequest) throws ApiException {
+    public AliExpressOrderDetail getOrderDetail(String orderId, OrderRequest orderRequest) throws ApiException {
         String appKey = orderRequest.getClientId();
         String appSecret = orderRequest.getClientSecret();
         String baseUrl = orderRequest.getBaseUrl();
@@ -159,8 +158,8 @@ public class AliExpressOrderService {
             AliExpressOrderDetail detail = jsonObject.get("target", AliExpressOrderDetail.class);
             return detail;
         }
-
-        return null;
+        String msg = StrUtil.format("拉取速卖通订单明细异常:orderId={}, response={}",orderId, JSONUtil.toJsonStr(response));
+        throw new ServiceException(msg);
     }
 
 
@@ -303,7 +302,10 @@ public class AliExpressOrderService {
         try {
             response = client.execute(request, token, Protocol.TOP);
         } catch (ApiException e) {
-            log.error("查询速卖通发货单请求失败>>>>>>>{}", request.toString());
+            String jsonStr = JSONUtil.toJsonStr(response);
+            log.error("查询速卖通发货单请求失败>>>>>>> response={}, error={}", jsonStr, ExceptionUtil.stacktraceToString(e));
+            String msg = StrUtil.format("查询速卖通发货单请求失败>>>>>>>response={}, error={}", jsonStr, ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException(msg);
         }
         JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_query_response");
@@ -342,7 +344,10 @@ public class AliExpressOrderService {
         try {
             response = client.execute(request, token, Protocol.TOP);
         } catch (ApiException e) {
-            log.error("查询速卖通发货单明细请求失败>>>>>>>{}", request.toString());
+            String jsonStr = JSONUtil.toJsonStr(response);
+            log.error("查询速卖通发货单明细请求失败>>>>>>> response={}, error={}", jsonStr, ExceptionUtil.stacktraceToString(e));
+            String msg = StrUtil.format("查询速卖通发货单明细请求失败>>>>>>>response={}, error={}", jsonStr, ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException(msg);
         }
         JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_item_query_response");
@@ -352,7 +357,8 @@ public class AliExpressOrderService {
         //失败
         if (!success) {
             log.error("查询速卖通发货单明细失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
-            return Collections.emptyList();
+            String msg = StrUtil.format("查询速卖通发货单明细请求失败>>>>>>>response={}", JSONUtil.toJsonStr(response));
+            throw new ServiceException(msg);
         }
         List<AliExpressDeliveryDetail> detailList = dataListJson.getBeanList("data",AliExpressDeliveryDetail.class);
         if (CollectionUtils.isEmpty(detailList)) {

@@ -1,5 +1,6 @@
 package com.erp.oms.aliexpress.dto.request;
 
+import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import lombok.Builder;
 import lombok.Data;
 
@@ -41,4 +42,14 @@ public class OrderRequest implements Serializable {
      * 当前页
      */
     private Integer currentPage;
+
+    public static OrderRequest builderByShopInfo(String apiName, AliExpressShopInfoDTO shopInfoDTO) {
+        return OrderRequest.builder().
+                clientId(shopInfoDTO.getClientId()).
+                clientSecret(shopInfoDTO.getClientSecret()).
+                baseUrl(shopInfoDTO.getBaseUrl()).
+                apiName(apiName).
+                currentPage(1).
+                token(shopInfoDTO.getToken()).build();
+    }
 }

@@ -170,9 +170,35 @@ public class AliExpressOrder implements Serializable {
 
 
     /**
+     * 物流状态
+     * （
+     * WAIT_SELLER_SEND_GOODS:等待卖家发货;
+     * SELLER_SEND_PART_GOODS:卖家部分发货;
+     * SELLER_SEND_GOODS:卖家已发货;
+     * BUYER_ACCEPT_GOODS:买家已确认收货;
+     * NO_LOGISTICS:没有物流流转信息
+     * ）
+     */
+    @SerializedName("logistics_status")
+    private String logisticsStatus;
+
+    /**
      * 产品明细
      */
     private AliExpressOrderDetail detail;
+
+
+    /**
+     * 是否有发货单下载
+     */
+    public boolean canDownloadDelivery(){
+        if (StringUtils.isBlank(this.getLogisticsStatus())) {
+            return false;
+        }
+        return "SELLER_SEND_PART_GOODS".equalsIgnoreCase(this.getLogisticsStatus())
+                || "SELLER_SEND_GOODS".equalsIgnoreCase(this.getLogisticsStatus())
+                || "BUYER_ACCEPT_GOODS".equalsIgnoreCase(this.getLogisticsStatus());
+    }
 
 
     /**

@@ -10,7 +10,6 @@ import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.*;
 import lombok.Data;
@@ -26,14 +25,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * @Description TODO
- * @Author yl
- * @Date 2023-11-29 10:13
+ * 平台发货单
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
+public class PlatformAliExpressSoDeliveryDTO extends CleanBaseDTO {
 
     /**
      * 速卖通订单信息
@@ -43,9 +40,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
     private AliExpressShopInfoDTO aliExpressShopInfoDTO;
 
-    private List<ErpFulfillmentForwardDtoBean> aliExpressDeliveryDTOList;
-
-    private List<AliExpressDeliveryDetail> aliExpressDeliveryDetailList;
+//    private List<AliExpressDeliveryDetail> aliExpressDeliveryDetailList;
 
     /**
      * 数据下载状态
@@ -55,40 +50,13 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
      */
     @Panno(findType = PannoEnum.EQ,field = "downloadStatus")
     private Integer downloadStatus;
-
-    /**
-     * 地址详情下载状态
-     * 0 详情数据需要更新
-     * 1 详情数据已更新
-     */
-    @Panno(findType = PannoEnum.EQ,field = "downloadAddressStatus")
-    private Integer downloadAddressStatus;
-
-
-    /**
-     * 发货单下载状态
-     * -1 无需下载(无发货信息或非平台仓订单)
-     * 0 待下载
-     * 1 已下载
-     */
-    @Panno(findType = PannoEnum.EQ,field = "downloadDeliveryStatus")
-    private Integer downloadDeliveryStatus;
-
-    /**
-     * 发货单明细下载状态
-     * -1 无需下载(无发货信息或非平台仓订单)
-     * 0 待下载
-     * 1 已下载
-     */
-    @Panno(findType = PannoEnum.EQ,field = "downloadDeliveryDetailStatus")
-    private Integer downloadDeliveryDetailStatus;
-
+    
 
     @Panno(findType = PannoEnum.EQ,field = "shopId")
     private String shopId;
 
 
-    public PlatformAliExpressOrderDTO(JobTaskDTO dto, AliExpressOrder aliExpressOrder, AliExpressShopInfoDTO aliExpressShopInfoDTO) {
+    public PlatformAliExpressSoDeliveryDTO(JobTaskDTO dto, AliExpressOrder aliExpressOrder, AliExpressShopInfoDTO aliExpressShopInfoDTO) {
         this.aliExpressOrder = aliExpressOrder;
         this.aliExpressShopInfoDTO = aliExpressShopInfoDTO;
         this.setIsClean(0);
@@ -96,16 +64,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         this.setPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         this.setUniqueId(combineUnique(aliExpressOrder.getOrderId(), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-        this.setDownloadAddressStatus(0);
         this.setDownloadStatus(0);
-        // 判断是否下载发货单
-        if (aliExpressOrder.canDownloadDelivery()){
-            this.setDownloadDeliveryStatus(0);
-            this.setDownloadDeliveryDetailStatus(0);
-        } else {
-            this.setDownloadDeliveryStatus(-1);
-            this.setDownloadDeliveryDetailStatus(-1);
-        }
         this.setLastPushTime(dto.getNextTime().toString());
     }
 
@@ -117,12 +76,8 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
     /**
      * 将订单的数据转化成想要的数据
      *
-     * @param dto 原始订单数据
-     * @return
-     * @author yl
-     * @date 2023-11-29 15:47
      */
-    public static PlatformOrderDTO convertDTO(PlatformAliExpressOrderDTO dto) {
+    public static PlatformSoDeliveryDTO convertDTO(PlatformAliExpressSoDeliveryDTO dto) {
         // 原订单信息
         AliExpressOrder sourceOrder = dto.getAliExpressOrder();
         // 原单明细
@@ -236,7 +191,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             isAliexpressPlatformWarehouseOrder = count > 0;
         }
         labelMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
-        labelMap.put("isPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
+        labelMap.put("isAliexpressPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
         String orderStatus = sourceOrder.getOrderStatus();
         if ("RISK_CONTROL".equals(orderStatus)
                 || "IN_CANCEL".equals(orderStatus)
@@ -296,7 +251,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         List<PlatformOrderDetailDTO> details = parseDetailList(detailNotNull ? detail.getChildOrderList() : Collections.emptyList(), warehouseName);
         orderDTO.setDetails(details);
 
-        orderDTO.setDeliveryDetailDTOList(parseDeliveryDetailList(dto.getAliExpressDeliveryDetailList()));
+//        orderDTO.setDeliveryDetailDTOList(parseDeliveryDetailList(dto.getAliExpressDeliveryDetailList()));
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (detailNotNull) {
             //收货信息

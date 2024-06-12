@@ -3,6 +3,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -23,6 +24,7 @@ import com.erp.oms.aliexpress.dto.request.AddressRequest;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.*;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
+import com.erp.oms.aliexpress.util.ApiException;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -31,10 +33,8 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -54,13 +54,8 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
     private AliExpressOrderService aliExpressOrderService;
 
 
-
-
     /**
-     * 下载数据
-     *
-     * @param data
-     * @return
+     * 下载主数据
      */
     @Override
     public List<PlatformAliExpressOrderDTO> download(JobTaskDTO data) {
@@ -105,10 +100,8 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
 
     /**
      * 查询平台发货单
-     * @param shopInfoDTO
-     * @param orderList
      */
-    private void getDeliveryList(AliExpressShopInfoDTO shopInfoDTO, List<PlatformAliExpressOrderDTO> orderList) {
+    public List<PlatformAliExpressOrderDTO> getDeliveryList(AliExpressShopInfoDTO shopInfoDTO, List<PlatformAliExpressOrderDTO> orderList) {
         String deliveryQueryAPiName = AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY;
         OrderRequest deliveryRequest = OrderRequest.builder().
                 clientId(shopInfoDTO.getClientId()).
@@ -123,34 +116,52 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         for (List<String> list : partition) {
             deliveryList.addAll(aliExpressOrderService.listDeliveryQuery(deliveryRequest, list));
         }
+        if (CollectionUtils.isEmpty(deliveryList)){
+            return orderList;
+        }
+        Map<String, List<ErpFulfillmentForwardDtoBean>> deliveryMap = deliveryList.stream()
+                .collect(Collectors.groupingBy(ErpFulfillmentForwardDtoBean::getTradeOrderNo));
+
         for (PlatformAliExpressOrderDTO platformAliExpressOrderDTO : orderList) {
+            List<ErpFulfillmentForwardDtoBean> curDeliveryList = deliveryMap.get(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId());
+            if (!CollectionUtils.isEmpty(curDeliveryList)){
+                platformAliExpressOrderDTO.setAliExpressDeliveryDTOList(curDeliveryList);
+                // 已下载
+                platformAliExpressOrderDTO.setDownloadDeliveryStatus(1);
+                platformAliExpressOrderDTO.setDownloadDeliveryDetailStatus(0);
+            } else {
+                // 无发货单
+                platformAliExpressOrderDTO.setDownloadDeliveryStatus(-1);
+                platformAliExpressOrderDTO.setDownloadDeliveryDetailStatus(-1);
+            }
             List<LogisitcsDTO> logisticInfoList = platformAliExpressOrderDTO.getAliExpressOrder().getDetail().getLogisticInfoList();
             if (!CollectionUtils.isEmpty(logisticInfoList)){
                 for (LogisitcsDTO logisitcsDTO : logisticInfoList) {
                     ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId()) && req.getTrackingNo().equals(logisitcsDTO.getLogisticsNo())).findFirst().orElse(null);
-                    if (ObjectUtil.isNotEmpty(erpFulfillmentForwardDtoBean)) {
+                    if (null != erpFulfillmentForwardDtoBean) {
                         logisitcsDTO.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName());
                     } else {
                         logisitcsDTO.setWarehouseName("");
                     }
                 }
-                List<ErpFulfillmentForwardDtoBean> erpFulfillmentForwardDtoBeanList = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId())).collect(Collectors.toList());
-                platformAliExpressOrderDTO.setAliExpressDeliveryDetailList(new ArrayList<>());
-                for (ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean : erpFulfillmentForwardDtoBeanList) {
-                    //封装发货明细
-                    List<AliExpressDeliveryDetail> aliExpressDeliveryDetailList = aliExpressOrderService.listDeliveryDetailQuery(deliveryRequest,erpFulfillmentForwardDtoBean.getFulfillmentOrderNo());
-                    aliExpressDeliveryDetailList.forEach(v->v.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName()));
-                    platformAliExpressOrderDTO.getAliExpressDeliveryDetailList().addAll(aliExpressDeliveryDetailList);
-                }
+//                List<ErpFulfillmentForwardDtoBean> erpFulfillmentForwardDtoBeanList = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId())).collect(Collectors.toList());
+//                platformAliExpressOrderDTO.setAliExpressDeliveryDetailList(new ArrayList<>());
+//                for (ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean : erpFulfillmentForwardDtoBeanList) {
+//                    //封装发货明细
+//                    List<AliExpressDeliveryDetail> aliExpressDeliveryDetailList = aliExpressOrderService.listDeliveryDetailQuery(deliveryRequest,erpFulfillmentForwardDtoBean.getFulfillmentOrderNo());
+//                    aliExpressDeliveryDetailList.forEach(v->v.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName()));
+//                    platformAliExpressOrderDTO.getAliExpressDeliveryDetailList().addAll(aliExpressDeliveryDetailList);
+//                }
             }
         }
+        return orderList;
     }
 
     @Override
     public List<PlatformOrderDTO> convert(List<PlatformAliExpressOrderDTO> sourceDataList) {
-        if(!CollectionUtils.isEmpty(sourceDataList)){
-            getDeliveryList(sourceDataList.get(0).getAliExpressShopInfoDTO(), sourceDataList);
-        }
+//        if(!CollectionUtils.isEmpty(sourceDataList)){
+//            getDeliveryList(sourceDataList.get(0).getAliExpressShopInfoDTO(), sourceDataList);
+//        }
         return sourceDataList.stream()
                 // 组装
                 .map(PlatformAliExpressOrderDTO::convertDTO)
@@ -165,8 +176,6 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
 
     /**
      * 下载地址信息
-     * @param dto
-     * @return
      */
     public PlatformAliExpressOrderDTO downloadAddress(PlatformAliExpressOrderDTO dto) {
         AliExpressOrder order = dto.getAliExpressOrder();
@@ -178,8 +187,9 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         String shopId=dto.getShopId();
         AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);
         if (null == shopInfoDTO) {
-            log.error("[速卖通地址下载]  获取 token 失败: shopId={}", shopId);
-            return null;
+            log.error("[速卖通订单地址明细下载]  获取 token 失败: shopId={}", shopId);
+            String msg = StrUtil.format("[速卖通订单地址明细下载]  获取 token 失败: shopId={}", shopId);
+            throw new ServiceException(msg);
         }
         String oaid = orderDetail.getOaid();
         //加密id
@@ -216,5 +226,61 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         }catch (Exception e){
             throw new ServiceException("查询速卖通订单地址失败"+ JSONUtil.toJsonStr(e));
         }
+    }
+
+    @Override
+    public PlatformAliExpressOrderDTO downloadDetail(PlatformAliExpressOrderDTO dto, JSONObject extendObj) {
+        String shopId = dto.getShopId();
+        String apiName = AliexpressConstants.LIST_ORDER;
+        AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);
+        if (null == shopInfoDTO) {
+            log.error("[速卖通订单明细下载]  获取 token 失败: shopId={}", shopId);
+            String msg = StrUtil.format("[速卖通订单下载]  获取 token 失败: shopId={}", shopId);
+            throw new ServiceException(msg);
+        }
+        OrderRequest orderRequest = OrderRequest.builderByShopInfo(apiName, shopInfoDTO);
+        try {
+            AliExpressOrderDetail orderDetail = aliExpressOrderService.getOrderDetail(dto.getAliExpressOrder().getOrderId(), orderRequest);
+            dto.getAliExpressOrder().setDetail(orderDetail);
+            return dto;
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 发货单明细下载
+     */
+    public PlatformAliExpressOrderDTO downloadDeliveryDetail(PlatformAliExpressOrderDTO dto) {
+        List<ErpFulfillmentForwardDtoBean> expressDeliveryDTOList = dto.getAliExpressDeliveryDTOList();
+        if (CollectionUtils.isEmpty(expressDeliveryDTOList)){
+            log.error("[速卖通发货单明细下载] 数据异常:未找到发货单数据: orderId={}", dto.getAliExpressOrder().getOrderId());
+            String msg = StrUtil.format("[速卖通发货单明细下载] 数据异常:未找到发货单数据: orderId={}", dto.getAliExpressOrder().getOrderId());
+            throw new ServiceException(msg);
+        }
+        String shopId = dto.getShopId();
+        AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);
+        if (null == shopInfoDTO) {
+            log.error("[速卖通发货单明细下载]  获取 token 失败: shopId={}", shopId);
+            String msg = StrUtil.format("[速卖通订单下载]  获取 token 失败: shopId={}", shopId);
+            throw new ServiceException(msg);
+        }
+        String deliveryQueryAPiName = AliexpressConstants.ALIEXPRESS_ASCP_FFO_ITEM_QUERY;;
+        OrderRequest deliveryRequest = OrderRequest.builder().
+                clientId(shopInfoDTO.getClientId()).
+                clientSecret(shopInfoDTO.getClientSecret()).
+                baseUrl(shopInfoDTO.getBaseUrl()).
+                apiName(deliveryQueryAPiName).
+                token(shopInfoDTO.getToken()).build();
+
+        List<AliExpressDeliveryDetail> resultDetailList = new LinkedList<>();
+        for (ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean : expressDeliveryDTOList) {
+            //封装发货明细
+            List<AliExpressDeliveryDetail> aliExpressDeliveryDetailList = aliExpressOrderService.listDeliveryDetailQuery(deliveryRequest, erpFulfillmentForwardDtoBean.getFulfillmentOrderNo());
+            aliExpressDeliveryDetailList.forEach(v -> v.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName()));
+            resultDetailList.addAll(aliExpressDeliveryDetailList);
+        }
+        dto.setAliExpressDeliveryDetailList(resultDetailList);
+        return dto;
     }
 }
