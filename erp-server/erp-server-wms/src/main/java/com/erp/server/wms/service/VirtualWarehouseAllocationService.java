@@ -82,5 +82,5 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
 
     List<VirtualWarehouseAllocationDTO.TabListDTO> tabList(PermissionsDTO dto);
 
-    BatchResultDTO addAndSubmit(VirtualWarehouseAllocationDTO.AddDTO dto);
+    BatchResultDTO saveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto);
 }

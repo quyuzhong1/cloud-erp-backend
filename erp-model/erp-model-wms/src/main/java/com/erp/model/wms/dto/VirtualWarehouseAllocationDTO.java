@@ -61,7 +61,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         /**
          * 主键id
          */
-        @NotBlank(message = "主键id不能为空")
+//        @NotBlank(message = "主键id不能为空")
         private String id;
         /**
          * 附件名集合
@@ -117,14 +117,30 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
          */
         private String typeName;
-//        /**
-//         * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
-//         */
-//        private String syncStatus;
-//        /**
-//         * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
-//         */
-//        private String syncStatusName;
+        /**
+         * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
+         */
+        private String syncStatus;
+        /**
+         * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
+         */
+        private String syncStatusName;
+        /**
+         * 同步平台名称（字符串）
+         */
+        private String sysTypeName;
+        /**
+         * 同步平台名称
+         */
+        private List<String> sysTypeNameList;
+        /**
+         * 同步平台单号（字符串）
+         */
+        private String thirdCode;
+        /**
+         * 同步平台单号
+         */
+        private List<String> thirdCodeList;
         /**
          * 备注
          */
@@ -333,10 +349,6 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String invalidDescription;
         /**
-         * 第三方单据单号
-         */
-        private String thirdCode;
-        /**
          * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
          */
         private String syncStatus;
@@ -345,17 +357,17 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String syncStatusName;
         /**
-         * 同步平台名称（字符串 /n换行）
+         * 同步平台名称（字符串）
          */
-        private String sysTypeNames;
+        private String sysTypeName;
         /**
          * 同步平台名称
          */
         private List<String> sysTypeNameList;
         /**
-         * 同步平台单号（字符串 /n换行）
+         * 同步平台单号（字符串）
          */
-        private String thirdCodes;
+        private String thirdCode;
         /**
          * 同步平台单号
          */

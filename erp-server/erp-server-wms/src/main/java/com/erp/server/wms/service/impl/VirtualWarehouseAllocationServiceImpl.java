@@ -105,7 +105,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓分货单", virtualWarehouseAllocationEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单", virtualWarehouseAllocationEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), "新增操作");
         // 新增明细
         virtualWarehouseAllocationDetailService.batchAdd(addDTO, virtualWarehouseAllocationEntity.getId());
@@ -121,8 +121,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(VirtualWarehouseAllocationDTO.UpdateDTO updateDTO) {
-        VirtualWarehouseAllocationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓分货单"));
+        VirtualWarehouseAllocationEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(() ->
+                new ServiceException(ApiError.NOT_EXIST_BILL, "分货单"));
         VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity = BeanMapperUtils.map(VirtualWarehouseAllocationEntity.class, updateDTO);
         // 数据处理
         handleData(virtualWarehouseAllocationEntity, updateDTO.getDetailList());
@@ -133,7 +133,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
         // 记录主单操作日志
         log.info("编辑 开始记录虚拟仓分货单日志数据，单号：【{}】", virtualWarehouseAllocationEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationEntity.getCode(), "虚拟仓分货单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), msg);
         // 新增明细
         virtualWarehouseAllocationDetailService.batchUpdate(updateDTO, virtualWarehouseAllocationEntity.getId());
@@ -243,6 +243,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         virtualWarehouseAllocationDetailService.submit(allocationEntity);
         //进行拆单并创建中台任务数据进行同步
         virtualWarehouseAllocationHandleService.handleData(allocationEntity);
+        // 记录操作日志
+        log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
+        String msg = StrUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单主单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -347,9 +351,17 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO addAndSubmit(VirtualWarehouseAllocationDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO add = service.add(dto);
-        VirtualWarehouseAllocationEntity allocationEntity = this.getById(add.getId());
+    public BatchResultDTO saveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto) {
+        String id = dto.getId();
+        if (StringUtils.isBlank(id)) {
+            VirtualWarehouseAllocationDTO.AddDTO addDTO = new VirtualWarehouseAllocationDTO.AddDTO();
+            BeanUtils.copyProperties(dto, addDTO);
+            BaseResultDTO.AddDTO add = service.add(addDTO);
+            id = add.getId();
+        } else {
+            service.update(dto);
+        }
+        VirtualWarehouseAllocationEntity allocationEntity = this.getById(id);
         return service.submit(allocationEntity);
     }
 
@@ -381,6 +393,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         allocationEntity.setStatus(status);
         allocationEntity.setInvalidDescription(invalidDescription);
         this.updateById(allocationEntity);
+        log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单主单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
+
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.INVALID);
     }
 
