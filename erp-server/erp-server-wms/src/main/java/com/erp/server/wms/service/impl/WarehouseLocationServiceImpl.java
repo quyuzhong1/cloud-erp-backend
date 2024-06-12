@@ -3,14 +3,12 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -48,14 +46,13 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -398,7 +395,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         WarehouseLocationDTO.SelectDTO params = searchDTO.getParams();
         IPage<WarehouseLocationDTO.LocationListDTO> pagResult;
-        if (StringUtils.hasText(params.getSkuNo())){
+        if (StringUtils.isNotBlank(params.getSkuNo())){
             pagResult = baseMapper.pagingSelectBySku(query, params);
         }else {
             pagResult = baseMapper.pagingSelect(query, params);
@@ -473,7 +470,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public WarehouseLocationEntity findByWarehouseCode(String warehouseLocation) {
-        if (StringUtils.isBlank(warehouseLocation)){
+        if (StringUtils.isEmpty(warehouseLocation)){
             return null;
         }
         List<WarehouseLocationEntity> list = lambdaQuery().eq(WarehouseLocationEntity::getCode, warehouseLocation).list();
@@ -775,7 +772,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         int count = count(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getCode, code)
                 .eq(WarehouseLocationEntity::getType, type)
-                .ne(StringUtils.hasText(id), WarehouseLocationEntity::getId, id));
+                .ne(StringUtils.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
             throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "编码", code);
         }
@@ -785,7 +782,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         int count = count(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getName, name)
                 .eq(WarehouseLocationEntity::getType, type)
-                .ne(StringUtils.hasText(id), WarehouseLocationEntity::getId, id));
+                .ne(StringUtils.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
             throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "名称", name);
         }
