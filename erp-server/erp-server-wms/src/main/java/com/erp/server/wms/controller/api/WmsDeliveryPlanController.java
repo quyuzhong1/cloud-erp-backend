@@ -457,6 +457,47 @@ public class WmsDeliveryPlanController extends BaseController {
     }
 
     /**
+     * 下推发货单列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:06
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>>
+     **/
+    @PostMapping("/generateDeliverView")
+    public ApiResult<List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO>> generateDeliverView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> result = wmsDeliveryPlanService.generateDeliverView(dto.getIds());
+        return success(result);
+    }
+
+    /**
+     * 下推发货单保存
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:06
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateDeliverSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存")
+    public ApiResult generateDeliverSave(@RequestBody @Validated ValidList<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
+        Boolean flag = wmsDeliveryPlanService.generateDeliverSave(dto.getList());
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 下推发货单保存并提交
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:06
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateDeliverSaveAndSubmit")
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存并提交")
+    public ApiResult generateDeliverSaveAndSubmit(@RequestBody @Validated ValidList<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
+        Boolean flag = wmsDeliveryPlanService.generateDeliverSaveAndSubmit(dto.getList());
+        return flag ? success() : failure();
+    }
+
+    /**
      * 导入详情信息
      * @Author Luo_WG
      * @Date 2023/11/23 14:17

@@ -1,19 +1,18 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
-
 import com.common.business.enums.ApproveStatusEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.util.Map;
+
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -586,7 +585,112 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private String shopName;
     }
 
+    /**
+     * 下推发货单列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateDeliverViewDTO {
 
+        /**
+         * 主表id
+         */
+        private String sourceId;
+
+        /**
+         * 明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 发货计划单号
+         */
+        private String sourceCode;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 国家二字码
+         */
+        private String country;
+
+        /**
+         * 国家中文名
+         */
+        private String countryName;
+
+        /**
+         * 发货仓id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 目的仓id
+         */
+        private String toWarehouseId;
+
+        /**
+         * 目的仓名称
+         */
+        private String toWarehouseName;
+
+        /**
+         * 状态
+         */
+        private String approveStatus;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * ERP的SKU
+         */
+        private String skuNo;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
+        /**
+         * 类型
+         */
+        private String type;
+    }
 
 
 }

@@ -62,4 +62,12 @@ public interface WmsDeliveryPlanMapper extends BaseMapper<WmsDeliveryPlanEntity>
      **/
     List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(@Param("ids") List<String> ids);
 
+    /**
+     * 下推发货单列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/20 10:17
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>
+     **/
+    List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(@Param("ids") List<String> ids);
 }
