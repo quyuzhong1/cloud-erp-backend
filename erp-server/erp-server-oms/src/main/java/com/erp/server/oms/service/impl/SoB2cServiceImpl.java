@@ -2002,7 +2002,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO deliveryIntercept(String id, String remark) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -2030,24 +2029,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (ObjectUtils.isEmpty(logisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-        }
-
-        //修改拦截打标识、冻结状态
-        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
-        interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
-        interceptUpdateOrderDTO.setIsFrozen(Boolean.TRUE);
-        interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
-        interceptUpdateOrderDTO.setRemark(remark);
-        Boolean flag = this.updateIntercept(interceptUpdateOrderDTO);
-        if (flag) {
-            // 操作日志
-            String msg;
-            if (StrUtil.equals(remark, "平台取消")) {
-                msg = "平台订单取消,自动发起拦截";
-            } else {
-                msg = StrUtil.format("用户【{}】发起【{}】，已冻结单据单号【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截", entity.getCode());
-            }
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "发货拦截");
         }
 
         //新增发货拦截
