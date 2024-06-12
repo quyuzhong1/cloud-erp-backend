@@ -2,7 +2,6 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -106,6 +105,10 @@ public class SoDeliveryNoticeDTO {
          * 销售单id
          */
         private String sourceId;
+        /**
+         * 类型
+         */
+        private String sourceType;
         /**
          * 销售单明细id
          */
@@ -583,8 +586,6 @@ public class SoDeliveryNoticeDTO {
     @Getter
     @Setter
     public static class GeneratePickingDTO {
-        @NotBlank(message = "单据来源类型不能为空")
-        private PickingBillTypeEnum billType;
 
         @NotBlank(message = "要货申请不能为空")
         private String id;

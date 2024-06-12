@@ -6,6 +6,7 @@
             sdn.id,
             sdnd.id as detailId,
             sdn.source_id AS sourceId,
+            sdn.source_type AS sourceType,
             sdnd.source_detail_id AS sourceDetailId,
             sdn.code,
             sdn.source_code AS sourceCode,
