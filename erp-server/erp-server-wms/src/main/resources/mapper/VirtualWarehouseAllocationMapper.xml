@@ -43,19 +43,21 @@
     </select>
     <select id="listCount" resultType="integer">
         select
-        count(distinct vmad.id)
+        count(distinct vma.id)
         FROM virtual_warehouse_allocation_detail vmad
         inner JOIN virtual_warehouse_allocation vma
         on vma.id = vmad.main_id and vma.is_deleted = false
         where vmad.is_deleted = false
-        and vmad.status = #{params.status}
+        <if test="params.status!=null and params.status!=''">
+            and vma.status = #{params.status}
+        </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
     </select>
     <select id="listCountBySyncStatus" resultType="integer">
         select
-        count(distinct vmad.id)
+        count(distinct vma.id)
         FROM virtual_warehouse_allocation_detail vmad
         inner JOIN virtual_warehouse_allocation vma
         on vma.id = vmad.main_id and vma.is_deleted = false

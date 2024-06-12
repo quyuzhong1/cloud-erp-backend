@@ -74,6 +74,20 @@ public class VirtualWarehouseAllocationController extends BaseController {
     }
 
     /**
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author hyj
+     * @date: 2024-06-05
+     */
+    @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓分货单新增")
+    public ApiResult<BatchResultDTO> addAndSubmit(@RequestBody @Validated VirtualWarehouseAllocationDTO.AddDTO dto) {
+        return success(virtualWarehouseAllocationService.addAndSubmit(dto));
+    }
+
+    /**
      * 修改
      *
      * @param dto

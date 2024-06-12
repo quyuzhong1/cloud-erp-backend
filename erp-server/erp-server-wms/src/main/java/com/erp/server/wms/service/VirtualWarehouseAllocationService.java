@@ -81,4 +81,6 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
     VirtualWarehouseAllocationDTO.DetailDto importFile(String type, MultipartFile excelFile, HttpServletResponse response);
 
     List<VirtualWarehouseAllocationDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    BatchResultDTO addAndSubmit(VirtualWarehouseAllocationDTO.AddDTO dto);
 }

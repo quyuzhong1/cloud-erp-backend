@@ -37,6 +37,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -82,6 +83,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private WarehouseService warehouseService;
+    @Resource
+    @Lazy
+    private VirtualWarehouseAllocationServiceImpl service;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -325,7 +329,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         VirtualWarehouseAllocationDTO.PagingParamDTO pagingParamDTO = new VirtualWarehouseAllocationDTO.PagingParamDTO();
         pagingParamDTO.setPermissionSql(dto.getPermissionSql());
         pagingParamDTO.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
-        Integer count = this.baseMapper.listCount(pagingParamDTO);
+        Integer count = this.baseMapper.listCountBySyncStatus(pagingParamDTO);
         VirtualWarehouseAllocationDTO.TabListDTO resultDTO = new VirtualWarehouseAllocationDTO.TabListDTO();
         resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
         resultDTO.setTabFlag(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
@@ -339,6 +343,14 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         listDTO.setCount(totalCount);
         list.add(listDTO);
         return list;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO addAndSubmit(VirtualWarehouseAllocationDTO.AddDTO dto) {
+        BaseResultDTO.AddDTO add = service.add(dto);
+        VirtualWarehouseAllocationEntity allocationEntity = this.getById(add.getId());
+        return service.submit(allocationEntity);
     }
 
 
