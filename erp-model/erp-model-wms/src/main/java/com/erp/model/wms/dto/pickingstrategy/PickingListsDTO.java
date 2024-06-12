@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -62,6 +63,14 @@ public class PickingListsDTO {
          * 仓位总数
          */
         private Integer locationTotal;
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     @Getter
