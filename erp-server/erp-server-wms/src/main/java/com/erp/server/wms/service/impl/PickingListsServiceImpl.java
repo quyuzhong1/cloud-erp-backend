@@ -208,7 +208,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         Map<String, String> locationMap = locationAndAreaList.stream()
                 .collect(Collectors.toMap(WarehouseLocationEntity::getCode, WarehouseLocationEntity::getParentId));
         Map<String, String> areaMap = locationAndAreaList.stream()
-                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, WarehouseLocationEntity::getName));
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, WarehouseLocationEntity::getName));
         PickingListsDTO.View view = BeanMapperUtils.map(PickingListsDTO.View.class, entity);
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, id));
         List<PickingDetailDTO.View> detailList = pickingDetails.stream()
