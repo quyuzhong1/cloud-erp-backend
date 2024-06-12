@@ -141,6 +141,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDetailList.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detail.getSkuId(), detail.getSkuNo(),
                     detail.getWarehouseLocation(), detail.getStagingLocation(), detail.getQty()));
         }
+        entity.setLocationTotal(entities.size());
         WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
         moveDto.setWarehouseId(dto.getWarehouseId());
         moveDto.setPcShow(false);

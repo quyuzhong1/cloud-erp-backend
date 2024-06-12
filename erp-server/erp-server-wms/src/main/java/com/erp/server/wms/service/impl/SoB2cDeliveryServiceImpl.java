@@ -289,6 +289,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
             inOutStockList.add(inOutStockDTO);
         }
+        entity.setLocationTotal(entities.size());
         //添加冻结库存
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setParamList(inOutStockList);
