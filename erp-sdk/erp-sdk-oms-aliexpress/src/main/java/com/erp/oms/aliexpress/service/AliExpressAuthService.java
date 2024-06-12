@@ -1,5 +1,6 @@
 package com.erp.oms.aliexpress.service;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
@@ -65,31 +66,31 @@ public class AliExpressAuthService {
     public static void main(String[] args) {
         AliExpressAuthService service = new AliExpressAuthService();
         JSONObject jsonObject = null;
-        Map<String, String> map = new HashMap<>();
-        map.put("clientId", "502978");
-        map.put("clientSecret", "3_502978_YNyPkGTynMfcDkZYcOXO58qf299");
-        map.put("code", "3_502978_6mwqSBdkUNNnw3ncwnXkusoj252");
-        map.put("baseUrl", "https://api-sg.aliexpress.com");
-        try {
-            jsonObject= service.generateToken(map);
-            System.out.println(jsonObject);
-        } catch (ApiException e) {
-            e.printStackTrace();
-        }
-//        RefreshTokenRequest request=RefreshTokenRequest.builder().
-//                clientId("503630").
-//                baseUrl("https://api-sg.aliexpress.com").
-//                clientSecret("PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ").
-//                refreshToken("50001200b34hfih8oxtufe6i1jhtbtuGBDbr3mswioFQoZ116e843eHxtklPrJkUj3fw").
-//                build();
-//
-//
+//        Map<String, String> map = new HashMap<>();
+//        map.put("clientId", "502978");
+//        map.put("clientSecret", "3_502978_YNyPkGTynMfcDkZYcOXO58qf299");
+//        map.put("code", "3_502978_6mwqSBdkUNNnw3ncwnXkusoj252");
+//        map.put("baseUrl", "https://api-sg.aliexpress.com");
 //        try {
-//            jsonObject = service.RefreshToken(request);
+//            jsonObject= service.generateToken(map);
+//            System.out.println(jsonObject);
 //        } catch (ApiException e) {
 //            e.printStackTrace();
 //        }
-        System.out.println(jsonObject);
+        RefreshTokenRequest request=RefreshTokenRequest.builder().
+                clientId("503630").
+                baseUrl("https://api-sg.aliexpress.com").
+                clientSecret("PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ").
+                refreshToken("500012000313OXYuTpgfvQltEo9rxovDDagvcjqcxxE1707591adjETAlS25O8FaLsaz").
+                build();
+
+
+        try {
+            jsonObject = service.RefreshToken(request);
+        } catch (ApiException e) {
+            e.printStackTrace();
+        }
+        System.out.println(JSONUtil.toJsonStr(jsonObject));
     }
 }
 

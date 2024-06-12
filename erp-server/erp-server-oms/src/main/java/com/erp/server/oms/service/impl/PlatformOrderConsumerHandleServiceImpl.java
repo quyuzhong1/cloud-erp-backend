@@ -29,6 +29,7 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,6 +84,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private OperateLogService operateLogService;
     @Resource
     private SkuMappingService skuMappingService;
+    @Lazy
+    @Resource
+    private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
 
 
 
@@ -99,18 +103,16 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //            log.warn("已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
 //            return;
 //        }
-        // 亚马逊, 跳过MFN时，地址为空的订单
-        // 已作废的MFN订单, 地址允许为空
-        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())
-                && this.checkHasMfnOrderAndNoAddress(dto)
+        // 跳过未作废的自发货无地址的订单
+        if ( notPlatformOrderNotExistAddress(dto)
                 && null != dto.getInvalidStatus()
                 && !dto.getInvalidStatus()
         ) {
-            log.warn("亚马逊卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
+            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
             return;
         }
 
-        SoB2cDTO.PullOrderResultDTO resultDTO = this.checkAndSaveAll(dto);
+        SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
         Boolean hasPlatformWarehouse = mainEntity.hasPlatformWarehouseOrder();
@@ -170,9 +172,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
 
     }
-
-
-
 
 
     /**
@@ -374,5 +373,36 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         });
         return splitSkuDTOS;
+    }
+
+    /**
+     * 自发货订单不存在地址
+     */
+    private boolean notPlatformOrderNotExistAddress(PlatformOrderDTO dto) {
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            return this.checkHasMfnOrderAndNoAddress(dto);
+        }
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            return this.aliExpressNotPlatformOrderNotExistAddress(dto);
+        }
+        return false;
+    }
+
+    /**
+     * 速卖通自发货订单未解密地址
+     */
+    private boolean aliExpressNotPlatformOrderNotExistAddress(PlatformOrderDTO dto) {
+        if (StrUtil.isNotBlank(dto.getLabelJson())) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
+            if (isAliexpressPlatformWarehouseOrder){
+                return false;
+            }
+            if (null == dto.getReceiver()){
+                return false;
+            }
+            return StringUtils.isNotBlank(dto.getReceiver().getFullAddress()) && dto.getReceiver().getFullAddress().contains("***");
+        }
+        return false;
     }
 }

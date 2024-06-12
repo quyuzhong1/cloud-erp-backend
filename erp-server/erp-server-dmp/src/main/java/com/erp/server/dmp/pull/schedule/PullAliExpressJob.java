@@ -82,6 +82,11 @@ public class PullAliExpressJob {
                 jobTaskDTO.setPlatformCategory(cleanDataTableEnum.getCategory());
                 jobTaskDTO.setDictPlatform(cleanDataTableEnum.getPlatform());
                 jobTaskDTO.setBillType(cleanDataTableEnum.getBusiness());
+                if (CleanDataTableEnum.ALI_EXPRESS_ORDER.equals(cleanDataTableEnum)
+                ) {
+                    // 清洗时检查明细下载状态:DownloadStatus=1
+                    jobTaskDTO.setClearCheckDownloadStatus(true);
+                }
                 try {
                     XxlJobHelper.log("开始清洗：{}类{}数据", cleanDataTableEnum.getPlatform(), cleanDataTableEnum.getBusiness());
                     platformDataThread.cleanOrder(jobTaskDTO);
@@ -124,7 +129,7 @@ public class PullAliExpressJob {
     }
 
     /**
-     * 拉取速卖通订单详情任务
+     * 下载【订单详情】(速卖通-ERP)
      */
     @XxlJob("aliExpressOrderDetailDownload")
     public ReturnT<String> aliExpressOrderDetailDownload() {
@@ -138,8 +143,8 @@ public class PullAliExpressJob {
         }
         XxlJobHelper.log("[拉取速卖通订单详情任务] aliExpressOrderDetailDownload 任务开始,size={}", size);
         // 查询所有任务列表
-        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), "orders");
-        if (org.springframework.util.CollectionUtils.isEmpty(taskList)) {
+        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), "order");
+        if (CollectionUtils.isEmpty(taskList)) {
             XxlJobHelper.log("[拉取速卖通订单详情任务] aliExpressOrderDetailDownload 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
@@ -190,7 +195,7 @@ public class PullAliExpressJob {
         }
         XxlJobHelper.log("[拉取速卖通发货单任务] aliExpressSoDeliveryDownload 任务开始,size={}", size);
         // 查询所有任务列表
-        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), "orders");
+        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), "order");
         if (org.springframework.util.CollectionUtils.isEmpty(taskList)) {
             XxlJobHelper.log("[拉取速卖通发货单任务] aliExpressSoDeliveryDownload 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
@@ -238,7 +243,7 @@ public class PullAliExpressJob {
         }
         XxlJobHelper.log("[拉取速卖通发货单明细任务] aliExpressSoDeliveryDetailDownload 任务开始,size={}", size);
         // 查询所有任务列表
-        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), "orders");
+        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), "order");
         if (org.springframework.util.CollectionUtils.isEmpty(taskList)) {
             XxlJobHelper.log("[拉取速卖通发货单明细任务] aliExpressSoDeliveryDetailDownload 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;

@@ -283,4 +283,9 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         dto.setAliExpressDeliveryDetailList(resultDetailList);
         return dto;
     }
+
+    @Override
+    public Boolean getIsSendMq() {
+        return false;
+    }
 }

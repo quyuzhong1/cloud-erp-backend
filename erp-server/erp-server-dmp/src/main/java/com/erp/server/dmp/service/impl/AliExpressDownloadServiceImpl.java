@@ -89,6 +89,8 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
                 //下载地址处理
                 PlatformAliExpressOrderDTO newDto = aliExpressOrderHandler.downloadAddress(item);
                 newDto.setDownloadAddressStatus(1);
+                // 判断是否有发货单下载(属于平台仓订单并且有物流信息)
+                newDto.setDownloadDeliveryStatus(newDto.convertDownloadDeliveryStatus());
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                 newDto.setIsClean(2);
                 List<PlatformOrderDTO> convertDto = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
@@ -129,6 +131,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
         if (currentPage > 0 && pageSize > 0) {
             query.skip((long) (currentPage - 1) * pageSize).limit(pageSize);
         }
+
         return mongoTemplate.find(query, PlatformAliExpressOrderDTO.class, MongoTableNameContant.THIRD_SYSTEM_ALI_EXPRESS_ORDER);
     }
 
@@ -151,6 +154,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
         try {
             PlatformAliExpressOrderDTO newDto = aliExpressOrderHandler.downloadDetail(dto, null);
             newDto.setDownloadStatus(1);
+            newDto.setDownloadAddressStatus(0);
             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
             List<PlatformOrderDTO> convertDtoList = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
             PlatformOrderDTO convertDto = convertDtoList.get(0);
@@ -217,7 +221,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
             return;
         }
         for (PlatformAliExpressOrderDTO dto : orderEntityList) {
-            singleHandlerOrderDetailDownload(platform, category, dto);
+            singleHandlerSoDeliveryDetailDownload(platform, category, dto);
         }
     }
 

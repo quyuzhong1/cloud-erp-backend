@@ -65,13 +65,4 @@ public interface AliExpressDownloadService {
      */
     void singleHandlerSoDeliveryDetailDownload(String platform, String category, PlatformAliExpressOrderDTO dto);
 
-    /**
-     * 商品明细下载
-     */
-    void handlerProductDetail(String groupId, List<PlatformApiTaskEntity> taskList, int size, String platform, String category, String business);
-
-    /**
-     * 查询速卖通mongo商品信息
-     */
-    List<PlatformAliExpressListingDTO> findMongoProductDownloadStatusAnShopId(Integer downloadStatus, List<String> shopIds, int currentPage, Integer pageSize);
 }
