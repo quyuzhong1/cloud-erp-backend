@@ -1028,7 +1028,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
 
-        if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_UPDATE_REMARK);
         }
         //未付款数据不能操作
@@ -5677,6 +5677,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         operateLogService.batchAddModuleOperateLog(msgSb.toString(), ModuleTypeEnum.SO_B2C.getCode(), pairList, "状态变更");
         return lambdaUpdate().set(Objects.nonNull(interceptUpdateOrderDTO.getIsIntercept()),SoB2cEntity::getIsIntercept, interceptUpdateOrderDTO.getIsIntercept())
                 .set(Objects.nonNull(interceptUpdateOrderDTO.getIsFrozen()),SoB2cEntity::getIsFrozen, interceptUpdateOrderDTO.getIsFrozen())
+                .set(Objects.nonNull(interceptUpdateOrderDTO.getIsFrozen()) && interceptUpdateOrderDTO.getIsFrozen(),SoB2cEntity::getFrozenType, SoB2cFrozenTypeEnum.ENUM_AUTOMATIC.getCode())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getApproveStatus()), SoB2cEntity::getApproveStatus, interceptUpdateOrderDTO.getApproveStatus())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getBillStatus()), SoB2cEntity::getBillStatus, interceptUpdateOrderDTO.getBillStatus())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getAbnormalType()), SoB2cEntity::getAbnormalType, interceptUpdateOrderDTO.getAbnormalType())

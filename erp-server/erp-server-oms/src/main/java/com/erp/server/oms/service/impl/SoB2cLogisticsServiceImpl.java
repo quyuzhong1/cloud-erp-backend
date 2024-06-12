@@ -425,8 +425,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             soB2cLogisticsEntity.setCode("");
             soB2cLogisticsEntity.setTrackNo("");
             this.updateById(soB2cLogisticsEntity);
-            return BatchResultDTO.fail(id,soB2cEntity.getCode(),cancelResult.getMsg());
+            String msg = StrUtil.format("用户【{}】取消物流单,运单号:{} ", UserContext.getDefaultLoginUser().getUserName(),soB2cLogisticsEntity.getCode());
+            operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "取消物流单");
+            return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
+
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

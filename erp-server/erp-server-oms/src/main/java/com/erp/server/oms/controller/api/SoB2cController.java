@@ -16,16 +16,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
-import com.erp.server.oms.service.SoB2cErrorService;
-import com.erp.server.oms.service.SoB2cLogisticsService;
-import com.erp.server.oms.service.SoB2cService;
-import com.erp.server.oms.service.SoB2cSplitService;
+import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -60,6 +58,12 @@ public class SoB2cController extends BaseController {
 
     @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
+
+    @Resource
+    private SoB2cStatusService soB2cStatusService;
+
+    @Resource
+    private SoB2cDetailService soB2cDetailService;
     /**
      * 获取状态统计
      *
@@ -1224,6 +1228,54 @@ public class SoB2cController extends BaseController {
                     resultDTOS.add(result);
                     continue;
                 }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 订单冻结
+     * @return
+     */
+    @PostMapping("/freeze")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "订单冻结：ids={ids}")
+    public ApiResult<List<BatchResultDTO>> freeze(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(idDTO.getIds().size());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(idDTO.getIds());
+        for (String id : idDTO.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cStatusService.freeze(id,soB2cEntityList);
+            } catch (Exception e) {
+                log.error("B2C销售订单冻结异常", e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消冻结
+     * @return
+     */
+    @PostMapping("/unfreeze")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "取消冻结：ids={ids}")
+    public ApiResult<List<BatchResultDTO>> unfreeze(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(idDTO.getIds().size());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(idDTO.getIds());
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(idDTO.getIds());
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(idDTO.getIds());
+        for (String id : idDTO.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cStatusService.unfreeze(id,soB2cEntityList,soB2cDetailEntityList,soB2cLogisticsEntityList);
+            } catch (Exception e) {
+                log.error("B2C销售订单取消冻结异常", e);
+                SoB2cEntity entity = soB2cService.getById(id);
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);

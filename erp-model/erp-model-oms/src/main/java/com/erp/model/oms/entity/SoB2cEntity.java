@@ -289,6 +289,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("seller_order_code")
     private String sellerOrderCode;
 
+    /**
+     * 冻结类型（manual手动冻结，automatic自动冻结）
+     */
+    @TableField("frozen_type")
+    private String frozenType;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
