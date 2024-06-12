@@ -29,9 +29,9 @@ public class WarehouseLocationInfoQueryHandler extends AbstractQueryHandler {
         if ("wl.status".equals(field) && StringUtils.isNotBlank((String) value)) {
             return getTabSql(value);
         }
-        if("wl.update_time".equals(field)) {
+        /*if("wl.update_time".equals(field)) {
             return getDateSql(value, compareCodeSplicingValueSql);
-        }
+        }*/
         return null;
     }
 
