@@ -2628,6 +2628,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> skuIdList = data.getDetailList().stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         Map<String, SkuVO> skuVOMap = new HashMap<>();
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        //子sku
+        List<String> skuIds = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> allBomChildrenSkuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         if (CollectionUtils.isNotEmpty(skuList)) {
             skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         }
@@ -2638,12 +2642,30 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //            if (ObjectUtils.isEmpty(skuVO)) {
 //                throw new ServiceException(ApiError.ERROR_95084);
 //            }
+
             viewDTO.setProductName(null == skuVO ? "" : skuVO.getSkuName());
-            viewDTO.setProductLength(Objects.nonNull(skuVO) ? skuVO.getProductLength(): BigDecimal.ZERO);
-            viewDTO.setProductHeight(Objects.nonNull(skuVO) ? skuVO.getProductHeight(): BigDecimal.ZERO);
-            viewDTO.setProductWidth(Objects.nonNull(skuVO) ? skuVO.getProductWidth(): BigDecimal.ZERO);
-            viewDTO.setGrossWeight(Objects.nonNull(skuVO) ? skuVO.getGrossWeight(): BigDecimal.ZERO);
-            viewDTO.setNetWeight(Objects.nonNull(skuVO) ? skuVO.getNetWeight(): BigDecimal.ZERO);
+            //组合品的话根据子件计算长宽高重量
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = allBomChildrenSkuDTOList.stream().filter(v->v.getParentSkuId().equals(skuVO.getSkuId())).collect(Collectors.toList());
+
+            if(CollectionUtils.isEmpty(bomChildrenSkuDTOList)){
+
+                viewDTO.setProductLength(Objects.nonNull(skuVO) ? skuVO.getProductLength(): BigDecimal.ZERO);
+                viewDTO.setProductHeight(Objects.nonNull(skuVO) ? skuVO.getProductHeight(): BigDecimal.ZERO);
+                viewDTO.setProductWidth(Objects.nonNull(skuVO) ? skuVO.getProductWidth(): BigDecimal.ZERO);
+                viewDTO.setGrossWeight(Objects.nonNull(skuVO) ? skuVO.getGrossWeight(): BigDecimal.ZERO);
+                viewDTO.setNetWeight(Objects.nonNull(skuVO) ? skuVO.getNetWeight(): BigDecimal.ZERO);
+            }else{
+                BigDecimal maxLength = bomChildrenSkuDTOList.stream().map(BomChildrenSkuDTO::getLength).filter(Objects::nonNull).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+                BigDecimal maxWidth = bomChildrenSkuDTOList.stream().map(BomChildrenSkuDTO::getWidth).filter(Objects::nonNull).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+                BigDecimal totalHeight = bomChildrenSkuDTOList.stream().map(e -> e.getHeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal totalGrossWeight = bomChildrenSkuDTOList.stream().map(e -> e.getGrossWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal totalNetWeight = bomChildrenSkuDTOList.stream().map(e -> e.getNetWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                viewDTO.setProductHeight(totalHeight);
+                viewDTO.setProductLength(maxLength);
+                viewDTO.setProductWidth(maxWidth);
+                viewDTO.setGrossWeight(totalGrossWeight);
+                viewDTO.setNetWeight(totalNetWeight);
+            }
         }
     }
 
