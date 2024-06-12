@@ -245,7 +245,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 if (Objects.equals(vmUsableQty.getToVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId())) {
                     viewQtyDTO.setToVirtualWarehouseUsableQty(vmUsableQty.getToVirtualWarehouseUsableQty());
                 }
-                if (Objects.equals(vmUsableQty.getFromVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId())) {
+                if (Objects.equals(vmUsableQty.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId())) {
                     viewQtyDTO.setFromVirtualWarehouseUsableQty(vmUsableQty.getToVirtualWarehouseUsableQty());
                 }
             }

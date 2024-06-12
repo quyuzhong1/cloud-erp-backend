@@ -499,9 +499,9 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private Integer qty;
 
-        //        private String warehouseUsableQty;
-//        private String toVirtualWarehouseUsableQty;
-//        private String fromVirtualWarehouseUsableQty;
+        private Integer warehouseUsableQty;
+        private Integer toVirtualWarehouseUsableQty;
+        private Integer fromVirtualWarehouseUsableQty;
         /**
          * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
          */

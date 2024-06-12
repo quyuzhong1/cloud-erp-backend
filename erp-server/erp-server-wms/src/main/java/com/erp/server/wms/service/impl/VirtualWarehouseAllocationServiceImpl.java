@@ -158,15 +158,18 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         VirtualWarehouseAllocationDTO.ViewDTO viewDTO = new VirtualWarehouseAllocationDTO.ViewDTO();
         BeanUtils.copyProperties(vmAllocation, viewDTO);
         //获取附件
-        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(id));
-        List<String> attachmentUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-        List<String> attachmentNameList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-        viewDTO.setAttachUrlList(attachmentUrlList);
-        viewDTO.setAttachNameList(attachmentNameList);
+        getAttachment(id, viewDTO);
 
         //获取明细
         List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, id));
+
+        //获取数量
+        VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
+        qtyTypeDTO.setType(vmAllocation.getType());
+        List<VirtualInventoryDTO.QtySearchDTO> qtySearchList = BeanMapperUtils.copyList(VirtualInventoryDTO.QtySearchDTO.class, detailList);
+        qtyTypeDTO.setQtySearchList(qtySearchList);
+        List<VirtualInventoryDTO.ViewQtyDTO> qtyDTOList = virtualInventoryService.getQty(qtyTypeDTO);
         //获取所有的sku信息
         List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -177,9 +180,34 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 detailDto.setProductName(skuVO.getBrandName());
                 detailDto.setImageUrl(skuVO.getSkuImagesUrl());
             }
+            qtyDTOList.forEach(qtyDTO -> {
+                if (Objects.equals(qtyDTO.getWarehouseId(), detailDto.getWarehouseId()) && Objects.equals(qtyDTO.getSkuId(), detailDto.getSkuId())) {
+                    detailDto.setWarehouseUsableQty(qtyDTO.getWarehouseAllocationQty());
+                    if (Objects.equals(qtyDTO.getFromVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())) {
+                        detailDto.setFromVirtualWarehouseUsableQty(qtyDTO.getFromVirtualWarehouseUsableQty());
+                    }
+                    if (Objects.equals(qtyDTO.getToVirtualWarehouseId(), detailDto.getToVirtualWarehouseId())) {
+                        detailDto.setToVirtualWarehouseUsableQty(qtyDTO.getToVirtualWarehouseUsableQty());
+                    }
+                }
+            });
         });
         viewDTO.setDetailList(detailDtos);
         return viewDTO;
+    }
+
+    /**
+     * 获取附件
+     *
+     * @param id
+     * @param viewDTO
+     */
+    private void getAttachment(String id, VirtualWarehouseAllocationDTO.ViewDTO viewDTO) {
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(id));
+        List<String> attachmentUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+        List<String> attachmentNameList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+        viewDTO.setAttachUrlList(attachmentUrlList);
+        viewDTO.setAttachNameList(attachmentNameList);
     }
 
     /**
