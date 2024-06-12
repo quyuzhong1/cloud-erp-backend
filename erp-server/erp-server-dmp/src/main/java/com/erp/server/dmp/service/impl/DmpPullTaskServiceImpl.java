@@ -41,7 +41,6 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -69,10 +68,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1135,5 +1130,15 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             return;
         }
         baseMapper.deleteByIds(ids);
+    }
+
+    @Override
+    public int countMonth(LocalDateTime date) {
+        return baseMapper.countMonth(date);
+    }
+
+    @Override
+    public List<DmpPullTaskEntity> listMonth(LocalDateTime date, int pageSize, int effect) {
+        return baseMapper.listMonth(date, pageSize, effect);
     }
 }
