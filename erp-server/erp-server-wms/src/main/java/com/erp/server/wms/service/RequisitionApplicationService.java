@@ -164,4 +164,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     List<RequisitionApplicationDTO.ChildViewDTO> listChildBySku(RequisitionApplicationDTO.ChildParamDTO dto);
 
     List<BatchResultDTO> bindShipment(List<RequisitionApplicationDTO.BindShipment> dto);
+
+    PagingVO<RequisitionApplicationDTO.WarehouseListDTO> pagingSelect(PagingDTO<RequisitionApplicationDTO.WarehouseSelectDTO> dto);
 }

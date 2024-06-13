@@ -12,6 +12,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -52,6 +53,7 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -109,6 +111,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+    @Resource
+    private VirtualWarehouseRelationService virtualWarehouseRelationService;
 
     @Resource
     @Lazy
@@ -1149,6 +1153,53 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         addDTO.setDetailList(detailAddDtoList);
         return transferInfoService.add(addDTO);
+    }
+
+    /**
+     * 仓库关联虚拟仓远程搜索
+     * @param dto
+     * @return
+     */
+    @Override
+    public PagingVO<RequisitionApplicationDTO.WarehouseListDTO> pagingSelect(PagingDTO<RequisitionApplicationDTO.WarehouseSelectDTO> dto) {
+        String virtualWarehouseId = dto.getParams().getVirtualWarehouseId();
+        //判断当前虚拟仓是否为空，不为空获取所有关联的实体仓
+        if (StringUtils.isNotBlank(virtualWarehouseId)) {
+            List<VirtualWarehouseRelationEntity> vwRelationList = virtualWarehouseRelationService.getByVirtualWarehouseId(virtualWarehouseId);
+            if (CollectionUtils.isEmpty(vwRelationList)){
+                return new PagingVO<>();
+            }else {
+                List<String> ids = vwRelationList.stream().map(VirtualWarehouseRelationEntity::getWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                dto.getParams().setIds(ids);
+            }
+        }
+
+        PagingDTO<WarehouseDTO.SelectDTO> warehouseDto=new PagingDTO<>();
+        warehouseDto.setPageSize(dto.getPageSize());
+        warehouseDto.setCurrPage(dto.getCurrPage());
+        WarehouseDTO.SelectDTO warehouseSelectDTO = new WarehouseDTO.SelectDTO();
+        BeanUtils.copyProperties(dto.getParams(),warehouseSelectDTO);
+        warehouseDto.setParams(warehouseSelectDTO);
+        PagingVO<WarehouseDTO.ListDTO> warehouseList = warehouseService.selectPaging(warehouseDto);
+        List<?> list = warehouseList.getList();
+        List<RequisitionApplicationDTO.WarehouseListDTO> warehouseListDTOS=new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(warehouse -> {
+                RequisitionApplicationDTO.WarehouseListDTO warehouseListDTO = new RequisitionApplicationDTO.WarehouseListDTO();
+                WarehouseDTO.ListDTO listDTO = (WarehouseDTO.ListDTO) warehouse;
+                BeanUtils.copyProperties(listDTO,warehouseListDTO);
+                if (!Objects.equals(ApproveStatusEnum.APPROVE, listDTO.getApproveStatus())) {
+                    warehouseListDTO.setDisabled(true);
+                    warehouseListDTO.setCanCheck(false);
+                }
+                warehouseListDTOS.add(warehouseListDTO);
+            });
+        }
+        PagingVO<RequisitionApplicationDTO.WarehouseListDTO> resultPage=new PagingVO<>();
+        resultPage.setPageSize(dto.getPageSize());
+        resultPage.setCurrPage(dto.getCurrPage());
+        resultPage.setList(warehouseListDTOS);
+        return resultPage;
     }
 
 }

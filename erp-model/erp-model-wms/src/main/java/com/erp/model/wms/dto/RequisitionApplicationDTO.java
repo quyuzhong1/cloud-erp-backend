@@ -921,4 +921,82 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer requisitionQty;
     }
+    /**
+     * 仓库列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseListDTO {
+
+        /**
+         * code
+         */
+        private String kingdeeWarehouseCode;
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 仓库类型 对应dict 表id
+         */
+        private String typeId;
+
+        /**
+         * 组织id
+         */
+        private String orgId;
+
+
+        /**
+         * 组织名称
+         */
+        private String orgName;
+
+        /**
+         * disabled
+         * true 禁用
+         */
+        private Boolean disabled;
+
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 是否可选
+         */
+        private Boolean canCheck=true;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseSelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 前端忽略
+         */
+        private List<String> ids;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+    }
+
 }
