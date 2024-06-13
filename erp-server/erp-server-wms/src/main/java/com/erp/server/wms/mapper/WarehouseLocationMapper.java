@@ -69,4 +69,13 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
 
     @Update("update warehouse_location set status = #{status} where type = 'location' and warehouse_id = #{warehouseId} and code = #{warehouseLocation}")
     Integer updateLocationStatus(String warehouseId, String warehouseLocation, String status);
+
+    /**
+     * 根据仓位状态统计仓位数量
+     * @param statusCode 仓位状态编码
+     * @return 统计数量
+     * @date: 2024-06-13
+     * @author: tanmujin
+     */
+    Integer countByStatus(@Param("statusCode") String statusCode);
 }

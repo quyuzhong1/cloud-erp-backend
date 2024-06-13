@@ -797,31 +797,19 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public List<WarehouseLocationDTO.tabDto> tabList() {
         List<WarehouseLocationDTO.tabDto> list = new ArrayList<>(4);
-        Integer occupiedCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("type", "location")
-                .eq("is_deleted", false)
-                .eq("status", WarehouseLocationStatusEnum.OCCUPIED.getCode()));
+        Integer occupiedCount = warehouseLocationMapper.countByStatus(WarehouseLocationStatusEnum.OCCUPIED.getCode());
         WarehouseLocationDTO.tabDto occupied = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.OCCUPIED.getCode(), occupiedCount);
         list.add(occupied);
 
-        Integer recyclableCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("type", "location")
-                .eq("is_deleted", false)
-                .eq("status", WarehouseLocationStatusEnum.RECYCLABLE.getCode()));
+        Integer recyclableCount = warehouseLocationMapper.countByStatus(WarehouseLocationStatusEnum.RECYCLABLE.getCode());
         WarehouseLocationDTO.tabDto recyclable = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.RECYCLABLE.getCode(), recyclableCount);
         list.add(recyclable);
 
-        Integer idleCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("type", "location")
-                .eq("is_deleted", false)
-                .eq("status", WarehouseLocationStatusEnum.IDLE.getCode()));
+        Integer idleCount = warehouseLocationMapper.countByStatus(WarehouseLocationStatusEnum.IDLE.getCode());
         WarehouseLocationDTO.tabDto idle = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.IDLE.getCode(), idleCount);
         list.add(idle);
 
-        Integer allCount = baseMapper.selectCount(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("type", "location")
-                .eq("is_deleted", false)
-                .ne("status", WarehouseLocationStatusEnum.STOP.getCode()));
+        Integer allCount = warehouseLocationMapper.countByStatus(null);
         WarehouseLocationDTO.tabDto all = new WarehouseLocationDTO.tabDto("all", allCount);
         list.add(all);
 
