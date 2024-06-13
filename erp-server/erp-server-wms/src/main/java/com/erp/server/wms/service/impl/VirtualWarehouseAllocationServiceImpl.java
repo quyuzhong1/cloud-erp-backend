@@ -27,6 +27,7 @@ import com.erp.model.wms.dto.excel.*;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
@@ -122,8 +123,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         // 新增明细
         virtualWarehouseAllocationDetailService.batchAdd(addDTO, virtualWarehouseAllocationEntity.getId());
         //保存附件
-        wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), WmsConstant.QC_PRODUCT, virtualWarehouseAllocationEntity.getId());
-
+        wmsAttachmentService.batchSaveNotDel(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), WmsConstant.QC_PRODUCT, virtualWarehouseAllocationEntity.getId());
         return new BaseResultDTO.AddDTO(virtualWarehouseAllocationEntity.getId(), code);
     }
 
@@ -290,7 +290,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         virtualWarehouseAllocationHandleService.handleData(allocationEntity);
         // 记录操作日志
         log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
-        String msg = StrUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单主单");
+        String msg = StrUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -594,7 +594,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return virtualInventoryQtyList;
     }
 
-    private static void checkInfo(VirtualWarehouseAllocationDTO.DetailDto detailDto, List<SkuVO> skuVOList, List<WarehouseDTO.UpdateDTO> warehouseList, List<VirtualWarehouseEntity> virtualWarehouseList) {
+    private void checkInfo(VirtualWarehouseAllocationDTO.DetailDto detailDto, List<SkuVO> skuVOList, List<WarehouseDTO.UpdateDTO> warehouseList, List<VirtualWarehouseEntity> virtualWarehouseList) {
         SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())).findFirst().orElse(null);
         if (Objects.isNull(skuVO)) {
             throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, detailDto.getSkuId());
@@ -608,6 +608,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTACTIVE, detailDto.getWarehouseId());
             }
         }
+
+        //根据实体仓获取虚拟仓
+        List<VirtualWarehouseRelationEntity> vwRelationList = virtualWarehouseRelationService.getByWarehouseId(Collections.singletonList(warehouseList.get(0).getId()));
+        if (CollUtil.isEmpty(vwRelationList) || Objects.isNull(vwRelationList.get(0))) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NORELATION_ERROR);
+        }
+
         detailDto.setWarehouseName(updateDTO.getName());
         if (StringUtils.isBlank(detailDto.getToVirtualWarehouseId()) && StringUtils.isBlank(detailDto.getFromVirtualWarehouseId())) {
             throw new ServiceException(ApiError.ERROR_FROM_TO_VM_BOTHEMPTY);
@@ -626,6 +633,12 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                     throw new ServiceException(ApiError.ERROR_TOVM_NOTACTIVE, detailDto.getToVirtualWarehouseId());
                 }
             }
+
+            VirtualWarehouseRelationEntity toVmRelation = vwRelationList.stream().filter(item ->
+                    Objects.equals(item.getVirtualWarehouseId(), detailDto.getToVirtualWarehouseId())).findFirst().orElse(null);
+            if (Objects.isNull(toVmRelation)) {
+                throw new ServiceException(ApiError.ERROR_VW_RELATION_ERROR, updateDTO.getName(), toVmWarehouse.getName());
+            }
             detailDto.setToVirtualWarehouseName(toVmWarehouse.getName());
             detailDto.setToVirtualWarehouseCode(toVmWarehouse.getCode());
         }
@@ -634,9 +647,14 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             if (Objects.isNull(fromVmWarehouse)) {
                 throw new ServiceException(ApiError.ERROR_FROMVM_NOTFOUND, detailDto.getFromVirtualWarehouseId());
             } else {
-                if (fromVmWarehouse.getDisabled()) {
+                if (Boolean.TRUE.equals(fromVmWarehouse.getDisabled())) {
                     throw new ServiceException(ApiError.ERROR_FROMVM_NOTACTIVE, detailDto.getFromVirtualWarehouseId());
                 }
+            }
+            VirtualWarehouseRelationEntity fromVmRelation = vwRelationList.stream().filter(item ->
+                    Objects.equals(item.getVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(null);
+            if (Objects.isNull(fromVmRelation)) {
+                throw new ServiceException(ApiError.ERROR_VW_RELATION_ERROR, updateDTO.getName(), fromVmWarehouse.getName());
             }
             detailDto.setFromVirtualWarehouseName(fromVmWarehouse.getName());
             detailDto.setFromVirtualWarehouseCode(fromVmWarehouse.getCode());

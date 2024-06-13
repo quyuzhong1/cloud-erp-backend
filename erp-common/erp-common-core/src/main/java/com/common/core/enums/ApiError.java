@@ -1034,6 +1034,8 @@ public enum ApiError implements Serializable {
     ERROR_FROM_VM_INVENTORY_ERROR(92216,"调出虚拟仓库存不足"),
     ERROR_APPROVEQTY_GT_VMUSABLEQTY_ERROR(92217,"批准数量不能大于虚拟仓可用库存"),
     ERROR_APPROVEQTY_GT_MUSABLEQTY_ERROR(92218,"批准数量不能大于仓库可用库存"),
+    ERROR_WAREHOUSE_NORELATION_ERROR(92219,"实体仓没有关联虚拟仓"),
+    ERROR_VW_RELATION_ERROR(92220,"实体仓【{}】没有关联虚拟仓【{}】"),
 
     /**
      * OMS 错误

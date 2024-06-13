@@ -117,7 +117,7 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
             errorMsgList.add("实体仓不能为空");
         }
         List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getWarehouseName()));
-        List<VirtualWarehouseDTO.VwDTO> vwDtoList = virtualWarehouseService.getByNames(Arrays.asList(vwAllocationAllocationExcelDTO.getToVirtualWarehouseName(),vwAllocationAllocationExcelDTO.getToVirtualWarehouseName()));
+        List<VirtualWarehouseDTO.VwDTO> vwDtoList = virtualWarehouseService.getByNames(Arrays.asList(vwAllocationAllocationExcelDTO.getFromVirtualWarehouseName(),vwAllocationAllocationExcelDTO.getToVirtualWarehouseName()));
         if (CollectionUtils.isEmpty(vwDtoList) || Objects.isNull(vwDtoList.get(0))) {
             errorMsgList.add("虚拟仓不存在");
         } else {
