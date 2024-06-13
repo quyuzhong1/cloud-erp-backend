@@ -73,7 +73,7 @@ public class PickingListsController extends BaseController {
      * @param id id
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "删除拣货单")
-    @DeleteMapping("/delete")
+    @PostMapping("/delete")
     public ApiResult<String> delete(@RequestParam String id) {
         pickingListsService.delete(id);
         return success();
@@ -99,8 +99,7 @@ public class PickingListsController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出拣货单")
     @PostMapping("/export")
     @WebAdvanceQuery
-    public ApiResult<String> export(@RequestBody @Validated PickingListsDTO.ExportDTO dto, HttpServletResponse response) {
+    public void export(@RequestBody @Validated PickingListsDTO.ExportDTO dto, HttpServletResponse response) {
         pickingListsService.export(dto, response);
-        return success();
     }
 }

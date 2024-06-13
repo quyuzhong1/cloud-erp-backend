@@ -123,7 +123,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                     .filter(staging -> staging.getBillType().equals(dto.getBillType()))
                     .filter(staging -> staging.getWarehouseId().equals(result.getWarehouseId()))
-                    .findFirst().orElse(new CfgRulePickingStagingEntity());
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
             // 获取产品信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream()
                     .filter(entityClass -> entityClass.getId().equals(result.getSkuId()))
@@ -241,13 +241,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         Map<String, String> locationMap = locationAndAreaList.stream()
                 .collect(Collectors.toMap(WarehouseLocationEntity::getCode, WarehouseLocationEntity::getParentId));
         Map<String, String> areaMap = locationAndAreaList.stream()
-                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, WarehouseLocationEntity::getName));
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, WarehouseLocationEntity::getName));
         for (PickingListsDTO.ExportInfoDTO infoDTO : list) {
             infoDTO.setWarehouseAreaName(areaMap.get(locationMap.get(infoDTO.getWarehouseLocation())));
             infoDTO.setStagingAreaName(areaMap.get(locationMap.get(infoDTO.getStagingLocation())));
         }
         StringBuilder sb = new StringBuilder();
-        String excelPath = "excel/productLogistics.xlsx";
+        String excelPath = "excel/pickingLists.xlsx";
         String name = "拣货单";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
