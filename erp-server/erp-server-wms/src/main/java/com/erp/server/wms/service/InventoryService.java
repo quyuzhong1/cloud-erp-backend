@@ -306,4 +306,14 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return
      */
     InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO);
+
+    /**
+     * 查询某个仓位的库存数量
+     * @param warehouseId 仓库ID
+     * @param warehouseLocation 仓位编码
+     * @return 库存数量
+     * @date: 2024-06-13
+     * @author: tanmujin
+     */
+    Integer getQtyByLocation(String warehouseId, String warehouseLocation);
 }

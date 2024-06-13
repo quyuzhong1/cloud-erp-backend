@@ -240,9 +240,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             inventorySaveDTO.setInventoryId(inventory.getId());
         }
 
-        //更新仓位状态
-        updateWarehouseLocationStatus(warehouseId, warehouseLocation);
-
         return inventorySaveDTO;
     }
 
@@ -1318,14 +1315,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         });
     }
 
-    private void updateWarehouseLocationStatus(String warehouseId, String warehouseLocation) {
-        Integer qty = inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation);
-        if(qty == 0){
-            //可回收
-            warehouseLocationService.updateLocationStatus(warehouseId, warehouseLocation, WarehouseLocationStatusEnum.RECYCLABLE.getCode());
-        }else {
-            //被占用
-            warehouseLocationService.updateLocationStatus(warehouseId, warehouseLocation, WarehouseLocationStatusEnum.OCCUPIED.getCode());
-        }
+    @Override
+    public Integer getQtyByLocation(String warehouseId, String warehouseLocation) {
+        return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation);
     }
 }

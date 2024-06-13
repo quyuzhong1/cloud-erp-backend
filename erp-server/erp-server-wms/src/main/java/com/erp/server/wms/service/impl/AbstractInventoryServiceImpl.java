@@ -16,11 +16,11 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.InOutStockCoreConverter;
@@ -36,6 +36,8 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
@@ -227,6 +229,9 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             }
 
             log.warn("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
+
+            //更新仓位占用状态
+            updateWarehouseLocationStatus(txnFlow.getWarehouseId(), txnFlow.getWarehouseLocation());
         });
     }
 
@@ -384,6 +389,9 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 rLock.unlock();
             }
         }
+
+        //根据库存数量更新仓位状态
+        updateWarehouseLocationStatus(param.getWarehouseId(), param.getWarehouseLocation());
     }
 
     /**
@@ -527,6 +535,9 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 rLock.unlock();
             }
         }
+
+        //根据库存数量更新仓位状态
+        updateWarehouseLocationStatus(param.getWarehouseId(), param.getWarehouseLocation());
     }
 
     /**
@@ -674,5 +685,18 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     @GlobalTransactional(rollbackFor = Exception.class,propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public InventoryRelationDTO createZeroInventoryRecord(InOutStockCoreDTO param, InventoryStatusEnum inventoryStatusEnum, String orgId) {
        return this.saveOrUpdateRelationInventory(param,inventoryStatusEnum,orgId);
+    }
+
+    /**
+     * 修改仓位占用状态
+     * @param warehouseId 仓库ID
+     * @param warehouseLocationCode 仓位编码
+     * @date: 2024-06-13
+     * @author: tanmujin
+     */
+    private void updateWarehouseLocationStatus(String warehouseId, String warehouseLocationCode) {
+        Integer qty = inventoryService.getQtyByLocation(warehouseId, warehouseLocationCode);
+        String statusCode = (qty == 0) ? WarehouseLocationStatusEnum.RECYCLABLE.getCode() : WarehouseLocationStatusEnum.OCCUPIED.getCode();
+        warehouseLocationService.updateLocationStatus(warehouseId, warehouseLocationCode, statusCode);
     }
 }
