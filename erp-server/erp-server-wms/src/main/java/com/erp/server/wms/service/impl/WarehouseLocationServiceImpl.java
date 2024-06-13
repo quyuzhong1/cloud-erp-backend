@@ -862,4 +862,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             operateLogService.addModuleOperateLog(String.format("编辑备注，由【%s】变更为【%s】", old.getRemark(), young.getRemark()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), old.getId(), "编辑操作", user.getUid(), user.getUserName());
         }
     }
+
+    @Override
+    public List<WarehouseLocationEntity> listByLocationName(String warehouseLocationName) {
+        return this.baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>()
+                .eq("type", "location")
+                .eq("name", warehouseLocationName)
+                .eq("is_deleted", false));
+    }
 }

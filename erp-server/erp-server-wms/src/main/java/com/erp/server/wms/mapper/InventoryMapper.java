@@ -158,7 +158,7 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * 以仓位的维度查询库存信息
      * @date 2024/06/04
      */
-    IPage<InventoryDTO.PagingViewDTO> pageByLocation(@Param("query") Page query, @Param("params") InventoryDTO.SearchParamDTO params);
+    IPage<InventoryDTO.PagingViewDTO> pageByLocation(@Param("query") Page query, @Param("params") InventoryDTO.SearchParamDTO params, @Param("codeList") List<String> codeList);
 
     /**
      * 按仓库统计数量

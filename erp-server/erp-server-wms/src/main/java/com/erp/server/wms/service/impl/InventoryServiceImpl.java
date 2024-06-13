@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -461,7 +462,13 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             pageData = this.baseMapper.pageByArea(query, pagingParamDTO.getParams());
         }
         if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
-            pageData = this.baseMapper.pageByLocation(query, pagingParamDTO.getParams());
+            if(StringUtils.isNotBlank(pagingParamDTO.getParams().getWarehouseLocationName())){
+                List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(pagingParamDTO.getParams().getWarehouseLocationName());
+                List<String> codeList = list.stream().map(WarehouseLocationEntity::getCode).distinct().collect(Collectors.toList());
+                pageData = this.baseMapper.pageByLocation(query, pagingParamDTO.getParams(), codeList);
+            }else {
+                pageData = this.baseMapper.pageByLocation(query, pagingParamDTO.getParams(), null);
+            }
         }
         // 填充名称
         fillInventoryPageData(pageData.getRecords());
@@ -493,7 +500,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             excelPath = "excel/inventory_area.xlsx";
         }
         if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
-            iPage = inventoryMapper.pageByLocation(page, searchParamDTO);
+            iPage = inventoryMapper.pageByLocation(page, searchParamDTO, null);
             excelPath = "excel/inventory_location.xlsx";
         }
 

@@ -900,7 +900,7 @@
                              left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
                              left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
                              left join product_sale ps on ps.sku_id = pd.id AND ps.is_deleted = FALSE
-                             left join (select distinct s.code as location_code, wa.code as area_code, s.warehouse_id
+                             left join (select distinct s.code as location_code, wa.code as area_code, s.warehouse_id, wa.name as area_name
                                         from warehouse_location s
                                                  left join warehouse_location wa
                                                            on s.parent_id = wa.id and s.is_deleted = false and wa.is_deleted = false) wl
@@ -940,8 +940,8 @@
                                 #{item}
                             </foreach>
                         </if>
-                        <if test="params.warehouseAreaCode != null and params.warehouseAreaCode != ''">
-                            and wl.area_code = #{params.warehouseAreaCode}
+                        <if test="params.warehouseAreaName != null and params.warehouseAreaName != ''">
+                            and wl.area_name = #{params.warehouseAreaName}
                         </if>
                         <if test="params.permissionSql != null and params.permissionSql != ''">
                             ${params.permissionSql}
@@ -1037,8 +1037,11 @@
                                     #{item}
                                 </foreach>
                             </if>
-                            <if test="params.warehouseLocationCode != null and params.warehouseLocationCode != ''">
-                                and it.warehouse_location = #{params.warehouseLocationCode}
+                            <if test="codeList != null and codeList.size > 0">
+                                and it.warehouse_location in
+                                <foreach collection="codeList" item="code" open="(" close=")" separator=",">
+                                    #{code}
+                                </foreach>
                             </if>
                             <if test="params.permissionSql != null and params.permissionSql != ''">
                                 ${params.permissionSql}

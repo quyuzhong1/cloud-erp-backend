@@ -79,14 +79,14 @@ public class InventoryDTO implements Serializable {
         private String dimension;
 
         /**
-         * 仓位编码
+         * 仓位名称
          */
-        private String warehouseLocationCode;
+        private String warehouseLocationName;
 
         /**
-         * 库区编码
+         * 库区名称
          */
-        private String warehouseAreaCode;
+        private String warehouseAreaName;
 
         /**
          * SKU ID编码集合
