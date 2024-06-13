@@ -1120,8 +1120,8 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/deliveryWithNotOutbound")
-    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto.getIds());
+    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody @Validated SoB2cDTO.DeliveryWithNotOutboundDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
