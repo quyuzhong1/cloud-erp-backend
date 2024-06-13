@@ -147,6 +147,12 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.skuIdList != null and params.skuIdList.size != ''">
+                and it.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.spuNoList != null and params.spuNoList.size != ''">
                 and pi.spu_no in
                 <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
@@ -916,6 +922,12 @@
                                 #{item}
                             </foreach>
                         </if>
+                        <if test="params.skuIdList != null and params.skuIdList.size != ''">
+                            and it.sku_id in
+                            <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                                #{item}
+                            </foreach>
+                        </if>
                         <if test="params.spuNoList != null and params.spuNoList.size != ''">
                             and pi.spu_no in
                             <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
@@ -1010,6 +1022,12 @@
                             <if test="params.skuNoList != null and params.skuNoList.size != ''">
                                 and it.sku_no in
                                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                                    #{item}
+                                </foreach>
+                            </if>
+                            <if test="params.skuIdList != null and params.skuIdList.size != ''">
+                                and it.sku_id in
+                                <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
                                     #{item}
                                 </foreach>
                             </if>
