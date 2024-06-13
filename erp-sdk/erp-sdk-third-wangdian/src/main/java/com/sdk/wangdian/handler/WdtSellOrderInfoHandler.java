@@ -95,7 +95,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             soOutStock.setOrderType(OrderTypeEnum.B2C.getCode());
             //审核时间
             soOutStock.setApproveTime(outStockTime);
-
+            soOutStock.setCreated(LocalDateTime.parse(order.getCreated(), DateTimeFormatter.ofPattern(DateUtil.fmt)));
             soOutStock.setCountry(order.getReceiverCountry());
             //第三方单据编号
             soOutStock.setThirdCode(order.getSrcOrderNo());

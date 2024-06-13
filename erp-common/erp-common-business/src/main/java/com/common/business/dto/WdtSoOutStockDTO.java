@@ -229,5 +229,7 @@ public class WdtSoOutStockDTO extends UniqueDto {
 
     private String shopNo;
 
+    private LocalDateTime created;
+
     private List<WdtSoOutStockDetailDTO> detailList;
 }
