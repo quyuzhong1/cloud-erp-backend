@@ -40,7 +40,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
@@ -180,7 +179,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                     List<String> newDictPlatformList = list.stream().map(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform).collect(Collectors.toList());
                     //校验是否存在过绑定关系
                     bindedDictPlatform.retainAll(newDictPlatformList);
-                    if (CollectionUtils.isNotEmpty(bindedDictPlatform)){
+                    if (CollectionUtils.isNotEmpty(bindedDictPlatform)) {
                     }
                 }
             });
@@ -350,16 +349,19 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      * 获取关联渠道
      *
      * @param key
+     * @param id
      * @return
      */
     @Override
-    public List<BaseDropDownDTO.Tree> tree(String key) {
+    public List<BaseDropDownDTO.Tree> tree(String key, String id) {
         List<BaseDropDownDTO.Tree> tree = omsDropDownFeign.tree(key);
         //获取当前已经绑定的所有渠道
         List<String> bindedDictPlatform = virtualWarehouseChannelService.getBindedDictPlatform();
         if (CollectionUtils.isEmpty(bindedDictPlatform)) {
             return tree;
         }
+        //获取当前数据绑定的平台
+        VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = virtualWarehouseChannelService.getByVirtualWarehouseId(id).stream().findFirst().orElse(null);
         for (BaseDropDownDTO.Tree dictPlatform : tree) {
             List<BaseDropDownDTO.ChildTree> childTreeList = dictPlatform.getChildTreeList();
             if (CollectionUtils.isEmpty(childTreeList)) {
@@ -367,7 +369,12 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             }
             childTreeList.forEach(childTree -> {
                 if (bindedDictPlatform.contains(childTree.getCode())) {
-                    childTree.setDisabled(true);
+                    if (Objects.nonNull(virtualWarehouseChannelEntity) && Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())
+                            && Objects.equals(virtualWarehouseChannelEntity.getDictPlatform(), childTree.getCode())) {
+                        childTree.setDisabled(false);
+                    } else {
+                        childTree.setDisabled(true);
+                    }
                 } else {
                     childTree.setDisabled(false);
                 }
@@ -377,8 +384,14 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     }
 
     @Override
-    public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
-        PagingVO<ShopDTO.ListDTO> pagingSelect = shopInfoFeign.pagingSelect(dto);
+    public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<VirtualWarehouseDTO.ShopSelectDTO> dto) {
+        PagingDTO<ShopDTO.SelectDTO> shopDto = new PagingDTO<>();
+        shopDto.setPageSize(dto.getPageSize());
+        shopDto.setCurrPage(dto.getCurrPage());
+        ShopDTO.SelectDTO selectDTO = new ShopDTO.SelectDTO();
+        BeanUtils.copyProperties(dto.getParams(), selectDTO);
+        shopDto.setParams(selectDTO);
+        PagingVO<ShopDTO.ListDTO> pagingSelect = shopInfoFeign.pagingSelect(shopDto);
         if (CollectionUtils.isEmpty(pagingSelect.getList())) {
             return new PagingVO<>();
         }
@@ -387,13 +400,26 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         if (CollectionUtils.isEmpty(bindedShopList)) {
             return pagingSelect;
         }
+        //获取当前虚拟仓绑定的店铺
+        List<VirtualWarehouseChannelEntity> warehouseChannelEntities = virtualWarehouseChannelService.getByVirtualWarehouseId(dto.getParams().getId());
+        List<String> shopIds = warehouseChannelEntities.stream().map(VirtualWarehouseChannelEntity::getRelationId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         pagingSelect.getList().forEach(shop -> {
             if (bindedShopList.contains(((ShopDTO.ListDTO) shop).getId())) {
-                ((ShopDTO.ListDTO) shop).setDisabled(true);
+                if (CollectionUtils.isNotEmpty(warehouseChannelEntities) && Objects.equals(warehouseChannelEntities.get(0).getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())
+                        && CollectionUtils.isNotEmpty(shopIds) && shopIds.contains(((ShopDTO.ListDTO) shop).getId()))){
+                    ((ShopDTO.ListDTO) shop).setDisabled(false);
+                } else{
+                    ((ShopDTO.ListDTO) shop).setDisabled(true);
+                }
             } else {
                 ((ShopDTO.ListDTO) shop).setDisabled(false);
             }
         });
         return pagingSelect;
+    }
+
+    @Override
+    public List<VirtualWarehouseDTO.VwDTO> getByNames(List<String> nameList) {
+        return baseMapper.getByNames(nameList);
     }
 }

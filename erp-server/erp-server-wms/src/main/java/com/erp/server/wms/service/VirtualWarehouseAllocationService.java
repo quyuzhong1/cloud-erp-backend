@@ -76,11 +76,37 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      */
     BatchResultDTO invalid(VirtualWarehouseAllocationEntity allocationEntity, String status, String invalidDescription);
 
+    /**
+     * 导出
+     *
+     * @param dto
+     * @param response
+     */
     void export(VirtualWarehouseAllocationDTO.ExportDTO dto, HttpServletResponse response);
 
-    VirtualWarehouseAllocationDTO.DetailDto importFile(String type, MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 导入
+     *
+     * @param type
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    VirtualWarehouseAllocationDTO.DetailViewDto importFile(String type, MultipartFile excelFile, HttpServletResponse response);
 
+    /**
+     * 获取数量
+     *
+     * @param dto
+     * @return
+     */
     List<VirtualWarehouseAllocationDTO.TabListDTO> tabList(PermissionsDTO dto);
 
+    /**
+     * 保存并提交
+     *
+     * @param dto
+     * @return
+     */
     BatchResultDTO saveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto);
 }

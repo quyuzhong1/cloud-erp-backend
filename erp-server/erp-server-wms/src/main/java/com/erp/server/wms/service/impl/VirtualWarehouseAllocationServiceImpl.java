@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,7 +16,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.PdaTabFlagPcEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
@@ -22,6 +23,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.*;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -30,6 +32,7 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
+import com.erp.server.wms.listener.*;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -43,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -84,9 +88,17 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Resource
     private WarehouseService warehouseService;
     @Resource
+    private VirtualWarehouseRelationService virtualWarehouseRelationService;
+    @Resource
     @Lazy
     private VirtualWarehouseAllocationServiceImpl service;
 
+    /**
+     * 新增
+     *
+     * @param addDTO
+     * @return
+     */
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -177,7 +189,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         detailDtos.forEach(detailDto -> {
             SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(skuVO)) {
-                detailDto.setProductName(skuVO.getBrandName());
+                detailDto.setProductName(skuVO.getSkuName());
                 detailDto.setImageUrl(skuVO.getSkuImagesUrl());
             }
             qtyDTOList.forEach(qtyDTO -> {
@@ -231,6 +243,11 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return new PagingVO(pageData);
     }
 
+    /**
+     * 设置sku
+     *
+     * @param records
+     */
     private void setSkuInfo(List<VirtualWarehouseAllocationDTO.ListDTO> records) {
         List<String> skuIds = records.stream().map(record -> record.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -278,6 +295,12 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    /**
+     * 导出
+     *
+     * @param dto
+     * @param response
+     */
     @Override
     public void export(VirtualWarehouseAllocationDTO.ExportDTO dto, HttpServletResponse response) {
         List<VirtualWarehouseAllocationDTO.ListDTO> list = baseMapper.listExport(dto);
@@ -298,37 +321,130 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
     }
 
+    /**
+     * 导入
+     *
+     * @param type
+     * @param excelFile
+     * @param response
+     * @return
+     */
     @Override
-    public VirtualWarehouseAllocationDTO.DetailDto importFile(String type, MultipartFile excelFile, HttpServletResponse response) {
-//        VirtualWarehouseAllocationExcelListener excelListenerUtil = new VirtualWarehouseAllocationExcelListener(this, warehouseService, warehouseLocationService, plmTaskFeign, inventoryService);
-//        try {
-//            EasyExcel.read(excelFile.getInputStream(), MoveInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-//        } catch (IOException e) {
-//            log.error("导入错误！", e);  throw new ServiceException(ApiError.ERROR_95124);
-//        } catch (ExcelCommonException e) {
-//            log.error("导入格式错误！",e);
-//            throw new ServiceException(ApiError.ERROR_1016);
-//        }
-//        //验证导入数据是否为空
-//        List<MoveInfoExcelDTO> allList = excelListenerUtil.getAllList();
-//        if (CollectionUtils.isEmpty(allList)) {
-//            throw new ServiceException(ApiError.ERROR_95123);
-//        }
-//        VirtualWarehouseAllocationDTO.DetailDto importDTO = new VirtualWarehouseAllocationDTO.DetailDto;
-//        List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
-//        String url = "";
-//        List<MoveInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
-//        if (errorList.size() > 0) {
-//            String fileName = "分货单导入错误信息.xlsx";
-//            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, MoveInfoExcelDTO.class);
-//            if (file != null && !file.isDirectory()) {
-//                url = FastDFSClientUtil.uploadFile(file, fileName);
-//            }
-//        }
-//        importDTO.setSuccessList(successList);
-//        importDTO.setErrorUrl(url);
-//        return importDTO;
-        return null;
+    public VirtualWarehouseAllocationDTO.DetailViewDto importFile(String type, MultipartFile excelFile, HttpServletResponse response) {
+        if (StringUtils.isBlank(type) || Objects.isNull(VirtualWarehouseAllocationTypeEnum.getEnum(type))) {
+            throw new ServiceException(ApiError.ERROR_99999);
+        }
+        VirtualWarehouseAllocationDTO.DetailViewDto importDTO = new VirtualWarehouseAllocationDTO.DetailViewDto();
+        switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
+            case ALLOCATION:
+                getAllocationImport(excelFile, importDTO);
+                break;
+            case TRANSFER:
+                getTransferImport(excelFile, importDTO);
+                break;
+            case CANCEL:
+                getCancelImport(excelFile, importDTO);
+                break;
+            default:
+                throw new ServiceException(ApiError.ERROR_99999);
+        }
+        return importDTO;
+    }
+
+    private void getAllocationImport(MultipartFile excelFile, VirtualWarehouseAllocationDTO.DetailViewDto importDTO) {
+        VirtualWarehouseAllocationExcelListener excelListenerUtil = new VirtualWarehouseAllocationExcelListener(
+                virtualWarehouseRelationService, warehouseService, virtualWarehouseService, plmTaskFeign, virtualInventoryService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<VwAllocationAllocationExcelDTO> allList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(allList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
+        String url = "";
+        List<VwAllocationAllocationExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "分货单导入错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+    }
+
+    private void getTransferImport(MultipartFile excelFile, VirtualWarehouseAllocationDTO.DetailViewDto importDTO) {
+        VirtualWarehouseAllocationTransferExcelListener excelListenerUtil = new VirtualWarehouseAllocationTransferExcelListener(
+                virtualWarehouseRelationService, warehouseService, virtualWarehouseService, plmTaskFeign, virtualInventoryService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationTransferExcelDTO1.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<VwAllocationAllocationTransferExcelDTO1> allList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(allList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
+        String url = "";
+        List<VwAllocationAllocationTransferExcelDTO1> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "分货单导入错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationCancelExcelDTO1.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+    }
+
+    private void getCancelImport(MultipartFile excelFile, VirtualWarehouseAllocationDTO.DetailViewDto importDTO) {
+        VirtualWarehouseAllocationCancelExcelListener excelListenerUtil = new VirtualWarehouseAllocationCancelExcelListener(
+                virtualWarehouseRelationService, warehouseService, virtualWarehouseService, plmTaskFeign, virtualInventoryService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationCancelExcelDTO1.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<VwAllocationAllocationCancelExcelDTO1> allList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(allList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
+        String url = "";
+        List<VwAllocationAllocationCancelExcelDTO1> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "分货单导入错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationCancelExcelDTO1.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
     }
 
     @Override
@@ -442,6 +558,12 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         checkInfoAndQty(virtualWarehouseAllocationEntity, detailList);
     }
 
+    /**
+     * 校验信息
+     *
+     * @param virtualWarehouseAllocationEntity
+     * @param detailList
+     */
     private void checkInfoAndQty(VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity, List<VirtualWarehouseAllocationDTO.DetailDto> detailList) {
         String type = virtualWarehouseAllocationEntity.getType();
         List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -482,7 +604,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (Objects.isNull(updateDTO)) {
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTFOUND, detailDto.getWarehouseId());
         } else {
-            if (updateDTO.getDisabled()) {
+            if (Boolean.TRUE.equals(updateDTO.getDisabled())) {
                 throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTACTIVE, detailDto.getWarehouseId());
             }
         }
@@ -490,12 +612,17 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (StringUtils.isBlank(detailDto.getToVirtualWarehouseId()) && StringUtils.isBlank(detailDto.getFromVirtualWarehouseId())) {
             throw new ServiceException(ApiError.ERROR_FROM_TO_VM_BOTHEMPTY);
         }
+
+        if (StringUtils.isNotBlank(detailDto.getToVirtualWarehouseId()) && StringUtils.isNotBlank(detailDto.getFromVirtualWarehouseId()) &&
+                Objects.equals(detailDto.getToVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())) {
+            throw new ServiceException(ApiError.ERROR_FROM_TO_VM_SAME);
+        }
         if (StringUtils.isNotBlank(detailDto.getToVirtualWarehouseId())) {
             VirtualWarehouseEntity toVmWarehouse = virtualWarehouseList.stream().filter(item -> Objects.equals(item.getId(), detailDto.getToVirtualWarehouseId())).findFirst().orElse(null);
             if (Objects.isNull(toVmWarehouse)) {
                 throw new ServiceException(ApiError.ERROR_TOVM_NOTFOUND, detailDto.getToVirtualWarehouseId());
             } else {
-                if (toVmWarehouse.getDisabled()) {
+                if (Boolean.TRUE.equals(toVmWarehouse.getDisabled())) {
                     throw new ServiceException(ApiError.ERROR_TOVM_NOTACTIVE, detailDto.getToVirtualWarehouseId());
                 }
             }
@@ -536,4 +663,42 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 break;
         }
     }
+
+//    @Override
+//    public VirtualWarehouseAllocationDTO.DetailViewDto importFile(String type, MultipartFile excelFile, HttpServletResponse response) {
+//        if (StringUtils.isBlank(type) || Objects.isNull(VirtualWarehouseAllocationTypeEnum.getEnum(type))) {
+//            throw new ServiceException(ApiError.ERROR_99999);
+//        }
+//        VirtualWarehouseAllocationDTO.DetailViewDto importDTO = new VirtualWarehouseAllocationDTO.DetailViewDto();
+//        VirtualWarehouseAllocationTransferExcelListener excelListenerUtil = new VirtualWarehouseAllocationTransferExcelListener(
+//                virtualWarehouseRelationService, warehouseService, virtualWarehouseService, plmTaskFeign, virtualInventoryService);
+//        try {
+//            EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationTransferExcelDTO1.class, excelListenerUtil).sheet(0).doRead();
+//        } catch (IOException e) {
+//            log.error("导入错误！", e);
+//            throw new ServiceException(ApiError.ERROR_95124);
+//        } catch (ExcelCommonException e) {
+//            log.error("导入格式错误！", e);
+//            throw new ServiceException(ApiError.ERROR_1016);
+//        }
+//        //验证导入数据是否为空
+//        List<VwAllocationAllocationTransferExcelDTO1> allList = excelListenerUtil.getAllList();
+//        if (CollectionUtils.isEmpty(allList)) {
+//            throw new ServiceException(ApiError.ERROR_95123);
+//        }
+//        List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
+//        String url = "";
+//        List<VwAllocationAllocationTransferExcelDTO1> errorList = excelListenerUtil.getErrorList();
+//        if (errorList.size() > 0) {
+//            String fileName = "分货单导入错误信息.xlsx";
+//            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationCancelExcelDTO1.class);
+//            if (file != null && !file.isDirectory()) {
+//                url = FastDFSClientUtil.uploadFile(file, fileName);
+//            }
+//        }
+//
+//        importDTO.setSuccessList(successList);
+//        importDTO.setErrorUrl(url);
+//        return importDTO;
+//    }
 }

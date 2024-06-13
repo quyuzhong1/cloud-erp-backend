@@ -50,7 +50,7 @@ public class VirtualWarehouseChannelEntity extends BaseEntity<VirtualWarehouseCh
     @TableField("dict_platform")
     private String dictPlatform;
     /**
-    * 关联类型：  platform 按平台 shop 按店铺
+    * 关联类型：  platform 按平台 shop 按店铺 VitualWarehouseChannelTypeEnum
     */
     @TableField("type")
     private String type;

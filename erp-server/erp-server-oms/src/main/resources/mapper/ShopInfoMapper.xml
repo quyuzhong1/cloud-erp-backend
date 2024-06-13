@@ -137,9 +137,9 @@
         <if test="params.dictPlatform != null and params.dictPlatform != ''">
             and si.dict_platform = #{params.dictPlatform}
         </if>
-        <if test="params.ids != null and params.ids.size > 0">
+        <if test="params.shopIdList != null and params.shopIdList.size > 0">
             and si.id in
-            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+            <foreach collection="params.shopIdList" item="item" open="(" close=")" separator=",">
                 (#{item})
             </foreach>
         </if>

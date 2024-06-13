@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -23,4 +25,6 @@ import org.apache.ibatis.annotations.Param;
 public interface VirtualWarehouseMapper extends BaseMapper<VirtualWarehouseEntity> {
 
     IPage<VirtualWarehouseDTO.ListDTO> paging(Page query, @Param("params") VirtualWarehouseDTO.PagingParamDTO params);
+
+    List<VirtualWarehouseDTO.VwDTO> getByNames(@Param("nameList")List<String> nameList);
 }

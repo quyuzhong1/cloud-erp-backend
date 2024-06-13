@@ -1,15 +1,11 @@
 package com.erp.server.wms.service;
 
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -70,7 +66,10 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      */
     VirtualWarehouseDTO.ViewDTO view(String id);
 
-    List<BaseDropDownDTO.Tree> tree(String key);
+    List<BaseDropDownDTO.Tree> tree(String key, String id);
 
-    PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
+    PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<VirtualWarehouseDTO.ShopSelectDTO> dto);
+
+    List<VirtualWarehouseDTO.VwDTO> getByNames(List<String> list);
+
 }

@@ -250,7 +250,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载分货单导入模板")
     @GetMapping("/exportTemplate")
     public void exportTemplate(@RequestParam(value = "type") String type, HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/pdaMoveInfoTemplate.xlsx";
+        String path = "classpath:excel/VwAllocation"+type+"Template.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -270,14 +270,21 @@ public class VirtualWarehouseAllocationController extends BaseController {
         }
     }
 
+    /**
+     * 导入
+     * @param type
+     * @param excelFile
+     * @param response
+     * @return
+     */
     @LogAction(value = LogActionEnum.IMPORT, desc = "分货单导入")
     @PostMapping("/importFile")
-    public ApiResult<VirtualWarehouseAllocationDTO.DetailDto> importFile(@RequestParam(value = "type") String type, @RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<VirtualWarehouseAllocationDTO.DetailViewDto> importFile(@RequestParam(value = "type") String type, @RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         return success(virtualWarehouseAllocationService.importFile(type,excelFile, response));
     }
 
     /**
-     * 获取状态统计
+     * 获取数量统计
      * @return
      */
     @PostMapping("/tabList")

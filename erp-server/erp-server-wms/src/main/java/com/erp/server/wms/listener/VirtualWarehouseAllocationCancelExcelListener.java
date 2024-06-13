@@ -6,24 +6,27 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.VwAllocationAllocationCancelExcelDTO1;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.VirtualInventoryService;
+import com.erp.server.wms.service.VirtualWarehouseRelationService;
+import com.erp.server.wms.service.VirtualWarehouseService;
+import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 分货单校验
@@ -31,7 +34,7 @@ import java.util.stream.Collectors;
  * @author Lambda
  * @Classname VirtualWarehouseAllocationExcelListener
  */
-public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListener<VwAllocationAllocationExcelDTO> {
+public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEventListener<VwAllocationAllocationCancelExcelDTO1> {
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
 
     private WarehouseService warehouseService;
@@ -46,19 +49,19 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
     /**
      * 导入数据，用于判断导入是否为空
      */
-    private List<VwAllocationAllocationExcelDTO> allList = new ArrayList<>();
+    private List<VwAllocationAllocationCancelExcelDTO1> allList = new ArrayList<>();
     /**
      * 导入错误数据
      */
-    private List<VwAllocationAllocationExcelDTO> errorList = new ArrayList<>();
+    private List<VwAllocationAllocationCancelExcelDTO1> errorList = new ArrayList<>();
 
 
     private PlmTaskFeign plmTaskFeign;
 
 
-    public VirtualWarehouseAllocationExcelListener(VirtualWarehouseRelationService virtualWarehouseRelationService,
-                                                   WarehouseService warehouseService, VirtualWarehouseService virtualWarehouseService,
-                                                   PlmTaskFeign plmTaskFeign,VirtualInventoryService virtualInventoryService) {
+    public VirtualWarehouseAllocationCancelExcelListener(VirtualWarehouseRelationService virtualWarehouseRelationService,
+                                                         WarehouseService warehouseService, VirtualWarehouseService virtualWarehouseService,
+                                                         PlmTaskFeign plmTaskFeign, VirtualInventoryService virtualInventoryService) {
         this.warehouseService = warehouseService;
         this.virtualWarehouseRelationService = virtualWarehouseRelationService;
         this.virtualWarehouseService = virtualWarehouseService;
@@ -76,7 +79,7 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void invoke(VwAllocationAllocationExcelDTO vwAllocationAllocationExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(VwAllocationAllocationCancelExcelDTO1 vwAllocationAllocationExcelDTO, AnalysisContext analysisContext) {
         //添加数据用于判断是否为空
         allList.add(vwAllocationAllocationExcelDTO);
         List<String> msgList = FieldValidUtil.fieldValid(vwAllocationAllocationExcelDTO);
@@ -114,14 +117,14 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
             errorMsgList.add("实体仓不能为空");
         }
         List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getWarehouseName()));
-        List<VirtualWarehouseDTO.VwDTO> vwDtoList = virtualWarehouseService.getByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getToVirtualWarehouseName()));
+        List<VirtualWarehouseDTO.VwDTO> vwDtoList = virtualWarehouseService.getByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getFromVirtualWarehouseName()));
         if (CollectionUtils.isEmpty(vwDtoList) || Objects.isNull(vwDtoList.get(0))) {
-            errorMsgList.add("调入虚拟仓不存在");
+            errorMsgList.add("调出虚拟仓不存在");
         } else {
             if (Boolean.TRUE.equals(vwDtoList.get(0).getDisabled())) {
-                errorMsgList.add("调入虚拟仓非启用状态");
+                errorMsgList.add("调出虚拟仓非启用状态");
             }else {
-                detailDto.setToVirtualWarehouseId(vwDtoList.get(0).getId());
+                detailDto.setFromVirtualWarehouseId(vwDtoList.get(0).getId());
             }
         }
 
@@ -134,7 +137,7 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
                 //根据实体仓获取虚拟仓
                 List<VirtualWarehouseRelationEntity> vwRelationList = virtualWarehouseRelationService.getByWarehouseId(Collections.singletonList(warehouseList.get(0).getId()));
                 if (CollUtil.isEmpty(vwRelationList) || Objects.isNull(vwRelationList.get(0))) {
-                    errorMsgList.add("当前实体仓没有此调入虚拟仓");
+                    errorMsgList.add("当前实体仓没有此调出虚拟仓");
                 } else {
                     BeanUtils.copyProperties(vwAllocationAllocationExcelDTO, detailDto);
                     detailDto.setWarehouseId(warehouseList.get(0).getId());
@@ -152,9 +155,6 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
                             detailDto.setWarehouseUsableQty(qtyDTO.getWarehouseAllocationQty());
                             if (Objects.equals(qtyDTO.getFromVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())) {
                                 detailDto.setFromVirtualWarehouseUsableQty(qtyDTO.getFromVirtualWarehouseUsableQty());
-                            }
-                            if (Objects.equals(qtyDTO.getToVirtualWarehouseId(), detailDto.getToVirtualWarehouseId())) {
-                                detailDto.setToVirtualWarehouseUsableQty(qtyDTO.getToVirtualWarehouseUsableQty());
                             }
                         }
                     });
@@ -184,7 +184,7 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
 
     }
 
-    public List<VwAllocationAllocationExcelDTO> getErrorList() {
+    public List<VwAllocationAllocationCancelExcelDTO1> getErrorList() {
         return errorList;
     }
 
@@ -192,7 +192,7 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
         return successList;
     }
 
-    public List<VwAllocationAllocationExcelDTO> getAllList() {
+    public List<VwAllocationAllocationCancelExcelDTO1> getAllList() {
         return allList;
     }
 }

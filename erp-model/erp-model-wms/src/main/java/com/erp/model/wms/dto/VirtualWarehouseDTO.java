@@ -67,6 +67,33 @@ public class VirtualWarehouseDTO implements Serializable {
         private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
         private List<String> warehouseIdList;
     }
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VwDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 是否失效 true 失效 false 未失效
+         */
+        private Boolean disabled;
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+    }
 
     /**
      * 新增
@@ -215,4 +242,30 @@ public class VirtualWarehouseDTO implements Serializable {
         }
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopSelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 是否已授权
+         */
+        private Boolean showByAuth = false;
+        /**
+         * 平台
+         */
+        private List<String> shopIdList;
+        /**
+         * 虚拟仓id
+         */
+        private String id;
+    }
 }

@@ -137,14 +137,14 @@ public class VirtualWarehouseController extends BaseController {
      */
     @GetMapping("/tree")
     @LogViewService
-    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam("key") String key) {
-        return success(virtualWarehouseService.tree(key));
+    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam("key") String key,@RequestParam("id") String id) {
+        return success(virtualWarehouseService.tree(key,id));
     }
     /**
      * 详情
      */
     @PostMapping("/pagingSelect")
-    public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto){
+    public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<VirtualWarehouseDTO.ShopSelectDTO> dto){
         return success(virtualWarehouseService.pagingSelect(dto));
     }
 }

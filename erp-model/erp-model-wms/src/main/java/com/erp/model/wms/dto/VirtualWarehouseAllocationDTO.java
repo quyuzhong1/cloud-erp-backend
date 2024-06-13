@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
@@ -11,6 +12,7 @@ import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotBlank;
@@ -460,7 +462,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
     }
 
     /**
-     * 手动完结
+     * 明细数据
      */
     @Data
     @NoArgsConstructor
@@ -514,6 +516,31 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         public String getSyncStatusName() {
             return VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(syncStatus);
         }
+    }
+    /**
+     * 明细数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DetailViewDto {
+
+        /**
+         * 错误的url
+         */
+        private String errorUrl;
+        /**
+         * 导入正确数据
+         */
+        private List<VirtualWarehouseAllocationDTO.DetailDto> successList = new ArrayList<>();
+        /**
+         * 导入数据，用于判断导入是否为空
+         */
+        private List<VwAllocationAllocationExcelDTO> allList = new ArrayList<>();
+        /**
+         * 导入错误数据
+         */
+        private List<VwAllocationAllocationExcelDTO> errorList = new ArrayList<>();
+
     }
 
     @Data

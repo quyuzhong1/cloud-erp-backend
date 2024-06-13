@@ -60,6 +60,18 @@
         </if>
         vw.id desc
     </select>
+    <select id="getByNames" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$VwDTO">
+        SELECT
+        id,
+        name,code,disabled
+        FROM virtual_warehouse  WHERE is_deleted=false
+        <if test="nameList != null and nameList.size > 0">
+            and name in
+            <foreach collection="nameList" item="name" open="(" close=")" separator=",">
+                #{name}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>
