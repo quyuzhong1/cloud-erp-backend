@@ -7549,7 +7549,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-
+            if(!dto.getPlatformShipFlag() && !soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                this.approveEnd(approveOneDTO,soB2cEntity,true);
+                soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+            }
             if(dto.getPlatformShipFlag() && this.checkPlatformShipOrder(soB2cEntity.getId()) && !soB2cEntity.hasPlatformWarehouseOrder()){
                 //调用第三方平台SDK声明发货
                 try {
