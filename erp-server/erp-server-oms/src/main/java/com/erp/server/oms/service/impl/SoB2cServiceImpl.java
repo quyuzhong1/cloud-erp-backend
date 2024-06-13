@@ -2608,7 +2608,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //产品信息
         List<String> skuIdList = data.getDetailList().stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         Map<String, SkuVO> skuVOMap = new HashMap<>();
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList =  plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //子sku
         List<String> skuIds = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
