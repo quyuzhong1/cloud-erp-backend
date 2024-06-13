@@ -2,12 +2,13 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -200,6 +201,30 @@ public class VirtualWarehouseChannelDTO implements Serializable {
          * 关联id（例如店铺）
          */
         private List<String> relationList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformDTO{
+
+        /**
+         * 关联id（如店铺id）,无关联id时传空字符
+         */
+        @NotNull(message = "关联id不能为null")
+        private String relationId;
+
+        /**
+         * 平台
+         */
+        @NotBlank(message = "平台不能为空")
+        private String dictPlatform;
+
+        /**
+         * 实体仓Id集合
+         */
+        @NotEmpty(message = "实体仓不能为空")
+        private List<String> warehouseIdList;
     }
 
 }

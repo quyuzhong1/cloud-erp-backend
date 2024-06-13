@@ -4,6 +4,7 @@ import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 
 import java.util.List;
 
@@ -56,4 +57,12 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
     List<String> getBindedDictPlatform();
 
     List<String> getBindedShopByDictPlatform(String dictPlatform);
+    /**
+     *  根据关联id、平台、实体仓库id查询
+     * @author will
+     * @date 2024/6/12 14:20
+     * @param platformDTO
+     * @return List<VirtualWarehouseRelationEntity>
+     */
+    List<VirtualWarehouseRelationEntity> getVirtualWarehouse(VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
 }

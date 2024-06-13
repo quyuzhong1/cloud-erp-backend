@@ -252,6 +252,11 @@ public class WarehouseDTO implements Serializable {
          */
         private Integer inventoryQty;
 
+        /**
+         * 虚拟库存数量
+         */
+        private Integer virtualInventoryQty;
+
     }
 
     @Data
@@ -279,6 +284,16 @@ public class WarehouseDTO implements Serializable {
          */
         @NotEmpty(message = "SKU不能为空")
         private List<String> skuIdList;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 关联id
+         */
+        private String relationId;
 
         /**
          * 关键词

@@ -136,23 +136,25 @@
 
     <!-- 库存差异列表数量 -->
     <select id="diffPagingCount" resultType="java.lang.Integer">
-        select
-            count(0)
-        from virtual_inventory vi
-        left join (
-        select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
-        and inv.dict_inventory_status = 'usable'
-        group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
-        ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
-        and vi.dict_inventory_status = inv.dict_inventory_status
-        <where>
-           vi.is_deleted = false
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
-            </if>
-        </where>
-        group by vi.sku_id,vi.warehouse_id
-        having COALESCE(sum(vi.qty),0) > COALESCE(sum(inv.qty),0)
+        select count(0) from (
+            select
+            vi.sku_id,vi.warehouse_id
+            from virtual_inventory vi
+            left join (
+            select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
+            and inv.dict_inventory_status = 'usable'
+            group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
+            ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
+            and vi.dict_inventory_status = inv.dict_inventory_status
+            <where>
+               vi.is_deleted = false
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+            </where>
+            group by vi.sku_id,vi.warehouse_id
+            having COALESCE(sum(vi.qty),0) > COALESCE(sum(inv.qty),0)
+            ) a;
     </select>
 
     <!-- 库存差异明细分页查询 -->
@@ -160,8 +162,8 @@
         select
             vi.virtual_warehouse_id as virtualWarehouseId,
             COALESCE(sum(vi.qty),0) as virtualQty,
-            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
-            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty
+            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
+            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty
         from virtual_inventory vi
         <where>
             vi.is_deleted = false
@@ -170,7 +172,7 @@
                 ${params.permissionSql}
             </if>
         </where>
-        group by vi.virtual_warehouse_id
+        group by vi.virtual_warehouse_id,vi.sku_id,vi.warehouse_id
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -246,6 +248,36 @@
             #{warehouseId}
         </foreach>
         GROUP BY vi.warehouse_id, vi.sku_id
+    </select>
+
+    <!-- 根据实体仓库id集合查询虚拟库存数量 -->
+    <select id="listInventoryQty"
+            resultType="com.erp.model.wms.dto.VirtualInventoryDTO$VirtualInventoryQtyDTO">
+        select
+               vi.sku_id,
+               vi.warehouse_id,
+               vi.virtual_warehouse_id,
+               vi.dict_inventory_status,
+               COALESCE(sum(vi.qty),0) as inventoryQty
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false and  vi.sku_id in
+            <foreach collection="params.warehouseIdList" item="item" separator="," close="(" open=")">
+                #{item}
+            </foreach>
+            and vi.warehouse_id in
+            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            and vi.virtual_warehouse_id in
+            <foreach collection="params.virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            <if test="params.dictInventoryStatus != null and params.dictInventoryStatus != ''">
+                and vi.dict_inventory_status = #{params.dictInventoryStatus}
+            </if>
+        </where>
+        group by  vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id,vi.dict_inventory_status
     </select>
 
 

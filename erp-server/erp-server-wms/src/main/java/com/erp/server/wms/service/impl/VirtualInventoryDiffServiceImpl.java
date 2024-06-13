@@ -62,7 +62,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //库存差异
-        Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff")).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
         if (ObjectUtil.isNotNull(isDiff)) {
             dto.getParams().setIsDiff(Boolean.valueOf(isDiff.toString()));
         }

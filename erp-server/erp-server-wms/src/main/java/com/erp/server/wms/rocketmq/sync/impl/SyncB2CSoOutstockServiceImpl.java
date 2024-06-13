@@ -23,11 +23,13 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockRuleDTO;
 import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
@@ -37,10 +39,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
-import com.erp.server.wms.service.InventoryTransCoreService;
-import com.erp.server.wms.service.SoOutstockDetailService;
-import com.erp.server.wms.service.SoOutstockService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -51,10 +50,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -89,6 +85,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private SyncKingdeeSoOutstockService syncKingdeeSoOutstockService;
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
+
+    @Resource
+    private VirtualWarehouseChannelService VirtualWarehouseChannelService;
 
     /**
      * 同步金蝶的销售出库单
@@ -180,9 +179,14 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if (ObjectUtil.isNotEmpty(company)) {
             soOutstock.setWarehouseOrgName(company.getCompanyName());
         }
+
         //仓库
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setWarehouseName(warehouse.getName());
+
+        //查询虚拟仓
+        handleVirtualWarehouse(soOutstock,shopInfo);
+
         //客户信息
         soOutstock.setCustomerId(shopInfo.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfo)) {
@@ -421,7 +425,22 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         return result;
     }
 
-
+    /**
+     * 获取虚拟仓
+     * @author will
+     * @date 2024/6/13 12:07
+     * @param soOutstock
+     */
+    private void handleVirtualWarehouse (SoOutstockEntity soOutstock,ShopInfoEntity shopInfo) {
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(shopInfo.getDictPlatform());
+        platformDTO.setRelationId(shopInfo.getId());
+        platformDTO.setWarehouseIdList(Arrays.asList(soOutstock.getWarehouseId()));
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = VirtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
+        if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+            throw new ServiceException(ApiError.ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST,shopInfo.getDictPlatform());
+        }
+    }
 }
 
 

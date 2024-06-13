@@ -2,10 +2,12 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -33,7 +35,7 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private Integer index;
         /**
-         * skuId
+         * skuId【可排序】
          */
         private String skuId;
         /**
@@ -381,6 +383,7 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private List<QtySearchDTO> qtySearchList;
     }
+
     /**
      * 即时库存查询条件
      */
@@ -406,4 +409,68 @@ public class VirtualInventoryDTO implements Serializable {
         private List<String> virtualWarehouseIdList;
 
     }
+
+    /**
+     * 即时库存查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VirtualInventoryParamDTO {
+
+        /**
+         * skuId集合
+         */
+        @NotEmpty(message = "SKU不能为空")
+        private List<String> skuIdList;
+
+
+        /**
+         * 仓库id集合
+         */
+        @NotEmpty(message = "实体仓库不能为空")
+        private List<String> warehouseIdList;
+
+
+        /**
+         * 虚拟仓id
+         */
+        @NotEmpty(message = "虚拟仓不能为空")
+        private List<String> virtualWarehouseIdList;
+
+        /**
+         * 库存状态
+         */
+        private String dictInventoryStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class VirtualInventoryQtyDTO {
+
+        /**
+         * SKU
+         */
+        private String skuId;
+
+        /**
+         * 实体仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+
+        /**
+         * 库存状态
+         */
+        private String dictInventoryStatus;
+
+        /**
+         * 库存数量
+         */
+        private Integer inventoryQty;
+    }
+
 }

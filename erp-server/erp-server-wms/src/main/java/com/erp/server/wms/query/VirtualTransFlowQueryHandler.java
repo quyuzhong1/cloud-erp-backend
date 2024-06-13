@@ -34,17 +34,17 @@ public class VirtualTransFlowQueryHandler extends AbstractQueryHandler {
         String date = LocalDateUtil.formatTime(dateTime, DateUtil.fmt_day);
         // 今天
         if ("today".equals(value)) {
-            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.GT, date, QueryDataTypeEnum.DATE);
+            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.GE, date, QueryDataTypeEnum.DATE);
             super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.LT,  LocalDateUtil.formatTime(dateTime.plusDays(1L), DateUtil.fmt_day), QueryDataTypeEnum.DATE);
         }
         // 昨天
         if ("yesterday".equals(value)) {
-            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.GT,  LocalDateUtil.formatTime(dateTime.minusDays(1L), DateUtil.fmt_day), QueryDataTypeEnum.DATE);
+            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.GE,  LocalDateUtil.formatTime(dateTime.minusDays(1L), DateUtil.fmt_day), QueryDataTypeEnum.DATE);
             super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.LT, date, QueryDataTypeEnum.DATE);
         }
         // 近七天
         if ("week".equals(value)) {
-            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.GT,  LocalDateUtil.formatTime(dateTime.minusDays(7L), DateUtil.fmt_day), QueryDataTypeEnum.DATE);
+            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.GE,  LocalDateUtil.formatTime(dateTime.minusDays(7L), DateUtil.fmt_day), QueryDataTypeEnum.DATE);
             super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.LT, date, QueryDataTypeEnum.DATE);
         }
         //近一个月

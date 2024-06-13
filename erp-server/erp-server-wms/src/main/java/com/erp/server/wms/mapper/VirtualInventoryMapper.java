@@ -90,5 +90,12 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
     List<VirtualInventoryDTO.ViewQtyDTO> getUsableQty(@Param("params")VirtualInventoryDTO.ParamDTO params);
 
     List<VirtualInventoryDTO.ViewQtyDTO> getRealQty(@Param("params")VirtualInventoryDTO.ParamDTO params);
-
+    /**
+     * 根据实体仓库id集合查询虚拟可用库存数量
+     * @author will
+     * @date 2024/6/12 17:28
+     * @param params
+     * @return List<VirtualInventoryQtyDTO>
+     */
+    List<VirtualInventoryDTO.VirtualInventoryQtyDTO> listInventoryQty(@Param("params")VirtualInventoryDTO.VirtualInventoryParamDTO params);
 }

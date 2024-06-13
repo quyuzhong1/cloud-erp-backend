@@ -1,32 +1,33 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.wms.mapper.VirtualWarehouseChannelMapper;
-import com.erp.server.wms.service.VirtualWarehouseChannelService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.VirtualWarehouseChannelService;
+import com.erp.server.wms.service.VirtualWarehouseRelationService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -41,6 +42,11 @@ import javax.annotation.Resource;
 public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<VirtualWarehouseChannelMapper, VirtualWarehouseChannelEntity> implements VirtualWarehouseChannelService {
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private VirtualWarehouseRelationService virtualWarehouseRelationService;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -164,6 +170,30 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     @Override
     public List<String> getBindedShopByDictPlatform(String dictPlatform) {
         return baseMapper.getBindedShopByDictPlatform(dictPlatform);
+    }
+
+    @Override
+    public List<VirtualWarehouseRelationEntity> getVirtualWarehouse(VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
+        VirtualWarehouseChannelEntity channelEntity = this.getByPlatform(platformDTO);
+        if (ObjectUtil.isEmpty(channelEntity)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList());
+        if (ObjectUtil.isEmpty(warehouseEntityList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return warehouseEntityList;
+    }
+
+    /**
+     * 根据关联id和平台查询
+     * @author will
+     * @date 2024/6/12 12:34
+     * @param platformDTO
+     * @return VirtualWarehouseChannelEntity
+     */
+    private VirtualWarehouseChannelEntity getByPlatform (VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
+        return  baseMapper.getByPlatform(platformDTO);
     }
 
 

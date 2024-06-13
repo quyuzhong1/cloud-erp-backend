@@ -75,6 +75,11 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("warehouse_name")
      private String warehouseName;
     /**
+     * 虚拟仓库Id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
+    /**
     * 单价
     */
     @TableField("price")

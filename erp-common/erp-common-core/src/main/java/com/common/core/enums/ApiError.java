@@ -1040,6 +1040,8 @@ public enum ApiError implements Serializable {
     ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR(92222,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】- 调出虚拟仓【{}】”重复\n"),
     ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR(92222,"“SKU【{}】- 实体仓【{}】- 调出虚拟仓【{}】”重复\n"),
 
+    ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST(92219,"平台【{}】下未找到对应虚拟仓库"),
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
