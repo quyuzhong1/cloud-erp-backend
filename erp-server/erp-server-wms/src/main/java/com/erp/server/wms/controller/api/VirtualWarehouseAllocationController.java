@@ -50,7 +50,7 @@ import java.util.Objects;
  */
 @Slf4j
 @RestController
-@LogSystemModule("虚拟仓分货单")
+@LogSystemModule("分货单")
 @RequestMapping("/virtualWarehouseAllocation")
 public class VirtualWarehouseAllocationController extends BaseController {
 
@@ -68,7 +68,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
      * @date: 2024-06-05
      */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓分货单新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "分货单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseAllocationDTO.AddDTO dto) {
         return success(virtualWarehouseAllocationService.add(dto));
     }
@@ -82,7 +82,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
      * @date: 2024-06-05
      */
     @PostMapping("/saveAndSubmit")
-    @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓分货单保存并提交")
+    @LogAction(value = LogActionEnum.INSERT, desc = "分货单保存并提交")
     public ApiResult<BatchResultDTO> addAndSubmit(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateDTO dto) {
         return success(virtualWarehouseAllocationService.saveAndSubmit(dto));
     }
@@ -96,7 +96,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
      * @date: 2024-06-05
      */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "虚拟仓分货单修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "分货单修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:virtualWarehouseAllocation:update",
@@ -140,7 +140,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
         return success(virtualWarehouseAllocationService.view(id));
     }
 
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交虚拟仓分货单信息")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交分货单信息")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -183,7 +183,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
         return resultDTOS.stream().anyMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "作废虚拟仓分货单信息")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "作废分货单信息")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

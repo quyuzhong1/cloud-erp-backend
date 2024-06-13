@@ -42,7 +42,7 @@ import java.util.Objects;
  */
 @Slf4j
 @RestController
-@LogSystemModule("虚拟仓分货单明细")
+@LogSystemModule("分货单明细")
 @RequestMapping("/virtualWarehouseAllocationDetail")
 public class VirtualWarehouseAllocationDetailController extends BaseController {
 
@@ -60,7 +60,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
      * @date: 2024-06-05
      */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓分货单明细新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "分货单明细新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseAllocationDetailDTO.AddDTO dto) {
         return success(virtualWarehouseAllocationDetailService.batchAdd(dto));
     }
@@ -74,7 +74,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
      * @date: 2024-06-05
      */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "虚拟仓分货单明细修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "分货单明细修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:virtualWarehouseAllocationDetail:update",
@@ -91,7 +91,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "手动完结虚拟仓分货单信息")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "手动完结分货单信息")
     @PostMapping("/manualFinish")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -138,7 +138,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
      * @param detailId
      * @return
      */
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "手动完结虚拟仓分货单信息")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "手动完结分货单信息")
     @GetMapping("/sync")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

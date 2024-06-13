@@ -1016,7 +1016,7 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_NOTACTIVE(92204,"实体仓是启用状态"),
     ERROR_ONLYONE(92205,"一个渠道只能关联一种类型"),
     ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST(92140,"虚拟仓不存在"),
-    ERROR_VMALLOCATION_DETAIL_ADD(92206 , "虚拟仓分货单明细保存失败"),
+    ERROR_VMALLOCATION_DETAIL_ADD(92206 , "分货单明细保存失败"),
     ERROR_INVENTORY_INSUFFICIENT(92207,"实体仓库存不足，SKU:【{}】,实物仓:【{}】,实物仓可分配库存:【{}】"),
     ERROR_SKU_NOTFOUND(92208,"SKU不存在【{}】"),
     ERROR_FROM_TO_VM_BOTHEMPTY(92209,"调入虚拟仓和调出虚拟仓不能同时为空"),

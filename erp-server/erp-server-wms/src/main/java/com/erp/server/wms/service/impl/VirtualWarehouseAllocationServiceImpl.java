@@ -107,13 +107,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         BeanMapperUtils.copy(addDTO, virtualWarehouseAllocationEntity);
         // 数据处理
         handleData(virtualWarehouseAllocationEntity, addDTO.getDetailList());
-        log.info("开始新增虚拟仓分货单");
+        log.info("开始新增分货单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FH);
         virtualWarehouseAllocationEntity.setCode(code);
         boolean save = super.save(virtualWarehouseAllocationEntity);
         if (!save) {
-            throw new ServiceException("虚拟仓分货单保存失败");
+            throw new ServiceException("分货单保存失败");
         }
 
         // 操作日志
@@ -138,13 +138,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity = BeanMapperUtils.map(VirtualWarehouseAllocationEntity.class, updateDTO);
         // 数据处理
         handleData(virtualWarehouseAllocationEntity, updateDTO.getDetailList());
-        log.info("编辑 开始修改虚拟仓分货单数据，单号：【{}】", old.getCode());
+        log.info("编辑 开始修改分货单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(virtualWarehouseAllocationEntity);
         if (!save) {
-            throw new ServiceException("虚拟仓分货单保存失败");
+            throw new ServiceException("分货单保存失败");
         }
         // 记录主单操作日志
-        log.info("编辑 开始记录虚拟仓分货单日志数据，单号：【{}】", virtualWarehouseAllocationEntity.getCode());
+        log.info("编辑 开始记录分货单日志数据，单号：【{}】", virtualWarehouseAllocationEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), msg);
         // 新增明细
@@ -405,7 +405,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VwAllocationAllocationTransferExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "分货单导入错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationCancelExcelDTO.class);
+            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationTransferExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }

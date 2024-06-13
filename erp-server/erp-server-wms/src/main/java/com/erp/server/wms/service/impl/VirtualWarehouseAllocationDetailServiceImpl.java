@@ -80,14 +80,14 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         // 数据处理
         handleData(virtualWarehouseAllocationDetailEntity);
 
-        log.info("开始新增虚拟仓分货单明细");
+        log.info("开始新增分货单明细");
         boolean save = super.save(virtualWarehouseAllocationDetailEntity);
         if (!save) {
-            throw new ServiceException("虚拟仓分货单明细保存失败");
+            throw new ServiceException("分货单明细保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓分货单明细", virtualWarehouseAllocationDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单明细", virtualWarehouseAllocationDetailEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, virtualWarehouseAllocationDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -102,21 +102,21 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Override
     public Boolean batchUpdate(VirtualWarehouseAllocationDetailDTO.UpdateDTO updateDTO) {
         VirtualWarehouseAllocationDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓分货单明细"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "分货单明细"));
         VirtualWarehouseAllocationDetailEntity virtualWarehouseAllocationDetailEntity = BeanMapperUtils.map(VirtualWarehouseAllocationDetailEntity.class, updateDTO);
 
         // 数据处理
         handleData(virtualWarehouseAllocationDetailEntity);
-        log.info("编辑 开始修改虚拟仓分货单明细数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改分货单明细数据，id：【{}】", old.getId());
         boolean save = super.updateById(virtualWarehouseAllocationDetailEntity);
         if (!save) {
-            throw new ServiceException("虚拟仓分货单明细保存失败");
+            throw new ServiceException("分货单明细保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-        log.info("编辑 开始记录虚拟仓分货单明细日志数据，id：【{}】", virtualWarehouseAllocationDetailEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationDetailEntity.getId(), "虚拟仓分货单明细");
+        log.info("编辑 开始记录分货单明细日志数据，id：【{}】", virtualWarehouseAllocationDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationDetailEntity.getId(), "分货单明细");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationDetailEntity, null, virtualWarehouseAllocationDetailEntity.getId(), msg);
         return Boolean.TRUE;
@@ -166,7 +166,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         if (CollectionUtils.isNotEmpty(addList)) {
             List<VirtualWarehouseAllocationDetailEntity> receiveDetailEntityList = this.listByIds(addList);
             List<Pair<String, String>> addPairList = receiveDetailEntityList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加了一个虚拟仓分货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), addPairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog("添加了一个分货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), addPairList, "编辑操作");
         }
         return this.saveOrUpdateBatch(list);
     }
