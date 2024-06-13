@@ -227,7 +227,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     PickingDetailDTO.View detailView = BeanMapperUtils.map(PickingDetailDTO.View.class, detail);
                     detailView.setWarehouseLocationId(location.getId());
                     detailView.setWarehouseLocationName(location.getName());
-                    detailView.setWarehouseLocationName(stagingLocation.getName());
+                    detailView.setStagingLocationName(stagingLocation.getName());
                     detailView.setWarehouseAreaId(locationMap.get(detailView.getWarehouseLocation()));
                     detailView.setWarehouseAreaName(areaMap.get(locationMap.get(detailView.getWarehouseLocation())));
                     detailView.setStagingAreaName(areaMap.get(locationMap.get(detailView.getStagingLocation())));
