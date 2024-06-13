@@ -768,12 +768,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 根据sku拆分订单
+     *
      * @param soB2cDetailEntities
      * @param skuIds
      * @param soCode
+     * @param judgeCombinationFlag
      * @return
      */
-    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities,List<String> skuIds, String soCode);
+    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities, List<String> skuIds, String soCode, boolean judgeCombinationFlag);
 
     /**
      * 根据条件获取数据对比系统数据
