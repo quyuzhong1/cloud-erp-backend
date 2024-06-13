@@ -150,7 +150,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         // 新增明细
         virtualWarehouseAllocationDetailService.batchUpdate(updateDTO, virtualWarehouseAllocationEntity.getId());
         //保存附件
-        wmsAttachmentService.batchSave(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), WmsConstant.QC_PRODUCT, virtualWarehouseAllocationEntity.getId());
+        wmsAttachmentService.batchSaveNotDel(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), WmsConstant.QC_PRODUCT, virtualWarehouseAllocationEntity.getId());
         return Boolean.TRUE;
     }
 
