@@ -387,7 +387,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         VirtualWarehouseAllocationTransferExcelListener excelListenerUtil = new VirtualWarehouseAllocationTransferExcelListener(
                 virtualWarehouseRelationService, warehouseService, virtualWarehouseService, plmTaskFeign, virtualInventoryService);
         try {
-            EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationTransferExcelDTO1.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationTransferExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -396,16 +396,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             throw new ServiceException(ApiError.ERROR_1016);
         }
         //验证导入数据是否为空
-        List<VwAllocationAllocationTransferExcelDTO1> allList = excelListenerUtil.getAllList();
+        List<VwAllocationAllocationTransferExcelDTO> allList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(allList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
         String url = "";
-        List<VwAllocationAllocationTransferExcelDTO1> errorList = excelListenerUtil.getErrorList();
+        List<VwAllocationAllocationTransferExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "分货单导入错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationCancelExcelDTO1.class);
+            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationCancelExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
@@ -419,7 +419,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         VirtualWarehouseAllocationCancelExcelListener excelListenerUtil = new VirtualWarehouseAllocationCancelExcelListener(
                 virtualWarehouseRelationService, warehouseService, virtualWarehouseService, plmTaskFeign, virtualInventoryService);
         try {
-            EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationCancelExcelDTO1.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationCancelExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -428,16 +428,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             throw new ServiceException(ApiError.ERROR_1016);
         }
         //验证导入数据是否为空
-        List<VwAllocationAllocationCancelExcelDTO1> allList = excelListenerUtil.getAllList();
+        List<VwAllocationAllocationCancelExcelDTO> allList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(allList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
         String url = "";
-        List<VwAllocationAllocationCancelExcelDTO1> errorList = excelListenerUtil.getErrorList();
+        List<VwAllocationAllocationCancelExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "分货单导入错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationCancelExcelDTO1.class);
+            File file = ExcelUtil.exportFile(fileName, "virtualWarehouseAllocationError", errorList, VwAllocationAllocationCancelExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }

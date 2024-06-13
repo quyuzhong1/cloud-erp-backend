@@ -14,7 +14,7 @@ import java.io.Serializable;
  * @date 2024/6/11
  */
 @Data
-public class VwAllocationAllocationCancelExcelDTO1 extends VwAllocationExcelDTO implements Serializable {
+public class VwAllocationAllocationCancelExcelDTO extends VwAllocationExcelDTO implements Serializable {
 
     /**
      * SKU

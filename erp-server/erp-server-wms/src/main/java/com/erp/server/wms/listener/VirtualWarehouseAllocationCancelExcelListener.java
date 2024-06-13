@@ -13,7 +13,7 @@ import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.excel.VwAllocationAllocationCancelExcelDTO1;
+import com.erp.model.wms.dto.excel.VwAllocationAllocationCancelExcelDTO;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -34,7 +34,7 @@ import java.util.*;
  * @author Lambda
  * @Classname VirtualWarehouseAllocationExcelListener
  */
-public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEventListener<VwAllocationAllocationCancelExcelDTO1> {
+public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEventListener<VwAllocationAllocationCancelExcelDTO> {
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
 
     private WarehouseService warehouseService;
@@ -49,11 +49,11 @@ public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEvent
     /**
      * 导入数据，用于判断导入是否为空
      */
-    private List<VwAllocationAllocationCancelExcelDTO1> allList = new ArrayList<>();
+    private List<VwAllocationAllocationCancelExcelDTO> allList = new ArrayList<>();
     /**
      * 导入错误数据
      */
-    private List<VwAllocationAllocationCancelExcelDTO1> errorList = new ArrayList<>();
+    private List<VwAllocationAllocationCancelExcelDTO> errorList = new ArrayList<>();
 
 
     private PlmTaskFeign plmTaskFeign;
@@ -79,7 +79,7 @@ public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEvent
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void invoke(VwAllocationAllocationCancelExcelDTO1 vwAllocationAllocationExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(VwAllocationAllocationCancelExcelDTO vwAllocationAllocationExcelDTO, AnalysisContext analysisContext) {
         //添加数据用于判断是否为空
         allList.add(vwAllocationAllocationExcelDTO);
         List<String> msgList = FieldValidUtil.fieldValid(vwAllocationAllocationExcelDTO);
@@ -184,7 +184,7 @@ public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEvent
 
     }
 
-    public List<VwAllocationAllocationCancelExcelDTO1> getErrorList() {
+    public List<VwAllocationAllocationCancelExcelDTO> getErrorList() {
         return errorList;
     }
 
@@ -192,7 +192,7 @@ public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEvent
         return successList;
     }
 
-    public List<VwAllocationAllocationCancelExcelDTO1> getAllList() {
+    public List<VwAllocationAllocationCancelExcelDTO> getAllList() {
         return allList;
     }
 }

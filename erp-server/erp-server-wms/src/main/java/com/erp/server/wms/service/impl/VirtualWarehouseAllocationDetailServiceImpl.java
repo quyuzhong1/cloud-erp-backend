@@ -264,7 +264,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             outInStockDTO.setSkuId(detailDto.getSkuId());
             outInStockDTO.setSkuNo(detailDto.getSkuNo());
             outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
-            outInStockDTO.setVirtualWarehouseId(detailDto.getToVirtualWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(detailDto.getFromVirtualWarehouseId());
             outInStockDTO.setQty(detailDto.getQty());
             allocationParamList.add(outInStockDTO);
         });
