@@ -406,7 +406,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         pagingSelect.getList().forEach(shop -> {
             if (bindedShopList.contains(((ShopDTO.ListDTO) shop).getId())) {
                 if (CollectionUtils.isNotEmpty(warehouseChannelEntities) && Objects.equals(warehouseChannelEntities.get(0).getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())
-                        && CollectionUtils.isNotEmpty(shopIds) && shopIds.contains(((ShopDTO.ListDTO) shop).getId()))){
+                        && CollectionUtils.isNotEmpty(shopIds) && shopIds.contains(((ShopDTO.ListDTO) shop).getId())){
                     ((ShopDTO.ListDTO) shop).setDisabled(false);
                 } else{
                     ((ShopDTO.ListDTO) shop).setDisabled(true);
