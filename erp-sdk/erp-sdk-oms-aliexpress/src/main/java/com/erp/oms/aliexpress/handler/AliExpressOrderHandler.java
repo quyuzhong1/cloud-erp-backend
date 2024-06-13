@@ -59,13 +59,28 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
      */
     @Override
     public List<PlatformAliExpressOrderDTO> download(JobTaskDTO data) {
-        String apiName = AliexpressConstants.LIST_ORDER;
+//        String apiName = AliexpressConstants.LIST_ORDER;
+        String apiName = data.getApiCode();
         AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(data.getShopId());
         if (null == shopInfoDTO) {
             log.error("[速卖通订单下载]  获取 token 失败: shopId={}", data.getShopId());
             String msg = StrUtil.format("[速卖通订单下载]  获取 token 失败: shopId={}", data.getShopId());
             throw new ServiceException(msg);
         }
+        // 订单状态
+        String orderStatus = "";
+        List<String> orderStatusList = new LinkedList<>();
+        Map<String, Object> apiParam = data.getApiParam();
+        if (!apiParam.isEmpty() && apiParam.containsKey("order_status")){
+            orderStatus = (String) apiParam.get("order_status");
+        }
+        if (!apiParam.isEmpty() && apiParam.containsKey("order_status_list")) {
+            Object listObj = apiParam.get("order_status_list");
+            if (null != listObj){
+                orderStatusList = (List<String>) listObj;
+            }
+        }
+
         // 上次执行时间
         LocalDateTime lastTime = data.getLastTime();
         // 下次执行时间
@@ -79,7 +94,10 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
                 baseUrl(shopInfoDTO.getBaseUrl()).
                 apiName(apiName).
                 currentPage(1).
-                token(shopInfoDTO.getToken()).build();
+                token(shopInfoDTO.getToken())
+                .orderStatus(orderStatus)
+                .orderStatusList(orderStatusList)
+                .build();
         List<AliExpressOrder> orderList = new ArrayList<>(20);
         try {
             aliExpressOrderService.listOrder(orderRequest,orderList);

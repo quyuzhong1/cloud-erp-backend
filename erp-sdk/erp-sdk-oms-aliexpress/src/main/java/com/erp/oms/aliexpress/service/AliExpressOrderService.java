@@ -88,6 +88,12 @@ public class AliExpressOrderService {
 //        paramMap.put("create_date_end", orderRequest.getEndTime());
         paramMap.put("modified_date_start", orderRequest.getStartTime());
         paramMap.put("modified_date_end", orderRequest.getEndTime());
+        if (StringUtils.isNotBlank(orderRequest.getOrderStatus())){
+            paramMap.put("order_status", orderRequest.getOrderStatus());
+        }
+        if (CollectionUtils.isNotEmpty(orderRequest.getOrderStatusList())){
+            paramMap.put("order_status_list", orderRequest.getOrderStatusList());
+        }
         request.addApiParameter("simplify", "true");
         request.addApiParameter("param_aeop_order_query", JSONUtil.toJsonStr(paramMap));
         String token = orderRequest.getToken();
