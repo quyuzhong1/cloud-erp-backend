@@ -369,7 +369,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             }
             childTreeList.forEach(childTree -> {
                 if (bindedDictPlatform.contains(childTree.getCode())) {
-                    if (Objects.nonNull(virtualWarehouseChannelEntity) && Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())
+                    if (Objects.nonNull(virtualWarehouseChannelEntity)/* && Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())*/
                             && Objects.equals(virtualWarehouseChannelEntity.getDictPlatform(), childTree.getCode())) {
                         childTree.setDisabled(false);
                     } else {
