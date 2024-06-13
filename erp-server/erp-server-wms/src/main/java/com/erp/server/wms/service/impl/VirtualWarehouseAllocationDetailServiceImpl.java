@@ -214,7 +214,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                     virtualInventoryTransCoreService.approve(dto);
                     break;
                 case CANCEL:
-                    VirtualInventoryStockDTO.StockParamDTO cancelDto = getAllocationDto(VirtualInventoryBusinessTypeEnum.OUT_USABLE, detailList, allocationEntity);
+                    VirtualInventoryStockDTO.StockParamDTO cancelDto = getCancelDto(VirtualInventoryBusinessTypeEnum.OUT_USABLE, detailList, allocationEntity);
                     virtualInventoryTransCoreService.approve(cancelDto);
                     break;
                 default:
@@ -250,6 +250,28 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     }
 
     private static VirtualInventoryStockDTO.StockParamDTO getAllocationDto(VirtualInventoryBusinessTypeEnum inUsable, List<VirtualWarehouseAllocationDetailEntity> detailList, VirtualWarehouseAllocationEntity allocationEntity) {
+        VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+        allocationDto.setBusinessType(inUsable.getCode());
+        List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
+        detailList.forEach(detailDto -> {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(allocationEntity.getId());
+            outInStockDTO.setSourceCode(allocationEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
+            outInStockDTO.setSourceDetailId(detailDto.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailDto.getSkuId());
+            outInStockDTO.setSkuNo(detailDto.getSkuNo());
+            outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(detailDto.getToVirtualWarehouseId());
+            outInStockDTO.setQty(detailDto.getQty());
+            allocationParamList.add(outInStockDTO);
+        });
+        allocationDto.setParamList(allocationParamList);
+        return allocationDto;
+    }
+    private static VirtualInventoryStockDTO.StockParamDTO getCancelDto(VirtualInventoryBusinessTypeEnum inUsable, List<VirtualWarehouseAllocationDetailEntity> detailList, VirtualWarehouseAllocationEntity allocationEntity) {
         VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
         allocationDto.setBusinessType(inUsable.getCode());
         List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();

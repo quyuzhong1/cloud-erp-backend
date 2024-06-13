@@ -166,7 +166,7 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
                         errorMsgList.add("当前实体仓没有关联此调入虚拟仓");
                     }else{
                         BeanUtils.copyProperties(vwAllocationAllocationExcelDTO, detailDto);
-//                        detailDto.setWarehouseId(warehouseList.get(0).getId());
+                        detailDto.setWarehouseId(warehouseList.get(0).getId());
 //                        detailDto.setToVirtualWarehouseId(vwDtoList.get(0).getId());
 //                        detailDto.setToVirtualWarehouseCode(vwDtoList.get(0).getCode());
                         //获取数量
