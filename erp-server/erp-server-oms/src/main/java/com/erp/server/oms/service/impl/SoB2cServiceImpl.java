@@ -2630,9 +2630,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             if(CollectionUtils.isEmpty(bomChildrenSkuDTOList)){
 
-                viewDTO.setProductLength(Objects.nonNull(skuVO) ? skuVO.getProductLength(): BigDecimal.ZERO);
-                viewDTO.setProductHeight(Objects.nonNull(skuVO) ? skuVO.getProductHeight(): BigDecimal.ZERO);
-                viewDTO.setProductWidth(Objects.nonNull(skuVO) ? skuVO.getProductWidth(): BigDecimal.ZERO);
+                viewDTO.setProductLength(Objects.nonNull(skuVO) ? LengthConverterUtil.mmToCm(skuVO.getProductLength()): BigDecimal.ZERO);
+                viewDTO.setProductHeight(Objects.nonNull(skuVO) ? LengthConverterUtil.mmToCm(skuVO.getProductHeight()): BigDecimal.ZERO);
+                viewDTO.setProductWidth(Objects.nonNull(skuVO) ? LengthConverterUtil.mmToCm(skuVO.getProductWidth()): BigDecimal.ZERO);
                 viewDTO.setGrossWeight(Objects.nonNull(skuVO) ? skuVO.getGrossWeight(): BigDecimal.ZERO);
                 viewDTO.setNetWeight(Objects.nonNull(skuVO) ? skuVO.getNetWeight(): BigDecimal.ZERO);
             }else{
@@ -2641,9 +2641,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 BigDecimal totalHeight = bomChildrenSkuDTOList.stream().map(e -> e.getHeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 BigDecimal totalGrossWeight = bomChildrenSkuDTOList.stream().map(e -> e.getGrossWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 BigDecimal totalNetWeight = bomChildrenSkuDTOList.stream().map(e -> e.getNetWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                viewDTO.setProductHeight(totalHeight);
-                viewDTO.setProductLength(maxLength);
-                viewDTO.setProductWidth(maxWidth);
+                viewDTO.setProductHeight(LengthConverterUtil.mmToCm(totalHeight));
+                viewDTO.setProductLength(LengthConverterUtil.mmToCm(maxLength));
+                viewDTO.setProductWidth(LengthConverterUtil.mmToCm(maxWidth));
                 viewDTO.setGrossWeight(totalGrossWeight);
                 viewDTO.setNetWeight(totalNetWeight);
             }

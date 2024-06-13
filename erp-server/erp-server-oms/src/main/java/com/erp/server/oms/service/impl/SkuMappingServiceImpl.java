@@ -22,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
@@ -710,9 +711,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             //组合品的话根据子件计算长宽高重量
             List<BomChildrenSkuDTO> bomChildrenSkuDTOList = allBomChildrenSkuDTOList.stream().filter(v->v.getParentSkuId().equals(skuVO.getSkuId())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(bomChildrenSkuDTOList)){
-                listSkuDTO.setProductHeight(skuVO.getProductHeight());
-                listSkuDTO.setProductLength(skuVO.getProductLength());
-                listSkuDTO.setProductWidth(skuVO.getProductWidth());
+                listSkuDTO.setProductHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
+                listSkuDTO.setProductLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
+                listSkuDTO.setProductWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
                 listSkuDTO.setGrossWeight(skuVO.getGrossWeight());
                 listSkuDTO.setNetWeight(skuVO.getNetWeight());
             }else{
@@ -721,9 +722,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 BigDecimal totalHeight = bomChildrenSkuDTOList.stream().map(e -> e.getHeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 BigDecimal totalGrossWeight = bomChildrenSkuDTOList.stream().map(e -> e.getGrossWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 BigDecimal totalNetWeight = bomChildrenSkuDTOList.stream().map(e -> e.getNetWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                listSkuDTO.setProductHeight(totalHeight);
-                listSkuDTO.setProductLength(maxLength);
-                listSkuDTO.setProductWidth(maxWidth);
+                listSkuDTO.setProductHeight(LengthConverterUtil.mmToCm(totalHeight));
+                listSkuDTO.setProductLength(LengthConverterUtil.mmToCm(maxLength));
+                listSkuDTO.setProductWidth(LengthConverterUtil.mmToCm(maxWidth));
                 listSkuDTO.setGrossWeight(totalGrossWeight);
                 listSkuDTO.setNetWeight(totalNetWeight);
             }
