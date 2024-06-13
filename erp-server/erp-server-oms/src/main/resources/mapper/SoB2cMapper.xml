@@ -888,5 +888,54 @@
         order by sb2c.id desc
         limit 50000
     </select>
+    <select id="getForeignOrderDeliveryInfo"
+            resultType="com.erp.model.oms.dto.SoB2cForeignDTO$OrderDeliveryResp">
+        SELECT
+            sb2c.id,
+            sb2c.invalid_status as invalidStatus,
+        sb2c.code as erpOrderCode,
+        sb2c.platform_code as platformOrderCode,
+        sb2c.seller_order_code as sellerOrderCode,
+        sb2c.seller_order_code as sellerOrderCode,
+        sb2c.source_type as orderSource,
+        sb2c.bill_status as orderStatus,
+        sb2c.approve_status as approveStatus,
+        sbd.code as deliveryCode,
+        sbl.logistics_channel_id as logisticChannelId,
+        sbl.code as transportCode,
+        sbl.track_no as trackingNumber,
+        sb2c.approve_time as approveTime,
+        sout.bill_date as deliveryTime
+        from so_b2c sb2c
+        inner join so_b2c_logistics sbl on sb2c.id = sbl.main_id and sbl.is_deleted = false
+        left join so_outstock sout on sout.so_id = sb2c.id and sout.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sbd.is_deleted = false
+        where sb2c.is_deleted = false and sb2c.shop_id = #{params.erpShopId}
+        <if test="params.platformOrderCodeList != null and params.platformOrderCodeList.size > 0">
+            and sb2c.platform_code in
+            <foreach collection="params.platformOrderCodeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sellerOrderCodeList != null and params.sellerOrderCodeList.size > 0">
+            and sb2c.seller_order_code in
+            <foreach collection="params.sellerOrderCodeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.orderStatus!=null and params.orderStatus !=''">
+            AND sb2c.bill_status = #{params.orderStatus}
+        </if>
+        <if test="params.approveStatus!=null and params.approveStatus !=''">
+            AND sb2c.approve_status = #{params.approveStatus}
+        </if>
+        <if test="params.deliveryStartTime != null">
+            and sout.bill_date >= #{params.deliveryStartTime}
+        </if>
+        <if test="params.deliveryEndTime != null">
+            and sout.bill_date <![CDATA[ <= ]]> #{params.deliveryEndTime}
+        </if>
+    </select>
 
 </mapper>
