@@ -921,5 +921,10 @@ public class ShopDTO implements Serializable {
          */
         private String authStatus;
 
+        /**
+         * 是否可选
+         */
+        private Boolean canCheck=true;
+
     }
 }

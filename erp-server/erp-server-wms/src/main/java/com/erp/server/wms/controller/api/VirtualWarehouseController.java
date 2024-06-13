@@ -133,7 +133,7 @@ public class VirtualWarehouseController extends BaseController {
         return success(virtualWarehouseService.view(id));
     }
     /**
-     * 详情
+     * 平台
      */
     @GetMapping("/tree")
     @LogViewService
@@ -141,7 +141,7 @@ public class VirtualWarehouseController extends BaseController {
         return success(virtualWarehouseService.tree(key,id));
     }
     /**
-     * 详情
+     * 搜索店铺
      */
     @PostMapping("/pagingSelect")
     public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<VirtualWarehouseDTO.ShopSelectDTO> dto){
