@@ -652,9 +652,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //申报类型
                 isCombination = Boolean.TRUE;
             }
-            //有些不需要判断是否拆分
-            isCombination = isCombination && judgeCombinationFlag;
-            if (Objects.nonNull(skuDTO) && BomTypeEnum.COMBINATION.getType().equals(skuDTO.getType()) && isCombination){
+            if (Objects.nonNull(skuDTO) && BomTypeEnum.COMBINATION.getType().equals(skuDTO.getType()) && ( isCombination||!judgeCombinationFlag)){
                 if (Objects.nonNull(skuChildMap) && StrUtil.isNotEmpty(soB2cDetailEntity.getSkuId()) && CollectionUtils.isNotEmpty(skuChildMap.get(soB2cDetailEntity.getSkuId()))){
                     List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(soB2cDetailEntity.getSkuId());
                     bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
