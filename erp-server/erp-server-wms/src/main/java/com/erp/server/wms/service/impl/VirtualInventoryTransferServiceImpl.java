@@ -220,10 +220,11 @@ public class VirtualInventoryTransferServiceImpl extends AbstractVirtualInventor
         VirtualInventoryStockDTO.TransferDTO transferDTO = new VirtualInventoryStockDTO.TransferDTO();
 
         if(Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT)) {
-            transferDTO.setWarehouseId(param.getVirtualCurWarehouseId());
+            transferDTO.setVirtualWarehouseId(param.getVirtualCurWarehouseId());
         } else if (Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET)) {
-            transferDTO.setWarehouseId(param.getVirtualTargetWarehouseId());
+            transferDTO.setVirtualWarehouseId(param.getVirtualTargetWarehouseId());
         }
+        transferDTO.setWarehouseId(param.getWarehouseId());
         transferDTO.setSourceType(param.getSourceType());
         transferDTO.setSourceId(param.getSourceId());
         transferDTO.setSourceDetailId(param.getSourceDetailId());
