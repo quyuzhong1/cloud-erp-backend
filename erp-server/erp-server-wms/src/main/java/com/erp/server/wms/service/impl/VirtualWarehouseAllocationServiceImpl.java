@@ -59,6 +59,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import static java.util.stream.Collectors.groupingBy;
+
 /**
  * <p>
  * 虚拟仓分货单 服务实现类
@@ -566,6 +568,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     private void checkInfoAndQty(VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity, List<VirtualWarehouseAllocationDTO.DetailDto> detailList) {
         String type = virtualWarehouseAllocationEntity.getType();
+
         List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> warehouseIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> vmIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getToVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -583,6 +586,48 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //校验库存
             checkQty(detailDto, type, virtualInventoryQtyList);
         });
+
+        //校验数据唯一
+        checkUniqueInfo(type, detailList);
+    }
+
+    /**
+     * 校验数据唯一
+     *
+     * @param type
+     * @param detailList
+     */
+    private static void checkUniqueInfo(String type, List<VirtualWarehouseAllocationDTO.DetailDto> detailList) {
+        Map<String, Long> countMap = detailList.stream()
+                .collect(Collectors.groupingBy(detail -> detail.getSkuNo() + "_&_" + detail.getWarehouseName() + "_&_"
+                                + detail.getFromVirtualWarehouseName() + "_&_" + detail.getToVirtualWarehouseName(),
+                        Collectors.counting()));
+
+        // 检查是否有数量大于1的组合
+        boolean hasDuplicates = countMap.values().stream().anyMatch(count -> count > 1);
+        // 如果有数量大于1的组合，则报错
+        if (hasDuplicates) {
+            StringBuilder msg = new StringBuilder();
+            countMap.forEach((k, v) -> {
+                String[] split = k.split("_&_");
+                if (v > 1) {
+                    switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
+                        case ALLOCATION:
+                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR.msg, split[0], split[1], split[3]));
+                            break;
+                        case TRANSFER:
+                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1],  split[2], split[3]));
+                            break;
+                        case CANCEL:
+                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1],  split[2]));
+                            break;
+                        default:
+                            throw new ServiceException(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR);
+                    }
+                }
+            });
+            throw new ServiceException(msg.toString());
+        }
     }
 
     private List<VirtualInventoryDTO.ViewQtyDTO> getQty(List<VirtualWarehouseAllocationDTO.DetailDto> detailList, String type) {

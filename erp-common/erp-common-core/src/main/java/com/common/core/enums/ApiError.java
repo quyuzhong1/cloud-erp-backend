@@ -1036,6 +1036,9 @@ public enum ApiError implements Serializable {
     ERROR_APPROVEQTY_GT_MUSABLEQTY_ERROR(92218,"批准数量不能大于仓库可用库存"),
     ERROR_WAREHOUSE_NORELATION_ERROR(92219,"实体仓没有关联虚拟仓"),
     ERROR_VW_RELATION_ERROR(92220,"实体仓【{}】没有关联虚拟仓【{}】"),
+    ERROR_ALLOCATION_UNIQUE_ERROR(92221,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】”重复\n"),
+    ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR(92222,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】- 调出虚拟仓【{}】”重复\n"),
+    ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR(92222,"“SKU【{}】- 实体仓【{}】- 调出虚拟仓【{}】”重复\n"),
 
     /**
      * OMS 错误
