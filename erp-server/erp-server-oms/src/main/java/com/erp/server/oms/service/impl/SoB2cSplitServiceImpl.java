@@ -951,7 +951,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }
         }
 
-        String invalidCodes = sameTargetList.stream().filter(obj -> obj.getInvalidStatus() || obj.getIsFrozen() || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
+        String invalidCodes = sameTargetList.stream().filter(obj -> obj.getInvalidStatus() ||  obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(invalidCodes)) {
             throw new ServiceException(StrUtil.format("{} 已作废，已冻结，待发货，已发货不允许还原拆分",invalidCodes));
         }
