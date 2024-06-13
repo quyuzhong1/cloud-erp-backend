@@ -931,13 +931,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (CollectionUtils.isEmpty(sameTargetList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_CHILD_NOT_EXIST, entity.getCode());
         }
-        String invalidCodes = sameTargetList.stream().filter(obj -> {
-            return obj.getInvalidStatus() || obj.getIsFrozen() || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-        }).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
-        if (StringUtils.isNotBlank(invalidCodes)) {
-            throw new ServiceException(StrUtil.format("{} 已作废，已冻结，待发货，已发货不允许还原拆分",invalidCodes));
-        }
-
         //关联的子单是否又拆分
         List<SoB2cRefEntity> otherB2cSplitRefList = soB2cRefService.listBySourceIds(targetIdList, SoB2cOptionTypeEnum.ENUM_SPLIT);
         if(CollectionUtils.isNotEmpty(otherB2cSplitRefList)){
@@ -956,6 +949,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             if(StringUtils.isNotBlank(sb.toString())){
                 return BatchResultDTO.fail(entity.getId(), entity.getCode(), sb.toString());
             }
+        }
+
+        String invalidCodes = sameTargetList.stream().filter(obj -> obj.getInvalidStatus() || obj.getIsFrozen() || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(invalidCodes)) {
+            throw new ServiceException(StrUtil.format("{} 已作废，已冻结，待发货，已发货不允许还原拆分",invalidCodes));
         }
 
         log.info("删除B2C销售订单数据，ids = {}", targetIdList);
