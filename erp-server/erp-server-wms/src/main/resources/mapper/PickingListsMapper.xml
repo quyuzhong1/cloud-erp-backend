@@ -55,12 +55,6 @@
         where ${params.sqlMap.default}
           and pl.source_type = #{params.sourceType}
           and pl.is_deleted = false
-        <if test="params.ids != null and params.ids.size > 0">
-            and pl.id in
-            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
-                #{id}
-            </foreach>
-        </if>
         order by pl.update_time desc, pl.id desc
     </select>
 

@@ -244,6 +244,10 @@ public class PickingDetailDTO implements Serializable {
          */
         private String warehouseLocation;
         /**
+         * 库位名字
+         */
+        private String warehouseLocationName;
+        /**
          * 数量
          */
         private Integer qty;
@@ -255,6 +259,10 @@ public class PickingDetailDTO implements Serializable {
          * 暂存库位
          */
         private String stagingLocation;
+        /**
+         * 暂存库位名称
+         */
+        private String stagingLocationName;
     }
 
     @Getter
