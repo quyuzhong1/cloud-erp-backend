@@ -409,7 +409,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 listDetailDTO.setVirtualFrozenQty(ObjectUtil.isEmpty(frozenInventory) ? MathUtil.ZERO : frozenInventory.getVirtualQty());
 
                 //实体仓分配数量
-                Integer distributionQty = MathUtil.add(listDetailDTO.getVirtualUsableQty(), listDetailDTO.getVirtualFrozenQty());
+                Integer distributionQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), warehouseId)
+                                && StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                                && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
+                        .map(VirtualInventoryDTO.ListInventoryDTO::getVirtualQty)
+                        .reduce(MathUtil.ZERO, Integer::sum);
                 listDetailDTO.setDistributionQty(distributionQty);
                 listDetailDTO.setVirtualQty(distributionQty);
                 //未分配数量

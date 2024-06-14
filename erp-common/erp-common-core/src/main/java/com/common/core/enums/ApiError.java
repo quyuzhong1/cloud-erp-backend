@@ -1041,7 +1041,7 @@ public enum ApiError implements Serializable {
     ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR(92222,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】- 调出虚拟仓【{}】”重复\n"),
     ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR(92223,"“SKU【{}】- 实体仓【{}】- 调出虚拟仓【{}】”重复\n"),
 
-    ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST(92219,"平台【{}】下未找到对应虚拟仓库"),
+    ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST(92219,"平台【{}】、实体仓【{}】下未找到对应虚拟仓库"),
     ERROR_VWSTOCK_NOTEMPRY(92230,"虚拟仓库存不为0，操作失败"),
     ERROR_VWWSTOCK_NOTEMPRY(92231,"本虚拟仓在实体仓【{}】下库存不为0，操作失败"),
 
