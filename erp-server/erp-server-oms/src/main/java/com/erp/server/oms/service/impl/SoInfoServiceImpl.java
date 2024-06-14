@@ -339,9 +339,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
         platformDTO.setWarehouseIdList(Arrays.asList(entity.getWarehouseId()));
+        platformDTO.setRelationId("");
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
-            throw new ServiceException(ApiError.ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST,platformDTO.getDictPlatform());
+            //平台名称
+            PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(platformDTO.getDictPlatform());
+            //实体仓名称
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
+            if (CollectionUtils.isEmpty(warehouseList)) {
+                log.error("未找到仓库信息，id= {}",entity.getWarehouseId());
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            throw new ServiceException(ApiError.ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST,ObjectUtil.isEmpty(platformDictEnum) ? "" : platformDictEnum.getName(),warehouseList.get(0).getName());
         }
         entity.setVirtualWarehouseId(virtualWarehouseList.get(0).getVirtualWarehouseId());
     }

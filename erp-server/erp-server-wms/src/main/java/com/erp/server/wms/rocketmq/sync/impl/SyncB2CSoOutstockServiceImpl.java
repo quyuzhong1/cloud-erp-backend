@@ -24,6 +24,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockRuleDTO;
 import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
@@ -37,9 +38,11 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -60,6 +63,7 @@ import java.util.stream.Collectors;
  * @Created by yl
  */
 @Service
+@Slf4j
 public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
@@ -88,6 +92,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private VirtualWarehouseChannelService VirtualWarehouseChannelService;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
 
     /**
      * 同步金蝶的销售出库单
@@ -438,7 +446,15 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         platformDTO.setWarehouseIdList(Arrays.asList(soOutstock.getWarehouseId()));
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = VirtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
-            throw new ServiceException(ApiError.ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST,shopInfo.getDictPlatform());
+            //平台名称
+            PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(platformDTO.getDictPlatform());
+            //实体仓名称
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(soOutstock.getWarehouseId()));
+            if (CollectionUtils.isEmpty(warehouseList)) {
+                log.error("未找到仓库信息，id= {}",soOutstock.getWarehouseId());
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            throw new ServiceException(ApiError.ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST,ObjectUtil.isEmpty(platformDictEnum) ? "" : platformDictEnum.getName(),warehouseList.get(0).getName());
         }
     }
 }
