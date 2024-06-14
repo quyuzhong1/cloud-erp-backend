@@ -410,7 +410,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (StringUtils.isBlank(soB2cLogisticsEntity.getCode())) {
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),"未获取跟踪号，无法取消");
         }
-        if (SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())) {
+        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())) {
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),"只有配货中的订单可以取消");
         }
         //取消物流单
