@@ -216,7 +216,7 @@ public class VirtualWarehouseChannelDTO implements Serializable {
          * 关联id（如店铺id）,无关联id时传空字符
          */
         @NotNull(message = "关联id不能为null")
-        private String relationId;
+        private String relationId = null;
 
         /**
          * 平台

@@ -44,11 +44,9 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
@@ -310,6 +308,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private SoB2cDeclareProductService soB2cDeclareProductService;
     @Resource
     private CfgRuleDeclareService cfgRuleDeclareService;
+
+    @Resource
+    private VirtualInventoryFeign virtualInventoryFeign;
+
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -3092,6 +3094,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(ids);
 
+        //虚拟仓库存
+        List<String> virtualWarehouseIdList = allDetailList.stream().map(SoB2cDetailEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
+        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setSkuIdList(skuIdList);
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryFeign.listInventoryQty(paramDTO);
 
         //物流信息
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
@@ -3206,6 +3216,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 labelDTO.setTikTokStatus(labelJsonDTO.getTikTokStatus());
                 labelDTO.setIsRefunded(labelJsonDTO.getIsRefunded());
             }
+
             //明细信息
             List<SoB2cDetailEntity> detailList = allDetailList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailList)) {
@@ -3286,6 +3297,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         detailLabelDTO.setIsOutStock(isOutStock);
                     }
                 }
+
+                //虚拟仓是否缺货
+                Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailDTO.getSkuId())
+                        && StrUtil.equals(obj.getVirtualWarehouseId(), detailDTO.getVirtualWarehouseId())
+                        && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId()))
+                        .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
+                        .findFirst().orElse(MathUtil.ZERO);
+                Boolean isVirtualOutStock = MathUtil.compareTo(virtualUsableQty, detailDTO.getQty()) >= MathUtil.ZERO ? Boolean.FALSE : Boolean.TRUE;
+                detailLabelDTO.setIsVirtualOutStock(isVirtualOutStock);
+
                 detailDTO.setDetailLabelDTO(detailLabelDTO);
                 //申报信息
                 SoB2cDeclareProductDTO.ViewDTO viewDTO = declareProductList.stream().filter(e -> Objects.nonNull(e)

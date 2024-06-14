@@ -44,13 +44,13 @@ public class VirtualTransFlowQueryHandler extends AbstractQueryHandler {
         }
         // 近七天
         if ("week".equals(value)) {
-            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.GE,  LocalDateUtil.formatTime(dateTime.minusDays(7L), DateUtil.fmt_day), QueryDataTypeEnum.DATE);
-            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.LT, date, QueryDataTypeEnum.DATE);
+            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.GT,  LocalDateUtil.formatTime(dateTime.minusDays(7L), DateUtil.fmt_day), QueryDataTypeEnum.DATE);
+            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.LE, date, QueryDataTypeEnum.DATE);
         }
         //近一个月
         if ("month".equals(value)) {
             super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.GT,  LocalDateUtil.formatTime(dateTime.minusDays(30L), DateUtil.fmt_day), QueryDataTypeEnum.DATE);
-            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.LT, date, QueryDataTypeEnum.DATE);
+            super.buildSplicingSQLDTO("vtf.trade_time", QueryConditionEnum.LE, date, QueryDataTypeEnum.DATE);
         }
         return super.getSplicingSQL();
     }

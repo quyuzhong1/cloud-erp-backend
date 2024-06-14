@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -39,16 +40,14 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -136,6 +135,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+    
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -477,7 +480,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     .in(SoDeliveryNoticeEntity::getId, ids)
                     .update();
 
-            generatePickingDetail(deliveryNoticeEntityList);
+            //销售通知明细信息
+            List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(ids);
+            if (CollectionUtils.isEmpty(detailList)) {
+                throw new ServiceException(ApiError.ERROR_99044);
+            }
+
+            //虚拟库存扣减
+            handleVirtualInventory(deliveryNoticeEntityList,detailList);
+
+            generatePickingDetail(deliveryNoticeEntityList,detailList);
         } else {
             //审核不通过
             lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -488,6 +500,45 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<Pair<String, String>> pairList = deliveryNoticeEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个发货通知单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
         return Boolean.TRUE;
+    }
+
+    /**
+     * 处理虚拟库存数据
+     * @author will
+     * @date 2024/6/14 10:39
+     * @param deliveryNoticeEntityList
+     * @param detailList
+     */
+    private void handleVirtualInventory (List<SoDeliveryNoticeEntity> deliveryNoticeEntityList,List<SoDeliveryNoticeDetailEntity> detailList) {
+
+        List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
+        for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
+
+            //发货通知单主表信息
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = deliveryNoticeEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST);
+            }
+
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+            outInStockDTO.setSourceId(soDeliveryNoticeEntity.getId());
+            outInStockDTO.setSourceCode(soDeliveryNoticeEntity.getCode());
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setQty(detailEntity.getDeliveryQty());
+            outInStockDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
+            paramList.add(outInStockDTO);
+        }
+        //添加冻结库存
+        VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+        dto.setParamList(paramList);
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        //更新库存
+        virtualInventoryTransCoreService.approve(dto);
+
     }
 
     @Override
@@ -711,13 +762,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return soOutstockService.addPushDownNo(resultList);
     }
 
-    private void generatePickingDetail(List<SoDeliveryNoticeEntity> list) {
-        //生成拣货明细
-        List<String> ids = list.stream().map(SoDeliveryNoticeEntity::getId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(ids);
-        if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99044);
-        }
+    private void generatePickingDetail(List<SoDeliveryNoticeEntity> list,List<SoDeliveryNoticeDetailEntity> detailList) {
 
         List<String> warehouseIds = list.stream().map(SoDeliveryNoticeEntity::getWarehouseId).collect(Collectors.toList());
         //获取仓库信息

@@ -830,8 +830,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //修改状态为取消发货
         this.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
 
-        //回滚库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_B2C_DELIVERY, ids);
+
+        //回滚虚拟仓库存
+        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+
+        //回滚实体仓库存
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //新增日志
