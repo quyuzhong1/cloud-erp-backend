@@ -521,7 +521,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
 
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
             outInStockDTO.setSourceId(soDeliveryNoticeEntity.getId());
             outInStockDTO.setSourceCode(soDeliveryNoticeEntity.getCode());
             outInStockDTO.setSourceDetailId(detailEntity.getId());
