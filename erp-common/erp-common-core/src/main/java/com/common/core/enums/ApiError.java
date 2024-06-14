@@ -731,6 +731,7 @@ public enum ApiError implements Serializable {
     PRICE_NOT_EXIST(98112,"采购价目表不存在"),
     PURCHASE_ORG_NOT_REPEAT(98113,"只有相同的采购组织可以批量变更报价"),
     ERROR_SUBCONTRACT_ORDER_WAREHOUSE_ORG(98114,"委外订单仓库【{}】与委外组织【{}】不匹配"),
+    ERROR_SO_DELIVERY_NOTICE_NOT_EXIST(98115,"发货通知单不存在"),
 
 
 

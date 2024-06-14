@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -46,6 +47,7 @@ import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -135,7 +137,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private DocNoGenHelper docNoGenHelper;
 
     @Resource
-    private VirtualInventoryService virtualInventoryService;
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
     
 
     @Override
@@ -510,32 +512,32 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private void handleVirtualInventory (List<SoDeliveryNoticeEntity> deliveryNoticeEntityList,List<SoDeliveryNoticeDetailEntity> detailList) {
 
         List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
-   /*     for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
+        for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
 
             //发货通知单主表信息
             SoDeliveryNoticeEntity soDeliveryNoticeEntity = deliveryNoticeEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
-                throw new ServiceException(ApiError)
+                throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST);
             }
 
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
-            outInStockDTO.setSourceId(entity.getId());
-            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceId(soDeliveryNoticeEntity.getId());
+            outInStockDTO.setSourceCode(soDeliveryNoticeEntity.getCode());
             outInStockDTO.setSourceDetailId(detailEntity.getId());
             outInStockDTO.setBillDate(LocalDate.now());
             outInStockDTO.setSkuId(detailEntity.getSkuId());
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setQty(detailEntity.getDeliveryQty());
-            outInStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            outInStockDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
             paramList.add(outInStockDTO);
         }
         //添加冻结库存
         VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
         dto.setParamList(paramList);
-        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE.getCode());
         //更新库存
-        virtualInventoryTransCoreService.approve(dto);*/
+        virtualInventoryTransCoreService.approve(dto);
 
     }
 
