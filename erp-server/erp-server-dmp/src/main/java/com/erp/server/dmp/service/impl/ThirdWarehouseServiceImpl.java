@@ -151,7 +151,8 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
     private void handleData(ThirdWarehouseEntity thirdWarehouseEntity) {
         //根据第三方id校验
         ThirdWarehouseEntity warehouseEntity = this.getOne(new LambdaQueryWrapper<ThirdWarehouseEntity>()
-                .eq(ThirdWarehouseEntity::getWarehouseId, thirdWarehouseEntity.getWarehouseId()));
+                .eq(ThirdWarehouseEntity::getWarehouseId, thirdWarehouseEntity.getWarehouseId())
+                .eq(ThirdWarehouseEntity::getCategory, thirdWarehouseEntity.getCategory()));
         if (Objects.nonNull(warehouseEntity)) {
             thirdWarehouseEntity.setId(warehouseEntity.getId());
         }

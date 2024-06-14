@@ -179,6 +179,7 @@ public enum SourceTypeEnum {
 
     //旺店通
     WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),
+    WDT_VIRTUAL_WAREHOUSE("wdt_virtual_warehouse", "旺店通虚拟仓基础数据", "dmp_pull_task"),
     WDT_SHOP("wdt_shop", "旺店通店铺基础数据", "dmp_pull_task"),
     ;
 

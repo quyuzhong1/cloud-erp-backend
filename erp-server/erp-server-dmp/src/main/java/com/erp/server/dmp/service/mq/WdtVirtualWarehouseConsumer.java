@@ -29,17 +29,17 @@ import javax.annotation.Resource;
 import java.util.Objects;
 
 /**
- * 旺店通仓库数据消费
- * @date 2024-05-23
- * @author tanmujin
+ * 旺店通虚拟仓数据消费
+ * @date 2024-06-13
+ * @author hyj
  */
 @Component
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_wdt_warehouse_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_wdt_warehouse_consumer",
+        selectorExpression = "third_system_wdt_virtual_warehouse_tag",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_wdt_virtual_warehouse_consumer",
         consumeMode = ConsumeMode.ORDERLY)
-public class WdtWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+public class WdtVirtualWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
@@ -86,7 +86,7 @@ public class WdtWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPl
         //入库
         ThirdWarehouseDTO.AddDTO addDTO = new ThirdWarehouseDTO.AddDTO();
         BeanUtils.copyProperties(entity,addDTO);
-        addDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
+        addDTO.setCategory(ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode());
         thirdWarehouseService.add(addDTO);
         return ApiResult.success();
     }
