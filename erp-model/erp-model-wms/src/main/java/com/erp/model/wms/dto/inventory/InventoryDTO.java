@@ -1492,6 +1492,10 @@ public class InventoryDTO implements Serializable {
          */
         private String warehouseLocation;
         /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+        /**
          * 实际库存
          */
         private Integer realTotalQty;
@@ -1547,6 +1551,37 @@ public class InventoryDTO implements Serializable {
          * 仓位信息
          */
         private List<PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList;
+
+        private Integer index;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventoryPageDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * sku缩略图
+         */
+        private String skuImagesUrl;
+        /**
+         * sku品名名称
+         */
+        private String skuName;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 仓位信息
+         */
+        private List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList;
 
         private Integer index;
     }

@@ -126,19 +126,19 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                         logisticsTrackEntities.add(logisticsTrackEntity);
                     });
                 }
-                logisticsOperateService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
-                        UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                logisticsOperateService.pullOperateLog(null,
+                        null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(track));
                 return success(logisticsTrackEntities);
             } else {
-                logisticsOperateService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
-                        UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                logisticsOperateService.pullOperateLog(null,
+                        null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(track));
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + track.getMsg());
             }
         } catch (Exception e) {
-            logisticsOperateService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
-                    UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+            logisticsOperateService.pullOperateLog(null,
+                    null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(e));
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }
@@ -199,19 +199,19 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                         logisticsTrackList.add(logisticsTrackEntity);
                     });
                 }
-                logisticsOperateService.pullOperateLog(oceanTrackRequestList.get(0).getAuthMap().get("id"),
-                        UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                logisticsOperateService.pullOperateLog(null,
+                        null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(oceanTrackRequestList), JSONUtil.toJsonStr(track));
                 return success(logisticsTrackList);
             } else {
-                logisticsOperateService.pullOperateLog(oceanTrackRequestList.get(0).getAuthMap().get("id"),
-                        UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                logisticsOperateService.pullOperateLog(null,
+                        null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(oceanTrackRequestList), JSONUtil.toJsonStr(track));
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + track.getMsg());
             }
         } catch (Exception e) {
-            logisticsOperateService.pullOperateLog(oceanTrackRequestList.get(0).getAuthMap().get("id"),
-                    UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+            logisticsOperateService.pullOperateLog(null,
+                    null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(oceanTrackRequestList), JSONUtil.toJsonStr(e));
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }
@@ -280,19 +280,19 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                         }
                     });
                 }
-                logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
-                        UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                logisticsOperateService.pushOperateLog(null,
+                        null, BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(registerResult), false);
                 return success(registerResponseVOS);
             }else {
-                logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
-                        UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                logisticsOperateService.pushOperateLog(null,
+                        null, BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(registerResult),false);
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + registerResult.getMsg());
             }
         }catch (Exception e){
-            logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
-                    UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+            logisticsOperateService.pushOperateLog(null,
+                    null, BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(e),true);
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }
@@ -336,19 +336,19 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                         }
                     });
                 }
-                logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
-                        UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                logisticsOperateService.pushOperateLog(null,
+                        null, BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(registerRequests), JSONUtil.toJsonStr(registerResult), false);
                 return success(registerResponseVOS);
             }else {
-                logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
-                        UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                logisticsOperateService.pushOperateLog(null,
+                        null, BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerRequests), JSONUtil.toJsonStr(registerResult),false);
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + registerResult.getMsg());
             }
         }catch (Exception e){
-            logisticsOperateService.pushOperateLog(UUID.randomUUID().toString(),
-                    UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+            logisticsOperateService.pushOperateLog(null,
+                    null, BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerRequests), JSONUtil.toJsonStr(e),true);
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }

@@ -1065,11 +1065,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
         InventoryDTO.PdaSearchParamDTO params = searchDTO.getParams();
-        if(StringUtils.isBlank(params.getWarehouseLocation())){
-            return new InventoryDTO.PdaInventoryWarehousePageDTO<>();
-        }
         //库存信息
         InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
+        if(StringUtils.isBlank(params.getWarehouseLocation())){
+            throw new ServiceException("仓位不存在");
+        }
+        WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCode(params.getWarehouseLocation());
+        if (Objects.nonNull(entity) && StringUtils.isNotBlank(entity.getCode())){
+            paramDTO.setWarehouseLocation(entity.getCode());
+        }else {
+            throw new ServiceException("仓位不存在");
+        }
+
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         //查询配置过滤对应组织仓库
         if(params.isFilterOrgFlag()){
@@ -1081,13 +1088,14 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
         paramDTO.setFilterSelfAddFlag(params.isFilterSelfAddFlag());
-        paramDTO.setWarehouseLocation(params.getWarehouseLocation());
+
         IPage<InventoryDTO.PdaInventoryPageDTO> page = baseMapper.pageInventoryWarehouseBySkuId(query,paramDTO);
         //填充基础信息
         buildWarehouseInfo(page.getRecords(), paramDTO);
         InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> result = new InventoryDTO.PdaInventoryWarehousePageDTO<>(page);
         //仓位信息回填
-        result.setWarehouseLocation(params.getWarehouseLocation());
+        result.setWarehouseLocation(entity.getCode());
+        result.setWarehouseLocationName(entity.getName());
         //汇总仓位实际库存/可用库存/冻结库存数量
         result.setRealTotalQty(page.getRecords().stream().map(InventoryDTO.PdaInventoryPageDTO::getRealQty)
                 .filter(Objects::nonNull).reduce(0, Integer::sum));

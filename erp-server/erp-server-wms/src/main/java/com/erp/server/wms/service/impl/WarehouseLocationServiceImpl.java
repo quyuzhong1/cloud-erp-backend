@@ -365,6 +365,19 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    public WarehouseLocationEntity findByWarehouseCode(String warehouseLocation) {
+        if (StringUtils.isBlank(warehouseLocation)){
+            return null;
+        }
+        List<WarehouseLocationEntity> list = lambdaQuery().eq(WarehouseLocationEntity::getCode, warehouseLocation).list();
+        if (CollectionUtils.isNotEmpty(list)){
+            return list.get(0);
+        }else {
+            return null;
+        }
+    }
+
+    @Override
     public List<WarehouseLocationEntity> findByWarehouseIdsAndCode(List<String> warehouseIds, String warehouseLocation) {
         if (CollectionUtils.isEmpty(warehouseIds) && StringUtils.isBlank(warehouseLocation)){
             return Collections.emptyList();

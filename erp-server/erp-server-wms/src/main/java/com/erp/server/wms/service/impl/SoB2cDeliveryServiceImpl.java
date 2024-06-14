@@ -150,7 +150,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DataIdempotent(keyIdName = "addDTO.soCode")
     public Boolean add(SoB2cDeliveryDTO.AddDTO addDTO) {
+        SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(addDTO.getSourceId());
+        if(ObjectUtil.isNotEmpty(existEntity)){
+            throw new ServiceException(StrUtil.format("已生成发货单，发货单号：{}", existEntity.getCode()));
+        }
         SoB2cDeliveryEntity soB2cDeliveryEntity = new SoB2cDeliveryEntity();
         BeanMapperUtils.copy(addDTO, soB2cDeliveryEntity);
 
@@ -952,15 +957,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public Boolean addDeliveryLog(List<SoB2cDeliveryEntity> deliveryEntities) {
-        for (SoB2cDeliveryEntity entity : deliveryEntities) {
-            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "组包预报", entity.getCode());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
-        }
-        return Boolean.TRUE;
-    }
-
-    @Override
     public Boolean mergePackageDelivery(List<String> soIdList) {
 
         //记录需要手动标发的订单id
@@ -973,12 +969,17 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         //查询发货单
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listBySourceIds(deliverySoIdList);
+        //过滤掉取消发货
+        deliveryEntityList = deliveryEntityList.stream().filter(v->!SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(v.getStatus())).collect(Collectors.toList());
+
         List<String> soDeliveryIds = deliveryEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         //调用第三方平台SDK发货
         this.falseDeliveryBatch(soDeliveryIds);
 
         //查询发货单
         List<SoB2cDeliveryEntity> deliveryEntities = this.listBySourceIds(soIdList);
+        //过滤掉取消发货
+        deliveryEntities = deliveryEntities.stream().filter(v->!SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(v.getStatus())).collect(Collectors.toList());
 
         //获取一个当前时间当作发货时间
         LocalDateTime deliveryTime = LocalDateTime.now();

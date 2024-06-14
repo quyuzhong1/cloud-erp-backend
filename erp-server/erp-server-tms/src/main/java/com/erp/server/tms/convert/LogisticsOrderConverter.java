@@ -501,6 +501,7 @@ public interface LogisticsOrderConverter {
 
 
     @Mappings({
+            @Mapping(target = "aneroid_markup" ,source = "isLiquid"),
             @Mapping(target = "category_cn_desc" ,source = "declareChineseName"),
             @Mapping(target = "category_en_desc" ,source = "declareEnglishName"),
             @Mapping(target = "contains_battery" ,source = "isElectric"),

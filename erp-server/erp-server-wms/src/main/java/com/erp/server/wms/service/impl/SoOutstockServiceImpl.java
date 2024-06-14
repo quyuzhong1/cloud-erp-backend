@@ -700,10 +700,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //B2B发送金蝶
             sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
-
-        //订单推送dmp
-        syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-
+        if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
+            //订单推送dmp
+            syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
         return Boolean.TRUE;
     }
 
@@ -1041,7 +1041,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //订单推送dmp
             list.forEach(entity -> {
-                syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+                if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
+                    //订单推送dmp
+                    syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+                }
             });
 
             //修改中转报关单订单出库状态
@@ -2186,10 +2189,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         try {
             if (dto.isHasPlatformWarehouseOrder()){
                 // 非自发货订单独立事务
-                this.handleCreateB2cSoOutstockWithoutTx(dto);
+                soOutstockService.handleCreateB2cSoOutstockWithoutTx(dto);
             } else {
                 // 自发货订单事务一起
-                this.handleCreateB2cSoOutstock(dto);
+                soOutstockService.handleCreateB2cSoOutstock(dto);
             }
             return Boolean.TRUE;
         } catch (Exception e) {
@@ -2266,17 +2269,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
-        String id = this.addB2cSoOutstock(dto);
+        String id = soOutstockService.addB2cSoOutstock(dto);
         //表示添加成功
         if (StringUtils.isNotBlank(id)) {
             try {
                 // 事务分开
                 // 检查关账或已有盘盈盘亏单据
-                if (checkClosedAndUpdateRemark(dto, id)){
+                if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
                     return true;
                 }
-                this.submitAndApprove(id);
+                soOutstockService.submitAndApprove(id);
             } catch (Exception e) {
                 log.error("B2C订单生成销售出库单提交或审核失败：error={}", ExceptionUtil.stacktraceToString(e));
                 // 记录明细(事务分开)
@@ -2369,7 +2373,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
         }
         soOutstock.setPackDate(billDate);
-        Boolean addResult = this.save(soOutstock);
+        Boolean addResult = super.save(soOutstock);
         if (addResult) {
             soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode());
             //添加日志
@@ -2488,7 +2492,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         for (SoOutstockDTO.GenerateB2cDTO genDTO : generateB2cList) {
             try {
-                if (!this.handleCreateB2cSoOutstock(genDTO)){
+                if (!handleCreateB2cSoOutstockWithoutTx(genDTO)){
                     log.warn("【亚马逊物流销售报告】生成销售出库单失败:dto={}", JSONUtil.toJsonStr(genDTO));
                 } else {
                     String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
