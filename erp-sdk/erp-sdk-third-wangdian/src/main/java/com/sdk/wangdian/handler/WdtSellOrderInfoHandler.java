@@ -26,7 +26,9 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,7 +97,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             soOutStock.setOrderType(OrderTypeEnum.B2C.getCode());
             //审核时间
             soOutStock.setApproveTime(outStockTime);
-            soOutStock.setCreated(LocalDateTime.parse(order.getCreated(), DateTimeFormatter.ofPattern(DateUtil.fmt)));
+            soOutStock.setCreated(LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(order.getCreated())), ZoneId.systemDefault()));
             soOutStock.setCountry(order.getReceiverCountry());
             //第三方单据编号
             soOutStock.setThirdCode(order.getSrcOrderNo());
