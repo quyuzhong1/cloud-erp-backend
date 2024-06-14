@@ -984,7 +984,7 @@ public class SoB2cController extends BaseController {
     }
 
     /**
-     * 虚假发货
+     * 手动标发
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
@@ -999,10 +999,10 @@ public class SoB2cController extends BaseController {
             try {
                 result = soB2cService.falseDelivery(id);
             } catch (Exception e) {
-                log.error("b2c订单 虚假发货失败", e);
+                log.error("b2c订单 手动标发失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "b2c订单不存在, 虚假发货失败");
+                    result = BatchResultDTO.fail(id, id, "b2c订单不存在, 手动标发失败");
                     resultDTOS.add(result);
                     continue;
                 }
