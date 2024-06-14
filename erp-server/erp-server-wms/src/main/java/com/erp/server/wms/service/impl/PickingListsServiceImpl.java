@@ -106,7 +106,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.Add::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
-        Map<String, Integer> sku = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getQty, (o1, o2) -> o1));
+        Map<String, Integer> sku = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getQty, Integer::sum));
         Map<String, String> skuMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSkuNo, (o1, o2) -> o1));
         Map<String, String> sourceDetailMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSourceDetailId, (o1, o2) -> o1));
         Map<String, Object> map = new HashMap<>();

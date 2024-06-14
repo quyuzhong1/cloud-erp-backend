@@ -250,7 +250,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         entity.setSkuTotal(skuTotal);
         List<String> skuIdList = add.getDetails().stream().map(PickingDetailDTO.Add::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        Map<String, Integer> sku = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getQty, (o1, o2) -> o1));
+        Map<String, Integer> sku = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getQty, Integer::sum));
         Map<String, String> skuMap = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSkuNo, (o1, o2) -> o1));
         Map<String, String> sourceDetailMap = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSourceDetailId, (o1, o2) -> o1));
         Map<String, Object> map = new HashMap<>();
