@@ -150,6 +150,8 @@
 
 
     <select id="listInventoryInOut" resultType="com.erp.model.wms.dto.inventory.InOutStockDTO">
+
+
         SELECT
         so.warehouse_id,
         so.id AS sourceId,
