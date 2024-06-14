@@ -2348,16 +2348,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //包装辅料净重
         BigDecimal accessoriesNw = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getAccessoriesNw).reduce(BigDecimal.ZERO, BigDecimal::add);
         logisticsAddDTO.setAccessoriesNw(accessoriesNw);
-        //长
-        BigDecimal height = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getHeight).reduce(BigDecimal.ZERO, BigDecimal::add);
-        logisticsAddDTO.setHeight(height);
-        //宽
-        BigDecimal width = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getWidth).reduce(BigDecimal.ZERO, BigDecimal::add);
-        logisticsAddDTO.setWidth(width);
-        //高
-        BigDecimal weight = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
-        logisticsAddDTO.setWeight(weight);
+//        //长
+//        BigDecimal height = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getHeight).reduce(BigDecimal.ZERO, BigDecimal::add);
+//        logisticsAddDTO.setHeight(height);
+//        //宽
+//        BigDecimal width = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getWidth).reduce(BigDecimal.ZERO, BigDecimal::add);
+//        logisticsAddDTO.setWidth(width);
+//        //高
+//        BigDecimal weight = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
+//        logisticsAddDTO.setWeight(weight);
 
+        logisticsAddDTO.setLength(null);
+        logisticsAddDTO.setWidth(null);
+        logisticsAddDTO.setHeight(null);
+        logisticsAddDTO.setWeight(null);
         //操作类型
         addDTO.setOperateType(SoB2cOptionTypeEnum.ENUM_MERGE);
         addDTO.setLogisticsDTO(logisticsAddDTO);

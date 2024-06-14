@@ -687,7 +687,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             BigDecimal actualShippingCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getActualShippingCost());
             BigDecimal accessoriesCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesCost());
             BigDecimal accessoriesNw = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesNw());
-            BigDecimal weight = MathUtil.multiply(rate, soB2cLogisticsEntity.getWeight());
             //最后一条根据减法计算金额
             if (i == splitList.size() - 1) {
                 amount = MathUtil.subtract(entity.getAmount(), groupAmount);
@@ -695,7 +694,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 actualShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getActualShippingCost(), groupActualShippingCost);
                 accessoriesCost = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesCost(), groupAccessoriesCost);
                 accessoriesNw = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesNw(), groupAccessoriesNw);
-                weight = MathUtil.subtract(soB2cLogisticsEntity.getWeight(), groupWeight);
             }
             //基本信息金额
             addDTO.setAmount(amount);
@@ -707,8 +705,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setAccessoriesCost(accessoriesCost);
             //包装净重
             logisticsAddDTO.setAccessoriesNw(accessoriesNw);
-            //包装重量
-            logisticsAddDTO.setWeight(weight);
+            logisticsAddDTO.setLength(null);
+            logisticsAddDTO.setWidth(null);
+            logisticsAddDTO.setHeight(null);
+            logisticsAddDTO.setWeight(null);
             addDTO.setLogisticsDTO(logisticsAddDTO);
             addDTO.setRemark(StrUtil.format("【{}】拆分订单", entity.getCode()));
 
