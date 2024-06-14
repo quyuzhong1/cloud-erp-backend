@@ -350,11 +350,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         List<String> warehouseIdList = virtualInventoryList.stream().map(VirtualInventoryDTO.ListInventoryDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
 
-        Integer index = MathUtil.ONE;
         for (VirtualInventoryDTO.ListDTO listDTO : list) {
-            //序号
-            listDTO.setIndex(index);
-            index++;
             //产品信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
             listDTO.setSkuNo(productDetailEntity.getSkuNo());
@@ -396,7 +392,9 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 //实体仓库名称
                 String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), warehouseId))
                         .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
-                listDetailDTO.setIndex(warehouseId);
+
+                String indexId = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getId).collect(Collectors.joining(","));
+                listDetailDTO.setIndexId(StrUtil.format("{}_{}",indexId,warehouseId));
                 listDetailDTO.setSkuNo(listDTO.getSkuNo());
                 listDetailDTO.setWarehouseId(warehouseId);
                 listDetailDTO.setWarehouseName(warehouseName);

@@ -51,6 +51,7 @@
     <!-- 虚拟库存分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListDTO">
         select
+            string_agg(vi.id, ',') as indexId,
             vi.sku_id as skuId,
             vi.warehouse_id as warehouseId,
             vi.virtual_warehouse_id as virtualWarehouseId
@@ -77,6 +78,7 @@
     <select id="listVirtualWarehouseIdListAndSkuIdList"
             resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListInventoryDTO">
         select
+               vi.id,
                vi.warehouse_id,
                vi.sku_id,
                vi.dict_inventory_status,
