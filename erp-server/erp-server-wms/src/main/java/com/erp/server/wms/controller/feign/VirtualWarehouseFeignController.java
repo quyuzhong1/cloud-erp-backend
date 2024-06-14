@@ -1,14 +1,17 @@
 package com.erp.server.wms.controller.feign;
 
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.server.wms.service.VirtualWarehouseRelationService;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.server.wms.service.VirtualWarehouseChannelService;
 import com.erp.server.wms.service.VirtualWarehouseService;
-import com.erp.server.wms.service.WarehouseService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -21,6 +24,9 @@ public class VirtualWarehouseFeignController {
     @Resource
     VirtualWarehouseService virtualWarehouseService;
 
+    @Resource
+   private VirtualWarehouseChannelService virtualWarehouseChannelService;
+
     /**
      * 根据IDS返回仓库信息
      *
@@ -29,6 +35,18 @@ public class VirtualWarehouseFeignController {
     @PostMapping("/listByIds")
     public List<VirtualWarehouseEntity> listByIds(@RequestBody List<String> ids){
         return virtualWarehouseService.listByIds(ids);
+    }
+
+    /**
+     * 根据关联id、平台、实体仓库id查询
+     * @author will
+     * @date 2024/6/12 14:24
+     * @param platformDTO
+     * @return VirtualWarehouseChannelEntity
+     */
+    @PostMapping("/getVirtualWarehouse")
+    public List<VirtualWarehouseRelationEntity> getVirtualWarehouse(@RequestBody @Valid VirtualWarehouseChannelDTO.PlatformDTO platformDTO){
+        return virtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
     }
 }
 

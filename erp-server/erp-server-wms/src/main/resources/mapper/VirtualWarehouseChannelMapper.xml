@@ -25,16 +25,16 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        disabled, virtual_warehouse_id, virtual_warehouse_code, virtual_warehouse_name, dict_platform, type, relation_id, relation_name, dict_platform_type
+        vwc.id,
+        vwc.create_user_id,
+        vwc.create_user_name,
+        vwc.create_time,
+        vwc.update_user_id,
+        vwc.update_user_name,
+        vwc.update_time,
+        vwc.version,
+        vwc.is_deleted,
+        vwc.disabled, vwc.virtual_warehouse_id, vwc.virtual_warehouse_code, vwc.virtual_warehouse_name, vwc.dict_platform, vwc.type, vwc.relation_id, vwc.relation_name, vwc.dict_platform_type
     </sql>
     <select id="getBindedDictPlatform" resultType="java.lang.String">
         SELECT dict_platform FROM "virtual_warehouse_channel"
@@ -50,6 +50,19 @@
           and type = 'shop'
           and dict_platform = #{dictPlatform}
         group by relation_id
+    </select>
+
+    <!-- 根据平台参数查询 -->
+    <select id="getByPlatform" resultType="com.erp.model.wms.entity.VirtualWarehouseChannelEntity">
+        select
+               <include refid="Base_Column_List" />
+        from  virtual_warehouse_channel vwc
+        <where>
+            vwc.is_deleted = false and vwc.disabled = false
+            and ((vwc.type = 'platform' and  vwc.dict_platform = #{platformDTO.dictPlatform})
+            or (vwc.type = 'shop' and vwc.dict_platform = #{platformDTO.dictPlatform} and vwc.relation_id = #{platformDTO.relationId}))
+            order by vwc.id limit 1
+        </where>
     </select>
 
 

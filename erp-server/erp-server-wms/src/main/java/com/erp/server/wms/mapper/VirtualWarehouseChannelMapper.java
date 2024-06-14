@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -22,4 +23,12 @@ public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehou
     List<String> getBindedDictPlatform();
 
     List<String> getBindedShopByDictPlatform(@Param("dictPlatform") String dictPlatform);
+    /**
+     * 根据平台参数查询
+     * @author will
+     * @date 2024/6/13 12:27
+     * @param platformDTO
+     * @return VirtualWarehouseChannelEntity
+     */
+    VirtualWarehouseChannelEntity getByPlatform(@Param("platformDTO")VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
 }

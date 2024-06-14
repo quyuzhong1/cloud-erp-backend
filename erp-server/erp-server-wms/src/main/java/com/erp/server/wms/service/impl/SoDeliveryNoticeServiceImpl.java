@@ -239,6 +239,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 soDeliveryNoticeEntity.setSalesDeptName(dept.getName());
             }
         }
+        //虚拟仓库
+        soDeliveryNoticeEntity.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+
         soDeliveryNoticeEntity.setSellerId(soInfoEntity.getSellerId());
         soDeliveryNoticeEntity.setSellerName(soInfoEntity.getSellerName());
         soDeliveryNoticeEntity.setCustomerId(soInfoEntity.getCustomerId());

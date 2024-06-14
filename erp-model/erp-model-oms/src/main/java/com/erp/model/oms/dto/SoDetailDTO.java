@@ -176,9 +176,19 @@ public class SoDetailDTO implements Serializable {
         private Integer scarceQty;
 
         /**
+         * 虚拟仓缺货数量
+         */
+        private Integer virtualScarceQty;
+
+        /**
          * 可出数量
          */
         private Integer availableQty;
+
+        /**
+         * 虚拟仓可出数量
+         */
+        private Integer virtualAvailableQty;
 
         /**
          * 已经出库数量
@@ -662,9 +672,19 @@ public class SoDetailDTO implements Serializable {
         private Integer scarceQty;
 
         /**
+         * 虚拟仓缺货数量
+         */
+        private Integer virtualScarceQty;
+
+        /**
          * 可出数量
          */
         private Integer availableQty;
+
+        /**
+         * 虚拟仓可出数量
+         */
+        private Integer virtualAvailableQty;
 
         /**
          * 已经出库数量
@@ -776,7 +796,11 @@ public class SoDetailDTO implements Serializable {
         @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
-
+        /**
+         * 客户Id
+         */
+        @NotBlank(message = "客户信息不能为空")
+        private String customerId;
     }
 
 

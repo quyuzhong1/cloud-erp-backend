@@ -63,4 +63,12 @@ public interface VirtualWarehouseRelationService extends SuperService<VirtualWar
 
     PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO> warehousePagingSelect(PagingDTO<VirtualWarehouseRelationDTO.SelectDTO> dto);
     PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO> vmPagingSelect(PagingDTO<VirtualWarehouseRelationDTO.SelectDTO> dto);
+    /**
+     * 根据实体仓库id查询
+     * @author will
+     * @date 2024/6/12 14:10
+     * @param warehouseIdList
+     * @return List<VirtualWarehouseRelationEntity>
+     */
+    List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList);
 }

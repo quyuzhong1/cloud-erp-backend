@@ -21,7 +21,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 虚拟库存表
+ * 虚拟库存差异表
  *
  * @author will
  * @since 2024-06-03

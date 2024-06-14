@@ -22,6 +22,12 @@ public enum VirtualInventoryBusinessTypeEnum {
      * 入库
      */
     IN_USABLE("in_usable", "03","入库，当前仓可用增加"),
+
+    /**
+     * b2c发货单，减可用，加冻结
+     */
+    SO_B2C_DELIVERY("so_b2c_delivery", "04","b2c发货单"),
+
     ;
 
     private String code;

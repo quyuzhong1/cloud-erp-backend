@@ -1,41 +1,38 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
-import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.server.wms.mapper.VirtualWarehouseRelationMapper;
-import com.erp.server.wms.service.VirtualWarehouseRelationService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.VirtualWarehouseRelationService;
 import com.erp.server.wms.service.VirtualWarehouseService;
 import com.erp.server.wms.service.WarehouseService;
-import com.sdk.wangdian.sdk.impl.Api;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -189,6 +186,15 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
         //排序
         pagResult.setRecords(records);
         return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList) {
+        if (CollectionUtil.isNotEmpty(warehouseIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<VirtualWarehouseRelationEntity> list = lambdaQuery().eq(VirtualWarehouseRelationEntity::getWarehouseId, warehouseIdList).list();
+        return list;
     }
 
 }

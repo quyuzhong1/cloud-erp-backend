@@ -115,6 +115,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         return Boolean.TRUE;
     }
 
+
     @Override
     public VirtualInventoryEntity findVirtualInventoryStock(String virtualWarehouseId, String warehouseId, String skuId, String inventoryStatus) {
         VirtualInventoryEntity entity = lambdaQuery()
@@ -307,6 +308,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     @Override
     public List<VirtualInventoryDTO.ViewQtyDTO> getVmUsableQtyBySkuIdsAndWIdsAndVmIds(VirtualInventoryDTO.ParamDTO vmParamDto) {
         return baseMapper.getUsableQty(vmParamDto);
+    }
+
+    @Override
+    public List<VirtualInventoryDTO.VirtualInventoryQtyDTO> listInventoryQty(VirtualInventoryDTO.VirtualInventoryParamDTO params) {
+        return baseMapper.listInventoryQty(params);
     }
 
     /**
