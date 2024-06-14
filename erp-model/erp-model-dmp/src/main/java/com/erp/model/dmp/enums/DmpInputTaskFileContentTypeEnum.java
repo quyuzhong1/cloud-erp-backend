@@ -6,15 +6,16 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 外部系统接口转换内部数据 输入任务存储状态 枚举
+ * 拉取任务文件存储 解析状态 枚举
  * </p>
  *
  * @author shukai
  * @since 2024-06-11 09:37:12
  */
-public enum DmpCfgInputConvertInputStatusEnum implements EnumMessage {
-	FDS("fds", "文件系统"),
-	MONGO("mongo", "mongo,dmp"),
+public enum DmpInputTaskFileContentTypeEnum implements EnumMessage {
+	JSON("json", "json"),
+	XML("xml", "xml"),
+	CSV("csv", "csv"),
     ;
     /**
      * 类型
@@ -27,7 +28,7 @@ public enum DmpCfgInputConvertInputStatusEnum implements EnumMessage {
      */
     private String name;
 
-    DmpCfgInputConvertInputStatusEnum(String code, String name) {
+    DmpInputTaskFileContentTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -46,7 +47,7 @@ public enum DmpCfgInputConvertInputStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpCfgInputConvertInputStatusEnum statusEnum : DmpCfgInputConvertInputStatusEnum.values()) {
+        for (DmpInputTaskFileContentTypeEnum statusEnum : DmpInputTaskFileContentTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

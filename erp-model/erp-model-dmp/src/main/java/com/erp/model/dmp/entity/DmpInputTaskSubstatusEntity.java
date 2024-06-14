@@ -24,6 +24,12 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("dmp_input_task_substatus")
 public class DmpInputTaskSubstatusEntity extends BaseEntity<DmpInputTaskSubstatusEntity> {
 
+	/**
+    * 拉取任务id
+    */
+    @TableField("main_id")
+    private String mainId;
+	
     /**
     * 任务状态
     */

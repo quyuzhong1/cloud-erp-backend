@@ -49,6 +49,12 @@ public class DmpInputTaskFileEntity extends BaseEntity<DmpInputTaskFileEntity> {
     */
     @TableField("file_size")
     private Integer fileSize;
+    
+    /**
+     * 文件内容形式 枚举：DmpInputTaskFileContentTypeEnum
+     */
+    @TableField("content_type")
+    private String contentType;
 
 
     public static final String MAIN_ID = "main_id";

@@ -59,6 +59,12 @@ public class DmpCfgInputConvertEntity extends BaseEntity<DmpCfgInputConvertEntit
     */
     @TableField("disabled")
     private Boolean disabled;
+    
+    /**
+     * 优先级
+     */
+     @TableField("order")
+     private Integer order;
 
 
     public static final String MAIN_ID = "main_id";
