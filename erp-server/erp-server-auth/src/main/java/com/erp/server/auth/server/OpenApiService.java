@@ -55,6 +55,15 @@ public class OpenApiService {
             }
         }catch(ServiceException e){
         	response = ApiResult.error(500, e.getMsg());
+        }catch(InvocationTargetException e) {
+        	Throwable targetException = e.getTargetException();
+        	if(targetException instanceof ServiceException) {
+        		ServiceException serviceException = (ServiceException) targetException;
+        		response = ApiResult.error(500, serviceException.getMsg());
+        	}else {
+        		log.error("统一对外接口处理异常{}" , e);
+                response = ApiResult.error(500, "服务器内部错误，请联系实施人员");
+        	}
         }catch(Exception e){
         	log.error("统一对外接口处理异常{}" , e);
             response = ApiResult.error(500, "服务器内部错误，请联系实施人员");
