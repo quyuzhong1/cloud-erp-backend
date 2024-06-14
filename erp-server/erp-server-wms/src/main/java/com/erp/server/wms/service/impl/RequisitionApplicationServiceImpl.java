@@ -766,7 +766,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         detailAddDto.setProductSizeWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
                         detailAddDto.setProductSizeHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
                     }
-                    detailAddDto.setWarehouseLocation(pickingDetail.getWarehouseLocation());
+                    detailAddDto.setWarehouseLocation(pickingDetail.getStagingLocation());
                     detailAddList.add(detailAddDto);
                 }
             }
