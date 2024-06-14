@@ -201,8 +201,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(VirtualWarehouseDTO.UpdateDTO updateDTO) {
-        VirtualWarehouseEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓"));
+        VirtualWarehouseEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓"));
         VirtualWarehouseEntity virtualWarehouseEntity = BeanMapperUtils.map(VirtualWarehouseEntity.class, updateDTO);
 
         // 数据处理
@@ -266,7 +265,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                     virtualInventoryQtyDTO.setVirtualWarehouseId(virtualWarehouseRelationEntity.getVirtualWarehouseId());
                     virtualInventoryQtyDTO.setWarehouseId(warehouseIdList.get(0));
                     Integer vwUsableQty = virtualInventoryService.findUsableQtyByQtyDto(virtualInventoryQtyDTO);
-                    if (vwUsableQty > 0) {
+                    if (Objects.nonNull(vwUsableQty)&&vwUsableQty > 0) {
                         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseIdList.get(0));
                         throw new ServiceException(ApiError.ERROR_VWWSTOCK_NOTEMPRY, warehouseEntity.getName());
                     }
@@ -275,21 +274,21 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         }
 
         //校验实体仓是否被别的虚拟仓绑定--当前只绑定一个实体仓库
-        if (CollectionUtils.isNotEmpty(warehouseIdList)) {
-            List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
-            if (StringUtils.isNotBlank(virtualWarehouseEntity.getId())) {
-                List<VirtualWarehouseRelationEntity> collect = warehouseRelationList.stream().filter(item -> !Objects.equals(item.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(collect)) {
-                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
-                }
-            } else {
-                if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
-                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
-                }
-            }
-        }
+//        if (CollectionUtils.isNotEmpty(warehouseIdList)) {
+//            List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
+//            if (StringUtils.isNotBlank(virtualWarehouseEntity.getId())) {
+//                List<VirtualWarehouseRelationEntity> collect = warehouseRelationList.stream().filter(item -> !Objects.equals(item.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
+//                if (CollectionUtils.isNotEmpty(collect)) {
+//                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
+//                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+//                }
+//            } else {
+//                if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
+//                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
+//                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+//                }
+//            }
+//        }
         if (CollectionUtils.isNotEmpty(thirdMappingList)) {
             //校验关联外部仓
             checkDmpThirdMapping(virtualWarehouseEntity.getId(), virtualWarehouseEntity.getName(), thirdMappingList);
@@ -386,17 +385,18 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      * @return
      */
     @Override
-    public List<BaseDropDownDTO.Tree> tree(String key, String id) {
+    public List<VirtualWarehouseDTO.Tree> tree(String key, String id) {
         List<BaseDropDownDTO.Tree> tree = omsDropDownFeign.tree(key);
+        List<VirtualWarehouseDTO.Tree> trees = BeanMapperUtils.copyList(VirtualWarehouseDTO.Tree.class, tree);
         //获取当前已经绑定的所有渠道
         List<String> bindedDictPlatform = virtualWarehouseChannelService.getBindedDictPlatform();
         if (CollectionUtils.isEmpty(bindedDictPlatform)) {
-            return tree;
+            return trees;
         }
         //获取当前数据绑定的平台
         VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = virtualWarehouseChannelService.getByVirtualWarehouseId(id).stream().findFirst().orElse(null);
-        for (BaseDropDownDTO.Tree dictPlatform : tree) {
-            List<BaseDropDownDTO.ChildTree> childTreeList = dictPlatform.getChildTreeList();
+        for (VirtualWarehouseDTO.Tree dictPlatform : trees) {
+            List<VirtualWarehouseDTO.ChildTree> childTreeList = dictPlatform.getChildTreeList();
             if (CollectionUtils.isEmpty(childTreeList)) {
                 continue;
             }
@@ -406,14 +406,25 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                             && Objects.equals(virtualWarehouseChannelEntity.getDictPlatform(), childTree.getCode())) {
                         childTree.setDisabled(false);
                     } else {
-                        childTree.setDisabled(true);
+                        //如果是绑定了平台则当前平台不可选择
+                        if (Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())){
+                            childTree.setDisabled(true);
+                            childTree.setCheckPlatform(false);
+                            childTree.setCheckShop(false);
+                        }else{
+                            childTree.setDisabled(false);
+                            childTree.setCheckPlatform(false);
+                            childTree.setCheckShop(true);
+                        }
                     }
                 } else {
                     childTree.setDisabled(false);
+                    childTree.setCheckPlatform(true);
+                    childTree.setCheckShop(true);
                 }
             });
         }
-        return tree;
+        return trees;
     }
 
     @Override

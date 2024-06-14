@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -267,5 +269,36 @@ public class VirtualWarehouseDTO implements Serializable {
          * 虚拟仓id
          */
         private String id;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class Tree {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 值
+         */
+        private String value;
+        private Boolean disabled;
+        private List<VirtualWarehouseDTO.ChildTree> childTreeList;
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ChildTree {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 值
+         */
+        private String value;
+        private Boolean disabled;
+        private Boolean checkPlatform;
+        private Boolean checkShop;
     }
 }

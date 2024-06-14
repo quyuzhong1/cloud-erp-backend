@@ -120,6 +120,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
             case ALLOCATION:
                 Map<String, List<VirtualWarehouseAllocationDetailEntity>> allocationMap = vmAllocationDetailList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId));
                 allocationMap.forEach((toVmId, allocationDetailList) -> {
+                    //获取
                     //保存拆单明细
                     VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
                     handleDetailEntity.setToVirtualWarehouseId(toVmId);
@@ -131,7 +132,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     });
                 });
                 break;
-            default:
+            case CANCEL:
                 Map<String, List<VirtualWarehouseAllocationDetailEntity>> map = vmAllocationDetailList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId));
                 map.forEach((fromVmId, allocationDetailList) -> {
                     //保存拆单明细
@@ -144,6 +145,10 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                         virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
                     });
                 });
+                break;
+            case TRANSFER:
+                //两种情况
+
                 break;
         }
         //todo 推送中台任务
@@ -164,8 +169,9 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         handleDetailEntity.setDirection(allocationEntity.getDirection());
         handleDetailEntity.setType(allocationEntity.getType());
         handleDetailEntity.setStatus(allocationEntity.getStatus());
-        handleDetailEntity.setDirection(allocationEntity.getDirection());
-        handleDetailEntity.setDirection(allocationEntity.getDirection());
+//        handleDetailEntity.setToVirtualWarehouseId(allocationEntity.get);
+//        handleDetailEntity.setFromVirtualWarehouseId(allocationEntity.getDirection());
+        //
         return handleDetailEntity;
     }
 
