@@ -477,7 +477,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     .in(SoDeliveryNoticeEntity::getId, ids)
                     .update();
 
-            generatePickingDetail(deliveryNoticeEntityList);
+            //销售通知明细信息
+            List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(ids);
+            if (CollectionUtils.isEmpty(detailList)) {
+                throw new ServiceException(ApiError.ERROR_99044);
+            }
+
+            //虚拟库存扣减
+            handleVirtualInventory(deliveryNoticeEntityList,detailList);
+
+            generatePickingDetail(deliveryNoticeEntityList,detailList);
         } else {
             //审核不通过
             lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -488,6 +497,23 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<Pair<String, String>> pairList = deliveryNoticeEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个发货通知单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
         return Boolean.TRUE;
+    }
+
+    /**
+     * 处理虚拟库存数据
+     * @author will
+     * @date 2024/6/14 10:39
+     * @param deliveryNoticeEntityList
+     * @param detailList
+     */
+    private void handleVirtualInventory (List<SoDeliveryNoticeEntity> deliveryNoticeEntityList,List<SoDeliveryNoticeDetailEntity> detailList) {
+        //虚拟仓库id集合
+        List<String> virtualWarehouseIdList = deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        //实际仓库id集合
+        List<String> warehouseIdList = deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getWarehouseId).collect(Collectors.toList());
+        //sku信息
+
+
     }
 
     @Override
@@ -711,13 +737,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return soOutstockService.addPushDownNo(resultList);
     }
 
-    private void generatePickingDetail(List<SoDeliveryNoticeEntity> list) {
-        //生成拣货明细
-        List<String> ids = list.stream().map(SoDeliveryNoticeEntity::getId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(ids);
-        if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99044);
-        }
+    private void generatePickingDetail(List<SoDeliveryNoticeEntity> list,List<SoDeliveryNoticeDetailEntity> detailList) {
 
         List<String> warehouseIds = list.stream().map(SoDeliveryNoticeEntity::getWarehouseId).collect(Collectors.toList());
         //获取仓库信息
