@@ -3100,6 +3100,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         paramDTO.setWarehouseIdList(warehouseIdList);
         paramDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
         paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setSkuIdList(skuIdList);
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryFeign.listInventoryQty(paramDTO);
 
         //物流信息

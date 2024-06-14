@@ -39,10 +39,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
@@ -136,6 +133,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private VirtualInventoryService virtualInventoryService;
+    
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -507,12 +508,34 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @param detailList
      */
     private void handleVirtualInventory (List<SoDeliveryNoticeEntity> deliveryNoticeEntityList,List<SoDeliveryNoticeDetailEntity> detailList) {
-        //虚拟仓库id集合
-        List<String> virtualWarehouseIdList = deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
-        //实际仓库id集合
-        List<String> warehouseIdList = deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getWarehouseId).collect(Collectors.toList());
-        //sku信息
 
+        List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
+   /*     for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
+
+            //发货通知单主表信息
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = deliveryNoticeEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
+                throw new ServiceException(ApiError)
+            }
+
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+            outInStockDTO.setSourceId(entity.getId());
+            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setQty(detailEntity.getDeliveryQty());
+            outInStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            paramList.add(outInStockDTO);
+        }
+        //添加冻结库存
+        VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+        dto.setParamList(paramList);
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
+        //更新库存
+        virtualInventoryTransCoreService.approve(dto);*/
 
     }
 
