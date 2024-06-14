@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
@@ -141,6 +142,21 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     @Panno(findType = PannoEnum.EQ, field = "platformShopCode")
     private String platformShopCode;
 
+    /**
+     * 仓库id
+     */
+    private String warehouseId;
+
+    /**
+     * 仓库名称
+     */
+    private String warehouseName;
+
+    /**
+     * 仓储中心(亚马逊专用)
+     */
+    private String fulfillmentCenter;
+
 
     public void checkAndSetAllDateLocale(String timeZone) {
         if (StringUtils.isBlank(timeZone)){
@@ -158,5 +174,9 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
             OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
             this.setPurchaseDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
         }
+    }
+
+    public String convertOrderUniqueId() {
+        return StrUtil.format("{}_{}", this.amazonOrderId, this.shopId);
     }
 }

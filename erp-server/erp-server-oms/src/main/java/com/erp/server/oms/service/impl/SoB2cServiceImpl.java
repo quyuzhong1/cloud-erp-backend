@@ -6219,6 +6219,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //                throw new ServiceException("");
 //            }
 //        }
+        // 记录明细仓库
+        List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+        if (CollectionUtils.isNotEmpty(detailEntityList)){
+            Map<String, PlatformSoOutStockDetailDTO> sourceDetailMap = dto.getDetailList().stream().collect(Collectors.toMap(PlatformSoOutStockDetailDTO::getPlatformOrderDetailId, Function.identity()));
+            detailEntityList.forEach(e->{
+                PlatformSoOutStockDetailDTO detailDTO = sourceDetailMap.get(e.getSourceDetailId());
+                if(null == detailDTO){
+                    return;
+                }
+                e.setWarehouseId(detailDTO.getWarehouseId());
+                e.setWarehouseName(detailDTO.getWarehouseName());
+                e.setWarehouseOrgId(detailDTO.getWarehouseOrgId());
+                e.setWarehouseOrgName(detailDTO.getWarehouseOrgName());
+            });
+            soB2cDetailService.updateBatchById(detailEntityList);
+        }
+
         OffsetDateTime earliestDeliveryDateTime = detailList.stream()
                 .map(PlatformSoOutStockDetailDTO::getPlatformDeliveryTime)
                 .min(Comparator.naturalOrder())

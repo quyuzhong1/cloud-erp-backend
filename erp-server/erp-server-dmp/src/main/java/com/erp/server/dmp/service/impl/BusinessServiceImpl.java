@@ -13,8 +13,10 @@ import com.common.business.enums.PlatformApiEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.BusinessHandlerRegistry;
 import com.common.business.handler.IBusinessHandler;
+import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.Md5Util;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
@@ -337,17 +339,30 @@ public class BusinessServiceImpl {
         if (ObjectUtil.isEmpty(sourceType)){
             throw new ServiceException(StrUtil.format("来源类型business = {} 不存在", business));
         }
-        List<DmpPullTaskEntity> allList = pushToMqList.stream()
+        // 根据唯一规则去重
+        List<DmpPullTaskEntity> allList = new ArrayList<>(pushToMqList.stream()
                 .map(msg -> new DmpPullTaskEntity(platform, sourceType.getCode(), targetPlatform, topic, tag, msg))
-                .collect(Collectors.toList());
-        List<String> allUniqueIds = pushToMqList.stream().map(UniqueDto::getUniqueId).collect(Collectors.toList());
+                .collect(Collectors.toMap(
+                        DmpPullTaskEntity::uniqueKey,
+                        obj -> obj,
+                        (existing, replacement) -> existing
+                ))
+                .values());
 
         // 批量保存和更新
         List<DmpPullTaskEntity> allResultList = dmpPullTaskService.batchCheckSaveAndUpdate(allList, platform, sourceType.getCode(), targetPlatform, topic, tag);
-        Map<String, String> unqueIdAndTaskIdMap = allResultList.stream().collect(Collectors.toMap(DmpPullTaskEntity::getSourceId, DmpPullTaskEntity::getId));
+        Map<String, String> unqueIdAndTaskIdMap = allResultList.stream().collect(Collectors.toMap(DmpPullTaskEntity::uniqueKey, DmpPullTaskEntity::getId));
         // 设置taskId到消息体
-        pushToMqList.forEach(e-> {
-            String taskId = unqueIdAndTaskIdMap.get(e.getUniqueId());
+        pushToMqList.forEach(e -> {
+            String uniqueKey = Md5Util.md5(StrUtil.format("{}_{}_{}_{}_{}_{}_{}",
+                    sourceType,
+                    e.getUniqueId(),
+                    e.getUniqueId(),
+                    platform,
+                    targetPlatform,
+                    topic,
+                    tag));
+            String taskId = unqueIdAndTaskIdMap.get(uniqueKey);
             if (StringUtils.isBlank(taskId)){
                 throw new ServiceException("处理异常:未找到DmpPullTaskEntity的Id， sourceId=" + e.getUniqueId());
             }

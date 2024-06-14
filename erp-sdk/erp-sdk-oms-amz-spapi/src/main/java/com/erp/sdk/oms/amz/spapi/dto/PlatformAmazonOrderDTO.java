@@ -104,12 +104,12 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         this.setIsClean(CleanStatusEnum.NONE.getCode());
     }
 
-    public PlatformAmazonOrderDTO(Order order, AmazonShopInfoDTO shopInfoDTO, List<CfgTimezoneEntity> timeZoneList) {
+    public PlatformAmazonOrderDTO(Order order, AmazonShopInfoDTO shopInfoDTO, List<CfgTimezoneEntity> timeZoneList, String shopId) {
         this.order = order;
         // 1 根据站点判断店铺ID
         AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(order.getMarketplaceId());
         if (null == shopNameDTO){
-            // 2, 多渠道订单找不到站点配置通过销售渠道匹配
+            // 2, 根据销售渠道匹配
             CfgTimezoneEntity timeZoneEntity = timeZoneList.stream()
                     .filter(t -> t.getAndParseCondition().contains(order.getSalesChannel()))
                     .findFirst()
@@ -120,15 +120,13 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
                     shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceEnum.getMarketplaceId());
                 }
             }
-        }
-        if (null == shopNameDTO && null != order.getShippingAddress()){
-            //3, 根据地址国家判断
-            String countryCode = order.getShippingAddress().getCountryCode();
-            if (StringUtils.isNotBlank(countryCode)) {
-                AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(countryCode);
-                if (null != marketplaceEnum){
-                    shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceEnum.getMarketplaceId());
-                }
+            // 3,多渠道订单根据仓库中心对应站点
+            if (order.hasMultiChannel() && StringUtils.isNotBlank(shopId)){
+                shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().values()
+                        .stream()
+                        .filter(e -> e.getShopId().equalsIgnoreCase(shopId))
+                        .findFirst()
+                        .orElse(null);
             }
         }
 
