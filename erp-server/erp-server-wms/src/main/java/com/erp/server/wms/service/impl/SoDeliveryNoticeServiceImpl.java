@@ -530,6 +530,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setQty(detailEntity.getDeliveryQty());
             outInStockDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(soDeliveryNoticeEntity.getVirtualWarehouseId());
             paramList.add(outInStockDTO);
         }
         //添加冻结库存

@@ -1611,6 +1611,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setQty(detailEntity.getDeliveryQty());
             outInStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
             paramList.add(outInStockDTO);
         }
         //添加冻结库存
