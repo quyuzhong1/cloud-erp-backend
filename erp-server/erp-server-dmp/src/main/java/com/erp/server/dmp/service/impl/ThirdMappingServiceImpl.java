@@ -654,6 +654,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         }
         LambdaQueryWrapper<ThirdWarehouseEntity> warehouseWrapper = new LambdaQueryWrapper<ThirdWarehouseEntity>()
                 .eq(ThirdWarehouseEntity::getWarehouseId, mappingEntity.getThirdId())
+                .eq(ThirdWarehouseEntity::getCategory, mappingEntity.getType())
                 .eq(ThirdWarehouseEntity::getIsDeleted, false)
                 .eq(ThirdWarehouseEntity::getDisabled, false);
         return thirdWarehouseService.getBaseMapper().selectOne(warehouseWrapper);
