@@ -29,8 +29,8 @@ public class SoB2cForeignFeignController extends BaseController {
     /**
      * 订单发货信息接口
      */
-    @PostMapping("/getOrderDeliveryInfo")
-    public PagingVO<List<SoB2cForeignDTO.OrderDeliveryResp>> getOrderDeliveryInfo(@RequestBody PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> orderDeliveryReq){
+    @PostMapping("/getB2cOrderDeliveryInfo")
+    public PagingVO<SoB2cForeignDTO.OrderDeliveryResp> getOrderDeliveryInfo(@RequestBody PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> orderDeliveryReq){
         return soB2cForeignService.getOrderDeliveryInfo(orderDeliveryReq);
     }
 

@@ -905,7 +905,7 @@
         sbl.code as transportCode,
         sbl.track_no as trackingNumber,
         sb2c.approve_time as approveTime,
-        sout.bill_date as deliveryTime
+        sout.bill_date as deliveryDate
         from so_b2c sb2c
         inner join so_b2c_logistics sbl on sb2c.id = sbl.main_id and sbl.is_deleted = false
         left join so_outstock sout on sout.so_id = sb2c.id and sout.is_deleted = false
@@ -936,6 +936,7 @@
         <if test="params.deliveryEndTime != null">
             and sout.bill_date <![CDATA[ <= ]]> #{params.deliveryEndTime}
         </if>
+        order by sb2c.id desc
     </select>
 
 </mapper>

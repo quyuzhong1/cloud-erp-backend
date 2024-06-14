@@ -17,5 +17,5 @@ import java.util.List;
  */
 public interface SoB2cForeignService extends IService<SoB2cEntity> {
 
-    PagingVO<List<SoB2cForeignDTO.OrderDeliveryResp>> getOrderDeliveryInfo(PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> orderDeliveryReq);
+    PagingVO<SoB2cForeignDTO.OrderDeliveryResp> getOrderDeliveryInfo(PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> orderDeliveryReq);
 }

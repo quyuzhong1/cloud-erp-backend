@@ -53,7 +53,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
     private LogisticsFeign logisticsFeign;
 
     @Override
-    public PagingVO<List<SoB2cForeignDTO.OrderDeliveryResp>> getOrderDeliveryInfo(PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> pagingDTO) {
+    public PagingVO<SoB2cForeignDTO.OrderDeliveryResp> getOrderDeliveryInfo(PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> pagingDTO) {
         SoB2cForeignDTO.OrderDeliveryReq orderDeliveryReq = pagingDTO.getParams();
         if(Objects.isNull(orderDeliveryReq)){
             throw new ServiceException("参数不能为空");
@@ -138,10 +138,10 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
                         && SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())
                         && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(record.getInvalidStatus())
                 ).count();
-                record.setIsMergeOrder(splitCount > 0);
-                if(record.getIsMergeOrder()){
+                record.setIsSplitOrder(splitCount > 0);
+                if(record.getIsSplitOrder()){
                     List<String> sourceIds = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(record.getId()))
-                            && SoB2cOptionTypeEnum.ENUM_MERGE.getCode().equals(obj.getType())).map(SoB2cRefEntity::getSourceId).collect(Collectors.toList());
+                            && SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())).map(SoB2cRefEntity::getSourceId).collect(Collectors.toList());
                     List<SoB2cEntity> splitSob2cList = allSplitSob2cList.stream().filter(v->sourceIds.contains(v.getId())).collect(Collectors.toList());
                     if(CollectionUtils.isNotEmpty(splitSob2cList)){
                         SoB2cForeignDTO.SplitOrderInfo splitOrderInfo = SoB2cForeignDTO.SplitOrderInfo.builder()

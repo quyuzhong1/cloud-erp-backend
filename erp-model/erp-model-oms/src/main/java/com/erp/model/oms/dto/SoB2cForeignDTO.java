@@ -1,11 +1,13 @@
 package com.erp.model.oms.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -80,7 +82,10 @@ public class SoB2cForeignDTO implements Serializable {
     @NoArgsConstructor
     public static class OrderDeliveryResp {
 
+        @JsonIgnore
         private Boolean invalidStatus;
+
+        @JsonIgnore
         private String id;
         /**
          * 店铺Id(第三方平台)
@@ -132,7 +137,7 @@ public class SoB2cForeignDTO implements Serializable {
         /**
          * 是否拆分订单
          */
-        private Boolean isSplitOrder;
+        private Boolean isSplitOrder = false;
 
         /**
          * 拆分订单信息
@@ -142,10 +147,10 @@ public class SoB2cForeignDTO implements Serializable {
         /**
          * 是否合并订单
          */
-        private Boolean isMergeOrder;
+        private Boolean isMergeOrder = false;
 
         /**
-         * 拆分订单信息
+         * 合并订单信息
          */
         private List<MergeOrderInfo> mergeOrderInfoList;
 
@@ -157,6 +162,7 @@ public class SoB2cForeignDTO implements Serializable {
         /**
          * 物流渠道id
          */
+        @JsonIgnore
         private String logisticChannelId;
 
         /**
@@ -187,7 +193,7 @@ public class SoB2cForeignDTO implements Serializable {
         /**
          * 发货时间 yyyy-MM-dd HH:mm:ss
          */
-        private LocalDateTime deliveryTime;
+        private LocalDate deliveryDate;
 
     }
 

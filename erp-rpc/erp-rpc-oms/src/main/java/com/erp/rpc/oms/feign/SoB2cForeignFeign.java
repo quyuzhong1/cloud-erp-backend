@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "soB2c")
+@FeignClient(name = "erp-oms", contextId = "soB2cForeign")
 public interface SoB2cForeignFeign {
 
     /**
      * 根据b2c订单id获取物流信息
      */
-    @PostMapping("/foreign/feign/soB2c/getOrderDeliveryInfo")
-    PagingVO<List<SoB2cForeignDTO.OrderDeliveryResp>> getOrderDeliveryInfo(@RequestBody PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> orderDeliveryReq);
+    @PostMapping("/foreign/feign/soB2c/getB2cOrderDeliveryInfo")
+    PagingVO<SoB2cForeignDTO.OrderDeliveryResp> getOrderDeliveryInfo(@RequestBody PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> orderDeliveryReq);
 
 }
