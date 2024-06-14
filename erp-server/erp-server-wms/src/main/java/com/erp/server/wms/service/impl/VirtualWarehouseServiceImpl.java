@@ -19,21 +19,20 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseMapper;
-import com.erp.server.wms.service.VirtualWarehouseChannelService;
-import com.erp.server.wms.service.VirtualWarehouseRelationService;
-import com.erp.server.wms.service.VirtualWarehouseService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -69,6 +68,10 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
+    @Resource
+    private WarehouseService warehouseService;
+    @Resource
+    private VirtualInventoryService virtualInventoryService;
     @Resource
     private VirtualWarehouseChannelService virtualWarehouseChannelService;
     @Resource
@@ -220,7 +223,6 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         virtualWarehouseRelationService.batchAdd(bindRelation(updateDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
         //新增关联外部仓
         dmpThirdMappingFeign.add(bindThirdMapping(updateDTO.getThirdMappingList(), virtualWarehouseEntity));
-
         return Boolean.TRUE;
     }
 
@@ -252,22 +254,42 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         if (Objects.nonNull(existVm) && !Objects.equals(existVm.getId(), virtualWarehouseEntity.getId())) {
             throw new ServiceException(ApiError.ERROR_VMNAME_EXIST);
         }
+        //校验实体仓绑定是否变更
+        if (StringUtils.isNotBlank(virtualWarehouseEntity.getId())) {
+            //获取原始绑定关系
+            List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByVirtualWarehouseId(virtualWarehouseEntity.getId());
+            if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
+                VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = warehouseRelationList.get(0);
+                if (!Objects.equals(virtualWarehouseRelationEntity.getWarehouseId(), warehouseIdList.get(0))) {
+                    //修改了虚拟仓实体仓绑定关系，校验库存
+                    VirtualInventoryDTO.VirtualInventoryQtyDTO virtualInventoryQtyDTO = new VirtualInventoryDTO.VirtualInventoryQtyDTO();
+                    virtualInventoryQtyDTO.setVirtualWarehouseId(virtualWarehouseRelationEntity.getVirtualWarehouseId());
+                    virtualInventoryQtyDTO.setWarehouseId(warehouseIdList.get(0));
+                    Integer vwUsableQty = virtualInventoryService.findUsableQtyByQtyDto(virtualInventoryQtyDTO);
+                    if (vwUsableQty > 0) {
+                        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseIdList.get(0));
+                        throw new ServiceException(ApiError.ERROR_VWWSTOCK_NOTEMPRY, warehouseEntity.getName());
+                    }
+                }
+            }
+        }
+
         //校验实体仓是否被别的虚拟仓绑定--当前只绑定一个实体仓库
-//        if (CollectionUtils.isNotEmpty(warehouseIdList)) {
-//            List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
-//            if (StringUtils.isNotBlank(virtualWarehouseEntity.getId())) {
-//                List<VirtualWarehouseRelationEntity> collect = warehouseRelationList.stream().filter(item -> !Objects.equals(item.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
-//                if (CollectionUtils.isNotEmpty(collect)) {
-//                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
-//                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
-//                }
-//            } else {
-//                if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
-//                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
-//                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
-//                }
-//            }
-//        }
+        if (CollectionUtils.isNotEmpty(warehouseIdList)) {
+            List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
+            if (StringUtils.isNotBlank(virtualWarehouseEntity.getId())) {
+                List<VirtualWarehouseRelationEntity> collect = warehouseRelationList.stream().filter(item -> !Objects.equals(item.getVirtualWarehouseId(), virtualWarehouseEntity.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(collect)) {
+                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+                }
+            } else {
+                if (CollectionUtils.isNotEmpty(warehouseRelationList)) {
+                    VirtualWarehouseEntity vmEntity = baseMapper.selectById(warehouseRelationList.get(0).getVirtualWarehouseId());
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_BINDED, vmEntity.getName());
+                }
+            }
+        }
         if (CollectionUtils.isNotEmpty(thirdMappingList)) {
             //校验关联外部仓
             checkDmpThirdMapping(virtualWarehouseEntity.getId(), virtualWarehouseEntity.getName(), thirdMappingList);
@@ -298,10 +320,21 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     @Override
     public Boolean updateState(VirtualWarehouseDTO.UpdateStateDTO updateStateDTO) {
         VirtualWarehouseEntity vmEntity = Optional.ofNullable(this.getById(updateStateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.ERROR_VM_NOTFOUND));
+
         //获取原始状态
         Boolean dbDisabled = vmEntity.getDisabled();
         if (dbDisabled.equals(updateStateDTO.getDisabled())) {
             throw new ServiceException(ApiError.ERROR_SAME_DISABLED);
+        }
+        //如果原始启用状态变成禁用状态时需要校验
+        if (Boolean.FALSE.equals(dbDisabled)) {
+            //获取虚拟仓库存
+            VirtualInventoryDTO.VirtualInventoryQtyDTO virtualInventoryQtyDTO = new VirtualInventoryDTO.VirtualInventoryQtyDTO();
+            virtualInventoryQtyDTO.setVirtualWarehouseId(updateStateDTO.getId());
+            Integer vmUsableQty = virtualInventoryService.findUsableQtyByQtyDto(virtualInventoryQtyDTO);
+            if (vmUsableQty > 0) {
+                throw new ServiceException(ApiError.ERROR_VWSTOCK_NOTEMPRY);
+            }
         }
         VirtualWarehouseEntity virtualWarehouseEntity = new VirtualWarehouseEntity();
         virtualWarehouseEntity.setId(updateStateDTO.getId());
@@ -406,9 +439,9 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         pagingSelect.getList().forEach(shop -> {
             if (bindedShopList.contains(((ShopDTO.ListDTO) shop).getId())) {
                 if (CollectionUtils.isNotEmpty(warehouseChannelEntities) && Objects.equals(warehouseChannelEntities.get(0).getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())
-                        && CollectionUtils.isNotEmpty(shopIds) && shopIds.contains(((ShopDTO.ListDTO) shop).getId())){
+                        && CollectionUtils.isNotEmpty(shopIds) && shopIds.contains(((ShopDTO.ListDTO) shop).getId())) {
                     ((ShopDTO.ListDTO) shop).setDisabled(false);
-                } else{
+                } else {
                     ((ShopDTO.ListDTO) shop).setDisabled(true);
                 }
             } else {

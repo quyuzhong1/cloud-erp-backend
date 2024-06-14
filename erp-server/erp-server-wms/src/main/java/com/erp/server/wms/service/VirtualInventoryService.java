@@ -94,4 +94,9 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @return List<VirtualInventoryQtyDTO>
      */
     List<VirtualInventoryDTO.VirtualInventoryQtyDTO> listInventoryQty(VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO);
+
+    /**
+     * 获取可用数量
+     */
+    Integer findUsableQtyByQtyDto(VirtualInventoryDTO.VirtualInventoryQtyDTO virtualInventoryQtyDTO);
 }

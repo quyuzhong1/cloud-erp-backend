@@ -201,6 +201,10 @@ public class VirtualWarehouseChannelDTO implements Serializable {
          * 关联id（例如店铺）
          */
         private List<String> relationList;
+        /**
+         * 是否失效 true 失效 false 未失效
+         */
+        private Boolean disabled=false;
     }
 
 

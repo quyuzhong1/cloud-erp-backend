@@ -73,12 +73,6 @@ public class WdtVirtualWarehouseHandler implements IBusinessHandler<WdtVirtualWa
 
     public List<WdtVirtualWarehouseDto> download(JobTaskDTO task) {
         WarehouseQueryRequest query = new WarehouseQueryRequest();
-//        query.setWarehouseNo("");
-//        query.setWarehouseName("");
-//        query.setType(WarehouseQueryRequest.TYPE_INNER);
-//        query.setSubType(WarehouseQueryRequest.SUB_TYPE_WDT);
-//        query.setStartTime(task.getLastTime().minusMinutes(15).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-//        query.setEndTime(task.getNextTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 
         Pager pager = new Pager();
         pager.setPageNo(0);

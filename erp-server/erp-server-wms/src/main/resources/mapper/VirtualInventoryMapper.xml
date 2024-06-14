@@ -215,7 +215,7 @@
         SELECT vi.warehouse_id,
                vi.sku_id,
                vi.virtual_warehouse_id as toVirtualWarehouseId,
-               sum(case when vi.dict_inventory_status = 'usable' then vi.qty else 0 end) as toVirtualWarehouseUsableQty
+               COALESCE(sum(case when vi.dict_inventory_status = 'usable' then vi.qty else 0 end),0) as toVirtualWarehouseUsableQty
         FROM virtual_inventory vi
         WHERE vi.is_deleted = FALSE
         and vi.sku_id in
@@ -236,7 +236,7 @@
         select
             vi.warehouse_id,
             vi.sku_id,
-            sum(vi.qty) as toVirtualWarehouseRealQty
+            COALESCE(sum(vi.qty),0) as toVirtualWarehouseRealQty
         from  virtual_inventory vi
         WHERE vi.is_deleted = FALSE
         and vi.sku_id in
@@ -278,6 +278,20 @@
             </if>
         </where>
         group by  vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id,vi.dict_inventory_status
+    </select>
+    <select id="findUsableQtyByQtyDto" resultType="java.lang.Integer"
+            parameterType="com.erp.model.wms.dto.VirtualInventoryDTO$VirtualInventoryQtyDTO">
+        select COALESCE(sum(case when vi.dict_inventory_status = 'usable' then vi.qty else 0 end),0)
+        FROM virtual_inventory vi
+        WHERE vi.is_deleted = FALSE
+        <if test="params.virtualWarehouseId != null and params.virtualWarehouseId != ''">
+          and vi.virtual_warehouse_id =#{params.virtualWarehouseId}
+        </if>
+          <if test="params.warehouseId != null and params.warehouseId != ''">
+          and vi.virtual_warehouse_id =#{params.warehouseId}
+        </if>
+        GROUP BY vi.virtual_warehouse_id
+
     </select>
 
 
