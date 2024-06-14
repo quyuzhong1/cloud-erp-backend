@@ -385,46 +385,34 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      * @return
      */
     @Override
-    public List<VirtualWarehouseDTO.Tree> tree(String key, String id) {
+    public List<BaseDropDownDTO.Tree> tree(String key, String id) {
         List<BaseDropDownDTO.Tree> tree = omsDropDownFeign.tree(key);
-        List<VirtualWarehouseDTO.Tree> trees = BeanMapperUtils.copyList(VirtualWarehouseDTO.Tree.class, tree);
         //获取当前已经绑定的所有渠道
         List<String> bindedDictPlatform = virtualWarehouseChannelService.getBindedDictPlatform();
         if (CollectionUtils.isEmpty(bindedDictPlatform)) {
-            return trees;
+            return tree;
         }
         //获取当前数据绑定的平台
         VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = virtualWarehouseChannelService.getByVirtualWarehouseId(id).stream().findFirst().orElse(null);
-        for (VirtualWarehouseDTO.Tree dictPlatform : trees) {
-            List<VirtualWarehouseDTO.ChildTree> childTreeList = dictPlatform.getChildTreeList();
+        for (BaseDropDownDTO.Tree dictPlatform : tree) {
+            List<BaseDropDownDTO.ChildTree> childTreeList = dictPlatform.getChildTreeList();
             if (CollectionUtils.isEmpty(childTreeList)) {
                 continue;
             }
             childTreeList.forEach(childTree -> {
                 if (bindedDictPlatform.contains(childTree.getCode())) {
-                    if (Objects.nonNull(virtualWarehouseChannelEntity)/* && Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())*/
+                    if (Objects.nonNull(virtualWarehouseChannelEntity) && Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())
                             && Objects.equals(virtualWarehouseChannelEntity.getDictPlatform(), childTree.getCode())) {
                         childTree.setDisabled(false);
                     } else {
-                        //如果是绑定了平台则当前平台不可选择
-                        if (Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())){
-                            childTree.setDisabled(true);
-                            childTree.setCheckPlatform(false);
-                            childTree.setCheckShop(false);
-                        }else{
-                            childTree.setDisabled(false);
-                            childTree.setCheckPlatform(false);
-                            childTree.setCheckShop(true);
-                        }
+                        childTree.setDisabled(true);
                     }
                 } else {
                     childTree.setDisabled(false);
-                    childTree.setCheckPlatform(true);
-                    childTree.setCheckShop(true);
                 }
             });
         }
-        return trees;
+        return tree;
     }
 
     @Override
