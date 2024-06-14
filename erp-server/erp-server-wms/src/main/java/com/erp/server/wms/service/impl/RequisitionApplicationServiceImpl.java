@@ -1187,10 +1187,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             list.forEach(warehouse -> {
                 RequisitionApplicationDTO.WarehouseListDTO warehouseListDTO = new RequisitionApplicationDTO.WarehouseListDTO();
                 WarehouseDTO.ListDTO listDTO = (WarehouseDTO.ListDTO) warehouse;
+                List<VirtualWarehouseRelationEntity> warehouseRelationEntities = virtualWarehouseRelationService.getByWarehouseId(Collections.singletonList(((WarehouseDTO.ListDTO) warehouse).getId()));
                 BeanUtils.copyProperties(listDTO,warehouseListDTO);
                 if (!Objects.equals(ApproveStatusEnum.APPROVE, listDTO.getApproveStatus())) {
                     warehouseListDTO.setDisabled(true);
                     warehouseListDTO.setCanCheck(false);
+                } if (CollectionUtils.isNotEmpty(warehouseRelationEntities)){
+                    warehouseListDTO.setHasVw(true);
                 }
                 warehouseListDTOS.add(warehouseListDTO);
             });

@@ -980,6 +980,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 是否可选
          */
         private Boolean canCheck=true;
+        /**
+         * 是否关联虚拟仓
+         */
+        private Boolean hasVw=false;
     }
     @Data
     @NoArgsConstructor
