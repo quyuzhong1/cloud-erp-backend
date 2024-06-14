@@ -113,6 +113,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         map.put("billType", dto.getBillType());
         map.put("customerId", dto.getCustomerId());
         map.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
+        map.put("warehouseId", dto.getWarehouseId());
         map.put("sku", sku);
         map.put("skuMap", skuMap);
         List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(map);
@@ -340,6 +341,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             removeByIds(idList);
             pickingDetailService.remove(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, idList));
         }
+    }
+
+    @Override
+    public List<PickingListsDTO.SourceView> listBySourceIds(List<String> sourceIds) {
+
+        return baseMapper.listBySourceIds(sourceIds);
     }
 
     /**

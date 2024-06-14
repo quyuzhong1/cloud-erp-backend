@@ -256,7 +256,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Map<String, Object> map = new HashMap<>();
         map.put("billType", add.getBillType());
         map.put("customerId", add.getCustomerId());
-        map.put("deliveryWarehouseId", add.getDeliveryWarehouseId());
+        map.put("warehouseId", add.getWarehouseId());
         map.put("sku", sku);
         map.put("skuMap", skuMap);
         List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(map);

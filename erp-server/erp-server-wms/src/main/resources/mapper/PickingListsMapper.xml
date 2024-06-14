@@ -57,5 +57,25 @@
           and pl.is_deleted = false
         order by pl.update_time desc, pl.id desc
     </select>
+    <select id="listBySourceIds" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$SourceView">
+        select pl.id                 as id,
+               pl.code               as code,
+               pl.source_id          as sourceId,
+               pl.source_code        as sourceCode,
+               pl.warehouse_id       as warehouseId,
+               pd.sku_id             as skuId,
+               pd.sku_no             as skuNo,
+               pd.warehouse_location as warehouseLocation,
+               pd.qty                as qty,
+               pd.source_detail_id   as sourceDetailId,
+               pd.staging_location   as stagingLocation
+        from picking_lists as pl
+                 left join public.picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
+        where pl.is_deleted = false
+        and pl.source_id in
+        <foreach collection="sourceIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
 
 </mapper>

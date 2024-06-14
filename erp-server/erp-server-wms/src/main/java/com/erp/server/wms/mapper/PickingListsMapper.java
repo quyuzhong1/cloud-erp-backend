@@ -24,4 +24,6 @@ public interface PickingListsMapper extends BaseMapper<PickingListsEntity> {
     IPage<PickingListsDTO.PagingView> paging(@Param("page") Page<PickingListsDTO.PagingView> page, @Param("params") PickingListsDTO.PagingParam params);
 
     List<PickingListsDTO.ExportInfoDTO> exportInfo(@Param("params") PickingListsDTO.ExportDTO params);
+
+    List<PickingListsDTO.SourceView> listBySourceIds(@Param("params") List<String> sourceIds);
 }

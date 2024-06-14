@@ -68,4 +68,9 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @param ids id
      */
     void deleteBySourceId(List<String> ids);
+
+    /**
+     * 根据来源id查询拣货单及明细
+     */
+    List<PickingListsDTO.SourceView> listBySourceIds(List<String> sourceIds);
 }

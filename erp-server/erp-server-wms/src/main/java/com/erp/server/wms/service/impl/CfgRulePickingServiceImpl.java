@@ -31,6 +31,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -172,9 +173,11 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 //获取到表达式,判断表达式是否匹配
                 Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
                 if (Boolean.TRUE.equals(matchResult)) {
-                    List<CfgRulePackingActionEntity> actionList = actions.stream().
-                            filter(r -> r.getRuleId().equals(picking.getId())).
-                            sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex)).collect(Collectors.toList());
+                    List<CfgRulePackingActionEntity> actionList = actions.stream()
+                            .filter(r -> r.getRuleId().equals(picking.getId()))
+                            .filter(r -> ObjectUtils.isEmpty(map.get("warehouseId")) || r.getWarehouseId().equals(map.get("warehouseId")))
+                            .sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex))
+                            .collect(Collectors.toList());
                     handlerAction(actionList, result, locationList, skuId, quantity);
                     if (0 == quantity.get()) {
                         break;

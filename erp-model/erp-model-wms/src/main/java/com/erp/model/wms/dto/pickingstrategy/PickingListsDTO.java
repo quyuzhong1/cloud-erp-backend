@@ -242,4 +242,48 @@ public class PickingListsDTO {
         private List<PickingDetailDTO.Add> details;
     }
 
+    @Getter
+    @Setter
+    public static class SourceView {
+        private String id;
+        /**
+         * 拣货单号
+         */
+        private String code;
+        private String sourceId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        private String warehouseId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 暂存仓位
+         */
+        private String stagingLocation;
+    }
+
 }
