@@ -14,26 +14,26 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.DmpInputTaskSubstatusService;
+import com.erp.server.dmp.service.DmpInputTaskStatusRecordService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.dmp.dto.DmpInputTaskSubstatusDTO;
+import com.erp.model.dmp.dto.DmpInputTaskStatusRecordDTO;
 
 /**
- * 拉取任务子状态
+ * 拉取任务状态记录
  *
  * @author shukai
  * @since 2024-06-11
  */
 @Slf4j
 @RestController
-@LogSystemModule("拉取任务子状态")
-@RequestMapping("/dmpInputTaskSubstatus")
-public class DmpInputTaskSubstatusController extends BaseController {
+@LogSystemModule("拉取任务状态记录")
+@RequestMapping("/dmpInputTaskStatusrecord")
+public class DmpInputTaskStatusRecordController extends BaseController {
 
     @Resource
-    private DmpInputTaskSubstatusService dmpInputTaskSubstatusService;
+    private DmpInputTaskStatusRecordService dmpInputTaskStatusrecordService;
 
     /**
     * 新增
@@ -43,9 +43,9 @@ public class DmpInputTaskSubstatusController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "拉取任务子状态新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DmpInputTaskSubstatusDTO.AddDTO dto) {
-        return success(dmpInputTaskSubstatusService.add(dto));
+    @LogAction(value = LogActionEnum.INSERT, desc = "拉取任务状态记录新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DmpInputTaskStatusRecordDTO.AddDTO dto) {
+        return success(dmpInputTaskStatusrecordService.add(dto));
     }
 
     /**
@@ -56,14 +56,14 @@ public class DmpInputTaskSubstatusController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "拉取任务子状态修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "拉取任务状态记录修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "dmp:dmpInputTaskSubstatus:update",
-        serviceClass = DmpInputTaskSubstatusService.class,
+        menuCode = "dmp:dmpInputTaskStatusrecord:update",
+        serviceClass = DmpInputTaskStatusRecordService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated DmpInputTaskSubstatusDTO.UpdateDTO dto) {
-        dmpInputTaskSubstatusService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated DmpInputTaskStatusRecordDTO.UpdateDTO dto) {
+        dmpInputTaskStatusrecordService.update(dto);
         return success();
     }
 

@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.finish;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
@@ -11,7 +12,8 @@ import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
-public class DmpInputBaseDmpHandler extends DmpInputFinishHandler{
+@Service
+public class DmpInputBaseFinishHandler extends DmpInputFinishHandler{
 
 	@Autowired
 	private DmpInputTaskService dmpInputTaskService;

@@ -12,13 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.erp.model.dmp.entity.DmpInputTaskStatusrecordEntity;
+import com.erp.model.dmp.entity.DmpInputTaskStatusRecordEntity;
 import com.erp.server.dmp.inout.dto.request.DmpInputRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
 import com.erp.server.dmp.service.DmpInputTaskService;
-import com.erp.server.dmp.service.DmpInputTaskStatusrecordService;
+import com.erp.server.dmp.service.DmpInputTaskStatusRecordService;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -29,7 +29,7 @@ public class DmpInputTaskStatusHandler extends DmpInputHandler{
 	private DmpInputTaskService dmpInputTaskService;
 	
 	@Autowired
-	private DmpInputTaskStatusrecordService dmpInputTaskStatusrecordService;
+	private DmpInputTaskStatusRecordService dmpInputTaskStatusRecordService;
 	
 	@Transactional(rollbackFor = Exception.class)
 	@Override
@@ -38,8 +38,8 @@ public class DmpInputTaskStatusHandler extends DmpInputHandler{
 		List<DmpInputTaskEntity> beforeDmpInputTaskEntityList = dmpResponse.getBeforeDmpInputTaskEntityList();
 		List<DmpInputTaskEntity> afterDmpInputTaskEntityList = dmpInputTaskService.listByIds(beforeDmpInputTaskEntityList.stream().map(DmpInputTaskEntity::getId).collect(Collectors.toList()));
 		
-		List<DmpInputTaskStatusrecordEntity> dmpInputTaskStatusrecordEntityList = new ArrayList<>();
-		DmpInputTaskStatusrecordEntity dmpInputTaskStatusrecordEntity = null;
+		List<DmpInputTaskStatusRecordEntity> dmpInputTaskStatusrecordEntityList = new ArrayList<>();
+		DmpInputTaskStatusRecordEntity dmpInputTaskStatusrecordEntity = null;
 		if(this.validateDmpInputTaskEntityList(beforeDmpInputTaskEntityList)) {
 			Map<String, String> statusbeforeEntityMaps = beforeDmpInputTaskEntityList.stream().collect(Collectors.toMap(DmpInputTaskEntity::getId , DmpInputTaskEntity::getStatus));
 			Map<String, String> statusAfterEntityMaps = afterDmpInputTaskEntityList.stream().collect(Collectors.toMap(DmpInputTaskEntity::getId , DmpInputTaskEntity::getStatus));
@@ -47,22 +47,22 @@ public class DmpInputTaskStatusHandler extends DmpInputHandler{
 				String id = statusbeforeEntityMap.getKey();
 				String beforeStatus = statusbeforeEntityMap.getValue();
 				String afterStatus = statusAfterEntityMaps.get(id);
-				List<DmpInputTaskStatusrecordEntity> list = dmpInputTaskStatusrecordService.lambdaQuery()
-						.eq(DmpInputTaskStatusrecordEntity::getMainId, id)
-						.eq(DmpInputTaskStatusrecordEntity::getStatus, beforeStatus)
+				List<DmpInputTaskStatusRecordEntity> list = dmpInputTaskStatusRecordService.lambdaQuery()
+						.eq(DmpInputTaskStatusRecordEntity::getMainId, id)
+						.eq(DmpInputTaskStatusRecordEntity::getStatus, beforeStatus)
 						.list();
 				if(CollUtil.isEmpty(list)) {
-					dmpInputTaskStatusrecordEntity = new DmpInputTaskStatusrecordEntity();
+					dmpInputTaskStatusrecordEntity = new DmpInputTaskStatusRecordEntity();
 					dmpInputTaskStatusrecordEntity.setMainId(id);
 					dmpInputTaskStatusrecordEntity.setStatus(beforeStatus);
 					dmpInputTaskStatusrecordEntity.setCreateTime(now);
 					dmpInputTaskStatusrecordEntity.setUpdateTime(now);
 					dmpInputTaskStatusrecordEntityList.add(dmpInputTaskStatusrecordEntity);
 				}else {
-					dmpInputTaskStatusrecordService.lambdaUpdate()
-							.eq(DmpInputTaskStatusrecordEntity::getMainId, id)
-							.eq(DmpInputTaskStatusrecordEntity::getStatus, beforeStatus)
-							.set(DmpInputTaskStatusrecordEntity::getUpdateTime, now)
+					dmpInputTaskStatusRecordService.lambdaUpdate()
+							.eq(DmpInputTaskStatusRecordEntity::getMainId, id)
+							.eq(DmpInputTaskStatusRecordEntity::getStatus, beforeStatus)
+							.set(DmpInputTaskStatusRecordEntity::getUpdateTime, now)
 							.update();
 				}
 				
@@ -74,7 +74,7 @@ public class DmpInputTaskStatusHandler extends DmpInputHandler{
 		
 		if(this.validateDmpInputTaskEntityList(afterDmpInputTaskEntityList)) {
 			for(DmpInputTaskEntity afterDmpInputTaskEntity : afterDmpInputTaskEntityList) {
-				dmpInputTaskStatusrecordEntity = new DmpInputTaskStatusrecordEntity();
+				dmpInputTaskStatusrecordEntity = new DmpInputTaskStatusRecordEntity();
 				dmpInputTaskStatusrecordEntity.setMainId(afterDmpInputTaskEntity.getId());
 				dmpInputTaskStatusrecordEntity.setStatus(afterDmpInputTaskEntity.getStatus());
 				dmpInputTaskStatusrecordEntity.setCreateTime(now);
@@ -83,7 +83,7 @@ public class DmpInputTaskStatusHandler extends DmpInputHandler{
 			}
 		}
 		if(CollUtil.isNotEmpty(dmpInputTaskStatusrecordEntityList)) {
-			dmpInputTaskStatusrecordService.saveBatch(dmpInputTaskStatusrecordEntityList);
+			dmpInputTaskStatusRecordService.saveBatch(dmpInputTaskStatusrecordEntityList);
 		}
 		
 		chain.doDmpHandler(dmpRequest, dmpResponse);

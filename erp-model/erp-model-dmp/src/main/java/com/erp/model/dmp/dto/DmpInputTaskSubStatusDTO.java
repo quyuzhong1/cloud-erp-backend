@@ -10,7 +10,7 @@ import javax.validation.constraints.Size;
 
 /**
  * <p>
- * 拉取任务状态记录请求响应实体
+ * 拉取任务子状态请求响应实体
  * </p>
  *
  * @author shukai
@@ -18,7 +18,7 @@ import javax.validation.constraints.Size;
 */
 @Data
 @NoArgsConstructor
-public class DmpInputTaskStatusrecordDTO implements Serializable {
+public class DmpInputTaskSubStatusDTO implements Serializable {
 
 
 
@@ -39,6 +39,11 @@ public class DmpInputTaskStatusrecordDTO implements Serializable {
         * 任务状态
         */
         private String status;
+
+        /**
+        * 子任务状态，业务开发人员定义
+        */
+        private String subStatus;
 
 
     }
@@ -78,6 +83,13 @@ public class DmpInputTaskStatusrecordDTO implements Serializable {
         @NotBlank(message = "任务状态不能为空")
         @Size(max = 50,message = "任务状态最大长度不能超过50位")
         private String status;
+
+        /**
+        * 子任务状态，业务开发人员定义
+        */
+        @NotBlank(message = "子任务状态，业务开发人员定义不能为空")
+        @Size(max = 50,message = "子任务状态，业务开发人员定义最大长度不能超过50位")
+        private String subStatus;
 
 
     }

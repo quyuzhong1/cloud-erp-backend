@@ -12,10 +12,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.DmpInputTaskSubstatusDTO;
-import com.erp.model.dmp.entity.DmpInputTaskSubstatusEntity;
-import com.erp.server.dmp.mapper.DmpInputTaskSubstatusMapper;
-import com.erp.server.dmp.service.DmpInputTaskSubstatusService;
+import com.erp.model.dmp.dto.DmpInputTaskSubStatusDTO;
+import com.erp.model.dmp.entity.DmpInputTaskSubStatusEntity;
+import com.erp.server.dmp.mapper.DmpInputTaskSubStatusMapper;
+import com.erp.server.dmp.service.DmpInputTaskSubStatusService;
 
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -30,12 +30,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-public class DmpInputTaskSubstatusServiceImpl extends SuperServiceImpl<DmpInputTaskSubstatusMapper, DmpInputTaskSubstatusEntity> implements DmpInputTaskSubstatusService {
+public class DmpInputTaskSubStatusServiceImpl extends SuperServiceImpl<DmpInputTaskSubStatusMapper, DmpInputTaskSubStatusEntity> implements DmpInputTaskSubStatusService {
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(DmpInputTaskSubstatusDTO.AddDTO addDTO) {
-        DmpInputTaskSubstatusEntity dmpInputTaskSubstatusEntity = new DmpInputTaskSubstatusEntity();
+    public BaseResultDTO.AddDTO add(DmpInputTaskSubStatusDTO.AddDTO addDTO) {
+        DmpInputTaskSubStatusEntity dmpInputTaskSubstatusEntity = new DmpInputTaskSubStatusEntity();
         BeanMapperUtils.copy(addDTO, dmpInputTaskSubstatusEntity);
 
         // 数据处理
@@ -60,10 +60,10 @@ public class DmpInputTaskSubstatusServiceImpl extends SuperServiceImpl<DmpInputT
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(DmpInputTaskSubstatusDTO.UpdateDTO updateDTO) {
-        DmpInputTaskSubstatusEntity old = super.getById(updateDTO.getId());
+    public Boolean update(DmpInputTaskSubStatusDTO.UpdateDTO updateDTO) {
+        DmpInputTaskSubStatusEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取任务子状态"));
-        DmpInputTaskSubstatusEntity dmpInputTaskSubstatusEntity =  BeanMapperUtils.map(DmpInputTaskSubstatusEntity.class, updateDTO);
+        DmpInputTaskSubStatusEntity dmpInputTaskSubstatusEntity =  BeanMapperUtils.map(DmpInputTaskSubStatusEntity.class, updateDTO);
 
         // 数据处理
         handleData(dmpInputTaskSubstatusEntity);
@@ -85,7 +85,7 @@ public class DmpInputTaskSubstatusServiceImpl extends SuperServiceImpl<DmpInputT
     /**
     * 新增修改处理数据
     */
-    private void handleData(DmpInputTaskSubstatusEntity dmpInputTaskSubstatusEntity) {
+    private void handleData(DmpInputTaskSubStatusEntity dmpInputTaskSubstatusEntity) {
     // TODO 验证数据 & 数据赋值
     }
 }

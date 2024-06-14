@@ -17,6 +17,7 @@ import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
 import com.erp.server.dmp.service.DmpCfgInputService;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -62,9 +63,12 @@ public abstract class DmpInputCreateHandler extends DmpInputHandler{
 		
 		dmpResponse.setDmpCfgInputEntity(dmpCfgInputEntity);
 		List<DmpInputTaskEntity> befortDmpInputTaskEntityList = createInputTask(dmpRequest , dmpResponse);
+		if(CollUtil.isEmpty(befortDmpInputTaskEntityList)) {
+			return;
+		}
 		dmpResponse.setBeforeDmpInputTaskEntityList(befortDmpInputTaskEntityList);
-		
 		chain.doDmpHandler(dmpRequest, dmpResponse);
+		
 	}
 	
 	public abstract List<DmpInputTaskEntity> createInputTask(DmpInputCreateRequest dmpRequest, DmpInputCreateResponse dmpResponse);

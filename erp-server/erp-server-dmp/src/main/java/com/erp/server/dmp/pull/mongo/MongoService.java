@@ -2,6 +2,8 @@ package com.erp.server.dmp.pull.mongo;
 
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.utils.MapUtil;
+import com.erp.server.dmp.inout.dto.base.DmpInputMongoBaseEntity;
+
 import jnr.ffi.annotations.In;
 import org.springframework.data.domain.Sort.Direction;
 
@@ -178,4 +180,12 @@ public interface MongoService {
 	 * 根据uniqueIds批量更新isClear新据
 	 */
 	<T extends CleanBaseDTO> void updateIsClearByUniqueIds(List<String> uniqueIds, Integer isClear, String finalTableName, Class<T> tClass);
+	
+	/**
+	 * @param <T>
+	 * @param fieldValueMaps
+	 * @param table
+	 * @return
+	 */
+	List<Map> findMongoData(Map<String, Object> fieldValueMaps, String table);
 }

@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.mongo.impl;
 
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.utils.MapUtil;
+import com.erp.server.dmp.inout.dto.base.DmpInputMongoBaseEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.utils.MongoUtil;
 import com.google.common.collect.Lists;
@@ -271,6 +272,18 @@ public class MongoServiceImpl implements MongoService {
 
 			// 执行更新操作
 			orderTemplate.updateMulti(query, update, tClass, tableName);
+		}
+	}
+
+	@Override
+	public List<Map> findMongoData(Map<String, Object> fieldValueMaps, String table) {
+		Criteria criteria = MongoUtil.mongoFilter_duplicateKey(fieldValueMaps);
+		Query query = new Query(criteria);
+		List<Map> list = orderTemplate.find(query, Map.class, table);
+		if(list == null || list.size() <= 0) {
+			return null;
+		}else {
+			return list;
 		}
 	}
 

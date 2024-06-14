@@ -12,10 +12,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.DmpInputTaskStatusrecordDTO;
-import com.erp.model.dmp.entity.DmpInputTaskStatusrecordEntity;
-import com.erp.server.dmp.mapper.DmpInputTaskStatusrecordMapper;
-import com.erp.server.dmp.service.DmpInputTaskStatusrecordService;
+import com.erp.model.dmp.dto.DmpInputTaskStatusRecordDTO;
+import com.erp.model.dmp.entity.DmpInputTaskStatusRecordEntity;
+import com.erp.server.dmp.mapper.DmpInputTaskStatusRecordMapper;
+import com.erp.server.dmp.service.DmpInputTaskStatusRecordService;
 
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -30,12 +30,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-public class DmpInputTaskStatusrecordServiceImpl extends SuperServiceImpl<DmpInputTaskStatusrecordMapper, DmpInputTaskStatusrecordEntity> implements DmpInputTaskStatusrecordService {
+public class DmpInputTaskStatusRecordServiceImpl extends SuperServiceImpl<DmpInputTaskStatusRecordMapper, DmpInputTaskStatusRecordEntity> implements DmpInputTaskStatusRecordService {
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(DmpInputTaskStatusrecordDTO.AddDTO addDTO) {
-        DmpInputTaskStatusrecordEntity dmpInputTaskStatusrecordEntity = new DmpInputTaskStatusrecordEntity();
+    public BaseResultDTO.AddDTO add(DmpInputTaskStatusRecordDTO.AddDTO addDTO) {
+        DmpInputTaskStatusRecordEntity dmpInputTaskStatusrecordEntity = new DmpInputTaskStatusRecordEntity();
         BeanMapperUtils.copy(addDTO, dmpInputTaskStatusrecordEntity);
 
         // 数据处理
@@ -60,10 +60,10 @@ public class DmpInputTaskStatusrecordServiceImpl extends SuperServiceImpl<DmpInp
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(DmpInputTaskStatusrecordDTO.UpdateDTO updateDTO) {
-        DmpInputTaskStatusrecordEntity old = super.getById(updateDTO.getId());
+    public Boolean update(DmpInputTaskStatusRecordDTO.UpdateDTO updateDTO) {
+        DmpInputTaskStatusRecordEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取任务状态记录"));
-        DmpInputTaskStatusrecordEntity dmpInputTaskStatusrecordEntity =  BeanMapperUtils.map(DmpInputTaskStatusrecordEntity.class, updateDTO);
+        DmpInputTaskStatusRecordEntity dmpInputTaskStatusrecordEntity =  BeanMapperUtils.map(DmpInputTaskStatusRecordEntity.class, updateDTO);
 
         // 数据处理
         handleData(dmpInputTaskStatusrecordEntity);
@@ -85,7 +85,7 @@ public class DmpInputTaskStatusrecordServiceImpl extends SuperServiceImpl<DmpInp
     /**
     * 新增修改处理数据
     */
-    private void handleData(DmpInputTaskStatusrecordEntity dmpInputTaskStatusrecordEntity) {
+    private void handleData(DmpInputTaskStatusRecordEntity dmpInputTaskStatusrecordEntity) {
     // TODO 验证数据 & 数据赋值
     }
 }

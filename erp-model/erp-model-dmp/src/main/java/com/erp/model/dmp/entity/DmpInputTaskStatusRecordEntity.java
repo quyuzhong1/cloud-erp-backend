@@ -21,8 +21,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("dmp_input_task_statusrecord")
-public class DmpInputTaskStatusrecordEntity extends BaseEntity<DmpInputTaskStatusrecordEntity> {
+@TableName("dmp_input_task_status_record")
+public class DmpInputTaskStatusRecordEntity extends BaseEntity<DmpInputTaskStatusRecordEntity> {
 
 	/**
     * 拉取任务id

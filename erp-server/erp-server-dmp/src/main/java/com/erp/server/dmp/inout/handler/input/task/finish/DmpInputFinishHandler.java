@@ -1,12 +1,12 @@
 package com.erp.server.dmp.inout.handler.input.task.finish;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputDmpBaseEntity;
-import com.erp.server.dmp.inout.dto.base.DmpInputMongoBaseEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
@@ -42,8 +42,8 @@ public abstract class DmpInputFinishHandler extends DmpInputHandler{
 		if(CollUtil.isNotEmpty(dmpInputDmpBaseEntityList)) {
 			dealDmpToFinish(dmpRequest, dmpResponse);
 		}else {
-			List<DmpInputMongoBaseEntity> dmpInputMongoBaseEntityList = dmpResponse.getDmpInputMongoBaseEntityList();
-			if(CollUtil.isNotEmpty(dmpInputMongoBaseEntityList)) {
+			List<Map> dmpInputMongoEntityList = dmpResponse.getDmpInputMongoEntityList();
+			if(CollUtil.isNotEmpty(dmpInputMongoEntityList)) {
 				dealMongoToFinish(dmpRequest, dmpResponse);
 			}else {
 				List<DmpInputTaskFileEntity> dmpInputTaskFileEntityList = dmpResponse.getDmpInputTaskFileEntityList();

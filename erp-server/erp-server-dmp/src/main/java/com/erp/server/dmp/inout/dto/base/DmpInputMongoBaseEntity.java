@@ -32,4 +32,5 @@ public class DmpInputMongoBaseEntity{
 	 * 下一层级id
 	 */
 	private String nextLevelId;
+	
 }

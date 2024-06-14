@@ -1,18 +1,18 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.DmpInputTaskStatusrecordEntity;
+import com.erp.model.dmp.entity.DmpInputTaskSubStatusEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.DmpInputTaskStatusrecordDTO;
+import com.erp.model.dmp.dto.DmpInputTaskSubStatusDTO;
 
 /**
  * <p>
- * 拉取任务状态记录 服务类
+ * 拉取任务子状态 服务类
  * </p>
  *
  * @author shukai
  * @since 2024-06-11
  */
-public interface DmpInputTaskStatusrecordService extends SuperService<DmpInputTaskStatusrecordEntity> {
+public interface DmpInputTaskSubStatusService extends SuperService<DmpInputTaskSubStatusEntity> {
 
     /**
     * 新增
@@ -21,7 +21,7 @@ public interface DmpInputTaskStatusrecordService extends SuperService<DmpInputTa
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(DmpInputTaskStatusrecordDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(DmpInputTaskSubStatusDTO.AddDTO dto);
 
     /**
     * 修改
@@ -30,7 +30,7 @@ public interface DmpInputTaskStatusrecordService extends SuperService<DmpInputTa
     * @param dto
     * @return
     */
-    Boolean update(DmpInputTaskStatusrecordDTO.UpdateDTO dto);
+    Boolean update(DmpInputTaskSubStatusDTO.UpdateDTO dto);
 
 
 }

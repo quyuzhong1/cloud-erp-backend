@@ -22,7 +22,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("dmp_input_task_substatus")
-public class DmpInputTaskSubstatusEntity extends BaseEntity<DmpInputTaskSubstatusEntity> {
+public class DmpInputTaskSubStatusEntity extends BaseEntity<DmpInputTaskSubStatusEntity> {
 
 	/**
     * 拉取任务id

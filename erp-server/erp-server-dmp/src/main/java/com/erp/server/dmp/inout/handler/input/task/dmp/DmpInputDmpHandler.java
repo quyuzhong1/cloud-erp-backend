@@ -1,12 +1,16 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputDmpBaseEntity;
-import com.erp.server.dmp.inout.dto.base.DmpInputMongoBaseEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputRequest;
@@ -37,21 +41,31 @@ public abstract class DmpInputDmpHandler extends DmpInputHandler{
 	}
 	
 	private void doDmpHandler(DmpInputDmpRequest dmpRequest, DmpInputDmpResponse dmpResponse, DmpHandlerChain chain) {
-		List<DmpInputDmpBaseEntity> dmpInputDmpBaseEntityList = null;
+		String inputTaskId = dmpRequest.getInputTaskId();
+		ServiceImpl bean = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(dmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
 		
-		List<DmpInputMongoBaseEntity> dmpInputMongoBaseEntityList = dmpResponse.getDmpInputMongoBaseEntityList();
-		if(CollUtil.isNotEmpty(dmpInputMongoBaseEntityList)) {
-			dmpInputDmpBaseEntityList = convertMongoToDmp(dmpRequest, dmpResponse);
+		QueryWrapper<?> wrapper = new QueryWrapper<>();
+		wrapper.eq("inputTaskId", inputTaskId);
+		bean.list(wrapper);
+		List<DmpInputDmpBaseEntity> dmpInputDmpBaseEntityList = bean.list(wrapper);
+		
+		if(CollUtil.isNotEmpty(dmpInputDmpBaseEntityList)) {
+			
 		}else {
-			List<DmpInputTaskFileEntity> dmpInputTaskFileEntityList = dmpResponse.getDmpInputTaskFileEntityList();
-			if(CollUtil.isNotEmpty(dmpInputTaskFileEntityList)) {
-				dmpInputDmpBaseEntityList = convertFdsToDmp(dmpRequest, dmpResponse);
+			List<Map> dmpInputMongoEntityList = dmpResponse.getDmpInputMongoEntityList();
+			if(CollUtil.isNotEmpty(dmpInputMongoEntityList)) {
+				dmpInputDmpBaseEntityList = convertMongoToDmp(dmpRequest, dmpResponse);
 			}else {
-				List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = dmpResponse.getDmpInputTaskInitDTOList();
-				if(CollUtil.isNotEmpty(dmpInputTaskInitDTOList)) {
-					dmpInputDmpBaseEntityList = convertInitToDmp(dmpRequest, dmpResponse);
+				List<DmpInputTaskFileEntity> dmpInputTaskFileEntityList = dmpResponse.getDmpInputTaskFileEntityList();
+				if(CollUtil.isNotEmpty(dmpInputTaskFileEntityList)) {
+					dmpInputDmpBaseEntityList = convertFdsToDmp(dmpRequest, dmpResponse);
 				}else {
-					dmpInputDmpBaseEntityList = convertNoneToDmp(dmpRequest, dmpResponse);
+					List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = dmpResponse.getDmpInputTaskInitDTOList();
+					if(CollUtil.isNotEmpty(dmpInputTaskInitDTOList)) {
+						dmpInputDmpBaseEntityList = convertInitToDmp(dmpRequest, dmpResponse);
+					}else {
+						dmpInputDmpBaseEntityList = convertNoneToDmp(dmpRequest, dmpResponse);
+					}
 				}
 			}
 		}

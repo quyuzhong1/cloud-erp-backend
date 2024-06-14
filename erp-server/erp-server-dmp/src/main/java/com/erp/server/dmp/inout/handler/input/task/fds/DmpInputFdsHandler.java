@@ -2,8 +2,10 @@ package com.erp.server.dmp.inout.handler.input.task.fds;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputFdsRequest;
@@ -14,11 +16,16 @@ import com.erp.server.dmp.inout.dto.response.DmpInputResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
+import com.erp.server.dmp.service.DmpInputTaskFileService;
 
 import cn.hutool.core.collection.CollUtil;
 
 @Service
 public abstract class DmpInputFdsHandler extends DmpInputHandler{
+	
+	@Autowired
+	private DmpInputTaskFileService dmpInputTaskFileService;
+	
 	@Override
 	public void doDmpHandler(DmpInputRequest dmpRequest, DmpInputResponse dmpResponse, DmpHandlerChain chain) {
 		if (!(dmpRequest instanceof DmpInputFdsRequest)) {
@@ -33,14 +40,20 @@ public abstract class DmpInputFdsHandler extends DmpInputHandler{
 	}
 	
 	private void doDmpHandler(DmpInputFdsRequest dmpRequest, DmpInputFdsResponse dmpResponse, DmpHandlerChain chain) {
-		List<DmpInputTaskFileEntity> dmpInputTaskFileEntityList = null;
+		DmpInputTaskEntity dmpInputTaskEntity = dmpResponse.getBeforeDmpInputTaskEntityList().get(0);
+		List<DmpInputTaskFileEntity> dmpInputTaskFileEntityList = dmpInputTaskFileService.lambdaQuery().eq(DmpInputTaskFileEntity::getMainId, dmpInputTaskEntity.getId()).list();
 		
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = dmpResponse.getDmpInputTaskInitDTOList();
-		if(CollUtil.isNotEmpty(dmpInputTaskInitDTOList)) {
-			dmpInputTaskFileEntityList = uploadInitToFds(dmpRequest,  dmpResponse);
+		if(CollUtil.isNotEmpty(dmpInputTaskFileEntityList)) {
+			
 		}else {
-			dmpInputTaskFileEntityList = uploadNoneToFds(dmpRequest,  dmpResponse);
+			List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = dmpResponse.getDmpInputTaskInitDTOList();
+			if(CollUtil.isNotEmpty(dmpInputTaskInitDTOList)) {
+				dmpInputTaskFileEntityList = uploadInitToFds(dmpRequest,  dmpResponse);
+			}else {
+				dmpInputTaskFileEntityList = uploadNoneToFds(dmpRequest,  dmpResponse);
+			}
 		}
+		
 		dmpResponse.setDmpInputTaskFileEntityList(dmpInputTaskFileEntityList);
 		chain.doDmpHandler(dmpRequest, dmpResponse);
 	}

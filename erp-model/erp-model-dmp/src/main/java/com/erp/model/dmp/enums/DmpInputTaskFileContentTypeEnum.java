@@ -16,6 +16,7 @@ public enum DmpInputTaskFileContentTypeEnum implements EnumMessage {
 	JSON("json", "json"),
 	XML("xml", "xml"),
 	CSV("csv", "csv"),
+	TXT("txt", "文本"),
     ;
     /**
      * 类型

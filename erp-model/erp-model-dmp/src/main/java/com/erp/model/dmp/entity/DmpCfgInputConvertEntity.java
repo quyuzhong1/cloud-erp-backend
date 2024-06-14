@@ -63,7 +63,7 @@ public class DmpCfgInputConvertEntity extends BaseEntity<DmpCfgInputConvertEntit
     /**
      * 优先级
      */
-     @TableField("order")
+     @TableField("\"order\"")
      private Integer order;
 
 

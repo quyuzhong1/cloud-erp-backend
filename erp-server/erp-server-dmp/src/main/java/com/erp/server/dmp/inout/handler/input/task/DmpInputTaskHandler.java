@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
@@ -25,6 +26,10 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.DmpHandler;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
+import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDmpHandler;
+import com.erp.server.dmp.inout.handler.input.task.finish.DmpInputBaseFinishHandler;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgApiService;
 import com.erp.server.dmp.service.DmpCfgInputConvertService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
@@ -58,6 +63,8 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 	private DmpCfgOutputService dmpCfgOutputService;
 	@Autowired
 	private DmpCfgOutputDetailService dmpCfgOutputDetailService;
+	@Autowired
+	private DmpBasicSystemService dmpBasicSystemService;
 	
 	@Override
 	public void doDmpHandler(DmpInputRequest dmpRequest, DmpInputResponse dmpResponse, DmpHandlerChain chain) {
@@ -97,8 +104,9 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		
 		DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpCfgInputDetailService.getById(dmpInputTaskEntity.getInputDetailId());
 		String mainId = dmpCfgInputDetailEntity.getMainId();
+		DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputService.getById(mainId);
+		DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.getById(dmpCfgInputEntity.getSystemId());
 		if(DmpInputTaskStatusEnum.INIT.getCode().equals(inputStatus)) {
-			DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputService.getById(mainId);
 			String type = dmpCfgInputEntity.getType();
 			if(DmpCfgInputTypeEnum.API.getCode().equals(type)) {
 				String typeId = dmpCfgInputEntity.getTypeId();
@@ -107,54 +115,67 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 					dmpHandlerList.add(this.getDmpHandlerBean(dmpCfgApiEntity.getApiClass()));
 				}
 			}
-		}else {
-			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
-					.eq(DmpCfgInputConvertEntity::getMainId, mainId)
-					.eq(DmpCfgInputConvertEntity::getInputStatus, inputStatus)
-					.eq(DmpCfgInputConvertEntity::getDisabled, Boolean.FALSE)
+		}
+
+		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
+				.eq(DmpCfgInputConvertEntity::getMainId, mainId)
+				.eq(DmpCfgInputConvertEntity::getDisabled, Boolean.FALSE)
+				.list();
+		dmpCfgInputConvertEntityList.sort((d1 , d2) -> {
+			if(d1 == null) {
+				return -1;
+			}
+			if(d2 == null) {
+				return 1;
+			}
+			return d1.getOrder().compareTo(d2.getOrder());
+		});
+		for(DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
+			DmpHandler dmpHandler = this.getDmpHandlerBean(dmpCfgInputConvertEntity.getConvertClass());
+			
+			if(dmpHandler instanceof DmpInputDmpHandler) {
+				((DmpInputDmpHandler) dmpHandler).setDmpCfgInputConvertEntity(dmpCfgInputConvertEntity);
+			}
+			
+			if(dmpHandler instanceof DmpInputMongoHandler) {
+				String mongoStorageName = dmpBasicSystemEntity.getCode() + "_" + dmpCfgInputEntity.getCode() + "_" + dmpCfgInputConvertEntity.getStorageName();
+				((DmpInputMongoHandler) dmpHandler).setMongoStorageName(mongoStorageName);
+			}
+			
+			dmpHandlerList.add(dmpHandler);
+			String covertId = dmpCfgInputConvertEntity.getId();
+			List<DmpCfgOutputEntity> dmpCfgOutputEntityList = dmpCfgOutputService.lambdaQuery()
+					.eq(DmpCfgOutputEntity::getInputConvertId, covertId)
+					.eq(DmpCfgOutputEntity::getDisabled, Boolean.FALSE)
 					.list();
-			dmpCfgInputConvertEntityList.sort((d1 , d2) -> {
-				if(d1 == null) {
-					return -1;
-				}
-				if(d2 == null) {
-					return 1;
-				}
-				return d1.getOrder().compareTo(d2.getOrder());
-			});
-			for(DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
-				dmpHandlerList.add(this.getDmpHandlerBean(dmpCfgInputConvertEntity.getConvertClass()));
-				String covertId = dmpCfgInputConvertEntity.getId();
-				List<DmpCfgOutputEntity> dmpCfgOutputEntityList = dmpCfgOutputService.lambdaQuery()
-						.eq(DmpCfgOutputEntity::getInputConvertId, covertId)
-						.eq(DmpCfgOutputEntity::getDisabled, Boolean.FALSE)
-						.list();
-				if(CollUtil.isNotEmpty(dmpCfgOutputEntityList)) {
-					for(DmpCfgOutputEntity dmpCfgOutputEntity : dmpCfgOutputEntityList) {
-						List<DmpCfgOutputDetailEntity> dmpCfgOutputDetailEntityList = dmpCfgOutputDetailService.lambdaQuery()
-								.eq(DmpCfgOutputDetailEntity::getMainId, dmpCfgOutputEntity.getId())
-								.eq(DmpCfgOutputDetailEntity::getNextLevelId, dmpCfgInputDetailEntity.getNextLevelId())
-								.list();
-						for(DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity : dmpCfgOutputDetailEntityList) {
-							String type = dmpCfgOutputEntity.getType();
-							String apiClass = "";
-							if(DmpCfgInputTypeEnum.API.getCode().equals(type)) {
-								String typeId = dmpCfgOutputEntity.getTypeId();
-								if(StringUtils.isNotBlank(typeId)) {
-									DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
-									apiClass = dmpCfgApiEntity.getApiClass();
-								}
-							}else if(DmpCfgInputTypeEnum.MQ.getCode().equals(type)) {
-								apiClass = "mqPushHandler";
-							}else if(DmpCfgInputTypeEnum.DB.getCode().equals(type)) {
-								apiClass = "dbPushHandler";
+			if(CollUtil.isNotEmpty(dmpCfgOutputEntityList)) {
+				for(DmpCfgOutputEntity dmpCfgOutputEntity : dmpCfgOutputEntityList) {
+					List<DmpCfgOutputDetailEntity> dmpCfgOutputDetailEntityList = dmpCfgOutputDetailService.lambdaQuery()
+							.eq(DmpCfgOutputDetailEntity::getMainId, dmpCfgOutputEntity.getId())
+							.eq(DmpCfgOutputDetailEntity::getNextLevelId, dmpCfgInputDetailEntity.getNextLevelId())
+							.list();
+					for(DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity : dmpCfgOutputDetailEntityList) {
+						String type = dmpCfgOutputEntity.getType();
+						String apiClass = "";
+						if(DmpCfgInputTypeEnum.API.getCode().equals(type)) {
+							String typeId = dmpCfgOutputEntity.getTypeId();
+							if(StringUtils.isNotBlank(typeId)) {
+								DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
+								apiClass = dmpCfgApiEntity.getApiClass();
 							}
-							dmpHandlerList.add(this.getDmpHandlerBean(apiClass));
+						}else if(DmpCfgInputTypeEnum.MQ.getCode().equals(type)) {
+							apiClass = "mqPushHandler";
+						}else if(DmpCfgInputTypeEnum.DB.getCode().equals(type)) {
+							apiClass = "dbPushHandler";
 						}
+						dmpHandlerList.add(this.getDmpHandlerBean(apiClass));
 					}
 				}
 			}
 		}
+	
+		
+		dmpHandlerList.add(getDmpHandlerBean(DmpInputBaseFinishHandler.class.getSimpleName()));
 		
 		return dmpHandlerList;
 	}
@@ -163,9 +184,10 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		if(StringUtils.isBlank(beanClass)) {
 			return null;
 		}
-		if(!beanClass.contains("\\.")) {
-			beanClass = StringUtils.uncapitalize(beanClass);
-		}
+		
+		String[] split = beanClass.split("\\.");
+		beanClass = StringUtils.uncapitalize(split[split.length - 1]);
+		
 		return ApplicationContextUtils.getBean(beanClass, DmpHandler.class);
 	}
 }
