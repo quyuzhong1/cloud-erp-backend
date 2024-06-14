@@ -795,12 +795,6 @@ public class SoDetailDTO implements Serializable {
          */
         @NotBlank(message = "仓库不能为空")
         private String warehouseId;
-
-        /**
-         * 客户Id
-         */
-        @NotBlank(message = "客户信息不能为空")
-        private String customerId;
     }
 
 
