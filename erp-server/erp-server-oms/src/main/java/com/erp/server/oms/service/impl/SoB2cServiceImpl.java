@@ -7588,6 +7588,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     public BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate) {
+        //已审核 配货中才会进行 申报规则执行
+        SoB2cEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //已存在申报信息 则不进行规则匹配
         List<SoB2cDeclareProductEntity> declareProductList = soB2cDeclareProductService.listBySoId(id);
         if (Objects.nonNull(isUpdate) && !isUpdate && CollectionUtils.isNotEmpty(declareProductList)){
@@ -7596,6 +7599,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (ObjectUtil.isEmpty(logisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        if (StrUtil.isBlank(logisticsEntity.getLogisticsChannelId())){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_ID_NOT_NULL, entity.getCode());
         }
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(id);
         if (ObjectUtil.isEmpty(receiverEntity)) {
@@ -7607,9 +7613,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal maxCustomsAmount = channelConstraintDTO.getMaxCustomsAmount();
         //最低报关金额
         BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
-        //已审核 配货中才会进行 申报规则执行
-        SoB2cEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        //物流渠道下单平台
+        String logisticsPlatform = channelConstraintDTO.getLogisticsPlatform();
+        if (StrUtil.isBlank(logisticsEntity.getLogisticsChannelId())){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL, entity.getCode());
+        }
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
                 || !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
         ) {
@@ -7617,7 +7625,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         if (map.isEmpty()) {
             List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
-            handleDeclareMatchJson(entity, detailList, map);
+            handleDeclareMatchJson(entity, detailList, map, logisticsPlatform);
         }
         //规则结果
         cfgRuleDeclareService.getRuleDeclareMatchResult(map, maxCustomsAmount, minCustomsAmount, isUpdate,declareProductList);
@@ -7625,15 +7633,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity) {
+    public List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity, String logisticsPlatform) {
         if (CollectionUtils.isEmpty(detailList)) {
             return Collections.emptyList();
         }
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
         String country = Objects.nonNull(receiverEntity)?Objects.nonNull(receiverEntity.getCountry())?receiverEntity.getCountry():"":"";
         //判断是否是速卖通  来源平台
-        String dictPlatform = soB2cEntity.getDictPlatform();
-        Boolean isAliExpress = PlatformDictEnum.ALI_EXPRESS.getCode().equals(dictPlatform);
+        Boolean isAliExpress = PlatformDictEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform);
 
         List<LogisticsDeclareProductDTO> declareProductDTOS = new ArrayList<>();
         List<String> skuIds = detailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
@@ -7858,7 +7865,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return customs;
     }
 
-    private void handleDeclareMatchJson(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailList, HashMap<String, Object> map) {
+    private void handleDeclareMatchJson(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailList, HashMap<String, Object> map, String logisticsPlatform) {
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
@@ -7873,7 +7880,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("id", soB2cEntity.getId());
         map.put("code", soB2cEntity.getCode());
         //根据订单明细进行sku拆分
-        List<LogisticsDeclareProductDTO> productDTOS = this.splitLogisticsBySoDetail(detailList, soB2cEntity);
+        List<LogisticsDeclareProductDTO> productDTOS = this.splitLogisticsBySoDetail(detailList, soB2cEntity,logisticsPlatform);
         List<Map<String, Object>> mapList = new ArrayList<>(detailList.size());
         productDTOS.forEach(dto -> {
             Map<String, Object> beanToMap = BeanUtil.beanToMap(dto);
