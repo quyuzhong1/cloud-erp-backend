@@ -118,6 +118,9 @@
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
+        <if test="params.warehouseAreaId != null and params.warehouseAreaId != ''">
+            and wl.parent_id = #{params.warehouseAreaId}
+        </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             case when wl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
@@ -355,6 +358,9 @@
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.warehouseAreaId != null and params.warehouseAreaId != ''">
+            and wl.parent_id = #{params.warehouseAreaId}
         </if>
         order by usableQty desc,
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
