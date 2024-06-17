@@ -25,5 +25,5 @@ public interface PickingListsMapper extends BaseMapper<PickingListsEntity> {
 
     List<PickingListsDTO.ExportInfoDTO> exportInfo(@Param("params") PickingListsDTO.ExportDTO params);
 
-    List<PickingListsDTO.SourceView> listBySourceIds(@Param("params") List<String> sourceIds);
+    List<PickingListsDTO.SourceView> listBySourceIds(@Param("sourceIds") List<String> sourceIds);
 }
