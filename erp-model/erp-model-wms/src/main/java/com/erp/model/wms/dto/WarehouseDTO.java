@@ -280,7 +280,14 @@ public class WarehouseDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
-
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 启用状态
+         */
+        private Boolean disabled;
     }
 
 

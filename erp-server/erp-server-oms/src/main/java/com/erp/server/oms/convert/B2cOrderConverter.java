@@ -1,5 +1,6 @@
 package com.erp.server.oms.convert;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.mapper.BigDecimalMapperWork;
 import com.common.business.mapper.BooleanMapperWork;
 import com.common.business.mapper.NumberMapperWork;
@@ -310,4 +311,18 @@ public interface B2cOrderConverter {
      * @return
      */
     SoB2cDTO.ViewDTO convertEntityToViewDTO(SoB2cEntity soB2cEntity);
+    /**
+     * 转换订单明细
+     * @param dto
+     * @return
+     */
+    @Mapping(target = "mainId", source = "id")
+    @Mapping(target = "imageUrl", source = "imageUrl")
+    @Mapping(target = "skuId", source = "skuId")
+    @Mapping(target = "skuNo", source = "skuNo")
+    @Mapping(target = "qty", source = "qty")
+    @Mapping(target = "warehouseId", source = "warehouseId")
+    @Mapping(target = "warehouseName", source = "warehouseName")
+    @Mapping(target = "id", ignore = true)
+    SoB2cDetailEntity convertB2cDetailByGiftDto(SoB2cDTO.GiftDTO dto);
 }

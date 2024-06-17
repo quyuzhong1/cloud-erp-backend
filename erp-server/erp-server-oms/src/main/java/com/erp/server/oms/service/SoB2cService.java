@@ -906,4 +906,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 同步处理历史审核订单数据到订单表
      */
     void processOrderApproveData();
+
+    /**
+     * 添加赠品
+     * @param dto
+     * @return
+     */
+    BatchResultDTO addGift(SoB2cDTO.GiftDTO dto);
 }
