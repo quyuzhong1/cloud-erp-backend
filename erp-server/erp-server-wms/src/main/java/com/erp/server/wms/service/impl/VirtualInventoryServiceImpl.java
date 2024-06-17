@@ -431,7 +431,9 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                         .map(VirtualInventoryDTO.ListInventoryDTO::getVirtualQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
                 listDetailDTO.setDistributionQty(distributionQty);
-                listDetailDTO.setVirtualQty(distributionQty);
+
+                //虚拟仓数量
+                listDetailDTO.setVirtualQty(MathUtil.add(listDetailDTO.getVirtualUsableQty(),listDetailDTO.getVirtualFrozenQty()));
                 //未分配数量
                 listDetailDTO.setUnDistributionQty(listDetailDTO.getUsableQty() - distributionQty);
 
