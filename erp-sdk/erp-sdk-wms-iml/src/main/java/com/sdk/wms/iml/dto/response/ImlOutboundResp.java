@@ -33,4 +33,7 @@ public class ImlOutboundResp extends CleanBaseDTO implements Serializable {
     //跟踪号
     @JSONField(name = "tracking_no")
     private String trackNo;
+
+    @JSONField(name = "abnormal_reason")
+    private String abnormalReason;
 }

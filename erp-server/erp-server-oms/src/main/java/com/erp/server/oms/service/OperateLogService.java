@@ -97,4 +97,12 @@ public interface OperateLogService extends SuperService<OperateLogEntity> {
     void removeByBusinessIds(List<String> businessIds);
 
     List<String> getContentByObj(Object oldObj, Object newObj,String msg);
+
+    /**
+     * 根据销售订单明细查询最新记录
+     * @param soIds
+     * @param operation
+     * @return
+     */
+    List<OperateLogEntity> listLastLogBySoIds(List<String> soIds, String operation);
 }

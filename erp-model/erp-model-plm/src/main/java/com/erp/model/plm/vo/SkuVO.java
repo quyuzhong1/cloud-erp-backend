@@ -1,5 +1,6 @@
 package com.erp.model.plm.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +27,9 @@ public class SkuVO implements Serializable {
     private String skuId;
 
     private String productId;
-
+    /**
+     * ean码
+     */
     private String ean;
 
     /**
@@ -47,6 +50,10 @@ public class SkuVO implements Serializable {
     private String declareCurrencySymbol;
 
     /**
+     * 单箱数量
+     */
+    private Integer boxQty;
+    /**
      * 销售方式
      */
     private String saleMethod;
@@ -55,19 +62,6 @@ public class SkuVO implements Serializable {
      * 单箱数量
      */
     private Integer unitQty;
-
-    /**
-     * 长
-     */
-    private BigDecimal length;
-    /**
-     * 宽
-     */
-    private BigDecimal width;
-    /**
-     * 高
-     */
-    private BigDecimal height;
 
     /**
      * sku 名称
@@ -181,9 +175,13 @@ public class SkuVO implements Serializable {
     private BigDecimal targetTaxCost;
 
     /**
-     * 实际含税成本
+     * 实际含税成本(含税)
      */
     private BigDecimal actualTaxCost;
+    /**
+     * 成本价格（不含税）
+     */
+    private BigDecimal notTaxCostPrice;
 
     /**
      * 标准零售价

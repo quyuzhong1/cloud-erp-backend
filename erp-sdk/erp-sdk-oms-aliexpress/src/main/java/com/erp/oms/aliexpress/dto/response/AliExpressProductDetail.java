@@ -20,7 +20,7 @@ import java.io.Serializable;
 public class AliExpressProductDetail implements Serializable {
 
 
-    @JSONField(name = "id")
+    @JSONField(name = "sku_Id")
     private String skuId;
 
     /**

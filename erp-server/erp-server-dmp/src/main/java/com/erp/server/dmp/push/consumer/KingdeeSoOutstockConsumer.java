@@ -37,7 +37,8 @@ import java.util.Map;
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
         selectorExpression = "kingdee_so_outstock_tag",
         consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK,
-        consumeMode = ConsumeMode.CONCURRENTLY)
+        consumeMode = ConsumeMode.CONCURRENTLY,
+        consumeThreadNumber = 5)
 public class KingdeeSoOutstockConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource

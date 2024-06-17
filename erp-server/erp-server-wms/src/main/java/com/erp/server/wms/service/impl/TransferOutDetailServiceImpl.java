@@ -147,7 +147,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
 
         List<TransferOutDTO.ChooseListDTO> resultList = BeanMapperUtils.copyList(TransferOutDTO.ChooseListDTO.class, transferOutDetailList);
         List<String> skuIds = resultList.stream().map(TransferOutDTO.ChooseListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         for (TransferOutDTO.ChooseListDTO data : resultList) {
             if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
@@ -186,7 +186,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         }
 
         List<String> skuIds = newList.stream().map(TransferOutDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuInfos = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuInfos = plmTaskFeign.listSkuProductByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuInfos.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         for(int i = 0, length = newList.size();i < length;i++) {
             TransferOutDetailEntity data = newList.get(i);

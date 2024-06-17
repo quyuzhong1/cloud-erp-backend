@@ -676,7 +676,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 FirstMileDeliveryDetailDTO.AddDTO detailAdd = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryDetailAdd(generateDeliverView);
 
                 //映射产品信息
-                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst().orElse(null);
+                if(Objects.isNull(skuVO)){
+                    throw new ServiceException(StrUtil.format("{}未找到产品信息",generateDeliverView.getSkuNo()));
+                }
                 detailAdd.setSkuId(skuVO.getSkuId());
                 detailAdd.setNetWeight(skuVO.getNetWeight());
                 detailAdd.setProductSizeLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
@@ -1314,12 +1317,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         //查询skuId产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         for (FbaShipmentDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
             //FBA下推要货单要货类型默认是：销售平台
-            viewDTO.setType(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode());
-            viewDTO.setTypeName(RequisitionApplicationTypeEnum.SALES_PLATFORM.getName());
+            viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
+            viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
             //来源类型
             viewDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             //来源类型中文
@@ -1734,4 +1737,29 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         return null;
     }
 
+    @Override
+    public PagingVO<FbaShipmentDTO.SearchResultDTO> search(PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<FbaShipmentDTO.SearchResultDTO> searchData = this.baseMapper.search(query, dto.getParams());
+        if (CollUtil.isEmpty(searchData.getRecords())) {
+            return new PagingVO(searchData);
+        }
+        return new PagingVO(searchData);
+    }
+
+    @Override
+    public FbaShipmentEntity getByCode(String fbaShipmentCode) {
+        return lambdaQuery().eq(FbaShipmentEntity::getCode,fbaShipmentCode)
+                .last("limit 1")
+                .one();
+    }
+
+    @Override
+    public List<FbaShipmentEntity> listByCodes(List<String> fbaShipmentCodeList) {
+        if(CollectionUtils.isEmpty(fbaShipmentCodeList)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FbaShipmentEntity::getCode,fbaShipmentCodeList)
+                .list();
+    }
 }

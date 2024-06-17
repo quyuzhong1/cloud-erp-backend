@@ -1,12 +1,12 @@
 package com.erp.model.wms.dto.inventory;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.poi.ss.formula.functions.T;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -1279,6 +1279,10 @@ public class InventoryDTO implements Serializable {
          * 是否需要过滤自建
          */
         private boolean filterSelfAddFlag;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
     }
 
     @Data
@@ -1297,6 +1301,10 @@ public class InventoryDTO implements Serializable {
          * skuId
          */
         private String skuId;
+        /**
+         * sku集合
+         */
+        private List<String> skuIds;
         /**
          * skuNo
          */
@@ -1432,7 +1440,7 @@ public class InventoryDTO implements Serializable {
     }
 
     /**
-     * PDA:库存查询
+     * PDA:库存查询（SKU）
      */
     @Data
     @NoArgsConstructor
@@ -1462,11 +1470,53 @@ public class InventoryDTO implements Serializable {
          */
         private String variantProperty;
         /**
+         * 总计实际库存
+         */
+        private Integer realTotalQty;
+        /**
+         * 总计可用库存
+         */
+        private Integer usableTotalQty;
+        /**
+         * 总计冻结库存
+         */
+        private Integer frozenTotalQty;
+        /**
          * 仓库信息
          */
         private PagingVO<PdaInventoryWarehouseDTO> warehouseDTOList;
     }
+    /**
+     * PDA:库存查询（SKU）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventoryWarehousePageDTO<T> extends PagingVO implements Serializable{
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+        /**
+         * 实际库存
+         */
+        private Integer realTotalQty;
+        /**
+         * 产品数量
+         */
+        private Integer productQty;
 
+        public PdaInventoryWarehousePageDTO(IPage<T> page) {
+            this.setList(page.getRecords());
+            this.setTotalCount((int) page.getTotal());
+            this.setPageSize((int) page.getSize());
+            this.setCurrPage((int) page.getCurrent());
+            this.setTotalPage((int) page.getPages());
+        }
+    }
     @Data
     @NoArgsConstructor
     public static class PdaInventoryWarehouseDTO {
@@ -1482,6 +1532,14 @@ public class InventoryDTO implements Serializable {
          * skuId
          */
         private String skuId;
+        /**
+         * sku品名名称
+         */
+        private String skuName;
+        /**
+         * sku编码
+         */
+        private String skuNo;
         /**
          * 实际库存
          */
@@ -1504,6 +1562,37 @@ public class InventoryDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class PdaInventoryPageDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * sku缩略图
+         */
+        private String skuImagesUrl;
+        /**
+         * sku品名名称
+         */
+        private String skuName;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 仓位信息
+         */
+        private List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList;
+
+        private Integer index;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class PdaInventoryWarehouseLocationDTO {
         /**
          * 组织id
@@ -1513,6 +1602,10 @@ public class InventoryDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
         /**
          * skuId
          */

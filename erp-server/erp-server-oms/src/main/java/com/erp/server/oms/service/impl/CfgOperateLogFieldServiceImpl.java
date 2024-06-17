@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -34,16 +35,13 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-        String  classPath = String.valueOf(ListingInfoEntity.class);
+        String  classPath = String.valueOf(CfgRuleOrderHandleDTO.ReceiveHandleContent.class);
         List<CfgOperateLogFieldEntity> logFields =  Arrays.asList(
 
-                new CfgOperateLogFieldEntity().setField("platformSpuNo").setFieldName("平台产品(spu) no").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("productImageUrl").setFieldName("产品图片 url").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("productSpec").setFieldName("产品规格信息").setClassPath(classPath).setType(3) .setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("productPacking").setFieldName("产品包装信息").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("platformFnSku").setFieldName("平台SKU额外关联的FNSKU").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("platformSkuName").setFieldName("平台产品Sku名称").setClassPath(classPath).setType(1) .setEnumClass("")
-
+                new CfgOperateLogFieldEntity().setField("receiveEmptyFillSwitch").setFieldName("收货人为空填充开关").setClassPath(classPath).setType(1) .setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("handleReceiveEmptyFillRule").setFieldName("处理收货人为空的规则").setClassPath(classPath).setType(2) .setEnumClass("com.erp.model.oms.enums.RuleOrderHandleEnum.ReceiveFillRuleContentEnum"),
+                new CfgOperateLogFieldEntity().setField("receiveFillText").setFieldName("收货人为空填充文本").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("filterReceiveTextList").setFieldName("收货人过滤特殊符号").setClassPath(classPath).setType(0) .setEnumClass("")
         );
         return this.saveBatch(logFields);
 

@@ -29,6 +29,7 @@ public enum AmzReportTaskStatusEnum {
     EXIST_STOP("existStop","最新报告已有终止"),
     NULL_STOP("nullStop","没有最新报告终止"),
     DIRECT_QUERY("direct_query","直接获取报表(第一步/第二步)"),
+    CANCELLED("cancelled", "亚马逊自动取消报告(报告数据可能为空)"),
     ;
 
     /**

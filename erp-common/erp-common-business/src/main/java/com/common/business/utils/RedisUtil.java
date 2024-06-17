@@ -586,4 +586,16 @@ public class RedisUtil {
     public Collection<String> keys(final String pattern) {
         return redisTemplate.keys(pattern);
     }
+
+    /**
+     * 获取多个Hash中的数据
+     *
+     * @param key   Redis键
+     * @param hKeys Hash键集合
+     * @return Hash对象集合
+     */
+    public <T> List<T> multiGet(final String key, final Collection hKeys) {
+        return redisTemplate.opsForHash().multiGet(key, hKeys);
+    }
+
 }

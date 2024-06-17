@@ -39,6 +39,24 @@ public class SoB2cDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    public static class DeliveryWithNotOutboundDTO {
+
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 平台是否标发
+         */
+        @NotNull(message = "平台是否标发标识不能为空")
+        private Boolean platformShipFlag;
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class MergeTransferDTO {
 
         /**
@@ -2605,5 +2623,15 @@ public class SoB2cDTO implements Serializable {
         private LocalDate startTime;
 
         private List<String> ids;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CombinationDTO{
+        private List<SoB2cEntity> soB2cEntityList;
+        private List<SoB2cDetailEntity> soB2cDetailEntityList;
     }
 }

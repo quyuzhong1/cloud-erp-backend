@@ -642,7 +642,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         // 获取SKU产品名称
         List<String> skuIds = list.stream().map(InitStockDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOs =  plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuVOs =  plmTaskFeign.listSkuSaleByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuVOs.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);

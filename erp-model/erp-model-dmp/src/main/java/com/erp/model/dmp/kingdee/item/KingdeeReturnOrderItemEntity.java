@@ -30,6 +30,9 @@ public class KingdeeReturnOrderItemEntity {
     @JSONField(name ="FUnitID.FName")
     @JsonProperty("FUnitID.FName")
     private String fUnitName;
+    @JSONField(name ="FEntity_FEntryId")
+    @JsonProperty("FEntity_FEntryId")
+    private String fEntryId;
     @JSONField(name ="FMaterialId")
     @JsonProperty("FMaterialId")
     private String fMaterialId;

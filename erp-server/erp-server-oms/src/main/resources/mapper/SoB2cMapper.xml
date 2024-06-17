@@ -156,6 +156,18 @@
         si.country_name as countryName,
         sbrc.categoryNames
     </sql>
+    <update id="updateBatchApproveById">
+        <foreach collection="updateList" item="item" index="index" separator=";">
+            UPDATE so_b2c
+            SET
+            <trim suffixOverrides=",">
+                <if test="item.approveTime != null">approve_time = #{item.approveTime},</if>
+                <if test="item.approveUserId != null">approve_user_id = #{item.approveUserId},</if>
+                <if test="item.approveUserName != null">approve_user_name = #{item.approveUserName},</if>
+            </trim>
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
 
     <!-- 列表分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
@@ -530,6 +542,7 @@
         sb.dict_platform,
         sb.shop_id,
         sbd.platform_spu_no
+        limit 50000
     </select>
     <!--获取标记发货信息-->
     <select id="getSignShipParam" resultType="com.erp.model.oms.dto.SoB2cDTO$SignShipOrderDTO">
@@ -770,6 +783,7 @@
             </if>
         </where>
         order by sb2c.id desc
+        limit 50000
     </select>
 
     <!-- B2C销售订单导出总数量查询 -->
@@ -872,6 +886,7 @@
             </if>
         </where>
         order by sb2c.id desc
+        limit 50000
     </select>
 
 </mapper>
