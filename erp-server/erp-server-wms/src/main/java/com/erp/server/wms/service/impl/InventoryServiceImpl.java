@@ -1118,7 +1118,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if (CollectionUtils.isEmpty(skuIds)){
             return;
         }
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuBaseByIds(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
 //        List<String> warehouseIds = records.stream().map(InventoryDTO.PdaInventoryWarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
         paramDTO.setSkuId(null);
         paramDTO.setSkuIds(skuIds);
