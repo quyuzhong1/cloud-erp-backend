@@ -5,10 +5,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
-import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -73,8 +70,8 @@ public interface LogisticsBillFeign {
      * @param query
      * @return
      */
-    @PostMapping("/feign/logisticsBill/getLogisticsBillDetails")
-    PagingVO<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query);
+    @PostMapping("/feign/logisticsBill/listTrackDto")
+    List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(@RequestBody LogisticsBillDetailQueryDTO query);
 
     /**
      * 删除物流单

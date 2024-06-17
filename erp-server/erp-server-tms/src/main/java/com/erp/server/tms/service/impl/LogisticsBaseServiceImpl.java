@@ -146,9 +146,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                         logisticsTrackService.deleteByTrackNo(logisticsBillDetailEntity.getTrackNo());
                         //新增
                         logisticsTrackService.saveBatch(logisticsTrackEntities);
-                        //TODO 根据记录最新状态修改订单状态
-                        //Student latest = Collections.max(studentList,
-                        //                                 Comparator.comparing(s -> s.getDate()));
+                        //根据记录最新状态修改订单状态
                         LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
                         logisticsTrackService.checkTrackStatus(max);
                     }
