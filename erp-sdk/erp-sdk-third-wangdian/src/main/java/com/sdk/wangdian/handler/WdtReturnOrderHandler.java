@@ -116,6 +116,7 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
             dto.setShopId(orderEntity.getShopId());
             dto.setShopName(orderEntity.getShopName());
             dto.setShopNo(orderEntity.getShopNo());
+            dto.setCreated(LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(orderEntity.getCreatedTime())), ZoneId.systemDefault()));
             //仓库id
             dto.setWarehouseId(orderEntity.getWarehouseId());
             dto.setWarehouseName(orderEntity.getWarehouseName());

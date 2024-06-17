@@ -249,6 +249,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         inStockEntity.setCustomerId(shopInfo.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             inStockEntity.setCustomerName(customerInfo.getName());
+            inStockEntity.setSellerId(customerInfo.getSellerId());
+            inStockEntity.setSellerName(customerInfo.getSellerName());
         }
         List<String> skuList = detailList.stream().map(SoReturnInstockDetailEntity::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuList);

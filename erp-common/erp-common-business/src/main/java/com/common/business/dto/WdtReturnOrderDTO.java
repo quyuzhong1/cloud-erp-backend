@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -80,6 +81,8 @@ public class WdtReturnOrderDTO extends UniqueDto {
     private String shopName;
 
     private String shopNo;
+
+    private LocalDateTime created;
 
     private List<WdtReturnOrderDetailDTO> detailList;
 }
