@@ -199,6 +199,11 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
     }
 
+    @Override
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query) {
+        return baseMapper.listTrackDto(query);
+    }
+
     /**
      * 回填数据
      * @param records

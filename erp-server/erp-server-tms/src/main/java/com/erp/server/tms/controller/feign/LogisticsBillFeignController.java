@@ -7,10 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
-import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -154,10 +151,9 @@ public class LogisticsBillFeignController {
      * @param query
      * @return
      */
-    @PostMapping("/getLogisticsBillDetails")
-    public PagingVO<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query) {
-        PagingVO<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
-        return page;
+    @PostMapping("/listTrackDto")
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(@RequestBody LogisticsBillDetailQueryDTO query) {
+        return logisticsBillDetailService.listTrackDto(query);
     }
 
 
