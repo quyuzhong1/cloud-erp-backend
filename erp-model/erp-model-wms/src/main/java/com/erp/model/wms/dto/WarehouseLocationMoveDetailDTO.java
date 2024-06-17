@@ -185,13 +185,14 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         private String remark;
 
 
-        public static WarehouseLocationMoveDetailDTO.AddDTO getLocationMoveDTO(String skuId, String skuNo, String outWarehouseLocation, String inWarehouseLocation, Integer qty) {
+        public static WarehouseLocationMoveDetailDTO.AddDTO getLocationMoveDTO(String skuId, String skuNo, String outWarehouseLocation, String inWarehouseLocation, Integer qty, String warehouseId) {
             WarehouseLocationMoveDetailDTO.AddDTO addDTO = new WarehouseLocationMoveDetailDTO.AddDTO();
             addDTO.setSkuId(skuId);
             addDTO.setSkuNo(skuNo);
             addDTO.setOutWarehouseLocation(outWarehouseLocation);
             addDTO.setInWarehouseLocation(inWarehouseLocation);
             addDTO.setQty(qty);
+            addDTO.setWarehouseId(warehouseId);
             return addDTO;
         }
     }
@@ -265,7 +266,7 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         /**
          * 取货仓位
          */
-        private String WarehouseId;
+        private String warehouseId;
     }
 
 

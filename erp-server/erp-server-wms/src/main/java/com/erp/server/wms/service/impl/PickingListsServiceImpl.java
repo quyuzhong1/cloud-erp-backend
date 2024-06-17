@@ -140,7 +140,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             detail.setStagingLocation(pickingStaging.getWarehouseLocation());
             entities.add(detail);
             moveDetailList.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detail.getSkuId(), detail.getSkuNo(),
-                    detail.getWarehouseLocation(), detail.getStagingLocation(), detail.getQty()));
+                    detail.getWarehouseLocation(), detail.getStagingLocation(), detail.getQty(), dto.getWarehouseId()));
         }
         entity.setLocationTotal(entities.size());
         WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
@@ -372,20 +372,20 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             if (view.getWarehouseLocation().equals(detailEntity.getWarehouseLocation())) {
                 if (detailEntity.getQty() > view.getQty()) {
                     addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detailEntity.getSkuId(), detailEntity.getSkuNo(),
-                            detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty() - view.getQty()));
+                            detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty() - view.getQty(), entity.getWarehouseId()));
                 } else if (detailEntity.getQty() < view.getQty()) {
                     //处理仓位移动数据
                     addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(view.getSkuId(), view.getSkuNo(),
-                            view.getWarehouseLocation(), view.getStagingLocation(), view.getQty() - detailEntity.getQty()));
+                            view.getWarehouseLocation(), view.getStagingLocation(), view.getQty() - detailEntity.getQty(), entity.getWarehouseId()));
                 } else {
                     continue;
                 }
             } else {
                 // 仓位变更了需要进行原数据仓位退回，新仓位移出
                 addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(view.getSkuId(), view.getSkuNo(),
-                        view.getWarehouseLocation(), view.getStagingLocation(), view.getQty()));
+                        view.getWarehouseLocation(), view.getStagingLocation(), view.getQty(), entity.getWarehouseId()));
                 addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detailEntity.getSkuId(), detailEntity.getSkuNo(),
-                        detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty()));
+                        detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty(), entity.getWarehouseId()));
             }
             detailEntity.setWarehouseLocation(view.getWarehouseLocation());
             detailEntity.setQty(view.getQty());
@@ -421,7 +421,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 removeIds.add(detail.getId());
                 //处理仓位移动数据
                 addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detail.getSkuId(), detail.getSkuNo(),
-                        detail.getStagingLocation(), detail.getWarehouseLocation(), detail.getQty()));
+                        detail.getStagingLocation(), detail.getWarehouseLocation(), detail.getQty(), entity.getWarehouseId()));
                 String context = CharSequenceUtil.format("增加【{}】明细行,拣货仓位【{}}】,数量【{}】", detail.getSkuNo(), detail.getWarehouseLocation(), detail.getQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
             }
@@ -458,9 +458,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setQty(data.getQty());
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setSourceDetailId(detailEntity.getSourceDetailId());
+                detail.setStagingLocation(detailEntity.getStagingLocation());
                 //处理仓位移动数据
                 addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(data.getSkuId(), data.getSkuNo(),
-                        data.getWarehouseLocation(), data.getStagingLocation(), data.getQty()));
+                        data.getWarehouseLocation(), data.getStagingLocation(), data.getQty(), entity.getWarehouseId()));
                 //处理日志
                 String context = CharSequenceUtil.format("增加【{}】明细行,拣货仓位【{}}】,数量【{}】", data.getSkuNo(), data.getWarehouseLocation(), data.getQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
