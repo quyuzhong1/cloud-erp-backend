@@ -145,9 +145,12 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
+        boolean isCancel = sourceOrder.convertCancel();
+
         // 作废状态（false未作废，true已作废）
-        orderDTO.setInvalidStatus(false);
-        orderDTO.setIsCancel(false);
+        orderDTO.setInvalidStatus(isCancel);
+        orderDTO.setIsCancel(isCancel);
+
         // 作废类型（manual手动作废，automatic自动作废）
         orderDTO.setInvalidType("");
         // 作废原因

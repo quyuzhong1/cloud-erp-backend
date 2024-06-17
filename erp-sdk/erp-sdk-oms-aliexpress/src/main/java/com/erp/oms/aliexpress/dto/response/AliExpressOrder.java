@@ -318,4 +318,37 @@ public class AliExpressOrder implements Serializable {
         }
         return ApproveStatusEnum.WAIT_SUBMIT.getCode();
     }
+
+    /**
+     * 速卖通转换平台取消状态
+     *
+     * end_issue结束问题
+     * trade_close交易关闭
+     * buyer_confirm_goods买家确认货物 ()
+     * buyer_confirm_goods_timeout买家确认货物超时
+     * pay_timeout支付超时
+     * buyer_cancel_order买家取消订单
+     * risk_closed风险已关闭
+     * suspicious_trade可疑交易
+     * confirm_payamount_timeout确认付款金额超时
+     * reject_payamount拒绝付款金额
+     * send_goods_timeout发送货物超时
+     * buyer_cancel_notpay_order买家取消未支付订单
+     * buyer_cancel_order_in_risk买家取消风控订单
+     * security_close安全关闭
+     */
+    public boolean convertCancel() {
+        if (!"FINISH".equalsIgnoreCase(this.orderStatus)){
+            // 非完结
+            return false;
+        }
+        if (StringUtils.isBlank(this.endReason)){
+            // 无完结原因
+            return false;
+        }
+        // 非买家确认货物 和 买家确认货物超时 都视为取消
+        return !"buyer_confirm_goods".equalsIgnoreCase(this.endReason)
+                && !"buyer_confirm_goods_timeout".equalsIgnoreCase(this.endReason)
+                ;
+    }
 }
