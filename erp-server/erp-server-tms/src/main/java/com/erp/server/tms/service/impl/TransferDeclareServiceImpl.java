@@ -963,6 +963,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadOrderStatus()));
                 //入库预报状态
                 listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(listDTO.getInstockForecastStatus()));
+            detailEntityList.forEach(transferDeclareDetailEntity -> {
+                transferDeclareDetailEntity.setOrderUploadStatusName(TransferDeclareUploadStatusEnum.getName(transferDeclareDetailEntity.getOrderUploadStatus()));
+                transferDeclareDetailEntity.setOutstockStatusName(TransferOutstockStatusEnum.getName(transferDeclareDetailEntity.getOutstockStatus()));
+                transferDeclareDetailEntity.setTransferStatusName(TransferLogisticsStatusEnum.getName(transferDeclareDetailEntity.getTransferStatus()));
+            });
             listDTO.setDetailEntityList(detailEntityList);
         }
     }
