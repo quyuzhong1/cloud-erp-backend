@@ -66,7 +66,7 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private Integer virtualUsableQty;
         /**
-         * 虚拟仓可用库存
+         * 虚拟仓冻结库存
          */
         private Integer virtualFrozenQty;
 
@@ -137,7 +137,7 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private Integer virtualUsableQty;
         /**
-         * 虚拟仓可用库存
+         * 虚拟仓冻结库存
          */
         private Integer virtualFrozenQty;
 
