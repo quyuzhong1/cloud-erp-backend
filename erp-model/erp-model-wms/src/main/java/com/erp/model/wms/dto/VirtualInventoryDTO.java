@@ -2,7 +2,6 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -33,7 +32,7 @@ public class VirtualInventoryDTO implements Serializable {
         /**
          * 序号
          */
-        private Integer index;
+        private String indexId;
         /**
          * skuId【可排序】
          */
@@ -82,9 +81,9 @@ public class VirtualInventoryDTO implements Serializable {
     public static class ListDetailDTO {
 
         /**
-         * 序号（可用仓库id）
+         * 序号
          */
-        private String index;
+        private String indexId;
         /**
          * skuId
          */
@@ -148,6 +147,10 @@ public class VirtualInventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class ListInventoryDTO {
 
+        /**
+         * 主键id
+         */
+        private String id;
         /**
          * 仓库Id
          */

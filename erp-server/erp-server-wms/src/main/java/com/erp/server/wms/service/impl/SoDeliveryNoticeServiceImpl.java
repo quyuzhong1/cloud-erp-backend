@@ -521,7 +521,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
 
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
             outInStockDTO.setSourceId(soDeliveryNoticeEntity.getId());
             outInStockDTO.setSourceCode(soDeliveryNoticeEntity.getCode());
             outInStockDTO.setSourceDetailId(detailEntity.getId());
@@ -530,6 +530,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setQty(detailEntity.getDeliveryQty());
             outInStockDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(soDeliveryNoticeEntity.getVirtualWarehouseId());
             paramList.add(outInStockDTO);
         }
         //添加冻结库存
@@ -566,8 +567,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(SoDeliveryNoticeEntity::getId, ids)
                 .update();
-        //回滚库存
+
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE, ids);
+
+        //回滚虚拟库存
+        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+
+        //回滚实体库存
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //删除拣货详情
         pickingDetailService.deleteBySourceId(ids);

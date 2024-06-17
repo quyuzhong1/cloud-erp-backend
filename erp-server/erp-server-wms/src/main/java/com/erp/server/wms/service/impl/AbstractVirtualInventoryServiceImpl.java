@@ -350,8 +350,8 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         //查询是否存在库存数据
         VirtualInventoryEntity inventory = virtualInventoryService.findVirtualInventoryStock(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(),status.getCode());
         String inventoryStatusName = status.getName();
-        if(ObjectUtil.isEmpty(inventory) || inventory.getQty() < param.getQty() ) {
-            throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.code, StrUtil.format(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.msg, param.getSkuNo(), virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,inventory.getQty(),param.getQty()));
+        if(ObjectUtil.isEmpty(inventory) || inventory.getQty() < param.getQty()) {
+            throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.code, StrUtil.format(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.msg, param.getSkuNo(), virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,ObjectUtil.isEmpty(inventory) ? MathUtil.ZERO : inventory.getQty(),param.getQty()));
         }
     }
 
