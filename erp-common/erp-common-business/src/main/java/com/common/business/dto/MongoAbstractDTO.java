@@ -14,8 +14,6 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-@NoArgsConstructor
 public abstract class MongoAbstractDTO extends MongoSuperDTO {
 
 

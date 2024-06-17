@@ -38,6 +38,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Array;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -192,6 +193,13 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
             return ApiResult.success();
         }
 
+        // 检查允许生成销售出库单的日期
+        LocalDate stopDate = soOutstockService.getStopSoOutStockDate();
+        if (null != stopDate && !generateB2cDTO.getBillDate().isAfter(stopDate)){
+            log.warn("[销售出库销售消费服务]:当前销售出库单日期【{}】停止生成：单号={}", generateB2cDTO.getBillDate(), dto.getPlatformCode());
+            return ApiResult.success();
+        }
+
         // 校验sku映射关系
         if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -204,6 +212,7 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
             soB2cFeign.addSoB2cError(addError);
             return ApiResult.success();
         }
+
         // 检查和生成销售出库单
         soOutstockService.checkAndGenerate(generateB2cDTO, dto, soB2cEntity);
         return ApiResult.success();
