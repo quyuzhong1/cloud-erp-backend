@@ -57,6 +57,7 @@ public class DmpInputNormalCreateHandler extends DmpInputCreateHandler{
 				.in(DmpInputTaskEntity::getInputDetailId, dmpCfgInputDetailEntityList.stream().map(DmpCfgInputDetailEntity::getId).collect(Collectors.toList()))
 				.eq(DmpInputTaskEntity::getTaskType, DmpInputTaskTaskTypeEnum.NORMAL.getCode())
 				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
+				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
 				.select(DmpInputTaskEntity::getInputDetailId)
 				.list().stream().map(DmpInputTaskEntity::getInputDetailId).collect(Collectors.toSet());
 		if(CollUtil.isNotEmpty(inputDetailIdSet)) {

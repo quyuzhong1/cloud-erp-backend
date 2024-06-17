@@ -8,27 +8,35 @@ import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.entity.BaseEntity;
 import com.common.core.utils.StrUtils;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
-import com.erp.server.dmp.inout.dto.base.DmpInputDmpBaseEntity;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputRequest;
+import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputDmpResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
-import com.erp.server.dmp.inout.dto.response.DmpInputResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
-import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
+import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
 
 import cn.hutool.core.collection.CollUtil;
 
 @Service
-public abstract class DmpInputDmpHandler extends DmpInputHandler{
+public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
+	
+	protected static final String INPUT_TASK_ID = "input_task_id";
+    
+	protected static final String CONVERT_ID = "convert_id";
+
+	protected static final String NEXT_LEVEL_ID = "next_level_id";
+	
 	@Override
-	public void doDmpHandler(DmpInputRequest dmpRequest, DmpInputResponse dmpResponse, DmpHandlerChain chain) {
+	public void doDmpHandler(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse, DmpHandlerChain chain) {
 		if (!(dmpRequest instanceof DmpInputDmpRequest)) {
 			chain.doDmpHandler(dmpRequest, dmpResponse);
 			return;
@@ -42,26 +50,25 @@ public abstract class DmpInputDmpHandler extends DmpInputHandler{
 	
 	private void doDmpHandler(DmpInputDmpRequest dmpRequest, DmpInputDmpResponse dmpResponse, DmpHandlerChain chain) {
 		String inputTaskId = dmpRequest.getInputTaskId();
-		ServiceImpl bean = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(dmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
 		
 		QueryWrapper<?> wrapper = new QueryWrapper<>();
-		wrapper.eq("inputTaskId", inputTaskId);
-		bean.list(wrapper);
-		List<DmpInputDmpBaseEntity> dmpInputDmpBaseEntityList = bean.list(wrapper);
+		wrapper.eq(INPUT_TASK_ID, inputTaskId);
+		wrapper.eq(CONVERT_ID, dmpCfgInputConvertEntity.getId());
+		List<BaseEntity> dmpInputDmpBaseEntityList = this.getServiceImpl().list(wrapper);
 		
 		if(CollUtil.isNotEmpty(dmpInputDmpBaseEntityList)) {
 			
 		}else {
-			List<Map> dmpInputMongoEntityList = dmpResponse.getDmpInputMongoEntityList();
-			if(CollUtil.isNotEmpty(dmpInputMongoEntityList)) {
+			Map<DmpCfgInputConvertEntity, List<Map>> convertInputMongoEntityListMaps = dmpResponse.getConvertInputMongoEntityListMaps();
+			if(convertInputMongoEntityListMaps != null && convertInputMongoEntityListMaps.size() > 0) {
 				dmpInputDmpBaseEntityList = convertMongoToDmp(dmpRequest, dmpResponse);
 			}else {
-				List<DmpInputTaskFileEntity> dmpInputTaskFileEntityList = dmpResponse.getDmpInputTaskFileEntityList();
-				if(CollUtil.isNotEmpty(dmpInputTaskFileEntityList)) {
+				Map<DmpCfgInputConvertEntity, List<DmpInputTaskFileEntity>> convertInputTaskFileEntityListMaps = dmpResponse.getConvertInputTaskFileEntityListMaps();
+				if(convertInputTaskFileEntityListMaps != null && convertInputTaskFileEntityListMaps.size() > 0) {
 					dmpInputDmpBaseEntityList = convertFdsToDmp(dmpRequest, dmpResponse);
 				}else {
-					List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = dmpResponse.getDmpInputTaskInitDTOList();
-					if(CollUtil.isNotEmpty(dmpInputTaskInitDTOList)) {
+					Map<DmpCfgInputConvertEntity, List<DmpInputTaskInitDTO>> convertInputTaskInitDTOListMaps = dmpResponse.getConvertInputTaskInitDTOListMaps();
+					if(convertInputTaskInitDTOListMaps != null && convertInputTaskInitDTOListMaps.size() > 0) {
 						dmpInputDmpBaseEntityList = convertInitToDmp(dmpRequest, dmpResponse);
 					}else {
 						dmpInputDmpBaseEntityList = convertNoneToDmp(dmpRequest, dmpResponse);
@@ -70,12 +77,19 @@ public abstract class DmpInputDmpHandler extends DmpInputHandler{
 			}
 		}
 		
-		dmpResponse.setDmpInputDmpBaseEntityList(dmpInputDmpBaseEntityList);
+		dmpResponse.getConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputDmpBaseEntityList);
+		
+		this.updateTaskStatus(DmpInputTaskStatusEnum.DMP);
+		
 		chain.doDmpHandler(dmpRequest, dmpResponse);
 	}
 	
-	public abstract List<DmpInputDmpBaseEntity> convertMongoToDmp(DmpInputDmpRequest dmpRequest, DmpInputMongoResponse dmpResponse);
-	public abstract List<DmpInputDmpBaseEntity> convertFdsToDmp(DmpInputDmpRequest dmpRequest, DmpInputFdsResponse dmpResponse);
-	public abstract List<DmpInputDmpBaseEntity> convertInitToDmp(DmpInputDmpRequest dmpRequest, DmpInputInitResponse dmpResponse);
-	public abstract List<DmpInputDmpBaseEntity> convertNoneToDmp(DmpInputDmpRequest dmpRequest, DmpInputTaskResponse dmpResponse);
+	protected ServiceImpl getServiceImpl() {
+		return ApplicationContextUtils.getBean(StrUtils.underlineToCamel(dmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
+	}
+	
+	public abstract List<BaseEntity> convertMongoToDmp(DmpInputDmpRequest dmpRequest, DmpInputMongoResponse dmpResponse);
+	public abstract List<BaseEntity> convertFdsToDmp(DmpInputDmpRequest dmpRequest, DmpInputFdsResponse dmpResponse);
+	public abstract List<BaseEntity> convertInitToDmp(DmpInputDmpRequest dmpRequest, DmpInputInitResponse dmpResponse);
+	public abstract List<BaseEntity> convertNoneToDmp(DmpInputDmpRequest dmpRequest, DmpInputTaskResponse dmpResponse);
 }

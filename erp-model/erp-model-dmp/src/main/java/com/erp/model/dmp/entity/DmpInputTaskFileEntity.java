@@ -29,6 +29,19 @@ public class DmpInputTaskFileEntity extends BaseEntity<DmpInputTaskFileEntity> {
     */
     @TableField("main_id")
     private String mainId;
+    
+    /**
+     * init转换id
+     */
+    @TableField("init_convert_id")
+    private String initConvertId;
+    
+    /**
+     * fds转换id
+     */
+    @TableField("fds_convert_id")
+    private String fdsConvertId;
+    
     /**
     * 文件url
     */

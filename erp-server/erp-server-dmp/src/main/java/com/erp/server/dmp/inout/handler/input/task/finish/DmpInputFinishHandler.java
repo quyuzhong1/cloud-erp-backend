@@ -5,27 +5,26 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.common.core.entity.BaseEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
-import com.erp.server.dmp.inout.dto.base.DmpInputDmpBaseEntity;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputRequest;
+import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
-import com.erp.server.dmp.inout.dto.response.DmpInputResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
-import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
-
-import cn.hutool.core.collection.CollUtil;
+import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
 
 @Service
-public abstract class DmpInputFinishHandler extends DmpInputHandler{
+public abstract class DmpInputFinishHandler extends DmpInputTaskHandler{
 	@Override
-	public void doDmpHandler(DmpInputRequest dmpRequest, DmpInputResponse dmpResponse, DmpHandlerChain chain) {
+	public void doDmpHandler(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse, DmpHandlerChain chain) {
 		if (!(dmpRequest instanceof DmpInputFinishRequest)) {
 			chain.doDmpHandler(dmpRequest, dmpResponse);
 			return;
@@ -38,20 +37,20 @@ public abstract class DmpInputFinishHandler extends DmpInputHandler{
 	}
 	
 	private void doDmpHandler(DmpInputFinishRequest dmpRequest, DmpInputFinishResponse dmpResponse, DmpHandlerChain chain) {
-		List<DmpInputDmpBaseEntity> dmpInputDmpBaseEntityList = dmpResponse.getDmpInputDmpBaseEntityList();
-		if(CollUtil.isNotEmpty(dmpInputDmpBaseEntityList)) {
+		Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpResponse.getConvertInputDmpBaseEntityListMaps();
+		if(convertInputDmpBaseEntityListMaps != null && convertInputDmpBaseEntityListMaps.size() > 0) {
 			dealDmpToFinish(dmpRequest, dmpResponse);
 		}else {
-			List<Map> dmpInputMongoEntityList = dmpResponse.getDmpInputMongoEntityList();
-			if(CollUtil.isNotEmpty(dmpInputMongoEntityList)) {
+			Map<DmpCfgInputConvertEntity, List<Map>> convertInputMongoEntityListMaps = dmpResponse.getConvertInputMongoEntityListMaps();
+			if(convertInputMongoEntityListMaps != null && convertInputMongoEntityListMaps.size() > 0) {
 				dealMongoToFinish(dmpRequest, dmpResponse);
 			}else {
-				List<DmpInputTaskFileEntity> dmpInputTaskFileEntityList = dmpResponse.getDmpInputTaskFileEntityList();
-				if(CollUtil.isNotEmpty(dmpInputTaskFileEntityList)) {
+				Map<DmpCfgInputConvertEntity, List<DmpInputTaskFileEntity>> convertInputTaskFileEntityListMaps = dmpResponse.getConvertInputTaskFileEntityListMaps();
+				if(convertInputTaskFileEntityListMaps != null && convertInputTaskFileEntityListMaps.size() > 0) {
 					dealFdsToFinish(dmpRequest, dmpResponse);
 				}else {
-					List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = dmpResponse.getDmpInputTaskInitDTOList();
-					if(CollUtil.isNotEmpty(dmpInputTaskInitDTOList)) {
+					Map<DmpCfgInputConvertEntity, List<DmpInputTaskInitDTO>> convertInputTaskInitDTOListMaps = dmpResponse.getConvertInputTaskInitDTOListMaps();
+					if(convertInputTaskInitDTOListMaps != null && convertInputTaskInitDTOListMaps.size() > 0) {
 						dealInitToFinish(dmpRequest, dmpResponse);
 					}else {
 						dealNoneToFinish(dmpRequest, dmpResponse);
@@ -59,6 +58,8 @@ public abstract class DmpInputFinishHandler extends DmpInputHandler{
 				}
 			}
 		}
+		
+		this.updateTaskStatus(DmpInputTaskStatusEnum.FINISH);
 		
 		chain.doDmpHandler(dmpRequest, dmpResponse);
 	}

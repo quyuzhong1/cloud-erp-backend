@@ -1,15 +1,18 @@
 package com.erp.server.dmp.inout.dto.response;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import com.erp.server.dmp.inout.dto.base.DmpInputDmpBaseEntity;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 
 import lombok.Data;
 
 @Data
 public class DmpInputDmpResponse extends DmpInputMongoResponse{
 	/**
-	 * 文件上传信息
+	 * dmp业务信息
 	 */
-	private List<DmpInputDmpBaseEntity> dmpInputDmpBaseEntityList;
+	private Map<DmpCfgInputConvertEntity , List<BaseEntity>> convertInputDmpBaseEntityListMaps = new HashMap<>();
 }

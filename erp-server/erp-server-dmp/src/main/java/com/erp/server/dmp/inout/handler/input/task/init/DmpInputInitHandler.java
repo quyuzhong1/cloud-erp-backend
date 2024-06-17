@@ -6,17 +6,22 @@ import org.springframework.stereotype.Service;
 
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputRequest;
+import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
-import com.erp.server.dmp.inout.dto.response.DmpInputResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.dto.response.DmpOutputInitResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
-import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
+import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
+import com.erp.server.dmp.inout.handler.output.task.init.DmpOutputInitHandler;
+
+import cn.hutool.core.collection.CollUtil;
 
 @Service
-public abstract class DmpInputInitHandler extends DmpInputHandler{
+public abstract class DmpInputInitHandler extends DmpInputTaskHandler{
+	
 	@Override
-	public void doDmpHandler(DmpInputRequest dmpRequest, DmpInputResponse dmpResponse, DmpHandlerChain chain) {
+	public void doDmpHandler(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse, DmpHandlerChain chain) {
 		if (!(dmpRequest instanceof DmpInputInitRequest)) {
 			chain.doDmpHandler(dmpRequest, dmpResponse);
 			return;
@@ -30,7 +35,17 @@ public abstract class DmpInputInitHandler extends DmpInputHandler{
 	
 	private void doDmpHandler(DmpInputInitRequest dmpRequest, DmpInputInitResponse dmpResponse, DmpHandlerChain chain) {
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = getInitData(dmpRequest , dmpResponse);
-		dmpResponse.setDmpInputTaskInitDTOList(dmpInputTaskInitDTOList);
+		dmpResponse.getConvertInputTaskInitDTOListMaps().put(dmpCfgInputConvertEntity, dmpInputTaskInitDTOList);
+		
+		List<String> outputClassList = this.getOutputClassList(dmpRequest, dmpResponse);
+		if(CollUtil.isNotEmpty(outputClassList)) {
+			for(String outputClass : outputClassList) {
+				DmpOutputInitHandler dmpHandlerBean = this.getDmpHandlerBean(outputClass, DmpOutputInitHandler.class);
+				DmpOutputInitRequest dmpOutputInitRequest = new DmpOutputInitRequest();
+				dmpOutputInitRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
+				dmpHandlerBean.doDmpHandler(dmpOutputInitRequest, new DmpOutputInitResponse(), chain);
+			}
+		}
 		chain.doDmpHandler(dmpRequest, dmpResponse);
 	}
 	

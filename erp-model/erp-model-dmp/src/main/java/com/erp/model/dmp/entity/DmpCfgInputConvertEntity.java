@@ -30,7 +30,7 @@ public class DmpCfgInputConvertEntity extends BaseEntity<DmpCfgInputConvertEntit
     @TableField("main_id")
     private String mainId;
     /**
-    * 输入任务存储状态：fds=文件系统，mongo=mongo,dmp=中台  枚举：DmpCfgInputConvertInputStatusEnum
+    * 输入任务存储状态：fds=文件系统，mongo=mongo,dmp=中台  枚举：DmpInputTaskStatusEnum
     */
     @TableField("input_status")
     private String inputStatus;

@@ -12,82 +12,114 @@ import org.springframework.cglib.beans.BeanMap;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.utils.ApplicationContextUtils;
+import com.alibaba.fastjson.JSON;
+import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpInputDataDmpRelationEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
-import com.erp.server.dmp.inout.dto.base.DmpInputDmpBaseEntity;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.inout.utils.IdSequenceUtils;
-import com.erp.server.dmp.service.DmpInputTaskService;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.service.DmpInputDataDmpRelationService;
+
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 
 @Service
 @Scope("prototype")
 public class DmpInputBaseDmpHandler extends DmpInputDmpHandler{
 
 	@Autowired
-	private DmpInputTaskService dmpInputTaskService;
+	private DmpInputDataDmpRelationService dmpInputDataDmpRelationService;
 	
 	@Override
-	public List<DmpInputDmpBaseEntity> convertMongoToDmp(DmpInputDmpRequest dmpRequest,
+	public List<BaseEntity> convertMongoToDmp(DmpInputDmpRequest dmpRequest,
 			DmpInputMongoResponse dmpResponse) {
-		String inputTaskId = dmpRequest.getInputTaskId();
-		List<DmpInputDmpBaseEntity> dmpInputDmpBaseEntityList = new ArrayList<>();
+		List<BaseEntity> dmpInputDmpBaseEntityList = new ArrayList<>();
+		List<DmpInputDataDmpRelationEntity> dmpInputDataDmpRelationEntityList = new ArrayList<>();
+		DmpInputDataDmpRelationEntity dmpInputDataDmpRelationEntity = null;
 		
-		List<Map> dmpInputMongoEntityList = dmpResponse.getDmpInputMongoEntityList();
-		for(Map dmpInputMongoBaseEntity : dmpInputMongoEntityList) {
-			BeanGenerator beanGenerator = new BeanGenerator();
-			beanGenerator.setSuperclass(DmpInputDmpBaseEntity.class);
-			Object dmpInputDmpEntity = beanGenerator.create();
-			
-			BeanMap beanMap = BeanMap.create(dmpInputDmpEntity);
-			
-			Set<Entry> entrySet = dmpInputMongoBaseEntity.entrySet();
-			for (Map.Entry entry : entrySet) {
-                String fieldName = entry.getKey().toString();
-				beanGenerator.addProperty(fieldName, Object.class);
-                
-                beanMap.put(fieldName, entry.getValue());
-            }
-			
-			beanGenerator.addProperty("id", String.class);
-			beanMap.put("id", IdSequenceUtils.getId());
-			
-			dmpInputDmpBaseEntityList.add((DmpInputDmpBaseEntity)dmpInputDmpEntity);
+		Map<DmpCfgInputConvertEntity, List<Map>> convertInputMongoEntityListMaps = dmpResponse.getConvertInputMongoEntityListMaps();
+		for(Map.Entry<DmpCfgInputConvertEntity, List<Map>> convertInputMongoEntityListMap : convertInputMongoEntityListMaps.entrySet()) {
+			List<Map> dmpInputMongoEntityList = convertInputMongoEntityListMap.getValue();
+			if(CollUtil.isNotEmpty(dmpInputMongoEntityList)) {
+				for(Map dmpInputMongoBaseEntity : dmpInputMongoEntityList) {
+					BeanGenerator beanGenerator = new BeanGenerator();
+					beanGenerator.setSuperclass(BaseEntity.class);
+					
+					Set<Entry> entrySet = dmpInputMongoBaseEntity.entrySet();
+					for (Map.Entry entry : entrySet) {
+		                String fieldName = entry.getKey().toString();
+		                if(!("_" + BaseEntity.ID).equals(fieldName)) {
+		                	beanGenerator.addProperty(fieldName, Object.class);
+		                }
+		                
+		            }
+					
+					Object beanDmpInputDmpEntity = beanGenerator.create();
+					
+					BeanMap beanMap = BeanMap.create(beanDmpInputDmpEntity);
+					
+					for (Map.Entry entry : entrySet) {
+						String fieldName = entry.getKey().toString();
+		                beanMap.put(fieldName, entry.getValue());
+		            }
+					
+					String id = DmpHandlerUtils.getId();
+					beanMap.put(StrUtils.underlineToCamel(CONVERT_ID, true), convertId);
+					
+					BaseEntity newBeanDmpInputDmpEntity = (BaseEntity)beanDmpInputDmpEntity;
+					newBeanDmpInputDmpEntity.setId(id);
+					dmpInputDmpBaseEntityList.add(newBeanDmpInputDmpEntity);
+					
+					dmpInputDataDmpRelationEntity = new DmpInputDataDmpRelationEntity();
+					dmpInputDataDmpRelationEntity.setDataId(dmpInputMongoBaseEntity.get(BaseEntity.ID).toString());
+					dmpInputDataDmpRelationEntity.setDmpId(id);
+					dmpInputDataDmpRelationEntity.setDataType(DmpInputTaskStatusEnum.MONGO.getCode());
+					
+					dmpInputDataDmpRelationEntityList.add(dmpInputDataDmpRelationEntity);
+				}
+			}
 		}
 		
-		ServiceImpl bean = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(dmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
+		List<?> copyToList = null;
+		if(CollUtil.isNotEmpty(dmpInputDmpBaseEntityList)) {
+			String storageName = dmpCfgInputConvertEntity.getStorageName();
+			try {
+				copyToList = JSON.parseArray(JSON.toJSONString(dmpInputDmpBaseEntityList),  Class.forName("com.erp.model.dmp.entity." + StrUtils.underlineToCamel(storageName, false) + "Entity"));
+			} catch (ClassNotFoundException e) {
+				throw new ServiceException(ExceptionUtil.stacktraceToString(e));
+			}
+			
+			this.getServiceImpl().saveBatch(copyToList);
+			
+			dmpInputDataDmpRelationService.saveBatch(dmpInputDataDmpRelationEntityList);
+		}
 		
-		bean.saveBatch(dmpInputDmpBaseEntityList);
-		
-		dmpInputTaskService.lambdaUpdate()
-				.eq(DmpInputTaskEntity::getId, inputTaskId)
-				.set(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.DMP.getCode())
-				.update();
-		
-		return dmpInputDmpBaseEntityList;
+		return (List<BaseEntity>) copyToList;
 	}
 
 	@Override
-	public List<DmpInputDmpBaseEntity> convertFdsToDmp(DmpInputDmpRequest dmpRequest, DmpInputFdsResponse dmpResponse) {
+	public List<BaseEntity> convertFdsToDmp(DmpInputDmpRequest dmpRequest, DmpInputFdsResponse dmpResponse) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<DmpInputDmpBaseEntity> convertInitToDmp(DmpInputDmpRequest dmpRequest,
+	public List<BaseEntity> convertInitToDmp(DmpInputDmpRequest dmpRequest,
 			DmpInputInitResponse dmpResponse) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<DmpInputDmpBaseEntity> convertNoneToDmp(DmpInputDmpRequest dmpRequest,
+	public List<BaseEntity> convertNoneToDmp(DmpInputDmpRequest dmpRequest,
 			DmpInputTaskResponse dmpResponse) {
 		// TODO Auto-generated method stub
 		return null;
