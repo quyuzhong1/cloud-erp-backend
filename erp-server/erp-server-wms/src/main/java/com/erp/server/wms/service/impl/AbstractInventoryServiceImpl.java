@@ -31,6 +31,7 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -695,6 +696,9 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
      * @author: tanmujin
      */
     private void updateWarehouseLocationStatus(String warehouseId, String warehouseLocationCode) {
+        if(StringUtils.isEmpty(warehouseId) || StringUtils.isEmpty(warehouseLocationCode)) {
+            return;
+        }
         Integer qty = inventoryService.getQtyByLocation(warehouseId, warehouseLocationCode);
         String statusCode = (qty == 0) ? WarehouseLocationStatusEnum.RECYCLABLE.getCode() : WarehouseLocationStatusEnum.OCCUPIED.getCode();
         warehouseLocationService.updateLocationStatus(warehouseId, warehouseLocationCode, statusCode);
