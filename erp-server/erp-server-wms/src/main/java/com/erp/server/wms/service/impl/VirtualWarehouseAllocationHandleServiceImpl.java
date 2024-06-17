@@ -107,6 +107,11 @@ public class VirtualWarehouseAllocationHandleServiceImpl extends SuperServiceImp
         vmAllocationHandleDetailService.handleDetail(allocationEntity,allocationHandleEntity);
     }
 
+    @Override
+    public void forceDeleteById(String id) {
+        baseMapper.forceDeleteById(id);
+    }
+
 
     /**
     * 新增修改处理数据

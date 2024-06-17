@@ -35,4 +35,6 @@ public interface VirtualWarehouseAllocationHandleService extends SuperService<Vi
 
 
     void handleData(VirtualWarehouseAllocationEntity allocationEntity);
+
+    void forceDeleteById(String id);
 }

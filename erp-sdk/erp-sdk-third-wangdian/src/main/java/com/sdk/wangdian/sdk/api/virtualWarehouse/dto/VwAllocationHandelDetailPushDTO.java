@@ -1,12 +1,16 @@
-package com.sdk.wangdian.sdk.api.goods.dto;
+package com.sdk.wangdian.sdk.api.virtualWarehouse.dto;
 
 import com.google.gson.annotations.SerializedName;
+import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * 虚拟仓分货单推送
+ */
 @Getter
 @Setter
 public class VwAllocationHandelDetailPushDTO {
@@ -20,7 +24,7 @@ public class VwAllocationHandelDetailPushDTO {
      * 默认值为1
      */
     @SerializedName("order_type")
-    private String orderType;
+    private int orderType;
     /**
      * 目标虚拟仓编号:order_type=3时必传
      */
@@ -28,14 +32,14 @@ public class VwAllocationHandelDetailPushDTO {
     private String toVirtualWarehouseNo;
     /**
      * 是否预审核:仅在order_type=3时生效
-     *
+     * <p>
      * 1：预设审核，   0：不审核
      */
     @SerializedName("is_pre_check")
     private String isPreCheck;
     /**
      * 库存不足则不审核:仅在order_type=3时生效，默认0
-     *
+     * <p>
      * 1：审核，  0：不审核
      */
     @SerializedName("insufficient_stock_not_pre_check")
@@ -49,13 +53,51 @@ public class VwAllocationHandelDetailPushDTO {
      * 备注 默认为空
      */
     @SerializedName("remark")
-    private boolean remark;
+    private String remark;
     /**
-     *是否审核单据: 1：审核，   0：不审核
-     *
+     * 是否审核单据: 1：审核，   0：不审核
+     * <p>
      * 默认0不审核
      */
     @SerializedName("is_check")
     private Integer isCheck;
 
+    @SerializedName("detailList")
+    private List<DetailList> detailList;
+
+
+    @Getter
+    @Setter
+    public static class DetailList {
+        /**
+         * 商家编码
+         */
+        @SerializedName("spec_no")
+        private String specNo;
+        /**
+         * 实体仓编码
+         */
+        @SerializedName("warehouse_no")
+        private String warehouseNo;
+        /**
+         * 入库数量，默认为1
+         */
+        @SerializedName("num")
+        private BigDecimal num;
+        /**
+         * 成本价：成本，默认为0
+         */
+        @SerializedName("price")
+        private BigDecimal price;
+        /**
+         * 采购在途数量，默认为0
+         */
+        @SerializedName("purchase_num")
+        private BigDecimal purchaseNum;
+        /**
+         * 自定义数量，默认为0
+         */
+        @SerializedName("factory_num")
+        private BigDecimal factoryNum;
+    }
 }

@@ -51,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,6 +95,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     private RedisUtil redisUtil;
     @Resource
     private DmpPushTaskHistoryMapper dmpPushTaskHistoryMapper;
+    @Resource
+    @Lazy
+    private DmpPushTaskServiceImpl dmpPushTaskService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -104,6 +108,21 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         isSendParentBillTask(entity);
         saveOrUpdateDmpSyncTask(entity);
         return entity;
+    }
+
+    /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos) {
+        List<DmpPushTaskEntity> dmpPushTaskEntityList=new ArrayList<>();
+        dtos.forEach(dto->{
+            dmpPushTaskEntityList.add(dmpPushTaskService.saveTask(dto));
+        });
+        return dmpPushTaskEntityList;
     }
 
     @Override

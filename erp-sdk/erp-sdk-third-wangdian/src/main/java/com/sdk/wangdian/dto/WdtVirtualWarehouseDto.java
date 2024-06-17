@@ -13,16 +13,16 @@ public class WdtVirtualWarehouseDto extends CleanBaseDTO {
     /**
      * 仓库id, 仓库唯一键
      */
-    private Integer warehouse_id;
+    private Integer virtual_warehouse_id;
 
     /**
      * 模式：0：普通店铺 1：分销模式
      */
-    private String warehouse_type;
+    private String virtual_warehouse_type;
     /**
      * 仓库编号
      */
-    private String warehouse_no;
+    private String virtual_warehouse_no;
 
     /**
      * 仓库名称

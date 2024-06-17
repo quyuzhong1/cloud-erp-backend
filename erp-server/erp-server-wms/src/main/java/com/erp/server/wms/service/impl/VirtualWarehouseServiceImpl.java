@@ -263,10 +263,10 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                     //修改了虚拟仓实体仓绑定关系，校验库存
                     VirtualInventoryDTO.VirtualInventoryQtyDTO virtualInventoryQtyDTO = new VirtualInventoryDTO.VirtualInventoryQtyDTO();
                     virtualInventoryQtyDTO.setVirtualWarehouseId(virtualWarehouseRelationEntity.getVirtualWarehouseId());
-                    virtualInventoryQtyDTO.setWarehouseId(warehouseIdList.get(0));
+                    virtualInventoryQtyDTO.setWarehouseId(virtualWarehouseRelationEntity.getWarehouseId());
                     Integer vwUsableQty = virtualInventoryService.findUsableQtyByQtyDto(virtualInventoryQtyDTO);
-                    if (Objects.nonNull(vwUsableQty)&&vwUsableQty > 0) {
-                        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseIdList.get(0));
+                    if (Objects.nonNull(vwUsableQty) && vwUsableQty > 0) {
+                        WarehouseEntity warehouseEntity = warehouseService.getById(virtualWarehouseRelationEntity.getWarehouseId());
                         throw new ServiceException(ApiError.ERROR_VWWSTOCK_NOTEMPRY, warehouseEntity.getName());
                     }
                 }
@@ -307,7 +307,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         if (CollectionUtils.isNotEmpty(thirdList)) {
             long count = thirdList.stream().filter(item -> !Objects.equals(item.getSysId(), virtualWarehouseId)).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING, thirdList.stream().map(ThirdMappingEntity::getSysName).collect(Collectors.joining()));
+                throw new ServiceException(ApiError.ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED, thirdList.get(0).getThirdName(), thirdList.stream().map(ThirdMappingEntity::getSysName).collect(Collectors.joining()));
             }
         }
     }
@@ -318,10 +318,10 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean updateState(VirtualWarehouseDTO.UpdateStateDTO updateStateDTO) {
-        VirtualWarehouseEntity vmEntity = Optional.ofNullable(this.getById(updateStateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.ERROR_VM_NOTFOUND));
+        VirtualWarehouseEntity vwEntity = Optional.ofNullable(this.getById(updateStateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST));
 
         //获取原始状态
-        Boolean dbDisabled = vmEntity.getDisabled();
+        Boolean dbDisabled = vwEntity.getDisabled();
         if (dbDisabled.equals(updateStateDTO.getDisabled())) {
             throw new ServiceException(ApiError.ERROR_SAME_DISABLED);
         }
@@ -334,6 +334,8 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             if (vmUsableQty > 0) {
                 throw new ServiceException(ApiError.ERROR_VWSTOCK_NOTEMPRY);
             }
+            //禁用时如果绑定第三方仓，需要清除
+            dmpThirdMappingFeign.add(bindThirdMapping(new ArrayList<>(), vwEntity));
         }
         VirtualWarehouseEntity virtualWarehouseEntity = new VirtualWarehouseEntity();
         virtualWarehouseEntity.setId(updateStateDTO.getId());
@@ -344,7 +346,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
 
     @Override
     public VirtualWarehouseDTO.ViewDTO view(String id) {
-        VirtualWarehouseEntity vmEntity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException(ApiError.ERROR_VM_NOTFOUND));
+        VirtualWarehouseEntity vmEntity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST));
         VirtualWarehouseDTO.ViewDTO viewDTO = new VirtualWarehouseDTO.ViewDTO();
         BeanUtils.copyProperties(vmEntity, viewDTO);
         //获取关联渠道

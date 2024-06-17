@@ -101,4 +101,11 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
     List<ThirdMappingEntity> getByThirdId(ThirdMappingDTO.ViewParamDTO viewParamDTO);
 
     BaseResultDTO.AddDTO batchAdd(ThirdMappingDTO.FeignMappingDTO feignMappingDTO);
+
+    /**
+     * 根据系统id获取绑定关系
+     * @param sysIds
+     * @return
+     */
+    List<ThirdMappingEntity> getListBySysIds(List<String> sysIds);
 }

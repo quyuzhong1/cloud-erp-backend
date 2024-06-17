@@ -1,4 +1,4 @@
-package com.sdk.wangdian.sdk.api.goods;
+package com.sdk.wangdian.sdk.api.virtualWarehouse;
 
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.api.Result;

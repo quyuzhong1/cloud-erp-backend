@@ -26,7 +26,13 @@ public interface DmpMqFeign {
      */
     @PostMapping("save/pushTask")
     DmpPushTaskEntity saveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto);
-
+    /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+    @PostMapping("/save/pushTaskList")
+    List<DmpPushTaskEntity> saveTaskList(@RequestBody List<DmpPushTaskFeignDTO> dtos);
 
     /**
      * @description: 发送MQ消息

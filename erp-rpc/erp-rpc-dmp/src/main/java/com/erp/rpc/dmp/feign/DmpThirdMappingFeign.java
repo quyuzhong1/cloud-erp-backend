@@ -28,6 +28,9 @@ public interface DmpThirdMappingFeign {
     @GetMapping("/getBySysId")
     ThirdWarehouseEntity getBySysId(@RequestParam String sysId);
 
+    @GetMapping("/getListBySysIds")
+    List<ThirdMappingEntity> getListBySysIds(@RequestParam List<String> sysIds);
+
     /**
      * 查询绑定关系
      */

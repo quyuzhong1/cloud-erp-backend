@@ -203,7 +203,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 getTransferInfo(qtySearchDTOS, vmParamDto, qtySearchList, resultList);
                 break;
             case CANCEL:
-                getCancelInfo(qtySearchDTOS, vmParamDto, qtySearchList, resultList);
+                getCancelInfo(qtySearchDTOS,skuIds, warehouseIds,  vmParamDto, qtySearchList, resultList);
                 break;
             default:
                 resultList.addAll(qtySearchList.stream().map(item -> {
@@ -216,15 +216,33 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         return resultList;
     }
 
-    private void getCancelInfo(List<VirtualInventoryDTO.QtySearchDTO> qtySearchDTOS, VirtualInventoryDTO.ParamDTO vmParamDto, List<VirtualInventoryDTO.QtySearchDTO> qtySearchList, List<VirtualInventoryDTO.ViewQtyDTO> resultList) {
+    private void getCancelInfo(List<VirtualInventoryDTO.QtySearchDTO> qtySearchDTOS, List<String> skuIds, List<String> warehouseIds, VirtualInventoryDTO.ParamDTO vmParamDto, List<VirtualInventoryDTO.QtySearchDTO> qtySearchList, List<VirtualInventoryDTO.ViewQtyDTO> resultList) {
+        //获取实体仓可用库存
+        InventoryDTO.ParamDTO paramDTO = new InventoryDTO.ParamDTO();
+        paramDTO.setSkuIdList(skuIds);
+        paramDTO.setWarehouseIdList(warehouseIds);
+        List<InventoryDTO.InventoryViewQtyDTO> inventoryUsableQtyList = inventoryService.getUsableQtyBySkuIdsAndWarehouseIds(paramDTO);
+        //获取实体仓对应的虚拟仓所有（可用+冻结）库存数量
+        List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = baseMapper.getRealQty(vmParamDto);
         //获取调出虚拟仓可用数量
         List<String> fromVmIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         vmParamDto.setVirtualWarehouseIdList(fromVmIds);
-        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList = getVmUsableQty(vmParamDto, fromVmIds);
-        for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {//获取调入仓、调出仓可用库存
+        List<VirtualInventoryDTO.ViewQtyDTO> vwUsableQtyList = getVmUsableQty(vmParamDto, fromVmIds);
+        for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {
+            //获取实体仓可用库存
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
-            VirtualInventoryDTO.ViewQtyDTO qtyDTO = vmUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
+            List<InventoryDTO.InventoryViewQtyDTO> inventoryViewQtyDTOS = inventoryUsableQtyList.stream()
+                    .filter(inventoryViewQtyDTO -> Objects.nonNull(inventoryViewQtyDTO.getSkuId()) && Objects.nonNull(inventoryViewQtyDTO.getWarehouseId()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(inventoryViewQtyDTOS)) {
+                Integer warehouseAllocationQty = inventoryViewQtyDTOS.get(0).getUsableQty();
+                viewQtyDTO.setWarehouseAllocationQty(warehouseAllocationQty);
+                viewQtyDTO.setWarehouseUsableQty(warehouseAllocationQty);
+            }
+
+            //获取调出仓可用库存
+            VirtualInventoryDTO.ViewQtyDTO qtyDTO = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
                     && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId())).findFirst().orElse(null);
             if (Objects.nonNull(qtyDTO)) {
                 viewQtyDTO.setFromVirtualWarehouseUsableQty(qtyDTO.getToVirtualWarehouseUsableQty());

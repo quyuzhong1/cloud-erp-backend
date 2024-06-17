@@ -33,6 +33,10 @@ public class DmpThirdMappingFeignController {
     public ThirdWarehouseEntity getBySysId(@RequestParam String sysId) {
         return thirdMappingService.getBySysId(sysId);
     }
+    @GetMapping("/getListBySysIds")
+    public List<ThirdMappingEntity> getListBySysIds(@RequestParam List<String> sysIds){
+        return thirdMappingService.getListBySysIds(sysIds);
+    }
 
     @PostMapping("/getWhetherBind")
     public Boolean getWhetherBind(@RequestBody ThirdMappingDTO.ViewParamDTO viewParamDTO) {

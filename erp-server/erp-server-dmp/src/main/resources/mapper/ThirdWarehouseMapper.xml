@@ -81,7 +81,7 @@
     </select>
     <select id="getByWarehouseId" resultType="com.erp.model.dmp.entity.ThirdWarehouseEntity">
         select id, warehouse_id,name,code from third_warehouse tw where tw.is_deleted=false and tw.disabled=false
-        and tw.warehouse_id=#{warehouseId}
+        and tw.warehouse_id=#{thirdId} and tw.category=#{category}
     </select>
 
 

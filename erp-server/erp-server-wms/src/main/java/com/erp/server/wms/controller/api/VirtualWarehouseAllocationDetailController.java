@@ -3,6 +3,8 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
@@ -132,13 +134,13 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
         return submit.getSuccess() ? success(submit) : failure(submit);
     }
 
-   /**
+    /**
      * 同步
      *
      * @param detailId
      * @return
      */
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "手动完结分货单信息")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "同步分货单信息")
     @GetMapping("/sync")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -177,6 +179,25 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
             submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
         }
         return submit.getSuccess() ? success(submit) : failure(submit);
+    }
+
+    /**
+     * 展示分货单同步信息
+     *
+     * @param detailId
+     * @return
+     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "展示分货单同步信息")
+    @GetMapping("/viewSyncInfo")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocationDetail:sync",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<DmpPushTaskEntity> viewSyncInfo(@RequestParam(value = "detailId") String detailId) {
+        String id = detailId;
+       return success(virtualWarehouseAllocationDetailService.viewSyncInfo(id));
     }
 
 

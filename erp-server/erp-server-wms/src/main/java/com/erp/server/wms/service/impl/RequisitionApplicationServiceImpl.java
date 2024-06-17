@@ -297,8 +297,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //获取虚拟仓可用库存
         List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList = getVmUsableQtyList(fromVmIds, skuIds, warehouseIds);
 
-        VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
-        allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
         List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
         for (RequisitionApplicationDTO.HandleListDTO handleListDTO : list) {
             Integer approveQty = handleListDTO.getApproveQty();
@@ -307,16 +305,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             InventoryDTO.InventoryViewQtyDTO inventoryQtyDTO = inventoryUsableQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), handleListDTO.getSkuId())
                             && Objects.equals(item.getWarehouseId(), handleListDTO.getFromWarehouseId())).findFirst()
                     .orElseThrow(() -> new ServiceException(ApiError.ERROR_FROM_WAREHOUSE_INVENTORY_ERROR));
+            //校验实体仓库存
+            Integer warehouseUsableQty = inventoryQtyDTO.getUsableQty();
+            if (warehouseUsableQty < approveQty) {
+                throw new ServiceException(ApiError.ERROR_APPROVEQTY_GT_MUSABLEQTY_ERROR);
+            }
             //虚拟仓数量
             if (StringUtils.isNotBlank(handleListDTO.getFromVirtualWarehouseId())) {
                 checkVmQty(handleListDTO, vmUsableQtyList, approveQty, vmList);
                 //执行虚拟仓出库
                 getStockParam(handleListDTO, approveQty, allocationParamList);
-            } else {
-                Integer warehouseUsableQty = inventoryQtyDTO.getUsableQty();
-                if (warehouseUsableQty < approveQty) {
-                    throw new ServiceException(ApiError.ERROR_APPROVEQTY_GT_MUSABLEQTY_ERROR);
-                }
             }
             //调出仓
             WarehouseDTO.UpdateDTO fromWarehouse = warehouseList.stream().filter(req -> req.getId().equals(handleListDTO.getFromWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
@@ -326,6 +324,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             handleListDTO.setInOrgId(toWarehouse.getOrgId());
         }
         if (CollectionUtils.isNotEmpty(allocationParamList)) {
+            VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+            allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
             allocationDto.setParamList(allocationParamList);
             virtualInventoryTransCoreService.approve(allocationDto);
         }
@@ -405,10 +405,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private static void checkVmQty(RequisitionApplicationDTO.HandleListDTO handleListDTO, List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList, Integer approveQty, List<VirtualWarehouseEntity> vmList) {
         VirtualInventoryDTO.ViewQtyDTO virtualInventoryQtyDto = vmUsableQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), handleListDTO.getSkuId())
                         && Objects.equals(item.getWarehouseId(), handleListDTO.getFromWarehouseId())
-                        && Objects.equals(item.getFromVirtualWarehouseId(), handleListDTO.getFromVirtualWarehouseId()))
+                        && Objects.equals(item.getToVirtualWarehouseId(), handleListDTO.getFromVirtualWarehouseId()))
                 .findFirst()
                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_FROM_VM_INVENTORY_ERROR));
-        Integer fromVirtualWarehouseUsableQty = virtualInventoryQtyDto.getFromVirtualWarehouseUsableQty();
+        Integer fromVirtualWarehouseUsableQty = virtualInventoryQtyDto.getToVirtualWarehouseUsableQty();
         if (fromVirtualWarehouseUsableQty < approveQty) {
             throw new ServiceException(ApiError.ERROR_APPROVEQTY_GT_VMUSABLEQTY_ERROR);
         }
@@ -625,6 +625,15 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE_ING.getStatus())) {
             //处理中撤销
             transferInfoService.requisitionApplicationCancelProcess(entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
+            //获取明细
+            List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = getOutInStockDTOS(entity);
+            //执行虚拟仓出库
+            if (CollectionUtils.isNotEmpty(allocationParamList)) {
+                VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+                allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
+                allocationDto.setParamList(allocationParamList);
+                virtualInventoryTransCoreService.approve(allocationDto);
+            }
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE.getStatus())) {
             //已处理
@@ -646,6 +655,29 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);*/
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    /**
+     * 获取出入库参数
+     * @param id
+     * @return
+     */
+    private List<VirtualInventoryStockDTO.OutInStockDTO> getOutInStockDTOS(RequisitionApplicationEntity entity) {
+        List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
+        List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isNotEmpty(detailEntityList)){
+            detailEntityList.forEach(detailEntity->{
+                if (StringUtils.isNotBlank(detailEntity.getFromVirtualWarehouseId())) {
+                    RequisitionApplicationDTO.HandleListDTO handleListDTO = new RequisitionApplicationDTO.HandleListDTO();
+                    BeanUtils.copyProperties(detailEntity, handleListDTO);
+                    handleListDTO.setSourceDetailId(detailEntity.getId());
+                    handleListDTO.setSourceId(entity.getId());
+                    handleListDTO.setSourceCode(entity.getCode());
+                    getStockParam(handleListDTO, detailEntity.getApproveQty(), allocationParamList);
+                }
+            });
+        }
+        return allocationParamList;
     }
 
     @Override

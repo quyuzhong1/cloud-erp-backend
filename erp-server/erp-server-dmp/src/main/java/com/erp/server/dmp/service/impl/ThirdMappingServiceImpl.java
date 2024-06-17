@@ -574,6 +574,20 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         return null;
     }
 
+    /**
+     * 根据系统id获取仓库
+     * @param sysIds
+     * @return
+     */
+    @Override
+    public List<ThirdMappingEntity> getListBySysIds(List<String> sysIds) {
+        LambdaQueryWrapper<ThirdMappingEntity> queryWrapper = new LambdaQueryWrapper<ThirdMappingEntity>()
+                .in(ThirdMappingEntity::getSysId, sysIds)
+                .eq(ThirdMappingEntity::getIsDeleted, false)
+                .eq(ThirdMappingEntity::getDisabled, false);
+        return baseMapper.selectList(queryWrapper);
+    }
+
 
     /**
      * 新增修改处理数据
@@ -653,7 +667,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             return entity;
         }
         LambdaQueryWrapper<ThirdWarehouseEntity> warehouseWrapper = new LambdaQueryWrapper<ThirdWarehouseEntity>()
-                .eq(ThirdWarehouseEntity::getWarehouseId, mappingEntity.getThirdInfoId())
+                .eq(ThirdWarehouseEntity::getWarehouseId, mappingEntity.getThirdId())
+                .eq(ThirdWarehouseEntity::getCategory, mappingEntity.getType())
                 .eq(ThirdWarehouseEntity::getIsDeleted, false)
                 .eq(ThirdWarehouseEntity::getDisabled, false);
         return thirdWarehouseService.getBaseMapper().selectOne(warehouseWrapper);
@@ -768,7 +783,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 case WAREHOUSE:
                     if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType())) {
                         //校验第三方仓库是否存在
-                        ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId()))
+                        ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode()))
                                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
                         thirdName = thirdWarehouseEntity.getName();
                         thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
@@ -796,7 +811,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     break;
                 case VIRTUAL_WAREHOUSE:
                     //校验第三方仓库是否存在
-                    ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId()))
+                    ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode()))
                             .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
                     thirdName = thirdWarehouseEntity.getName();
                     thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());

@@ -32,6 +32,9 @@
         is_deleted,
         allocation_id, allocation_code, allocation_type, allocation_status, allocation_direction
     </sql>
+    <delete id="forceDeleteById" parameterType="java.lang.String">
+        delete from virtual_warehouse_allocation_handle where id=#{id}
+    </delete>
 
 
 </mapper>

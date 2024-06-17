@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -30,6 +31,13 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @param dto
      */
     DmpPushTaskEntity saveTask(DmpPushTaskFeignDTO dto);
+
+    /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
 
     /**
      * 根据id推送任务

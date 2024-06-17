@@ -4,28 +4,25 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.threadlocal.UserContext;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
-import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleRelationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationDetailMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -33,15 +30,12 @@ import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,7 +44,6 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -68,7 +61,13 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
     @Resource
+    private VirtualWarehouseAllocationService virtualWarehouseAllocationService;
+    @Resource
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
+    @Resource
+    private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -306,6 +305,27 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         //变更明细同步状态
         virtualWarehouseAllocationDetailService.updateByMainId(vmAllocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
         return null;
+    }
+
+    @Override
+    public DmpPushTaskEntity viewSyncInfo(String id) {
+        VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity = virtualWarehouseAllocationDetailService.getById(id);
+        if (Objects.isNull(vmAllocationDetailEntity)) {
+            throw new ServiceException("分货单明细不存在");
+        } else {
+            VirtualWarehouseAllocationEntity vmAllocationEntity = virtualWarehouseAllocationService.getById(vmAllocationDetailEntity.getMainId());
+            if (Objects.isNull(vmAllocationEntity)) {
+                throw new ServiceException("分货单不存在");
+            }
+        }
+        //获取合单表明细id
+        VirtualWarehouseAllocationHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
+                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationId, vmAllocationDetailEntity.getId())
+                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId, vmAllocationDetailEntity.getId()));
+
+        DmpPushTaskEntity productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
+                handleRelation.getHandleDetailId(), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc()));
+        return productBomHistoryTask;
     }
 
     private void handleData(List<VirtualWarehouseAllocationDetailEntity> detailEntityList, String mainId) {

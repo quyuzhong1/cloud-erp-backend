@@ -288,7 +288,7 @@
             and vi.virtual_warehouse_id =#{params.virtualWarehouseId}
         </if>
         <if test="params.warehouseId != null and params.warehouseId != ''">
-            and vi.virtual_warehouse_id =#{params.warehouseId}
+            and vi.warehouse_id =#{params.warehouseId}
         </if>
         GROUP BY vi.virtual_warehouse_id
     </select>

@@ -86,8 +86,8 @@ public class VirtualWarehouseAllocationHandleDetailEntity extends BaseEntity<Vir
     /**
     * 分货单拆单主表id
     */
-    @TableField("handle_id")
-    private String handleId;
+    @TableField("main_id")
+    private String mainId;
 
 
     public static final String STATUS = "status";

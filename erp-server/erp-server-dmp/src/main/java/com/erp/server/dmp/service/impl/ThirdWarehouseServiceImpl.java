@@ -138,10 +138,15 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
         }
         return new PagingVO<>();
     }
-
+    /**
+     * 根据分类和第三方id获取
+     * @param thirdId
+     * @param category
+     * @return
+     */
     @Override
-    public ThirdWarehouseEntity getByWarehouseId(String thirdId) {
-        return baseMapper.getByWarehouseId(thirdId);
+    public ThirdWarehouseEntity getByWarehouseId(String thirdId, String category) {
+        return baseMapper.getByWarehouseId(thirdId,category);
     }
 
 

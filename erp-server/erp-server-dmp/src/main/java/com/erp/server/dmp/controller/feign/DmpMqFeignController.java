@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,6 +41,16 @@ public class DmpMqFeignController {
     public DmpPushTaskEntity saveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto){
         DmpPushTaskEntity entity = dmpPushTaskService.saveTask(dto);
         return entity;
+    }
+
+    /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+    @PostMapping("/save/pushTaskList")
+    public List<DmpPushTaskEntity> saveTaskList(@RequestBody List<DmpPushTaskFeignDTO> dtos){
+       return dmpPushTaskService.saveTaskList(dtos);
     }
 
     /**

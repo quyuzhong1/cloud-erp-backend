@@ -18,6 +18,8 @@ import com.sdk.wangdian.dto.ErpVirtualWarehouseDto;
 import com.sdk.wangdian.dto.WdtVirtualWarehouseDto;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.api.setting.SettingAPI;
+import com.sdk.wangdian.sdk.api.setting.dto.VirtualWarehouseQueryRequest;
+import com.sdk.wangdian.sdk.api.setting.dto.VirtualWarehouseQueryResponse;
 import com.sdk.wangdian.sdk.api.setting.dto.WarehouseQueryRequest;
 import com.sdk.wangdian.sdk.api.setting.dto.WarehouseQueryResponse;
 import com.sdk.wangdian.server.WangDianClientService;
@@ -29,9 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 旺店通仓库数据处理器
+ * 旺店通虚拟仓数据处理器
  * @date 2024-05-23
- * @author tanmujin
+ * @author hyj
  */
 @Slf4j
 @Component
@@ -72,7 +74,7 @@ public class WdtVirtualWarehouseHandler implements IBusinessHandler<WdtVirtualWa
     }
 
     public List<WdtVirtualWarehouseDto> download(JobTaskDTO task) {
-        WarehouseQueryRequest query = new WarehouseQueryRequest();
+        VirtualWarehouseQueryRequest query = new VirtualWarehouseQueryRequest();
 
         Pager pager = new Pager();
         pager.setPageNo(0);
@@ -80,23 +82,23 @@ public class WdtVirtualWarehouseHandler implements IBusinessHandler<WdtVirtualWa
         pager.setCalcTotal(true);
 
         SettingAPI settingAPI = clientService.get(SettingAPI.class);
-        List<WarehouseQueryResponse.WarehouseDto> warehouseList = new ArrayList<>();
+        List<VirtualWarehouseQueryResponse.VirtualWarehouseDto> warehouseList = new ArrayList<>();
         boolean hasNext = true;
         int pageSize = 200;
 
         //分页循环拉取数据
         while (hasNext) {
-            WarehouseQueryResponse response = null;
+            VirtualWarehouseQueryResponse response = null;
             try {
-                response = settingAPI.queryWarehouse(query, pager);
+                response = settingAPI.queryVirtualWarehouse(query, pager);
             } catch (Exception e) {
-                log.error("拉取旺店通仓库数据失败，原因【{}】", e.getMessage(), e);
+                log.error("拉取旺店通虚拟仓数据失败，原因【{}】", e.getMessage(), e);
                 return BeanMapperUtils.copyList(WdtVirtualWarehouseDto.class, warehouseList);
             }
-            if (response == null || response.getWarehouseList().isEmpty()) {
+            if (response == null || response.getVirtualWarehouseList().isEmpty()) {
                 return BeanMapperUtils.copyList(WdtVirtualWarehouseDto.class, warehouseList);
             }
-            warehouseList.addAll(response.getWarehouseList());
+            warehouseList.addAll(response.getVirtualWarehouseList());
             Integer totalCount = response.getTotal();
             if (totalCount <= (pager.getPageNo() + 1) * pageSize) {
                 hasNext = false;
@@ -109,13 +111,14 @@ public class WdtVirtualWarehouseHandler implements IBusinessHandler<WdtVirtualWa
     public List<ErpVirtualWarehouseDto> convert(List<WdtVirtualWarehouseDto> sourceDataList) {
         List<ErpVirtualWarehouseDto> targetList = new ArrayList<>();
         for (WdtVirtualWarehouseDto source : sourceDataList) {
-            source.setUniqueId(String.valueOf(source.getWarehouse_id()));
+            source.setUniqueId(String.valueOf(source.getVirtual_warehouse_id()));
             ErpVirtualWarehouseDto target = new ErpVirtualWarehouseDto();
             target.setUniqueId(source.getUniqueId());
             target.setDisabled(source.getIs_disabled());
             target.setSysType(PlatformDictEnum.WDT.getCode());
-            target.setWarehouseId(String.valueOf(source.getWarehouse_id()));
-            target.setCode(source.getWarehouse_no());
+            target.setWarehouseId(String.valueOf(source.getVirtual_warehouse_id()));
+            target.setName(source.getVirtual_warehouse_name());
+            target.setCode(source.getVirtual_warehouse_no());
             target.setCreated(source.getCreated());
             target.setModified(source.getModified());
             target.setRemark(source.getRemark());

@@ -54,6 +54,8 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -288,12 +290,18 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         virtualWarehouseAllocationDetailService.updateByMainId(allocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
         //执行扣减库存
         virtualWarehouseAllocationDetailService.submit(allocationEntity);
-        //进行拆单并创建中台任务数据进行同步
-        virtualWarehouseAllocationHandleService.handleData(allocationEntity);
+
         // 记录操作日志
         log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
         String msg = StrUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
+        //进行合单并创建中台任务数据进行同步
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                virtualWarehouseAllocationHandleService.handleData(allocationEntity);
+            }
+        });
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -578,11 +586,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
         List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(vmIds);
+        //根据实体仓获取虚拟仓
+        List<VirtualWarehouseRelationEntity> vwRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIds);
+        if (CollUtil.isEmpty(vwRelationList) || Objects.isNull(vwRelationList.get(0))) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NORELATION_ERROR);
+        }
         //获取库存
         List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryQtyList = getQty(detailList, type);
         detailList.forEach(detailDto -> {
             //校验sku、仓库、虚拟仓是否存在
-            checkInfo(detailDto, skuVOList, warehouseList, virtualWarehouseList);
+            checkInfo(detailDto, skuVOList, warehouseList, virtualWarehouseList, vwRelationList);
             //校验库存
             checkQty(detailDto, type, virtualInventoryQtyList);
         });
@@ -598,17 +611,22 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * @param detailList
      */
     private static void checkUniqueInfo(String type, List<VirtualWarehouseAllocationDTO.DetailDto> detailList) {
-        Map<String, Long> countMap = detailList.stream()
-                .collect(Collectors.groupingBy(detail -> detail.getSkuNo() + "_&_" + detail.getWarehouseName() + "_&_"
-                                + detail.getFromVirtualWarehouseName() + "_&_" + detail.getToVirtualWarehouseName(),
-                        Collectors.counting()));
+        Map<String, Integer> keyMap = new HashMap<>();
 
-        // 检查是否有数量大于1的组合
-        boolean hasDuplicates = countMap.values().stream().anyMatch(count -> count > 1);
-        // 如果有数量大于1的组合，则报错
-        if (hasDuplicates) {
-            StringBuilder msg = new StringBuilder();
-            countMap.forEach((k, v) -> {
+        detailList.forEach(detail -> {
+            String key=detail.getSkuNo() + "_&_" + detail.getWarehouseName() + "_&_"
+                    + detail.getFromVirtualWarehouseName() + "_&_" + detail.getToVirtualWarehouseName();
+            Integer value = keyMap.get(key);
+            if (Objects.isNull(value)) {
+               value=1;
+            }else{
+                value+=1;
+            }
+            keyMap.put(key,value);
+        });
+        StringBuilder msg = new StringBuilder();
+        keyMap.forEach((k,v)->{
+            if (v>1) {
                 String[] split = k.split("_&_");
                 if (v > 1) {
                     switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
@@ -616,18 +634,50 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                             msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR.msg, split[0], split[1], split[3]));
                             break;
                         case TRANSFER:
-                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1],  split[2], split[3]));
+                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2], split[3]));
                             break;
                         case CANCEL:
-                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1],  split[2]));
+                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
                             break;
                         default:
                             throw new ServiceException(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR);
                     }
                 }
-            });
+            }
+        });
+        if (StringUtils.isNotBlank(msg.toString())){
             throw new ServiceException(msg.toString());
         }
+
+//        Map<String, Long> countMap = detailList.stream().collect(Collectors.groupingBy(detail -> detail.getSkuNo() + "_&_" + detail.getWarehouseName() + "_&_"
+//                        + detail.getFromVirtualWarehouseName() + "_&_" + detail.getToVirtualWarehouseName(),
+//                Collectors.counting()));
+//
+//        // 检查是否有数量大于1的组合
+//        boolean hasDuplicates = countMap.values().stream().anyMatch(count -> count > 1);
+//        // 如果有数量大于1的组合，则报错
+//        if (hasDuplicates) {
+//            StringBuilder msg = new StringBuilder();
+//            countMap.forEach((k, v) -> {
+//                String[] split = k.split("_&_");
+//                if (v > 1) {
+//                    switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
+//                        case ALLOCATION:
+//                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR.msg, split[0], split[1], split[3]));
+//                            break;
+//                        case TRANSFER:
+//                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2], split[3]));
+//                            break;
+//                        case CANCEL:
+//                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
+//                            break;
+//                        default:
+//                            throw new ServiceException(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR);
+//                    }
+//                }
+//            });
+//            throw new ServiceException(msg.toString());
+//        }
     }
 
     private List<VirtualInventoryDTO.ViewQtyDTO> getQty(List<VirtualWarehouseAllocationDTO.DetailDto> detailList, String type) {
@@ -639,7 +689,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return virtualInventoryQtyList;
     }
 
-    private void checkInfo(VirtualWarehouseAllocationDTO.DetailDto detailDto, List<SkuVO> skuVOList, List<WarehouseDTO.UpdateDTO> warehouseList, List<VirtualWarehouseEntity> virtualWarehouseList) {
+    private void checkInfo(VirtualWarehouseAllocationDTO.DetailDto detailDto, List<SkuVO> skuVOList, List<WarehouseDTO.UpdateDTO> warehouseList,
+                           List<VirtualWarehouseEntity> virtualWarehouseList, List<VirtualWarehouseRelationEntity> vwRelationList) {
         SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())).findFirst().orElse(null);
         if (Objects.isNull(skuVO)) {
             throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, detailDto.getSkuId());
@@ -654,11 +705,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             }
         }
 
-        //根据实体仓获取虚拟仓
-        List<VirtualWarehouseRelationEntity> vwRelationList = virtualWarehouseRelationService.getByWarehouseId(Collections.singletonList(warehouseList.get(0).getId()));
-        if (CollUtil.isEmpty(vwRelationList) || Objects.isNull(vwRelationList.get(0))) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NORELATION_ERROR);
-        }
 
         detailDto.setWarehouseName(updateDTO.getName());
         if (StringUtils.isBlank(detailDto.getToVirtualWarehouseId()) && StringUtils.isBlank(detailDto.getFromVirtualWarehouseId())) {
@@ -679,13 +725,25 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 }
             }
 
-            VirtualWarehouseRelationEntity toVmRelation = vwRelationList.stream().filter(item ->
-                    Objects.equals(item.getVirtualWarehouseId(), detailDto.getToVirtualWarehouseId())).findFirst().orElse(null);
-            if (Objects.isNull(toVmRelation)) {
-                throw new ServiceException(ApiError.ERROR_VW_RELATION_ERROR, updateDTO.getName(), toVmWarehouse.getName());
+            if (StringUtils.isNotBlank(detailDto.getToVirtualWarehouseId())) {
+                VirtualWarehouseRelationEntity toVmRelation = vwRelationList.stream().filter(item ->
+                        Objects.equals(item.getVirtualWarehouseId(), detailDto.getToVirtualWarehouseId()) && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId())).findFirst().orElse(null);
+                if (Objects.isNull(toVmRelation)) {
+                    throw new ServiceException(ApiError.ERROR_VW_RELATION_ERROR, updateDTO.getName(), toVmWarehouse.getName());
+                }
+                detailDto.setToVirtualWarehouseName(toVmWarehouse.getName());
+                detailDto.setToVirtualWarehouseCode(toVmWarehouse.getCode());
             }
-            detailDto.setToVirtualWarehouseName(toVmWarehouse.getName());
-            detailDto.setToVirtualWarehouseCode(toVmWarehouse.getCode());
+            if (StringUtils.isNotBlank(detailDto.getFromVirtualWarehouseId())) {
+                VirtualWarehouseRelationEntity fromVmRelation = vwRelationList.stream().filter(item ->
+                        Objects.equals(item.getVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId()) && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId())).findFirst().orElse(null);
+                if (Objects.isNull(fromVmRelation)) {
+                    throw new ServiceException(ApiError.ERROR_VW_RELATION_ERROR, updateDTO.getName(), toVmWarehouse.getName());
+                }
+                detailDto.setFromVirtualWarehouseName(toVmWarehouse.getName());
+                detailDto.setFromVirtualWarehouseCode(toVmWarehouse.getCode());
+            }
+
         }
         if (StringUtils.isNotBlank(detailDto.getFromVirtualWarehouseId())) {
             VirtualWarehouseEntity fromVmWarehouse = virtualWarehouseList.stream().filter(item -> Objects.equals(item.getId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(null);

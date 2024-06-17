@@ -1010,7 +1010,6 @@ public enum ApiError implements Serializable {
     ERROR_VIRTUAL_INVENTORY_INSUFFICIENT(92141,"虚拟库存不足，SKU:[{}],虚拟仓库：[{}],实物仓库:[{}],库存状态:[{}],库存数量[{}],交易数量[{}]"),
     ERROR_BINDING(99141,"绑定失败"),
     ERROR_VMNAME_EXIST(92200,"虚拟仓名称已存在"),
-    ERROR_VM_NOTFOUND(92201,"虚拟仓不存在"),
     ERROR_WAREHOUSE_BINDED(92202,"当前实体仓已被虚拟仓【{}】绑定"),
     ERROR_SAME_DISABLED(92203,"存在相同状态"),
     ERROR_WAREHOUSE_NOTFOUND(92204,"实体仓不存在"),
@@ -1044,6 +1043,7 @@ public enum ApiError implements Serializable {
     ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST(92219,"平台【{}】、实体仓【{}】下未找到对应虚拟仓库"),
     ERROR_VWSTOCK_NOTEMPRY(92230,"虚拟仓库存不为0，操作失败"),
     ERROR_VWWSTOCK_NOTEMPRY(92231,"本虚拟仓在实体仓【{}】下库存不为0，操作失败"),
+    ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED(92232,"旺店通【{}】已与仓库【{}】关联"),
 
     /**
      * OMS 错误
