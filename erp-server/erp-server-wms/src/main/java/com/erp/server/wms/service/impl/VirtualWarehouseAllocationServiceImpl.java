@@ -261,7 +261,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 if (Objects.nonNull(skuVO)) {
                     record.setSkuName(skuVO.getSkuName());
                     record.setImageUrl(skuVO.getSkuImagesUrl());
-                    record.setProductName(skuVO.getBrandName());
+                    record.setProductName(skuVO.getSkuName());
                 }
             });
         }

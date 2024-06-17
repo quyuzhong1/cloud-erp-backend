@@ -270,6 +270,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         allocationDto.setParamList(allocationParamList);
         return allocationDto;
     }
+
     private static VirtualInventoryStockDTO.StockParamDTO getCancelDto(VirtualInventoryBusinessTypeEnum inUsable, List<VirtualWarehouseAllocationDetailEntity> detailList, VirtualWarehouseAllocationEntity allocationEntity) {
         VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
         allocationDto.setBusinessType(inUsable.getCode());
@@ -310,21 +311,24 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Override
     public DmpPushTaskEntity viewSyncInfo(String id) {
         VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity = virtualWarehouseAllocationDetailService.getById(id);
+        VirtualWarehouseAllocationEntity vmAllocationEntity;
         if (Objects.isNull(vmAllocationDetailEntity)) {
             throw new ServiceException("分货单明细不存在");
         } else {
-            VirtualWarehouseAllocationEntity vmAllocationEntity = virtualWarehouseAllocationService.getById(vmAllocationDetailEntity.getMainId());
+            vmAllocationEntity = virtualWarehouseAllocationService.getById(vmAllocationDetailEntity.getMainId());
             if (Objects.isNull(vmAllocationEntity)) {
                 throw new ServiceException("分货单不存在");
             }
         }
         //获取合单表明细id
         VirtualWarehouseAllocationHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
-                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationId, vmAllocationDetailEntity.getId())
+                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationId, vmAllocationEntity.getId())
                 .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId, vmAllocationDetailEntity.getId()));
-
-        DmpPushTaskEntity productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
-                handleRelation.getHandleDetailId(), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc()));
+        DmpPushTaskEntity productBomHistoryTask=new DmpPushTaskEntity();
+        if (Objects.nonNull(handleRelation)) {
+            productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
+                    handleRelation.getHandleDetailId(), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc()));
+        }
         return productBomHistoryTask;
     }
 
