@@ -467,7 +467,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-
+        soB2cEntity.setVersion(0);
         return soB2cEntity;
     }
 
