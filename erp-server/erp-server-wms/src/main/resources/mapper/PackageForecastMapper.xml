@@ -30,6 +30,7 @@
             <result property="logisticsChannelName" column="logisticsChannelName"/>
             <result property="trackNo" column="trackNo"/>
             <result property="minPackageTransportNo" column="minPackageTransportNo"/>
+            <result property="minPackageHandoverStatus" column="minPackageHandoverStatus"/>
             <result property="weight" column="weight"/>
             <result property="weightUnit" column="weightUnit"/>
         </collection>
@@ -45,8 +46,8 @@
     <!--分页查询-->
     <select id="paging" resultMap="pagingMap">
         SELECT
+            distinct
         pf.id AS id,
-        pfd.id AS detailId,
         pf.bill_date AS billDate,
         pf.code,
         pf.handover_no AS handoverNo,
@@ -63,16 +64,7 @@
         pf.handover_status AS handoverStatus,
         pf.remark,
         pf.create_user_name AS createUserName,
-        pf.create_time AS createTime,
-        pfd.so_id AS soId,
-        pfd.so_code AS soCode,
-        pfd.logistics_channel_id AS logisticsChannelId,
-        pfd.logistics_channel_name AS logisticsChannelName,
-        pfd.track_no AS trackNo,
-        pfd.transport_no AS minPackageTransportNo,
-        pfd.weight,
-        pfd.weight_unit AS weightUnit,
-        pfd.handover_status AS minPackageHandoverStatus
+        pf.create_time AS createTime
         FROM package_forecast pf
         LEFT JOIN package_forecast_detail pfd
         ON pf.id = pfd.main_id AND pfd.is_deleted = FALSE
