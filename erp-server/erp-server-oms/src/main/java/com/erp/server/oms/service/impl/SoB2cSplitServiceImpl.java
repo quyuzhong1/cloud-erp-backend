@@ -711,6 +711,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setWidth(null);
             logisticsAddDTO.setHeight(null);
             logisticsAddDTO.setWeight(null);
+            logisticsAddDTO.setLogisticsChannelId("");
             addDTO.setLogisticsDTO(logisticsAddDTO);
             addDTO.setRemark(StrUtil.format("【{}】拆分订单", entity.getCode()));
 
@@ -728,21 +729,21 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
                 soB2cService.approveEnd(approveOneDTO,add,true);
                 //走仓库规则和物流规则的
-                if (entity.hasPlatformWarehouseOrder()) {
+                if (add.hasPlatformWarehouseOrder()) {
                     soB2cService.platformWarehouseOrderHandle(add.getId(), new HashMap<>());
                 } else {
                     //拉取订单正常处理
                     List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(add.getId());
-                    SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(entity.getId(), soB2cDetailEntityList, new HashMap<>());
+                    SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(add.getId(), soB2cDetailEntityList, new HashMap<>());
                     Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
                     if (warehouseRuleMatch) {
-                        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(entity.getId(), new HashMap<>());
+                        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(add.getId(), new HashMap<>());
                         if(logisticsRuleResult.getIsRuleMatch()){
-                            soB2cService.checkProductRegistrationAndUpdate(entity.getId(), "");
+                            soB2cService.checkProductRegistrationAndUpdate(add.getId(), "");
                         }
                         Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                         if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
-                            soB2cService.getLogisticsCode(entity.getId(), true);
+                            soB2cService.getLogisticsCode(add.getId(), true);
                         }
                     }
                 }
