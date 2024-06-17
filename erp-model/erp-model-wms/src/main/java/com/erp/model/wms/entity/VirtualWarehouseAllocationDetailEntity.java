@@ -105,6 +105,16 @@ public class VirtualWarehouseAllocationDetailEntity extends BaseEntity<VirtualWa
      */
     @TableField("sync_status")
     private String syncStatus;
+    /**
+     * 同步平台
+     */
+    @TableField("sys_type")
+    private String syncType;
+    /**
+     * 同步平台
+     */
+    @TableField("sys_type_name")
+    private String syncTypeName;
 
     public static final String DISABLED = "disabled";
 

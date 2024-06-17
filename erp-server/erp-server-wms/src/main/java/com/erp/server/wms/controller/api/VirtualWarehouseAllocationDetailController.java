@@ -34,6 +34,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -119,7 +120,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                     submit = BatchResultDTO.fail(id, id, "分货单不存在");
                 } else {
                     //只有已处理状态且同步失败状态可以手动完结
-                    if (Objects.equals(handleStatus, vmAllocationEntity.getStatus()) && Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
+                    if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus()) || !Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
                         submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_MANUAL_STATUS_ERROR.msg);
                     } else {
                         flagCode = vmAllocationEntity.getCode();
@@ -166,7 +167,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                     submit = BatchResultDTO.fail(id, id, "分货单不存在");
                 } else {
                     //只有已处理状态且同步失败状态可以同步
-                    if (Objects.equals(handleStatus, vmAllocationEntity.getStatus()) && Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
+                    if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus()) || !Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
                         submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_SYNC_ERROR.msg);
                     } else {
                         flagCode = vmAllocationEntity.getCode();
@@ -191,14 +192,30 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
     @GetMapping("/viewSyncInfo")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:virtualWarehouseAllocationDetail:sync",
+            menuCode = "wms:virtualWarehouseAllocationDetail:viewSyncInfo",
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
     )
     public ApiResult<DmpPushTaskEntity> viewSyncInfo(@RequestParam(value = "detailId") String detailId) {
-        String id = detailId;
-       return success(virtualWarehouseAllocationDetailService.viewSyncInfo(id));
+       return success(virtualWarehouseAllocationDetailService.viewSyncInfo(detailId));
     }
 
+    /**
+     * 根据单号展示信息
+     *
+     * @param detailId
+     * @return
+     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "展示分货单同步信息")
+    @GetMapping("/viewByThirdCode")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocationDetail:viewByThirdCode",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<VirtualWarehouseAllocationDTO.ThirdCodeDto> viewByThirdCode(@RequestParam(value = "detailId") String detailId) {
+       return success(virtualWarehouseAllocationDetailService.viewByThirdCode(detailId));
+    }
 
 }

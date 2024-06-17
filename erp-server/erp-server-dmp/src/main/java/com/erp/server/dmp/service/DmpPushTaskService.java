@@ -133,6 +133,14 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @date 2024/4/11 16:51
      */
     Boolean batchNoNeedSync(List<String> ids);
+    /**
+     * @param sourceIds
+     * @return Boolean
+     * @description: 根据sourceId批量修改无需同步
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    Boolean batchNoNeedSyncBySourceId(List<String> sourceIds);
 
     /**
      * @param syncTaskId

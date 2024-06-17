@@ -54,4 +54,5 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
 
     DmpPushTaskEntity viewSyncInfo(String id);
 
+    VirtualWarehouseAllocationDTO.ThirdCodeDto viewByThirdCode(String id);
 }

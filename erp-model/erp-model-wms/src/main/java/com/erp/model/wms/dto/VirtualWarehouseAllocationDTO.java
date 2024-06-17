@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
@@ -450,6 +451,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         @NotBlank(message = "类型不能为空")
         private String sysType;
+        private String sysTypeName;
         /**
          * 主键id
          */
@@ -459,6 +461,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 完结说明
          */
         private String finishDescription;
+
     }
 
     /**
@@ -517,6 +520,34 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
             return VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(syncStatus);
         }
     }
+
+    /**
+     * 明细数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ThirdCodeDto {
+        /**
+         * 分货单类型
+         */
+        private String type;
+        /**
+         * 第三方类型
+         */
+        private String sysType;
+        /**
+         * 第三方类型
+         */
+        private String sysTypeName;
+        /**
+         * 第三方编码
+         */
+        private String thirdCode;
+        private List<DetailDto> detailList;
+
+
+    }
+
     /**
      * 明细数据
      */

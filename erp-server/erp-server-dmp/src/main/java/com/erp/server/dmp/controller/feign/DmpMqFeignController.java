@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -86,5 +90,30 @@ public class DmpMqFeignController {
     public List<DmpPushTaskEntity> listByParam(@RequestBody @Valid DmpSyncTaskDTO.ListDTO listDTO){
         List<DmpPushTaskEntity> list = dmpPushTaskService.listByParam(listDTO);
         return CollectionUtils.isEmpty(list) ? new ArrayList<>() : list;
+    }
+
+    /**
+     * 批量修改无需同步
+     *
+     * @param dto
+     * @return ApiResult
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    @PostMapping(value = "/batchNoNeedSync")
+    public Boolean batchNoNeedSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        return dmpPushTaskService.batchNoNeedSync(dto.getIds());
+    }
+    /**
+     * 根据sourceId批量修改无需同步
+     *
+     * @param sourceIds
+     * @return ApiResult
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    @PostMapping(value = "/batchNoNeedSyncBySourceId")
+    public Boolean batchNoNeedSyncBySourceId(@RequestBody List<String> sourceIds) {
+        return dmpPushTaskService.batchNoNeedSyncBySourceId(sourceIds);
     }
 }

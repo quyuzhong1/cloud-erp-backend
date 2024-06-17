@@ -1044,6 +1044,7 @@ public enum ApiError implements Serializable {
     ERROR_VWSTOCK_NOTEMPRY(92230,"虚拟仓库存不为0，操作失败"),
     ERROR_VWWSTOCK_NOTEMPRY(92231,"本虚拟仓在实体仓【{}】下库存不为0，操作失败"),
     ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED(92232,"旺店通【{}】已与仓库【{}】关联"),
+    ERROR_NO_SYNC(92232,"没有同步信息"),
 
     /**
      * OMS 错误
