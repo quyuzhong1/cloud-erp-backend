@@ -1,25 +1,18 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.common.business.dto.PlatformDeliveryInterceptDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -302,7 +295,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                         soB2cEntity.getCode(),
                         soB2cEntity.getDictPlatform(),
                         JSONUtil.toJsonStr(dto),
-                        businessDesc);
+                        businessDesc, false);
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }

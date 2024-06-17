@@ -113,7 +113,7 @@ public class GoodCangLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     private void logAndReturnSuccess(ChanelQueryVO chanelQueryVO, RequestStatusEnums status,
                                      GoodCangResponse<?> goodCangResponse) {
-        logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+        logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                 chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(),
                 getPlatForm().getCode(), status.getCode(), JSONUtil.toJsonStr(chanelQueryVO),
                 JSONUtil.toJsonStr(goodCangResponse));
@@ -121,7 +121,7 @@ public class GoodCangLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     private void logAndReturnFailure(ChanelQueryVO chanelQueryVO, RequestStatusEnums status,
                                      Object failureDetails) {
-        logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+        logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                 chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(),
                 getPlatForm().getCode(), status.getCode(), JSONUtil.toJsonStr(chanelQueryVO),
                 JSONUtil.toJsonStr(failureDetails));

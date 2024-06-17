@@ -109,6 +109,10 @@ public class QueryUtils {
 
         //like查询拼接成 concat('%',#{val},'%') 或concat(#{val},'%') 或concat('%',#{val})
         if(QueryConditionEnum.SET_LIKE.contains(condEnum)){
+            //_需要转义
+            if(dto.getValue().toString().contains("_")){
+                dto.setValue(dto.getValue().toString().replace("_","\\_"));
+            }
             if(QueryConditionEnum.STARTS_WITH.equals(condEnum)){
                 val = "'" + dto.getValue() + "%'";
             }else if(QueryConditionEnum.ENDS_WITH.equals(condEnum)){

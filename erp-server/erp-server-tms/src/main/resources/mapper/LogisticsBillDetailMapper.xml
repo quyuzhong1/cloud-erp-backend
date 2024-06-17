@@ -90,7 +90,7 @@
         <if test="query.trackEnable != null">
             and lbd.track_enable = #{query.trackEnable}
         </if>
-        order by lbd.track_time desc
+        order by lbd.create_time desc
     </select>
 
     <!-- 根据平台单和物流跟踪单号查询 -->

@@ -220,16 +220,16 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
      */
     private void updateProductPackPackaging (ProductPackDTO productPackDTO) {
         lambdaUpdate()
-                .eq(ProductPackEntity::getSkuId,productPackDTO.getSkuId())
-                .set(ProductPackEntity::getProductLength,productPackDTO.getProductLength())
-                .set(ProductPackEntity::getProductWidth,productPackDTO.getProductWidth())
-                .set(ProductPackEntity::getProductHeight,productPackDTO.getProductHeight())
-                .set(ProductPackEntity::getBoxLength,productPackDTO.getBoxLength())
-                .set(ProductPackEntity::getBoxWidth,productPackDTO.getBoxWidth())
-                .set(ProductPackEntity::getBoxHeight,productPackDTO.getBoxHeight())
-                .set(ProductPackEntity::getBoxQty,productPackDTO.getBoxQty())
-                .set(ProductPackEntity::getBoxWeight,productPackDTO.getBoxWeight())
-                .set(ProductPackEntity::getNetWeight,productPackDTO.getNetWeight())
+		        .eq(ProductPackEntity::getSkuId,productPackDTO.getSkuId())
+		        .set(productPackDTO.getProductLength() != null , ProductPackEntity::getProductLength,productPackDTO.getProductLength())
+		        .set(productPackDTO.getProductWidth() != null , ProductPackEntity::getProductWidth,productPackDTO.getProductWidth())
+		        .set(productPackDTO.getProductHeight() != null , ProductPackEntity::getProductHeight,productPackDTO.getProductHeight())
+		        .set(productPackDTO.getBoxLength() != null , ProductPackEntity::getBoxLength,productPackDTO.getBoxLength())
+		        .set(productPackDTO.getBoxWidth() != null , ProductPackEntity::getBoxWidth,productPackDTO.getBoxWidth())
+		        .set(productPackDTO.getBoxHeight() != null , ProductPackEntity::getBoxHeight,productPackDTO.getBoxHeight())
+		        .set(productPackDTO.getBoxQty() != null , ProductPackEntity::getBoxQty,productPackDTO.getBoxQty())
+		        .set(productPackDTO.getBoxWeight() != null , ProductPackEntity::getBoxWeight,productPackDTO.getBoxWeight())
+		        .set(productPackDTO.getNetWeight() != null , ProductPackEntity::getNetWeight,productPackDTO.getNetWeight())
                 .update();
     }
 }

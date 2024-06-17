@@ -116,6 +116,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setShopId(dto.getShopId());
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(false);
+        orderDTO.setIsCancel(false);
         // 作废类型（manual手动作废，automatic自动作废）
         orderDTO.setInvalidType("");
         // 作废原因
@@ -196,7 +197,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             isAliexpressPlatformWarehouseOrder = count > 0;
         }
         labelMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
-        labelMap.put("isAliexpressPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
+        labelMap.put("isPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
         String orderStatus = sourceOrder.getOrderStatus();
         if ("RISK_CONTROL".equals(orderStatus)
                 || "IN_CANCEL".equals(orderStatus)
@@ -326,6 +327,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             deliveryDetailDTO.setQty(Integer.valueOf(v.getDeliveryQty()));
             deliveryDetailDTO.setPlatformWarehouseName(v.getWarehouseName());
             deliveryDetailDTO.setPlatformSpuNo(v.getItemId());
+            deliveryDetailDTO.setPlatformSkuId(v.getPlatformSkuId());
             result.add(deliveryDetailDTO);
         });
         return result;

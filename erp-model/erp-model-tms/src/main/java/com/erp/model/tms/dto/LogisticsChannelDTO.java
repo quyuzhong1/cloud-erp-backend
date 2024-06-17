@@ -454,7 +454,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 仓库设置
          */
-        @NotEmpty(message = "仓库设置不能为空")
+        @NotNull(message = "仓库设置不能为空")
         private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
     }
 

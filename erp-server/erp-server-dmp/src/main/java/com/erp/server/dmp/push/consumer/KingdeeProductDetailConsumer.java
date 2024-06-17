@@ -53,6 +53,7 @@ public class KingdeeProductDetailConsumer<T extends DmpSyncTaskIdDTO> extends Ab
            viewMap.put("number", "DZ1601");
 
         log.info("view方法数据查询,viewJson = {}", JSONUtil.toJsonStr(viewMap));
+
         JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         JSONObject createOrgId = (JSONObject) model.get("CreateOrgId");
         System.out.println(model);

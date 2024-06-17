@@ -44,7 +44,7 @@ public class ListingInfoController extends BaseController {
 
 
     /**
-     * sku映射
+     * 平台sku映射
      * @Author Luo_WG
      * @Date 2023/11/2 11:19
      * @param dto

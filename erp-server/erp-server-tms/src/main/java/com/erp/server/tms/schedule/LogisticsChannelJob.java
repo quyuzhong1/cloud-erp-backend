@@ -16,11 +16,14 @@ import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -120,8 +123,15 @@ public class LogisticsChannelJob {
         XxlJobHelper.log("====开始同步渠道====");
         log.info("====全部渠道同步开始=====");
         LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
+        String jobParam = XxlJobHelper.getJobParam();
+        Map<String, String> map = new HashMap<>();
+        if (StringUtils.isNotEmpty(jobParam)){
+            String[] split = jobParam.split(",");
+            map.put("orderId", split[0]);
+            map.put("childOrderId",split[1]);
+        }
         XxlJobHelper.log("物流商{}开始同步渠道", LogisticsPlatformEnum.ALI_EXPRESS.getName());
-        List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncAliExpressChannel(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
+        List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncAliExpressChannel(LogisticsPlatformEnum.ALI_EXPRESS.getCode(),map);
         XxlJobHelper.log("物流商{}同步渠道结果:同步结果详情{}", LogisticsPlatformEnum.ALI_EXPRESS.getName(), JSONUtil.toJsonStr(batchResultDTOS));
         log.info("=====渠道同步结束=====");
         XxlJobHelper.log("====同步渠道信息完成====");

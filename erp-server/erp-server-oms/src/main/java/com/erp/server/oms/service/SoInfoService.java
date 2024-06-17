@@ -253,12 +253,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     /**
      * 下推销售退货订单-列表查询
      *
-     * @param ids ids
+     * @param detailIds detailIds 订单详情id
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>
      * @Author Luo_WG
      * @Date 2023/5/25 15:17
      **/
-    List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> ids);
+    List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> detailIds);
 
     /**
      * 更改销售订单金蝶推送的状态

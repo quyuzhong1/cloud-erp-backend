@@ -7,6 +7,7 @@ import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.server.rule.SpElServer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @Description
@@ -265,7 +268,7 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     private String getContentList(String field, String addField, String compare, Object targetValue, SpElExpressionDTO spElDTO, Map<String, Object> detailMap) {
-        String[] split = targetValue.toString().split(",");
+        List<Object> targetValueStr = Arrays.asList(targetValue.toString().split(","));
         StringBuilder sb=new StringBuilder();
         //要对比的值  变量.contains
         Object o = detailMap.get(field);
@@ -275,17 +278,27 @@ public class SpElServerImpl implements SpElServer {
         }else {
             fieldStr = "";
         }
-        String[] split1 = fieldStr.split(",");
-        if (split1.length > 1){
+        List<String> split1 = Arrays.stream(fieldStr.split(",")).collect(Collectors.toList());
+        boolean startsWith = fieldStr.startsWith(",");
+        boolean endsWith = fieldStr.endsWith(",");
+        boolean contains = fieldStr.contains(",,");
+        if (startsWith || endsWith || contains){
+            if (CollectionUtils.isEmpty(split1)){
+                split1 = new ArrayList<>();
+            }
+            split1.add("");
+        }
+
+        if (split1.size() > 1){
             sb.append("(");
-            for (int i = 0; i < split1.length; i++) {
+            for (int i = 0; i < split1.size(); i++) {
                 if (RuleCompareEnum.CONTAINS.getCode().equals(compare) || RuleCompareEnum.IN_LIST.getCode().equals(compare)){
                     sb.append("#").append(addField).append(".contains");
                 }else if (RuleCompareEnum.NOT_CONTAINS.getCode().equals(compare) || RuleCompareEnum.NOT_IN_LIST.getCode().equals(compare)){
                     sb.append("!#").append(addField).append(".contains");
                 }
-                sb.append("('").append(split1[i]).append("')");
-                if (i + 1 < split1.length){
+                sb.append("('").append(split1.get(i)).append("')");
+                if (i + 1 < split1.size()){
                     if (RuleCompareEnum.CONTAINS.getCode().equals(compare) || RuleCompareEnum.NOT_CONTAINS.getCode().equals(compare)){
                         sb.append(" or ");
                     }else if (RuleCompareEnum.IN_LIST.getCode().equals(compare) || RuleCompareEnum.NOT_IN_LIST.getCode().equals(compare)){
@@ -303,12 +316,36 @@ public class SpElServerImpl implements SpElServer {
             sb.append("('").append(fieldStr).append("')");
         }
         Map<String, Object> variables = spElDTO.getVariables();
-        //对于非数组 就传递字符串
-        if (split.length > 1){
-            variables.put(addField, Arrays.asList(split));
+        //是否存在记录
+        Object object = variables.get(addField);
+        if (Objects.nonNull(object) && object instanceof List){
+            //列表
+            List<Object> list = (List<Object>)object;
+            //对于非数组 就传递字符串
+            if (targetValueStr.size() > 1){
+                List<Object> list3 = Stream.of(list, targetValueStr).flatMap(List::stream).collect(Collectors.toList());
+                variables.put(addField, list3);
+            }else {
+                list.add(targetValue);
+                variables.put(addField, list);
+            }
         }else {
-            variables.put(addField, targetValue);
+            List<Object> list = new ArrayList<>();
+            //对于非数组 就传递字符串
+            if (targetValueStr.size() > 1){
+                if (Objects.nonNull(object)){
+                    targetValueStr.add(object);
+                }
+                variables.put(addField, targetValueStr);
+            }else {
+                if (Objects.nonNull(object)){
+                    list.add(object);
+                }
+                list.add(targetValue);
+                variables.put(addField, list);
+            }
         }
+
         spElDTO.setVariables(variables);
         return sb.toString();
     }

@@ -50,6 +50,10 @@ public class SkuVO implements Serializable {
     private String declareCurrencySymbol;
 
     /**
+     * 单箱数量
+     */
+    private Integer boxQty;
+    /**
      * 销售方式
      */
     private String saleMethod;
@@ -58,19 +62,6 @@ public class SkuVO implements Serializable {
      * 单箱数量
      */
     private Integer unitQty;
-
-    /**
-     * 长
-     */
-    private BigDecimal length;
-    /**
-     * 宽
-     */
-    private BigDecimal width;
-    /**
-     * 高
-     */
-    private BigDecimal height;
 
     /**
      * sku 名称

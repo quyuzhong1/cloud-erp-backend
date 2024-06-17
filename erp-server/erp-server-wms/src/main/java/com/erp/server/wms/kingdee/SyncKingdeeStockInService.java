@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
 
 public interface SyncKingdeeStockInService {
@@ -12,5 +13,5 @@ public interface SyncKingdeeStockInService {
      * @param operate
      * @return void
      **/
-    void syncDataToKingdee(PoInstockEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(PoInstockEntity entity, String operate);
 }

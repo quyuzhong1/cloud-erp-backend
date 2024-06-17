@@ -39,6 +39,7 @@
            pp.product_width as width,
            pp.product_height as height,
            pp.gross_weight as grossWeight,
+            pp.net_weight as netWeight,
            pd.name as skuName,
            pd.unit_name as unitName,
             pd.images_url as imageUrl
@@ -92,8 +93,6 @@
             pbi.type,
             pbi.state,
             pbi.remark,
-            pbi.sync_kingdee_status,
-            pbi.sync_kingdee_time,
             pbi.sync_kingdee_id,
             pbs.parent_sku_id
         from product_bom_info pbi
@@ -114,8 +113,6 @@
         pbi.type,
         pbi.state,
         pbi.remark,
-        pbi.sync_kingdee_status,
-        pbi.sync_kingdee_time,
         pbi.sync_kingdee_id,
         pbs.parent_sku_id,
         pbs.parent_sku_no
@@ -140,8 +137,6 @@
         pbi.type,
         pbi.state,
         pbi.remark,
-        pbi.sync_kingdee_status,
-        pbi.sync_kingdee_time,
         pbi.sync_kingdee_id,
         pbs.parent_sku_id,
         pbs.parent_sku_no

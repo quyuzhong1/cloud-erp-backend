@@ -8,6 +8,8 @@ import com.erp.model.scm.dto.OperateLogDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 操作日志表 Mapper 接口
  *
@@ -26,4 +28,11 @@ public interface OperateLogMapper extends BaseMapper<OperateLogEntity> {
      * @return IPage<listDTO>
      */
     IPage<OperateLogDTO.ListDTO> paging(Page query,@Param("params") OperateLogDTO.SearchDTO params);
+    /**
+     * 根据销售订单明细查询最新记录
+     * @param soIds
+     * @param operation
+     * @return
+     */
+    List<OperateLogEntity> listLastLogBySoIds(@Param("soIds") List<String> soIds, @Param("operation") String operation);
 }

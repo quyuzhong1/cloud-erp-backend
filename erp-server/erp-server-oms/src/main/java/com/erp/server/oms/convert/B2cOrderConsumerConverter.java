@@ -121,10 +121,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "sourceCode", source = "oldEntity.sourceCode"),
             @Mapping(target = "abnormalType", source = "oldEntity.abnormalType"),
             @Mapping(target = "isNotMerge", source = "oldEntity.isNotMerge"),
-            @Mapping(target = "syncKingdeeStatus", source = "oldEntity.syncKingdeeStatus"),
-            @Mapping(target = "syncKingdeeTime", source = "oldEntity.syncKingdeeTime"),
             @Mapping(target = "syncKingdeeId", source = "oldEntity.syncKingdeeId"),
-            @Mapping(target = "syncOperate", source = "oldEntity.syncOperate"),
             @Mapping(target = "shopName", source = "oldEntity.shopName"),
             @Mapping(target = "sellerOrderCode",ignore = true),
     })

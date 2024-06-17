@@ -41,7 +41,7 @@ public class DmpReturnOrderItemEntity implements Serializable {
     private String itemName;
 
     /**
-     * 买家购买数量
+     * 退货数量
      */
     @TableField(value = "quantity")
     private Integer quantity;

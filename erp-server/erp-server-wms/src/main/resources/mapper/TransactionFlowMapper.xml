@@ -692,7 +692,7 @@
             tf.warehouse_id as warehouseId,
             max(tf.warehouse_name) as warehouseName,
             max(tf.org_id) as orgId,
-            max(tf.sku_no) as skuNo ,
+            max(pd.sku_no) as skuNo ,
             max(ps.sale_state) as saleState,
             max(pd.name) as productName,
             max(pd.images_url) as imagesUrl
@@ -709,7 +709,7 @@
                 and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.bill_date
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size != ''">
-                and tf.sku_no in
+                and pd.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>

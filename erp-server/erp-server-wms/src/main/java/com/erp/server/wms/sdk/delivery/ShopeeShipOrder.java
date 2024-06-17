@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -31,8 +32,8 @@ public class ShopeeShipOrder extends AbstractShipOrder {
     private LogisticsMappingFeign logisticsMappingFeign;
 
     @Override
-    public void shipOrder(PlatformShipOrderDTO dto) {
-
+    public List<String> shipOrder(PlatformShipOrderDTO dto) {
+        return new ArrayList<>();
     }
 
     @Override
