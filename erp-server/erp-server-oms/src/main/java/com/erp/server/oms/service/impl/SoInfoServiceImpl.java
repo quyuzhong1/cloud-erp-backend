@@ -208,7 +208,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private DmpMqFeign dmpMqFeign;
-    
+    @Autowired
+    private SkuMappingService skuMappingService;
+
 
     /**
      * 添加销售订单
@@ -539,11 +541,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
         List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingService.listByErpSkuIdAndType(skuIds,"",soInfo.getWarehouseId(),"");
         for (SoDetailDTO.ViewDTO viewDTO : detailList) {
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(skuVO)) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
             }
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(new ListingInfoWithSkuMappingDTO());
+            viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
         }
         view.setDetailList(detailList);
         return view;
