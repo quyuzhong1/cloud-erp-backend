@@ -506,15 +506,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         //申报信息
         List<LogisticsProductVO> productVOS = dto.getProductVOS();
-//        List<LogisticsBillDTO.SkuDTO> skuList = dto.getSkuList();
-//        List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
-//        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
-//        List<LogisticsProductDTO.ProductDTO> ordersSkuList = buildTransferDeclareProduct(country, dto, skuInfoList, minCustomsAmount, maxCustomsAmount,isAliExpress);
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
-//        List<LogisticsProductVO> logisticsProductList = LogisticsBillConverter.INSTANCE.convertLogisticsProduct(ordersSkuList);
-
-
         ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
         Boolean hasBattery = productVOS.stream().filter(e -> Objects.nonNull(e.getIsElectric())).anyMatch(LogisticsProductVO::getIsElectric);
         //是否带电

@@ -48,7 +48,7 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     private String fRetcustName;
     @JSONField(name = "FRetcustId.FNumber")
     @JsonProperty("FRetcustId.FNumber")
-    private String FRetcustNumber;
+    private String fRetcustNumber;
     @JSONField(name = "FSalesManId")
     @JsonProperty("FSalesManId")
     private String fSalesManId;
@@ -91,8 +91,8 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     @JSONField(name = "FHeadNote")
     @JsonProperty("FHeadNote")
     private String FHeadNote;
-    @JSONField(name = "FReturnReason")
-    @JsonProperty("FReturnReason")
+    @JSONField(name = "FReturnReason.FDataValue")
+    @JsonProperty("FReturnReason.FDataValue")
     private String fReturnReason;
     @JSONField(name = "FSaledeptid.FNumber")
     @JsonProperty("FSaledeptid.FNumber")
@@ -106,6 +106,7 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     @JSONField(name = "FISGENFORIOS")
     @JsonProperty("FISGENFORIOS")
     private Boolean fIsGenForIos;
+
     @JSONField(name = "FETHIRDBILLNO")
     @JsonProperty("FETHIRDBILLNO")
     private String fEThirdBillNo;

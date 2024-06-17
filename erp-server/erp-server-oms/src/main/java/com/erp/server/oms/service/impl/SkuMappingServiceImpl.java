@@ -22,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
@@ -31,6 +32,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.CalculateSizeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -64,6 +66,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -388,7 +391,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
-//        skuMaping.setIsDeleted(true);
+        if (StringUtils.isBlank(skuMaping.getProductSkuId())){
+            skuMaping.setIsDeleted(true);
+        }
         if (!this.updateById(skuMaping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }
@@ -675,6 +680,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(skuList)) {
             return Collections.EMPTY_LIST;
         }
+        //子sku
+        List<String> skuIds = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> allBomChildrenSkuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        allBomChildrenSkuDTOList = allBomChildrenSkuDTOList.stream().filter(v->BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
         //获取到skumappping 的对应关系
         List<SkuMappingEntity> list = lambdaQuery().in(SkuMappingEntity::getProductSkuNo, skuNoList).eq(SkuMappingEntity::getIsExpire, Boolean.FALSE).list();
 
@@ -702,6 +711,27 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(), MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
             listSkuDTO.setWarehouseId(listSkuParamDTO.getWarehouseId());
             listSkuDTO.setDictPlatform(listSkuParamDTO.getDictPlatform());
+            //组合品的话根据子件计算长宽高重量
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = allBomChildrenSkuDTOList.stream().filter(v->v.getParentSkuId().equals(skuVO.getSkuId())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(bomChildrenSkuDTOList)){
+                listSkuDTO.setProductHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
+                listSkuDTO.setProductLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
+                listSkuDTO.setProductWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
+                listSkuDTO.setGrossWeight(skuVO.getGrossWeight());
+                listSkuDTO.setNetWeight(skuVO.getNetWeight());
+            }else{
+                BigDecimal maxLength = bomChildrenSkuDTOList.stream().map(BomChildrenSkuDTO::getLength).filter(Objects::nonNull).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+                BigDecimal maxWidth = bomChildrenSkuDTOList.stream().map(BomChildrenSkuDTO::getWidth).filter(Objects::nonNull).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+                BigDecimal totalHeight = bomChildrenSkuDTOList.stream().map(e -> e.getHeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal totalGrossWeight = bomChildrenSkuDTOList.stream().map(e -> e.getGrossWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal totalNetWeight = bomChildrenSkuDTOList.stream().map(e -> e.getNetWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                listSkuDTO.setProductHeight(LengthConverterUtil.mmToCm(totalHeight));
+                listSkuDTO.setProductLength(LengthConverterUtil.mmToCm(maxLength));
+                listSkuDTO.setProductWidth(LengthConverterUtil.mmToCm(maxWidth));
+                listSkuDTO.setGrossWeight(totalGrossWeight);
+                listSkuDTO.setNetWeight(totalNetWeight);
+            }
+
             //查询库存sku映射
             SkuMappingEntity warehouseSkuMapping = list.stream().filter(
                     obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId()) &&

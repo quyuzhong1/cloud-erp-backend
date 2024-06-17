@@ -166,7 +166,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
 
 
-        this.saveBatch(addList);
+        super.saveBatch(addList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
     }
 
