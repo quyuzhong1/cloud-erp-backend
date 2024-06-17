@@ -230,6 +230,27 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
     private void fillPaging(List<PackageForecastDTO.PagingViewDTO> list) {
+        List<String> ids = list.stream().map(PackageForecastDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+        List<PackageForecastDetailEntity> allDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
+        for (PackageForecastDTO.PagingViewDTO pagingViewDTO : list) {
+            List<PackageForecastDetailEntity> detailEntityList = allDetailEntityList.stream().filter(v->v.getMainId().equals(pagingViewDTO.getId())).collect(Collectors.toList());
+            List<PackageForecastDTO.PagingDetailViewDTO> detailViewDTOList = new ArrayList<>();
+            for (PackageForecastDetailEntity packageForecastDetailEntity : detailEntityList) {
+                PackageForecastDTO.PagingDetailViewDTO pagingDetailViewDTO = new PackageForecastDTO.PagingDetailViewDTO();
+                pagingDetailViewDTO.setDetailId(packageForecastDetailEntity.getId());
+                pagingDetailViewDTO.setSoId(packageForecastDetailEntity.getSoId());
+                pagingDetailViewDTO.setSoCode(packageForecastDetailEntity.getSoCode());
+                pagingDetailViewDTO.setLogisticsChannelId(packageForecastDetailEntity.getLogisticsChannelId());
+                pagingDetailViewDTO.setLogisticsChannelName(packageForecastDetailEntity.getLogisticsChannelName());
+                pagingDetailViewDTO.setTrackNo(packageForecastDetailEntity.getTrackNo());
+                pagingDetailViewDTO.setMinPackageTransportNo(packageForecastDetailEntity.getTransportNo());
+                pagingDetailViewDTO.setWeight(packageForecastDetailEntity.getWeight());
+                pagingDetailViewDTO.setWeightUnit(packageForecastDetailEntity.getWeightUnit());
+                pagingDetailViewDTO.setMinPackageHandoverStatus(packageForecastDetailEntity.getHandoverStatus());
+                detailViewDTOList.add(pagingDetailViewDTO);
+            }
+            pagingViewDTO.setDetailViewDTOList(detailViewDTOList);
+        }
         for (PackageForecastDTO.PagingViewDTO item : list) {
             String uploadStatus = item.getUploadStatus();
             String uploadStatusName = PackageUploadStatusEnum.getName(uploadStatus);
