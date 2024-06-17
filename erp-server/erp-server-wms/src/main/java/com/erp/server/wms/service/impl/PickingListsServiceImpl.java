@@ -422,7 +422,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 //处理仓位移动数据
                 addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detail.getSkuId(), detail.getSkuNo(),
                         detail.getStagingLocation(), detail.getWarehouseLocation(), detail.getQty(), entity.getWarehouseId()));
-                String context = CharSequenceUtil.format("增加【{}】明细行,拣货仓位【{}}】,数量【{}】", detail.getSkuNo(), detail.getWarehouseLocation(), detail.getQty());
+                String context = CharSequenceUtil.format("移除【{}】明细行,拣货仓位【{}}】,数量【{}】", detail.getSkuNo(), detail.getWarehouseLocation(), detail.getQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
             }
             pickingDetailService.removeByIds(removeIds);
@@ -457,6 +457,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setSkuNo(data.getSkuNo());
                 detail.setQty(data.getQty());
                 detail.setUnit(productDetailEntity.getUnitName());
+                detail.setWarehouseLocation(data.getWarehouseLocation());
                 detail.setSourceDetailId(detailEntity.getSourceDetailId());
                 detail.setStagingLocation(detailEntity.getStagingLocation());
                 //处理仓位移动数据
