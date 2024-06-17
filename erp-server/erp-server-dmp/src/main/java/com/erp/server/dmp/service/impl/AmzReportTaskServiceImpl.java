@@ -9,6 +9,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.constant.MongoTableNameContant;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.MongoSuperDTO;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -34,6 +35,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
@@ -54,6 +56,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,6 +105,11 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     private CfgSettingService cfgSettingService;
     @Resource
     private MongoService mongoService;
+    @Lazy
+    @Resource
+    private AmzReportTaskService amzReportTaskService;
+    @Resource
+    private MongoTemplate mongoTemplate;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -535,14 +546,14 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 curTask.setReportParseTime(LocalDateTime.now(ZoneId.systemDefault()));
             }
             // 保存mongo处理
-            curTask = this.saveMongoAndUpdateRowIndex(recordType.getMongoInfoEnum().getMongoTableName(), curList, curTask);
+            curTask = amzReportTaskService.saveMongoAndUpdateRowIndex(recordType.getMongoInfoEnum().getMongoTableName(), curList, curTask);
         }
 
         // 更新任务状态和完成时间
-        this.updateStatus(null, entity, AmzReportTaskStatusEnum.FINISH, null, null, null, null, LocalDateTime.now(ZoneId.systemDefault()), false);
+        amzReportTaskService.updateStatus(null, entity, AmzReportTaskStatusEnum.FINISH, null, null, null, null, LocalDateTime.now(ZoneId.systemDefault()), false);
 
         // 检查缓存是否已删除
-        this.checkAndDelHistory(entity);
+        amzReportTaskService.checkAndDelHistory(entity);
     }
 
 
@@ -984,13 +995,18 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public <T extends MongoSuperDTO> AmzReportTaskEntity saveMongoAndUpdateRowIndex(String mongoTableName, List<T> mongoList, AmzReportTaskEntity currentEntity) {
+
         // 保存或更新mongo
         Class<T> tClass = (Class<T>) mongoList.get(0).getClass();
+
+        // 区分新数据还是历史数据
+        checkAndSetIsAddOrUpdate(mongoList,mongoTableName, tClass);
+
         List<T> insertList = new ArrayList<>();
         for (T item : mongoList) {
             MongoSuperDTO uniqueDto = MongoSuperDTO.getUniqId(item.getUniqueId());
             List<T> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, mongoTableName, tClass);
-            item.setDownloadTime(LocalDateTime.now().toString());
+            item.setDownloadTime(LocalDateTime.now());
             if (CollectionUtil.isEmpty(mongoData)) {
                 insertList.add(item);
                 continue;
@@ -1013,6 +1029,30 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             throw new ServiceException("[AmzReportTaskEntity] 更新解析的行数失败");
         }
         return currentEntity;
+    }
+
+    /**
+     * 根据业务唯一ID判断数量是新增还是历史已有
+     */
+    private <T extends MongoSuperDTO> void checkAndSetIsAddOrUpdate(List<T> mongoList, String mongoTableName, Class<T> tClass) {
+        if (mongoList.stream().allMatch(e->e.getUniqueId().equalsIgnoreCase(e.getBusinessUniqueKey()))){
+            // 都是新增
+            return;
+        };
+        List<String> businessKeyList = mongoList.stream().map(MongoSuperDTO::getBusinessUniqueKey).distinct().collect(Collectors.toList());
+        Query query = new Query();
+        Criteria criteria = Criteria.where("businessUniqueKey").in(businessKeyList);
+        query.addCriteria(criteria);
+        List<T> existBusinessList = mongoTemplate.find(query, tClass, mongoTableName);
+        if (CollectionUtil.isEmpty(existBusinessList)){
+            // 不存在
+            return;
+        }
+        List<String> existbusinessKeyList = existBusinessList.stream().map(MongoSuperDTO::getBusinessUniqueKey).distinct().collect(Collectors.toList());
+        mongoList.forEach(e ->
+            // 设置已存在的数据为非新增或更新
+            e.setIsAddOrUpdate(!existbusinessKeyList.contains(e.getBusinessUniqueKey()))
+        );
     }
 
     /**
@@ -1049,6 +1089,9 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                         mongoDTO.setRequestShopId(report.getShopId());
                         String uniqueId = toUniqueMd5(mongoDTO);
                         mongoDTO.setUniqueId(uniqueId);
+                        // 业务唯一ID
+                        mongoDTO.setBusinessUniqueKey(mongoDTO.convertBusinessUniqueKey());
+                        mongoDTO.setIsAddOrUpdate(true);
                         return mongoDTO;
                     } catch (Exception e) {
                         throw new ServiceException("转换mongoDTO失败, error=" + e.getMessage());

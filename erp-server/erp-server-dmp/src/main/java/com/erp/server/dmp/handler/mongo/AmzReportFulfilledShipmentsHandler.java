@@ -71,13 +71,13 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Integer findAndFillDataOrHandle(DmpMongoHandleTaskEntity mongoHandleTaskEntity) {
+    public Integer findAndFillDataOrHandle(DmpMongoHandleTaskEntity mongoHandleTaskEntity, Boolean queryIsAddOrUpdate) {
         // 任务每次处理数量
         Integer handleCount = mongoHandleTaskEntity.getHandleCount();
         // 指定的mongo表
         String mongoTableName = MongoTableNameContant.DATA_REPORT_AMZ_FULFILLED_SHIPMENTS;
         // 查询
-        List<ReportFulfilledShipmentsMongoDTO> allList = dmpMongoHandleTaskService.findMongoData(mongoHandleTaskEntity.getLastId(), handleCount, mongoTableName, ReportFulfilledShipmentsMongoDTO.class);
+        List<ReportFulfilledShipmentsMongoDTO> allList = dmpMongoHandleTaskService.findMongoData(mongoHandleTaskEntity.getLastId(), handleCount, mongoTableName, ReportFulfilledShipmentsMongoDTO.class, queryIsAddOrUpdate);
         if (CollectionUtils.isEmpty(allList)) {
             log.warn("亚马逊物流销售报告处理服务处理结束：处理数据为空:handleType={}", mongoHandleTaskEntity.getHandleType());
             return 0;

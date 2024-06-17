@@ -1,7 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -13,7 +12,6 @@ import com.common.business.enums.PlatformApiEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.BusinessHandlerRegistry;
 import com.common.business.handler.IBusinessHandler;
-import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.Md5Util;
@@ -37,8 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -377,5 +373,35 @@ public class BusinessServiceImpl {
             }
         }).collect(Collectors.toList());
         return pushToMqList;
+    }
+
+    /**
+     * 批量处理业务
+     *
+     * @param <T>             业务类型
+     * @param <R>             业务返回类型
+     * @param <>              业务数据类型
+     * @param category        业务类型
+     * @param platform        平台类型
+     * @param business        业务类型
+     * @param data            业务数据
+     * @param platformApiEnum
+     */
+//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
+    public <T extends CleanBaseDTO,R extends UniqueDto> void batchCheckAndInsert(String category, String platform, String business, JobTaskDTO data, PlatformApiEnum platformApiEnum, Integer batchSendMqSize) {
+        IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
+        if (handler != null) {
+            PlatformDataDTO<T, R> platformData = handler.pullHandle(data);
+
+            String targetPlatform = handler.getTargetPlatform();
+            Boolean isSendMq = handler.getIsSendMq();
+            // 保存mongo 并发送mq
+            List<R> toMqList = batchCompareAndSaveMongo(isSendMq, category, platform, business, targetPlatform, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC, platformApiEnum, batchSendMqSize);
+        } else {
+            // Handle the case when no handler is found
+            throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);
+        }
+
     }
 }

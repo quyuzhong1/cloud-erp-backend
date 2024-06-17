@@ -66,4 +66,9 @@ public class ReportReservedMongoDTO extends ReportSuperMongoDTO {
         }
         return Integer.parseInt(this.reservedCustomerOrders);
     }
+
+    @Override
+    public String convertBusinessUniqueKey() {
+        return super.getUniqueId();
+    }
 }
