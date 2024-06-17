@@ -476,6 +476,12 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(StringUtils.isBlank(channelId)){
             return result;
         }
+        if (StringUtils.isNotBlank(channelId)){
+            LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
+            if (Objects.nonNull(authEntity)){
+                result.setLogisticsPlatform(authEntity.getLogisticsPlatform());
+            }
+        }
         //先通过国家+渠道获取
         LogisticsChannelConstraintEntity logisticsChannelConstraintEntity = logisticsChannelConstraintService.getByChannelAndCountry(channelId,country);
         if(Objects.nonNull(logisticsChannelConstraintEntity)){
