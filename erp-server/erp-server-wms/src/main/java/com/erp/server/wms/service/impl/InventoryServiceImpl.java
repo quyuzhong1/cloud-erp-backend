@@ -478,28 +478,30 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             List<String> warehouseIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
             List<String> orgIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getOrgId).distinct().collect(Collectors.toList());
             List<String> skuIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getSkuId).distinct().collect(Collectors.toList());
+            List<String> areaNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseAreaCode).filter(item -> !StringUtils.isBlank(item)).distinct().collect(Collectors.toList());
+            List<String> locationNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseLocationCode).filter(item -> !StringUtils.isBlank(item)).distinct().collect(Collectors.toList());
             param.setWarehouseIdList(warehouseIds);
             param.setOrgIdList(orgIds);
             param.setSkuIdList(skuIds);
+            param.setWarehouseAreaCodeList(areaNameList);
+            param.setWarehouseLocationCodeList(locationNameList);
         }
         InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, param);
-        IPage<InventoryDTO.PagingViewDTO> iPage = new Page<>();
+        List<InventoryDTO.PagingViewDTO> dataList = new ArrayList<>();
         String excelPath = "";
-        Page page = new Page(1, 999999);
         if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
-            iPage = inventoryMapper.page(page, searchParamDTO);
+            dataList = inventoryMapper.exportByWarehouse(searchParamDTO);
             excelPath = "excel/inventory.xlsx";
         }
         if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())) {
-            iPage = inventoryMapper.pageByArea(page, searchParamDTO);
+            dataList = inventoryMapper.exportByArea(searchParamDTO, param.getWarehouseAreaCodeList());
             excelPath = "excel/inventory_area.xlsx";
         }
         if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
-            iPage = inventoryMapper.pageByLocation(page, searchParamDTO, null);
+            dataList = this.baseMapper.exportByLocation(searchParamDTO, param.getWarehouseLocationCodeList());
             excelPath = "excel/inventory_location.xlsx";
         }
 
-        List<InventoryDTO.PagingViewDTO> dataList = iPage.getRecords();
         if (CollUtil.isEmpty(dataList)) {
             return;
         }

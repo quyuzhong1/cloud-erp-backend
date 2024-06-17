@@ -181,4 +181,19 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      */
     @Select("select sum(qty) from inventory where warehouse_id = #{warehouseId} and warehouse_location = #{warehouseLocation}")
     Integer getQtyByLocation(@Param("warehouseId") String warehouseId, @Param("warehouseLocation") String warehouseLocation);
+
+    /**
+     * 按仓库导出数据
+     */
+    List<InventoryDTO.PagingViewDTO> exportByWarehouse(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO);
+
+    /**
+     * 按库区导出数据
+     */
+    List<InventoryDTO.PagingViewDTO> exportByArea(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseAreaCodeList") List<String> warehouseAreaCodeList);
+
+    /**
+     * 按仓位导出数据
+     */
+    List<InventoryDTO.PagingViewDTO> exportByLocation(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList);
 }

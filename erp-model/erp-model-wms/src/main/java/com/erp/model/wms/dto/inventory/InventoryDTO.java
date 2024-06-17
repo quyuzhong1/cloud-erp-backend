@@ -165,9 +165,20 @@ public class InventoryDTO implements Serializable {
         private String skuId;
 
         /**
-         * 导出维度：
+         * 导出维度：warehouse，warehouseArea，warehouseLocation
          */
+        @NotEmpty(message = "dimension不能为空")
         private String dimension;
+
+        /**
+         * 仓位编码（按仓位导出时传递）
+         */
+        private String warehouseAreaCode;
+
+        /**
+         * 库区编码（按库区导出时传递）
+         */
+        private String warehouseLocationCode;
     }
 
     /**
@@ -228,12 +239,22 @@ public class InventoryDTO implements Serializable {
         /**
          * 仓位编码
          */
-        private String warehouseLocationCode;
+//        private String warehouseLocationCode;
 
         /**
          * 库区编码
          */
-        private String warehouseAreaCode;
+//        private String warehouseAreaCode;
+
+        /**
+         * 库区编码集合
+         */
+        private List<String> warehouseAreaCodeList;
+
+        /**
+         * 仓位编码集合
+         */
+        private List<String> warehouseLocationCodeList;
     }
 
     /**
