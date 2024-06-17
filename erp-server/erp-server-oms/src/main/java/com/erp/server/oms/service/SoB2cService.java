@@ -852,9 +852,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      *
      * @param detailList
      * @param soB2cEntity
+     * @param logisticsPlatform
      * @return
      */
-    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
+    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity, String logisticsPlatform);
 
     /**
      * 修复历史平均成本数据数据
