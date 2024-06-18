@@ -342,6 +342,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         return baseMapper.findUsableQtyByQtyDto(virtualInventoryQtyDTO);
     }
 
+    @Override
+    public Integer getInventoryQtyByWarehouseId(String warehouseId) {
+        return baseMapper.getInventoryQtyByWarehouseId(warehouseId);
+    }
+
     /**
      * 虚拟库存分页查询数据处理
      *

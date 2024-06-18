@@ -99,4 +99,12 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * 获取可用数量
      */
     Integer findUsableQtyByQtyDto(VirtualInventoryDTO.VirtualInventoryQtyDTO virtualInventoryQtyDTO);
+    /**
+     * 根据实体仓库查询虚拟库存数量
+     * @author will
+     * @date 2024/6/18 9:23
+     * @param warehouseId
+     * @return Integer
+     */
+    Integer getInventoryQtyByWarehouseId(String warehouseId);
 }

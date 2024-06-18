@@ -295,4 +295,15 @@
         GROUP BY vi.virtual_warehouse_id
     </select>
 
+    <!-- 根据实体仓库查询虚拟库存数量 -->
+    <select id="getInventoryQtyByWarehouseId" resultType="java.lang.Integer">
+        select
+            COALESCE(sum(vi.qty),0) as qty
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false and vi.warehouse_id = #{warehouseId}
+        </where>
+        group by vi.warehouse_id
+    </select>
+
 </mapper>

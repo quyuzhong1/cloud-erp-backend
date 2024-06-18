@@ -113,4 +113,12 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * 获取可用数量
      */
     Integer findUsableQtyByQtyDto(@Param("params") VirtualInventoryDTO.VirtualInventoryQtyDTO params);
+    /**
+     * 根据实体仓库查询虚拟库存数量
+     * @author will
+     * @date 2024/6/18 9:24
+     * @param warehouseId
+     * @return Integer
+     */
+    Integer getInventoryQtyByWarehouseId(@Param("warehouseId") String warehouseId);
 }
