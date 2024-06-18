@@ -7909,6 +7909,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //订单明细数据整理
         SoB2cDetailEntity detail = B2cOrderConverter.INSTANCE.convertB2cDetailByGiftDto(dto);
+        if (StringUtils.isBlank(detail.getImageUrl())){
+            List<ProductDetailDTO.ProductDTO> productDTOS = plmTaskFeign.listProductBySkuIds(Collections.singletonList(detail.getSkuId()));
+            if (CollectionUtils.isNotEmpty(productDTOS)){
+                detail.setImageUrl(productDTOS.get(0).getImagesUrl());
+            }
+        }
         //新增订单明细
         soB2cDetailService.save(detail);
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "新增赠品成功");
@@ -7955,7 +7961,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_92016);
         }
         //step2 获取买家信息
-        SoB2cReceiverEntity old = soB2cReceiverService.getById(dto.getMainId());
+        SoB2cReceiverEntity old = soB2cReceiverService.getById(dto.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单买家信息表"));
         //step3 更新买家物流信息
         SoB2cReceiverEntity receiver = B2cOrderConsumerConverter.INSTANCE.convertUpdateReceiverByDto(dto,old);
