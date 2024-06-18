@@ -121,7 +121,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             return;
         }
         List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         Class<SoOutstockDetailEntity> credentialClass = SoOutstockDetailEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
@@ -195,7 +195,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(idList);
         //可用库存
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (SoOutstockDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
             String id = item.getId();
@@ -287,7 +287,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 throw new ServiceException(ApiError.ERROR_92031);
             }
             List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-            List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
+            List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String sourceDetailId = item.getSourceDetailId();
                 String soDetailId = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
@@ -389,7 +389,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
 
         List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         Class<SoOutstockDetailEntity> credentialClass = SoOutstockDetailEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
@@ -937,7 +937,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //查询已装箱数
         List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(mainId, null);

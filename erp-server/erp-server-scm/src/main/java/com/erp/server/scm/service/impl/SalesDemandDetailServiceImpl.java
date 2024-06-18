@@ -194,7 +194,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
 
         //产品信息
         List<String> skuIds = newList.stream().map(SalesDemandDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }

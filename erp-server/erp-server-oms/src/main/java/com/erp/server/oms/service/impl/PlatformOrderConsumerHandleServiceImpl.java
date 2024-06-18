@@ -3,10 +3,8 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
@@ -288,12 +286,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         BigDecimal totalHeight = BigDecimal.ZERO;
         if (CollectionUtils.isNotEmpty(skuList)){
             //拆分明细
-            List<SplitSkuDTO> splitSkuDTOS = soB2cService.splitBySoDetail(detailList, skuIds, mainEntity.getCode());
+            List<SplitSkuDTO> splitSkuDTOS = soB2cService.splitBySoDetail(detailList, skuIds, mainEntity.getCode(), true);
             //根据sku进行计算
             List<String> keyList = new ArrayList<>();
             keyList.add(CalculateSizeEnum.LENGTH.getCode());
             keyList.add(CalculateSizeEnum.WIDTH.getCode());
             keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+            keyList.add(CalculateSizeEnum.GROSS_WEIGHT.getCode());
             List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
             Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
             maxLength = SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));

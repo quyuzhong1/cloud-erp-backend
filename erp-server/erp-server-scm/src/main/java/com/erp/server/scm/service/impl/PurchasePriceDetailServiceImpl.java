@@ -112,7 +112,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
         List<PurchasePriceDetailEntity> addList = BeanMapper.copyList(purchasePriceDetailList, PurchasePriceDetailEntity.class);
         List<String> skuIds = addList.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
         if (ObjectUtils.isEmpty(purchasePriceEntity)) {
@@ -304,7 +304,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         this.removeByIds(deleteIdList);
         List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<PurchasePriceDetailEntity> saveOrUpdateList = new ArrayList<>(purchasePriceDetailList.size());
 
         PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
@@ -540,7 +540,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //查询产品信息
         List<String> skuIds = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         //查询供应商
         List<String> supplierIds = viewList.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
@@ -595,7 +595,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceDetailDTO.ViewDTO> list = this.listByPurchasePriceIds(dto);
 
         List<String> skuIds = list.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
 
 
 

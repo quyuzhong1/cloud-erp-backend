@@ -37,10 +37,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
-import com.erp.model.plm.enums.ProductDetailStatusEnum;
-import com.erp.model.plm.enums.SaleStateEnum;
+import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -480,10 +477,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             return Collections.emptyList();
         }
         List<LogisticsProductDTO.ProductDTO> list = baseMapper.listLogisticsProduct(skuIdList,skuNoList);
-        String isElectricFlag = ProductConstant.IS_ELECTRIC;
         //属性
-        List<String> propertyIdList = list.stream().map(LogisticsProductDTO.ProductDTO::getProductPropertyId).distinct().collect(Collectors.toList());
-        List<BasicDictEntity> dictList = CollectionUtils.isNotEmpty(propertyIdList) ? basicDictService.listByIds(propertyIdList) : Collections.emptyList();
+        List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
         for (LogisticsProductDTO.ProductDTO item : list) {
             //毛重
             BigDecimal grossWeight = item.getGrossWeight();
@@ -493,8 +488,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             }
             item.setWeight(weight);
             String propertyId = item.getProductPropertyId();
-            String flag = dictList.stream().filter(d -> d.getId().equals(propertyId)).findFirst().map(BasicDictEntity::getRemark).orElse("");
-            item.setIsElectric(isElectricFlag.equals(flag));
+            List<BasicDictEntity> dictEntityList = dictList.stream().filter(e -> StringUtils.isNotBlank(propertyId) && propertyId.contains(e.getId())).collect(Collectors.toList());
+            BasicDictEntity electricDict = dictEntityList.stream().filter(e -> Objects.nonNull(e) && ProductConstant.IS_ELECTRIC.equals(e.getRemark())).findFirst().orElse(null);
+            item.setIsElectric(Objects.nonNull(electricDict) ? Boolean.TRUE : Boolean.FALSE);
+            BasicDictEntity liquidDict = dictEntityList.stream().filter(e -> Objects.nonNull(e) && ProductConstant.IS_LIQUID.equals(e.getRemark())).findFirst().orElse(null);
+            item.setIsLiquid(Objects.nonNull(liquidDict) ? Boolean.TRUE : Boolean.FALSE);
         }
         return list;
     }
