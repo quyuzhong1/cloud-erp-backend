@@ -9,7 +9,6 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.DataIdempotent;
-import com.common.business.constant.MongoTableNameContant;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.MongoSuperDTO;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -25,6 +24,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.AmazonCreateReportResultDTO;
 import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
@@ -35,7 +35,6 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
@@ -394,9 +393,27 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 }
             }
         }
+        // 查询是否有处理中的报告(计算预估等待时间：0=不等待)
+        AmazonCreateReportResultDTO resultDTO = amzReportHandleService.checkAndCreateAmzReport(entity, config.getReportGroup());
+        if (!resultDTO.isCreatedSuccess()){
+            // 根据预估时间 添加到延时队列1末端
+            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(
+                    RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
+                    RocketMqTagEnum.AMZ_REPORT_CREATE_TAG.getName(),
+                    entity,
+                    StrUtil.format("{}_{}", entity.getId(), entity.getStatus()),
+                    // 等待时间转换延时等级
+                    mqProducerService.convertSecondsToDelayLevel(resultDTO.getEstimatedWaitSecond())
+            );
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                throw new RuntimeException(StrUtil.format("发送创建报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+            return;
+        }
+
 
         // 请求创建报告
-        String reportId = amzReportHandleService.createAmzReport(entity);
+        String reportId = resultDTO.getReportId();
 
         // 固定位置：防止授权异常后所有任务后, 导致当前时间任务停止
         // 更新下次计划任务下次执行时间

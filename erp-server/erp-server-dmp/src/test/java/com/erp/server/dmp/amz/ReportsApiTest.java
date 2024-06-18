@@ -370,8 +370,8 @@ public class ReportsApiTest {
 //        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
 //                .collect(Collectors.toList());
-//        List<String> processingStatuses = Arrays.asList(Report.ProcessingStatusEnum.DONE.getValue());
-        List<String> processingStatuses = null;
+        List<String> processingStatuses = Arrays.asList(Report.ProcessingStatusEnum.DONE.getValue());
+//        List<String> processingStatuses = null;
 //        List<String> marketplaceIds = Arrays.asList("A1VC38T7YXB528");
         ;
         Integer pageSize = 20;
@@ -383,7 +383,7 @@ public class ReportsApiTest {
 //        String shopId = "1734478618731483137";
 //        String shopId = "1738050804738166786";
 //        String shopId = "1739563826220634113";
-        String shopId = "1735553314990329858";
+        String shopId = "1735512797405515783";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -391,7 +391,8 @@ public class ReportsApiTest {
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 //        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.IN;
-        List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
+//        List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
+        List<String> marketplaceIds = null;
         ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         GetReportsResponse response = api.getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
         System.out.println("getReportsTest");

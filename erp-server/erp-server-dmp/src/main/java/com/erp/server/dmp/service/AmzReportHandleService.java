@@ -1,21 +1,18 @@
 package com.erp.server.dmp.service;
 
 import cn.hutool.json.JSONObject;
+import com.erp.model.dmp.dto.AmazonCreateReportResultDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
-import com.erp.sdk.oms.amz.spapi.dto.*;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -53,12 +50,13 @@ public interface AmzReportHandleService {
 
 
     /**
-     * 请求创建亚马逊报告
+     * 查询和创建报告(检查是否有处理中的报告）
+     * 预估等待时间(秒)：0=不等待
      *
      * @Author Jim
-     * @since 2023-11-10
+     * @since 2024-06-18
      **/
-    String createAmzReport(AmzReportTaskEntity taskEntity);
+    AmazonCreateReportResultDTO checkAndCreateAmzReport(AmzReportTaskEntity taskEntity, String reportGroup);
 
     /**
      * 查询亚马逊报告
@@ -77,7 +75,6 @@ public interface AmzReportHandleService {
     Report directQueryAmzReportInfo(AmzReportTaskEntity entity);
 
     /**
-     *
      * 获取报告文档
      *
      * @Author Jim
@@ -92,5 +89,17 @@ public interface AmzReportHandleService {
      * @Author Jim
      * @since 2023-12-19
      **/
-    void checkAndUpdateShop(List<ShopInfoEntity> shopList) throws Exception ;
+    void checkAndUpdateShop(List<ShopInfoEntity> shopList) throws Exception;
+
+    /**
+     * 查询是否有处理中的报告(响应预估处理结束时间:0=无处理中报告)
+     *
+     * @param reportsApi  报告API
+     * @param reportTypes 同组报告类型
+     * @param taskEntity  当前任务
+     * @return 预估等待时间:0=无需等待
+     * @Author Jim
+     * @since 2024-06-18
+     */
+    Long queryProcessReportWaitTime(ReportsApi reportsApi, List<String> reportTypes, AmzReportTaskEntity taskEntity);
 }
