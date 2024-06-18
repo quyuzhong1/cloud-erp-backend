@@ -172,6 +172,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     WarehouseLocationMoveDetailDTO.AddDTO moveDetail = new WarehouseLocationMoveDetailDTO.AddDTO();
                     moveDetail.setSkuId(detail.getSkuId());
                     moveDetail.setSkuNo(detail.getSkuNo());
+                    moveDetail.setWarehouseId(entity.getWarehouseId());
                     moveDetail.setOutWarehouseLocation(detail.getStagingLocation());
                     moveDetail.setInWarehouseLocation(detail.getWarehouseLocation());
                     moveDetail.setQty(detail.getQty());
@@ -247,12 +248,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 .collect(Collectors.toList());
         List<WarehouseLocationEntity> locationAndAreaList = warehouseLocationService.listByWarehouseIds(warehouseIds);
         Map<String, String> locationMap = locationAndAreaList.stream()
-                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, WarehouseLocationEntity::getParentId));
+                .collect(Collectors.toMap(v -> v.getWarehouseId() + ":" + v.getCode(), WarehouseLocationEntity::getParentId));
         Map<String, String> areaMap = locationAndAreaList.stream()
                 .collect(Collectors.toMap(WarehouseLocationEntity::getId, WarehouseLocationEntity::getName));
         for (PickingListsDTO.ExportInfoDTO infoDTO : list) {
-            infoDTO.setWarehouseAreaName(areaMap.get(locationMap.get(infoDTO.getWarehouseLocation())));
-            infoDTO.setStagingAreaName(areaMap.get(locationMap.get(infoDTO.getStagingLocation())));
+            infoDTO.setWarehouseAreaName(areaMap.get(locationMap.get(infoDTO.getWarehouseId() + ":" + infoDTO.getWarehouseLocation())));
+            infoDTO.setStagingAreaName(areaMap.get(locationMap.get(infoDTO.getWarehouseId() + ":" + infoDTO.getStagingLocation())));
         }
         StringBuilder sb = new StringBuilder();
         String excelPath = "excel/pickingLists.xlsx";
@@ -273,7 +274,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuBaseByIds(skuIds);
-        return detailList.stream().map(detail -> {
+        List<PickingListsDTO.PrintView> views = detailList.stream().map(detail -> {
             PickingListsEntity entity = pickingLists.stream()
                     .filter(picking -> picking.getId().equals(detail.getMainId()))
                     .findFirst()
@@ -286,6 +287,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             view.getPrintView(entity, detail, skuVO.getSkuName());
             return view;
         }).collect(Collectors.toList());
+        return new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
+                Collectors.collectingAndThen(Collectors.toList(), v -> {
+                    PickingListsDTO.PrintView view = v.get(0);
+                    int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintView::getPickingQty).sum();
+                    view.setPickingQty(totalQuantity);
+                    return view;
+                }))).values());
     }
 
     @Override
@@ -321,7 +329,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
             requisitionApplicationService.writeBackData(sourceDetailIds);
-        }else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())){
+        } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
     }
@@ -329,7 +337,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteBySourceId(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)){
+        if (CollectionUtils.isEmpty(ids)) {
             return;
         }
         List<PickingListsEntity> list = list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
@@ -337,7 +345,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 .map(PickingListsEntity::getId)
                 .distinct()
                 .collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(idList)){
+        if (!CollectionUtils.isEmpty(idList)) {
             removeByIds(idList);
             pickingDetailService.remove(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, idList));
         }

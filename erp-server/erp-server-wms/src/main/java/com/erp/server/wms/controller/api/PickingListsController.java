@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -70,12 +71,12 @@ public class PickingListsController extends BaseController {
     /**
      * 删除
      *
-     * @param id id
+     * @param dto dto
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "删除拣货单")
     @PostMapping("/delete")
-    public ApiResult<String> delete(@RequestParam String id) {
-        pickingListsService.delete(id);
+    public ApiResult<String> delete(@RequestBody BaseIdDTO dto) {
+        pickingListsService.delete(dto.getId());
         return success();
     }
 

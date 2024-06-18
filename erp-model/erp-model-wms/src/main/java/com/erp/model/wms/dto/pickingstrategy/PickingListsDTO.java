@@ -149,6 +149,15 @@ public class PickingListsDTO {
          * 暂存库位
          */
         private String stagingLocation;
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     @Getter
