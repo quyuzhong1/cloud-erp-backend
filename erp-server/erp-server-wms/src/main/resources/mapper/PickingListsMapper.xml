@@ -49,7 +49,9 @@
                pd.sku_no,
                pd.warehouse_location,
                pd.qty,
-               pd.staging_location
+               pd.staging_location,
+               pl.update_user_name,
+               pl.update_time
         from picking_lists as pl
                  left join public.picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
         where ${params.sqlMap.default}
