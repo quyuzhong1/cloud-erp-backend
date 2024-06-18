@@ -934,6 +934,29 @@ public class SkuMappingDTO implements Serializable {
          * 平台字典
          */
         private String dictPlatform;
+        /**
+         * 产品尺寸（长）
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品尺寸（宽）
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品尺寸（高）
+         */
+        private BigDecimal productHeight;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
     }
 
 

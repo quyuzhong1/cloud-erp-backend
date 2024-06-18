@@ -257,6 +257,28 @@ public class SoB2cDetailDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+        /**
+         * 产品尺寸（长）
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品尺寸（宽）
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品尺寸（高）
+         */
+        private BigDecimal productHeight;
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
 
         /**
         * 库存sku编号 http://172.16.100.11:3002/project/110/interface/api/19609

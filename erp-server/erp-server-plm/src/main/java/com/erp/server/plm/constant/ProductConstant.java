@@ -66,6 +66,10 @@ public interface ProductConstant {
      * 带电标识
      */
     String IS_ELECTRIC="isElectric";
+    /**
+     * 液体标识
+     */
+    String IS_LIQUID="isLiquid";
 
 
     /**
