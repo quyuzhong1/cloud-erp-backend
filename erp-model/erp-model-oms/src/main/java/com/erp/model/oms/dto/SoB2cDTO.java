@@ -1151,6 +1151,8 @@ public class SoB2cDTO implements Serializable {
     @NoArgsConstructor
     public static class SaveSoB2cDistributionDetailDTO {
 
+        @NotBlank(message = "销售订单id不能为空")
+        private String id;
         /**
          * 明细id
          */
@@ -1162,6 +1164,11 @@ public class SoB2cDTO implements Serializable {
          */
         @NotBlank(message = "仓库id不能为空")
         private String warehouseId;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
     }
 
         @Data

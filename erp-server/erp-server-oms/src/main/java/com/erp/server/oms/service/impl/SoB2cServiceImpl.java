@@ -1155,7 +1155,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION, entity.getCode());
         }
-
+        //筛选订单物流渠道 相同订单不能存在多个渠道
+        List<String> channelIds = dto.getDetailList().stream().filter(e -> StringUtils.isNotBlank(e.getLogisticsChannelId())
+                && id.equals(e.getId())).map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getLogisticsChannelId)
+                .distinct().collect(Collectors.toList());
+        if (channelIds.size() > 1){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION);
+        }
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
@@ -1172,7 +1178,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          * 否：新选择的物流渠道和仓库只添加到物流方式和仓库为空的订单，已存在物流方式和仓库的订单不做更改
          */
         Boolean isCover = dto.getIsCover();
-        String logisticsChannelId = dto.getLogisticsChannelId();
+        String logisticsChannelId = null;
+        if (CollectionUtils.isNotEmpty(channelIds)){
+            logisticsChannelId = channelIds.get(0);
+        }else {
+            logisticsChannelId = dto.getLogisticsChannelId();
+        }
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
         String packageStatus = resultDTO.getPackageStatus();
         String transferStatus = resultDTO.getTransferStatus();
