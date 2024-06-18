@@ -667,6 +667,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                     if (Objects.nonNull(logisticsSupplierListDTO)) {
                         record.setLogisticsSupplierId(logisticsSupplierListDTO.getLogisticsSupplierId());
                         record.setLogisticsSupplierName(logisticsSupplierListDTO.getLogisticsSupplierName());
+                    }else{
+                        record.setLogisticsSupplierId("");
                     }
                 });
             }
