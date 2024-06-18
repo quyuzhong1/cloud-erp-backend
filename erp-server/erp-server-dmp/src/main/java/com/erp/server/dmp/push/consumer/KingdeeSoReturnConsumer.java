@@ -56,10 +56,11 @@ public class KingdeeSoReturnConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
 //        queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
-        queryFilters.add(String.format("FBillNo = '%s'", "XSTH23122100102"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSTHD13659667"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID," +
                 "FBillTypeID," +
+                "FEntity_FEntryId," +
                 "FBillTypeID.FName," +
                 "FBillTypeID.FNumber," +
                 "FBillNo," +
@@ -83,7 +84,7 @@ public class KingdeeSoReturnConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
                 "FSettleCurrId.FCode," +
                 "FDelTime," +
                 "FHeadNote," +
-                "FReturnReason," +
+                "FReturnReason.FDataValue," +
                 "FSaledeptid.FNumber," +
                 "FSaledeptid.FName," +
                 "FOrderNo," +

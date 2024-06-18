@@ -64,9 +64,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Resource
     private CustomerFeign customerFeign;
 
-    @Resource
-    private DmpOrderItemService dmpOrderItemService;
-
     private static Integer pageNumber = 1;
 
     /**

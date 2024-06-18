@@ -480,7 +480,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
         List<SoB2cDetailDTO.ViewDTO> viewDTOList = BeanUtil.copyToList(resultDetailList,SoB2cDetailDTO.ViewDTO.class);
         List<String> skuIds = viewDTOList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         viewDTOList.forEach(v->{
             v.setIsCombination(true);
             SkuVO skuVO = skuList.stream().filter(t->v.getSkuId().equals(t.getSkuId())).findFirst().orElse(null);
@@ -687,7 +687,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             BigDecimal actualShippingCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getActualShippingCost());
             BigDecimal accessoriesCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesCost());
             BigDecimal accessoriesNw = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesNw());
-            BigDecimal weight = MathUtil.multiply(rate, soB2cLogisticsEntity.getWeight());
             //最后一条根据减法计算金额
             if (i == splitList.size() - 1) {
                 amount = MathUtil.subtract(entity.getAmount(), groupAmount);
@@ -695,7 +694,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 actualShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getActualShippingCost(), groupActualShippingCost);
                 accessoriesCost = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesCost(), groupAccessoriesCost);
                 accessoriesNw = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesNw(), groupAccessoriesNw);
-                weight = MathUtil.subtract(soB2cLogisticsEntity.getWeight(), groupWeight);
             }
             //基本信息金额
             addDTO.setAmount(amount);
@@ -707,8 +705,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setAccessoriesCost(accessoriesCost);
             //包装净重
             logisticsAddDTO.setAccessoriesNw(accessoriesNw);
-            //包装重量
-            logisticsAddDTO.setWeight(weight);
+            logisticsAddDTO.setLength(null);
+            logisticsAddDTO.setWidth(null);
+            logisticsAddDTO.setHeight(null);
+            logisticsAddDTO.setWeight(null);
             addDTO.setLogisticsDTO(logisticsAddDTO);
             addDTO.setRemark(StrUtil.format("【{}】拆分订单", entity.getCode()));
 
@@ -826,7 +826,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
         //产品信息
         List<String> skuIdList = soB2cDetailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuPackByIds(skuIdList);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
@@ -918,17 +918,17 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         //已作废，已冻结，待发货，已发货不允许取消拆分
-        if (entity.getInvalidStatus() || entity.getIsFrozen() || entity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()) || entity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())) {
-            throw new ServiceException("已作废，已冻结，待发货，已发货不允许还原拆分");
-        }
+//        if () {
+//            throw new ServiceException("已作废，已冻结，待发货，已发货不允许还原拆分");
+//        }
         //关联关系
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listSourceByTargetIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT.getCode());
         if (CollectionUtils.isEmpty(soB2cRefList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PARENT_NOT_SPLIT, entity.getCode());
         }
         List<String> targetIdList = soB2cRefList.stream().map(SoB2cRefEntity::getTargetId).collect(Collectors.toList());
-        List<SoB2cEntity> otherTargetList = this.listByIds(targetIdList);
-        if (CollectionUtils.isEmpty(otherTargetList)) {
+        List<SoB2cEntity> sameTargetList = this.listByIds(targetIdList);
+        if (CollectionUtils.isEmpty(sameTargetList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_CHILD_NOT_EXIST, entity.getCode());
         }
         //关联的子单是否又拆分
@@ -937,7 +937,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             StringBuilder sb = new StringBuilder();
             List<String> otherB2cSplitIds = otherB2cSplitRefList.stream().map(SoB2cRefEntity::getTargetId).collect(Collectors.toList());
             List<SoB2cEntity> otherB2cSplitList = this.listByIds(otherB2cSplitIds);
-            for(SoB2cEntity soB2cEntity : otherTargetList){
+            for(SoB2cEntity soB2cEntity : sameTargetList){
                 List<String> otherSplitIds = otherB2cSplitRefList.stream().filter(v->v.getSourceId().equals(soB2cEntity.getId())).map(SoB2cRefEntity::getTargetId).collect(Collectors.toList());
                 List<String> otherSplitCodes = otherB2cSplitList.stream().filter(v->otherSplitIds.contains(v.getId())).map(SoB2cEntity::getCode).collect(Collectors.toList());
                 if(CollectionUtils.isNotEmpty(otherSplitCodes)){
@@ -951,11 +951,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }
         }
 
-        //验证拆分后单据是否作废
-        String invalidCodes = otherTargetList.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
+        String invalidCodes = sameTargetList.stream().filter(obj -> obj.getInvalidStatus() ||  obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(invalidCodes)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_CHILD_HAS_INVALID, invalidCodes);
+            throw new ServiceException(StrUtil.format("{} 已作废，已冻结，待发货，已发货不允许还原拆分",invalidCodes));
         }
+
         log.info("删除B2C销售订单数据，ids = {}", targetIdList);
         //删除拆分后的数据
         soB2cService.deleteById(targetIdList);
