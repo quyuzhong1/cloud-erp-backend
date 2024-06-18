@@ -94,4 +94,5 @@ public class ErpVirtualWarehouseDto extends UniqueDto {
      * 备注
      */
     private String remark;
+    private String warehouseList;
 }

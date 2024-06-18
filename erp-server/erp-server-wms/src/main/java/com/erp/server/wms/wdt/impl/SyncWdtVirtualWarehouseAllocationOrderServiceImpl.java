@@ -34,7 +34,8 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
     private DmpMqFeign dmpMqFeign;
 
     @Override
-    public List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, String vwAllocationCode, String operateCode) {
+    public List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList,
+                                                String vwAllocationCode, String operateCode,String sourceType) {
 //        request.setOuterNo(entity.getCode());
 
         //查询推送任务表，如果有了相同的来源单据号，则序号累加
@@ -83,7 +84,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             detail.setNum(BigDecimal.valueOf(handleDetail.getQty()));
             detail.setWarehouseNo("1");
             detail.setSpecNo(handleDetail.getId());
-
+            detailList.add(detail);
             request.setDetailList(detailList);
             request.setRemark("原始单据号：" + vwAllocationCode);
 
@@ -91,7 +92,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
             dmpSyncTaskDTO.setSourceId(handleDetail.getId());
             dmpSyncTaskDTO.setSourceCode(vwAllocationCode);
-            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
+            dmpSyncTaskDTO.setSourceType(sourceType);
             dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
             dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG.getName());
             dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));

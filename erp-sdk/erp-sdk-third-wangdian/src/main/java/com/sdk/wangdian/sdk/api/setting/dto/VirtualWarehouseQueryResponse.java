@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Objects;
 
 
 @Data
@@ -44,8 +45,18 @@ public class VirtualWarehouseQueryResponse
 		private String virtual_warehouse_no;
 		private String virtual_warehouse_name;
 		private String modified;
-		private Integer warehouse_id;
+		private String virtual_warehouse_id;
 		private Boolean is_disabled;
 		private String created;
+		private List<WarehouseListDto> warehouse_list;
+	}
+	@Data
+	public static class WarehouseListDto
+	{
+
+		private String virtual_warehouse_id;
+		private String warehouse_no;
+		private String sys_warehouse_id;
+		private Integer is_start_up;
 	}
 }

@@ -19,5 +19,6 @@ public interface SyncWdtVirtualWarehouseAllocationOrderService {
      * @param sourceCode  来源单据编号
      * @return DmpPushTaskEntity DMP返回的任务
      */
-    List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, String sourceCode, String operateCode);
+    List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList,
+                                         String sourceCode, String operateCode,String sourceType);
 }

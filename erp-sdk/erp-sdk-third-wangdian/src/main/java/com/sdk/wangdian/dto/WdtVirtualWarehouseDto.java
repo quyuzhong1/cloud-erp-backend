@@ -49,4 +49,5 @@ public class WdtVirtualWarehouseDto extends CleanBaseDTO {
      * 创建时间
      */
     private String created;
+    private String warehouse_list;
 }

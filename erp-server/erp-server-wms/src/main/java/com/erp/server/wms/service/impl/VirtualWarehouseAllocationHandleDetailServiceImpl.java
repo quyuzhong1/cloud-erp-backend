@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.threadlocal.UserContext;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -292,7 +293,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         if (CollectionUtils.isNotEmpty(handleDetailList)) {
             //推送中台任务:保存任务+发送mq
             List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
-                    allocationEntity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode());
+                    allocationEntity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
             if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                     @Override

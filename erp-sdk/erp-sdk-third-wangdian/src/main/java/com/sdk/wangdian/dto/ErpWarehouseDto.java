@@ -95,4 +95,8 @@ public class ErpWarehouseDto extends UniqueDto {
      * 备注
      */
     private String remark;
+    /**
+     * 当分类是虚拟仓时，会存储第三方虚拟仓关联实体仓信息';
+     */
+    private String warehouseList;
 }

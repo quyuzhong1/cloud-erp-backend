@@ -328,7 +328,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
             ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
 
             if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
-                ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByWarehouseId(thirdMappingEntity.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode());
+                ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByWarehouseId(thirdMappingEntity.getThirdId(), ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode());
                 if (Objects.isNull(thirdWarehouseEntity)) {
                     continue;
                 }
