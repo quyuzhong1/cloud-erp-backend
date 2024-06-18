@@ -323,8 +323,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         entity.setLocationTotal(dto.getDetails().size());
         updateById(entity);
         // 进行对应的仓位移动
-        moveDto.setDetailList(addDTOS);
-        warehouseLocationMoveService.addAndApprove(moveDto);
+        if (!CollectionUtils.isEmpty(addDTOS)) {
+            moveDto.setDetailList(addDTOS);
+            warehouseLocationMoveService.addAndApprove(moveDto);
+        }
         List<String> sourceDetailIds = detailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量

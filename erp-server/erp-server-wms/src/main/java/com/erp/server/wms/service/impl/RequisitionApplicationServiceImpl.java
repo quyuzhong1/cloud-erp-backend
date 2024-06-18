@@ -107,6 +107,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     @Lazy
     private RequisitionApplicationServiceImpl service;
+    @Resource
+    @Lazy
+    private WmsDeliveryPlanService wmsDeliveryPlanService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -682,11 +685,25 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        Map<String, Set<String>> sourceIdByType = list.stream()
+                .collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getType, Collectors.mapping(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId, Collectors.toSet())));
+        //获取国家信息
+        Map<String, String> countryMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode()))){
+            Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
+            List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
+            countryMap.putAll(wmsDeliveryPlanEntities.stream().collect(Collectors.toMap(WmsDeliveryPlanEntity::getId, WmsDeliveryPlanEntity::getCountry)));
 
+        }else if (CollectionUtils.isNotEmpty(sourceIdByType.get(RequisitionApplicationTypeEnum.FBA.getCode()))){
+            Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
+            List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(sourIds);
+            countryMap.putAll(fbaShipmentEntities.stream().collect(Collectors.toMap(FbaShipmentEntity::getId, FbaShipmentEntity::getCountryId)));
+        }
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : list) {
+            viewDTO.setCountry(countryMap.get(viewDTO.getSourceId()));
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
