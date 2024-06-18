@@ -72,5 +72,5 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
      * @return
      */
     List<LogisticsChannelEntity> listByMainIdsAndName(@Param("mainIdList") List<String> mainIdList,@Param("name") String name);
-    IPage<BaseDropDownDTO.DisabledDTO> pagingSelect(Page query, @Param("params") BaseDropDownDTO.SelectDTO params);
+    IPage<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(Page query, @Param("params") LogisticsChannelDTO.SelectDTO params);
 }

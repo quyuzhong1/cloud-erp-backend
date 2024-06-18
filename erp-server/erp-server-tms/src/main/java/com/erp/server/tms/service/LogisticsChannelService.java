@@ -215,6 +215,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * 所有渠道下拉远程搜索
      * @return PagingVO<BaseDropDownDTO.DisabledDTO>
      */
-    PagingVO<BaseDropDownDTO.DisabledDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto);
+    PagingVO<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsChannelDTO.SelectDTO> dto);
 
 }
