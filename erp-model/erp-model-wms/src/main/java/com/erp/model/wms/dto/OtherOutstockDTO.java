@@ -4,7 +4,6 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
-import com.erp.model.wms.enums.OutstockTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -54,15 +53,23 @@ public class OtherOutstockDTO implements Serializable {
         private String customerName;
 
         /**
-         * 出库类型
+         * 业务类型 sys/dictKingdee/drop/down?typeName=其他出库单业务类型
          */
         private String type;
 
+        /**
+         * 业务类型名称
+         */
+        private String typeName;
 
+        /**
+         * 出库类型 sys/dictKingdee/drop/down?typeName=出库类型
+         */
+        private String outType;
         /**
          * 出库类型名称
          */
-        private String typeName;
+        private String outTypeName;
 
         /**
          * 库存方向
@@ -251,13 +258,20 @@ public class OtherOutstockDTO implements Serializable {
         private String receiveOrgId;
 
         /**
-         * 出库类型
+         * 业务类型 sys/dictKingdee/drop/down?typeName=其他出库单业务类型
          */
-        @NotBlank(message = "出库类型不能为空")
-        @StateEnumValue(clazz = OutstockTypeEnum.class, message = "出库类型输入值有误")
+        @NotBlank(message = "业务类型不能为空")
         private String type;
 
         private String typeName;
+
+        /**
+         * 出库类型 sys/dictKingdee/drop/down?typeName=出库类型
+         */
+        @NotBlank(message = "出库类型不能为空")
+        private String outType;
+
+        private String outTypeName;
 
         /**
          * 领料部门id

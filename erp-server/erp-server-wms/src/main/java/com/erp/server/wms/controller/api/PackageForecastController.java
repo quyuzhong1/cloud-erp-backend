@@ -196,36 +196,6 @@ public class PackageForecastController extends BaseController {
     }
 
     /**
-     * 中转报关
-     *
-     * @param dto
-     * @return
-     */
-    /*@PostMapping("/forecast")
-    public ApiResult<List<BatchResultDTO>> forecast(@RequestBody @Valid PackageForecastDTO.TransferDeclareDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        String transferLogisticsChannelId = dto.getTransferLogisticsChannelId();
-        String transferLogisticsSupplierId = dto.getTransferLogisticsSupplierId();
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = packageForecastService.forecast(id, transferLogisticsSupplierId, transferLogisticsChannelId);
-            } catch (Exception e) {
-                log.error("组包预报单 中转报关失败===>{}", e.getMessage());
-                PackageForecastEntity entity = packageForecastService.getById(id);
-                if (Objects.isNull(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 中转报关失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }*/
-
-    /**
      * 入库预报
      *
      * @param dto
@@ -233,23 +203,7 @@ public class PackageForecastController extends BaseController {
      */
     @PostMapping("/instockForcast")
     public ApiResult<List<BatchResultDTO>> instockForcast(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = packageForecastService.instockForcast(id);
-            } catch (Exception e) {
-                log.error("组包预报单 入库预报失败===>{}", e.getMessage());
-                PackageForecastEntity entity = packageForecastService.getById(id);
-                if (Objects.isNull(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 入库预报失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
+        List<BatchResultDTO> resultDTOS = packageForecastService.instockForcast(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

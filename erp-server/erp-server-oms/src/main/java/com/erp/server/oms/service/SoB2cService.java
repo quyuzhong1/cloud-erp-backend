@@ -401,7 +401,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean checkPlatformShipOrder(String soB2cId);
 
     /**
-     * 虚假发货
+     * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/27 15:07
      * @param id

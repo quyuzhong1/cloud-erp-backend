@@ -5,13 +5,16 @@ import java.time.LocalDate;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.tms.aliexpress.model.handover.UserInfo;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.validation.constraints.*;
 
 /**
@@ -116,6 +119,79 @@ public class PackageForecastDTO implements Serializable {
         private String collectAddressId;
     }
 
+    /**
+     * 分页明细参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingDetailViewDTO{
+
+        /**
+         * 详情id
+         */
+        private String detailId;
+
+        /**
+         * 销售订单id
+         */
+        private String soId;
+
+
+        /**
+         * 销售订单code
+         */
+        private String soCode;
+
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+
+        /**
+         * 物流渠道名
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 跟踪单号
+         */
+        private String trackNo;
+
+        /**
+         * 小包运输单号
+         */
+        private String minPackageTransportNo;
+
+        /**
+         * 重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 重量
+         */
+        private String weightStr;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
+
+        /**
+         * 小包交接状态
+         */
+        private String minPackageHandoverStatus;
+
+
+        /**
+         * 小包交接状态名
+         *
+         */
+        private String minPackageHandoverStatusName;
+    }
 
     /**
      * 分页
@@ -128,11 +204,6 @@ public class PackageForecastDTO implements Serializable {
          * 主表id
          */
         private String id;
-
-        /**
-         * 详情id
-         */
-        private String detailId;
 
         /**
          * 组包日期
@@ -230,69 +301,6 @@ public class PackageForecastDTO implements Serializable {
         private String remark;
 
         /**
-         * 销售订单id
-         */
-        private String soId;
-
-        /**
-         * 销售订单code
-         */
-        private String soCode;
-
-
-        /**
-         * 物流渠道id
-         */
-        private String logisticsChannelId;
-
-
-        /**
-         * 物流渠道名
-         */
-        private String logisticsChannelName;
-
-
-
-        /**
-         * 跟踪单号
-         */
-        private String trackNo;
-
-
-        /**
-         * 小包运输单号
-         */
-        private String minPackageTransportNo;
-
-        /**
-         * 重量
-         */
-        private BigDecimal weight;
-
-        /**
-         * 重量
-         */
-        private String weightStr;
-
-        /**
-         * 重量单位
-         */
-        private String weightUnit;
-
-
-        /**
-         * 小包交接状态
-         */
-        private String minPackageHandoverStatus;
-
-
-        /**
-         * 小包交接状态名
-         *
-         */
-        private String minPackageHandoverStatusName;
-
-        /**
          * 创建人
          */
         private String createUserName;
@@ -301,6 +309,11 @@ public class PackageForecastDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 明细
+         */
+        private List<PagingDetailViewDTO> detailViewDTOList;
     }
 
 
@@ -365,6 +378,37 @@ public class PackageForecastDTO implements Serializable {
 
     }
 
+    /**
+     * 中转报关合并DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InstockForcastMergeDTO {
+        private String logisticsSupplierId;
+        private String transferLogisticsSupplierId;
+        private String transferLogisticsChannelId;
+        private List<PackageForecastDetailEntity> detailEntityList;
+
+        public InstockForcastMergeDTO(String logisticsSupplierId, String transferLogisticsSupplierId, String transferLogisticsChannelId, List<PackageForecastDetailEntity> detailEntityList) {
+            this.logisticsSupplierId = logisticsSupplierId;
+            this.transferLogisticsSupplierId = transferLogisticsSupplierId;
+            this.transferLogisticsChannelId = transferLogisticsChannelId;
+            this.detailEntityList = detailEntityList;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            InstockForcastMergeDTO that = (InstockForcastMergeDTO) o;
+            return Objects.equals(logisticsSupplierId, that.logisticsSupplierId) && Objects.equals(transferLogisticsSupplierId, that.transferLogisticsSupplierId) && Objects.equals(transferLogisticsChannelId, that.transferLogisticsChannelId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(logisticsSupplierId, transferLogisticsSupplierId, transferLogisticsChannelId);
+        }
+    }
 
     /**
     * 详情
@@ -589,5 +633,190 @@ public class PackageForecastDTO implements Serializable {
 
     }
 
+    /**
+     * 分页
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportViewDTO{
 
+        /**
+         * 主表id
+         */
+        private String id;
+
+        /**
+         * 详情id
+         */
+        private String detailId;
+
+        /**
+         * 组包日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 编号
+         */
+        private String code;
+
+        /**
+         *第三方交接单号
+         */
+        private String handoverNo;
+
+        /**
+         *第三方组包号
+         */
+        private String platformPackageNo;
+
+        /**
+         * 导出用到 handoverNo/platformPackageNo
+         */
+        private String platformNo;
+
+        /**
+         *物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商
+         */
+        private String logisticsSupplierName;
+
+        /**
+         *大包运输单号
+         */
+        private String transportNo;
+
+        /**
+         * 包裹总数量
+         */
+        private Integer totalPackageQty;
+
+        /**
+         *包裹总重量
+         */
+        private BigDecimal totalPackageWeight;
+
+        /**
+         * 导出用到 包裹总重量
+         */
+        private String totalPackageWeightStr;
+
+        /**
+         *单位
+         */
+        private String totalPackageWeightUnit;
+
+        /**
+         * 上传状态
+         */
+        private String uploadStatus;
+
+        /**
+         * 上传状态名
+         */
+        private String uploadStatusName;
+
+        /**
+         * 打印状态
+         */
+        private String printStatus;
+
+        /**
+         * 打印状态名
+         */
+        private String printStatusName;
+
+        /**
+         * 交接状态
+         */
+        private String handoverStatus;
+
+        /**
+         * 交接状态名
+         */
+        private String handoverStatusName;
+
+        /**
+         * 最新失败原因
+         */
+        private String remark;
+
+        /**
+         * 销售订单id
+         */
+        private String soId;
+
+        /**
+         * 销售订单code
+         */
+        private String soCode;
+
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+
+        /**
+         * 物流渠道名
+         */
+        private String logisticsChannelName;
+
+
+
+        /**
+         * 跟踪单号
+         */
+        private String trackNo;
+
+
+        /**
+         * 小包运输单号
+         */
+        private String minPackageTransportNo;
+
+        /**
+         * 重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 重量
+         */
+        private String weightStr;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
+
+        /**
+         * 小包交接状态
+         */
+        private String minPackageHandoverStatus;
+
+
+        /**
+         * 小包交接状态名
+         *
+         */
+        private String minPackageHandoverStatusName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+    }
 }

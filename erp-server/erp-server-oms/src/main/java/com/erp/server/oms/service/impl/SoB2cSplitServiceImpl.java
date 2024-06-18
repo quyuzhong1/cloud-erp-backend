@@ -6,8 +6,10 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -687,7 +689,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             BigDecimal actualShippingCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getActualShippingCost());
             BigDecimal accessoriesCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesCost());
             BigDecimal accessoriesNw = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesNw());
-            BigDecimal weight = MathUtil.multiply(rate, soB2cLogisticsEntity.getWeight());
             //最后一条根据减法计算金额
             if (i == splitList.size() - 1) {
                 amount = MathUtil.subtract(entity.getAmount(), groupAmount);
@@ -695,7 +696,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 actualShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getActualShippingCost(), groupActualShippingCost);
                 accessoriesCost = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesCost(), groupAccessoriesCost);
                 accessoriesNw = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesNw(), groupAccessoriesNw);
-                weight = MathUtil.subtract(soB2cLogisticsEntity.getWeight(), groupWeight);
             }
             //基本信息金额
             addDTO.setAmount(amount);
@@ -707,8 +707,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setAccessoriesCost(accessoriesCost);
             //包装净重
             logisticsAddDTO.setAccessoriesNw(accessoriesNw);
-            //包装重量
-            logisticsAddDTO.setWeight(weight);
+            logisticsAddDTO.setLength(null);
+            logisticsAddDTO.setWidth(null);
+            logisticsAddDTO.setHeight(null);
+            logisticsAddDTO.setWeight(null);
+            logisticsAddDTO.setLogisticsChannelId("");
             addDTO.setLogisticsDTO(logisticsAddDTO);
             addDTO.setRemark(StrUtil.format("【{}】拆分订单", entity.getCode()));
 
@@ -719,7 +722,35 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             String code = StrUtil.format("{}_{}", entity.getCode(), flag);
             SoB2cEntity add = soB2cService.add(addDTO, code);
             soIdList.add(add.getId());
-
+            //迭代1.27.4 拆分的子订单的审核状态默认等于原订单审核状态 订单状态：如果子件不是审核通过，则默认待配货；如果子单是审核通过，则子件走仓库和物流规则，按实际规则执行结果确认订单状态
+            add.setApproveStatus(entity.getApproveStatus());
+            if(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                soB2cService.approveEnd(approveOneDTO,add,true);
+                //走仓库规则和物流规则的
+                if (add.hasPlatformWarehouseOrder()) {
+                    soB2cService.platformWarehouseOrderHandle(add.getId(), new HashMap<>());
+                } else {
+                    //拉取订单正常处理
+                    List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(add.getId());
+                    SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(add.getId(), soB2cDetailEntityList, new HashMap<>());
+                    Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+                    if (warehouseRuleMatch) {
+                        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(add.getId(), new HashMap<>());
+                        if(logisticsRuleResult.getIsRuleMatch()){
+                            soB2cService.checkProductRegistrationAndUpdate(add.getId(), "");
+                        }
+                        Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                        if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                            soB2cService.getLogisticsCode(add.getId(), true);
+                        }
+                    }
+                }
+            }else{
+                add.setApproveStatus(entity.getApproveStatus());
+                this.updateById(add);
+            }
             //用于同步到TikTok拆分数据的入参
             List<String> sourceDetailIds = detailList.stream().map(req -> req.getSourceDetailId()).collect(Collectors.toList());
             groupsBean.setOrderLineItemIds(sourceDetailIds);

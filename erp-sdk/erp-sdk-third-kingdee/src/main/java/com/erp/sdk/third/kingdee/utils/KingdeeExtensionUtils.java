@@ -1,5 +1,6 @@
-package com.erp.server.wms.utils;
+package com.erp.sdk.third.kingdee.utils;
 
+import cn.hutool.crypto.SecureUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONArray;
@@ -10,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.TreeMap;
 
 /**
@@ -21,6 +24,9 @@ public class KingdeeExtensionUtils {
 
     // 查询最新库存组织关账时间路径
     public static final String STK_CLOSE_PATH = "/open/api/stk/closed/list";
+
+    // 金蝶枚举接口
+    public static final String KINGDEE_ENUM_PATH = "/open/api/enum/getByEnumTypeName";
 
 
     // 通用参数名称
@@ -63,7 +69,7 @@ public class KingdeeExtensionUtils {
     /**
      * 添加通用参数并签名和请求金蝶扩展项目
      */
-    private static String postAndSign(String fullUrl, TreeMap<String, String> params) {
+    private static String postAndSign(String fullUrl, TreeMap<String, Object> params) {
         params.put(API_KEY_NAME, API_KEY);
         params.put(TIMESTAMP_NAME, "" + System.currentTimeMillis());
         String sign = KingdeeExtensionSignUtil.sign(params, API_SECRET);
@@ -93,6 +99,15 @@ public class KingdeeExtensionUtils {
     }
 
     /**
+     * 查询金蝶枚举
+     */
+    public static String getKingdeeEnum(List<String> enumTypeNameList) {
+        TreeMap<String, Object> params = new TreeMap<>();
+        params.put("enumTypeNameList",enumTypeNameList);
+        return postAndSign(HOST.concat(KINGDEE_ENUM_PATH),params );
+    }
+
+    /**
      * 查询最新存货核算关账时间列表
      */
     public static String queryHsClosedList() {
@@ -102,13 +117,14 @@ public class KingdeeExtensionUtils {
     }
 
     public static void main(String[] args) {
-        TreeMap<String, String> params = new TreeMap<>();
+        TreeMap<String, Object> params = new TreeMap<>();
         params.put(API_KEY_NAME, "test");
         params.put(TIMESTAMP_NAME, "" + System.currentTimeMillis());
+        List<String> enumNameList = Arrays.asList("其他出库单业务类型");
+        params.put("enumTypeNameList", enumNameList);
         String sign = KingdeeExtensionSignUtil.sign(params, "test", SIGN_NAME);
         params.put(SIGN_NAME, sign);
-
-        String fullUrl = "http://127.0.0.1:18080".concat(STK_CLOSE_PATH);
+        String fullUrl = "http://127.0.0.1:18080".concat(KINGDEE_ENUM_PATH);
         try (HttpResponse response = HttpRequest.post(fullUrl)
                 .body(JSONUtil.toJsonStr(params))
                 // 添加请求头信息

@@ -26,7 +26,7 @@ public class PlatformShipOrderDTO {
     private String dictPlatform;
 
     /**
-     * 是否虚假发货
+     * 是否手动标发
      */
     private boolean falseDeliveryFlag;
 }

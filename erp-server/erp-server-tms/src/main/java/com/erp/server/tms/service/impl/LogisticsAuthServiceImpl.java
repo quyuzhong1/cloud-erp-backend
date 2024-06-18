@@ -198,6 +198,14 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         logisticsSupplierService.updateById(supplierEntity);
     }
 
+    @Override
+    public List<LogisticsAuthEntity> listByMainIds(List<String> supplierIds) {
+        if (CollectionUtils.isEmpty(supplierIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsAuthEntity::getMainId, supplierIds).list();
+    }
+
     public LogisticsAuthEntity getDbByMainId(String mainId){
         return this.lambdaQuery().eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
     }
