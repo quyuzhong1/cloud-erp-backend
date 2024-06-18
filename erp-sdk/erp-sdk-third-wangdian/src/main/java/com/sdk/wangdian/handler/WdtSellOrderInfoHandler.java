@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.common.core.enums.CountrySiteEnum.CHINA;
+
 @Slf4j
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
@@ -98,7 +100,8 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             //审核时间
             soOutStock.setApproveTime(outStockTime);
             soOutStock.setCreated(LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(order.getCreated())), ZoneId.systemDefault()));
-            soOutStock.setCountry(order.getReceiverCountry());
+            soOutStock.setCreateUserName("wangdaintong");
+            soOutStock.setCountry(CHINA.getSite());
             //第三方单据编号
             soOutStock.setThirdCode(order.getSrcOrderNo());
 
@@ -120,7 +123,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
                 detail.setAmount(detailItem.getSellPrice());
                 detail.setCurrency(CurrencyEnum.RMB.getCurrencyCode());
                 detail.setCurrencySymbol(CurrencyEnum.RMB.getCurrencySymbol());
-                detail.setAllAmountLocalCurrency(detailItem.getSellPrice());
+                detail.setAllAmountLocalCurrency(detailItem.getSellPrice().multiply(new BigDecimal(actualQty)));
                 detail.setExchangeRate(new BigDecimal(1));
                 detail.setSoDetailId(detailItem.getSrcOrderDetailId());
                 detail.setRemark(detailItem.getRemark());
