@@ -128,7 +128,6 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
                 detail.setSoDetailId(detailItem.getSrcOrderDetailId());
                 detail.setRemark(detailItem.getRemark());
                 detail.setSourceDetailId(detailItem.getSrcOrderDetailId());
-                detail.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
                 detail.setInvalidStatus(false);
                 detailList.add(detail);
             }
