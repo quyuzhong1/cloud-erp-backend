@@ -143,59 +143,9 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         String type = allocationEntity.getType();
         switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
             case ALLOCATION:
-//                Map<String, List<VirtualWarehouseAllocationDetailEntity>> allocationMap = vmAllocationDetailList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId));
-//                List<String> toVwList = vmAllocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId).collect(Collectors.toList());
-//                List<ThirdMappingEntity> toThirdMappingList = dmpThirdMappingFeign.getListBySysIds(toVwList);
-//                allocationMap.forEach((toVmId, allocationDetailList) -> {
-//                    //获取调出仓绑定的旺店通虚拟仓
-//                    if (CollectionUtils.isNotEmpty(toThirdMappingList)) {
-//                        toThirdMappingList.forEach(thirdMapping -> {
-//                            //保存合单明细
-//                            VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
-//                            handleDetailEntity.setToVirtualWarehouseId(toVmId);
-//                            handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-//                            handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
-//                            handleDetailEntity.setHandleId(allocationHandleEntity.getId());
-//                            handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
-//                            Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
-//                            handleDetailEntity.setQty(sumQty);
-//                            this.save(handleDetailEntity);
-//                            handleDetailList.add(handleDetailEntity);
-//                            allocationDetailList.forEach(allocationDetail -> {
-//                                VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, allocationHandleEntity, allocationDetail, handleDetailEntity);
-//                                virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
-//                            });
-//                        });
-//                    }
-//                });
                 saveToHandleDetail(vmAllocationDetailList, allocationEntity, allocationHandleEntity, handleDetailList,noSyncDetailList);
                 break;
             case CANCEL:
-//                Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap = vmAllocationDetailList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId));
-//                List<String> fromVwId = vmAllocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
-//                List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getListBySysIds(fromVwId);
-//                cancelMap.forEach((fromVmId, allocationDetailList) -> {
-//                    //获取调出仓绑定的旺店通虚拟仓
-//                    if (CollectionUtils.isNotEmpty(fromThirdMappingList)) {
-//                        fromThirdMappingList.forEach(thirdMapping -> {
-//                            //保存合单明细
-//                            VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
-//                            handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
-//                            handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-//                            handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
-//                            handleDetailEntity.setHandleId(allocationHandleEntity.getId());
-//                            handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
-//                            Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
-//                            handleDetailEntity.setQty(sumQty);
-//                            this.save(handleDetailEntity);
-//                            handleDetailList.add(handleDetailEntity);
-//                            allocationDetailList.forEach(allocationDetail -> {
-//                                VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, allocationHandleEntity, allocationDetail, handleDetailEntity);
-//                                virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
-//                            });
-//                        });
-//                    }
-//                });
                 saveFromHandleDetail(vmAllocationDetailList, allocationEntity, allocationHandleEntity, handleDetailList,noSyncDetailList);
                 break;
             case TRANSFER:
@@ -262,31 +212,6 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     saveFromHandleDetail(fromVwResultList, allocationEntity, allocationHandleEntity, handleDetailList,noSyncDetailList);
                 }
                 if (CollectionUtils.isNotEmpty(toVwResultList)) {
-//                    Map<String, List<VirtualWarehouseAllocationDetailEntity>> toVmMap = toVwResultList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId));
-//                    List<String> toVwIds = toVwResultList.stream().map(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId).collect(Collectors.toList());
-//                    List<ThirdMappingEntity> toMappingList = dmpThirdMappingFeign.getListBySysIds(toVwIds);
-//                    toVmMap.forEach((toVmId, allocationDetailList) -> {
-//                        //获取调出仓绑定的旺店通虚拟仓
-//                        if (CollectionUtils.isNotEmpty(toMappingList)) {
-//                            toMappingList.forEach(thirdMapping -> {
-//                                //保存合单明细
-//                                VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
-//                                handleDetailEntity.setToVirtualWarehouseId(toVmId);
-//                                handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-//                                handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
-//                                handleDetailEntity.setHandleId(allocationHandleEntity.getId());
-//                                handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
-//                                Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
-//                                handleDetailEntity.setQty(sumQty);
-//                                this.save(handleDetailEntity);
-//                                handleDetailList.add(handleDetailEntity);
-//                                allocationDetailList.forEach(allocationDetail -> {
-//                                    VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, allocationHandleEntity, allocationDetail, handleDetailEntity);
-//                                    virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
-//                                });
-//                            });
-//                        }
-//                    });
                     saveToHandleDetail(toVwResultList, allocationEntity, allocationHandleEntity, handleDetailList,noSyncDetailList);
                 }
                 break;
