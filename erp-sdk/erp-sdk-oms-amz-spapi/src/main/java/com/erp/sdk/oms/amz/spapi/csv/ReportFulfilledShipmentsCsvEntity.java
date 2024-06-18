@@ -118,29 +118,4 @@ public class ReportFulfilledShipmentsCsvEntity implements Serializable {
     private String salesChannel;
 
     private String pointsGranted;
-
-    public String convertShipmentDate(){
-        if (StringUtils.isBlank(this.shipmentDateLocale)){
-            return "";
-        }
-        return OffsetDateTime.parse(this.shipmentDate).toLocalDate().toString();
-    }
-
-    public void checkAndSetAllDateLocale(Integer utfDiffHour) {
-        if (null == utfDiffHour){
-            return;
-        }
-        if (StringUtils.isNotBlank(this.shipmentDate)){
-            OffsetDateTime parseDate = OffsetDateTime.parse(this.shipmentDate);
-            this.setShipmentDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
-        }
-        if (StringUtils.isNotBlank(this.paymentsDate)){
-            OffsetDateTime parseDate = OffsetDateTime.parse(this.paymentsDate);
-            this.setPaymentsDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
-        }
-        if (StringUtils.isNotBlank(this.purchaseDate)){
-            OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
-            this.setPurchaseDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
-        }
-    }
 }

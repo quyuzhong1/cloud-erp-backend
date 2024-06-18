@@ -28,8 +28,7 @@ public enum BusinessTypeEnum implements EnumMessage {
     GLOBAL_PRODUCT("global_product","全球商品", SourceTypeEnum.LISTING_INFO),
     // TODO 补充来源类型
     RETURN("return","退货单", null),
-    // TODO 补充来源类型
-    DELIVERY("delivery","发货单", null),
+    DELIVERY("delivery","发货单", SourceTypeEnum.SO_B2C_DELIVERY),
     AUTH("auth","授权", null),
     REFRESH_TOKEN("refresh_token","刷新token",null),
     FBA_SHIPMENT("fba_shipment","亚马逊FBA货件", SourceTypeEnum.FBA_SHIPMENT),

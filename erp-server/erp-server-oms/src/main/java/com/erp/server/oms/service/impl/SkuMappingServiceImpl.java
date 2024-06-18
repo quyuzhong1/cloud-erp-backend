@@ -18,6 +18,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -346,6 +347,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.isNull(skuMaping)) {
             throw new ServiceException(ApiError.ERROR_92051);
         }
+        // 历史skuId
+        String historyProductSkuId = skuMaping.getProductSkuId();
+        // 当前skuId
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
@@ -389,17 +393,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return skuMaping.getId();
         }
         LocalDateTime now = LocalDateTime.now();
-        skuMaping.setExpireTime(now);
-        skuMaping.setIsExpire(Boolean.TRUE);
-        if (StringUtils.isBlank(skuMaping.getProductSkuId())){
-            skuMaping.setIsDeleted(true);
-        }
-        if (!this.updateById(skuMaping)) {
+        // 历史SkuId为设置过期
+        boolean update = lambdaUpdate()
+                .set(SkuMappingEntity::getIsExpire, true)
+                .set(SkuMappingEntity::getExpireTime, now)
+                //       // 历史SkuId为空逻辑删除
+                .set(StringUtils.isBlank(historyProductSkuId), BaseEntity::getIsDeleted, true)
+                .eq(BaseEntity::getId, skuMaping.getId())
+                .update();
+        if (!update){
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }
-//        if (!this.removeById(skuMaping.getId())) {
-//            throw new ServiceException("[SkuMapping] 原数据删除失败");
-//        }
+
         SkuMappingEntity addSkuMaping = new SkuMappingEntity();
         addSkuMaping.setShopId(dto.getShopId());
         addSkuMaping.setDictPlatform(skuMaping.getDictPlatform());

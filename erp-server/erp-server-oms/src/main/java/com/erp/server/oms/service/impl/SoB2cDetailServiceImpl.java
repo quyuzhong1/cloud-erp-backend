@@ -402,7 +402,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && mainEntity.hasPlatformWarehouseOrder() && isShipped) {
                 //查询映射的仓库信息
-                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream().filter(req -> detailDTO.getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
+                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream()
+                        .filter(req -> StringUtils.isNotBlank(detailDTO.getWarehouseName()) && detailDTO.getWarehouseName().equals(req.getThirdWarehouseName()))
+                        .findFirst()
+                        .orElse(null);
                 if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
                     saveOrUpdateEntity.setWarehouseId(mappingViewDTO.getWarehouseId());
                     saveOrUpdateEntity.setWarehouseName(mappingViewDTO.getWarehouseName());
