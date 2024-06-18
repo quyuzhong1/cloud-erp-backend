@@ -211,7 +211,7 @@ public class SplitSkuDTO {
                     .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
         } else {
             totalGrossWeight = skuList.stream()
-                    .filter(Objects::nonNull)
+                    .filter(e-> Objects.nonNull(e.getGrossWeight()))
                     .map(e -> e.getGrossWeight().multiply(new BigDecimal(e.getQty())))
                     .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         }
@@ -231,7 +231,7 @@ public class SplitSkuDTO {
                     .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
         } else {
             totalHeight = skuList.stream()
-                    .filter(Objects::nonNull)
+                    .filter(e-> Objects.nonNull(e.getHeight()))
                     .map(e -> e.getHeight().multiply(new BigDecimal(e.getQty())))
                     .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         }
