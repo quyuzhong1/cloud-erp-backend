@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -10,7 +9,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
@@ -22,7 +20,6 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.WmsAttachmentService;
-import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -76,27 +73,13 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         List<SoDeliveryNoticeDetailEntity> detailEntityList = this.listDetailBySourceDetailIds(detailIds);
         List<SoDeliveryNoticeDetailEntity> list = new ArrayList<>();
 
-        // 忽略库存计算SKU
-        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        }
+
 
         for (SoDeliveryNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             Integer deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            /**
-            if(ignoreInventorySkuIds.contains(soDetailEntity.getSkuId())) {
-                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", soDetailEntity.getSkuId(), soDetailEntity.getSkuNo());
-            } else {
-                if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
-                    throw new ServiceException(ApiError.ERROR_92010);
-                }
-            }
-             */
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
                 throw new ServiceException(ApiError.ERROR_92010);
             }
