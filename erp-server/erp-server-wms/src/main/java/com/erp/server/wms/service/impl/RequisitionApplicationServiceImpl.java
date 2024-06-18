@@ -766,6 +766,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : value) {
                 List<PickingDetailEntity> pickingDetails = pickingDetailListMap.get(viewDTO.getSourceDetailId());
+                if (CollectionUtils.isEmpty(pickingDetails)) {
+                    continue;
+                }
                 for (PickingDetailEntity pickingDetail : pickingDetails) {
                     FirstMileDeliveryDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
                     //查询sku是否存在子SKU
