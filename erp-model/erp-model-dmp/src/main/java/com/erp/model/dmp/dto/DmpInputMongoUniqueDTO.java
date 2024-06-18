@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DmpInputMongoUniqueDTO {
-    @Panno(findType = PannoEnum.IN,field = "uniqueFieldMd5")
-    private List<String> uniqueFieldMd5;
+    @Panno(findType = PannoEnum.IN,field = "uniqueEncrypt")
+    private List<String> uniqueEncrypt;
 
 }

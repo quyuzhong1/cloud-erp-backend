@@ -37,16 +37,22 @@ public abstract class DmpInputInitHandler extends DmpInputTaskHandler{
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = getInitData(dmpRequest , dmpResponse);
 		dmpResponse.getConvertInputTaskInitDTOListMaps().put(dmpCfgInputConvertEntity, dmpInputTaskInitDTOList);
 		
-		List<String> outputClassList = this.getOutputClassList(dmpRequest, dmpResponse);
-		if(CollUtil.isNotEmpty(outputClassList)) {
-			for(String outputClass : outputClassList) {
-				DmpOutputInitHandler dmpHandlerBean = this.getDmpHandlerBean(outputClass, DmpOutputInitHandler.class);
-				DmpOutputInitRequest dmpOutputInitRequest = new DmpOutputInitRequest();
-				dmpOutputInitRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
-				dmpHandlerBean.doDmpHandler(dmpOutputInitRequest, new DmpOutputInitResponse(), chain);
+		if(dmpResponse.isDoOutputChain()) {
+			List<String> outputClassList = this.getOutputClassList(dmpRequest, dmpResponse);
+			if(CollUtil.isNotEmpty(outputClassList)) {
+				for(String outputClass : outputClassList) {
+					DmpOutputInitHandler dmpHandlerBean = this.getDmpHandlerBean(outputClass, DmpOutputInitHandler.class);
+					DmpOutputInitRequest dmpOutputInitRequest = new DmpOutputInitRequest();
+					dmpOutputInitRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
+					dmpHandlerBean.doDmpHandler(dmpOutputInitRequest, new DmpOutputInitResponse(), chain);
+				}
 			}
 		}
-		chain.doDmpHandler(dmpRequest, dmpResponse);
+		
+		if(dmpResponse.isDoNextChain()) {
+			dmpResponse.setDoOutputChain(true);
+			chain.doDmpHandler(dmpRequest, dmpResponse);
+		}
 	}
 	
 	public abstract List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse);

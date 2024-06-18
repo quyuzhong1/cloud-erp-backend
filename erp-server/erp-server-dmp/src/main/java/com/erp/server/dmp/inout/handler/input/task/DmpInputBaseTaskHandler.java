@@ -61,7 +61,7 @@ public class DmpInputBaseTaskHandler extends DmpInputTaskHandler{
 	}
 	
 	protected void doDmpHandler(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse, DmpHandlerChain chain) {
-		String inputTaskId = dmpRequest.getInputTaskId();
+		inputTaskId = dmpRequest.getInputTaskId();
 		
 		if(StringUtils.isBlank(inputTaskId)) {
 			log.warn("输入任务id为空");
@@ -117,7 +117,6 @@ public class DmpInputBaseTaskHandler extends DmpInputTaskHandler{
 		for(int i = 0; i < size ; i++) {
 			DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
 			DmpInputTaskHandler dmpHandler = this.getDmpHandlerBean(dmpCfgInputConvertEntity.getConvertClass() , DmpInputTaskHandler.class);
-			dmpHandler.setInputTaskId(dmpRequest.getInputTaskId());
 			dmpHandler.setConvertId(dmpCfgInputConvertEntity.getId());
 			dmpHandler.setDmpCfgInputConvertEntity(dmpCfgInputConvertEntity);
 			if(i == (size - 1)) {

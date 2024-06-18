@@ -37,31 +37,42 @@ public abstract class DmpInputFinishHandler extends DmpInputTaskHandler{
 	}
 	
 	private void doDmpHandler(DmpInputFinishRequest dmpRequest, DmpInputFinishResponse dmpResponse, DmpHandlerChain chain) {
-		Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpResponse.getConvertInputDmpBaseEntityListMaps();
-		if(convertInputDmpBaseEntityListMaps != null && convertInputDmpBaseEntityListMaps.size() > 0) {
-			dealDmpToFinish(dmpRequest, dmpResponse);
+		String status = dmpResponse.getBeforeDmpInputTaskEntityList().get(0).getStatus();
+		if(DmpInputTaskStatusEnum.FINISH.getCode().equals(status)) {
+			dmpResponse.setDoUpdateStatus(false);
 		}else {
-			Map<DmpCfgInputConvertEntity, List<Map>> convertInputMongoEntityListMaps = dmpResponse.getConvertInputMongoEntityListMaps();
-			if(convertInputMongoEntityListMaps != null && convertInputMongoEntityListMaps.size() > 0) {
-				dealMongoToFinish(dmpRequest, dmpResponse);
+			Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpResponse.getConvertInputDmpBaseEntityListMaps();
+			if(convertInputDmpBaseEntityListMaps != null && convertInputDmpBaseEntityListMaps.size() > 0) {
+				dealDmpToFinish(dmpRequest, dmpResponse);
 			}else {
-				Map<DmpCfgInputConvertEntity, List<DmpInputTaskFileEntity>> convertInputTaskFileEntityListMaps = dmpResponse.getConvertInputTaskFileEntityListMaps();
-				if(convertInputTaskFileEntityListMaps != null && convertInputTaskFileEntityListMaps.size() > 0) {
-					dealFdsToFinish(dmpRequest, dmpResponse);
+				Map<DmpCfgInputConvertEntity, List<Map>> convertInputMongoEntityListMaps = dmpResponse.getConvertInputMongoEntityListMaps();
+				if(convertInputMongoEntityListMaps != null && convertInputMongoEntityListMaps.size() > 0) {
+					dealMongoToFinish(dmpRequest, dmpResponse);
 				}else {
-					Map<DmpCfgInputConvertEntity, List<DmpInputTaskInitDTO>> convertInputTaskInitDTOListMaps = dmpResponse.getConvertInputTaskInitDTOListMaps();
-					if(convertInputTaskInitDTOListMaps != null && convertInputTaskInitDTOListMaps.size() > 0) {
-						dealInitToFinish(dmpRequest, dmpResponse);
+					Map<DmpCfgInputConvertEntity, List<DmpInputTaskFileEntity>> convertInputTaskFileEntityListMaps = dmpResponse.getConvertInputTaskFileEntityListMaps();
+					if(convertInputTaskFileEntityListMaps != null && convertInputTaskFileEntityListMaps.size() > 0) {
+						dealFdsToFinish(dmpRequest, dmpResponse);
 					}else {
-						dealNoneToFinish(dmpRequest, dmpResponse);
+						Map<DmpCfgInputConvertEntity, List<DmpInputTaskInitDTO>> convertInputTaskInitDTOListMaps = dmpResponse.getConvertInputTaskInitDTOListMaps();
+						if(convertInputTaskInitDTOListMaps != null && convertInputTaskInitDTOListMaps.size() > 0) {
+							dealInitToFinish(dmpRequest, dmpResponse);
+						}else {
+							dealNoneToFinish(dmpRequest, dmpResponse);
+						}
 					}
 				}
 			}
 		}
 		
-		this.updateTaskStatus(DmpInputTaskStatusEnum.FINISH);
+		if(dmpResponse.isDoUpdateStatus()) {
+			this.updateTaskStatus(DmpInputTaskStatusEnum.FINISH);
+		}
 		
-		chain.doDmpHandler(dmpRequest, dmpResponse);
+		if(dmpResponse.isDoNextChain()) {
+			dmpResponse.setDoUpdateStatus(true);
+			dmpResponse.setDoOutputChain(true);
+			chain.doDmpHandler(dmpRequest, dmpResponse);
+		}
 	}
 	
 	public abstract void dealDmpToFinish(DmpInputDmpRequest dmpRequest, DmpInputMongoResponse dmpResponse);

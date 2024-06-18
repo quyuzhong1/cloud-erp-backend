@@ -68,8 +68,7 @@ public class DmpInputTaskFileEntity extends BaseEntity<DmpInputTaskFileEntity> {
      */
     @TableField("content_type")
     private String contentType;
-
-
+    
     public static final String MAIN_ID = "main_id";
 
     public static final String FILE_URL = "file_url";

@@ -53,7 +53,10 @@ public abstract class DmpInputFdsHandler extends DmpInputTaskHandler{
 					.list();
 		
 		if(CollUtil.isNotEmpty(dmpInputTaskFileEntityList)) {
-			
+			String status = dmpResponse.getBeforeDmpInputTaskEntityList().get(0).getStatus();
+			if(DmpInputTaskStatusEnum.FDS.getCode().equals(status) || DmpInputTaskStatusEnum.MONGO.getCode().equals(status) || DmpInputTaskStatusEnum.DMP.getCode().equals(status) || DmpInputTaskStatusEnum.FINISH.getCode().equals(status)) {
+				dmpResponse.setDoUpdateStatus(false);
+			}
 		}else {
 			Map<DmpCfgInputConvertEntity, List<DmpInputTaskInitDTO>> convertInputTaskInitDTOListMaps = dmpResponse.getConvertInputTaskInitDTOListMaps();
 			if(convertInputTaskInitDTOListMaps != null && convertInputTaskInitDTOListMaps.size() > 0) {
@@ -65,9 +68,15 @@ public abstract class DmpInputFdsHandler extends DmpInputTaskHandler{
 
 		dmpResponse.getConvertInputTaskFileEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputTaskFileEntityList);
 	
-		this.updateTaskStatus(DmpInputTaskStatusEnum.FDS);
+		if(dmpResponse.isDoUpdateStatus()) {
+			this.updateTaskStatus(DmpInputTaskStatusEnum.FDS);
+		}
 		
-		chain.doDmpHandler(dmpRequest, dmpResponse);
+		if(dmpResponse.isDoNextChain()) {
+			dmpResponse.setDoUpdateStatus(true);
+			dmpResponse.setDoOutputChain(true);
+			chain.doDmpHandler(dmpRequest, dmpResponse);
+		}
 	}
 	
 	public abstract List<DmpInputTaskFileEntity> uploadInitToFds(DmpInputFdsRequest dmpRequest, DmpInputInitResponse dmpResponse);

@@ -166,7 +166,7 @@ public interface MongoService {
 	 * @param map:条件
 	 * @throws Exception
 	 */
-	<T> void upsertMongoDataBatch(List<Map<String,Object>> map, String table, Class<T> clazz);
+	<T> void upsertMongoDataBatch(List<Map<String,Object>> map, String table);
 
 	/**
 	 * 14 批量删除数据

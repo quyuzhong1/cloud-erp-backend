@@ -224,13 +224,13 @@ public class MongoServiceImpl implements MongoService {
 	}
 
 	@Override
-	public <T> void upsertMongoDataBatch(List<Map<String,Object>> newData, String table, Class<T> clazz) {
+	public <T> void upsertMongoDataBatch(List<Map<String,Object>> newData, String table) {
 		ArrayList<WriteModel<Document>> writeModels = new ArrayList<>();
 		if(!CollectionUtils.isEmpty(newData)){
 			for (int i = 0; i < newData.size(); i++) {
-
-				Document document1 = new Document("mainId",newData.get(i).get("mainId"));
-				Document document2 = new Document("$set",newData.get(i).get("entity"));
+				Map<String, Object> map = newData.get(i);
+				Document document1 = new Document("_id",map.get("_id"));
+				Document document2 = new Document("$set",map);
 				UpdateOneModel<Document> documentUpdateOneModel = new UpdateOneModel<Document>(document1,document2,new UpdateOptions().upsert(true));
 				writeModels.add(documentUpdateOneModel);
 			}

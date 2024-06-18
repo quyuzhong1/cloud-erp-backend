@@ -1,8 +1,11 @@
 package com.erp.server.dmp.inout.handler.input.task.mongo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -27,13 +31,33 @@ import cn.hutool.core.collection.CollUtil;
 public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 	
 	protected String mongoStorageName;
+	protected Set<String> uniqueFieldSet = new HashSet<>();
+	protected boolean allFieldFlag;
 	
-	protected static final String MONGO_BASE_ID = "id";
+	public static final String MONGO_BASE_ID = "_id";
 	protected static final String MONGO_BASE_INPUTTASKID = "inputTaskId";
+	protected static final String MONGO_BASE_NEXTLEVELID = "nextLevelId";
 	protected static final String MONGO_BASE_FILEID = "fileId";
 	protected static final String MONGO_BASE_CONVERTID = "convertId";
 	protected static final String MONGO_BASE_ROWNUMBER = "rowNumber";
-	protected static final String MONGO_BASE_UNIQUEFIELDMD5 = "uniqueFieldMd5";
+	protected static final String MONGO_BASE_UNIQUEENCRYPT = "uniqueEncrypt";
+	protected static final String MONGO_BASE_DATAENCRYPT = "dataEncrypt";
+	protected static final String MONGO_BASE_MONGOCREATETIME = "mongoCreateTime";
+	protected static final String MONGO_BASE_MONGOUPDATETIME = "mongoUpdateTime";
+	
+	public static List<String> mongoBaseFiledList = new ArrayList<>();
+	static {
+		mongoBaseFiledList.add(MONGO_BASE_ID);
+		mongoBaseFiledList.add(MONGO_BASE_INPUTTASKID);
+		mongoBaseFiledList.add(MONGO_BASE_NEXTLEVELID);
+		mongoBaseFiledList.add(MONGO_BASE_FILEID);
+		mongoBaseFiledList.add(MONGO_BASE_CONVERTID);
+		mongoBaseFiledList.add(MONGO_BASE_ROWNUMBER);
+		mongoBaseFiledList.add(MONGO_BASE_UNIQUEENCRYPT);
+		mongoBaseFiledList.add(MONGO_BASE_DATAENCRYPT);
+		mongoBaseFiledList.add(MONGO_BASE_MONGOCREATETIME);
+		mongoBaseFiledList.add(MONGO_BASE_MONGOUPDATETIME);
+	}
 	
 	@Autowired
 	protected MongoService mongoService;
@@ -53,14 +77,17 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 	
 	private void doDmpHandler(DmpInputMongoRequest dmpRequest, DmpInputMongoResponse dmpResponse, DmpHandlerChain chain) {
 		mongoStorageName = dmpResponse.getDmpBasicSystemEntity().getCode() + "_" + dmpResponse.getDmpCfgInputEntity().getCode() + "_" + dmpCfgInputConvertEntity.getStorageName();
+		allFieldFlag = DmpHandlerUtils.getAllFieldFlag(dmpCfgInputConvertEntity.getUniqueFieldName(), uniqueFieldSet);
 		
-		String inputTaskId = dmpRequest.getInputTaskId();
 		Map<String, Object> fieldValueMaps = new HashMap<>();
 		fieldValueMaps.put(MONGO_BASE_INPUTTASKID, inputTaskId);
-		fieldValueMaps.put(MONGO_BASE_CONVERTID, dmpCfgInputConvertEntity.getId());
+		fieldValueMaps.put(MONGO_BASE_CONVERTID, convertId);
 		List<Map> dmpInputMongoBaseEntityList = mongoService.findMongoData(fieldValueMaps, mongoStorageName);
 		if(CollUtil.isNotEmpty(dmpInputMongoBaseEntityList)) {
-			
+			String status = dmpResponse.getBeforeDmpInputTaskEntityList().get(0).getStatus();
+			if(DmpInputTaskStatusEnum.MONGO.getCode().equals(status) || DmpInputTaskStatusEnum.DMP.getCode().equals(status) || DmpInputTaskStatusEnum.FINISH.getCode().equals(status)) {
+				dmpResponse.setDoUpdateStatus(false);
+			}
 		}else {
 			Map<DmpCfgInputConvertEntity, List<DmpInputTaskFileEntity>> convertInputTaskFileEntityListMaps = dmpResponse.getConvertInputTaskFileEntityListMaps();
 			if(convertInputTaskFileEntityListMaps != null && convertInputTaskFileEntityListMaps.size() > 0) {
@@ -77,9 +104,15 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 		
 		dmpResponse.getConvertInputMongoEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputMongoBaseEntityList);
 		
-		this.updateTaskStatus(DmpInputTaskStatusEnum.MONGO);
+		if(dmpResponse.isDoUpdateStatus()) {
+			this.updateTaskStatus(DmpInputTaskStatusEnum.MONGO);
+		}
 		
-		chain.doDmpHandler(dmpRequest, dmpResponse);
+		if(dmpResponse.isDoNextChain()) {
+			dmpResponse.setDoUpdateStatus(true);
+			dmpResponse.setDoOutputChain(true);
+			chain.doDmpHandler(dmpRequest, dmpResponse);
+		}
 	}
 	
 	public abstract List<Map> parseFdsToMongo(DmpInputMongoRequest dmpRequest, DmpInputFdsResponse dmpResponse);

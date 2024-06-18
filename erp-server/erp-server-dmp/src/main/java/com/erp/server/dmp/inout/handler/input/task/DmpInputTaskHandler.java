@@ -18,10 +18,8 @@ import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpCfgInputTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
-import com.erp.server.dmp.inout.dto.request.DmpInputRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
 import com.erp.server.dmp.inout.dto.request.DmpRequest;
-import com.erp.server.dmp.inout.dto.response.DmpInputResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.dto.response.DmpResponse;
 import com.erp.server.dmp.inout.handler.DmpHandler;
@@ -53,15 +51,11 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 	@Autowired
 	private DmpCfgApiService dmpCfgApiService;
 	
-	protected String inputTaskId;
+	/**----------多例对象属性,初始化在DmpInputBaseTaskHandler.addDmpHandler(DmpInputTaskRequest, DmpInputTaskResponse, List<DmpHandler>, DmpInputTaskStatusEnum)-----------**/
 	protected String convertId;
 	protected DmpCfgInputConvertEntity dmpCfgInputConvertEntity;
 	protected boolean currStatusLastHandlerFlag = false;
 	
-	public void setInputTaskId(String inputTaskId) {
-		this.inputTaskId = inputTaskId;
-	}
-
 	public void setConvertId(String convertId) {
 		this.convertId = convertId;
 	}
@@ -73,6 +67,12 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 	public void setCurrStatusLastHandlerFlag(boolean currStatusLastHandlerFlag) {
 		this.currStatusLastHandlerFlag = currStatusLastHandlerFlag;
 	}
+	/**----------多例对象属性,初始化在DmpInputBaseTaskHandler.addDmpHandler(DmpInputTaskRequest, DmpInputTaskResponse, List<DmpHandler>, DmpInputTaskStatusEnum)-----------**/
+	
+	/**-----------------------------公共对象初始化属性,初始化在DmpInputTaskHandler.doDmpHandler(DmpRequest, DmpResponse, DmpHandlerChain)------------------------------------**/
+	protected String inputTaskId;
+	protected String nextLevelId;
+	/**-----------------------------公共对象初始化属性,初始化在DmpInputTaskHandler.doDmpHandler(DmpRequest, DmpResponse, DmpHandlerChain)------------------------------------**/
 
 	@Override
 	public void doDmpHandler(DmpRequest dmpRequest, DmpResponse dmpResponse, DmpHandlerChain chain) {
@@ -82,7 +82,16 @@ public class DmpInputTaskHandler extends DmpInputHandler{
         if (!(dmpResponse instanceof DmpInputTaskResponse)) {
             throw new ServiceException(dmpResponse + " not DmpInputResponse");
         }
-        doDmpHandler((DmpInputTaskRequest) dmpRequest, (DmpInputTaskResponse) dmpResponse, chain);
+        
+        DmpInputTaskRequest dmpInputTaskRequest = (DmpInputTaskRequest) dmpRequest;
+        DmpInputTaskResponse dmpInputTaskResponse = (DmpInputTaskResponse) dmpResponse;
+		inputTaskId = dmpInputTaskRequest.getInputTaskId();
+		DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpInputTaskResponse.getDmpCfgInputDetailEntity();
+		if(dmpCfgInputDetailEntity != null) {
+			nextLevelId = dmpCfgInputDetailEntity.getNextLevelId();
+		}
+        
+		doDmpHandler(dmpInputTaskRequest, dmpInputTaskResponse, chain);
 	}
 	
 	protected void doDmpHandler(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse, DmpHandlerChain chain) {
@@ -96,7 +105,7 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		return ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(beanClass) , clazz);
 	}
 	
-	protected List<String> getOutputClassList(DmpInputRequest dmpRequest, DmpInputResponse dmpResponse) {
+	protected List<String> getOutputClassList(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		List<String> apiClassList = new ArrayList<>();
 		List<DmpCfgOutputEntity> dmpCfgOutputEntityList = dmpCfgOutputService.lambdaQuery()
 				.eq(DmpCfgOutputEntity::getInputConvertId, convertId)

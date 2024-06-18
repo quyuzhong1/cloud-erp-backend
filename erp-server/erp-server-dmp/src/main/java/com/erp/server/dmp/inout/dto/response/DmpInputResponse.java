@@ -17,18 +17,4 @@ public class DmpInputResponse extends DmpResponse{
 	 */
 	private List<DmpInputTaskEntity> beforeDmpInputTaskEntityList;
 	
-	/**
-	 * 推送数据配置明细
-	 */
-	private DmpCfgInputDetailEntity dmpCfgInputDetailEntity;
-	
-	/**
-	 * 推送数据配置
-	 */
-	private DmpCfgInputEntity dmpCfgInputEntity;
-	
-	/**
-	 * 外部系统
-	 */
-	private DmpBasicSystemEntity dmpBasicSystemEntity;
 }
