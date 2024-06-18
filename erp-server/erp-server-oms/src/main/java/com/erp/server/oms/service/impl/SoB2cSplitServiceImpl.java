@@ -810,7 +810,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             throw new ServiceException(ApiError.ERROR_SO_B2C_SAVE_SPLIT_INVALID);
         }
         if(Objects.nonNull(soB2cLogisticsEntity) && StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())){
-            throw new ServiceException("已获取跟踪号不允许拆分");
+            throw new ServiceException("已获取跟踪号，请取消物流单后再执行拆分");
         }
         if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_SPLIT, entity.getCode());
