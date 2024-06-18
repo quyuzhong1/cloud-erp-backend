@@ -71,4 +71,14 @@ public interface DmpMqFeign {
      */
     @PostMapping(value = "/batchNoNeedSyncBySourceId")
     Boolean batchNoNeedSyncBySourceId(@RequestBody List<String> sourceIds);
+    /**
+     * 根据sourceId重新同步
+     *
+     * @param sourceIds
+     * @return ApiResult
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    @PostMapping(value = "/batchSyncBySourceId")
+    Boolean batchSyncBySourceId(@RequestBody List<String> sourceIds);
 }

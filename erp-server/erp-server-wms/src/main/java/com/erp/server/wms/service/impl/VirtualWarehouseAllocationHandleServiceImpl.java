@@ -95,7 +95,7 @@ public class VirtualWarehouseAllocationHandleServiceImpl extends SuperServiceImp
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void handleData(VirtualWarehouseAllocationEntity allocationEntity) {
-        //保存拆单主表
+        //保存合单主表
         VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
         allocationHandleEntity.setAllocationId(allocationEntity.getId());
         allocationHandleEntity.setAllocationCode(allocationEntity.getCode());

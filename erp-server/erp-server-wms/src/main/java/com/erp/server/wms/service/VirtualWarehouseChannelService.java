@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -54,7 +55,7 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
      */
     List<VirtualWarehouseChannelEntity> getByVirtualWarehouseId(String virtualWarehouseId);
 
-    List<String> getBindedDictPlatform();
+    List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatform();
 
     List<String> getBindedShopByDictPlatform(String dictPlatform);
     /**

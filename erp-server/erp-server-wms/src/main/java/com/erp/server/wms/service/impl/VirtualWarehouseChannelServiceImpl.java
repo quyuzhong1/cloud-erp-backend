@@ -11,6 +11,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
@@ -162,7 +163,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     }
 
     @Override
-    public List<String> getBindedDictPlatform() {
+    public List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatform() {
         return baseMapper.getBindedDictPlatform();
     }
 

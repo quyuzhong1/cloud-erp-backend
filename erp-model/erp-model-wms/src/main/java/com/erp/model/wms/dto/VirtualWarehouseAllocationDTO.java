@@ -362,6 +362,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         /**
          * 同步平台名称（字符串）
          */
+        private String sysType;
+        /**
+         * 同步平台名称（字符串）
+         */
         private String sysTypeName;
         /**
          * 同步平台名称

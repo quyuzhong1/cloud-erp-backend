@@ -138,6 +138,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         List<VirtualWarehouseAllocationDetailEntity> vmAllocationDetailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, allocationEntity.getId()));
         List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
+        List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList = new ArrayList<>();
         String type = allocationEntity.getType();
         switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
             case ALLOCATION:
@@ -166,7 +167,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
 //                        });
 //                    }
 //                });
-                saveToHandleDetail(vmAllocationDetailList, allocationEntity, allocationHandleEntity, handleDetailList);
+                saveToHandleDetail(vmAllocationDetailList, allocationEntity, allocationHandleEntity, handleDetailList,noSyncDetailList);
                 break;
             case CANCEL:
 //                Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap = vmAllocationDetailList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId));
@@ -194,7 +195,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
 //                        });
 //                    }
 //                });
-                saveFromHandleDetail(vmAllocationDetailList, allocationEntity, allocationHandleEntity, handleDetailList);
+                saveFromHandleDetail(vmAllocationDetailList, allocationEntity, allocationHandleEntity, handleDetailList,noSyncDetailList);
                 break;
             case TRANSFER:
                 Set<String> fromToIds = new HashSet<>();
@@ -220,6 +221,8 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     } else if (CollectionUtils.isEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getFromVirtualWarehouseId()))
                             && CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getToVirtualWarehouseId()))) {
                         toVwResultList.add(vmAllocationDetail);
+                    }else{
+                        noSyncDetailList.add(vmAllocationDetail);
                     }
                 });
                 if (CollectionUtils.isNotEmpty(fromToVwResultList)) {
@@ -254,7 +257,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     });
                 }
                 if (CollectionUtils.isNotEmpty(fromVwResultList)) {
-                    saveToHandleDetail(fromVwResultList, allocationEntity, allocationHandleEntity, handleDetailList);
+                    saveFromHandleDetail(fromVwResultList, allocationEntity, allocationHandleEntity, handleDetailList,noSyncDetailList);
                 }
                 if (CollectionUtils.isNotEmpty(toVwResultList)) {
 //                    Map<String, List<VirtualWarehouseAllocationDetailEntity>> toVmMap = toVwResultList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId));
@@ -282,7 +285,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
 //                            });
 //                        }
 //                    });
-                    saveToHandleDetail(toVwResultList, allocationEntity, allocationHandleEntity, handleDetailList);
+                    saveToHandleDetail(toVwResultList, allocationEntity, allocationHandleEntity, handleDetailList,noSyncDetailList);
                 }
                 break;
         }
@@ -306,9 +309,20 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     }
                 });
             }
+            //设置没有关联虚拟仓的分货单子单无需同步
+            if (CollectionUtils.isNotEmpty(noSyncDetailList)){
+                //设置分货单子单无需同步
+                virtualWarehouseAllocationDetailService.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>()
+                        .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus,VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode())
+                        .in(VirtualWarehouseAllocationDetailEntity::getId,noSyncDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).collect(Collectors.toList())));
+            }
         }else{
             //删除合单表主单
             virtualWarehouseAllocationHandleService.forceDeleteById(allocationHandleEntity.getId());
+            //设置分货单子单无需同步
+            virtualWarehouseAllocationDetailService.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>()
+                            .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus,VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode())
+                    .in(VirtualWarehouseAllocationDetailEntity::getId,vmAllocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).collect(Collectors.toList())));
         }
     }
 
@@ -319,8 +333,9 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
      * @param allocationEntity
      * @param allocationHandleEntity
      * @param handleDetailList
+     * @param noSyncDetailList
      */
-    private void saveFromHandleDetail(List<VirtualWarehouseAllocationDetailEntity> fromVmList, VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity, List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList) {
+    private void saveFromHandleDetail(List<VirtualWarehouseAllocationDetailEntity> fromVmList, VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity, List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList) {
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap = fromVmList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId));
         List<String> fromVwId = fromVmList.stream().map(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
         List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getListBySysIds(fromVwId);
@@ -344,6 +359,8 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                         virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
                     });
                 });
+            }else{
+                noSyncDetailList.addAll(allocationDetailList);
             }
         });
     }
@@ -355,8 +372,9 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
      * @param allocationEntity
      * @param allocationHandleEntity
      * @param handleDetailList
+     * @param noSyncDetailList
      */
-    private void saveToHandleDetail(List<VirtualWarehouseAllocationDetailEntity> toVwResultList, VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity, List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList) {
+    private void saveToHandleDetail(List<VirtualWarehouseAllocationDetailEntity> toVwResultList, VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity, List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList) {
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> toVmMap = toVwResultList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId));
         List<String> toVwIds = toVwResultList.stream().map(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId).collect(Collectors.toList());
         List<ThirdMappingEntity> toMappingList = dmpThirdMappingFeign.getListBySysIds(toVwIds);
@@ -380,6 +398,8 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                         virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
                     });
                 });
+            }else{
+                noSyncDetailList.addAll(allocationDetailList);
             }
         });
     }

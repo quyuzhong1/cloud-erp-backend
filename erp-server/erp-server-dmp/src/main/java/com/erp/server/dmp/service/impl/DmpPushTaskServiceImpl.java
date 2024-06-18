@@ -384,6 +384,43 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         return Boolean.TRUE;
     }
 
+    /**
+     * 根据sourceId重新同步
+     * @param sourceIds
+     * @return
+     */
+    @Override
+    public Boolean batchSyncBySourceId(List<String> sourceIds) {
+        List<DmpPushTaskEntity> list = this.list(new LambdaQueryWrapper<DmpPushTaskEntity>().in(DmpPushTaskEntity::getSourceId,sourceIds));
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+        }
+        //需要修改备注信息
+        List<DmpPushTaskEntity> updateList = new ArrayList<>();
+        for (DmpPushTaskEntity dmpPushTaskEntity : list) {
+            try {
+                //查询来源上级单据
+                Boolean isSend = isSendParentBillTask(dmpPushTaskEntity);
+                //判断是否存在上级单据，并且推送成功
+                if (!isSend) {
+                    dmpPushTaskEntity.setStatus(SyncStatusEnum.IN_SYNC.getCode());
+                    updateList.add(dmpPushTaskEntity);
+                    continue;
+                }
+                DmpPushTaskHistoryServiceImpl.sendMq(dmpPushTaskEntity.getMqData(), dmpPushTaskEntity.getId(), mqProducerService, dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpPushTaskEntity.getSourceId());
+            }catch (Exception e){
+                String sourceTypeName = SourceTypeEnum.getName(dmpPushTaskEntity.getSourceType());
+                log.error("从{}推送{}到{}发送消息异常", dmpPushTaskEntity.getSourcePlatformName(), sourceTypeName, dmpPushTaskEntity.getTargetPlatformName(), e);
+            }
+        }
+        //更新信息
+        if (CollectionUtil.isNotEmpty(updateList)) {
+            this.updateBatchById(updateList);
+        }
+        return Boolean.TRUE;
+    }
+
+
     @Override
     public void sendWarnMsg(String syncTaskId) {
         DmpPushTaskEntity entity = this.getById(syncTaskId);

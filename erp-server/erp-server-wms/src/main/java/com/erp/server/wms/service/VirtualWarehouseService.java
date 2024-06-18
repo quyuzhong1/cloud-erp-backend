@@ -66,7 +66,7 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      */
     VirtualWarehouseDTO.ViewDTO view(String id);
 
-    List<BaseDropDownDTO.Tree> tree(String key, String id);
+    List<VirtualWarehouseDTO.Tree> tree(String key, String id);
 
     PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<VirtualWarehouseDTO.ShopSelectDTO> dto);
 

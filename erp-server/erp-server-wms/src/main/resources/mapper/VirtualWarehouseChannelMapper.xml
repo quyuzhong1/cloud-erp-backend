@@ -36,11 +36,11 @@
         vwc.is_deleted,
         vwc.disabled, vwc.virtual_warehouse_id, vwc.virtual_warehouse_code, vwc.virtual_warehouse_name, vwc.dict_platform, vwc.type, vwc.relation_id, vwc.relation_name, vwc.dict_platform_type
     </sql>
-    <select id="getBindedDictPlatform" resultType="java.lang.String">
-        SELECT dict_platform FROM "virtual_warehouse_channel"
+    <select id="getBindedDictPlatform" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
+        SELECT dict_platform,type FROM "virtual_warehouse_channel"
         where is_deleted=false
           and disabled=false
-        group by dict_platform
+        group by dict_platform,type
     </select>
     <select id="getBindedShopByDictPlatform" resultType="java.lang.String">
         SELECT relation_id

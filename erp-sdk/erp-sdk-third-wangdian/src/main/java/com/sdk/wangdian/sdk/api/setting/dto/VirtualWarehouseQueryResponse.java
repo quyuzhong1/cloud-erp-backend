@@ -40,8 +40,8 @@ public class VirtualWarehouseQueryResponse
 	{
 
 		private String remark;
-		private Byte type;
-		private String warehouse_no;
+		private Byte warehouse_type;
+		private String virtual_warehouse_no;
 		private String virtual_warehouse_name;
 		private String modified;
 		private Integer warehouse_id;

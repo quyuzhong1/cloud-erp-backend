@@ -562,6 +562,7 @@ public enum RocketMqTagEnum {
 
     WDT_OTHER_IN_STOCK_TAG(11003, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_other_in_stock_tag"),
     WDT_OTHER_OUT_STOCK_TAG(11004, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_other_out_stock_tag"),
+    WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG(11005, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_virtual_allocation_handle_detail_tag"),
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";

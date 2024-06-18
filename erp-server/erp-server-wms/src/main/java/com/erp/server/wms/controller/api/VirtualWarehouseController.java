@@ -137,7 +137,7 @@ public class VirtualWarehouseController extends BaseController {
      */
     @GetMapping("/tree")
     @LogViewService
-    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam("key") String key,@RequestParam("id") String id) {
+    public ApiResult<List<VirtualWarehouseDTO.Tree>> tree(@RequestParam("key") String key,@RequestParam("id") String id) {
         return success(virtualWarehouseService.tree(key,id));
     }
     /**

@@ -92,7 +92,10 @@
         vmad.create_time,
         vmad.update_user_id,
         vmad.update_user_name,
-        vmad.update_time
+        vmad.update_time,
+        vmad.third_code,
+        vmad.sys_type,
+        vmad.sys_type_name
         FROM virtual_warehouse_allocation_detail vmad
         inner JOIN virtual_warehouse_allocation vma
         on vma.id = vmad.main_id and vma.is_deleted = false
@@ -107,7 +110,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        vmad.id desc
+        vma.id,vmad.id desc
     </sql>
 
 </mapper>

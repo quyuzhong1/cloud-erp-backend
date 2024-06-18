@@ -27,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,6 +82,8 @@ public class WdtVirtualWarehouseHandler implements IBusinessHandler<WdtVirtualWa
         pager.setPageNo(0);
         pager.setPageSize(200);
         pager.setCalcTotal(true);
+        query.setStartTime(LocalDateTime.now().minusDays(30).minusSeconds(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        query.setEndTime(LocalDateTime.now().minusSeconds(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 
         SettingAPI settingAPI = clientService.get(SettingAPI.class);
         List<VirtualWarehouseQueryResponse.VirtualWarehouseDto> warehouseList = new ArrayList<>();

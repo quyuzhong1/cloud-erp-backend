@@ -1,21 +1,14 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import org.python.modules._csv._csv;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -298,7 +291,20 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String value;
         private Boolean disabled;
-        private Boolean checkPlatform;
-        private Boolean checkShop;
+        private Boolean platformDisabled;
+        private Boolean shopDisabled;
+    }    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class BindChannelDto {
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 类型
+         */
+        private String type;
     }
 }

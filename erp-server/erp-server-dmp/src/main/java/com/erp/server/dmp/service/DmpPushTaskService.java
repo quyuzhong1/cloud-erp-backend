@@ -171,5 +171,10 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @param ids
      */
     void deleteByIds(List<String> ids);
-
+    /**
+     * 根据sourceId重新同步
+     * @param sourceIds
+     * @return
+     */
+    Boolean batchSyncBySourceId(List<String> sourceIds);
 }

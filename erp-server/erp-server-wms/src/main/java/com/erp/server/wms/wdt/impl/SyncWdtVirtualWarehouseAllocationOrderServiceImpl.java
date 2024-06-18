@@ -61,8 +61,8 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
 //        request.setWarehouseNo(Optional.ofNullable(thirdMappingEntity).orElse(new ThirdMappingEntity("")).getThirdInfoId());
 //        ThirdWarehouseEntity thirdWarehouse = dmpThirdMappingFeign.getBySysId(entity.getWarehouseId());
 
-        List<DmpPushTaskFeignDTO> dmpPushTaskEntityList=new ArrayList<>();
-        handleDetailList.forEach(handleDetail->{
+        List<DmpPushTaskFeignDTO> dmpPushTaskEntityList = new ArrayList<>();
+        handleDetailList.forEach(handleDetail -> {
             VwAllocationHandelDetailPushDTO request = new VwAllocationHandelDetailPushDTO();
             //获取调出仓 调入仓关联的第三方仓（旺店通）
             if (StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId())
@@ -76,9 +76,9 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                 request.setOrderType(1);
             }
 
-            request.setVirtualWarehouseNo(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId())?handleDetail.getThirdFromVirtualWarehouseId():handleDetail.getThirdToVirtualWarehouseId());
+            request.setVirtualWarehouseNo(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId()) ? handleDetail.getThirdFromVirtualWarehouseId() : handleDetail.getThirdToVirtualWarehouseId());
             request.setToVirtualWarehouseNo(handleDetail.getThirdToVirtualWarehouseId());
-            List<VwAllocationHandelDetailPushDTO.DetailList> detailList=new ArrayList<>();
+            List<VwAllocationHandelDetailPushDTO.DetailList> detailList = new ArrayList<>();
             VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
             detail.setNum(BigDecimal.valueOf(handleDetail.getQty()));
             detail.setWarehouseNo("1");
@@ -93,7 +93,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             dmpSyncTaskDTO.setSourceCode(vwAllocationCode);
             dmpSyncTaskDTO.setSourceType(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
             dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName());
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG.getName());
             dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
             dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());

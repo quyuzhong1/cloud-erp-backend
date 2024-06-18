@@ -110,10 +110,20 @@ public class DmpMqFeignController {
      * @param sourceIds
      * @return ApiResult
      * @author hyj
-     * @date 2024/4/11 16:51
      */
     @PostMapping(value = "/batchNoNeedSyncBySourceId")
     public Boolean batchNoNeedSyncBySourceId(@RequestBody List<String> sourceIds) {
         return dmpPushTaskService.batchNoNeedSyncBySourceId(sourceIds);
+    }
+
+    /**
+     * 根据sourceId重新同步
+     *
+     * @param sourceIds
+     * @return
+     */
+    @PostMapping(value = "/batchSyncBySourceId")
+    public Boolean batchSyncBySourceId(@RequestBody List<String> sourceIds) {
+        return dmpPushTaskService.batchSyncBySourceId(sourceIds);
     }
 }

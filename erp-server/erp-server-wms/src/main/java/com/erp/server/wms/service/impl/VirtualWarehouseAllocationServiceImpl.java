@@ -547,9 +547,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         allocationEntity.setStatus(status);
         allocationEntity.setInvalidDescription(invalidDescription);
         this.updateById(allocationEntity);
-        log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单主单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
+        log.info("作废 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
+        String msg = StrUtil.format("用户【{}】作废了【{}】单据【{}】，作废说明（invalidDescription）", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单主单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "作废操作");
 
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.INVALID);
     }
