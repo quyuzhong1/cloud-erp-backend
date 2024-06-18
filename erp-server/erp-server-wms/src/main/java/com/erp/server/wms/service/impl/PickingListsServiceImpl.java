@@ -33,6 +33,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -151,6 +152,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void saveAddData(PickingListsEntity entity, List<PickingDetailEntity> entities, WarehouseLocationMoveDTO.AddDTO moveDto) {
         save(entity);
         pickingDetailService.saveBatch(entities);

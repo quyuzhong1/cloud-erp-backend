@@ -1,14 +1,12 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -63,5 +61,9 @@ public enum RequisitionApplicationStatusEnum implements EnumMessage  {
 
     public static List<String> getStatusList() {
         return Arrays.stream(RequisitionApplicationStatusEnum.values()).map(RequisitionApplicationStatusEnum::getStatus).collect(Collectors.toList());
+    }
+
+    public static List<String> getPickingList(){
+        return Arrays.asList(HANDLE_ING.getCode(), HANDLE.getCode());
     }
 }

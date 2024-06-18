@@ -822,6 +822,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (ObjectUtil.isEmpty(application)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
+        if (RequisitionApplicationStatusEnum.getPickingList().contains(application.getStatus())) {
+            throw new ServiceException(ApiError.HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING);
+        }
         List<RequisitionApplicationDetailEntity> details = requisitionApplicationDetailService.list(Wrappers.<RequisitionApplicationDetailEntity>lambdaQuery()
                 .eq(RequisitionApplicationDetailEntity::getMainId, picking.getId())
                 .in(RequisitionApplicationDetailEntity::getId, picking.getDetailIds())
