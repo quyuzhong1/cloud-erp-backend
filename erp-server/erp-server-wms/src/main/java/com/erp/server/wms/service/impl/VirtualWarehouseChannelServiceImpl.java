@@ -179,7 +179,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         if (ObjectUtil.isEmpty(channelEntity)) {
             return Collections.EMPTY_LIST;
         }
-        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList());
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(),channelEntity.getVirtualWarehouseId());
         if (ObjectUtil.isEmpty(warehouseEntityList)) {
             return Collections.EMPTY_LIST;
         }

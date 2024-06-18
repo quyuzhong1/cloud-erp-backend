@@ -68,7 +68,8 @@ public interface VirtualWarehouseRelationService extends SuperService<VirtualWar
      * @author will
      * @date 2024/6/12 14:10
      * @param warehouseIdList
+     * @param virtualWarehouseId
      * @return List<VirtualWarehouseRelationEntity>
      */
-    List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList);
+    List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList,String virtualWarehouseId);
 }
