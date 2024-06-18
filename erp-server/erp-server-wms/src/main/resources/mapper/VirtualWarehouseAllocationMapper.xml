@@ -93,7 +93,7 @@
         vmad.update_user_id,
         vmad.update_user_name,
         vmad.update_time,
-        vmad.third_code,
+        vmad.third_code as thirdCode,
         vmad.sys_type,
         vmad.sys_type_name
         FROM virtual_warehouse_allocation_detail vmad

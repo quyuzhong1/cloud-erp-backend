@@ -182,16 +182,15 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                 VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = virtualWarehouseChannelService.getByVirtualWarehouseId(virtualWarehouseEntityId).stream().findFirst().orElse(null);
                 Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> newChannelMap = channelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform));
 
-                newChannelMap.forEach((k,v)->{
+                newChannelMap.forEach((k, v) -> {
                     List<VirtualWarehouseDTO.BindChannelDto> bindChannelDtos = allBindedMap.get(k);
-                    if (CollectionUtils.isNotEmpty(bindChannelDtos)){
+                    if (CollectionUtils.isNotEmpty(bindChannelDtos)) {
 //                        if (Objects.nonNull(virtualWarehouseChannelEntity)
 //                                && Objects.equals(virtualWarehouseChannelEntity.getType(), childTree.getCode())) {
-                            //如果是本虚拟仓绑定需要设置为可选
+                        //如果是本虚拟仓绑定需要设置为可选
 //                        }
                     }
                 });
-
 
 
                 Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> listMap = channelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getType));
@@ -353,7 +352,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             VirtualInventoryDTO.VirtualInventoryQtyDTO virtualInventoryQtyDTO = new VirtualInventoryDTO.VirtualInventoryQtyDTO();
             virtualInventoryQtyDTO.setVirtualWarehouseId(updateStateDTO.getId());
             Integer vmUsableQty = virtualInventoryService.findUsableQtyByQtyDto(virtualInventoryQtyDTO);
-            if (vmUsableQty > 0) {
+            if (Objects.nonNull(vmUsableQty) && vmUsableQty > 0) {
                 throw new ServiceException(ApiError.ERROR_VWSTOCK_NOTEMPRY);
             }
             //禁用时如果绑定第三方仓，需要清除

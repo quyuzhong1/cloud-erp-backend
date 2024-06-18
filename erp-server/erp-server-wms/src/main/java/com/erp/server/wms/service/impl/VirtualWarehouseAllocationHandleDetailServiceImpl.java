@@ -204,7 +204,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     fromToIds.add(detailDto.getFromVirtualWarehouseId());
                     fromToIds.add(detailDto.getToVirtualWarehouseId());
                 }
-                List<ThirdMappingEntity> fromToThirdMappingList = dmpThirdMappingFeign.getListBySysIds((List<String>) fromToIds);
+                List<ThirdMappingEntity> fromToThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds((List<String>) fromToIds);
                 Map<String, List<ThirdMappingEntity>> fromToThirdMappingMap = fromToThirdMappingList.stream().collect(Collectors.groupingBy(ThirdMappingEntity::getSysId));
 
                 List<VirtualWarehouseAllocationDetailEntity> fromToVwResultList = new ArrayList<>();
@@ -244,6 +244,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                                 handleDetailEntity.setSysType(fromMappingList.get(0).getThirdSysType());
                                 handleDetailEntity.setMainId(allocationHandleEntity.getId());
                                 handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
+                                handleDetailEntity.setThirdWarehouseId(toMappingList.get(0).getRemark());
                                 Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
                                 handleDetailEntity.setQty(sumQty);
                                 this.save(handleDetailEntity);
@@ -336,10 +337,11 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
      * @param handleDetailList
      * @param noSyncDetailList
      */
-    private void saveFromHandleDetail(List<VirtualWarehouseAllocationDetailEntity> fromVmList, VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity, List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList) {
+    private void saveFromHandleDetail(List<VirtualWarehouseAllocationDetailEntity> fromVmList, VirtualWarehouseAllocationEntity allocationEntity,
+                                      VirtualWarehouseAllocationHandleEntity allocationHandleEntity, List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList) {
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap = fromVmList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId));
         List<String> fromVwId = fromVmList.stream().map(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
-        List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getListBySysIds(fromVwId);
+        List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
         cancelMap.forEach((fromVmId, allocationDetailList) -> {
             //获取调出仓绑定的旺店通虚拟仓
             if (CollectionUtils.isNotEmpty(fromThirdMappingList)) {
@@ -351,6 +353,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(allocationHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
+                    handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
                     Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
                     handleDetailEntity.setQty(sumQty);
                     this.save(handleDetailEntity);
@@ -378,7 +381,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
     private void saveToHandleDetail(List<VirtualWarehouseAllocationDetailEntity> toVwResultList, VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity, List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList) {
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> toVmMap = toVwResultList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId));
         List<String> toVwIds = toVwResultList.stream().map(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId).collect(Collectors.toList());
-        List<ThirdMappingEntity> toMappingList = dmpThirdMappingFeign.getListBySysIds(toVwIds);
+        List<ThirdMappingEntity> toMappingList = dmpThirdMappingFeign.getVwListBySysIds(toVwIds);
         toVmMap.forEach((toVmId, allocationDetailList) -> {
             //获取调出仓绑定的旺店通虚拟仓
             if (CollectionUtils.isNotEmpty(toMappingList)) {
@@ -390,6 +393,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(allocationHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
+                    handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
                     Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
                     handleDetailEntity.setQty(sumQty);
                     this.save(handleDetailEntity);

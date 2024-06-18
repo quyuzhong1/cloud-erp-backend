@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleEntity;
@@ -99,7 +100,7 @@ public class VirtualWarehouseAllocationHandleServiceImpl extends SuperServiceImp
         VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
         allocationHandleEntity.setAllocationId(allocationEntity.getId());
         allocationHandleEntity.setAllocationCode(allocationEntity.getCode());
-        allocationHandleEntity.setType(allocationEntity.getType());
+        allocationHandleEntity.setType(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
         allocationHandleEntity.setStatus(allocationEntity.getStatus());
         allocationHandleEntity.setDirection(allocationEntity.getDirection());
         this.save(allocationHandleEntity);

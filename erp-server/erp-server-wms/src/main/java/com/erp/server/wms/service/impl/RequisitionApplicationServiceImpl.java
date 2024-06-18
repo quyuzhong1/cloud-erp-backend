@@ -4,8 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -352,62 +350,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             Map<String, List<RequisitionApplicationDTO.HandleListDTO>> haveFromVwMap = haveFromVwList.stream().collect(Collectors.groupingBy(RequisitionApplicationDTO.HandleListDTO::getFromVirtualWarehouseId));
 
             //创建旺店通虚拟仓订单
-            List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
-            Map<String, List<ThirdMappingEntity>> fromThirdMappingMap = dmpThirdMappingFeign.getListBySysIds(fromVwId).stream()
-                    .collect(Collectors.groupingBy(ThirdMappingEntity::getThirdId));
-            //保存要货申请主单
-            VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
-            allocationHandleEntity.setAllocationId(requisitionApplication.getId());
-            allocationHandleEntity.setAllocationCode(requisitionApplication.getCode());
-            allocationHandleEntity.setType(requisitionApplication.getType());
-            allocationHandleEntity.setStatus(requisitionApplication.getStatus());
-            allocationHandleEntity.setDirection(-1);
-            virtualWarehouseAllocationHandleService.save(allocationHandleEntity);
-            List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
-            haveFromVwMap.forEach((fromVmId,fromHandleList)->{
-                //获取调出仓绑定的旺店通虚拟仓
-                if (CollectionUtils.isNotEmpty(fromThirdMappingMap.get(fromVmId))) {
-                    fromThirdMappingMap.get(fromVmId).forEach(thirdMapping -> {
-                            //保存合单明细
-                        VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = new VirtualWarehouseAllocationHandleDetailEntity();
-                        handleDetailEntity.setAllocationId(requisitionApplication.getId());
-                        handleDetailEntity.setDirection(allocationHandleEntity.getDirection());
-                        handleDetailEntity.setType(allocationHandleEntity.getType());
-                        handleDetailEntity.setStatus(allocationHandleEntity.getStatus());
-                        handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
-                        handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-                        handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
-                        handleDetailEntity.setMainId(allocationHandleEntity.getId());
-                        handleDetailEntity.setWarehouseId(fromHandleList.get(0).getFromWarehouseId());
-                        Integer sumQty = fromHandleList.stream().map(RequisitionApplicationDTO.HandleListDTO::getApproveQty).reduce(0, Integer::sum);
-                        handleDetailEntity.setQty(sumQty);
-                        virtualWarehouseAllocationHandledetailService.save(handleDetailEntity);
-                        handleDetailList.add(handleDetailEntity);
-                        fromHandleList.forEach(allocationDetail -> {
-                            VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehouseAllocationHandleRelationEntity();
-                            vmAllocationHandleRelationEntity.setAllocationId(requisitionApplication.getId());
-                            vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getSourceDetailId());
-                            vmAllocationHandleRelationEntity.setHandleId(allocationHandleEntity.getId());
-                            vmAllocationHandleRelationEntity.setHandleDetailId(handleDetailEntity.getId());
-                            virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
-                        });
-                    });
-                }
-            });
-            if (CollectionUtils.isNotEmpty(handleDetailList)) {
-                //推送中台任务:保存任务+发送mq
-                List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
-                        requisitionApplication.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(),SourceTypeEnum.REQUISITION_APPLICATION.getCode());
-                if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
-                    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                        @Override
-                        public void afterCommit() {
-                            //发送mq
-                            dmpMqFeign.sendTask(dmpPushTaskEntityList);
-                        }
-                    });
-                }
-            }
+            service.saveWdtOrder(fromVmIds, requisitionApplication, haveFromVwMap);
 
         }
         //调出仓库和调入仓库不一致的单据
@@ -433,6 +376,67 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "处理保存");
         }
         return flag;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void saveWdtOrder(List<String> fromVmIds, RequisitionApplicationEntity requisitionApplication, Map<String, List<RequisitionApplicationDTO.HandleListDTO>> haveFromVwMap) {
+        List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        Map<String, List<ThirdMappingEntity>> fromThirdMappingMap = dmpThirdMappingFeign.getVwListBySysIds(fromVwId).stream()
+                .collect(Collectors.groupingBy(ThirdMappingEntity::getThirdId));
+        //保存要货申请主单
+        VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
+        allocationHandleEntity.setAllocationId(requisitionApplication.getId());
+        allocationHandleEntity.setAllocationCode(requisitionApplication.getCode());
+        allocationHandleEntity.setType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+        allocationHandleEntity.setStatus(requisitionApplication.getStatus());
+        allocationHandleEntity.setDirection(-1);
+        virtualWarehouseAllocationHandleService.save(allocationHandleEntity);
+        List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
+        haveFromVwMap.forEach((fromVmId, fromHandleList)->{
+            //获取调出仓绑定的旺店通虚拟仓
+            if (CollectionUtils.isNotEmpty(fromThirdMappingMap.get(fromVmId))) {
+                fromThirdMappingMap.get(fromVmId).forEach(thirdMapping -> {
+                        //保存合单明细
+                    VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = new VirtualWarehouseAllocationHandleDetailEntity();
+                    handleDetailEntity.setAllocationId(requisitionApplication.getId());
+                    handleDetailEntity.setDirection(allocationHandleEntity.getDirection());
+                    handleDetailEntity.setType(requisitionApplication.getType());
+                    handleDetailEntity.setStatus(allocationHandleEntity.getStatus());
+                    handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
+                    handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
+                    handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
+                    handleDetailEntity.setMainId(allocationHandleEntity.getId());
+                    handleDetailEntity.setWarehouseId(fromHandleList.get(0).getFromWarehouseId());
+                    handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
+                    Integer sumQty = fromHandleList.stream().map(RequisitionApplicationDTO.HandleListDTO::getApproveQty).reduce(0, Integer::sum);
+                    handleDetailEntity.setQty(sumQty);
+                    virtualWarehouseAllocationHandledetailService.save(handleDetailEntity);
+                    handleDetailList.add(handleDetailEntity);
+                    fromHandleList.forEach(allocationDetail -> {
+                        VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehouseAllocationHandleRelationEntity();
+                        vmAllocationHandleRelationEntity.setAllocationId(requisitionApplication.getId());
+                        vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getSourceDetailId());
+                        vmAllocationHandleRelationEntity.setHandleId(allocationHandleEntity.getId());
+                        vmAllocationHandleRelationEntity.setHandleDetailId(handleDetailEntity.getId());
+                        virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
+                    });
+                });
+            }
+        });
+        if (CollectionUtils.isNotEmpty(handleDetailList)) {
+            //推送中台任务:保存任务+发送mq
+            List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
+                    requisitionApplication.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(),SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+            if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        //发送mq
+                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+                    }
+                });
+            }
+        }
     }
 
     /**
@@ -721,64 +725,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 List<String> fromVmIds = haveFromVwList.stream().map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
 
                 //创建旺店通虚拟仓订单
-                List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
-                Map<String, List<ThirdMappingEntity>> fromThirdMappingMap = dmpThirdMappingFeign.getListBySysIds(fromVwId).stream()
-                        .collect(Collectors.groupingBy(ThirdMappingEntity::getThirdId));
-                //保存要货申请主单
-                VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
-                allocationHandleEntity.setAllocationId(entity.getId());
-                allocationHandleEntity.setAllocationCode(entity.getCode());
-                allocationHandleEntity.setType(entity.getType());
-                allocationHandleEntity.setStatus(entity.getStatus());
-                allocationHandleEntity.setDirection(-1);
-                virtualWarehouseAllocationHandleService.save(allocationHandleEntity);
-                List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
-                haveFromVwMap.forEach((fromVmId,fromHandleList)->{
-                    //获取调出仓绑定的旺店通虚拟仓
-                    if (CollectionUtils.isNotEmpty(fromThirdMappingMap.get(fromVmId))) {
-                        fromThirdMappingMap.get(fromVmId).forEach(thirdMapping -> {
-                            //保存合单明细
-                            VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = new VirtualWarehouseAllocationHandleDetailEntity();
-                            handleDetailEntity.setAllocationId(entity.getId());
-                            handleDetailEntity.setDirection(allocationHandleEntity.getDirection());
-                            handleDetailEntity.setType(allocationHandleEntity.getType());
-                            handleDetailEntity.setStatus(allocationHandleEntity.getStatus());
-                            handleDetailEntity.setToVirtualWarehouseId(fromVmId);
-                            handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-                            handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
-                            handleDetailEntity.setMainId(allocationHandleEntity.getId());
-                            handleDetailEntity.setWarehouseId(fromHandleList.get(0).getFromWarehouseId());
-                            Integer sumQty = fromHandleList.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum);
-                            handleDetailEntity.setQty(sumQty);
-                            virtualWarehouseAllocationHandledetailService.save(handleDetailEntity);
-                            handleDetailList.add(handleDetailEntity);
-                            fromHandleList.forEach(allocationDetail -> {
-                                VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehouseAllocationHandleRelationEntity();
-                                vmAllocationHandleRelationEntity.setAllocationId(entity.getId());
-                                vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getSourceDetailId());
-                                vmAllocationHandleRelationEntity.setHandleId(allocationHandleEntity.getId());
-                                vmAllocationHandleRelationEntity.setHandleDetailId(handleDetailEntity.getId());
-                                virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
-                            });
-                        });
-                    }
-                });
-                if (CollectionUtils.isNotEmpty(handleDetailList)) {
-                    //推送中台任务:保存任务+发送mq
-                    List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
-                            entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(),SourceTypeEnum.REQUISITION_APPLICATION.getCode());
-                    if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
-                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                            @Override
-                            public void afterCommit() {
-                                //发送mq
-                                dmpMqFeign.sendTask(dmpPushTaskEntityList);
-                            }
-                        });
-                    }
-                }
-
-
+                service.cancelWdtOrder(fromVmIds, entity, haveFromVwMap);
             }
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE.getStatus())) {
@@ -801,6 +748,67 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);*/
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelWdtOrder(List<String> fromVmIds, RequisitionApplicationEntity entity, Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap) {
+        List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        Map<String, List<ThirdMappingEntity>> fromThirdMappingMap = dmpThirdMappingFeign.getVwListBySysIds(fromVwId).stream()
+                .collect(Collectors.groupingBy(ThirdMappingEntity::getThirdId));
+        //保存要货申请主单
+        VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
+        allocationHandleEntity.setAllocationId(entity.getId());
+        allocationHandleEntity.setAllocationCode(entity.getCode());
+        allocationHandleEntity.setType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+        allocationHandleEntity.setStatus(entity.getStatus());
+        allocationHandleEntity.setDirection(-1);
+        virtualWarehouseAllocationHandleService.save(allocationHandleEntity);
+        List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
+        haveFromVwMap.forEach((fromVmId, fromHandleList)->{
+            //获取调出仓绑定的旺店通虚拟仓
+            if (CollectionUtils.isNotEmpty(fromThirdMappingMap.get(fromVmId))) {
+                fromThirdMappingMap.get(fromVmId).forEach(thirdMapping -> {
+                    //保存合单明细
+                    VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = new VirtualWarehouseAllocationHandleDetailEntity();
+                    handleDetailEntity.setAllocationId(entity.getId());
+                    handleDetailEntity.setDirection(allocationHandleEntity.getDirection());
+                    handleDetailEntity.setType(entity.getType());
+                    handleDetailEntity.setStatus(allocationHandleEntity.getStatus());
+                    handleDetailEntity.setToVirtualWarehouseId(fromVmId);
+                    handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
+                    handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
+                    handleDetailEntity.setMainId(allocationHandleEntity.getId());
+                    handleDetailEntity.setWarehouseId(fromHandleList.get(0).getFromWarehouseId());
+                    handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
+                    Integer sumQty = fromHandleList.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum);
+                    handleDetailEntity.setQty(sumQty);
+                    virtualWarehouseAllocationHandledetailService.save(handleDetailEntity);
+                    handleDetailList.add(handleDetailEntity);
+                    fromHandleList.forEach(allocationDetail -> {
+                        VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehouseAllocationHandleRelationEntity();
+                        vmAllocationHandleRelationEntity.setAllocationId(entity.getId());
+                        vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getSourceDetailId());
+                        vmAllocationHandleRelationEntity.setHandleId(allocationHandleEntity.getId());
+                        vmAllocationHandleRelationEntity.setHandleDetailId(handleDetailEntity.getId());
+                        virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
+                    });
+                });
+            }
+        });
+        if (CollectionUtils.isNotEmpty(handleDetailList)) {
+            //推送中台任务:保存任务+发送mq
+            List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
+                    entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(),SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+            if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        //发送mq
+                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+                    }
+                });
+            }
+        }
     }
 
     /**

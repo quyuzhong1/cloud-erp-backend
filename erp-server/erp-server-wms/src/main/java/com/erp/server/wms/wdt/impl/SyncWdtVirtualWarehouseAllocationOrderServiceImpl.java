@@ -80,11 +80,15 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             request.setVirtualWarehouseNo(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId()) ? handleDetail.getThirdFromVirtualWarehouseId() : handleDetail.getThirdToVirtualWarehouseId());
             request.setToVirtualWarehouseNo(handleDetail.getThirdToVirtualWarehouseId());
             List<VwAllocationHandelDetailPushDTO.DetailList> detailList = new ArrayList<>();
+            //获取对应的产品信息
+
             VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
             detail.setNum(BigDecimal.valueOf(handleDetail.getQty()));
-            detail.setWarehouseNo("1");
+            detail.setWarehouseNo(handleDetail.getThirdWarehouseId());
             detail.setSpecNo(handleDetail.getId());
             detailList.add(detail);
+
+
             request.setDetailList(detailList);
             request.setRemark("原始单据号：" + vwAllocationCode);
 

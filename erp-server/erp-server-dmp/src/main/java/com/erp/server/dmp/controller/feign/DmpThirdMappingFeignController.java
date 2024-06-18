@@ -1,11 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.DataAttributeEnum;
-import com.common.core.anno.LogAction;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.server.dmp.service.ThirdMappingService;
@@ -36,6 +31,10 @@ public class DmpThirdMappingFeignController {
     @GetMapping("/getListBySysIds")
     public List<ThirdMappingEntity> getListBySysIds(@RequestParam List<String> sysIds){
         return thirdMappingService.getListBySysIds(sysIds);
+    }
+    @GetMapping("/getWarehouseListBySysIds")
+    public List<ThirdMappingEntity> getWarehouseListBySysIds(@RequestParam List<String> sysIds){
+        return thirdMappingService.getVwListBySysIds(sysIds);
     }
 
     @PostMapping("/getWhetherBind")

@@ -1,9 +1,6 @@
 package com.erp.rpc.dmp.feign;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.DataAttributeEnum;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
@@ -30,6 +27,9 @@ public interface DmpThirdMappingFeign {
 
     @GetMapping("/getListBySysIds")
     List<ThirdMappingEntity> getListBySysIds(@RequestParam List<String> sysIds);
+
+    @GetMapping("/getVwListBySysIds")
+    List<ThirdMappingEntity> getVwListBySysIds(@RequestParam List<String> sysIds);
 
     /**
      * 查询绑定关系

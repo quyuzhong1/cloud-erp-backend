@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -21,8 +22,10 @@ import com.erp.server.dmp.mapper.ThirdMappingMapper;
 import com.erp.server.dmp.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import com.sdk.wangdian.dto.ErpWarehouseDto;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -586,6 +589,32 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 .eq(ThirdMappingEntity::getIsDeleted, false)
                 .eq(ThirdMappingEntity::getDisabled, false);
         return baseMapper.selectList(queryWrapper);
+    }
+
+    /**
+     * 根据系统id获取虚拟仓绑定
+     * @param sysIds
+     * @return
+     */
+    @Override
+    public List<ThirdMappingEntity> getVwListBySysIds(List<String> sysIds) {
+        List<ThirdMappingEntity> listBySysIds = getListBySysIds(sysIds);
+        if (CollectionUtils.isNotEmpty(listBySysIds)){
+            List<ThirdWarehouseEntity> thirdWarehouseEntities = thirdWarehouseService.listByIds(listBySysIds.stream().map(ThirdMappingEntity::getThirdInfoId).collect(Collectors.toList()));
+            listBySysIds.forEach(thirdMappingEntity -> {
+                ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseEntities.stream().filter(item -> Objects.equals(thirdMappingEntity.getThirdId(), item.getWarehouseId())).findFirst().orElse(null);
+                if (Objects.nonNull(thirdWarehouseEntity)){
+                    String warehouseList = thirdWarehouseEntity.getWarehouseList();
+                    if (StringUtils.isNotBlank(warehouseList)) {
+                        ThirdMappingDTO.WarehouseListDto warehouseListDto = JSONObject.parseArray(warehouseList, ThirdMappingDTO.WarehouseListDto.class).stream().findFirst().orElse(null);
+                        if (Objects.nonNull(warehouseListDto)) {
+                            thirdWarehouseEntity.setRemark(warehouseListDto.getSys_warehouse_id());
+                        }
+                    }
+                }
+            });
+        }
+        return listBySysIds;
     }
 
 
