@@ -22,6 +22,7 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.SoB2cErrorService;
+import com.erp.server.oms.service.SoB2cReceiverService;
 import com.erp.server.oms.service.SoB2cService;
 import com.erp.server.oms.service.SoB2cSplitService;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
@@ -1225,4 +1226,40 @@ public class SoB2cController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 获取买家信息
+     * @param idDTO
+     * @return
+     */
+    @PostMapping("/getReceiverInfo")
+    public ApiResult<List<SoB2cReceiverDTO.ViewDTO>> getReceiverInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        return success(soB2cService.getReceiverInfo(idDTO.getIds()));
+    }
+
+    /**
+     * 修改买家信息
+     * @param dtoList
+     * @return
+     */
+    @PostMapping("/updateReceiverInfo")
+    public ApiResult<List<BatchResultDTO>> updateReceiverInfo(@RequestBody @Validated List<SoB2cReceiverDTO.UpdateBaseDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        for (SoB2cReceiverDTO.UpdateBaseDTO dto : dtoList) {
+            BatchResultDTO receiverResult;
+            try {
+                receiverResult = soB2cService.updateReceiverInfo(dto);
+            } catch (Exception e) {
+                log.error("B2C销售订单作废失败", e);
+                SoB2cEntity entity = soB2cService.getById(dto.getMainId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    receiverResult = BatchResultDTO.fail(dto.getMainId(), dto.getSoB2cCode(), "B2C销售订单不存在, 修改买家信息失败");
+                    resultDTOS.add(receiverResult);
+                    continue;
+                }
+                receiverResult = BatchResultDTO.fail(dto.getMainId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(receiverResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

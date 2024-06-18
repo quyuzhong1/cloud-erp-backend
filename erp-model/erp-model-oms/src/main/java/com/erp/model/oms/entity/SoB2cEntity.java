@@ -281,7 +281,11 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("is_cancel")
     private Boolean isCancel;
-
+    /**
+     * 是否地址修改
+     */
+    @TableField("is_change_receiver_address")
+    private Boolean isChangeReceiverAddress;
 
     /**
      * 卖家订单编号

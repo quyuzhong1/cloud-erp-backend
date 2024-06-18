@@ -913,4 +913,18 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     BatchResultDTO addGift(SoB2cDTO.GiftDTO dto);
+
+    /**
+     * 根据销售订单id获取买家信息
+     * @param ids
+     * @return
+     */
+    List<SoB2cReceiverDTO.ViewDTO> getReceiverInfo(List<String> ids);
+
+    /**
+     * 更新买家信息
+     * @param dto
+     * @return
+     */
+    BatchResultDTO updateReceiverInfo(SoB2cReceiverDTO.UpdateBaseDTO dto);
 }

@@ -7913,4 +7913,70 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cDetailService.save(detail);
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "新增赠品成功");
     }
+    /**
+     * 根据销售订单id获取买家信息
+     * @param ids
+     * @return
+     */
+    @Override
+    public List<SoB2cReceiverDTO.ViewDTO> getReceiverInfo(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        //step1:根据ids获取销售订单列表
+        List<SoB2cEntity> soB2cEntities = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soB2cEntities)){
+            return Collections.emptyList();
+        }
+        //step2:根据销售订单ids获取收货人信息
+        List<SoB2cReceiverEntity> soB2cReceiverEntities = soB2cReceiverService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(soB2cReceiverEntities)){
+            return Collections.emptyList();
+        }
+        //step3：信息整合并返回
+        List<SoB2cReceiverDTO.ViewDTO> viewDTOList = new ArrayList<>(soB2cReceiverEntities.size());
+        soB2cReceiverEntities.forEach(soB2cReceiverEntity -> {
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getId().equals(soB2cReceiverEntity.getMainId())).findFirst().orElse(new SoB2cEntity());
+            SoB2cReceiverDTO.ViewDTO viewDTO = B2cOrderConsumerConverter.INSTANCE.convertReceiverToView(soB2cReceiverEntity,soB2cEntity);
+            viewDTOList.add(viewDTO);
+        });
+        return viewDTOList;
+    }
+    /**
+     * 更新买家信息
+     * @param dto
+     * @return
+     */
+    @Override
+    public BatchResultDTO updateReceiverInfo(SoB2cReceiverDTO.UpdateBaseDTO dto) {
+        //step1 获取销售订单信息
+        SoB2cEntity entity = this.getById(dto.getMainId());
+        if (Objects.isNull(entity)){
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        //step2 获取买家信息
+        SoB2cReceiverEntity old = soB2cReceiverService.getById(dto.getMainId());
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单买家信息表"));
+        //step3 更新买家物流信息
+        SoB2cReceiverEntity receiver = B2cOrderConsumerConverter.INSTANCE.convertUpdateReceiverByDto(dto,old);
+        soB2cReceiverService.updateFieldById(receiver);
+        // 记录主单操作日志
+        log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", entity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表");
+        operateLogService.addModuleOperateLogByObj(old, receiver, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), msg);
+        //step4 销售订单打标
+        this.updateChangeReceiverAddressById(entity.getId(),Boolean.TRUE);
+        return BatchResultDTO.success(dto.getMainId(), entity.getCode(), "修改买家信息成功");
+    }
+
+    /**
+     * 更新销售订单是否修复地址标识
+     * @param id
+     * @param flag
+     */
+    private void updateChangeReceiverAddressById(String id, Boolean flag) {
+        if (StrUtil.isNotBlank(id) && Objects.nonNull(flag)){
+            this.lambdaUpdate().set(SoB2cEntity::getIsChangeReceiverAddress, flag).eq(SoB2cEntity::getId, id).update();
+        }
+    }
 }
