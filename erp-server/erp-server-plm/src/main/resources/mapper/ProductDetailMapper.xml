@@ -816,6 +816,9 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.saleMethod !=null and params.saleMethod != ''">
+            AND string_to_array(pi.sale_method,',') &amp;&amp; string_to_array(#{params.saleMethod},',')
+        </if>
         <if test="params.permissionSql != '' and params.permissionSql != null">
             ${params.permissionSql}
         </if>

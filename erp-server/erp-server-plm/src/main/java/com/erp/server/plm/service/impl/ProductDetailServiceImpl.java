@@ -4083,6 +4083,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
         //已存在数据
         skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        List<String> saleMethodList = skuParamDTO.getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            skuParamDTO.setSaleMethod(StringUtils.join(saleMethodParams, ","));
+        }
         List<ProductSearchDTO.SkuListDTO> list = this.baseMapper.listSkuBySkuNos(skuParamDTO);
 
         List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
