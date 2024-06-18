@@ -78,6 +78,8 @@
         sb2cr.name as buyerName,
         sb2cr.country_name as countryName,
         sb2cr.country as country,
+        sb2cr.email as email,
+        sb2cr.tel_number as telNumber,
         sb2c.create_time as createTime,
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
         sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
