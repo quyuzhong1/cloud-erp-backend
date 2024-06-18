@@ -315,7 +315,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "packageCount" ,constant = "1"),
             @Mapping(target = "sourceCode" ,source = "orderSource"),
             @Mapping(target = "returnOption" ,source = "returnOption"),
-            @Mapping(target = "InsuranceOption" ,constant = "0"),
+            @Mapping(target = "insuranceOption" ,constant = "0"),
             @Mapping(target = "iossCode" ,source = "iossCode"),
 //            @Mapping(target = "coverage" ,source = "parceInfoVO.insuranceValue"),
             @Mapping(target = "receiver.countryCode",source = "receiverInfoVO.country"),
