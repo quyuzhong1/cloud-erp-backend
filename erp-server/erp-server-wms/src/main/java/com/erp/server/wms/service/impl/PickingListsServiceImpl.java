@@ -155,6 +155,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @GlobalTransactional(rollbackFor = Exception.class)
     public void saveAddData(PickingListsEntity entity, List<PickingDetailEntity> entities, WarehouseLocationMoveDTO.AddDTO moveDto) {
         save(entity);
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("生成拣货单【{}】", entity.getCode()), ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "新增操作");
         pickingDetailService.saveBatch(entities);
         warehouseLocationMoveService.addAndApprove(moveDto);
     }
@@ -399,11 +400,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detailEntity.getSkuId(), detailEntity.getSkuNo(),
                         detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty(), entity.getWarehouseId()));
             }
+            String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，数量由【{}】变更为【{}】", view.getSkuNo(),
+                    detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getQty(), view.getQty());
             detailEntity.setWarehouseLocation(view.getWarehouseLocation());
             detailEntity.setQty(view.getQty());
             updateList.add(detailEntity);
-            String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，数量由【{}】变更为【{}】", view.getSkuNo(),
-                    detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getQty(), view.getQty());
             operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
 
         }
