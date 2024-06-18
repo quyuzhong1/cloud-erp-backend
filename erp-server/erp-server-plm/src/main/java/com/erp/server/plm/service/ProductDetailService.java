@@ -715,7 +715,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds);
-    void initProductToWangDian(List<String> ids);
     PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
 
 }

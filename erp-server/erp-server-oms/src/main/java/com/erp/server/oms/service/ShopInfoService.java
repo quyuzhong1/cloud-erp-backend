@@ -294,21 +294,6 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      **/
     List<ShopInfoEntity> getRelatedShopById(String platformShopCode);
 
-    List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto);
-
-    void listExport(ShopDTO.ExportDTO dto, HttpServletResponse response);
-
-
-    /**
-     * 添加国内店铺
-     *
-     * @param dto
-     * @return java.lang.String
-     * @author hyj
-     * @date 2024-05-23 16:39
-     */
-    List<ShopInfoEntity> addIntenal(ShopDTO.AddInternalDTO dto);
-
     /**
      * 远程搜索
      * @param dto
