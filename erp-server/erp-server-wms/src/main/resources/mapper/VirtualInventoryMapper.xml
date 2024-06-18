@@ -301,9 +301,9 @@
             COALESCE(sum(vi.qty),0) as qty
         from virtual_inventory vi
         <where>
-            vi.is_deleted = false and vi.warehouse_id = #{warehouseId}
+            vi.is_deleted = false and vi.warehouse_id = #{warehouseId} and vi.sku_id = #{skuId}
         </where>
-        group by vi.warehouse_id
+        group by vi.warehouse_id,vi.sku_id
     </select>
 
 </mapper>

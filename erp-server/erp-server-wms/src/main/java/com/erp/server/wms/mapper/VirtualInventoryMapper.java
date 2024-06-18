@@ -120,5 +120,5 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @param warehouseId
      * @return Integer
      */
-    Integer getInventoryQtyByWarehouseId(@Param("warehouseId") String warehouseId);
+    Integer getInventoryQtyByWarehouseId(@Param("warehouseId") String warehouseId,@Param("skuId")String skuId);
 }

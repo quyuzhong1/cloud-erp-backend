@@ -343,8 +343,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     }
 
     @Override
-    public Integer getInventoryQtyByWarehouseId(String warehouseId) {
-        return baseMapper.getInventoryQtyByWarehouseId(warehouseId);
+    public Integer getInventoryQtyByWarehouseId(String warehouseId,String skuId) {
+        return baseMapper.getInventoryQtyByWarehouseId(warehouseId, skuId);
     }
 
     /**

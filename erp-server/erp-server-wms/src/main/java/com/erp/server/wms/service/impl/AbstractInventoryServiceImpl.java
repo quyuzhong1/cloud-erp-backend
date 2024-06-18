@@ -626,7 +626,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         //虚拟库存校验
         if (InventoryStatusEnum.USABLE.equals(status)) {
             //虚拟库存
-            Integer virtualQty = virtualInventoryService.getInventoryQtyByWarehouseId(warehouseId);
+            Integer virtualQty = virtualInventoryService.getInventoryQtyByWarehouseId(warehouseId,skuId);
             virtualQty = ObjectUtil.isEmpty(virtualQty) ? MathUtil.ZERO : virtualQty;
             //仓库可用库存
             Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(warehouseId, skuId);

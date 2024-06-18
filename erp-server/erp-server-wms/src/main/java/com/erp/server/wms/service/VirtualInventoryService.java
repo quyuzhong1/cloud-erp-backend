@@ -104,7 +104,8 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @author will
      * @date 2024/6/18 9:23
      * @param warehouseId
+     * @param skuId
      * @return Integer
      */
-    Integer getInventoryQtyByWarehouseId(String warehouseId);
+    Integer getInventoryQtyByWarehouseId(String warehouseId,String skuId);
 }
