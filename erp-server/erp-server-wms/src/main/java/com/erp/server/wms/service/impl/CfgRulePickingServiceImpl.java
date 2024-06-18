@@ -9,6 +9,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
@@ -34,6 +35,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -128,8 +130,12 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     public void updateStatus(UpdateStateDTO.BatchUpdateDTO dto) {
         List<CfgRulePickingEntity> list = listByIds(dto.getIds());
         List<Pair<String, String>> pairs = list.stream().map(e -> Pair.create(e.getId(), Boolean.TRUE.equals(e.getDisabled()) ? "停用" : "启用")).collect(Collectors.toList());
+        LoginUser user = UserContext.getDefaultLoginUser();
         update(Wrappers.<CfgRulePickingEntity>lambdaUpdate()
                 .set(CfgRulePickingEntity::getDisabled, dto.getDisabled())
+                .set(CfgRulePickingEntity::getUpdateTime, LocalDateTime.now())
+                .set(CfgRulePickingEntity::getUpdateUserId, user.getUid())
+                .set(CfgRulePickingEntity::getUpdateUserName, user.getUserName())
                 .in(CfgRulePickingEntity::getId, dto.getIds()));
         String content = "启用状态由[%s]变更为" + (Boolean.TRUE.equals(dto.getDisabled()) ? "停用" : "启用");
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.PICKING_STRATEGY.getCode(), pairs, "状态变更");
@@ -216,6 +222,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                         .eq(InventoryEntity::getSkuId, skuId)
                         .eq(InventoryEntity::getWarehouseId, action.getWarehouseId())
                         .in(InventoryEntity::getWarehouseLocation, locationCodes)
+                        .ne(InventoryEntity::getQty, 0)
                         .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
                         .orderByDesc(InventoryEntity::getQty)
                 );

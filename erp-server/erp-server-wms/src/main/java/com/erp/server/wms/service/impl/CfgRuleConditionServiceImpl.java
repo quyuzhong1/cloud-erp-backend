@@ -119,6 +119,7 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                 .map(action -> {
                     CfgRuleConditionEntity entity = BeanMapperUtils.map(CfgRuleConditionEntity.class, action);
                     entity.setIndex(index.incrementAndGet());
+                    entity.setSourceType(sourceType);
                     entity.setRuleId(ruleId);
                     return entity;
                 }).collect(Collectors.toList());

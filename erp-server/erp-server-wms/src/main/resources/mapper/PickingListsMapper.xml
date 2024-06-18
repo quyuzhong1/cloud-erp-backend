@@ -38,7 +38,7 @@
         where ${params.sqlMap.default}
           and source_type = #{params.sourceType}
           and is_deleted = false
-        order by update_time desc, id desc
+        order by create_time desc, id desc
     </select>
 
     <select id="exportInfo" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$ExportInfoDTO">
