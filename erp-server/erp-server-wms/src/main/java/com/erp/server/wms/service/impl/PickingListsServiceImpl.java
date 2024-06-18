@@ -276,7 +276,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<PickingListsEntity> pickingLists = listByIds(ids);
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuBaseByIds(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<PickingListsDTO.PrintView> views = detailList.stream().map(detail -> {
             PickingListsEntity entity = pickingLists.stream()
                     .filter(picking -> picking.getId().equals(detail.getMainId()))

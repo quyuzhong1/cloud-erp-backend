@@ -12,11 +12,9 @@ import com.erp.server.wms.mapper.CfgConditionMapper;
 import com.erp.server.wms.service.CfgConditionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -81,5 +79,13 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
 
         }
         return resultList;
+    }
+
+    @Override
+    public List<CfgConditionEntity> listByFields(List<String> fieldList) {
+        if (CollectionUtils.isEmpty(fieldList)){
+            return Collections.emptyList();
+        }
+        return list(Wrappers.<CfgConditionEntity>lambdaQuery().in(CfgConditionEntity::getConditionField, fieldList));
     }
 }

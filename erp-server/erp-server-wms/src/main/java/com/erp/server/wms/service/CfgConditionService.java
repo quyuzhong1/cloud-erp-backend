@@ -35,4 +35,6 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
      * @param type 类型
      */
     List<CfgConditionDTO.TreeDTO> tree(String type);
+
+    List<CfgConditionEntity> listByFields(List<String> fieldList);
 }

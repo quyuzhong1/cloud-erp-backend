@@ -64,6 +64,9 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     @Resource
     private InventoryService inventoryService;
 
+    @Resource
+    private CfgConditionService cfgConditionService;
+
     @Override
     public PagingVO<CfgRulePickingDTO.PagingView> paging(PagingDTO<CfgRulePickingDTO.PagingParam> dto) {
         IPage<CfgRulePickingDTO.PagingView> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
@@ -175,6 +178,14 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 List<CfgRuleConditionEntity> conditionList = conditions.stream().
                         filter(r -> r.getRuleId().equals(picking.getId())).
                         sorted(Comparator.comparing(CfgRuleConditionEntity::getIndex)).collect(Collectors.toList());
+                List<String> fieldList = conditionList.stream().map(CfgRuleConditionEntity::getField).distinct().collect(Collectors.toList());
+                List<CfgConditionEntity> cfgConditionList = cfgConditionService.listByFields(fieldList);
+                for (CfgRuleConditionEntity item : conditionList) {
+                    String fieldFlag = item.getField();
+                    String valueType = cfgConditionList.stream().filter(c -> c.getConditionField().equals(fieldFlag)).
+                            findFirst().map(CfgConditionEntity::getValueType).orElse("String");
+                    item.setValueType(valueType);
+                }
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
                 //获取到表达式,判断表达式是否匹配
                 Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
