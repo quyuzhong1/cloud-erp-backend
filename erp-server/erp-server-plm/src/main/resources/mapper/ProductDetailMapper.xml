@@ -1810,6 +1810,263 @@
             pd.sku_no, pd.name;
         </if>
     </select>
+    <select id="listSkuCostByIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.version,
+        pd.id AS skuId,
+        pd.sku_no,
+        pd.product_id AS productId,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.version,
+        pd.unit_name,
+        pd.status,
+        pd.variant_property as variantProperty,
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge,
+        pc.actual_tax_cost,
+        pc.target_tax_cost,
+        pc.retail_price,
+        pp.moq,
+        pp.main_supplier as supplierId,
+        pp.main_supplier as mainSupplier,
+        pp.second_supplier as secondSupplier,
+        pp.ean
+        FROM  product_detail pd
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        WHERE
+        pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
+    <select id="listSkuProductByIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pi.spec_type,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        pi.category_id as categoryId,
+        pi.sale_method,
+        pd.version,
+        pd.id AS skuId,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.version,
+        pd.unit_name,
+        pd.status,
+        pd.variant_property as variantProperty,
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
+    <select id="listSkuPackByIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.spu_no,
+        pi.name AS spuName,
+        pi.spec_type,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        pi.category_id as categoryId,
+        pi.sale_method,
+        pd.version,
+        pd.id AS skuId,
+        pd.sku_no,
+        pd.product_id AS productId,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.version,
+        pd.unit_name,
+        pd.status,
+        pd.variant_property as variantProperty,
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge,
+        ppk.gross_weight,
+        ppk.product_length as productLength,
+        ppk.product_width as productWidth,
+        ppk.product_height as productHeight,
+        ppk.box_qty::integer as boxQty,
+        ppk.box_qty::integer as unitQty,
+        ppk.net_weight as netWeight
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
+    <select id="listSkuSaleByIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pi.spec_type,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        pi.category_id as categoryId,
+        pi.sale_method,
+        pd.version,
+        pd.id AS skuId,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.version,
+        pd.unit_name,
+        pd.status,
+        pd.variant_property as variantProperty,
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge,
+        ps.sale_state as saleState
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_sale ps on pd.id = ps.sku_id AND ps.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
+    <select id="listSkuLogisticsByIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pi.spec_type,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        pi.category_id as categoryId,
+        pi.sale_method,
+        pd.version,
+        pd.id AS skuId,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.version,
+        pd.unit_name,
+        pd.status,
+        pd.variant_property as variantProperty,
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge,
+        pl.declare_chinese_name as declareName,
+        pl.declare_model as declareModel,
+        pl.product_property_id AS productPropertyId,
+        pl.declare_element as declareElement,
+        pl.declare_currency_symbol as declareCurrencySymbol
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
+    <select id="listSkuCategoryByIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pi.spec_type,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        pi.category_id as categoryId,
+        pi.sale_method,
+        pd.version,
+        pd.id AS skuId,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.version,
+        pd.unit_name,
+        pd.status,
+        pd.variant_property as variantProperty,
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge,
+        bc.name as categoryName
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join basic_category bc on pi.category_id = bc.id AND bc.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
+    <select id="listSkuPurchaseByIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pi.spec_type,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        pi.category_id as categoryId,
+        pi.sale_method,
+        pd.version,
+        pd.id AS skuId,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.version,
+        pd.unit_name,
+        pd.status,
+        pd.variant_property as variantProperty,
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location_large as warehouseLocationLarge,
+        pp.moq,
+        pp.main_supplier as supplierId,
+        pp.main_supplier as mainSupplier,
+        pp.second_supplier as secondSupplier,
+        pp.ean
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        WHERE
+        pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
 
     <select id="listCount" resultType="java.lang.Integer">
         select

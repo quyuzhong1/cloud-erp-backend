@@ -1081,7 +1081,7 @@ public class PullAmzJob {
                 return;
             }
             // 设置所有本地时区
-            e.checkAndSetAllDateLocale(timeZoneEntity.getUtcDiffHour());
+            e.checkAndSetAllDateLocale(timeZoneEntity.getTimeZone());
 
         });
     }
