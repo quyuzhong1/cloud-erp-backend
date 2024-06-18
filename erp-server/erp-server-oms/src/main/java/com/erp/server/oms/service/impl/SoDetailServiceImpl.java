@@ -371,8 +371,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryQty())).orElse(MathUtil.ZERO);
             item.setVirtualAvailableQty(MathUtil.compareTo(virtualUsableQty,qty) > MathUtil.ZERO ? qty : virtualUsableQty);
 
-            //虚拟缺货数量
-            Integer virtualScarceQty =  MathUtil.compareTo(virtualUsableQty,qty) > MathUtil.ZERO ? MathUtil.ZERO : virtualUsableQty - qty;
+            //虚拟缺货数量(显示正数)
+            Integer virtualScarceQty =  MathUtil.compareTo(virtualUsableQty,qty) > MathUtil.ZERO ? MathUtil.ZERO : qty - virtualUsableQty;
             item.setVirtualScarceQty(virtualScarceQty);
 
             //税率

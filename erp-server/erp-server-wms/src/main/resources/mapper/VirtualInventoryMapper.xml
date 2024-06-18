@@ -264,7 +264,7 @@
         from virtual_inventory vi
         <where>
             vi.is_deleted = false and  vi.sku_id in
-            <foreach collection="params.warehouseIdList" item="item" separator=","  open="(" close=")">
+            <foreach collection="params.skuIdList" item="item" separator=","  open="(" close=")">
                 #{item}
             </foreach>
             and vi.warehouse_id in
