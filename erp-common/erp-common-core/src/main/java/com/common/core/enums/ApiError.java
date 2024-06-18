@@ -1279,6 +1279,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
     ERROR_CFG_COST_EMPTY(94045,"未发现【{}】费用配置信息"),
     ERROR_LOGISTICS_CHANNEL_WAREHOUSE_NOT_NULL(94046,"指定仓库不能为空"),
+    ERROR_SO_B2C_STATUS_NOT_ALLOWED(92150,"非待提交和审核不通过的订单不允许添加赠品"),
 
 
 

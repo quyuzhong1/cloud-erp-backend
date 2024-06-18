@@ -366,7 +366,10 @@ public class ProductDetailDTO implements Serializable {
          * spu编号
          */
         private String spuNo;
-
+        /**
+         * 产品名称
+         */
+        private String productName;
     }
 
 }
