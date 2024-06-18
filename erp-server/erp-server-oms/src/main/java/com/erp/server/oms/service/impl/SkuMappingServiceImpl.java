@@ -393,25 +393,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return skuMaping.getId();
         }
         LocalDateTime now = LocalDateTime.now();
-        skuMaping.setExpireTime(now);
-        skuMaping.setIsExpire(Boolean.TRUE);
-        if (StringUtils.isBlank(historyProductSkuId)){
-            // 历史SkuId为空逻辑删除
-            boolean update = lambdaUpdate()
-                    .set(SkuMappingEntity::getIsExpire, true)
-                    .set(SkuMappingEntity::getExpireTime, now)
-                    .set(BaseEntity::getIsDeleted, true)
-                    .eq(BaseEntity::getId, skuMaping.getId())
-                    .update();
-            if (!update){
-                throw new ServiceException("[SkuMapping] 历史映射修改失败");
-            }
-        } else {
-            // 历史SkuId为设置过期
-            if (!this.updateById(skuMaping)) {
-                throw new ServiceException("[SkuMapping] 历史映射修改失败");
-            }
+        // 历史SkuId为设置过期
+        boolean update = lambdaUpdate()
+                .set(SkuMappingEntity::getIsExpire, true)
+                .set(SkuMappingEntity::getExpireTime, now)
+                //       // 历史SkuId为空逻辑删除
+                .set(StringUtils.isBlank(historyProductSkuId), BaseEntity::getIsDeleted, true)
+                .eq(BaseEntity::getId, skuMaping.getId())
+                .update();
+        if (!update){
+            throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }
+
         SkuMappingEntity addSkuMaping = new SkuMappingEntity();
         addSkuMaping.setShopId(dto.getShopId());
         addSkuMaping.setDictPlatform(skuMaping.getDictPlatform());
