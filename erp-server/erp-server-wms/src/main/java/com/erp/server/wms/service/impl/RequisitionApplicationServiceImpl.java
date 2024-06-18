@@ -695,7 +695,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             countryMap.putAll(wmsDeliveryPlanEntities.stream().collect(Collectors.toMap(WmsDeliveryPlanEntity::getId, WmsDeliveryPlanEntity::getCountry)));
 
         }else if (CollectionUtils.isNotEmpty(sourceIdByType.get(RequisitionApplicationTypeEnum.FBA.getCode()))){
-            Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
+            Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.FBA.getCode());
             List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(sourIds);
             countryMap.putAll(fbaShipmentEntities.stream().collect(Collectors.toMap(FbaShipmentEntity::getId, FbaShipmentEntity::getCountryId)));
         }
