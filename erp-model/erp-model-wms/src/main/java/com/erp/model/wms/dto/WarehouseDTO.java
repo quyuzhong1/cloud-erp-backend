@@ -657,6 +657,14 @@ public class WarehouseDTO implements Serializable {
          * 前端忽略
          */
         private String warehouseManageType;
+        /**
+         * 审核状态
+         * waitSubmit :待提交
+         * approveIng :审核中
+         * reject :审核不通过
+         * approve :已审核
+         */
+        private String approveStatus;
     }
 
     /**

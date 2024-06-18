@@ -391,6 +391,9 @@
                    #{orgId}
                 </foreach>
             </if>
+            <if test="params.approveStatus != null and params.approveStatus != ''">
+                and wh.approve_status = #{params.approveStatus}
+            </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or (wh.id = #{params.searchKeyword})  or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
