@@ -148,6 +148,53 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                 return getQueryAllSql();
             }
         }
+
+        if("orderDeliveryType".equals(field)){
+            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+            List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
+            StringBuilder sb = new StringBuilder();
+            //是否是第一个，否则需要加连接符
+            boolean isFirst = true;
+            sb.append(" ( ");
+            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) ){
+                for(String valueStr : valueList) {
+                    if (!isFirst) {
+                        sb.append(" or ");
+                    }
+                    isFirst = false;
+                    if (valueStr.equals("platformWarehouseDelivery")) {
+                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment')");
+                    }
+                    if (valueStr.equals("transitWarehouseDelivery")) {
+                        sb.append(" (sb2c.label_json ~ 'drop_off' or sb2c.label_json ~ 'cross_docking')");
+                    }
+                    if (valueStr.equals("selfDelivery")) {
+                        sb.append(" (sb2c.label_json !~ 'AFN' and sb2c.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.label_json !~ 'WFSFulfilled' and sb2c.label_json !~ '3PLFulfilled' and sb2c.label_json !~ 'fulfillment')");
+                    }
+                }
+            }
+
+            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) ){
+                for(String valueStr : valueList) {
+                    if (!isFirst) {
+                        sb.append(" and ");
+                    }
+                    isFirst = false;
+                    if (valueStr.equals("platformWarehouseDelivery")) {
+                        sb.append(" (sb2c.label_json !~ 'AFN' and sb2c.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.label_json !~ 'WFSFulfilled' and sb2c.label_json !~ '3PLFulfilled' and sb2c.label_json !~ 'fulfillment')");
+                    }
+                    if (valueStr.equals("transitWarehouseDelivery")) {
+                        sb.append(" (sb2c.label_json !~ 'drop_off' and sb2c.label_json !~ 'cross_docking')");
+                    }
+                    if (valueStr.equals("selfDelivery")) {
+                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment')");
+                    }
+                }
+            }
+
+            sb.append(" ) ");
+            return sb.toString();
+        }
         /**
          * B2C订单待处理类型归类,SoB2cWaitHandleTypeEnum枚举
          * 审核不通过（自动）：订单审核状态为审核不通过，不通过原因是自动审核条件不通过或拦截成功后自动不通过

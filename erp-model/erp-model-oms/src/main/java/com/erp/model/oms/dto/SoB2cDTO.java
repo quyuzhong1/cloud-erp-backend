@@ -337,6 +337,11 @@ public class SoB2cDTO implements Serializable {
         private String logisticsCode;
 
         /**
+         * 跟踪号
+         */
+        private String trackCode;
+
+        /**
          * 订单金额
          */
         private BigDecimal amount;
