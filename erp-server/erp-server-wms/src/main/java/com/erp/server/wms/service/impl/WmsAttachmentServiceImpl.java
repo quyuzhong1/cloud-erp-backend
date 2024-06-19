@@ -107,11 +107,14 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     @Override
     public List<WmsAttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds) {
+        if (CollectionUtils.isEmpty(businessIds)){
+            return Collections.emptyList();
+        }
         LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(WmsAttachmentEntity::getBusinessId, businessIds);
         List<WmsAttachmentEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return BeanMapper.copyList(list, WmsAttachmentDTO.UpdateDTO.class);
 
