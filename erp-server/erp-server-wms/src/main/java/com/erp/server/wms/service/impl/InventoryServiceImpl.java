@@ -1341,4 +1341,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<InventoryEntity> list = baseMapper.selectList(queryWrapper);
         return CollUtil.isEmpty(list) ? 0 : list.stream().mapToInt(InventoryEntity::getQty).sum();
     }
+
+    /**
+     * 根据skuId和仓库id获取可用数量
+     * @param paramDTO
+     * @return
+     */
+    @Override
+    public List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(InventoryDTO.ParamDTO paramDTO) {
+        if (Objects.isNull(paramDTO)) {
+            return new ArrayList<>();
+        }
+        List<InventoryDTO.InventoryViewQtyDTO> list=baseMapper.getUsableQtyBySkuIdsAndWarehouseIds(paramDTO);
+        return list;
+    }
 }

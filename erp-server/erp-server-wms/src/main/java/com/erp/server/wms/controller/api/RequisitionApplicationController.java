@@ -405,4 +405,16 @@ public class RequisitionApplicationController extends BaseController {
         Boolean flag = requisitionApplicationService.generateDeliverSaveAndSubmit(dto.getList());
         return Boolean.TRUE.equals(flag) ? success() : failure();
     }
+    /**
+     * 远程分页下拉查询
+     * @author Will
+     * @date: 2024/5/24 13:06
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<RequisitionApplicationDTO.WarehouseListDTO>> selectPaging(@RequestBody @Validated PagingDTO<RequisitionApplicationDTO.WarehouseSelectDTO> dto) {
+        PagingVO<RequisitionApplicationDTO.WarehouseListDTO> pagingVO = requisitionApplicationService.pagingSelect(dto);
+        return success(pagingVO);
+    }
 }

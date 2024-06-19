@@ -206,7 +206,7 @@ public class LogisticsChannelController extends BaseController {
      * @return
      */
     @PostMapping("pagingSelect")
-    public ApiResult<PagingVO<BaseDropDownDTO.DisabledDTO>> pagingSelect(@RequestBody @Validated PagingDTO<BaseDropDownDTO.SelectDTO> dto){
+    public ApiResult<PagingVO<LogisticsChannelDTO.PagingSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<LogisticsChannelDTO.SelectDTO> dto){
         return success(logisticsChannelService.pagingSelect(dto));
     }
     /**

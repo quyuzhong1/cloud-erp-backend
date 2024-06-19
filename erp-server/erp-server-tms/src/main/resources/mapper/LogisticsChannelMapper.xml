@@ -166,15 +166,16 @@
         </if>
         order by  lc.disabled asc,lc.create_time desc
     </select>
-    <select id="pagingSelect" resultType="com.common.business.dto.base.BaseDropDownDTO$DisabledDTO">
-        select id,name as value,code,disabled
+    <select id="pagingSelect" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PagingSelectDTO">
+        select id,name as value,code,disabled,logisticsSupplierId
         from
         (
         select
         lc.id,
         lc.name,
         lc.code,
-        lc.disabled
+        lc.disabled,
+         lc.main_id   as logisticsSupplierId
         from logistics_channel lc
         where
         lc.is_deleted = false

@@ -1,10 +1,14 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -126,4 +130,12 @@ public interface ShopInfoFeign {
     @GetMapping("feign/shop/getRelatedByShopId")
     List<ShopInfoEntity> getRelatedByShopId(@RequestParam("shopId") String shopId);
 
+    /**
+     * 获取店铺--showByAuth true已授权 false所有数据
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
+     * @author hyj
+     */
+    @PostMapping("feign/shop/pagingSelect")
+    PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto);
 }

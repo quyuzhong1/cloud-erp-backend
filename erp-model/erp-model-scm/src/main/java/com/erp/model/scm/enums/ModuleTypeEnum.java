@@ -92,6 +92,10 @@ public enum ModuleTypeEnum {
     DMP_THIRD_SHOP("77", "第三方店铺"),
     DMP_THIRD_MAPPING("78", "第三方映射"),
 
+
+
+    VIRTUAL_WAREHOUSE("80", "虚拟仓设置"),
+    VIRTUAL_WAREHOUSE_ALLOCATION("81", "分货单"),
     PICKING_LISTS("91", "拣货单")
 
     ;

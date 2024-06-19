@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -30,6 +31,13 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @param dto
      */
     DmpPushTaskEntity saveTask(DmpPushTaskFeignDTO dto);
+
+    /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
 
     /**
      * 根据id推送任务
@@ -125,6 +133,14 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @date 2024/4/11 16:51
      */
     Boolean batchNoNeedSync(List<String> ids);
+    /**
+     * @param sourceIds
+     * @return Boolean
+     * @description: 根据sourceId批量修改无需同步
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    Boolean batchNoNeedSyncBySourceId(List<String> sourceIds);
 
     /**
      * @param syncTaskId
@@ -155,5 +171,10 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @param ids
      */
     void deleteByIds(List<String> ids);
-
+    /**
+     * 根据sourceId重新同步
+     * @param sourceIds
+     * @return
+     */
+    Boolean batchSyncBySourceId(List<String> sourceIds);
 }

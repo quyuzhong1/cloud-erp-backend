@@ -134,6 +134,7 @@ public enum PlatformApiEnum {
     WDT_RETURN_STOCK_OUT_ORDER(101, "wdt.wms.stockin.Refund.queryWithDetail", MongoTableNameContant.THIRD_SYSTEM_WDT_RETURN_STOCK_OUT_ORDER, TaskConstant.WDT_PULL_DATA_TASK),
     WANGDIAN_SHOP(102, "setting.Shop.queryShop", MongoTableNameContant.ORIGNAL_WANGDIAN_SHOP, TaskConstant.WDT_PULL_DATA_TASK),
     WANGDIAN_WAREHOUSE(103, "setting.Warehouse.queryWarehouse", MongoTableNameContant.ORIGNAL_WANGDIAN_WAREHOUSE, TaskConstant.WDT_PULL_DATA_TASK),
+    WANGDIAN_VIRTUAL_WAREHOUSE(104, "setting.strategy.VirtualWarehouse.warehouseSearch", MongoTableNameContant.ORIGNAL_WANGDIAN_VIRTUAL_WAREHOUSE, TaskConstant.WDT_PULL_DATA_TASK),
     ;
 
     /** 状态码 */
