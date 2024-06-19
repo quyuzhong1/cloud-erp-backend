@@ -75,6 +75,12 @@ public class DmpCfgInputDetailEntity extends BaseEntity<DmpCfgInputDetailEntity>
     */
     @TableField("extend_json")
     private String extendJson;
+    
+    /**
+     * 延迟时间，单位秒
+     */
+     @TableField("dealy_time")
+     private Integer dealyTime;
 
 
     public static final String MAIN_ID = "main_id";

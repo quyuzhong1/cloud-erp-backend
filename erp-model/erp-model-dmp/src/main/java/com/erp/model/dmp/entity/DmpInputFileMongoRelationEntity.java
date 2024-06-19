@@ -12,39 +12,33 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * data表与dmp关联表
+ * file与mongo关联表
  * </p>
  *
  * @author shukai
- * @since 2024-06-17
+ * @since 2024-06-19
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("dmp_input_data_dmp_relation")
-public class DmpInputDataDmpRelationEntity extends BaseEntity<DmpInputDataDmpRelationEntity> {
+@TableName("dmp_input_file_mongo_relation")
+public class DmpInputFileMongoRelationEntity extends BaseEntity<DmpInputFileMongoRelationEntity> {
 
     /**
-    * 数据表主键
+    * dmp_input_task_file表主键
     */
-    @TableField("data_id")
-    private String dataId;
+    @TableField("file_id")
+    private String fileId;
     /**
-    * dmp主键
+    * mongo主键
     */
-    @TableField("dmp_id")
-    private String dmpId;
-    
-    /**
-     * 数据类型 DmpInputTaskStatusEnum
-     */
-     @TableField("data_type")
-     private String dataType;
+    @TableField("mongo_id")
+    private String mongoId;
 
 
-    public static final String DATA_ID = "data_id";
+    public static final String FILE_ID = "file_id";
 
-    public static final String DMP_ID = "dmp_id";
+    public static final String MONGO_ID = "mongo_id";
 
     @Override
     public Serializable pkVal() {

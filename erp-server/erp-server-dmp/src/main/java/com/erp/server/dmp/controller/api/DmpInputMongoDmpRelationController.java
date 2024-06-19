@@ -14,56 +14,56 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.DmpInputDataDmpRelationService;
+import com.erp.server.dmp.service.DmpInputMongoDmpRelationService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.dmp.dto.DmpInputDataDmpRelationDTO;
+import com.erp.model.dmp.dto.DmpInputMongoDmpRelationDTO;
 
 /**
- * data表与dmp关联表
+ * mongo与dmp关联表
  *
  * @author shukai
- * @since 2024-06-17
+ * @since 2024-06-19
  */
 @Slf4j
 @RestController
-@LogSystemModule("data表与dmp关联表")
-@RequestMapping("/dmpInputDataDmpRelation")
-public class DmpInputDataDmpRelationController extends BaseController {
+@LogSystemModule("mongo与dmp关联表")
+@RequestMapping("/dmpInputMongoDmpRelation")
+public class DmpInputMongoDmpRelationController extends BaseController {
 
     @Resource
-    private DmpInputDataDmpRelationService dmpInputDataDmpRelationService;
+    private DmpInputMongoDmpRelationService dmpInputMongoDmpRelationService;
 
     /**
     * 新增
     * @author shukai
-    * @date:  2024-06-17
+    * @date:  2024-06-19
     * @param dto
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "data表与dmp关联表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DmpInputDataDmpRelationDTO.AddDTO dto) {
-        return success(dmpInputDataDmpRelationService.add(dto));
+    @LogAction(value = LogActionEnum.INSERT, desc = "mongo与dmp关联表新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DmpInputMongoDmpRelationDTO.AddDTO dto) {
+        return success(dmpInputMongoDmpRelationService.add(dto));
     }
 
     /**
     * 修改
     * @author shukai
-    * @date:  2024-06-17
+    * @date:  2024-06-19
     * @param dto
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "data表与dmp关联表修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "mongo与dmp关联表修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "dmp:dmpInputDataDmpRelation:update",
-        serviceClass = DmpInputDataDmpRelationService.class,
+        menuCode = "dmp:dmpInputMongoDmpRelation:update",
+        serviceClass = DmpInputMongoDmpRelationService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated DmpInputDataDmpRelationDTO.UpdateDTO dto) {
-        dmpInputDataDmpRelationService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated DmpInputMongoDmpRelationDTO.UpdateDTO dto) {
+        dmpInputMongoDmpRelationService.update(dto);
         return success();
     }
 

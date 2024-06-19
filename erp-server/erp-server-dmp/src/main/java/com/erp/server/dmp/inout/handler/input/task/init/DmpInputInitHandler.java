@@ -43,6 +43,7 @@ public abstract class DmpInputInitHandler extends DmpInputTaskHandler{
 				for(String outputClass : outputClassList) {
 					DmpOutputInitHandler dmpHandlerBean = this.getDmpHandlerBean(outputClass, DmpOutputInitHandler.class);
 					DmpOutputInitRequest dmpOutputInitRequest = new DmpOutputInitRequest();
+					dmpOutputInitRequest.setDoNextChain(false);
 					dmpOutputInitRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
 					dmpHandlerBean.doDmpHandler(dmpOutputInitRequest, new DmpOutputInitResponse(), chain);
 				}

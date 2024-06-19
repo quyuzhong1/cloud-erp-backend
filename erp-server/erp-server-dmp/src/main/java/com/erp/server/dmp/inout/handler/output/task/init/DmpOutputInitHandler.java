@@ -26,7 +26,9 @@ public abstract class DmpOutputInitHandler extends DmpOutputHandler{
 	
 	private void doDmpHandler(DmpOutputInitRequest dmpRequest, DmpOutputInitResponse dmpResponse, DmpHandlerChain chain) {
 		test(dmpRequest, dmpResponse);
-//		chain.doDmpHandler(dmpRequest, dmpResponse);
+		if(dmpRequest.isDoNextChain()) {
+			chain.doDmpHandler(dmpRequest, dmpResponse);
+		}
 	}
 	
 	public abstract void test(DmpOutputInitRequest dmpRequest, DmpOutputInitResponse dmpResponse);

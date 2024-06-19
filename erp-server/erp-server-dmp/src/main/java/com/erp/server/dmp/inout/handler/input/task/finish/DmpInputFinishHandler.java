@@ -13,13 +13,18 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputFinishRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.dto.response.DmpOutputFinishResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
+import com.erp.server.dmp.inout.handler.output.task.finish.DmpOutputFinishHandler;
+
+import cn.hutool.core.collection.CollUtil;
 
 @Service
 public abstract class DmpInputFinishHandler extends DmpInputTaskHandler{
@@ -40,6 +45,7 @@ public abstract class DmpInputFinishHandler extends DmpInputTaskHandler{
 		String status = dmpResponse.getBeforeDmpInputTaskEntityList().get(0).getStatus();
 		if(DmpInputTaskStatusEnum.FINISH.getCode().equals(status)) {
 			dmpResponse.setDoUpdateStatus(false);
+			dmpResponse.setDoOutputChain(false);
 		}else {
 			Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpResponse.getConvertInputDmpBaseEntityListMaps();
 			if(convertInputDmpBaseEntityListMaps != null && convertInputDmpBaseEntityListMaps.size() > 0) {
@@ -60,6 +66,22 @@ public abstract class DmpInputFinishHandler extends DmpInputTaskHandler{
 							dealNoneToFinish(dmpRequest, dmpResponse);
 						}
 					}
+				}
+			}
+		}
+		
+		if(dmpResponse.isDoOutputChain()) {
+			List<String> outputClassList = this.getOutputClassList(dmpRequest, dmpResponse);
+			if(CollUtil.isNotEmpty(outputClassList)) {
+				for(String outputClass : outputClassList) {
+					DmpOutputFinishHandler dmpHandlerBean = this.getDmpHandlerBean(outputClass, DmpOutputFinishHandler.class);
+					DmpOutputFinishRequest dmpOutputFinishRequest = new DmpOutputFinishRequest();
+					dmpOutputFinishRequest.setDoNextChain(false);
+					dmpOutputFinishRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
+					dmpOutputFinishRequest.setConvertInputTaskFileEntityListMaps(dmpResponse.getConvertInputTaskFileEntityListMaps());
+					dmpOutputFinishRequest.setConvertInputMongoEntityListMaps(dmpResponse.getConvertInputMongoEntityListMaps());
+					dmpOutputFinishRequest.setConvertInputDmpBaseEntityListMaps(dmpResponse.getConvertInputDmpBaseEntityListMaps());
+					dmpHandlerBean.doDmpHandler(dmpOutputFinishRequest, new DmpOutputFinishResponse(), chain);
 				}
 			}
 		}

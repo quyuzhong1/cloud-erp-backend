@@ -12,11 +12,15 @@ import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputFdsRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputFdsRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.dto.response.DmpOutputFdsResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
+import com.erp.server.dmp.inout.handler.output.task.fds.DmpOutputFdsHandler;
 import com.erp.server.dmp.service.DmpInputTaskFileService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -56,6 +60,7 @@ public abstract class DmpInputFdsHandler extends DmpInputTaskHandler{
 			String status = dmpResponse.getBeforeDmpInputTaskEntityList().get(0).getStatus();
 			if(DmpInputTaskStatusEnum.FDS.getCode().equals(status) || DmpInputTaskStatusEnum.MONGO.getCode().equals(status) || DmpInputTaskStatusEnum.DMP.getCode().equals(status) || DmpInputTaskStatusEnum.FINISH.getCode().equals(status)) {
 				dmpResponse.setDoUpdateStatus(false);
+				dmpResponse.setDoOutputChain(false);
 			}
 		}else {
 			Map<DmpCfgInputConvertEntity, List<DmpInputTaskInitDTO>> convertInputTaskInitDTOListMaps = dmpResponse.getConvertInputTaskInitDTOListMaps();
@@ -68,6 +73,20 @@ public abstract class DmpInputFdsHandler extends DmpInputTaskHandler{
 
 		dmpResponse.getConvertInputTaskFileEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputTaskFileEntityList);
 	
+		if(dmpResponse.isDoOutputChain()) {
+			List<String> outputClassList = this.getOutputClassList(dmpRequest, dmpResponse);
+			if(CollUtil.isNotEmpty(outputClassList)) {
+				for(String outputClass : outputClassList) {
+					DmpOutputFdsHandler dmpHandlerBean = this.getDmpHandlerBean(outputClass, DmpOutputFdsHandler.class);
+					DmpOutputFdsRequest dmpOutputFdsRequest = new DmpOutputFdsRequest();
+					dmpOutputFdsRequest.setDoNextChain(false);
+					dmpOutputFdsRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
+					dmpOutputFdsRequest.setConvertInputTaskFileEntityListMaps(dmpResponse.getConvertInputTaskFileEntityListMaps());
+					dmpHandlerBean.doDmpHandler(dmpOutputFdsRequest, new DmpOutputFdsResponse(), chain);
+				}
+			}
+		}
+		
 		if(dmpResponse.isDoUpdateStatus()) {
 			this.updateTaskStatus(DmpInputTaskStatusEnum.FDS);
 		}

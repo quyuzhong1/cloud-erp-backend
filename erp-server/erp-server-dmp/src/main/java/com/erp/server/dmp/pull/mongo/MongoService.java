@@ -1,14 +1,12 @@
 package com.erp.server.dmp.pull.mongo;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.core.utils.MapUtil;
-import com.erp.server.dmp.inout.dto.base.DmpInputMongoBaseEntity;
-
-import jnr.ffi.annotations.In;
-import org.springframework.data.domain.Sort.Direction;
-
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.data.domain.Sort.Direction;
+
+import com.common.business.dto.CleanBaseDTO;
+import com.common.core.utils.MapUtil;
 
 public interface MongoService {
 	/**

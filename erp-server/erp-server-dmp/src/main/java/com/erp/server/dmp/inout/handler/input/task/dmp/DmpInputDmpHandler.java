@@ -1,12 +1,16 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
@@ -19,13 +23,16 @@ import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputDmpRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputDmpResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.dto.response.DmpOutputDmpResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
+import com.erp.server.dmp.inout.handler.output.task.dmp.DmpOutputDmpHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 
 import cn.hutool.core.collection.CollUtil;
@@ -39,6 +46,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	protected String storageName;
 	protected String entityClassName;
 	protected Class<? extends BaseEntity> dmpEntityClass;
+	protected Set<String> entityFieldNameSet;
 	protected ServiceImpl dmpEntityServiceImpl;
 	
 	protected static final String INPUT_TASK_ID = "input_task_id";
@@ -69,6 +77,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		} catch (ClassNotFoundException e) {
 			throw new ServiceException(entityClassName + "类不存在，异常信息：" + ExceptionUtil.stacktraceToString(e));
 		}
+		entityFieldNameSet = Stream.of(dmpEntityClass.getDeclaredFields()).filter(f -> f.getAnnotation(TableField.class) != null).map(Field::getName).collect(Collectors.toSet());
 		dmpEntityServiceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(storageName, true) + "ServiceImpl" , ServiceImpl.class);
 		
 		QueryWrapper<?> wrapper = new QueryWrapper<>();
@@ -80,6 +89,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			String status = dmpResponse.getBeforeDmpInputTaskEntityList().get(0).getStatus();
 			if(DmpInputTaskStatusEnum.DMP.getCode().equals(status) || DmpInputTaskStatusEnum.FINISH.getCode().equals(status)) {
 				dmpResponse.setDoUpdateStatus(false);
+				dmpResponse.setDoOutputChain(false);
 			}
 		}else {
 			Map<DmpCfgInputConvertEntity, List<Map>> convertInputMongoEntityListMaps = dmpResponse.getConvertInputMongoEntityListMaps();
@@ -101,6 +111,22 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		}
 		
 		dmpResponse.getConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputDmpBaseEntityList);
+		
+		if(dmpResponse.isDoOutputChain()) {
+			List<String> outputClassList = this.getOutputClassList(dmpRequest, dmpResponse);
+			if(CollUtil.isNotEmpty(outputClassList)) {
+				for(String outputClass : outputClassList) {
+					DmpOutputDmpHandler dmpHandlerBean = this.getDmpHandlerBean(outputClass, DmpOutputDmpHandler.class);
+					DmpOutputDmpRequest dmpOutputDmpRequest = new DmpOutputDmpRequest();
+					dmpOutputDmpRequest.setDoNextChain(false);
+					dmpOutputDmpRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
+					dmpOutputDmpRequest.setConvertInputTaskFileEntityListMaps(dmpResponse.getConvertInputTaskFileEntityListMaps());
+					dmpOutputDmpRequest.setConvertInputMongoEntityListMaps(dmpResponse.getConvertInputMongoEntityListMaps());
+					dmpOutputDmpRequest.setConvertInputDmpBaseEntityListMaps(dmpResponse.getConvertInputDmpBaseEntityListMaps());
+					dmpHandlerBean.doDmpHandler(dmpOutputDmpRequest, new DmpOutputDmpResponse(), chain);
+				}
+			}
+		}
 		
 		if(dmpResponse.isDoUpdateStatus()) {
 			this.updateTaskStatus(DmpInputTaskStatusEnum.DMP);

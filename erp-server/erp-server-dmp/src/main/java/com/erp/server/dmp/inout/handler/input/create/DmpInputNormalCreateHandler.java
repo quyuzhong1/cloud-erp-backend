@@ -83,13 +83,18 @@ public class DmpInputNormalCreateHandler extends DmpInputCreateHandler{
 				startTime = lastTime;
 			}
 			Integer overrideTime = dmpCfgInputDetailEntity.getOverrideTime();
-			if(overrideTime != null) {
+			if(overrideTime != null && overrideTime != 0) {
 				startTime = LocalDateTimeUtil.offset(lastTime, overrideTime * -1, ChronoUnit.SECONDS);
 			}
-			
 			dmpInputTaskEntity.setStartTime(startTime);
+			
 			LocalDateTime nextTime = dmpCfgInputDetailEntity.getNextTime();
-			dmpInputTaskEntity.setEndTime(nextTime);
+			LocalDateTime endTime = nextTime;
+			Integer dealyTime = dmpCfgInputDetailEntity.getDealyTime();
+			if(dealyTime != null && dealyTime != 0) {
+				endTime = LocalDateTimeUtil.offset(endTime, dealyTime * -1, ChronoUnit.SECONDS);
+			}
+			dmpInputTaskEntity.setEndTime(endTime);
 			dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
 			dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
 			

@@ -10,15 +10,15 @@ import javax.validation.constraints.Size;
 
 /**
  * <p>
- * data表与dmp关联表请求响应实体
+ * mongo与dmp关联表请求响应实体
  * </p>
  *
  * @author shukai
- * @since 2024-06-17
+ * @since 2024-06-19
 */
 @Data
 @NoArgsConstructor
-public class DmpInputDataDmpRelationDTO implements Serializable {
+public class DmpInputMongoDmpRelationDTO implements Serializable {
 
 
 
@@ -36,9 +36,9 @@ public class DmpInputDataDmpRelationDTO implements Serializable {
         private String  id;
 
         /**
-        * 数据表主键
+        * mongo表主键
         */
-        private String dataId;
+        private String mongoId;
 
         /**
         * dmp主键
@@ -78,11 +78,11 @@ public class DmpInputDataDmpRelationDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 数据表主键
+        * mongo表主键
         */
-        @NotBlank(message = "数据表主键不能为空")
-        @Size(max = 50,message = "数据表主键最大长度不能超过50位")
-        private String dataId;
+        @NotBlank(message = "mongo表主键不能为空")
+        @Size(max = 50,message = "mongo表主键最大长度不能超过50位")
+        private String mongoId;
 
         /**
         * dmp主键

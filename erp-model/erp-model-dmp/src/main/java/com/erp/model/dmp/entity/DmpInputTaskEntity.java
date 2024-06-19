@@ -55,7 +55,12 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
     */
     @TableField("task_type")
     private String taskType;
-
+    
+    /**
+     * 错误次数
+     */
+     @TableField("error_count")
+     private Integer errorCount;
 
     public static final String INPUT_DETAIL_ID = "input_detail_id";
 

@@ -16,12 +16,15 @@ import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputMongoRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputMongoRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.dto.response.DmpOutputMongoResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
+import com.erp.server.dmp.inout.handler.output.task.mongo.DmpOutputMongoHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 
@@ -87,6 +90,7 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 			String status = dmpResponse.getBeforeDmpInputTaskEntityList().get(0).getStatus();
 			if(DmpInputTaskStatusEnum.MONGO.getCode().equals(status) || DmpInputTaskStatusEnum.DMP.getCode().equals(status) || DmpInputTaskStatusEnum.FINISH.getCode().equals(status)) {
 				dmpResponse.setDoUpdateStatus(false);
+				dmpResponse.setDoOutputChain(false);
 			}
 		}else {
 			Map<DmpCfgInputConvertEntity, List<DmpInputTaskFileEntity>> convertInputTaskFileEntityListMaps = dmpResponse.getConvertInputTaskFileEntityListMaps();
@@ -103,6 +107,21 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 		}
 		
 		dmpResponse.getConvertInputMongoEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputMongoBaseEntityList);
+		
+		if(dmpResponse.isDoOutputChain()) {
+			List<String> outputClassList = this.getOutputClassList(dmpRequest, dmpResponse);
+			if(CollUtil.isNotEmpty(outputClassList)) {
+				for(String outputClass : outputClassList) {
+					DmpOutputMongoHandler dmpHandlerBean = this.getDmpHandlerBean(outputClass, DmpOutputMongoHandler.class);
+					DmpOutputMongoRequest dmpOutputMongoRequest = new DmpOutputMongoRequest();
+					dmpOutputMongoRequest.setDoNextChain(false);
+					dmpOutputMongoRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
+					dmpOutputMongoRequest.setConvertInputTaskFileEntityListMaps(dmpResponse.getConvertInputTaskFileEntityListMaps());
+					dmpOutputMongoRequest.setConvertInputMongoEntityListMaps(dmpResponse.getConvertInputMongoEntityListMaps());
+					dmpHandlerBean.doDmpHandler(dmpOutputMongoRequest, new DmpOutputMongoResponse(), chain);
+				}
+			}
+		}
 		
 		if(dmpResponse.isDoUpdateStatus()) {
 			this.updateTaskStatus(DmpInputTaskStatusEnum.MONGO);
