@@ -53,6 +53,7 @@ public enum PlatformDictEnum implements EnumMessage {
     GOOD_CANG("goodcang", "谷仓", "谷仓", "49"),
     IML("iml", "艾姆勒", "艾姆勒", "50"),
     WDT("wdt", "旺店通", "旺店通", "51"),
+    QI_MEN("qimen", "奇门", "奇门", "52"),
         ;
 
 
