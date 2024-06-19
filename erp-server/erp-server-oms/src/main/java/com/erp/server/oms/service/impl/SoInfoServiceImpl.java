@@ -2866,6 +2866,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         groupMap.forEach((key,val)->{
             List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList = new ArrayList<>();
             for (SoInfoDTO.GenerateSoOutView soOutView : val) {
+                if(soOutView.getActualDeliveryQty() > soOutView.getWaitDeliveryQty()){
+                    batchResultDTOList.add(BatchResultDTO.fail(key,key,StrUtil.format("{}实发数量不能大于待发数量",soOutView.getSkuNo())));
+                    return;
+                }
                 SoOutstockDTO.GenerateSoOutstockViewDTO generateB2cDTO = SoInfoConverter.INSTANCE.soOutViewToGenerateSoOut(soOutView);
                 generateSoOutstockViewDTOList.add(generateB2cDTO);
             }
