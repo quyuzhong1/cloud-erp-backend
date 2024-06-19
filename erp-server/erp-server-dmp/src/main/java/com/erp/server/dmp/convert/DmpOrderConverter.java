@@ -162,7 +162,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "salesRecordNumber", source = "viewDTO.platformCode"),
             @Mapping(target = "platformOrderStatus", source = "approveStatus"),
             @Mapping(target = "orderFee", source = "amount"),
-            @Mapping(target = "sourcePlatform", constant = "soB2c"),
+            @Mapping(target = "sourcePlatform", constant = "viewDTO.dictPlatform"),
             @Mapping(target = "isUnion", constant = "2"),
             @Mapping(target = "isSplit", constant = "2"),
             @Mapping(target = "isResend", constant = "2"),
