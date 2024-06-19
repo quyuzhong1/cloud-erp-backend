@@ -1,5 +1,6 @@
 package com.erp.server.wms.sdk.delivery;
 
+import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -58,62 +59,16 @@ public class ShopifyShipOrder extends AbstractShipOrder {
 
     @Override
     public List<String> shipOrder(PlatformShipOrderDTO dto) {
-        List<SoB2cEntity> sourceOrderList;
-        Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = new HashMap<>();
-        Map<String, SoB2cLogisticsEntity> logisticsEntityMap= new HashMap<>();
-
-        // 查询合并来源关系
-        List<SoB2cRefEntity> refEntityList = soB2cFeign.findMergeByTargetId(dto.getSoB2cId());
-        if (CollectionUtils.isEmpty(refEntityList)){
-            // 无合并
-            //检查销售订单是否存在
-            SoB2cEntity mainEntity = soB2cFeign.getById(dto.getSoB2cId());
-            if (ObjectUtil.isEmpty(mainEntity)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-            }
-            sourceOrderList = Collections.singletonList(mainEntity);
-            //检查销售订单物流信息是否存在
-            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(mainEntity.getId()));
-            if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-            }
-            logisticsEntityMap.put(dto.getSoB2cId(), soB2cLogisticsEntities.get(0));
-            //检查销售订单详情是否存在
-            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
-            if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
-            }
-            soB2cDetailEntityListMap.put(dto.getSoB2cId(),soB2cDetailEntityList);
-        } else {
-            // 有合并
-            List<String> mainIds = refEntityList.stream().map(SoB2cRefEntity::getSourceId).distinct().collect(Collectors.toList());
-            List<String> detailIds = refEntityList.stream().map(SoB2cRefEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-            sourceOrderList = soB2cFeign.listByIds(mainIds);
-            //检查销售订单是否存在
-            if (CollectionUtils.isEmpty(sourceOrderList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-            }
-            sourceOrderList = sourceOrderList.stream()
-                    .filter(e-> SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(e.getSourceType()) && PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(e.getDictPlatform()))
-                    .collect(Collectors.toList());
-            //检查销售订单物流信息是否存在
-            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(mainIds);
-            if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-            }
-            logisticsEntityMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
-            // 查询所有明细
-            List<SoB2cDetailEntity> allDetailList = soB2cFeign.listDetailByIds(detailIds);
-            soB2cDetailEntityListMap = allDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
-        }
+        Tuple tuple = super.allSourceOrderInfo(dto);
+        // 所有源单信息
+        List<SoB2cEntity> sourceOrderList = tuple.get(0);
+        // 对应明细
+        Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = tuple.get(1);
+        // 当前单据物流信息
+        SoB2cLogisticsEntity logisticsEntity = tuple.get(2);
 
         List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
-            //检查销售订单物流信息是否存在
-            SoB2cLogisticsEntity logisticsEntity = logisticsEntityMap.get(mainEntity.getId());
-            if (null == logisticsEntity) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-            }
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
