@@ -18,7 +18,7 @@ public class YunTuUpdateWeightRequest {
     private String orderNumber;
 
     //KG
-    @NotBlank(message = "重量不能为空")
+    @NotNull(message = "重量不能为空")
     private BigDecimal weight;
 
 }
