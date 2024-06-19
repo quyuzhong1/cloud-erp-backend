@@ -598,9 +598,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO) {
-        if (ObjectUtil.isNotEmpty(viewDTO)) {
+    public Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO,String soId,List<String> skuIdList) {
+        if (ObjectUtil.isNotEmpty(viewDTO) && StringUtils.isNotBlank(soId) && CollectionUtils.isNotEmpty(skuIdList)) {
             lambdaUpdate()
+                    .eq(SoB2cDetailEntity::getMainId, soId)
+                    .in(SoB2cDetailEntity::getSkuId,skuIdList)
                     .set(SoB2cDetailEntity::getWarehouseId, viewDTO.getWarehouseId())
                     .set(SoB2cDetailEntity::getWarehouseName, viewDTO.getWarehouseName())
                     .set(SoB2cDetailEntity::getWarehouseOrgId, viewDTO.getWarehouseOrgId())
