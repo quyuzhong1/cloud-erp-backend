@@ -2,7 +2,9 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -22,6 +24,7 @@ import com.erp.server.dmp.mapper.ThirdMappingMapper;
 import com.erp.server.dmp.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.wangdian.dto.ErpWarehouseDto;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
@@ -32,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -579,6 +583,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 
     /**
      * 根据系统id获取仓库
+     *
      * @param sysIds
      * @return
      */
@@ -593,23 +598,34 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 
     /**
      * 根据系统id获取虚拟仓绑定
+     *
      * @param sysIds
      * @return
      */
     @Override
     public List<ThirdMappingEntity> getVwListBySysIds(List<String> sysIds) {
         List<ThirdMappingEntity> listBySysIds = getListBySysIds(sysIds);
-        if (CollectionUtils.isNotEmpty(listBySysIds)){
+        if (CollectionUtils.isNotEmpty(listBySysIds)) {
             List<ThirdWarehouseEntity> thirdWarehouseEntities = thirdWarehouseService.listByIds(listBySysIds.stream().map(ThirdMappingEntity::getThirdInfoId).collect(Collectors.toList()));
             listBySysIds.forEach(thirdMappingEntity -> {
                 ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseEntities.stream().filter(item -> Objects.equals(thirdMappingEntity.getThirdId(), item.getWarehouseId())).findFirst().orElse(null);
-                if (Objects.nonNull(thirdWarehouseEntity)){
+                if (Objects.nonNull(thirdWarehouseEntity)) {
                     String warehouseList = thirdWarehouseEntity.getWarehouseList();
                     if (StringUtils.isNotBlank(warehouseList)) {
-                        ThirdMappingDTO.WarehouseListDto warehouseListDto = JSONObject.parseArray(warehouseList, ThirdMappingDTO.WarehouseListDto.class).stream().findFirst().orElse(null);
-                        if (Objects.nonNull(warehouseListDto)) {
-                            thirdWarehouseEntity.setRemark(warehouseListDto.getSys_warehouse_id());
+                        JSONArray jsonArray = JSONObject.parseArray(warehouseList);
+
+                        if (Objects.nonNull(jsonArray)) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(0);
+
+                            String warehouseId = jsonObject.getString("warehouse_id");
+                            thirdWarehouseEntity.setRemark(warehouseId);
                         }
+
+
+//                        ThirdMappingDTO.WarehouseListDto warehouseListDto = JSONObject.parseArray(warehouseList, ThirdMappingDTO.WarehouseListDto.class).stream().findFirst().orElse(null);
+//                        if (Objects.nonNull(warehouseListDto)) {
+//                            thirdWarehouseEntity.setRemark(warehouseListDto.getSys_warehouse_id());
+//                        }
                     }
                 }
             });
@@ -725,7 +741,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 sysName = shopInfo.getName();
                 break;
             case VIRTUAL_WAREHOUSE:
-                sysName=addDTO.getSysName();
+                sysName = addDTO.getSysName();
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_400);
@@ -875,6 +891,5 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             }
         });
     }
-
 
 }

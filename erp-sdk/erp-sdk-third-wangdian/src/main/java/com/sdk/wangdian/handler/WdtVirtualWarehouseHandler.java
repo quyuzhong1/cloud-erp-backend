@@ -126,7 +126,7 @@ public class WdtVirtualWarehouseHandler implements IBusinessHandler<WdtVirtualWa
             target.setCreated(source.getCreated());
             target.setModified(source.getModified());
             target.setRemark(source.getRemark());
-            target.setWarehouseList(JSONObject.toJSONString(source.getWarehouse_list()));
+            target.setWarehouseList(source.getWarehouse_list());
             targetList.add(target);
         }
         return targetList;

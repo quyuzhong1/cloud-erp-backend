@@ -93,6 +93,17 @@ public class VirtualWarehouseAllocationHandleDetailEntity extends BaseEntity<Vir
     */
     @TableField("main_id")
     private String mainId;
+    /**
+    * skuId
+    */
+    @TableField("sku_id")
+    private String skuId;
+
+    /**
+    * skuNo
+    */
+    @TableField("sku_no")
+    private String skuNo;
 
 
     public static final String STATUS = "status";

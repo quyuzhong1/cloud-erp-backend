@@ -429,10 +429,11 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             childTreeList.forEach(childTree -> {
                 List<VirtualWarehouseDTO.BindChannelDto> bindChannelDtos = allBindedMap.get(childTree.getCode());
                 if (Objects.nonNull(bindChannelDtos)) {
-                    if (Objects.nonNull(virtualWarehouseChannelEntity) /*&& Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())*/
-                            && Objects.equals(virtualWarehouseChannelEntity.getDictPlatform(), childTree.getCode())) {
+                    if (Objects.nonNull(virtualWarehouseChannelEntity) /*&& Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())*/) {
                         //如果是本虚拟仓绑定需要设置为可选
                         childTree.setDisabled(false);
+                        childTree.setShopDisabled(false);
+                        childTree.setPlatformDisabled(false);
                     } else {
                         //如果是别的虚拟仓已绑定，如果是绑定平台，当前渠道不可选，如果是店铺则只禁用平台
                         String bindedType = bindChannelDtos.get(0).getDictPlatform();

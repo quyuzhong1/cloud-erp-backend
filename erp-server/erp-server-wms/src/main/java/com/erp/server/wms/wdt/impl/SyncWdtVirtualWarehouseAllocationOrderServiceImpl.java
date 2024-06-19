@@ -8,9 +8,14 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleRelationEntity;
+import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.server.wms.service.RequisitionApplicationDetailService;
+import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
 import com.erp.server.wms.service.VirtualWarehouseAllocationHandleRelationService;
 import com.erp.server.wms.wdt.SyncWdtVirtualWarehouseAllocationOrderService;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwAllocationHandelDetailPushDTO;
@@ -22,6 +27,8 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 将erp虚拟仓分货单同步至旺店通
@@ -37,10 +44,14 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
     private DmpMqFeign dmpMqFeign;
     @Resource
     private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
+    @Resource
+    private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
+    @Resource
+    private RequisitionApplicationDetailService requisitionApplicationDetailService;
 
     @Override
     public List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList,
-                                                String vwAllocationCode, String operateCode,String sourceType) {
+                                                String vwAllocationCode, String operateCode, String sourceType) {
 
         List<DmpPushTaskFeignDTO> dmpPushTaskEntityList = new ArrayList<>();
         handleDetailList.forEach(handleDetail -> {
@@ -56,32 +67,68 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                     && StringUtils.isNotEmpty(handleDetail.getThirdToVirtualWarehouseId())) {
                 request.setOrderType(1);
             }
+            String type = handleDetail.getType();
 
             request.setVirtualWarehouseNo(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId()) ? handleDetail.getThirdFromVirtualWarehouseId() : handleDetail.getThirdToVirtualWarehouseId());
             request.setToVirtualWarehouseNo(handleDetail.getThirdToVirtualWarehouseId());
             List<VwAllocationHandelDetailPushDTO.DetailList> detailList = new ArrayList<>();
-//            switch (SourceTypeEnum.getByCode(sourceType)){
-//                case VIRTUAL_WAREHOUSE_ALLOCATION:
+            //获取明细
+            List<VirtualWarehouseAllocationHandleRelationEntity> allocationHandleRelationEntities = virtualWarehouseAllocationHandleRelationService
+                    .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
+                            .eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetail.getId()));
+            //根据sku和调入虚拟仓进行聚合
+            List<String> allocationDetailIds = allocationHandleRelationEntities.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList());
+
+            switch (SourceTypeEnum.getByCode(sourceType)) {
+                case VIRTUAL_WAREHOUSE_ALLOCATION:
+//                    switch (VirtualWarehouseAllocationTypeEnum.getByCode(type)) {
+//                        case ALLOCATION:
+                            Map<String, List<VirtualWarehouseAllocationDetailEntity>> skuMap = virtualWarehouseAllocationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getSkuNo));
+                            skuMap.forEach((skuNo,list)->{
+                                VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
+                                detail.setNum(BigDecimal.valueOf(list.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum)));
+                                detail.setWarehouseNo(handleDetail.getThirdWarehouseId());
+                                detail.setSpecNo(skuNo);
+                                detailList.add(detail);
+                            });
+//                            break;
+//                        case TRANSFER:
+//                            break;
+//                        case CANCEL:
+//                            break;
+//                        default:
+//                            break;
+//                    }
+
+
 //                    //获取明细
-//                    List<VirtualWarehouseAllocationHandleRelationEntity> allocationHandleRelationEntities = virtualWarehouseAllocationHandleRelationService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
-//                            .eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetail.getId()));
-//                    //根据sku和调出虚拟仓进行聚合
-//                    allocationHandleRelationEntities.forEach(allocationHandleRelationEntity->{
+//                    List<VirtualWarehouseAllocationHandleRelationEntity> allocationHandleRelationEntities = virtualWarehouseAllocationHandleRelationService
+//                            .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
+//                                    .eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetail.getId()));
+//                    //根据sku和调入虚拟仓进行聚合
+//                    allocationHandleRelationEntities.forEach(allocationHandleRelationEntity -> {
+//                        //
+//
 //                        VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
 //                        detail.setNum(BigDecimal.valueOf(handleDetail.getQty()));
 //                        detail.setWarehouseNo(handleDetail.getThirdWarehouseId());
 //                        detail.setSpecNo(handleDetail.getId());
 //                        detailList.add(detail);
 //                    });
-//                    break;
-//                case REQUISITION_APPLICATION:
-//                    break;
-//                default:
-//                   break;
-//            }
-            //获取对应的产品信息
-
-
+                    break;
+                case REQUISITION_APPLICATION:
+                    Map<String, List<RequisitionApplicationDetailEntity>> requireSkuMap = requisitionApplicationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getSkuNo));
+                    requireSkuMap.forEach((skuNo,list)->{
+                        VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
+                        detail.setNum(BigDecimal.valueOf(list.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum)));
+                        detail.setWarehouseNo(handleDetail.getThirdWarehouseId());
+                        detail.setSpecNo(skuNo);
+                        detailList.add(detail);
+                    });
+                    break;
+                default:
+                    break;
+            }
 
 
             request.setDetailList(detailList);

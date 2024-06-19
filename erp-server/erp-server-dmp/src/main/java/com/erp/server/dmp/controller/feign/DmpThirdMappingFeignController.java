@@ -32,8 +32,8 @@ public class DmpThirdMappingFeignController {
     public List<ThirdMappingEntity> getListBySysIds(@RequestParam List<String> sysIds){
         return thirdMappingService.getListBySysIds(sysIds);
     }
-    @GetMapping("/getWarehouseListBySysIds")
-    public List<ThirdMappingEntity> getWarehouseListBySysIds(@RequestParam List<String> sysIds){
+    @GetMapping("/getVwListBySysIds")
+    public List<ThirdMappingEntity> getVwListBySysIds(@RequestParam List<String> sysIds){
         return thirdMappingService.getVwListBySysIds(sysIds);
     }
 

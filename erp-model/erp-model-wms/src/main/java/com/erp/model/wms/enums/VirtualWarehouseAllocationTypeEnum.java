@@ -1,5 +1,7 @@
 package com.erp.model.wms.enums;
 
+import com.common.business.enums.SourceTypeEnum;
+
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,6 +49,9 @@ public enum VirtualWarehouseAllocationTypeEnum {
      * @return
      */
     public static VirtualWarehouseAllocationTypeEnum getEnum(String code) {
+        return Arrays.stream(VirtualWarehouseAllocationTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    }
+    public static VirtualWarehouseAllocationTypeEnum getByCode(String code) {
         return Arrays.stream(VirtualWarehouseAllocationTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 }
