@@ -58,7 +58,7 @@ public interface WarehouseLocationFeign {
      * @return
      */
     @PostMapping("/listByWarehouseIdAndCode")
-    List<WarehouseLocationEntity> listByWarehouseIdAndCode(List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList);
+    List<WarehouseLocationEntity> listByWarehouseIdAndCode(@RequestBody List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList);
 }
 
 
