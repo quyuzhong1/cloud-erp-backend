@@ -1034,7 +1034,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         Map<String, Integer> detailQtyMap = pickingDetailEntities.stream()
                 .collect(Collectors.toMap(PickingDetailEntity::getSourceDetailId, PickingDetailEntity::getQty, Integer::sum));
         for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
-            detailEntity.setPickingQty(detailQtyMap.get(detailEntity.getId()));
+            detailEntity.setPickingQty(Optional.ofNullable(detailQtyMap.get(detailEntity.getId())).orElse(0));
         }
         soDeliveryNoticeDetailService.updateBatchById(detailEntities);
     }

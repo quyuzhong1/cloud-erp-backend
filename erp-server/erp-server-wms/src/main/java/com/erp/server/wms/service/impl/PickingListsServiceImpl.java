@@ -186,6 +186,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         warehouseLocationMoveService.addAndApprove(dto);
         pickingDetailService.remove(Wrappers.<PickingDetailEntity>lambdaQuery()
                 .eq(PickingDetailEntity::getMainId, id));
+        List<String> sourceDetailIds = entityList.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
+            // 反写要货申请的拣货数量
+            requisitionApplicationService.writeBackData(sourceDetailIds);
+        } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
+            soDeliveryNoticeService.writeBackData(sourceDetailIds);
+        }
     }
 
     private void checkStatus(PickingListsEntity entity) {
@@ -296,7 +303,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintView::getPickingQty).sum();
                     view.setPickingQty(totalQuantity);
                     return view;
-                }))).values());
+                }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintView::getWarehouseId)
+                .thenComparing(PickingListsDTO.PrintView::getWarehouseLocation)
+                .thenComparing(PickingListsDTO.PrintView::getSkuNo)).collect(Collectors.toList());
     }
 
     @Override
