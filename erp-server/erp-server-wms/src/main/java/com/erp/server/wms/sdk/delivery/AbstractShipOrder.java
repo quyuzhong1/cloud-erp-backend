@@ -126,9 +126,6 @@ public abstract class AbstractShipOrder implements IPlatformService {
             if (CollectionUtils.isEmpty(sourceOrderList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
             }
-            sourceOrderList = sourceOrderList.stream()
-                    .filter(e-> SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(e.getSourceType()) && PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(e.getDictPlatform()))
-                    .collect(Collectors.toList());
             // 查询所有明细
             List<SoB2cDetailEntity> allDetailList = soB2cFeign.listDetailByIds(detailIds);
             soB2cDetailEntityListMap = allDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
