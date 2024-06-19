@@ -45,6 +45,10 @@ public class MachineDetailDTO implements Serializable {
          * 库位id
          */
         private String warehouseLocation;
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
 
         /**
          * 参照版本 http://172.16.100.11:3002/project/47/interface/api/21859

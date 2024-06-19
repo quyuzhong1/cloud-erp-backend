@@ -3,6 +3,7 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -65,8 +66,8 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     /**
      * 根据归属进行模糊匹配
      * @param mainIdList
-     * @param name
+     * @param params
      * @return
      */
-    List<LogisticsChannelEntity> listByMainIdsAndName(@Param("mainIdList") List<String> mainIdList,@Param("name") String name);
+    List<LogisticsChannelEntity> listByMainIdsAndName(@Param("mainIdList") List<String> mainIdList,@Param("params") LogisticsSupplierDTO.PagingParamDTO params);
 }

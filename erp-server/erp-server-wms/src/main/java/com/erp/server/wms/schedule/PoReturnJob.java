@@ -13,7 +13,6 @@ import com.erp.model.wms.entity.InventoryClosedRecordEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.server.wms.service.PoReturnService;
-import com.erp.server.wms.utils.KingdeeExtensionUtils;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;

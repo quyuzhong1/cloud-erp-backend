@@ -332,7 +332,17 @@ public class SoB2cDTO implements Serializable {
         private String buyerName;
 
         /**
-         * 物流单号
+         * 买家邮箱
+         */
+        private String email;
+
+        /**
+         * 买家电话
+         */
+        private String telNumber;
+
+        /**
+         * 运单号
          */
         private String logisticsCode;
 

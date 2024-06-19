@@ -1,5 +1,6 @@
 package com.sdk.tms.track123.handler;
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -14,6 +15,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
@@ -90,32 +92,32 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
 
 
     private void getTrackData(LogisticsBillDetailQueryDTO query, List<OceanResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
-        PagingVO<LogisticsBillDetailEntity> page = logisticsBillFeign.getLogisticsBillDetails(query);
-        if (Objects.isNull(page) || CollectionUtils.isEmpty(page.getList())) {
-            return;
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
+        if (list.size() > MathUtil.NUMBER_100){
+            //列表数据较多情况下，进行分割集合
+            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+            //物流商数据处理
+            partition.forEach(e -> {
+                OceanResponseData responseData = this.processTrackData(e, cfgAppClient);
+                if (Objects.nonNull(responseData)){
+                    responseDataList.add(responseData);
+                }
+            });
+        }else {
+            //物流商数据处理
+            OceanResponseData responseData = this.processTrackData(list, cfgAppClient);
+            if (Objects.nonNull(responseData)){
+                responseDataList.add(responseData);
+            }
         }
-        OceanResponseData responseData = processTrackData((List<LogisticsBillDetailEntity>) page.getList(), cfgAppClient);
-        if (Objects.isNull(responseData)) {
-            return;
-        }
-        //业务处理
-        responseDataList.add(responseData);
-        long pages = page.getTotalPage();
-        if (pages > page.getCurrPage()) {
-            //下一页
-            query.setCurrent(page.getCurrPage() + 1);
-            getTrackData(query, responseDataList, cfgAppClient);
-        } else {
-            //无数据
-            log.info("========同步物流轨迹数据完成==========");
-        }
+        log.info("========同步物流轨迹数据完成==========");
     }
 
-    private OceanResponseData processTrackData(List<LogisticsBillDetailEntity> records, CfgAppClientEntity cfgAppClient) {
+    private OceanResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
         if (CollectionUtils.isNotEmpty(records)) {
             List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> list = new ArrayList<>();
             String token = cfgAppClient.getClientSecret();
-            for (LogisticsBillDetailEntity record : records) {
+            for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
               LogisticsTrackBaseDTO.OceanTrackRequestDTO oceanTrackRequestDTO = LogisticsTrackBaseDTO.OceanTrackRequestDTO.builder()
                       .trackingNo(record.getTrackNo())
                       .orderNo(record.getPlatformOrderNo())

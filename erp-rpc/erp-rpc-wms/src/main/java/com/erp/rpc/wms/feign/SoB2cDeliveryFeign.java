@@ -49,7 +49,7 @@ public interface SoB2cDeliveryFeign {
     Boolean updateB2cDeliveryWeightBySoId(@RequestBody SoB2cDeliveryDTO.UpdateWeightDTO dto);
 
     /**
-     * 虚假发货
+     * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/27 15:30
      * @param id
@@ -59,7 +59,7 @@ public interface SoB2cDeliveryFeign {
     BatchResultDTO falseDelivery(@RequestBody String id);
 
     /**
-     * 虚假发货
+     * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/27 16:00
      * @param ids 发货单id

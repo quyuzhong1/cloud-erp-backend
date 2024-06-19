@@ -1006,10 +1006,12 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public InventoryDTO.InventoryQtyDTO getInventoryQty(InventoryDTO.InventoryBySkuNoDTO dto) {
         InventoryDTO.InventoryQtyDTO result = new InventoryDTO.InventoryQtyDTO();
-        List<InventoryEntity> list = this.lambdaQuery().eq(InventoryEntity::getSkuId, dto.getSkuId()).
-                eq(InventoryEntity::getOrgId, dto.getOrgId()).
-                eq(InventoryEntity::getWarehouseId, dto.getWarehouseId()).
-                eq(StringUtils.isNotBlank(dto.getWarehouseLocation()), InventoryEntity::getWarehouseLocation, dto.getWarehouseLocation()).list();
+        List<InventoryEntity> list = this.lambdaQuery()
+                .eq(StringUtils.isNotBlank(dto.getWarehouseId()),InventoryEntity::getSkuId, dto.getSkuId())
+                .eq(StringUtils.isNotBlank(dto.getOrgId()),InventoryEntity::getOrgId, dto.getOrgId())
+                .eq(StringUtils.isNotBlank(dto.getWarehouseId()),InventoryEntity::getWarehouseId, dto.getWarehouseId())
+                .eq(InventoryEntity::getWarehouseLocation, dto.getWarehouseLocation())
+                .list();
         result.setOrgId(dto.getOrgId());
         result.setSkuId(dto.getSkuId());
         result.setWarehouseId(dto.getWarehouseId());
@@ -1043,15 +1045,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 view.setWarehouseId(usableInventoryParamDTO.getWarehouseId());
                 view.setWarehouseLocation(usableInventoryParamDTO.getWarehouseLocation());
                 view.setUsableQty(this.getUsableInventoryTotal(usableInventoryParamDTO.getWarehouseId(), usableInventoryParamDTO.getSkuId()));
+                view.setFrozenQty(this.getFrozenInventoryTotal(usableInventoryParamDTO.getWarehouseId(), usableInventoryParamDTO.getSkuId()));
                 viewList.add(view);
             } else {
                 WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(usableInventoryParamDTO.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
                 Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
-                Integer inventoryTotal = this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), usableInventoryParamDTO.getSkuId(), usableInventoryParamDTO.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
+                Integer inventoryUsableTotal = this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), usableInventoryParamDTO.getSkuId(), usableInventoryParamDTO.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
                 view.setSkuId(usableInventoryParamDTO.getSkuId());
                 view.setWarehouseId(usableInventoryParamDTO.getWarehouseId());
                 view.setWarehouseLocation(usableInventoryParamDTO.getWarehouseLocation());
-                view.setUsableQty(inventoryTotal);
+                view.setUsableQty(inventoryUsableTotal);
+                Integer inventoryFrozenTotal = this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), usableInventoryParamDTO.getSkuId(), usableInventoryParamDTO.getWarehouseLocation(), InventoryStatusEnum.FROZEN.getCode());
+                view.setFrozenQty(inventoryFrozenTotal);
                 viewList.add(view);
             }
         }
@@ -1154,5 +1159,19 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                     && StringUtils.isNotBlank(e.getWarehouseLocationName()) && StringUtils.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuId)).collect(Collectors.toList());
             pdaInventoryWarehouseDTO.setWarehouseLocationDTOList(warehouseDTOS);
         });
+    }
+
+    @Override
+    public Integer getFrozenInventoryTotal(String warehouseId, String skuId) {
+        // 查询仓库组织
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, warehouseEntity.getOrgId())
+                .eq(InventoryEntity::getSkuId, skuId)
+                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.FROZEN.getCode());
+
+        List<InventoryEntity> list = baseMapper.selectList(queryWrapper);
+        return CollUtil.isEmpty(list) ? 0 : list.stream().mapToInt(InventoryEntity::getQty).sum();
     }
 }

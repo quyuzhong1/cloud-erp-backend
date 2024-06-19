@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -13,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.server.tms.query.LogisticsSupplierQueryHandler;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +68,7 @@ public class LogisticsSupplierController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = LogisticsSupplierQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:logisticsSupplier:paging",
@@ -117,16 +120,6 @@ public class LogisticsSupplierController extends BaseController {
         logisticsSupplierService.update(dto);
         return success();
     }
-
-    /**
-     * 分页列表详情
-     */
-    @PostMapping("/channelView")
-    public ApiResult<List<LogisticsSupplierDTO.ChannelViewDTO>> channelView(@RequestBody BaseIdDTO dto){
-       List<LogisticsSupplierDTO.ChannelViewDTO> channelViewList=logisticsSupplierService.listChannelView(dto.getId(),dto.getName());
-       return success(channelViewList);
-    }
-
 
     /**
      * 物流渠道同步
