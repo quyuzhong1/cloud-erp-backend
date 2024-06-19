@@ -895,7 +895,8 @@ public class ShopDTO implements Serializable {
         /**
          * 是否可选
          */
-        private Boolean canCheck=true;
+        private Boolean canCheck = true;
+    }
 
     @Data
     @NoArgsConstructor
