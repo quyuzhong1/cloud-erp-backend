@@ -32,9 +32,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -76,7 +78,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private StocktakingTaskService stocktakingTaskService;
     @Resource
     private WarehouseService warehouseService;
-
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
 
     @Override
     public PagingVO<StocktakingPlanDTO.ListDTO> paging(PagingDTO<StocktakingPlanDTO.PagingParamDTO> pagingParamDTO) {
@@ -420,7 +423,13 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 查询明细数据
         List<StocktakingPlanDetailDTO.ViewDTO> detailEntityList = stocktakingPlanDetailService.listByMainIdAndType(id);
         if (CollUtil.isNotEmpty(detailEntityList)) {
+            List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = detailEntityList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+            List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
             List<StocktakingPlanDetailDTO.ViewDTO> detailDTOList = BeanUtil.copyToList(detailEntityList, StocktakingPlanDetailDTO.ViewDTO.class);
+            detailDTOList.forEach(viewDTO -> {
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(viewDTO.getWarehouseId()) && e.getCode().equals(viewDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+                viewDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
+            });
             data.setDetailList(detailDTOList);
         }
         return data;
