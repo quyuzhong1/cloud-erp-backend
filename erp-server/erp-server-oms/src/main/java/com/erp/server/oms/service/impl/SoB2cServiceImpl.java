@@ -2318,8 +2318,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         addDTO.setPayTime(payTime);
         addDTO.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
         //平台订单号
-        String platformCode = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getPlatformCode())).map(SoB2cEntity::getPlatformCode).collect(Collectors.joining("*"));
-        addDTO.setPlatformCode(platformCode);
+//        String platformCode = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getPlatformCode())).map(SoB2cEntity::getPlatformCode).collect(Collectors.joining("*"));
+//        addDTO.setPlatformCode(platformCode);
+        // 合并订单无平台订单号(防止合并字段过长)
+        addDTO.setPlatformCode("");
         //物流信息
         SoB2cLogisticsDTO.AddDTO logisticsAddDTO = new SoB2cLogisticsDTO.AddDTO();
         BeanMapperUtils.copy(soB2cLogisticsList.get(0), logisticsAddDTO);
@@ -2379,11 +2381,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDetailDTO.AddDTO detailAddDTO = new SoB2cDetailDTO.AddDTO();
             BeanMapperUtils.copy(detailEntity, detailAddDTO);
             detailAddDTO.setOperateDetailId(detailEntity.getId());
-            detailAddDTO.setSourceDetailId(null);
+            // 记录来源明细ID（作为合并订单触发平台标记发货的依据）
+            detailAddDTO.setSourceDetailId(detailEntity.getSourceDetailId());
             detailList.add(detailAddDTO);
         }
+        // 源单号列表
         String codes = list.stream().map(SoB2cEntity::getCode).collect(Collectors.joining(","));
-        addDTO.setRemark(StrUtil.format("订单【{}】合并新订单", codes));
+        // 源平台订单号列表
+        String platformCodeListStr = list.stream().map(SoB2cEntity::getPlatformCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.joining(","));
+        String remark;
+        if (StringUtils.isBlank(platformCodeListStr)){
+            remark = StrUtil.format("订单【{}】合并新订单", codes);
+        } else {
+            remark = StrUtil.format("订单【{}】合并新订单,平台订单号【{}】 ", codes, platformCodeListStr);
+        }
+        addDTO.setRemark(remark);
         addDTO.setDetailList(detailList);
         log.info("新增合并后的B2C销售订单，addDTO = {}", addDTO);
         //新增数据
