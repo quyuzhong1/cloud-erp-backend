@@ -451,6 +451,30 @@ public class SoB2cDTO implements Serializable {
          * 包装重量单位
          */
         private String weightUnit;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+        /**
+         * 是否匹配仓库规则
+         */
+        private Boolean isMatchWarehouseRule;
+        /**
+         * 冻结类型（manual手动冻结，automatic自动冻结）
+         */
+        private String frozenType;
+        /**
+         * 是否地址修改 true 是  false 否
+         */
+        private Boolean isChangeReceiverAddress;
     }
 
     @Data
