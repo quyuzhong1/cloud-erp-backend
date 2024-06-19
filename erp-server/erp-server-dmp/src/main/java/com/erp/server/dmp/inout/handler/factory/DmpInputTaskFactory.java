@@ -1,7 +1,5 @@
 package com.erp.server.dmp.inout.handler.factory;
 
-import java.time.LocalDateTime;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,8 +13,6 @@ import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
 import com.erp.server.dmp.inout.handler.input.all.DmpInputTaskStatusHandler;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputBaseTaskHandler;
 import com.erp.server.dmp.service.DmpInputTaskService;
-
-import cn.hutool.core.exceptions.ExceptionUtil;
 
 @Component
 public class DmpInputTaskFactory{
@@ -45,16 +41,12 @@ public class DmpInputTaskFactory{
 					DmpInputTaskEntity dmpInputTaskEntity = dmpResponse.getBeforeDmpInputTaskEntityList().get(0);
 					Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
 					boolean errorFlag = errorCount == maxRetryCount;
-					dmpInputTaskService.lambdaUpdate()
-							.eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getId())
-							.set(errorFlag , DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
-							.set(DmpInputTaskEntity::getUpdateTime, LocalDateTime.now())
-							.set(DmpInputTaskEntity::getErrorMessage, ExceptionUtil.stacktraceToString(e))
-							.update();
+					dmpInputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
 					throw e;
 				}
 			}
 		}
 		return dmpResponse;
 	}
+	
 }

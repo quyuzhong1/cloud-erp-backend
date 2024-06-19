@@ -1,9 +1,11 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.common.business.dto.base.BaseResultDTO;
@@ -14,9 +16,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpInputTaskDTO;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.mapper.DmpInputTaskMapper;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -88,4 +92,14 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     private void handleData(DmpInputTaskEntity dmpInputTaskEntity) {
     // TODO 验证数据 & 数据赋值
     }
+    
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+    public boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e) {
+    	return lambdaUpdate().eq(DmpInputTaskEntity::getId, id)
+				.set(DmpInputTaskEntity::getErrorCount, errorCount)
+				.set(errorFlag , DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
+				.set(DmpInputTaskEntity::getUpdateTime, LocalDateTime.now())
+				.set(DmpInputTaskEntity::getErrorMessage, ExceptionUtil.stacktraceToString(e))
+				.update();
+	}
 }

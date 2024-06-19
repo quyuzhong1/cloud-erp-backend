@@ -22,13 +22,13 @@ public class DmpInputTestInitHandler extends DmpInputInitHandler{
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 		dmpInputTaskInitDTO.setCode(200);
 		dmpInputTaskInitDTO.setContentType(DmpInputTaskFileContentTypeEnum.JSON);
-		dmpInputTaskInitDTO.setMsg("{'size' : '12' , 'name' : '金蝶15' , 'code' : 'kingdee'}");
+		dmpInputTaskInitDTO.setMsg("{'size' : '13' , 'name' : '金蝶16' , 'code' : 'kingdee'}");
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 		
 		dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 		dmpInputTaskInitDTO.setCode(200);
 		dmpInputTaskInitDTO.setContentType(DmpInputTaskFileContentTypeEnum.TXT);
-		dmpInputTaskInitDTO.setMsg("code\tname\tsize\namazon\t亚马逊12\t6");
+		dmpInputTaskInitDTO.setMsg("code\tname\tsize\namazon\t亚马逊13\t8");
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 		return dmpInputTaskInitDTOList;
 	}

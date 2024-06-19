@@ -2,9 +2,13 @@ package com.erp.server.dmp.inout.handler.input.task;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Resource;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,7 @@ import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
+import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -47,6 +52,8 @@ public class DmpInputBaseTaskHandler extends DmpInputTaskHandler{
 	private DmpCfgInputConvertService dmpCfgInputConvertService;
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
+	@Resource
+    private RedisTemplate<String,Object> redisTemplate;
 	
 	@Transactional(rollbackFor = Exception.class)
 	@Override
@@ -73,22 +80,33 @@ public class DmpInputBaseTaskHandler extends DmpInputTaskHandler{
 			return;
 		}
 		
+		String redisKey = "dmp:input:task:" + inputTaskId;
+		Integer execTimeout = 3600;
 		DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpCfgInputDetailService.getById(dmpInputTaskEntity.getInputDetailId());
-		
-		DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputService.getById(dmpCfgInputDetailEntity.getMainId());
-		
-		DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.getById(dmpCfgInputEntity.getSystemId());
-		
-		List<DmpInputTaskEntity> beforeDmpInputTaskEntityList = new ArrayList<>();
-		beforeDmpInputTaskEntityList.add(dmpInputTaskEntity);
-		dmpResponse.setBeforeDmpInputTaskEntityList(beforeDmpInputTaskEntityList);
-		dmpResponse.setDmpCfgInputDetailEntity(dmpCfgInputDetailEntity);
-		dmpResponse.setDmpCfgInputEntity(dmpCfgInputEntity);
-		dmpResponse.setDmpBasicSystemEntity(dmpBasicSystemEntity);
-		
-		chain.addFirstDmpHandlerList(this.getDmpCfgInputConvertEntityList(dmpRequest, dmpResponse));
-		
-		chain.doDmpHandler(dmpRequest, dmpResponse);
+		if(dmpCfgInputDetailEntity != null && dmpCfgInputDetailEntity.getExecTimeout() != null && dmpCfgInputDetailEntity.getExecTimeout() > 0) {
+			execTimeout = dmpCfgInputDetailEntity.getExecTimeout();
+		}
+		if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), execTimeout, TimeUnit.SECONDS)) {
+			try {
+				DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputService.getById(dmpCfgInputDetailEntity.getMainId());
+				DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.getById(dmpCfgInputEntity.getSystemId());
+				
+				List<DmpInputTaskEntity> beforeDmpInputTaskEntityList = new ArrayList<>();
+				beforeDmpInputTaskEntityList.add(dmpInputTaskEntity);
+				dmpResponse.setBeforeDmpInputTaskEntityList(beforeDmpInputTaskEntityList);
+				dmpResponse.setDmpCfgInputDetailEntity(dmpCfgInputDetailEntity);
+				dmpResponse.setDmpCfgInputEntity(dmpCfgInputEntity);
+				dmpResponse.setDmpBasicSystemEntity(dmpBasicSystemEntity);
+				
+				chain.addFirstDmpHandlerList(this.getDmpCfgInputConvertEntityList(dmpRequest, dmpResponse));
+				
+				chain.doDmpHandler(dmpRequest, dmpResponse);
+			} catch (Exception e) {
+				throw e;
+			}finally {
+				redisTemplate.delete(redisKey);
+			}
+		}
 	}
 	
 	private List<DmpHandler> getDmpCfgInputConvertEntityList(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse){

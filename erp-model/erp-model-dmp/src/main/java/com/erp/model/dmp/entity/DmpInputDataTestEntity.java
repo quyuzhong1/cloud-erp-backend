@@ -54,6 +54,8 @@ public class DmpInputDataTestEntity extends BaseEntity<DmpInputDataTestEntity> {
     private String code;
     @TableField("name")
     private String name;
+    @TableField("size")
+    private Integer size;
 
     public static final String INPUT_TASK_ID = "input_task_id";
     

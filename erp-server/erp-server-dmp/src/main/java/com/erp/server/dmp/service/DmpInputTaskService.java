@@ -32,5 +32,5 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
     */
     Boolean update(DmpInputTaskDTO.UpdateDTO dto);
 
-
+    boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e);
 }
