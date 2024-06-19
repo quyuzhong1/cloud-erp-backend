@@ -452,15 +452,9 @@ public class PullAmzJob {
         String platform = PlatformDictEnum.AMAZON.getCode();
         String business = BusinessTypeEnum.ORDER.getCode();
 
-        // 仓储中心配置
-        // 查询仓库中心配置
-        List<CfgAmzFulfillmentCenterEntity> centerEntityList = amazonDownloadService.feignQueryFulfillmentCenterlist(Collections.emptyList());
-        Map<String, String> centerMap = centerEntityList
-                .stream()
-                .collect(Collectors.toMap(CfgAmzFulfillmentCenterEntity::getCode, CfgAmzFulfillmentCenterEntity::getCountry));
 
         taskGroupMap.forEach((key, value) -> {
-            amazonDownloadService.handlerFulfilledCheckOrder(key, value, size, platform, category, business, timeZoneList, shopMap, centerMap);
+            amazonDownloadService.handlerFulfilledCheckOrder(key, value, size, platform, category, business, timeZoneList, shopMap);
             log.info("[ 根据物流销售记录补充订单【亚马逊】->ERP] amazonFulfilledCheckOrder 当前线程执行完毕");
             XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonFulfilledCheckOrder 当前线程执行完毕");
         });

@@ -176,7 +176,8 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
         }
     }
 
-    public String convertOrderUniqueId() {
-        return StrUtil.format("{}_{}", this.amazonOrderId, this.shopId);
+
+    public String convertOrderIdWithPlatformShopCode(){
+        return StrUtil.format("{}_{}", this.amazonOrderId, this.platformShopCode);
     }
 }

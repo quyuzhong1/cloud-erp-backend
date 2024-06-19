@@ -96,12 +96,12 @@ public interface AmazonDownloadService {
     /**
      * 根据订单ID补充订单
      */
-    void handlerFulfilledCheckOrder(String groupId, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business, List<CfgTimezoneEntity> timeZoneList, Map<String, ShopInfoEntity> shopMap, Map<String, String> centerMap);
+    void handlerFulfilledCheckOrder(String groupId, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business, List<CfgTimezoneEntity> timeZoneList, Map<String, ShopInfoEntity> shopMap);
 
     /**
      * 根据订单ID查询Mongo
      */
-    List<PlatformAmazonOrderDTO> findMongoOrderByUniqueIds(List<String> allOrderIds);
+    List<PlatformAmazonOrderDTO> findMongoOrderByIdsAndPlatformShopCode(List<PlatformAmazonFulfilledShipmentsDTO> allOrderIds);
 
     /**
      * 根据账号ID查询Mongo

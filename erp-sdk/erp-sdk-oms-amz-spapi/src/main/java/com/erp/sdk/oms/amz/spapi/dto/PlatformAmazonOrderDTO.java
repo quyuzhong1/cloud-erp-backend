@@ -11,7 +11,6 @@ import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
-import com.erp.sdk.oms.amz.spapi.model.sellers.Marketplace;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -104,7 +103,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         this.setIsClean(CleanStatusEnum.NONE.getCode());
     }
 
-    public PlatformAmazonOrderDTO(Order order, AmazonShopInfoDTO shopInfoDTO, List<CfgTimezoneEntity> timeZoneList, String shopId) {
+    public PlatformAmazonOrderDTO(Order order, AmazonShopInfoDTO shopInfoDTO, List<CfgTimezoneEntity> timeZoneList) {
         this.order = order;
         // 1 根据站点判断店铺ID
         AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(order.getMarketplaceId());
@@ -119,14 +118,6 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
                 if (null != marketplaceEnum){
                     shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceEnum.getMarketplaceId());
                 }
-            }
-            // 3,多渠道订单根据仓库中心对应站点
-            if (order.hasMultiChannel() && StringUtils.isNotBlank(shopId)){
-                shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().values()
-                        .stream()
-                        .filter(e -> e.getShopId().equalsIgnoreCase(shopId))
-                        .findFirst()
-                        .orElse(null);
             }
         }
 
@@ -160,6 +151,10 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
     public static String combineUnique(String orderId, String shopId){
         return StrUtil.format("{}_{}", orderId, shopId);
+    }
+
+    public String convertOrderIdWithPlatformShopCode(){
+        return StrUtil.format("{}_{}", this.order.getAmazonOrderId(), this.platformShopCode);
     }
 
     /**

@@ -426,7 +426,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
 
-    public List<PlatformAmazonOrderDTO> downloadByOrderIds(Map<String, String> dtoOrderIdShopIdMap, String shopId, String groupId, List<CfgTimezoneEntity> timeZoneList, Map<String, String> centerMap) {
+    public List<PlatformAmazonOrderDTO> downloadByOrderIds(Map<String, String> dtoOrderIdShopIdMap, String shopId, String groupId, List<CfgTimezoneEntity> timeZoneList) {
         List<String> orderIds = new ArrayList<>(dtoOrderIdShopIdMap.keySet());
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
@@ -474,7 +474,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             }
             // 返回下载源数据
             return orderList.stream()
-                    .map(e-> new PlatformAmazonOrderDTO(e, shopInfoDTO, timeZoneList, dtoOrderIdShopIdMap.get(e.getAmazonOrderId())))
+                    .map(e-> new PlatformAmazonOrderDTO(e, shopInfoDTO, timeZoneList))
                     .collect(Collectors.toList());
         } catch (ApiException e) {
             if (429 == e.getCode()){

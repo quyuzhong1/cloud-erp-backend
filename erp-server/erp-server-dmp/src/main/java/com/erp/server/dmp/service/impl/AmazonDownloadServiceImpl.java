@@ -554,7 +554,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
 
 
     @Override
-    public void handlerFulfilledCheckOrder(String groupId, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business, List<CfgTimezoneEntity> timeZoneList, Map<String, ShopInfoEntity> shopMap, Map<String, String> centerMap) {
+    public void handlerFulfilledCheckOrder(String groupId, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business, List<CfgTimezoneEntity> timeZoneList, Map<String, ShopInfoEntity> shopMap) {
         // 亚马逊账号
         String platformShopCode = StringUtils.substringBetween(groupId, ":", ":");
         // 查询当前分组未下载的mongo订单
@@ -565,22 +565,19 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             return;
         }
 
-        List<String> allOrderUniqueIds = dtoList.stream().map(PlatformAmazonFulfilledShipmentsDTO::convertOrderUniqueId)
-                .distinct()
-                .collect(Collectors.toList());
-        List<PlatformAmazonOrderDTO> existOrderList = this.findMongoOrderByUniqueIds(allOrderUniqueIds);
+        // 查询已存在的订单
+        List<PlatformAmazonOrderDTO> existOrderList = this.findMongoOrderByIdsAndPlatformShopCode(dtoList);
 
-        // 已存在IDS
+        // 转换Map
         Map<String, PlatformAmazonOrderDTO> existOrderMap = existOrderList.stream()
-                .filter(e -> null != e.getOrder())
-                .distinct()
-                .collect(Collectors.toMap(UniqueDto::getUniqueId, Function.identity()));
-        Set<String> existOrderIds = existOrderMap.keySet();
+                .collect(Collectors.toMap(PlatformAmazonOrderDTO::convertOrderIdWithPlatformShopCode, Function.identity()));
 
         // 任意店铺ID
         String shopId = value.get(0).getShopId();
 
-        Map<Boolean, List<PlatformAmazonFulfilledShipmentsDTO>> groupMap = dtoList.stream().collect(Collectors.groupingBy(e -> existOrderIds.contains(e.convertOrderUniqueId())));
+        // 按订单主表是否已下载分组
+        Map<Boolean, List<PlatformAmazonFulfilledShipmentsDTO>> groupMap = dtoList.stream()
+                .collect(Collectors.groupingBy(e -> existOrderMap.containsKey(e.convertOrderIdWithPlatformShopCode())));
 
         List<PlatformAmazonFulfilledShipmentsDTO> existList = groupMap.get(true);
         List<PlatformAmazonFulfilledShipmentsDTO> queryList = groupMap.get(false);
@@ -597,7 +594,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             Set<String> orderIds = dtoOrderIdShopIdMap.keySet();
             try {
                 // 根据订单ID下载分组查询
-                List<PlatformAmazonOrderDTO> newOrderDTOList = amazonOrderHandler.downloadByOrderIds(dtoOrderIdShopIdMap, shopId, groupId, timeZoneList, centerMap);
+                List<PlatformAmazonOrderDTO> newOrderDTOList = amazonOrderHandler.downloadByOrderIds(dtoOrderIdShopIdMap, shopId, groupId, timeZoneList);
                 // 订单主体保存倒mongo
                 businessService.handleSaveOrUpdateMongo(newOrderDTOList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformAmazonOrderDTO.class, new ArrayList<>());
                 // 更新物流销售记录mongo
@@ -624,7 +621,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
                                                   Map<String, ShopInfoEntity> shopMap) {
         existList.forEach(e -> {
             e.setHandleStatus(AmazonHandleStatusEnum.WAIT_HANDLE.getCode());
-            PlatformAmazonOrderDTO orderDTO = existOrderMap.get(e.getAmazonOrderId());
+            PlatformAmazonOrderDTO orderDTO = existOrderMap.get(e.convertOrderIdWithPlatformShopCode());
             if (null == orderDTO) {
                 return;
             }
@@ -648,11 +645,16 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
     }
 
     @Override
-    public List<PlatformAmazonOrderDTO> findMongoOrderByUniqueIds(List<String> allOrderIds) {
-        Query query = new Query();
-//        query.addCriteria(Criteria.where("order.amazonOrderId").in(allOrderIds)
-        query.addCriteria(Criteria.where("uniqueId").in(allOrderIds)
-        );
+    public List<PlatformAmazonOrderDTO> findMongoOrderByIdsAndPlatformShopCode(List<PlatformAmazonFulfilledShipmentsDTO> dtoList) {
+        // 构建查询条件
+        List<Criteria> criteriaList = new ArrayList<>();
+        for (PlatformAmazonFulfilledShipmentsDTO dto : dtoList) {
+            Criteria criteria = Criteria.where("order.amazonOrderId").is(dto.getAmazonOrderId())
+                    .and("platformShopCode").is(dto.getPlatformShopCode());
+            criteriaList.add(criteria);
+        }
+        Query query = new Query(new Criteria().orOperator(criteriaList.toArray(new Criteria[0])));
+
         List<PlatformAmazonOrderDTO> orderDTOList = mongoTemplate.find(query, PlatformAmazonOrderDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER);
         if (CollectionUtils.isEmpty(orderDTOList)) {
             return Collections.emptyList();
