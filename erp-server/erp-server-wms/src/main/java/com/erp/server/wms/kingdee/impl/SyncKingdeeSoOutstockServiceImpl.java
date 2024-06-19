@@ -4,14 +4,13 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.*;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
+import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -20,7 +19,6 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -29,11 +27,13 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -45,7 +45,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.convert.SoOutstockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
-import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
@@ -53,8 +52,6 @@ import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -65,7 +62,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -864,23 +860,25 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 }
             }
         } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
-            SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSoId());
-            if (Objects.isNull(view)) {
-                log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2C订单异常:[" + soOutstockEntity.getSourceId() + "]");
-            }
-            soId = view.getId();
-            soCode = view.getCode();
-            receiveAddress = view.getReceiverDTO().getFirstAddress();
-            currency = view.getCurrency();
-            remark = view.getRemark();
+            if (ObjectUtil.isNotEmpty(soOutstockEntity.getSoId())) {
+                SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSoId());
+                if (Objects.isNull(view)) {
+                    log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2C订单异常:[" + soOutstockEntity.getSourceId() + "]");
+                }
+                soId = view.getId();
+                soCode = view.getCode();
+                receiveAddress = view.getReceiverDTO().getFirstAddress();
+                currency = view.getCurrency();
+                remark = view.getRemark();
 
-            List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
-            BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            entity.setItemTotalCost(itemTotalCost);
-            entity.setOrderTotalCost(view.getAmount());
-            entity.setShopName(view.getShopName());
-            entity.setShopNo(view.getShopId());
-            entity.setCustomerName(view.getReceiverDTO().getReceiverName());
+                List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
+                BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                entity.setItemTotalCost(itemTotalCost);
+                entity.setOrderTotalCost(view.getAmount());
+                entity.setShopName(view.getShopName());
+                entity.setShopNo(view.getShopId());
+                entity.setCustomerName(view.getReceiverDTO().getReceiverName());
+            }
 
         }
 

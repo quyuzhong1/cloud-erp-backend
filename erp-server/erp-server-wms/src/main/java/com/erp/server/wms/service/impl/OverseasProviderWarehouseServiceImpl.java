@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -59,9 +60,10 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     private OverseasProviderService overseasProviderService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+
     /**
-    * 修改
-    */
+     * 修改
+     */
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -72,9 +74,9 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         // 数据处理
         handleData(list, mainId);
         boolean save = this.updateBatchById(list);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("海外物流商仓库保存失败");
-        }else {
+        } else {
             //第三方映射绑定
             addThirdMapping(updateDTO, list);
         }
@@ -83,6 +85,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     /**
      * 第三方映射绑定
+     *
      * @param updateDTO
      * @param list
      */
@@ -132,14 +135,14 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseIdList(List<String> warehouseIds) {
-        if(CollectionUtils.isEmpty(warehouseIds)){
-             return Collections.emptyList();
+        if (CollectionUtils.isEmpty(warehouseIds)) {
+            return Collections.emptyList();
         }
         return baseMapper.listByWarehouseIdList(warehouseIds);
     }
 
     @Override
-    public OverseasProviderWarehouseEntity getByPlatform(String mainId,String platformWarehouseCode) {
+    public OverseasProviderWarehouseEntity getByPlatform(String mainId, String platformWarehouseCode) {
         return lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getMainId, mainId)
                 .eq(OverseasProviderWarehouseEntity::getPlatformWarehouseCode, platformWarehouseCode)
@@ -153,22 +156,22 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     }
 
     @Override
-    public List<OverseasProviderWarehouseEntity> listByPlatformWarehouseCode(List<String> warehouseCodeList,String platform) {
+    public List<OverseasProviderWarehouseEntity> listByPlatformWarehouseCode(List<String> warehouseCodeList, String platform) {
         String mainId = overseasProviderService.getByPlatformCode(platform).getId();
         return lambdaQuery()
-                .eq(OverseasProviderWarehouseEntity :: getMainId,mainId)
-                .in(OverseasProviderWarehouseEntity :: getPlatformWarehouseCode,warehouseCodeList)
+                .eq(OverseasProviderWarehouseEntity::getMainId, mainId)
+                .in(OverseasProviderWarehouseEntity::getPlatformWarehouseCode, warehouseCodeList)
                 .list();
     }
 
     @Override
     public OverseasProviderEntity findPlatformByWarehouseId(String warehouseId) {
         OverseasProviderWarehouseEntity entity = getByWarehouseId(warehouseId);
-        if (null == entity){
+        if (null == entity) {
             return null;
         }
         OverseasProviderEntity providerEntity = overseasProviderService.getById(entity.getMainId());
-        if (null == providerEntity){
+        if (null == providerEntity) {
             throw new ServiceException("目的仓数据异常：未找到关联服务：id" + entity.getMainId());
         }
         return providerEntity;
@@ -185,8 +188,8 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(List<OverseasProviderWarehouseEntity> list, String mainId) {
         List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
         List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
@@ -229,15 +232,31 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
                 }
-                operateLogService.addModuleOperateLogByObj(old,detailEntity, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(),mainId,"",String.format("【%s】",old.getPlatformWarehouseName()));
+                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), mainId, "", String.format("【%s】", old.getPlatformWarehouseName()));
             }
         }
 
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean feignBind(OverseasProviderDTO.FeignDTO feignDTO) {
+        //获取系统仓库获取绑定的第三方仓
+        OverseasProviderWarehouseEntity providerWarehouseEntity = this.getByWarehouseId(feignDTO.getWarehouseId());
+        if (Objects.nonNull(providerWarehouseEntity)) {
+            //有效数据直接删除关联
+            if (!providerWarehouseEntity.getDisabled() && !Objects.equals(providerWarehouseEntity.getId(), feignDTO.getOverseasProviderWarehouseId())) {
+                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = new OverseasProviderWarehouseEntity();
+                overseasProviderWarehouseEntity.setWarehouseId("");
+                overseasProviderWarehouseEntity.setWarehouseName("");
+                overseasProviderWarehouseEntity.setId(providerWarehouseEntity.getId());
+                overseasProviderWarehouseEntity.setWarehouseCode("");
+                overseasProviderWarehouseEntity.setDisabled(true);
+                baseMapper.updateById(overseasProviderWarehouseEntity);
+            }
+
+        }
         OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = new OverseasProviderWarehouseEntity();
         overseasProviderWarehouseEntity.setWarehouseId(feignDTO.getWarehouseId());
         overseasProviderWarehouseEntity.setWarehouseName(feignDTO.getWarehouseName());
@@ -245,9 +264,10 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         overseasProviderWarehouseEntity.setWarehouseCode(feignDTO.getWarehouseCode());
         overseasProviderWarehouseEntity.setDisabled(feignDTO.getDisabled());
         int flag = baseMapper.updateById(overseasProviderWarehouseEntity);
-        if (flag<=0){
+        if (flag <= 0) {
             throw new ServiceException(ApiError.ERROR_BINDING);
         }
+
         return Boolean.TRUE;
     }
 }
