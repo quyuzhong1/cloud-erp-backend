@@ -31,15 +31,18 @@ import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
@@ -107,6 +110,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Resource
     private InventoryFeign inventoryFeign;
+    @Resource
+    private WarehouseLocationFeign warehouseLocationFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -427,6 +432,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (CollectionUtils.isNotEmpty(supplierList)) {
             supplierList = supplierService.listByIds(supplierIdList);
         }
+        //仓位信息查询
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getDeliveryWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationFeign.listByWarehouseIdAndCode(paramList);
 
         for (PurchaseOrderDetailDTO.ViewProductDTO viewProductDTO : list) {
 
@@ -481,6 +489,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             viewProductDTO.setEffectiveStockInQty(effectiveStockInQty);
             //未入库数量
             viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - effectiveStockInQty + returnQty );
+            //仓位名称填充
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(viewProductDTO.getDeliveryWarehouseId()) && e.getCode().equals(viewProductDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewProductDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
         return list;
     }

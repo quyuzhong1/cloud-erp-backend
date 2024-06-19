@@ -1021,7 +1021,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(List<String> ids) {
         List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInViewDTOS = baseMapper.generateStockInView(ids);
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-
+        //仓位信息
+        List<String> warehouseIds = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getDeliveryWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIds(warehouseIds);
         //获取sku的id集合
         List<String> skuIdList = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询采购单详情
@@ -1047,7 +1049,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             String warehouseLocation = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(req.getPurchaseOrderDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getWarehouseLocation())).orElse("");
             req.setWarehouseLocation(warehouseLocation);
-
+            //仓位信息填充
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getCode().equals(warehouseLocation)
+                    && e.getWarehouseId().equals(req.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseLocationEntity());
+            req.setWarehouseLocationName(warehouseLocationEntity.getName());
             ProductDetailEntity productDetailEntity = byIdList.stream().filter(obj -> req.getSkuId().equals(obj.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
