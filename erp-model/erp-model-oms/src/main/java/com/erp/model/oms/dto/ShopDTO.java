@@ -892,41 +892,20 @@ public class ShopDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddInternalDTO {
+    public static class UpdateInternalDTO {
 
+        @NotBlank(message = "店铺表不能为空")
+        private String id;
 
-        /**
-         * 平台
-         */
-        @NotBlank(message = "平台不能为空")
-        private String dictPlatform;
-
-
-        /**
-         * 店铺名称
-         */
         @NotBlank(message = "店铺名称不能为空")
         @Size(max = 100, message = "店铺名称最大100字符")
         private String name;
-
-
-        /**
-         * 店铺账号
-         */
-        @NotBlank(message = "店铺账号不能为空")
-        @Size(max = 100, message = "店铺账号最大100字符")
-        private String account;
-
 
         /**
          * 店铺负责人
          */
         @NotBlank(message = "负责人不能为空")
         private String chargeId;
-        /**
-         * 金蝶客户编码
-         */
-        private String customerId;
 
         /**
          * 销售组织
@@ -935,8 +914,10 @@ public class ShopDTO implements Serializable {
         private String salesOrgId;
 
         /**
-         * 是否包含平台仓 true 包含
+         * 客户的id
+         * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
          */
-        private Boolean  isHaveWarehouse;
+        private String customerId;
+
     }
 }

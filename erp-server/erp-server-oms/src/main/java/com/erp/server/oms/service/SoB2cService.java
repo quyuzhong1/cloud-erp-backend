@@ -870,10 +870,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     SoB2cEntity getByCode(String soCode);
 
-    List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> id);
-
-    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> id);
-
     /**
      * 同步订单到DMP
      */

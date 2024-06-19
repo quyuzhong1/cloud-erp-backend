@@ -839,7 +839,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
         List<SoOutstockDetailEntity> soOutstockDetails = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
         List<PickingListsDTO.SourceView> pickingLists = pickingListsService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
         List<InOutStockDTO> members = new ArrayList<>();
         for (PickingListsDTO.SourceView detail : pickingLists) {
@@ -3028,19 +3027,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     /**
      * 平台拉取数据生成销售出库单
      * 注意 List<PlatformDeliveryDetailDTO> 里的仓库ID和mainId相同
-     * @param platformDeliveryDetailDTO
+     * @param platformGenerateSoOutstockDTO
      * @return
      */
-    @Override
-    public Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO) {
-        if(CollectionUtils.isEmpty(platformDeliveryDetailDTO)){
+    public Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO) {
+        List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO = platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList();
+        if (CollectionUtils.isEmpty(platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList())) {
             return true;
         }
         String warehouseId = platformDeliveryDetailDTO.get(0).getWarehouseId();
         String soB2cId = platformDeliveryDetailDTO.get(0).getMainId();
-        SoOutstockEntity outstock = this.getBySoIdAndWarehouseId(soB2cId,warehouseId);
+        SoOutstockEntity outstock = this.getBySoIdAndWarehouseId(soB2cId, warehouseId);
         if (Objects.isNull(outstock)) {
-            SoOutstockDTO.GenerateB2cDTO dto = soB2cFeign.getSoOutstockInfoById(soB2cId);
+            SoOutstockDTO.GenerateB2cDTO dto = platformGenerateSoOutstockDTO.getGenerateB2cDTO();
             //重新赋值仓库 因为可能销售订单是仓库A 速卖通发货是仓库B
             dto.setWarehouseId(warehouseId);
             dto.setWarehouseName(platformDeliveryDetailDTO.get(0).getWarehouseName());
@@ -3050,13 +3049,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             LinkedList<SoOutstockDetailDTO.AddDTO> allSkuList = dto.getDetailList();
             LinkedList<SoOutstockDetailDTO.AddDTO> skuList = new LinkedList<>();
             for (PlatformDeliveryDetailDTO deliveryDetailDTO : platformDeliveryDetailDTO) {
-                SoOutstockDetailDTO.AddDTO detailAddDTO = allSkuList.stream().filter(v->v.getSkuId().equals(deliveryDetailDTO.getSkuId())).findFirst().orElse(null);
-                if(Objects.nonNull(detailAddDTO)){
+                SoOutstockDetailDTO.AddDTO detailAddDTO = allSkuList.stream().filter(v -> v.getSkuId().equals(deliveryDetailDTO.getSkuId())).findFirst().orElse(null);
+                if (Objects.nonNull(detailAddDTO)) {
                     detailAddDTO.setActualQty(deliveryDetailDTO.getQty());
                     skuList.add(detailAddDTO);
                 }
             }
-            if(CollectionUtils.isEmpty(skuList)){
+            if (CollectionUtils.isEmpty(skuList)) {
                 throw new ServiceException("销售出库单明细为空");
             }
             dto.setDetailList(skuList);
@@ -3067,7 +3066,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             ApproveStatusEnum approveStatus = outstock.getApproveStatus();
             // 检查关账时间
             LocalDate closedDate = inventoryClosedRecordService.checkClosed(outstock.getWarehouseOrgId(), outstock.getBillDate());
-            if (null == closedDate){
+            if (null == closedDate) {
                 // 已关账
                 return Boolean.TRUE;
             }
@@ -3081,7 +3080,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             return Boolean.TRUE;
         }
-
     }
     @Override
     public Boolean afreshGenerateB2cOutstock(List<String> ids) {

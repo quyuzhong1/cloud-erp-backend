@@ -506,7 +506,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     List<SoOutstockEntity> listByCodes(List<String> codes);
 //    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
 
-    Boolean generateB2cSoOutstockByPlatformData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO);
+    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
     /**
      * @description: 重新生成销售出库单
      * @author Will

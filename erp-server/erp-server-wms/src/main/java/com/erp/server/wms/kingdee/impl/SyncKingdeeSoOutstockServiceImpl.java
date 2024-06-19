@@ -873,23 +873,23 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 }
             }
 
-        } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType()) ) {
+        } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
             if (ObjectUtil.isNotEmpty(soOutstockEntity.getSoId())) {
 
                 SoB2cDTO.ViewDTO view = soB2cFeign.view(soOutstockEntity.getSoId());
-            if (Objects.isNull(view) || SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(soOutstockEntity.getSourceType())) {
-                log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2C订单异常:[" + soOutstockEntity.getSourceId() + "]");
-                return null;
-            }
+                if (Objects.isNull(view) || SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(soOutstockEntity.getSourceType())) {
+                    log.warn("销售出库单：" + soOutstockEntity.getCode() + "未找到上游订单获取原始B2C订单异常:[" + soOutstockEntity.getSourceId() + "]");
+                    return null;
+                }
 
-            if (Objects.nonNull(view)) {
-                soId = view.getId();
-                soCode = view.getCode();
-                receiveAddress = view.getReceiverDTO().getFirstAddress();
-                currency = view.getCurrency();
-                remark = view.getRemark();
+                if (Objects.nonNull(view)) {
+                    soId = view.getId();
+                    soCode = view.getCode();
+                    receiveAddress = view.getReceiverDTO().getFirstAddress();
+                    currency = view.getCurrency();
+                    remark = view.getRemark();
 
-                List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
+                    List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
                 BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 entity.setItemTotalCost(itemTotalCost);
                 entity.setOrderTotalCost(view.getAmount());

@@ -7925,6 +7925,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return customs;
     }
 
+    @Override
+    public SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id, String warehouseId) {
+        return null;
+    }
+
     private void handleDeclareMatchJson(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailList, HashMap<String, Object> map, String logisticsPlatform) {
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
