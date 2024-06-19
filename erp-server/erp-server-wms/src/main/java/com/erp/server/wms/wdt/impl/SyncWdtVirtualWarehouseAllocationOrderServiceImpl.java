@@ -112,7 +112,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             String detailStr = JSONUtil.toJsonStr(detailList);
             String requestStr = JSONUtil.toJsonStr(request);
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("["+requestStr+",["+detailStr+"]");
+            stringBuilder.append("["+requestStr+","+detailStr+"]");
 
             //添加推送任务
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
