@@ -52,7 +52,7 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
-        RLock lock = redissonClient.getLock(LOCK + pushDTOS.getVirtualWarehouseNo());
+        RLock lock = redissonClient.getLock(LOCK + pushDTOS.getVirtual_warehouse_no());
         try {
             boolean locked = lock.tryLock(10, 30, TimeUnit.SECONDS);
             if (locked) {

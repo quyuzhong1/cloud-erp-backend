@@ -149,12 +149,12 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                 saveFromHandleDetail(vmAllocationDetailList, allocationEntity, allocationHandleEntity, handleDetailList, noSyncDetailList);
                 break;
             case TRANSFER:
-                Set<String> fromToIds = new HashSet<>();
+                List<String> fromToIds = new ArrayList<>();
                 for (VirtualWarehouseAllocationDetailEntity detailDto : vmAllocationDetailList) {
                     fromToIds.add(detailDto.getFromVirtualWarehouseId());
                     fromToIds.add(detailDto.getToVirtualWarehouseId());
                 }
-                List<ThirdMappingEntity> fromToThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds((List<String>) fromToIds);
+                List<ThirdMappingEntity> fromToThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromToIds);
                 Map<String, List<ThirdMappingEntity>> fromToThirdMappingMap = fromToThirdMappingList.stream().collect(Collectors.groupingBy(ThirdMappingEntity::getSysId));
 
                 List<VirtualWarehouseAllocationDetailEntity> fromToVwResultList = new ArrayList<>();
@@ -188,7 +188,8 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
 //                                toMappingList.forEach(thirdMapping -> {
                                 //保存合单明细
                                 VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
-                                handleDetailEntity.setToVirtualWarehouseId(toVmId);
+                                handleDetailEntity.setFromVirtualWarehouseId(split[0]);
+                                handleDetailEntity.setToVirtualWarehouseId(split[1]);
                                 handleDetailEntity.setThirdFromVirtualWarehouseId(fromMappingList.get(0).getThirdId());
                                 handleDetailEntity.setThirdToVirtualWarehouseId(toMappingList.get(0).getThirdId());
                                 handleDetailEntity.setSysType(fromMappingList.get(0).getThirdSysType());

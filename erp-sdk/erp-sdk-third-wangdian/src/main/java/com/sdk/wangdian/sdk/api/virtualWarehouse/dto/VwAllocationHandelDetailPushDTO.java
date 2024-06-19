@@ -1,7 +1,6 @@
 package com.sdk.wangdian.sdk.api.virtualWarehouse.dto;
 
 import com.google.gson.annotations.SerializedName;
-import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,18 +17,18 @@ public class VwAllocationHandelDetailPushDTO {
      * 虚拟仓编号
      */
     @SerializedName("virtual_warehouse_no")
-    private String virtualWarehouseNo;
+    private String virtual_warehouse_no;
     /**
      * 单据类型:1:锁定分配,2:释放出库,3:虚拟仓间调拨,4:采购入库
      * 默认值为1
      */
     @SerializedName("order_type")
-    private int orderType;
+    private int order_type;
     /**
      * 目标虚拟仓编号:order_type=3时必传
      */
     @SerializedName("to_virtual_warehouse_no")
-    private String toVirtualWarehouseNo;
+    private String to_virtual_warehouse_no;
     /**
      * 是否预审核:仅在order_type=3时生效
      * <p>
@@ -48,7 +47,7 @@ public class VwAllocationHandelDetailPushDTO {
      * 审核时间: 仅在order_type=3时生效, 格式: yyyy-MM-dd HH:mm, 时间要大于当前服务器时间2分钟以上
      */
     @SerializedName("pre_time")
-    private String preTime;
+    private String pre_time;
     /**
      * 备注 默认为空
      */
@@ -78,7 +77,7 @@ public class VwAllocationHandelDetailPushDTO {
          * 实体仓编码
          */
         @SerializedName("warehouse_no")
-        private String warehouseNo;
+        private String warehouse_no;
         /**
          * 入库数量，默认为1
          */

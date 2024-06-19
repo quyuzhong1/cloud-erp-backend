@@ -12,7 +12,6 @@ import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleRelationEntity;
-import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.service.RequisitionApplicationDetailService;
 import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
@@ -25,6 +24,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,18 +60,19 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             //获取调出仓 调入仓关联的第三方仓（旺店通）
             if (StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId())
                     && StringUtils.isNotEmpty(handleDetail.getThirdToVirtualWarehouseId())) {
-                request.setOrderType(3);
+                request.setOrder_type(3);
             } else if (StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId())
                     && StringUtils.isEmpty(handleDetail.getThirdToVirtualWarehouseId())) {
-                request.setOrderType(2);
+                request.setOrder_type(2);
             } else if (StringUtils.isEmpty(handleDetail.getThirdFromVirtualWarehouseId())
                     && StringUtils.isNotEmpty(handleDetail.getThirdToVirtualWarehouseId())) {
-                request.setOrderType(1);
+                request.setOrder_type(1);
             }
-            String type = handleDetail.getType();
 
-            request.setVirtualWarehouseNo(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId()) ? handleDetail.getThirdFromVirtualWarehouseId() : handleDetail.getThirdToVirtualWarehouseId());
-            request.setToVirtualWarehouseNo(handleDetail.getThirdToVirtualWarehouseId());
+            String type = handleDetail.getType();
+            request.setPre_time(LocalDateTime.now().minusMinutes(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            request.setVirtual_warehouse_no(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId()) ? handleDetail.getThirdFromVirtualWarehouseId() : handleDetail.getThirdToVirtualWarehouseId());
+            request.setTo_virtual_warehouse_no(handleDetail.getThirdToVirtualWarehouseId());
             List<VwAllocationHandelDetailPushDTO.DetailList> detailList = new ArrayList<>();
             //获取明细
             List<VirtualWarehouseAllocationHandleRelationEntity> allocationHandleRelationEntities = virtualWarehouseAllocationHandleRelationService
@@ -83,45 +85,21 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                 case VIRTUAL_WAREHOUSE_ALLOCATION:
 //                    switch (VirtualWarehouseAllocationTypeEnum.getByCode(type)) {
 //                        case ALLOCATION:
-                            Map<String, List<VirtualWarehouseAllocationDetailEntity>> skuMap = virtualWarehouseAllocationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getSkuNo));
-                            skuMap.forEach((skuNo,list)->{
-                                VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
-                                detail.setNum(BigDecimal.valueOf(list.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum)));
-                                detail.setWarehouseNo(handleDetail.getThirdWarehouseId());
-                                detail.setSpecNo(skuNo);
-                                detailList.add(detail);
-                            });
-//                            break;
-//                        case TRANSFER:
-//                            break;
-//                        case CANCEL:
-//                            break;
-//                        default:
-//                            break;
-//                    }
-
-
-//                    //获取明细
-//                    List<VirtualWarehouseAllocationHandleRelationEntity> allocationHandleRelationEntities = virtualWarehouseAllocationHandleRelationService
-//                            .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
-//                                    .eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetail.getId()));
-//                    //根据sku和调入虚拟仓进行聚合
-//                    allocationHandleRelationEntities.forEach(allocationHandleRelationEntity -> {
-//                        //
-//
-//                        VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
-//                        detail.setNum(BigDecimal.valueOf(handleDetail.getQty()));
-//                        detail.setWarehouseNo(handleDetail.getThirdWarehouseId());
-//                        detail.setSpecNo(handleDetail.getId());
-//                        detailList.add(detail);
-//                    });
+                    Map<String, List<VirtualWarehouseAllocationDetailEntity>> skuMap = virtualWarehouseAllocationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getSkuNo));
+                    skuMap.forEach((skuNo, list) -> {
+                        VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
+                        detail.setNum(BigDecimal.valueOf(list.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum)));
+                        detail.setWarehouse_no(handleDetail.getThirdWarehouseId());
+                        detail.setSpecNo(skuNo);
+                        detailList.add(detail);
+                    });
                     break;
                 case REQUISITION_APPLICATION:
                     Map<String, List<RequisitionApplicationDetailEntity>> requireSkuMap = requisitionApplicationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getSkuNo));
-                    requireSkuMap.forEach((skuNo,list)->{
+                    requireSkuMap.forEach((skuNo, list) -> {
                         VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
                         detail.setNum(BigDecimal.valueOf(list.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum)));
-                        detail.setWarehouseNo(handleDetail.getThirdWarehouseId());
+                        detail.setWarehouse_no(handleDetail.getThirdWarehouseId());
                         detail.setSpecNo(skuNo);
                         detailList.add(detail);
                     });
@@ -129,10 +107,12 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                 default:
                     break;
             }
-
-
-            request.setDetailList(detailList);
+//            request.setDetailList(detailList);
             request.setRemark("原始单据号：" + vwAllocationCode);
+            String detailStr = JSONUtil.toJsonStr(detailList);
+            String requestStr = JSONUtil.toJsonStr(request);
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("["+requestStr+",["+detailStr+"]");
 
             //添加推送任务
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
@@ -141,7 +121,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             dmpSyncTaskDTO.setSourceType(sourceType);
             dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
             dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG.getName());
-            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
+            dmpSyncTaskDTO.setMqData(stringBuilder.toString());
             dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
             dmpSyncTaskDTO.setSyncOperate(operateCode);
