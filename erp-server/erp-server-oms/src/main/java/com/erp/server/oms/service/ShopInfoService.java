@@ -299,13 +299,6 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param dto
      * @return
      */
-    List<ShopInfoEntity> addIntenal(ShopDTO.AddInternalDTO dto);
-
-    /**
-     * 远程搜索
-     * @param dto
-     * @return
-     */
     PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
 
 }
