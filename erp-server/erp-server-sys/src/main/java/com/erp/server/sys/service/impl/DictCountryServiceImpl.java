@@ -487,7 +487,15 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
-
+    @Override
+    public PagingVO<DictCountryDTO.ListDTO> pagingSelect(PagingDTO<DictCountryDTO.SelectDTO> dto) {
+        DictCountryDTO.SelectDTO params = dto.getParams();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<DictCountryDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<DictCountryDTO.ListDTO> records = pagResult.getRecords();
+        pagResult.setRecords(records);
+        return new PagingVO<>(pagResult);
+    }
 
     /**
      * 根据data flag获取国家

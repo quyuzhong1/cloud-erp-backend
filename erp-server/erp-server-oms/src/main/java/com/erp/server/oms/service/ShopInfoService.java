@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -292,4 +293,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @Date 2024/03/28
      **/
     List<ShopInfoEntity> getRelatedShopById(String platformShopCode);
+
+    /**
+     * 远程搜索
+     * @param dto
+     * @return
+     */
+    PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
+
 }

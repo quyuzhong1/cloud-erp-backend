@@ -105,4 +105,39 @@
         </if>
         dc.create_time desc
     </select>
+    <select id="pagingSelect" resultType="com.erp.model.sys.dto.DictCountryDTO$ListDTO">
+        select id,
+        name_cn,
+        name_en,
+        short_name_cn,
+        short_name_en,
+        region_code,
+        disabled,
+        subregion_code
+        from
+        (
+        SELECT
+        dc.id,
+        dc.name_cn,
+        dc.name_en,
+        dc.short_name_cn,
+        dc.short_name_en,
+        dc.region_code,
+        dc.disabled,
+        dc.subregion_code
+        FROM  dict_country dc
+        WHERE dc.is_deleted = FALSE
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((dc.id = #{params.searchKeyword})  or dc.name_cn ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when dc.name_cn ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when dc.name_cn ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when dc.name_cn ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , dc.name_cn,
+        </if>
+        dc.id asc
+        ) wls
+    </select>
 </mapper>

@@ -347,6 +347,11 @@ public class SoB2cDTO implements Serializable {
         private String logisticsCode;
 
         /**
+         * 跟踪号
+         */
+        private String trackCode;
+
+        /**
          * 订单金额
          */
         private BigDecimal amount;
@@ -456,6 +461,30 @@ public class SoB2cDTO implements Serializable {
          * 包装重量单位
          */
         private String weightUnit;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+        /**
+         * 是否匹配仓库规则
+         */
+        private Boolean isMatchWarehouseRule;
+        /**
+         * 冻结类型（manual手动冻结，automatic自动冻结）
+         */
+        private String frozenType;
+        /**
+         * 是否地址修改 true 是  false 否
+         */
+        private Boolean isChangeReceiverAddress;
     }
 
     @Data
@@ -1156,6 +1185,8 @@ public class SoB2cDTO implements Serializable {
     @NoArgsConstructor
     public static class SaveSoB2cDistributionDetailDTO {
 
+        @NotBlank(message = "销售订单id不能为空")
+        private String id;
         /**
          * 明细id
          */
@@ -1167,6 +1198,11 @@ public class SoB2cDTO implements Serializable {
          */
         @NotBlank(message = "仓库id不能为空")
         private String warehouseId;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
     }
 
         @Data
@@ -2643,5 +2679,55 @@ public class SoB2cDTO implements Serializable {
     public static class CombinationDTO{
         private List<SoB2cEntity> soB2cEntityList;
         private List<SoB2cDetailEntity> soB2cDetailEntityList;
+    }
+    /**
+     * 赠品DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GiftDTO implements Serializable{
+        /**
+         * 销售订单id
+         */
+        @NotBlank(message = "销售订单id不能为空")
+        private String id;
+        /**
+         * 销售订单编码
+         */
+//        @NotBlank(message = "销售订单编码不能为空")
+        private String code;
+        /**
+         * 赠品skuId
+         */
+        @NotBlank(message = "赠品skuId不能为空")
+        private String skuId;
+        /**
+         * sku URL
+         */
+        private String imageUrl;
+
+        /**
+         * 赠品skuNo
+         */
+        @NotBlank(message = "赠品skuNo不能为空")
+        private String skuNo;
+        /**
+         * 赠品数量
+         */
+        @NotNull(message = "赠品数量不能为空")
+        @Min(value = 1,message = "赠品数量最小值为1")
+        @Max(value = 999999999,message = "赠品数量最大值为999999999")
+        private Integer qty;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        @NotBlank(message = "仓库名称不能为空")
+        private String warehouseName;
     }
 }

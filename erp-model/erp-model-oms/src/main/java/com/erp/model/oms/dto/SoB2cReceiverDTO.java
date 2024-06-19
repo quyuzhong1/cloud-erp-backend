@@ -40,6 +40,14 @@ public class SoB2cReceiverDTO implements Serializable {
         * 国家名称
         */
         private String countryName;
+        /**
+         * 销售订单id
+         */
+        private String mainId;
+        /**
+         * 销售订单编码
+         */
+        private String soB2cCode;
     }
 
     /**
@@ -165,5 +173,80 @@ public class SoB2cReceiverDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateBaseDTO {
+        /**
+         * 收件人信息id
+         */
+        @NotBlank(message = "收件人信息id不能为空")
+        private String id;
+        /**
+         * 销售订单id
+         */
+        @NotBlank(message = "销售订单id不能为空")
+        private String mainId;
+        /**
+         * 销售订单编码
+         */
+        private String soB2cCode;
+        //国家城市信息
+        /**
+         * 国家 来源 http://172.16.100.11:3002/project/36/interface/api/13390
+         */
+         @NotBlank(message = "国家不能为空")
+        private String country;
+        /**
+         * 国家名称
+         */
+        private String countryName;
+        /**
+         *省/州
+         */
+        private String provinceName;
+        /**
+         * 城市名称
+         */
+        @NotBlank(message = "城市名称不能为空")
+        @Size(max = 50,message = "城市名称最大长度不能超过50位")
+        private String cityName;
+        /**
+         * 邮编
+         */
+        @Size(max = 32,message = "邮编最大长度不能超过32位")
+        private String postCode;
+        //收货人信息
+        /**
+         * 收货人名称
+         */
+        @NotBlank(message = "收货人名称不能为空")
+        @Size(max = 50,message = "收货人名称最大长度不能超过50位")
+        private String receiverName;
 
+        /**
+         * 收货人电话
+         */
+        @Size(max = 32,message = "收货人电话最大长度不能超过32位")
+        private String receiverTelNumber;
+        /**
+         * 收件人税号
+         */
+        private String receiverTaxNo;
+        //地址信息
+        /**
+         * 收货地址1
+         */
+        @Size(max = 255,message = "收货地址1最大长度不能超过255位")
+        private String firstAddress;
+
+        /**
+         * 收货地址2
+         */
+        @Size(max = 255,message = "收货地址2最大长度不能超过255位")
+        private String secondAddress;
+        /**
+         * 街道详细地址
+         */
+        private String fullAddress;
+    }
 }
