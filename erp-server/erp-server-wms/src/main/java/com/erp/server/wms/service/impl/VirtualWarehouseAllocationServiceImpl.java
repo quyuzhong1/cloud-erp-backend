@@ -150,8 +150,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
         // 记录主单操作日志
         log.info("编辑 开始记录分货单日志数据，单号：【{}】", virtualWarehouseAllocationEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationEntity.getCode(), "分货单");
-        operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), msg);
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), "分货单", virtualWarehouseAllocationEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), "编辑操作");
+
         // 新增明细
         virtualWarehouseAllocationDetailService.batchUpdate(updateDTO, virtualWarehouseAllocationEntity.getId());
         //保存附件

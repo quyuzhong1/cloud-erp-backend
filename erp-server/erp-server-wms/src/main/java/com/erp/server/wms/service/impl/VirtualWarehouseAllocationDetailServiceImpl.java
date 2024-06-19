@@ -155,10 +155,10 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         List<VirtualWarehouseAllocationDetailEntity> oldList = this.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>().eq(VirtualWarehouseAllocationDetailEntity::getMainId, mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            List<VirtualWarehouseAllocationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
-            //操作日志
-            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个分货单明细【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "编辑操作");
+//            List<VirtualWarehouseAllocationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+//            //操作日志
+//            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+//            operateLogService.batchAddModuleOperateLog("删除了一个分货单明细【%s】", ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
         }
 
