@@ -8,9 +8,12 @@ import com.common.core.exception.ServiceException;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.rpc.wms.feign.VirtualWarehouseAllocationDetailFeign;
+import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WangDianVwAllocationHandleDetailService;
@@ -72,8 +75,8 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
                 if (Objects.equals(map.get("bizType"), "allocation")) {
                     VirtualWarehouseAllocationDTO.SyncUpdateDto dto = new VirtualWarehouseAllocationDTO.SyncUpdateDto();
                     if (Objects.nonNull(pushResult/*.getData()*/.getMessage())) {
-                        dto.setSysType("wdt");
-                        dto.setSysTypeName("旺店通");
+                        dto.setSysType(ThirdSysTypeEnum.WDT.getCode());
+                        dto.setSysTypeName(ThirdSysTypeEnum.WDT.getName());
                         dto.setThirdCode(pushResult/*.getData()*/.getMessage());
                         dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.SUCCESS_SYNC.getCode());
                     } else {

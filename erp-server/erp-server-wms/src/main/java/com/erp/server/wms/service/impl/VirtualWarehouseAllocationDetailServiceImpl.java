@@ -152,7 +152,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         if (CollectionUtils.isEmpty(updateDTO.getDetailList())) {
             throw new ServiceException(ApiError.ERROR_1040, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getName());
         }
-        List<VirtualWarehouseAllocationDetailEntity> oldList = this.listByIds(Collections.singletonList(mainId));
+        List<VirtualWarehouseAllocationDetailEntity> oldList = this.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>().eq(VirtualWarehouseAllocationDetailEntity::getMainId, mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<VirtualWarehouseAllocationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());

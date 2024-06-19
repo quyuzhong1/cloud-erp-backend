@@ -473,7 +473,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class SyncUpdateDto {
+    public static class SyncUpdateDto implements Serializable {
 
         /**
          * 合单明细id
