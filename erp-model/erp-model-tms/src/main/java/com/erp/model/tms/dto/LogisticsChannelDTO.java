@@ -735,4 +735,47 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String logisticsSupplierName;
     }
+    @Data
+    @NoArgsConstructor
+    public static class PagingSelectDTO {
+        /**
+         * 渠道id
+         */
+        private String id;
+        /**
+         * 启用/禁用
+         */
+        private Boolean disabled;
+        /**
+         * 渠道编码
+         */
+        private String code;
+        /**
+         * 渠道名称
+         */
+        private String value;
+        /**
+         * 物流供应商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流供应商名称
+         */
+        private String logisticsSupplierName;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+    }
+
 }
