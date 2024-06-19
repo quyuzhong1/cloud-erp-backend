@@ -68,7 +68,7 @@ public class WarehouseLocationFeignController extends BaseController {
      * @return
      */
     @PostMapping("/listByWarehouseIdAndCode")
-    public List<WarehouseLocationEntity> listByWarehouseIdAndCode(List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList){
+    public List<WarehouseLocationEntity> listByWarehouseIdAndCode(@RequestBody List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList){
         return warehouseLocationService.listByWarehouseIdAndCode(paramList);
     }
 }
