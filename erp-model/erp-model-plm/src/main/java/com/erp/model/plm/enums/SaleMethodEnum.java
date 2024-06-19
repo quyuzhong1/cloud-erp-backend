@@ -65,4 +65,14 @@ public enum SaleMethodEnum implements EnumMessage {
         }
         return null;
     }
+
+    public static SaleMethodEnum getEnumByName(String name) {
+        SaleMethodEnum[] saleMethodEnums = values();
+        for (SaleMethodEnum saleMethodEnum : saleMethodEnums) {
+            if (saleMethodEnum.getName().equals(name)) {
+                return saleMethodEnum;
+            }
+        }
+        return null;
+    }
 }

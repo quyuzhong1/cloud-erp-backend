@@ -11,6 +11,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -868,6 +869,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 根据单号查询销售订单
      */
     SoB2cEntity getByCode(String soCode);
+
+    List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> id);
+
+    List<SoB2cDetailDTO.ViewDTO> getBomRestoreInfo(List<String> id);
 
     /**
      * 同步订单到DMP

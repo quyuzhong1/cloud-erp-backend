@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -7,10 +8,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
+import org.apache.xpath.operations.Bool;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -47,6 +50,17 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @date 2023-07-03 9:05
      */
     ShopInfoEntity updateShop(ShopDTO.UpdateDTO dto);
+
+
+    /**
+     * 修改店铺
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-07-03 9:05
+     */
+    ShopInfoEntity updateInternalShop(ShopDTO.UpdateInternalDTO dto);
 
 
     /**
@@ -222,7 +236,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     ShopInfoEntity getRelatedShopByIdAndCountry(ShopInfoDTO.RelatedDTO relateDTO);
 
-    String autoCreateShopCustomer(String id);
+    CustomerInfoEntity autoCreateShopCustomer(String id);
 
     /**
      * Shopify直接安装授权Url
@@ -294,11 +308,27 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      **/
     List<ShopInfoEntity> getRelatedShopById(String platformShopCode);
 
+    List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto);
+
+    void listExport(ShopDTO.ExportDTO dto, HttpServletResponse response);
+
+
+    /**
+     * 添加国内店铺
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author hyj
+     * @date 2024-05-23 16:39
+     */
+    List<ShopInfoEntity> addIntenal(ShopDTO.AddInternalDTO dto);
+
     /**
      * 远程搜索
      * @param dto
      * @return
      */
     PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
+
 
 }

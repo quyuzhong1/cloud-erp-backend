@@ -124,7 +124,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
      * @param resultDTO
      * @param mainEntity
      */
-    public void aliExpressDeliveryQuery(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity) {
+ public void aliExpressDeliveryQuery(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity) {
         String warehouseName = "";
         if (CollectionUtils.isNotEmpty(dto.getDetails())) {
             warehouseName = dto.getDetails().get(0).getWarehouseName();
@@ -201,7 +201,6 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
             });
         }
     }
-
     /**
      * 新增速卖通发货单
      * @param dto

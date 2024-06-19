@@ -88,6 +88,9 @@ public enum ModuleTypeEnum {
     PICKING_STRATEGY("81", "拣货策略"),
     WAREHOUSE_LOCATION("90", "仓位"),
     SO_MULTI_CHANNEL("75", "多渠道订单"),
+    DMP_THIRD_WAREHOUSE("76", "第三方仓库"),
+    DMP_THIRD_SHOP("77", "第三方店铺"),
+    DMP_THIRD_MAPPING("78", "第三方映射"),
 
     PICKING_LISTS("91", "拣货单")
 
