@@ -102,6 +102,11 @@ public interface SoOutstockFeign {
     Boolean generateB2cSoOutstockByData(@RequestBody SoOutstockDTO.GenerateB2cDTO generateB2cDTO);
 
     /**
+     * 单据下推 销售出库单
+     */
+    @PostMapping("feign/soOutstock/addB2bPushDownNo")
+    Boolean addB2bPushDownNo(@RequestBody List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateB2cDTO);
+    /**
      * 生成b2c 销售出库单(平台拉取发货信息生成)
      */
     @PostMapping("feign/soOutstock/generateB2cSoOutstockByPlatformData")

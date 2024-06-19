@@ -705,7 +705,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             item.setAttachUrlList(attachmentUrlList);
         }
         //销售出库单保存下推单据
-        return soOutstockService.addPushDownNo(resultList);
+        return soOutstockService.addB2bPushDownNo(resultList);
     }
 
     private void generatePickingDetail(List<SoDeliveryNoticeEntity> list) {

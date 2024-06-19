@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
@@ -199,7 +198,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param resultList
      * @return java.lang.Boolean
      */
-    Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
+    Boolean addB2bPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
 
     
     /**

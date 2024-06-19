@@ -75,6 +75,7 @@ public enum InventoryBusinessTypeEnum {
     SO_B2C_DELIVERY("so_b2c_delivery", "34","b2c发货单"),
     SO_OUTSTOCK_USABLE("so_outstock_usable", "35","销售出库扣可用库存"),
 
+
     ;
 
     private String code;

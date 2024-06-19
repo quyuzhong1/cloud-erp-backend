@@ -3,7 +3,6 @@ package com.erp.server.wms.controller.feign;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -162,7 +162,15 @@ public class SoOutstockFeignController {
     Boolean generateB2cSoOutstockByData(@RequestBody SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
     }
-
+    /**
+     * 单据下推 销售出库单
+     * @param generateB2cDTO
+     * @return
+     */
+    @PostMapping("/addB2bPushDownNo")
+    Boolean addB2bPushDownNo(@RequestBody List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateB2cDTO) {
+        return soOutstockService.addB2bPushDownNo(generateB2cDTO);
+    }
     /**
      * 查询封装报关信息
      * @return
