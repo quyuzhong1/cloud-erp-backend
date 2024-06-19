@@ -237,8 +237,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
         if (Objects.nonNull(channelEntity)) {
             LogisticsAuthEntity logisticsAuthEntity = this.getByMainId(null,channelEntity.getMainId());
-            if(Objects.isNull(logisticsAuthEntity)){
-                return new LogisticsAuthEntity();
+            if(Objects.nonNull(logisticsAuthEntity)){
+                return logisticsAuthEntity;
             }
         }
         return new LogisticsAuthEntity();
