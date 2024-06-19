@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.PickingListsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.PickingListsEntity">
+        <result column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="code" property="code"/>
+        <result column="warehouse_id" property="warehouseId"/>
+        <result column="warehouse_name" property="warehouseName"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="source_type" property="sourceType"/>
+        <result column="source_code" property="sourceCode"/>
+        <result column="sku_total" property="skuTotal"/>
+        <result column="location_total" property="locationTotal"/>
+    </resultMap>
+    <select id="paging" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$PagingView">
+        select id,
+               update_time,
+               update_user_name,
+               code,
+               warehouse_id,
+               warehouse_name,
+               source_id,
+               source_type,
+               source_code,
+               sku_total,
+               location_total
+        from picking_lists
+        where ${params.sqlMap.default}
+          and source_type = #{params.sourceType}
+          and is_deleted = false
+        order by create_time desc, id desc
+    </select>
+
+    <select id="exportInfo" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$ExportInfoDTO">
+        select pl.code,
+               pl.warehouse_id,
+               pl.warehouse_name,
+               pl.source_code,
+               pd.sku_no,
+               pd.warehouse_location,
+               pd.qty,
+               pd.staging_location,
+               pl.update_user_name,
+               pl.update_time
+        from picking_lists as pl
+                 left join public.picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
+        where ${params.sqlMap.default}
+          and pl.source_type = #{params.sourceType}
+          and pl.is_deleted = false
+        order by pl.update_time desc, pl.id desc
+    </select>
+    <select id="listBySourceIds" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$SourceView">
+        select pl.id                 as id,
+               pl.code               as code,
+               pl.source_id          as sourceId,
+               pl.source_code        as sourceCode,
+               pl.warehouse_id       as warehouseId,
+               pd.sku_id             as skuId,
+               pd.sku_no             as skuNo,
+               pd.warehouse_location as warehouseLocation,
+               pd.qty                as qty,
+               pd.source_detail_id   as sourceDetailId,
+               pd.staging_location   as stagingLocation
+        from picking_lists as pl
+                 left join public.picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
+        where pl.is_deleted = false
+        and pl.source_id in
+        <foreach collection="sourceIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>

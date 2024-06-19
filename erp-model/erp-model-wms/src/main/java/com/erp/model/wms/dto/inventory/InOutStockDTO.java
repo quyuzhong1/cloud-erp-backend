@@ -2,6 +2,7 @@ package com.erp.model.wms.dto.inventory;
 
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
@@ -73,5 +74,19 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 inOutStockDTO.setQty(qty);
                 inOutStockDTO.setInventoryStatus(inventoryStatus);
                 return inOutStockDTO;
+        }
+
+        public static InOutStockDTO getInOutStockDTO(SoOutstockEntity entity, String sourceDetailId,String skuId, String skuNo, String warehouseLocation, Integer qty){
+                InOutStockDTO stockDTO = new InOutStockDTO();
+                stockDTO.setWarehouseId(entity.getWarehouseId());
+                stockDTO.setSourceId(entity.getId());
+                stockDTO.setSourceCode(entity.getCode());
+                stockDTO.setSourceDetailId(sourceDetailId);
+                stockDTO.setSkuId(skuId);
+                stockDTO.setSkuNo(skuNo);
+                stockDTO.setWarehouseLocation(warehouseLocation);
+                stockDTO.setQty(qty);
+                stockDTO.setBillDate(entity.getBillDate());
+                return stockDTO;
         }
 }

@@ -4,9 +4,12 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -49,4 +52,30 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
      * @return IPage<LocationListDTO>
      */
     IPage<WarehouseLocationDTO.LocationListDTO> pagingSelect(Page query,@Param("params") WarehouseLocationDTO.SelectDTO params);
+
+    IPage<WarehouseLocationDTO.ViewDto> pagingByArgs(@Param("query") Page<WarehouseLocationDTO.ViewDto> query, @Param("params") WarehouseLocationDTO.SearchParamDTO params);
+
+    IPage<WarehouseAreaDTO.PagingView> areaPaging(@Param("page") Page<WarehouseAreaDTO.PagingView> page,@Param("params") WarehouseAreaDTO.PagingParam params);
+
+    List<WarehouseLocationExportVo> listByIds(@Param("ids") List<String> ids);
+
+    List<WarehouseLocationExportVo> selectAllByParam(@Param("dto") WarehouseLocationDTO.exportParamDto dto);
+
+    List<WarehouseLocationDTO.ViewDto> listAreaByWarehouseId(@Param("warehouseId") String warehouseId);
+
+    List<WarehouseLocationExportVo> listAllByParam(@Param("dto") WarehouseLocationDTO.exportParamDto dto);
+
+    IPage<WarehouseLocationDTO.LocationListDTO> pagingSelectBySku(Page query, WarehouseLocationDTO.SelectDTO params);
+
+    @Update("update warehouse_location set status = #{status} where type = 'location' and warehouse_id = #{warehouseId} and code = #{warehouseLocation}")
+    Integer updateLocationStatus(String warehouseId, String warehouseLocation, String status);
+
+    /**
+     * 根据仓位状态统计仓位数量
+     * @param statusCode 仓位状态编码
+     * @return 统计数量
+     * @date: 2024-06-13
+     * @author: tanmujin
+     */
+    Integer countByStatus(@Param("statusCode") String statusCode);
 }

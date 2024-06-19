@@ -8,12 +8,17 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
-import com.common.business.dto.*;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.PrintWayBillPdfDetailDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -37,10 +42,14 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -52,17 +61,13 @@ import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
-import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -144,8 +149,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Lazy
     @Resource
     private AsyncService asyncService;
+    @Resource
+    private PickingDetailService pickingDetailService;
 
+    @Resource
+    private PickingListsService pickingListsService;
 
+    @Resource
+    private CfgRulePickingService cfgRulePickingService;
+    @Resource
+    private WarehouseService warehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -178,11 +191,115 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "新增操作");
         // 新增明细
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
-
-        //冻结库存
-        freezeInventory(soB2cDeliveryEntity, soB2cDeliveryDetailEntities);
+        // 生成拣货单
+        generatePickingDetail(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
         return save;
     }
+
+    private void generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities) {
+        List<String> skuIds = soB2cDeliveryDetailEntities.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<String> childSkuIds = bomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+        skuIds.addAll(childSkuIds);
+        PickingListsDTO.Add add = new PickingListsDTO.Add();
+        add.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        add.setBillType(PickingBillTypeEnum.B2C.getCode());
+        add.setSourceId(soB2cDeliveryEntity.getId());
+        add.setSourceCode(soB2cDeliveryEntity.getCode());
+        List<PickingDetailDTO.Add> details = new ArrayList<>();
+        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailEntities) {
+            add.setWarehouseId(detailEntity.getWarehouseId());
+            add.setWarehouseName(detailEntity.getWarehouseName());
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
+                    PickingDetailDTO.Add detailAdd = new PickingDetailDTO.Add();
+                    detailAdd.setSkuId(bomChildrenSkuDTO.getSkuId());
+                    detailAdd.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                    detailAdd.setQty(detailEntity.getDeliveryQty() * bomChildrenSkuDTO.getQuantity());
+                    detailAdd.setSourceDetailId(detailEntity.getId());
+                    details.add(detailAdd);
+                }
+            } else {
+                PickingDetailDTO.Add detailAdd = new PickingDetailDTO.Add();
+                detailAdd.setSkuId(detailEntity.getSkuId());
+                detailAdd.setSkuNo(detailEntity.getSkuNo());
+                detailAdd.setQty(detailEntity.getDeliveryQty());
+                detailAdd.setSourceDetailId(detailEntity.getId());
+                details.add(detailAdd);
+            }
+        }
+        add.setDetails(details);
+//        pickingListsService.add(add);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JHD);
+        // 生成拣货单主表数据
+        PickingListsEntity entity = new PickingListsEntity();
+        entity.setId(IdWorker.getIdStr());
+        entity.setCode(code);
+        entity.setWarehouseId(add.getWarehouseId());
+        entity.setWarehouseName(add.getWarehouseName());
+        entity.setSourceId(add.getSourceId());
+        entity.setSourceCode(add.getSourceCode());
+        entity.setSourceType(add.getSourceType());
+        int skuTotal = add.getDetails().stream().map(PickingDetailDTO.Add::getQty).reduce(0, Math::addExact);
+        entity.setSkuTotal(skuTotal);
+        List<String> skuIdList = add.getDetails().stream().map(PickingDetailDTO.Add::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        Map<String, Integer> sku = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getQty, Integer::sum));
+        Map<String, String> skuMap = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSkuNo, (o1, o2) -> o1));
+        Map<String, String> sourceDetailMap = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSourceDetailId, (o1, o2) -> o1));
+        Map<String, Object> map = new HashMap<>();
+        map.put("billType", add.getBillType());
+        map.put("customerId", add.getCustomerId());
+        map.put("warehouseId", add.getWarehouseId());
+        map.put("sku", sku);
+        map.put("skuMap", skuMap);
+        List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(map);
+        List<PickingDetailEntity> entities = new ArrayList<>();
+        List<InOutStockDTO> inOutStockList = new ArrayList<>();
+        for (LocationInventoryResultDTO result : results) {
+            // 获取产品信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream()
+                    .filter(entityClass -> entityClass.getId().equals(result.getSkuId()))
+                    .findFirst().orElse(new ProductDetailEntity());
+            PickingDetailEntity detail = new PickingDetailEntity();
+            detail.setMainId(entity.getId());
+            detail.setSkuId(result.getSkuId());
+            detail.setSkuNo(skuMap.get(result.getSkuId()));
+            detail.setQty(result.getQuantity());
+            detail.setUnit(productDetailEntity.getUnitName());
+            detail.setWarehouseLocation(result.getWarehouseLocation());
+            detail.setSourceDetailId(sourceDetailMap.get(result.getSkuId()));
+            entities.add(detail);
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+            inOutStockDTO.setSourceCode(soB2cDeliveryEntity.getCode());
+            inOutStockDTO.setSourceId(soB2cDeliveryEntity.getId());
+            inOutStockDTO.setSourceDetailId(detail.getSourceDetailId());
+            inOutStockDTO.setBillDate(LocalDate.now());
+            inOutStockDTO.setSkuNo(detail.getSkuNo());
+            inOutStockDTO.setSkuId(detail.getSkuId());
+            inOutStockDTO.setQty(detail.getQty());
+            inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+            inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
+            inOutStockList.add(inOutStockDTO);
+        }
+        entity.setLocationTotal(entities.size());
+        //添加冻结库存
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setParamList(inOutStockList);
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
+        //更新库存
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+        pickingListsService.save(entity);
+        pickingDetailService.saveBatch(entities);
+    }
+
 
     @Override
     public List<SoB2cDeliveryDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -365,104 +482,49 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
         List<String> codeList = deliveryEntityList.stream()
                 .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus()))
-                .map(req -> req.getCode()).collect(Collectors.toList());
+                .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, StrUtil.join(",", codeList));
         }
-
         //查询产品信息
-        List<String> skuIds = deliveryDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-
-        //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-
-        List<String> childSkuIds = bomChildrenSkuList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-        skuIds.addAll(childSkuIds);
+        List<String> skuIds = deliveryDetailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
-
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = new ArrayList<>();
-        for (SoB2cDeliveryDetailEntity deliveryDetailEntity : deliveryDetailEntityList) {
-            //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
-                    .filter(req -> req.getParentSkuId().equals(deliveryDetailEntity.getSkuId())
-                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
-                    ).collect(Collectors.toList());
-
-            if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
-                    SoB2cDeliveryDTO.PrintPickingViewDTO viewDTO = new SoB2cDeliveryDTO.PrintPickingViewDTO();
-                    BeanMapper.copy(deliveryDetailEntity, viewDTO);
-                    viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
-                    viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                    if (viewDTO.getPickingQty() == null || viewDTO.getPickingQty() == 0) {
-                        viewDTO.setPickingQty(deliveryDetailEntity.getDeliveryQty());
-                    }
-
-                    //匹配sku信息
-                    SkuVO skuVO = skuVOList.stream()
-                            .filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getParentSkuId()))
-                            .distinct().findFirst().orElse(new SkuVO());
-                    viewDTO.setProductName(skuVO.getSkuName());
-                    viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocation()) ? "" : skuVO.getWarehouseLocation());
-
-                    //备注
-                    SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> req.getId().equals(deliveryDetailEntity.getMainId())).findFirst().orElse(null);
-                    if (ObjectUtil.isNotEmpty(entity)) {
-                        viewDTO.setRemark(entity.getRemark());
-                    }
-                    printPickingViewList.add(viewDTO);
-                }
-            } else {
-                SoB2cDeliveryDTO.PrintPickingViewDTO viewDTO = new SoB2cDeliveryDTO.PrintPickingViewDTO();
-                BeanMapper.copy(deliveryDetailEntity, viewDTO);
-                //匹配sku信息
-                SkuVO skuVO = skuVOList.stream()
-                        .filter(req -> req.getSkuId().equals(deliveryDetailEntity.getSkuId()))
-                        .distinct().findFirst().orElse(new SkuVO());
-                viewDTO.setProductName(skuVO.getSkuName());
-                viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocation()) ? "" : skuVO.getWarehouseLocation());
-                if (viewDTO.getPickingQty() == null || viewDTO.getPickingQty() == 0) {
-                    viewDTO.setPickingQty(deliveryDetailEntity.getDeliveryQty());
-                }
-
-                //备注
-                SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> req.getId().equals(deliveryDetailEntity.getMainId())).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(entity)) {
-                    viewDTO.setRemark(entity.getRemark());
-                }
-                printPickingViewList.add(viewDTO);
-            }
+        List<PickingListsEntity> list = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
+        List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingIds));
+        for (PickingDetailEntity pickingDetail : pickingDetails) {
+            SoB2cDeliveryDTO.PrintPickingViewDTO viewDTO = new SoB2cDeliveryDTO.PrintPickingViewDTO();
+            BeanMapper.copy(pickingDetail, viewDTO);
+            viewDTO.setPickingQty(pickingDetail.getQty());
+            //匹配sku信息
+            SkuVO skuVO = skuVOList.stream()
+                    .filter(req -> req.getSkuId().equals(pickingDetail.getSkuId()))
+                    .distinct().findFirst().orElse(new SkuVO());
+            viewDTO.setProductName(skuVO.getSkuName());
+            PickingListsEntity pickingLists = list.stream()
+                    .filter(v -> v.getId().equals(pickingDetail.getMainId()))
+                    .findFirst()
+                    .orElse(new PickingListsEntity());
+            viewDTO.setWarehouseId(pickingLists.getWarehouseId());
+            viewDTO.setWarehouseName(pickingLists.getWarehouseName());
+            //备注
+            SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> req.getId().equals(pickingLists.getSourceId())).findFirst().orElse(new SoB2cDeliveryEntity());
+            viewDTO.setRemark(entity.getRemark());
+            printPickingViewList.add(viewDTO);
         }
         // 合并处理数量不相同的行
-//        Map<SoB2cDeliveryDTO.PrintPickingViewDTO, Integer> mergedMap = printPickingViewList.stream()
-//                .collect(Collectors.toMap(dto -> dto, SoB2cDeliveryDTO.PrintPickingViewDTO::getPickingQty, Integer::sum));
-        // 合并处理数量不相同的行，并拼接remark
-        Map<SoB2cDeliveryDTO.PrintPickingViewDTO, SoB2cDeliveryDTO.PrintPickingViewDTO> mergedMap = printPickingViewList.stream()
-                .collect(Collectors.toMap(
-                        dto -> dto,
-                        dto -> dto,
-                        (dto1, dto2) -> {
-                            dto1.setPickingQty(dto1.getPickingQty() + dto2.getPickingQty());
-                            dto1.setRemark(StringUtils.isNotBlank(dto2.getRemark())?StringUtils.isNotBlank(dto1.getRemark())?dto1.getRemark() + ";" + dto2.getRemark():dto2.getRemark():dto1.getRemark());
-                            return dto1;
-                        }
-                ));
-
-         printPickingViewList = mergedMap.values().stream()
-                .map(dto -> new SoB2cDeliveryDTO.PrintPickingViewDTO(
-                        dto.getSkuId(),
-                        dto.getSkuNo(),
-                        dto.getProductName(),
-                        dto.getPickingQty(),
-                        dto.getWarehouseId(),
-                        dto.getWarehouseName(),
-                        dto.getWarehouseLocation(),
-                        dto.getRemark()
-                ))
+        Map<SoB2cDeliveryDTO.PrintPickingViewDTO, Integer> mergedMap = printPickingViewList.stream()
+                .collect(Collectors.toMap(dto -> dto, SoB2cDeliveryDTO.PrintPickingViewDTO::getPickingQty, Integer::sum));
+        printPickingViewList =  mergedMap.entrySet().stream()
+                .map(entry -> {
+                    SoB2cDeliveryDTO.PrintPickingViewDTO dto = entry.getKey();
+                    dto.setPickingQty(entry.getValue());
+                    return dto;
+                })
                 .collect(Collectors.toList());
-
         // 仓库+仓位排序
-        List<SoB2cDeliveryDTO.PrintPickingViewDTO> resultList = printPickingViewList.stream()
+        return printPickingViewList.stream()
                 .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName)
                         .thenComparing((s1, s2) -> {
                             if (StringUtils.isBlank(s1.getWarehouseLocation()) && !StringUtils.isBlank(s2.getWarehouseLocation())) {
@@ -476,7 +538,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             }
                         }))
                 .collect(Collectors.toList());
-        return resultList;
     }
 
     @Override
@@ -1522,39 +1583,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         printWayBillPdf.setDetailList(wayBillDetailList);
         return printWayBillPdf;
-    }
-
-    /**
-     * 冻结库存
-     *
-     * @param entity
-     * @param detailEntityList
-     * @return void
-     * @Author Luo_WG
-     * @Date 2023/12/25 17:47
-     **/
-    private void freezeInventory(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> detailEntityList) {
-        List<InOutStockDTO> inOutStockList = new ArrayList<>();
-        for (SoB2cDeliveryDetailEntity detailEntity : detailEntityList) {
-            InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
-            inOutStockDTO.setSourceId(entity.getId());
-            inOutStockDTO.setSourceCode(entity.getCode());
-            inOutStockDTO.setSourceDetailId(detailEntity.getId());
-            inOutStockDTO.setBillDate(LocalDate.now());
-            inOutStockDTO.setSkuId(detailEntity.getSkuId());
-            inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
-            inOutStockDTO.setQty(detailEntity.getDeliveryQty());
-            inOutStockDTO.setWarehouseId(detailEntity.getWarehouseId());
-            inOutStockDTO.setWarehouseLocation("");
-            inOutStockList.add(inOutStockDTO);
-        }
-        //添加冻结库存
-        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setParamList(inOutStockList);
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
-        //更新库存
-        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 
     /**

@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -146,4 +147,53 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * @return
      */
     List<InventoryEntity> listByParam(@Param("params")InventoryDTO.ParamDTO params );
+
+    /**
+     * 以库区的维度查询库存信息
+     * @date 2024/06/04
+     */
+    IPage<InventoryDTO.PagingViewDTO> pageByArea(@Param("query") Page query, @Param("params") InventoryDTO.SearchParamDTO params);
+
+    /**
+     * 以仓位的维度查询库存信息
+     * @date 2024/06/04
+     */
+    IPage<InventoryDTO.PagingViewDTO> pageByLocation(@Param("query") Page query, @Param("params") InventoryDTO.SearchParamDTO params, @Param("codeList") List<String> codeList);
+
+    /**
+     * 按仓库统计数量
+     */
+    Long countByWarehouse();
+
+    /**
+     * 按库区统计数量
+     */
+    Long countByArea();
+
+    /**
+     * 按仓位统计数量
+     */
+    Long countByLocation();
+
+    /**
+     * 查询仓位下是否有库存
+     * @return 库存数量
+     */
+    @Select("select sum(qty) from inventory where warehouse_id = #{warehouseId} and warehouse_location = #{warehouseLocation}")
+    Integer getQtyByLocation(@Param("warehouseId") String warehouseId, @Param("warehouseLocation") String warehouseLocation);
+
+    /**
+     * 按仓库导出数据
+     */
+    List<InventoryDTO.PagingViewDTO> exportByWarehouse(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO);
+
+    /**
+     * 按库区导出数据
+     */
+    List<InventoryDTO.PagingViewDTO> exportByArea(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseAreaCodeList") List<String> warehouseAreaCodeList);
+
+    /**
+     * 按仓位导出数据
+     */
+    List<InventoryDTO.PagingViewDTO> exportByLocation(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList);
 }

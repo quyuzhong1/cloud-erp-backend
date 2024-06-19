@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
@@ -530,4 +529,11 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto);
 
+    /**
+     * 根据来源id获取未作废且未删除的数据
+     *
+     * @param id id
+     * @return
+     */
+    int countNotVoided(String id);
 }

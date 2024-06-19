@@ -1,10 +1,7 @@
 package com.erp.server.wms.convert;
 
 
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.wms.dto.RequisitionApplicationDTO;
-import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
-import com.erp.model.wms.dto.TransferInfoDetailDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
@@ -51,4 +48,16 @@ public interface RequisitionApplicationConverter {
     })
     RequisitionApplicationDetailEntity detailConvert(RequisitionApplicationDetailDTO.AddDTO detailList);
     List<RequisitionApplicationDetailEntity> detailConvert(List<RequisitionApplicationDetailDTO.AddDTO> detailList);
+
+    @Mappings({
+            @Mapping(target = "destWarehouseId", source = "toWarehouseId"),
+            @Mapping(target = "destWarehouseName", source = "toWarehouseName"),
+            @Mapping(target = "countryId", source = "country")
+    })
+    FirstMileDeliveryDTO.AddDTO generateDeliverFDD(RequisitionApplicationDTO.GenerateDeliverViewDTO dto);
+
+    @Mappings({
+            @Mapping(target = "platformSkuNo", source = "platformSku")
+    })
+    FirstMileDeliveryDetailDTO.AddDTO generateDeliverDetailFDD(RequisitionApplicationDTO.GenerateDeliverViewDTO dto);
 }
