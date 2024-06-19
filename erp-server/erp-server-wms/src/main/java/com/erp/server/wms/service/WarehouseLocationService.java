@@ -293,4 +293,12 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @author: tanmujin
      */
     List<WarehouseLocationEntity> listByLocationName(String warehouseLocationName);
+
+    /**
+     * 根据仓库ids和库位code查询库位列表
+     * @param warehouseIds
+     * @param warehouseLocation
+     * @return
+     */
+    List<WarehouseLocationEntity> findByWarehouseIdsAndCode(List<String> warehouseIds, String warehouseLocation);
 }

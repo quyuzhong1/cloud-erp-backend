@@ -7,10 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -1301,6 +1298,39 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
                 .eq(ShopInfoEntity::getDisabled, false)
                 .list();
+    }
+    /**
+     * 远程搜索
+     */
+    @Override
+    public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
+        ShopDTO.SelectDTO params = dto.getParams();
+        if (params.getShowByAuth()){
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
+            List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
+            if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
+                return new PagingVO<>();
+            }
+
+            ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
+            List<String> shopIdList;
+            if (StringUtils.isNotBlank(params.getDictPlatform())) {
+                shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(params.getDictPlatform()))
+                        .map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+            } else {
+                shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+            }
+            if (CollectionUtils.isEmpty(shopIdList)) {
+                return new PagingVO<>();
+            }
+            params.setShopIdList(shopIdList);
+        }
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ShopDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<ShopDTO.ListDTO> records = pagResult.getRecords();
+        //排序
+        pagResult.setRecords(records);
+        return new PagingVO<>(pagResult);
     }
 
     private boolean verifyHmac(String data, String hmacHeader) {

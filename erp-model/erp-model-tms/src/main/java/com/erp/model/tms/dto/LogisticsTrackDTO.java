@@ -139,6 +139,10 @@ public class LogisticsTrackDTO implements Serializable {
         @Size(max = 30,message = "运单号最大长度不能超过30位")
         private String trackNo;
         /**
+         * 平台订单号
+         */
+        private String platformOrderNo;
+        /**
          * 船司/航司
          */
         private String carrierId;

@@ -125,7 +125,7 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      * @return
      */
     BatchResultDTO delete(String id);
-
+    PagingVO<DictCountryDTO.ListDTO> pagingSelect(PagingDTO<DictCountryDTO.SelectDTO> dto);
 
     void exportList(DictCountryDTO.PagingParamDTO dto, HttpServletResponse response);
 }

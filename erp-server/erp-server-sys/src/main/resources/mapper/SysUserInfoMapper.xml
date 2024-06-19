@@ -372,6 +372,32 @@
         </where>
         ORDER BY sui.create_time DESC
     </select>
-
+    <select id="pagingSelect" resultType="com.common.business.dto.UserSelectDto$PageSelectDTO">
+        select uid as userId,user_name  as userName,delete_state as userState from (
+        select
+        sui.uid,
+        sui.user_name,
+        sui.delete_state
+        from sys_user_info sui
+        where  sui.delete_state = 1
+        and sui.user_type='erp'
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((sui.uid = #{params.searchKeyword}) or sui.user_name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        order by
+        <if test="params!=null">
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                case when sui.user_name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when sui.user_name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , sui.user_name,
+            </if>
+        </if>
+        <if test="params=null">
+            sui.user_name asc,
+        </if>
+        uid desc
+        ) userInfo
+    </select>
 
 </mapper>

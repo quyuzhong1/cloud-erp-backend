@@ -6,6 +6,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.StocktakingProfitLossDetailMapper;
@@ -13,6 +14,7 @@ import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingProfitLossDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +54,8 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
-
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
     /**
      * 根据主表id 获取到对应详情信息
      *
@@ -69,6 +72,9 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
         List<StocktakingProfitLossDetailDTO.ViewDTO> viewList = baseMapper.listByMainIds(mainIdList);
         List<String> skuIdList = viewList.stream().map(StocktakingProfitLossDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
+        //库位信息查询
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = viewList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         for (StocktakingProfitLossDetailDTO.ViewDTO item : viewList) {
             String skuId = item.getSkuId();
             ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
@@ -79,6 +85,10 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
                 item.setProductName("");
                 item.setUnit("");
             }
+            //仓位信息
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> Objects.nonNull(e) && e.getWarehouseId().equals(item.getWarehouseId())
+                    && e.getCode().equals(item.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            item.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
         return viewList;
     }

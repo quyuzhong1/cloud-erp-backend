@@ -778,6 +778,10 @@ public class WarehouseReceiveDTO {
          * 库位
          */
         private String warehouseLocation;
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
 
         /**
          * 采购订单明细id

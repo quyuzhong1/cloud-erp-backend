@@ -278,4 +278,13 @@ public class DictCountryDTO implements Serializable {
             this.regionName = regionName;
         }
     }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
 }

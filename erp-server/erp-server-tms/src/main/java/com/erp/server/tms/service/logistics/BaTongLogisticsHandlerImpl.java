@@ -4,8 +4,10 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
@@ -31,12 +33,15 @@ import com.erp.tms.batong.model.order.request.*;
 import com.erp.tms.batong.model.order.response.OrderResponse;
 import com.erp.tms.batong.model.order.response.TrackBase;
 import com.erp.tms.batong.service.BaTongService;
+import com.sdk.tms.tongyou.dto.request.TongYouUpdateWeightRequest;
+import com.sdk.tms.tongyou.dto.response.TongYouResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 /**
@@ -209,6 +214,38 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
 
+    /**
+     * 更新重量
+     *
+     * @return
+     */
+    @Override
+    public ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO) {
+        try {
+            BaTongUpdateWeightReq request = BaTongUpdateWeightReq.builder()
+                    .referenceNo(logisticsUpdateWeightVO.getDeliveryNo())
+                    .orderWeight(logisticsUpdateWeightVO.getWeight().divide(new BigDecimal(1000),4, RoundingMode.HALF_UP).toString())
+                    .build();
+            ValidatorUtil.validateEntity(request);
+            BaseResult response = baTongService.updateWeight(logisticsUpdateWeightVO.getAuthMap(), request);
+
+            if (!BaTongConstants.SUCCESS.equals(response.getSuccess())) {
+                logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                        logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getCnMessage());
+            }
+            logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                    logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
+            return success();
+        }catch (Exception e){
+            logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                    logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(e),true);
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }
+    }
 
 
     /**

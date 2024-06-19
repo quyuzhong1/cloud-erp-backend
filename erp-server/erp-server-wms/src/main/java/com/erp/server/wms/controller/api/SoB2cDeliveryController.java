@@ -207,7 +207,7 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
-     * 虚假发货
+     * 手动标发
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
@@ -227,10 +227,10 @@ public class SoB2cDeliveryController extends BaseController {
             try {
                 result = soB2cDeliveryService.falseDelivery(id);
             } catch (Exception e) {
-                log.error("发货单 虚假发货失败", e);
+                log.error("发货单 手动标发失败", e);
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "发货单不存在, 虚假发货失败");
+                    result = BatchResultDTO.fail(id, id, "发货单不存在, 手动标发失败");
                     resultDTOS.add(result);
                     continue;
                 }

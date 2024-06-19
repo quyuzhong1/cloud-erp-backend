@@ -52,7 +52,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
             return;
         }
 
-        //记录需要虚假发货的订单id
+        //记录需要手动标发的订单id
         Boolean flag = soB2cFeign.checkPlatformShipOrder(soId);
         if (flag) {
             List<String> soDeliveryIds = deliveryEntities.stream().map(req -> req.getId()).collect(Collectors.toList());

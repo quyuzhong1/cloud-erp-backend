@@ -281,13 +281,23 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("is_cancel")
     private Boolean isCancel;
-
+    /**
+     * 是否地址修改
+     */
+    @TableField("is_change_receiver_address")
+    private Boolean isChangeReceiverAddress;
 
     /**
      * 卖家订单编号
      */
     @TableField("seller_order_code")
     private String sellerOrderCode;
+
+    /**
+     * 冻结类型（manual手动冻结，automatic自动冻结）
+     */
+    @TableField("frozen_type")
+    private String frozenType;
 
     public static final String CODE = "code";
 

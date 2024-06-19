@@ -330,4 +330,6 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(List<String> supplierIdList);
 
     void updateCategory(SupplierDTO.BatchUpdateCategoryDTO dto);
+
+    PagingVO<BaseDropDownDTO.RemarkDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto);
 }

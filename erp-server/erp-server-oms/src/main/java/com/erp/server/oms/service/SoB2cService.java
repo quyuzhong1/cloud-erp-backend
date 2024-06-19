@@ -401,7 +401,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean checkPlatformShipOrder(String soB2cId);
 
     /**
-     * 虚假发货
+     * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/27 15:07
      * @param id
@@ -852,9 +852,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      *
      * @param detailList
      * @param soB2cEntity
+     * @param logisticsPlatform
      * @return
      */
-    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
+    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity, String logisticsPlatform);
 
     /**
      * 修复历史平均成本数据数据
@@ -906,4 +907,25 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 同步处理历史审核订单数据到订单表
      */
     void processOrderApproveData();
+
+    /**
+     * 添加赠品
+     * @param dto
+     * @return
+     */
+    BatchResultDTO addGift(SoB2cDTO.GiftDTO dto);
+
+    /**
+     * 根据销售订单id获取买家信息
+     * @param ids
+     * @return
+     */
+    List<SoB2cReceiverDTO.ViewDTO> getReceiverInfo(List<String> ids);
+
+    /**
+     * 更新买家信息
+     * @param dto
+     * @return
+     */
+    BatchResultDTO updateReceiverInfo(SoB2cReceiverDTO.UpdateBaseDTO dto);
 }

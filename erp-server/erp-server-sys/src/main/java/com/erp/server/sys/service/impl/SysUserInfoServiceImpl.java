@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -542,6 +543,30 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public List<SysUserInfoEntity> listErpUser() {
         return this.lambdaQuery().eq(SysUserInfoEntity::getUserType, UserTypeEnum.ERP.getCode()).list();
+    }
+
+    /**
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
+     */
+    @Override
+    public PagingVO<UserSelectDto.PageSelectDTO> pagingSelect(PagingDTO<UserSelectDto.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<UserSelectDto.PageSelectDTO> pageData = this.baseMapper.pagingSelect(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        Integer notState = SysConstant.NO_STATE;
+        LoginUser loginUser = UserContext.getLoginUser();
+
+        pageData.getRecords().forEach(item -> {
+            Integer userState = item.getUserState();
+            item.setDisabled(notState.equals(userState));
+            item.setIsMyState(Objects.nonNull(loginUser) && Objects.equals(loginUser.getUid(), item.getUserId()) ? 1 : 0);
+        });
+        return new PagingVO<>(pageData);
     }
 
     /**

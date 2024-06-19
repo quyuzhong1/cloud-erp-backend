@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserSelectDto;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -94,4 +95,6 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      * @return
      */
     List<SupplierUserVO> srmList(@Param("params") UserPagingSearchDTO dto);
+
+    IPage<UserSelectDto.PageSelectDTO> pagingSelect(Page query, @Param("params") UserSelectDto.SelectDTO params);
 }

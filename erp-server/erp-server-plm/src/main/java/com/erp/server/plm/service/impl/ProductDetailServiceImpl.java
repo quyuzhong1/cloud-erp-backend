@@ -2283,7 +2283,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
 
     }
+    @Override
+    public PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        SkuVO.SelectDTO params = dto.getParams();
+        IPage<SkuVO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
 
+    }
     private void customDataProcess(List<ProductDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)){
             return;
@@ -4085,6 +4092,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
         //已存在数据
         skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        List<String> saleMethodList = skuParamDTO.getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            skuParamDTO.setSaleMethod(StringUtils.join(saleMethodParams, ","));
+        }
         List<ProductSearchDTO.SkuListDTO> list = this.baseMapper.listSkuBySkuNos(skuParamDTO);
 
         List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
@@ -4858,6 +4873,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public PagingVO<ProductDetailDTO.SkuDTO> listSku(PagingDTO<ProductSkuDTO> pagingDTO) {
         if(StringUtils.isEmpty(pagingDTO.getParams().getRemoteSearchSku())){
             return new PagingVO<>();
+        }
+        List<String> saleMethodList = pagingDTO.getParams().getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            pagingDTO.getParams().setSaleMethod(StringUtils.join(saleMethodParams, ","));
         }
         Page<ProductDetailDTO.SkuDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailDTO.SkuDTO> pageData=  baseMapper.listSku(query, pagingDTO.getParams());

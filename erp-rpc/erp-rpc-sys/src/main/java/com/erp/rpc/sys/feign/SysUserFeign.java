@@ -5,8 +5,11 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
@@ -55,6 +58,15 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/findList")
     ApiResult<List<FindUserDTO>> userList(@RequestBody BaseSearchDTO dto);
+
+    /**
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("feign/user/pagingSelect")
+    ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto);
 
     /**
      * 获取用户权限

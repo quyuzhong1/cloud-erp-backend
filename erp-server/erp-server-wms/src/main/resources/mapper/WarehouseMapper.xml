@@ -334,14 +334,20 @@
         from warehouse wh
         where
         wh.is_deleted = false
-        <if test="searchKeyword != null and searchKeyword != ''">
-            and ((wh.kingdee_warehouse_code = #{searchKeyword}) or wh.name ilike concat('%', #{searchKeyword}::text ,'%'))
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.approveStatus != null and params.approveStatus != ''">
+            and wh.approve_status = #{params.approveStatus}
+        </if>
+        <if test="params.disabled != null and params.disabled != ''">
+            and wh.disabled = #{params.disabled}
         </if>
         order by
-        <if test="searchKeyword != null and searchKeyword != ''">
-            case when wh.name ILIKE concat(#{searchKeyword}::text,'%') THEN 1
-            when wh.name ILIKE concat('%',#{searchKeyword}::text) THEN 2
-            when wh.name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 3
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when wh.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when wh.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when wh.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
             end , wh.name,
         </if>
         wh.kingdee_warehouse_code asc
@@ -384,6 +390,9 @@
                 <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
                    #{orgId}
                 </foreach>
+            </if>
+            <if test="params.approveStatus != null and params.approveStatus != ''">
+                and wh.approve_status = #{params.approveStatus}
             </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or (wh.id = #{params.searchKeyword})  or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
