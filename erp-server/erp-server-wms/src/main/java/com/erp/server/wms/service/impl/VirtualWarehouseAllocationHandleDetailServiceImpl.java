@@ -133,7 +133,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
     public void handleDetail(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity) {
         //获取所有明细
         List<VirtualWarehouseAllocationDetailEntity> vmAllocationDetailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
@@ -191,7 +191,9 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                                 handleDetailEntity.setFromVirtualWarehouseId(split[0]);
                                 handleDetailEntity.setToVirtualWarehouseId(split[1]);
                                 handleDetailEntity.setThirdFromVirtualWarehouseId(fromMappingList.get(0).getThirdId());
+                                handleDetailEntity.setThirdFromVirtualWarehouseNo(fromMappingList.get(0).getThirdCode());
                                 handleDetailEntity.setThirdToVirtualWarehouseId(toMappingList.get(0).getThirdId());
+                                handleDetailEntity.setThirdToVirtualWarehouseNo(toMappingList.get(0).getThirdCode());
                                 handleDetailEntity.setSysType(fromMappingList.get(0).getThirdSysType());
                                 handleDetailEntity.setMainId(allocationHandleEntity.getId());
                                 handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
@@ -222,21 +224,21 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
             List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
                     allocationEntity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
             if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                    @Override
-                    public void afterCommit() {
+//                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                    @Override
+//                    public void afterCommit() {
                         //获取合单表和分货单明细关联关系，修改为同步中状态
                         List<String> handleDetailIds = dmpPushTaskEntityList.stream().map(DmpPushTaskEntity::getSourceId).collect(Collectors.toList());
                         List<String> allocationDetailList = virtualWarehouseAllocationHandleRelationService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
                                         .in(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetailIds))
-                                .stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList());
+                                .stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).distinct().collect(Collectors.toList());
                         virtualWarehouseAllocationDetailService.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>()
                                 .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus, VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode()).in(VirtualWarehouseAllocationDetailEntity::getId, allocationDetailList));
                         //发送mq
                         dmpMqFeign.sendTask(dmpPushTaskEntityList);
                     }
-                });
-            }
+//                });
+//            }
             //设置没有关联虚拟仓的分货单子单无需同步
             if (CollectionUtils.isNotEmpty(noSyncDetailList)) {
                 //设置分货单子单无需同步
@@ -276,6 +278,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
                     handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
                     handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
+                    handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(allocationHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
@@ -316,6 +319,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
                     handleDetailEntity.setToVirtualWarehouseId(toVmId);
                     handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
+                    handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(allocationHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());

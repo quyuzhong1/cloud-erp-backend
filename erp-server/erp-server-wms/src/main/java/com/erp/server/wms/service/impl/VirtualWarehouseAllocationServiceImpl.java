@@ -50,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -299,7 +300,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                virtualWarehouseAllocationHandleService.handleData(allocationEntity);
+//                virtualWarehouseAllocationHandleService.handleData(allocationEntity);
+                CompletableFuture.runAsync(() -> virtualWarehouseAllocationHandleService.handleData(allocationEntity));
             }
         });
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
@@ -614,19 +616,19 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         Map<String, Integer> keyMap = new HashMap<>();
 
         detailList.forEach(detail -> {
-            String key=detail.getSkuNo() + "_&_" + detail.getWarehouseName() + "_&_"
+            String key = detail.getSkuNo() + "_&_" + detail.getWarehouseName() + "_&_"
                     + detail.getFromVirtualWarehouseName() + "_&_" + detail.getToVirtualWarehouseName();
             Integer value = keyMap.get(key);
             if (Objects.isNull(value)) {
-               value=1;
-            }else{
-                value+=1;
+                value = 1;
+            } else {
+                value += 1;
             }
-            keyMap.put(key,value);
+            keyMap.put(key, value);
         });
         StringBuilder msg = new StringBuilder();
-        keyMap.forEach((k,v)->{
-            if (v>1) {
+        keyMap.forEach((k, v) -> {
+            if (v > 1) {
                 String[] split = k.split("_&_");
                 if (v > 1) {
                     switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
@@ -645,7 +647,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 }
             }
         });
-        if (StringUtils.isNotBlank(msg.toString())){
+        if (StringUtils.isNotBlank(msg.toString())) {
             throw new ServiceException(msg.toString());
         }
 

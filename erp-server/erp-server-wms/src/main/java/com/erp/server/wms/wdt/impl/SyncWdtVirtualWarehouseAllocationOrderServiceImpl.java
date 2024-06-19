@@ -71,8 +71,10 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
 
             String type = handleDetail.getType();
             request.setPre_time(LocalDateTime.now().minusMinutes(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            request.setVirtual_warehouse_no(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId()) ? handleDetail.getThirdFromVirtualWarehouseId() : handleDetail.getThirdToVirtualWarehouseId());
-            request.setTo_virtual_warehouse_no(handleDetail.getThirdToVirtualWarehouseId());
+            request.setVirtual_warehouse_no(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseNo()) ? handleDetail.getThirdFromVirtualWarehouseNo() : handleDetail.getThirdToVirtualWarehouseNo());
+            request.setTo_virtual_warehouse_no(handleDetail.getThirdToVirtualWarehouseNo());
+            request.setBizType(type);
+            request.setSourceId(handleDetail.getId());
             List<VwAllocationHandelDetailPushDTO.DetailList> detailList = new ArrayList<>();
             //获取明细
             List<VirtualWarehouseAllocationHandleRelationEntity> allocationHandleRelationEntities = virtualWarehouseAllocationHandleRelationService
@@ -90,7 +92,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                         VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
                         detail.setNum(BigDecimal.valueOf(list.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum)));
                         detail.setWarehouse_no(handleDetail.getThirdWarehouseId());
-                        detail.setSpecNo(skuNo);
+                        detail.setSpec_no(skuNo);
                         detailList.add(detail);
                     });
                     break;
@@ -100,19 +102,19 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                         VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
                         detail.setNum(BigDecimal.valueOf(list.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum)));
                         detail.setWarehouse_no(handleDetail.getThirdWarehouseId());
-                        detail.setSpecNo(skuNo);
+                        detail.setSpec_no(skuNo);
                         detailList.add(detail);
                     });
                     break;
                 default:
                     break;
             }
-//            request.setDetailList(detailList);
+            request.setDetailList(detailList);
             request.setRemark("原始单据号：" + vwAllocationCode);
-            String detailStr = JSONUtil.toJsonStr(detailList);
-            String requestStr = JSONUtil.toJsonStr(request);
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("["+requestStr+","+detailStr+"]");
+//            String detailStr = JSONUtil.toJsonStr(detailList);
+//            String requestStr = JSONUtil.toJsonStr(request);
+//            StringBuilder stringBuilder = new StringBuilder();
+//            stringBuilder.append("["+requestStr+","+detailStr+"]");
 
             //添加推送任务
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
@@ -121,7 +123,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             dmpSyncTaskDTO.setSourceType(sourceType);
             dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
             dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG.getName());
-            dmpSyncTaskDTO.setMqData(stringBuilder.toString());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
             dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
             dmpSyncTaskDTO.setSyncOperate(operateCode);

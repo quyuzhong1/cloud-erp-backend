@@ -54,6 +54,11 @@ public class VirtualWarehouseAllocationHandleDetailEntity extends BaseEntity<Vir
     @TableField("third_from_virtual_warehouse_id")
     private String thirdFromVirtualWarehouseId;
     /**
+    * 第三方调出虚拟仓id
+    */
+    @TableField("third_from_virtual_warehouse_no")
+    private String thirdFromVirtualWarehouseNo;
+    /**
     * 第三方实体仓id
     */
     @TableField("third_warehouse_id")
@@ -63,6 +68,11 @@ public class VirtualWarehouseAllocationHandleDetailEntity extends BaseEntity<Vir
     */
     @TableField("third_to_virtual_warehouse_id")
     private String thirdToVirtualWarehouseId;
+    /**
+    * 第三方调入虚拟仓id
+    */
+    @TableField("third_to_virtual_warehouse_no")
+    private String thirdToVirtualWarehouseNo;
     /**
     * 数量
     */

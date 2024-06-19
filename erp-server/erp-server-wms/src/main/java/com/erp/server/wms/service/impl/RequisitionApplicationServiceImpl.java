@@ -404,6 +404,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     handleDetailEntity.setStatus(allocationHandleEntity.getStatus());
                     handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
                     handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
+                    handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(allocationHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(fromHandleList.get(0).getFromWarehouseId());
@@ -779,6 +780,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     handleDetailEntity.setStatus(allocationHandleEntity.getStatus());
                     handleDetailEntity.setToVirtualWarehouseId(fromVmId);
                     handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
+                    handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(allocationHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(fromHandleList.get(0).getFromWarehouseId());

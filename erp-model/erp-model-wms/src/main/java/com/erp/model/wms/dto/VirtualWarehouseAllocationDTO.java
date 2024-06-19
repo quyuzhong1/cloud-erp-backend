@@ -469,6 +469,36 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
     }
 
     /**
+     * 手动完结
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SyncUpdateDto {
+
+        /**
+         * 合单明细id
+         */
+        private String handelDetailId;
+        /**
+         * 类型
+         */
+        private String sysType;
+        /**
+         * 类型
+         */
+        private String sysTypeName;
+        /**
+         * 主键id
+         */
+        private String thirdCode;
+        /**
+         * 同步状态
+         */
+        private String syncStatus;
+
+    }
+
+    /**
      * 明细数据
      */
     @Data

@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
@@ -48,5 +49,6 @@ public class VirtualWarehouseFeignController {
     public List<VirtualWarehouseRelationEntity> getVirtualWarehouse(@RequestBody @Valid VirtualWarehouseChannelDTO.PlatformDTO platformDTO){
         return virtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
     }
+
 }
 

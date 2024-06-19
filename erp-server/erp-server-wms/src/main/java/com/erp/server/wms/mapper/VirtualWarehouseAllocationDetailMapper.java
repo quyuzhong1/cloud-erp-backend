@@ -22,4 +22,6 @@ public interface VirtualWarehouseAllocationDetailMapper extends BaseMapper<Virtu
 
     void batchManualFinish(@Param("params") VirtualWarehouseAllocationDTO.ManualFinishDto params, @Param("code") Integer code, @Param("ids") List<String> ids);
     void batchSync( @Param("code")String code, @Param("ids") List<String> ids);
+
+    void updateSyncStatus(@Param("params")VirtualWarehouseAllocationDTO.SyncUpdateDto dto, @Param("ids")List<String> ids);
 }

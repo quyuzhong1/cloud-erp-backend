@@ -612,13 +612,13 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 if (Objects.nonNull(thirdWarehouseEntity)) {
                     String warehouseList = thirdWarehouseEntity.getWarehouseList();
                     if (StringUtils.isNotBlank(warehouseList)) {
-                        JSONArray jsonArray = JSONObject.parseArray(warehouseList);
+                         JSONArray jsonArray = JSONObject.parseArray(warehouseList);
 
                         if (Objects.nonNull(jsonArray)) {
                             JSONObject jsonObject = jsonArray.getJSONObject(0);
 
                             String warehouseNo = jsonObject.getString("warehouse_no");
-                            thirdWarehouseEntity.setRemark(warehouseNo);
+                            thirdMappingEntity.setRemark(warehouseNo);
                         }
 
 

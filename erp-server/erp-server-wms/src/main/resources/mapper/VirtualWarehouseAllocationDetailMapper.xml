@@ -61,4 +61,24 @@
             #{id}
         </foreach>
     </update>
+    <update id="updateSyncStatus">
+        update virtual_warehouse_allocation_detail
+        set sync_status=#{code}
+          <if test="params.thirdCode!=null and params.thirdCode!=''">
+              , third_code=#{params.thirdCode}
+          </if>
+        <if test="params.sysType!=null and params.sysType!=''">
+            , sys_type=#{params.sysType}
+        </if>
+        <if test="params.sysTypeName!=null and params.sysTypeName!=''">
+            , sys_type_name=#{params.sysTypeName}
+        </if>
+        <if test="params.finishDescription!=null and params.finishDescription!=''">
+            , finish_description=#{params.finishDescription}
+        </if>
+        where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
 </mapper>

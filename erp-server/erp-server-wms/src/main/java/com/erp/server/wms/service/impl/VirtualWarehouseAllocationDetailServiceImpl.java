@@ -456,4 +456,14 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         return thirdCodeDto;
     }
 
+    @Override
+    public void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto) {
+        //根据合单明细id获取拆单信息
+        List<VirtualWarehouseAllocationHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
+                .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>().eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, dto.getHandelDetailId()));
+        if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
+            baseMapper.updateSyncStatus(dto, handleRelationEntityList.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList()));
+        }
+    }
+
 }

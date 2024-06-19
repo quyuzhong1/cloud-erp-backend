@@ -53,17 +53,28 @@ public class VwAllocationHandelDetailPushDTO {
      */
     @SerializedName("remark")
     private String remark;
+
     /**
      * 是否审核单据: 1：审核，   0：不审核
      * <p>
      * 默认0不审核
      */
     @SerializedName("is_check")
-    private Integer isCheck;
+    private Integer is_check;
 
     @SerializedName("detailList")
     private List<DetailList> detailList;
 
+    /**
+     * （非同步字段）业务同步类型：allocation分货单
+     */
+    @SerializedName("bizType")
+    private String bizType;
+    /**
+     * （非同步字段）业务id
+     */
+    @SerializedName("sourceId")
+    private String sourceId;
 
     @Getter
     @Setter
@@ -72,7 +83,7 @@ public class VwAllocationHandelDetailPushDTO {
          * 商家编码
          */
         @SerializedName("spec_no")
-        private String specNo;
+        private String spec_no;
         /**
          * 实体仓编码
          */
