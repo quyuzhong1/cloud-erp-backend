@@ -4,9 +4,9 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.db.Page;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
@@ -664,19 +664,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         LogisticsChannelDTO.SelectDTO params = dto.getParams();
         IPage<LogisticsChannelDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<LogisticsChannelDTO.PagingSelectDTO> records = pagResult.getRecords();
-        if (Boolean.TRUE.equals(dto.getParams().getShowSupplier())) {
-            List<String> supplierIds = records.stream().map(LogisticsChannelDTO.PagingSelectDTO::getLogisticsSupplierId).collect(Collectors.toList());
-            List<LogisticsSupplierDTO.LogisticsSupplierListDTO> supplierListDTOS = logisticsSupplierService.listLogisticsChannel(supplierIds);
-            if (CollectionUtils.isNotEmpty(supplierListDTOS)){
-                records.forEach(record->{
-                    LogisticsSupplierDTO.LogisticsSupplierListDTO logisticsSupplierListDTO = supplierListDTOS.stream().filter(item -> Objects.equals(item.getLogisticsSupplierId(), record.getLogisticsSupplierId())).findFirst().orElse(null);
-                    if (Objects.nonNull(logisticsSupplierListDTO)) {
-                        record.setLogisticsSupplierId(logisticsSupplierListDTO.getLogisticsSupplierId());
-                        record.setLogisticsSupplierName(logisticsSupplierListDTO.getLogisticsSupplierName());
-                    }
-                });
-            }
-        }
         //排序
         List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
         pagResult.setRecords(list);

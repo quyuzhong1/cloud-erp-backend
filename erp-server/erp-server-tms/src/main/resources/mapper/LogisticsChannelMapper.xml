@@ -166,7 +166,7 @@
         order by  lc.disabled asc,lc.create_time desc
     </select>
     <select id="pagingSelect" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PagingSelectDTO">
-        select id,name as value,code,disabled,logisticsSupplierId
+        select id,name as value,code,disabled,logisticsSupplierId,logisticsSupplierName
         from
         (
         select
@@ -174,8 +174,10 @@
         lc.name,
         lc.code,
         lc.disabled,
-         lc.main_id   as logisticsSupplierId
+        ls.supplier_id as logisticsSupplierId,
+        ls.supplier_name as logisticsSupplierName
         from logistics_channel lc
+        left join logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = false
         where
         lc.is_deleted = false
         <if test="params.searchKeyword != null and params.searchKeyword != ''">

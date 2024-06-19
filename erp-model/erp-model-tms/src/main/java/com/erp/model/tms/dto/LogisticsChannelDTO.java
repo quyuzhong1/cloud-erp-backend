@@ -738,17 +738,20 @@ public class LogisticsChannelDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingSelectDTO {
-
+        /**
+         * 渠道id
+         */
+        private String id;
         /**
          * 启用/禁用
          */
         private Boolean disabled;
         /**
-         * 编码
+         * 渠道编码
          */
         private String code;
         /**
-         * 值
+         * 渠道名称
          */
         private String value;
         /**
@@ -773,10 +776,6 @@ public class LogisticsChannelDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
-        /**
-         * 是否展示物流商
-         */
-        private Boolean showSupplier=false;
     }
 
 }
