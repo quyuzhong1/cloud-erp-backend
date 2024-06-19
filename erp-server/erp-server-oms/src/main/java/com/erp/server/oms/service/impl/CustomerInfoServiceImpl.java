@@ -858,7 +858,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(approve);
         queryWrapper.eq(CustomerInfoEntity::getApproveStatus, approveStatusEnum);
-        queryWrapper.orderByDesc(CustomerInfoEntity::getDisabled);
+        queryWrapper.orderByAsc(CustomerInfoEntity::getDisabled);
         List<CustomerInfoEntity> list = this.list(queryWrapper);
         return BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
     }
