@@ -21,10 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -46,12 +43,17 @@ public class VirtualInventoryStockServiceImpl extends AbstractVirtualInventorySe
     @Override
     public <T extends VirtualInventoryStockDTO.StockBaseDTO> List<RLock> handleLockKey(List<T> paramList) {
         List<RLock> rLockList = new ArrayList<>();
+        List<String> lockKeyList = new ArrayList<>();
         for(VirtualInventoryStockDTO.StockBaseDTO baseParam : paramList) {
             if (baseParam instanceof VirtualInventoryStockDTO.OutInStockDTO) {
                 // 按照虚拟仓库+实体仓库+SKU+库存状态进行锁定
-                String lockKey = StrUtil.format( "{}:{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), baseParam.getVirtualWarehouseId(), baseParam.getWarehouseId(),baseParam.getSkuId() ,baseParam.getInventoryStatus());
+                String lockKey = StrUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_VIRTUAL_INVENTORY_SKU.getCode(), baseParam.getVirtualWarehouseId(), baseParam.getWarehouseId(),baseParam.getSkuId());
+                if (lockKeyList.contains(lockKey)) {
+                    continue;
+                }
                 RLock rLock = redisson.getLock(lockKey);
                 rLockList.add(rLock);
+                lockKeyList.add(lockKey);
             }
         }
         return rLockList;

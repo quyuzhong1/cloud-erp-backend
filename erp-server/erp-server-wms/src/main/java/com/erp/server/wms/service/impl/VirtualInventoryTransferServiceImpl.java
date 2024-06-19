@@ -48,12 +48,17 @@ public class VirtualInventoryTransferServiceImpl extends AbstractVirtualInventor
     @Override
     public <T extends VirtualInventoryStockDTO.StockBaseDTO> List<RLock> handleLockKey(List<T> paramList) {
         List<RLock> rLockList = new ArrayList<>();
+        List<String> lockKeyList = new ArrayList<>();
         for(VirtualInventoryStockDTO.StockBaseDTO baseParam : paramList) {
             if (baseParam instanceof VirtualInventoryStockDTO.TransferStockDTO) {
                 // 按照虚拟仓库+实体仓库+SKU+库存状态进行锁定
-                String lockKey = StrUtil.format( "{}:{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), baseParam.getVirtualWarehouseId(), baseParam.getWarehouseId(),baseParam.getSkuId() ,baseParam.getInventoryStatus());
+                String lockKey = StrUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_VIRTUAL_INVENTORY_SKU.getCode(), baseParam.getVirtualWarehouseId(), baseParam.getWarehouseId(),baseParam.getSkuId());
+                if (lockKeyList.contains(lockKey)) {
+                    continue;
+                }
                 RLock rLock = redisson.getLock(lockKey);
                 rLockList.add(rLock);
+                lockKeyList.add(lockKey);
             }
         }
         return rLockList;
