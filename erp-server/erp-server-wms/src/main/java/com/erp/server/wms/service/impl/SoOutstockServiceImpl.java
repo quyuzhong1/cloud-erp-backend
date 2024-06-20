@@ -604,6 +604,31 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_98006);
         }
 
+        if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){
+            if (ObjectUtil.isNotEmpty(entity.getSoId())) {
+                List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listByMainIds(Collections.singletonList(dto.getId()));
+                List<SoDetailEntity> details = soInfoFeign.listSoDetailByMainId(entity.getSoId());
+                Map<String, Integer> detailMap = details.stream().collect(Collectors.toMap(SoDetailEntity::getId, SoDetailEntity::getQty, Integer::sum));
+                List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(new ArrayList<>(detailMap.keySet()));
+                for (SoOutstockDetailEntity detail : detailEntities) {
+                    SoDeliveryNoticeDetailEntity detailEntity = noticeDetailEntities.stream()
+                            .filter(e -> e.getId().equals(detail.getSourceDetailId()))
+                            .findFirst()
+                            .orElse(new SoDeliveryNoticeDetailEntity());
+                    Integer skuQty = detailMap.get(detailEntity.getSourceDetailId());
+                    List<String> ids = noticeDetailEntities.stream()
+                            .filter(e -> e.getSourceDetailId().equals(detailEntity.getSourceDetailId()))
+                            .map(SoDeliveryNoticeDetailEntity::getId)
+                            .collect(Collectors.toList());
+                    List<SoOutstockDetailEntity> soOutstockDetailEntityList = baseMapper.listApproveBySourceDetailIds(ids);
+                    Map<String, Integer> outDetailMap = soOutstockDetailEntityList.stream().collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getActualQty, Integer::sum));
+                    if (skuQty < detail.getActualQty() + outDetailMap.get(detail.getSkuNo())) {
+                        throw new ServiceException(ApiError.ERROR_99103, detail.getSkuNo());
+                    }
+                }
+            }
+
+        }
 
         //已装箱才能审核(B2B订单)
 /*        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())
