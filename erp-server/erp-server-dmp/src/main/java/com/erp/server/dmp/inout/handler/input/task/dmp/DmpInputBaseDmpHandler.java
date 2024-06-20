@@ -101,9 +101,8 @@ public class DmpInputBaseDmpHandler extends DmpInputDmpHandler{
 			}
 		}
 		
-		List<BaseEntity> allDmpInputDmpEntityList = new ArrayList<>();
+		List<BaseEntity> saveDmpInputDmpEntityList = new ArrayList<>();
 		if(beanDmpInputDmpEntityMaps.size() > 0) {
-			List<BaseEntity> saveDmpInputDmpEntityList = new ArrayList<>();
 			List<BaseEntity> updateDmpInputDmpEntityList = new ArrayList<>();
 			List<String> deleteDmpIdList = new ArrayList<>();
 			
@@ -130,16 +129,9 @@ public class DmpInputBaseDmpHandler extends DmpInputDmpHandler{
 						});
 						waitEntity.put(BaseEntity.CREATE_TIME, findEntity.get(BaseEntity.CREATE_TIME));
 						if(!findEntity.get(DATA_ENCRYPT).toString().equals(waitEntity.get(DATA_ENCRYPT).toString())) {
-							updateDmpInputDmpEntityList.add(JSON.parseObject(JSON.toJSONString(waitEntity), dmpEntityClass));
 							deleteDmpIdList.add(dmpId);
-						}else {
-							dmpInputDataDmpRelationEntityList.forEach(d -> {
-								if(dmpId.equals(d.getDmpId())) {
-									d.setIsDeleted(true);
-								}
-							});
-							allDmpInputDmpEntityList.add(JSON.parseObject(JSON.toJSONString(findEntity), dmpEntityClass));
 						}
+						updateDmpInputDmpEntityList.add(JSON.parseObject(JSON.toJSONString(waitEntity), dmpEntityClass));
 					}else {
 						saveDmpInputDmpEntityList.add(JSON.parseObject(JSON.toJSONString(waitEntity), dmpEntityClass));
 					}
@@ -150,11 +142,10 @@ public class DmpInputBaseDmpHandler extends DmpInputDmpHandler{
 			
 			if(CollUtil.isNotEmpty(saveDmpInputDmpEntityList)) {
 				dmpEntityServiceImpl.saveBatch(saveDmpInputDmpEntityList);
-				allDmpInputDmpEntityList.addAll(saveDmpInputDmpEntityList);
 			}
 			if(CollUtil.isNotEmpty(updateDmpInputDmpEntityList)) {
 				dmpEntityServiceImpl.updateBatchById(updateDmpInputDmpEntityList);
-				allDmpInputDmpEntityList.addAll(updateDmpInputDmpEntityList);
+				saveDmpInputDmpEntityList.addAll(updateDmpInputDmpEntityList);
 			}
 			if(CollUtil.isNotEmpty(deleteDmpIdList)) {
 				dmpInputMongoDmpRelationService.lambdaUpdate()
@@ -170,7 +161,7 @@ public class DmpInputBaseDmpHandler extends DmpInputDmpHandler{
 			dmpInputMongoDmpRelationService.saveBatch(dmpInputDataDmpRelationEntityList);
 		}
 		
-		return allDmpInputDmpEntityList;
+		return saveDmpInputDmpEntityList;
 	}
 	
 	protected Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> convertData(List<Map> dmpInputMongoEntityList) {

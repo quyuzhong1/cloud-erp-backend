@@ -76,25 +76,23 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 			}
 		}
 		
-		List<Map> allDmpInputMongoEntityList = new ArrayList<>();
+		List<Map> saveDmpInputMongoEntityList = new ArrayList<>();
 		if(md5DmpInputMongoEntityMaps.size() > 0) {
-			List<Map> saveDmpInputMongoEntityList = new ArrayList<>();
 			List<Map<String, Object>> updateDmpInputMongoEntityList = new ArrayList<>();
-			this.compareData(saveDmpInputMongoEntityList, updateDmpInputMongoEntityList, md5DmpInputMongoEntityMaps , allDmpInputMongoEntityList);
+			this.compareData(saveDmpInputMongoEntityList, updateDmpInputMongoEntityList, md5DmpInputMongoEntityMaps);
 			if(CollUtil.isNotEmpty(saveDmpInputMongoEntityList)) {
 				mongoService.saveMongoDataMult(saveDmpInputMongoEntityList, mongoStorageName);
-				allDmpInputMongoEntityList.addAll(saveDmpInputMongoEntityList);
 			}
 			if(CollUtil.isNotEmpty(updateDmpInputMongoEntityList)) {
 				mongoService.upsertMongoDataBatch(updateDmpInputMongoEntityList, mongoStorageName);
-				allDmpInputMongoEntityList.addAll(updateDmpInputMongoEntityList);
+				saveDmpInputMongoEntityList.addAll(updateDmpInputMongoEntityList);
 			}
 		}
 		
-		if(CollUtil.isNotEmpty(allDmpInputMongoEntityList)) {
-			List<DmpInputFileMongoRelationEntity> dmpInputFileMongoRelationEntityList = new ArrayList<>(allDmpInputMongoEntityList.size());
+		if(CollUtil.isNotEmpty(saveDmpInputMongoEntityList)) {
+			List<DmpInputFileMongoRelationEntity> dmpInputFileMongoRelationEntityList = new ArrayList<>(saveDmpInputMongoEntityList.size());
 			DmpInputFileMongoRelationEntity dmpInputFileMongoRelationEntity = null;
-			for(Map allDmpInputMongoEntity : allDmpInputMongoEntityList) {
+			for(Map allDmpInputMongoEntity : saveDmpInputMongoEntityList) {
 				dmpInputFileMongoRelationEntity = new DmpInputFileMongoRelationEntity();
 				dmpInputFileMongoRelationEntity.setMongoId(allDmpInputMongoEntity.get(MONGO_BASE_ID).toString());
 				dmpInputFileMongoRelationEntity.setFileId(allDmpInputMongoEntity.get(MONGO_BASE_FILEID).toString());
@@ -104,7 +102,7 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 			dmpInputFileMongoRelationService.saveBatch(dmpInputFileMongoRelationEntityList);
 		}
 		
-		return allDmpInputMongoEntityList;
+		return saveDmpInputMongoEntityList;
 	}
 
 	/**
@@ -238,7 +236,7 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 	 * @param updateDmpInputMongoEntityList
 	 * @param md5DmpInputMongoEntityMaps
 	 */
-	private void compareData(List<Map> saveDmpInputMongoEntityList , List<Map<String, Object>> updateDmpInputMongoEntityList , Map<String, Map> md5DmpInputMongoEntityMaps , List<Map> allDmpInputMongoEntityList) {
+	private void compareData(List<Map> saveDmpInputMongoEntityList , List<Map<String, Object>> updateDmpInputMongoEntityList , Map<String, Map> md5DmpInputMongoEntityMaps) {
 		DmpInputMongoUniqueDTO dmpInputMongoUniqueDTO = new DmpInputMongoUniqueDTO();
 		dmpInputMongoUniqueDTO.setUniqueEncrypt(new ArrayList<>(md5DmpInputMongoEntityMaps.keySet()));
 		List<Map> findDmpInputMongoEntityList = mongoService.findMongoData(dmpInputMongoUniqueDTO, 0, 0, mongoStorageName, Map.class);
@@ -255,11 +253,7 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 				if(findEntity != null) {
 					waitEntity.put(MONGO_BASE_ID, findEntity.get(MONGO_BASE_ID).toString());
 					waitEntity.put(MONGO_BASE_MONGOCREATETIME, findEntity.get(MONGO_BASE_MONGOCREATETIME).toString());
-					if(!findEntity.get(MONGO_BASE_DATAENCRYPT).toString().equals(waitEntity.get(MONGO_BASE_DATAENCRYPT).toString())) {
-						updateDmpInputMongoEntityList.add(waitEntity);
-					}else {
-						allDmpInputMongoEntityList.add(waitEntity);
-					}
+					updateDmpInputMongoEntityList.add(waitEntity);
 				}else {
 					saveDmpInputMongoEntityList.add(waitEntity);
 				}
