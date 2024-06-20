@@ -1,6 +1,7 @@
 package com.erp.oms.aliexpress.dto;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
@@ -11,6 +12,8 @@ import com.erp.oms.aliexpress.dto.response.AliExpressProductDetail;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
@@ -28,6 +31,7 @@ import java.util.Objects;
  * @Date 2023-11-30 11:24
  * @Created by yl
  */
+@Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
@@ -65,6 +69,15 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             return Collections.emptyList();
         }
         AliExpressProduct sourceProduct = dto.getAliExpressProduct();
+        if (null == sourceProduct.getProductSku()) {
+            log.warn("速卖通下载商品信息:SKU信息为空, dto={}", JSONUtil.toJsonStr(dto));
+            return Collections.emptyList();
+        }
+        if (CollectionUtils.isEmpty(sourceProduct.getProductSku().getProductDetailList())) {
+            log.warn("速卖通下载商品信息:SKU信息列表为空,  dto={}", JSONUtil.toJsonStr(dto));
+            return Collections.emptyList();
+        }
+
         List<AliExpressProductDetail> detailList = sourceProduct.getProductSku().getProductDetailList();
         List<PlatformProductDTO> resultList = new ArrayList<>(detailList.size());
         for (AliExpressProductDetail item : detailList) {
@@ -79,11 +92,11 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             product.setPlatformSkuName(sourceProduct.getSubject());
             // 类型 platform 平台  warehouse 仓库
             product.setPlatformType("platform");
-            String imageUrls=sourceProduct.getImageUrls();
-            if (StringUtils.isBlank(imageUrls)){
+            String imageUrls = sourceProduct.getImageUrls();
+            if (StringUtils.isBlank(imageUrls)) {
                 product.setProductImageUrl("");
             } else {
-                String imageUrl=imageUrls.split(";")[0];
+                String imageUrl = imageUrls.split(";")[0];
                 product.setProductImageUrl(imageUrl);
             }
             product.setShopId(dto.getShopId());
