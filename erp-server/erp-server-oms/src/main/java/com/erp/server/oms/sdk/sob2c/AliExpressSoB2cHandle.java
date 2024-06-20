@@ -21,15 +21,18 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
+import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.AliexpressDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WarehouseMappingFeign;
 import com.erp.server.oms.service.*;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,6 +76,8 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private SoB2cService soB2cService;
+    @Autowired
+    private AliExpressDliveryOrderService aliExpressDliveryOrderService;
 
     @Override
     public Boolean handleRule(SoB2cEntity mainEntity) {
@@ -139,6 +144,10 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
             //根据仓库分组，同个仓库生成相同的销售出库单，销售出库单的sku和数量取速卖通返回的数据
             //根据平台sku查询Listing信息
             List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList = dto.getDeliveryDetailDTOList();
+            platformDeliveryDetailDTOList = platformDeliveryDetailDTOList.stream().filter(v->StringUtils.isNotBlank(v.getPlatformWarehouseName())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(platformDeliveryDetailDTOList)){
+                return;
+            }
             List<String> platformSkuIdList = platformDeliveryDetailDTOList.stream().map(PlatformDeliveryDetailDTO::getPlatformSkuId).collect(Collectors.toList());
             List<String> platformSpuList = platformDeliveryDetailDTOList.stream().map(PlatformDeliveryDetailDTO::getPlatformSpuNo).collect(Collectors.toList());
             Map<String, List<ListingInfoWithSkuMappingDTO>> skuMappingMap = soB2cDetailService.mapListingByPlatformSkuId(platformSkuIdList, platformSpuList, mainEntity.getDictPlatform(), mainEntity.getShopId(), null, null);
@@ -176,6 +185,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                         soB2cErrorService.add(addError);
                         return;
                     }
+                    deliveryDetailDTO.setPlatformSkuId(mappingDTO.getPlatformSkuId());
                     deliveryDetailDTO.setSkuId(mappingDTO.getProductSkuId());
                     deliveryDetailDTO.setSkuNo(mappingDTO.getProductSkuNo());
                     deliveryDetailDTO.setWarehouseId(mappingViewDTO.getWarehouseId());
@@ -183,9 +193,10 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                     deliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
                     deliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
                 }
+                val = aliExpressDliveryOrderService.handleData(val);
                 List<String> skuIdList = val.stream().map(PlatformDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
                 PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
-                        .platformDeliveryDetailDTOList(platformDeliveryDetailDTOList)
+                        .platformDeliveryDetailDTOList(val)
                         .generateB2cDTO(soB2cService.getSoOutstockByIdAndWarehouseId(mainEntity.getId(),mappingViewDTO.getWarehouseId()))
                         .build();
                 //生成销售出库单

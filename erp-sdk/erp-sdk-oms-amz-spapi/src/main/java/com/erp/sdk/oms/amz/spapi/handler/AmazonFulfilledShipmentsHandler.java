@@ -78,7 +78,10 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
                         e.getAmazonOrderId(),
                         e.getShopId(),
                         e.getUniqueId(),
-                        Collections.singletonList(e)
+                        Collections.singletonList(e),
+                        e.getWarehouseId(),
+                        e.getWarehouseName(),
+                        e.getFulfillmentCenter()
                 )).collect(Collectors.toList());
 
         // 亚马逊物流销售报告转为发送mq数据
