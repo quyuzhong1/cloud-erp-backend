@@ -129,7 +129,18 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
                     errorMsgList.add("调出虚拟仓非启用状态");
                 }else {
                     detailDto.setFromVirtualWarehouseId(fromVwDTO.getId());
+                    //判断sku在此调出仓是否存在
+                    if (StringUtils.isNotBlank(detailDto.getSkuId())) {
+                        List<VirtualInventoryDTO.CommonDTO> existVirtualInventoryList = virtualInventoryService.getBySkuIdAndVwId(detailDto.getSkuId(), fromVwDTO.getId());
+                        if (CollectionUtils.isEmpty(existVirtualInventoryList)){
+                            errorMsgList.add("sku在此调出仓不存在");
+                        }
+                    }
                 }
+                //取消分配校验：调出仓是否存在此sku
+                //新增分配校验：实体仓是否存在此sku
+                //调拨校验：调出是否存在此sku
+
             }
             VirtualWarehouseDTO.VwDTO toVwDTO = vwDtoList.stream().filter(item -> Objects.equals(item.getName(), vwAllocationAllocationExcelDTO.getToVirtualWarehouseName())).findFirst().orElse(null);
             if (Objects.isNull(toVwDTO)){
@@ -139,6 +150,13 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
                     errorMsgList.add("调入虚拟仓非启用状态");
                 }else{
                     detailDto.setToVirtualWarehouseId(toVwDTO.getId());
+                    //判断sku在此调入仓是否存在
+                    if (StringUtils.isNotBlank(detailDto.getSkuId())) {
+                        List<VirtualInventoryDTO.CommonDTO> existVirtualInventoryList = virtualInventoryService.getBySkuIdAndVwId(detailDto.getSkuId(), toVwDTO.getId());
+                        if (CollectionUtils.isEmpty(existVirtualInventoryList)){
+                            errorMsgList.add("sku在此调入仓不存在");
+                        }
+                    }
                 }
             }
         }
@@ -159,11 +177,11 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
                     VirtualWarehouseRelationEntity fromVmRelation = vwRelationList.stream().filter(item ->
                             Objects.equals(item.getVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(null);
                     if (Objects.isNull(toVmRelation)&&Objects.isNull(fromVmRelation)){
-                        errorMsgList.add("当前实体仓没有关联此调入和调入虚拟仓");
+                        errorMsgList.add("实体仓没有关联此调入和调入虚拟仓");
                     }else if (Objects.isNull(fromVmRelation)){
-                        errorMsgList.add("当前实体仓没有关联此调出虚拟仓");
+                        errorMsgList.add("实体仓没有关联此调出虚拟仓");
                     }else if (Objects.isNull(toVmRelation)){
-                        errorMsgList.add("当前实体仓没有关联此调入虚拟仓");
+                        errorMsgList.add("实体仓没有关联此调入虚拟仓");
                     }else{
                         BeanUtils.copyProperties(vwAllocationAllocationExcelDTO, detailDto);
                         detailDto.setWarehouseId(warehouseList.get(0).getId());

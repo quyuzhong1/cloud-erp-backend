@@ -123,7 +123,7 @@ public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEvent
         } else {
             if (Boolean.TRUE.equals(vwDtoList.get(0).getDisabled())) {
                 errorMsgList.add("调出虚拟仓非启用状态");
-            }else {
+            } else {
                 detailDto.setFromVirtualWarehouseId(vwDtoList.get(0).getId());
             }
         }
@@ -137,27 +137,33 @@ public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEvent
                 //根据实体仓获取虚拟仓
                 List<VirtualWarehouseRelationEntity> vwRelationList = virtualWarehouseRelationService.getByWarehouseId(Collections.singletonList(warehouseList.get(0).getId()));
                 if (CollUtil.isEmpty(vwRelationList) || Objects.isNull(vwRelationList.get(0))) {
-                    errorMsgList.add("当前实体仓没有此调出虚拟仓");
+                    errorMsgList.add("当前实体仓没有关联虚拟仓");
                 } else {
-                    BeanUtils.copyProperties(vwAllocationAllocationExcelDTO, detailDto);
-                    detailDto.setWarehouseId(warehouseList.get(0).getId());
-                    //获取数量
-                    VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
-                    qtyTypeDTO.setType(VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode());
-                    VirtualInventoryDTO.QtySearchDTO qtySearchDTO = new VirtualInventoryDTO.QtySearchDTO();
-                    BeanUtils.copyProperties(detailDto,qtySearchDTO);
-                    List<VirtualInventoryDTO.QtySearchDTO> qtySearchList = new ArrayList<>();
-                    qtySearchList.add(qtySearchDTO);
-                    qtyTypeDTO.setQtySearchList(qtySearchList);
-                    List<VirtualInventoryDTO.ViewQtyDTO> qtyDTOList = virtualInventoryService.getQty(qtyTypeDTO);
-                    qtyDTOList.forEach(qtyDTO -> {
-                        if (Objects.equals(qtyDTO.getWarehouseId(), detailDto.getWarehouseId()) && Objects.equals(qtyDTO.getSkuId(), detailDto.getSkuId())) {
-                            detailDto.setWarehouseUsableQty(qtyDTO.getWarehouseAllocationQty());
-                            if (Objects.equals(qtyDTO.getFromVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())) {
-                                detailDto.setFromVirtualWarehouseUsableQty(qtyDTO.getFromVirtualWarehouseUsableQty());
+                    VirtualWarehouseRelationEntity fromVmRelation = vwRelationList.stream().filter(item ->
+                            Objects.equals(item.getVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(null);
+                    if (Objects.isNull(fromVmRelation)) {
+                        errorMsgList.add("实体仓没有关联此调出虚拟仓");
+                    } else {
+                        BeanUtils.copyProperties(vwAllocationAllocationExcelDTO, detailDto);
+                        detailDto.setWarehouseId(warehouseList.get(0).getId());
+                        //获取数量
+                        VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
+                        qtyTypeDTO.setType(VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode());
+                        VirtualInventoryDTO.QtySearchDTO qtySearchDTO = new VirtualInventoryDTO.QtySearchDTO();
+                        BeanUtils.copyProperties(detailDto, qtySearchDTO);
+                        List<VirtualInventoryDTO.QtySearchDTO> qtySearchList = new ArrayList<>();
+                        qtySearchList.add(qtySearchDTO);
+                        qtyTypeDTO.setQtySearchList(qtySearchList);
+                        List<VirtualInventoryDTO.ViewQtyDTO> qtyDTOList = virtualInventoryService.getQty(qtyTypeDTO);
+                        qtyDTOList.forEach(qtyDTO -> {
+                            if (Objects.equals(qtyDTO.getWarehouseId(), detailDto.getWarehouseId()) && Objects.equals(qtyDTO.getSkuId(), detailDto.getSkuId())) {
+                                detailDto.setWarehouseUsableQty(qtyDTO.getWarehouseAllocationQty());
+                                if (Objects.equals(qtyDTO.getFromVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())) {
+                                    detailDto.setFromVirtualWarehouseUsableQty(qtyDTO.getFromVirtualWarehouseUsableQty());
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }

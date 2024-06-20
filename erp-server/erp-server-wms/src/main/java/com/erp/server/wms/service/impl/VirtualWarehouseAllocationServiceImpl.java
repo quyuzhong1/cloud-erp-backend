@@ -99,6 +99,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Resource
     @Lazy
     private VirtualWarehouseAllocationServiceImpl service;
+    private int size=20;
 
     /**
      * 新增
@@ -150,9 +151,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             throw new ServiceException("分货单保存失败");
         }
         // 记录主单操作日志
-        log.info("编辑 开始记录分货单日志数据，单号：【{}】", virtualWarehouseAllocationEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationEntity.getCode(), "分货单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), "编辑操作");
+        log.info("编辑 开始记录分货单日志数据，单号：【{}】", old.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "分货单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), old.getId(), "编辑操作");
 
         // 新增明细
         virtualWarehouseAllocationDetailService.batchUpdate(updateDTO, virtualWarehouseAllocationEntity.getId());
@@ -383,6 +384,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
+        if (successList.size()>size){
+            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR,size);
+        }
         String url = "";
         List<VwAllocationAllocationExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
@@ -415,6 +419,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
+        if (successList.size()>size){
+            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR,size);
+        }
         String url = "";
         List<VwAllocationAllocationTransferExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
@@ -447,6 +454,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
+        if (successList.size()>size){
+            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR,size);
+        }
         String url = "";
         List<VwAllocationAllocationCancelExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {

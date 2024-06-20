@@ -277,8 +277,8 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     //保存合单明细
                     VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
                     handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
-                    handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-                    handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
+                    handleDetailEntity.setThirdFromVirtualWarehouseId(thirdMapping.getThirdId());
+                    handleDetailEntity.setThirdFromVirtualWarehouseNo(thirdMapping.getThirdCode());
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(allocationHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());

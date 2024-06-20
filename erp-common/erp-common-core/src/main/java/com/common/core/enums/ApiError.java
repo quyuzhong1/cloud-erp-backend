@@ -1047,6 +1047,7 @@ public enum ApiError implements Serializable {
     ERROR_NO_SYNC(92232,"没有同步信息"),
     ERROR_CHECK_OUT_VIRTUAL_INVENTORY(92233,"虚拟仓库存已分配【{}】，出库数量不能超过【{}】"),
     ERROR_VW_CHANNEL_ERROR(92234,"虚拟仓【{}】已绑定当前渠道"),
+    ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
 
 
     /**
