@@ -23,12 +23,6 @@ import com.common.business.enums.ApproveStatusEnum;
 @Accessors(chain = true)
 @TableName("virtual_warehouse_channel")
 public class VirtualWarehouseChannelEntity extends BaseEntity<VirtualWarehouseChannelEntity> {
-
-    /**
-    * 是否失效 true 失效 false 未失效
-    */
-    @TableField("disabled")
-    private Boolean disabled;
     /**
     * 虚拟仓id
     */

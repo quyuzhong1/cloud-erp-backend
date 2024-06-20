@@ -93,9 +93,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单明细", virtualWarehouseAllocationDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, virtualWarehouseAllocationDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(virtualWarehouseAllocationDetailEntity.getId(), virtualWarehouseAllocationDetailEntity.getId());
     }
@@ -117,12 +115,10 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         if (!save) {
             throw new ServiceException("分货单明细保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
         log.info("编辑 开始记录分货单明细日志数据，id：【{}】", virtualWarehouseAllocationDetailEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationDetailEntity.getId(), "分货单明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationDetailEntity, null, virtualWarehouseAllocationDetailEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -136,14 +132,6 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         if (!save) {
             throw new ServiceException(ApiError.ERROR_VMALLOCATION_DETAIL_ADD);
         }
-//        //添加操作日志
-//        List<String> addList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).filter(StringUtils::isBlank).collect(Collectors.toList());
-//        //添加操作日志
-//        if (CollectionUtils.isNotEmpty(addList)) {
-//            List<VirtualWarehouseAllocationDetailEntity> receiveDetailEntityList = this.listByIds(addList);
-//            List<Pair<String, String>> addPairList = receiveDetailEntityList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-//            operateLogService.batchAddModuleOperateLog("添加了一个分货单明细【%s】", ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), addPairList, "新增操作");
-//        }
     }
 
     @Override
@@ -155,10 +143,6 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         List<VirtualWarehouseAllocationDetailEntity> oldList = this.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>().eq(VirtualWarehouseAllocationDetailEntity::getMainId, mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-//            List<VirtualWarehouseAllocationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
-//            //操作日志
-//            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-//            operateLogService.batchAddModuleOperateLog("删除了一个分货单明细【%s】", ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
         }
 
@@ -193,10 +177,6 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             throw new ServiceException("存在相同的状态");
         }
         dto.setSysTypeName(PlatformDictEnum.getByCode(dto.getSysType()).getName());
-//        vwAllocationDetailEntity.setSyncStatus(code);
-//        vwAllocationDetailEntity.setFinishDescription(dto.getFinishDescription());
-//        vwAllocationDetailEntity.setThirdCode(dto.getThirdCode());
-//        this.updateById(vwAllocationDetailEntity);
         //根据分货单主单和明细获取分货单合单数据
         //获取合单表明细id
         VirtualWarehouseAllocationHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
@@ -458,11 +438,13 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
 
     @Override
     public void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto) {
+        log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态：{}",dto);
         //根据合单明细id获取拆单信息
         List<VirtualWarehouseAllocationHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
                 .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>().eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, dto.getHandelDetailId()));
         if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
             baseMapper.updateSyncStatus(dto, handleRelationEntityList.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList()));
+            log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态成功：{}",dto);
         }
     }
 

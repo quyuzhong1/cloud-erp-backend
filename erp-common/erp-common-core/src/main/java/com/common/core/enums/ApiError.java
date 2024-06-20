@@ -1066,6 +1066,7 @@ public enum ApiError implements Serializable {
     UNPICKED_QUANTITY_SHORTAGE(92151, "未拣货数量不足，无法生成拣货单，请重新操作"),
 
 
+    ERROR_VW_CHANNEL_ERROR(92234,"虚拟仓【{}】已绑定当前渠道"),
 
 
     /**
