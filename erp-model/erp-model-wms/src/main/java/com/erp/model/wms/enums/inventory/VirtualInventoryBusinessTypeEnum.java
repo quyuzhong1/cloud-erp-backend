@@ -33,6 +33,10 @@ public enum VirtualInventoryBusinessTypeEnum {
      */
     SO_DELIVERY_NOTICE("so_delivery_notice", "05","发货通知单"),
 
+    /**
+     * 销售出库单，减冻结
+     */
+    SO_OUT_STOCK("so_out_stock", "06","销售出库单"),
     ;
 
     private String code;
