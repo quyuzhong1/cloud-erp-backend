@@ -8,6 +8,7 @@ import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -54,4 +55,6 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @return
      */
     List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(@Param("ids") List<String> ids);
+
+    BigDecimal getActualLogisticCost(@Param("soId") String soId);
 }

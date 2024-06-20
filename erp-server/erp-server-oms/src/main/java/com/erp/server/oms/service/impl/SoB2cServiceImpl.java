@@ -233,6 +233,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private LogisticsFeign logisticsFeign;
 
+    @Autowired
+    private LogisticsBillCostFeign logisticsBillCostFeign;
 
     @Autowired
     private ListingInfoService listingInfoService;
@@ -2563,6 +2565,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(CollectionUtils.isNotEmpty(soOutstockEntityList) && Objects.nonNull(soOutstockEntityList.get(0).getBillDate())){
             logisticsDTO.setDeliveryTime(soOutstockEntityList.get(0).getBillDate().atStartOfDay());
         }
+        logisticsDTO.setActualShippingCost(logisticsBillCostFeign.getActualLogisticCost(soB2cEntity.getId()));
         data.setLogisticsDTO(logisticsDTO);
         //买家
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(id);
