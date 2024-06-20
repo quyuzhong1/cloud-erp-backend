@@ -185,6 +185,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                         soB2cErrorService.add(addError);
                         return;
                     }
+                    deliveryDetailDTO.setPlatformSkuId(mappingDTO.getPlatformSkuId());
                     deliveryDetailDTO.setSkuId(mappingDTO.getProductSkuId());
                     deliveryDetailDTO.setSkuNo(mappingDTO.getProductSkuNo());
                     deliveryDetailDTO.setWarehouseId(mappingViewDTO.getWarehouseId());
