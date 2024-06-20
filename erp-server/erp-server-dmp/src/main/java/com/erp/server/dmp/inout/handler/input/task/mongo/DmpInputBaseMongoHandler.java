@@ -56,6 +56,7 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 	@Override
 	public List<Map> parseFdsToMongo(DmpInputMongoRequest dmpRequest,
 			DmpInputFdsResponse dmpResponse) {
+		this.beforeToDo(dmpRequest , dmpResponse);
 		Map<String, Map> md5DmpInputMongoEntityMaps = new HashMap<>();
 		
 		Map<DmpCfgInputConvertEntity, List<DmpInputTaskFileEntity>> convertInputTaskFileEntityListMaps = dmpResponse.getConvertInputTaskFileEntityListMaps();
@@ -102,6 +103,7 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 			dmpInputFileMongoRelationService.saveBatch(dmpInputFileMongoRelationEntityList);
 		}
 		
+		this.afterToDo(dmpRequest , dmpResponse , saveDmpInputMongoEntityList);
 		return saveDmpInputMongoEntityList;
 	}
 
@@ -218,6 +220,16 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 	 */
 	protected String convertKey(String originalKey) {
 		return originalKey;
+	}
+	
+	protected void beforeToDo(DmpInputMongoRequest dmpRequest,
+			DmpInputFdsResponse dmpResponse) {
+		 
+	}
+	
+	protected void afterToDo(DmpInputMongoRequest dmpRequest,
+			DmpInputFdsResponse dmpResponse , List<Map> resultDmpInputMongoEntityList) {
+		 
 	}
 	
 	

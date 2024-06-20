@@ -42,11 +42,13 @@ public class DmpInputHotfixCreateHandler extends DmpInputCreateHandler{
 		DmpCfgInputEntity dmpCfgInputEntity = dmpResponse.getDmpCfgInputEntity();
 		String cfgInputId = dmpCfgInputEntity.getId();
 		List<String> cfgInputDetailIdList = dmpInputHotfixCreateRequest.getCfgInputDetailIdList();
+		List<String> nextLevelIdList = dmpInputHotfixCreateRequest.getNextLevelIdList();
 		
 		List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityList = dmpCfgInputDetailService.lambdaQuery()
 				.eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
 				.eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
 				.in(CollUtil.isNotEmpty(cfgInputDetailIdList) , DmpCfgInputDetailEntity::getId, cfgInputDetailIdList)
+				.in(CollUtil.isNotEmpty(nextLevelIdList) , DmpCfgInputDetailEntity::getNextLevelId, nextLevelIdList)
 				.list();
 		String msg = "";
 		if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {

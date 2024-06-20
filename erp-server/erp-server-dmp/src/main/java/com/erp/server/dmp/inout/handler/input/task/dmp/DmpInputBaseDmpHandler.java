@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -29,6 +30,7 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpInputMongoDmpRelationService;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.crypto.digest.MD5;
 
@@ -129,13 +131,13 @@ public class DmpInputBaseDmpHandler extends DmpInputDmpHandler{
 						});
 						waitEntity.put(BaseEntity.CREATE_TIME, findEntity.get(BaseEntity.CREATE_TIME));
 						deleteDmpIdList.add(dmpId);
-						updateDmpInputDmpEntityList.add(JSON.parseObject(JSON.toJSONString(waitEntity), dmpEntityClass));
+						updateDmpInputDmpEntityList.add(BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass));
 					}else {
-						saveDmpInputDmpEntityList.add(JSON.parseObject(JSON.toJSONString(waitEntity), dmpEntityClass));
+						saveDmpInputDmpEntityList.add(BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass));
 					}
 				}
 			}else {
-				saveDmpInputDmpEntityList = (List<BaseEntity>) JSON.parseArray(JSON.toJSONString(beanDmpInputDmpEntityMaps.values()) , dmpEntityClass);
+				saveDmpInputDmpEntityList = beanDmpInputDmpEntityMaps.values().stream().map(waitEntity -> BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass)).collect(Collectors.toList());
 			}
 			
 			if(CollUtil.isNotEmpty(saveDmpInputDmpEntityList)) {

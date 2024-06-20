@@ -13,6 +13,11 @@ public class DmpInputHotfixCreateRequest extends DmpInputCreateRequest{
 	private List<String> cfgInputDetailIdList;
 	
 	/**
+	 * 输入明细信息下一层级id列表
+	 */
+	private List<String> nextLevelIdList;
+	
+	/**
     * 拉取接口条件的开始时间
     */
     private LocalDateTime startTime;
