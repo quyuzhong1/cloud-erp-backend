@@ -5286,13 +5286,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String warehouseLocation = detailItem.getWarehouseLocation();
             //查询到对应的数据
             List<SoB2cDeliveryDTO.DeliverySkuDTO> deliveryList = deliverySkuList.stream().filter(d -> skuId.equals(d.getSourceSkuId())).distinct().collect(Collectors.toList());
-            //表示有啊
-            SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
-            // 明细记录平台单号
-            addDTO.setPlatformCode(entity.getPlatformCode());
+
             if (CollectionUtils.isNotEmpty(deliveryList)) {
                 String detailRemark = "B2C订单发货自动生成";
                 for (SoB2cDeliveryDTO.DeliverySkuDTO deliverySku : deliveryList) {
+                    //表示有啊
+                    SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
+                    // 明细记录平台单号
+                    addDTO.setPlatformCode(entity.getPlatformCode());
                     addDTO.setSkuId(deliverySku.getSkuId());
                     addDTO.setSkuNo(deliverySku.getSkuNo());
                     addDTO.setSourceDetailId(detailItem.getSourceDetailId());
@@ -5302,8 +5303,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     addDTO.setActualQty(wantQty);
                     addDTO.setWarehouseLocation(warehouseLocation);
                     addDTO.setRemark(detailRemark);
+                    wantDetailList.add(addDTO);
                 }
             } else {
+                //表示有啊
+                SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
+                // 明细记录平台单号
+                addDTO.setPlatformCode(entity.getPlatformCode());
                 addDTO.setSkuId(skuId);
                 addDTO.setSkuNo(detailItem.getSkuNo());
                 addDTO.setSourceDetailId(detailId);
@@ -5312,18 +5318,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setActualQty(qty);
                 addDTO.setWarehouseLocation(warehouseLocation);
                 addDTO.setRemark("B2C订单平台自动生成");
+                // 平台订单记录历史映射
+                if (entity.hasPlatformWarehouseOrder()) {
+                    List<ListingInfoWithSkuMappingDTO> list = listingInfoWithSkuMappingDTOMap.getOrDefault(detailItem.getPlatformSkuNo(), Collections.emptyList());
+                    List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> historyList = B2cOrderConverter.INSTANCE.skuMappingDTOListToGenDTOList(list);
+                    // 按过期时间排序
+                    List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> sortList = historyList.stream()
+                            .sorted(Comparator.comparing(SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO::getExpireTime))
+                            .collect(Collectors.toList());
+                    addDTO.setHistorySkuMappingList(new LinkedList<>(sortList));
+                }
+                wantDetailList.add(addDTO);
             }
-            // 平台订单记录历史映射
-            if (entity.hasPlatformWarehouseOrder()) {
-                List<ListingInfoWithSkuMappingDTO> list = listingInfoWithSkuMappingDTOMap.getOrDefault(detailItem.getPlatformSkuNo(), Collections.emptyList());
-                List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> historyList = B2cOrderConverter.INSTANCE.skuMappingDTOListToGenDTOList(list);
-                // 按过期时间排序
-                List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> sortList = historyList.stream()
-                        .sorted(Comparator.comparing(SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO::getExpireTime))
-                        .collect(Collectors.toList());
-                addDTO.setHistorySkuMappingList(new LinkedList<>(sortList));
-            }
-            wantDetailList.add(addDTO);
         }
         dto.setDetailList(wantDetailList);
         return dto;
