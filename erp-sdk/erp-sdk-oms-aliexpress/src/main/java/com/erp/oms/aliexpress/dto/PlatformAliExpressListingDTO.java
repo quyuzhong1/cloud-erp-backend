@@ -11,6 +11,7 @@ import com.erp.oms.aliexpress.dto.response.AliExpressProductDetail;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -79,8 +80,12 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             // 类型 platform 平台  warehouse 仓库
             product.setPlatformType("platform");
             String imageUrls=sourceProduct.getImageUrls();
-            String imageUrl=imageUrls.split(";")[0];
-            product.setProductImageUrl(imageUrl);
+            if (StringUtils.isBlank(imageUrls)){
+                product.setProductImageUrl("");
+            } else {
+                String imageUrl=imageUrls.split(";")[0];
+                product.setProductImageUrl(imageUrl);
+            }
             product.setShopId(dto.getShopId());
             // 包装信息
             String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", sourceProduct.getPackageLength(), sourceProduct.getPackageWidth(), sourceProduct.getPackageHeight(), sourceProduct.getGrossWeight());
@@ -88,6 +93,11 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             String gmtModified = sourceProduct.getGmtModified();
             product.setPlatformUpdateTime(LocalDateUtil.parseStrToLocalTime(gmtModified));
             product.setPlatformSkuId(item.getSkuId());
+
+            // 平台唯一标识=平台skuId + 店铺ID
+            String uniqueId = StrUtil.format("{}_{}", item.getSkuId(), dto.getShopId());
+            product.setUniqueId(uniqueId);
+
             resultList.add(product);
         }
 
