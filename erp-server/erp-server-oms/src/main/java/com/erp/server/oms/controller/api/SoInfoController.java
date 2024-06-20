@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -17,6 +18,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
@@ -673,4 +675,22 @@ public class SoInfoController extends BaseController {
         return result ? success():failure();
     }
 
+    /**
+     * 下推销售出库订单-列表查询 入参id为明细Id
+     **/
+    @PostMapping("/generateSoOutView")
+    public ApiResult<List<SoInfoDTO.GenerateSoOutView>> generateSoOutView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoInfoDTO.GenerateSoOutView> list = soInfoService.generateSoOutView(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 下推销售出库订单
+     **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推销售出库订单,id={soId}")
+    @PostMapping("/generateSoOut")
+    public ApiResult<List<BatchResultDTO>> generateSoOut(@RequestBody @Validated List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList) {
+        List<BatchResultDTO> resultDTOS = soInfoService.generateSoOut(generateSoOutViewList);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

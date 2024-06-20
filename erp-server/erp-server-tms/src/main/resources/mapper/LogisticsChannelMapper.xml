@@ -175,8 +175,10 @@
         lc.name,
         lc.code,
         lc.disabled,
-         lc.main_id   as logisticsSupplierId
+        ls.supplier_id as logisticsSupplierId,
+        ls.supplier_name as logisticsSupplierName
         from logistics_channel lc
+        left join logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = false
         where
         lc.is_deleted = false
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
