@@ -44,6 +44,7 @@ import ${package.Dto}.${table.dtoName};
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.stream.Collectors;
 import ${package.Entity}.${entity};
 </#if>
 
@@ -193,14 +194,18 @@ public class ${table.controllerName} {
     </#if>
     @LogAction(value = LogActionEnum.SUBMIT, desc = "${table.comment!}提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+		List<${entity}> list = ${serviceBean}.lambdaQuery().in(${entity}::getId, ids).list();
+		Map<String, ${entity}> idEntityMap = list.stream().collect(Collectors.toMap(${entity}::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
                 submit = ${serviceBean}.submit(id);
             }catch (Exception e){
                 log.error("${docName} 提交审核失败",e);
-                ${entity} entity = ${serviceBean}.getById(id);
+                ${entity} entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "${docName}不存在, 提交失败");
                     resultDTOS.add(submit);
@@ -231,14 +236,17 @@ public class ${table.controllerName} {
     @LogAction(value = LogActionEnum.APPROVE, desc = "${table.comment!}审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+		List<${entity}> list = ${serviceBean}.lambdaQuery().in(${entity}::getId, ids).list();
+		Map<String, ${entity}> idEntityMap = list.stream().collect(Collectors.toMap(${entity}::getId, w -> w));
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
                 approveResult = ${serviceBean}.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
                 log.error("${docName}审核失败",e);
-                ${entity} entity = ${serviceBean}.getById(id);
+                ${entity} entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "${docName}不存在, 审核失败");
                     resultDTOS.add(approveResult);
@@ -268,14 +276,18 @@ public class ${table.controllerName} {
     </#if>
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "${table.comment!}反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+		List<${entity}> list = ${serviceBean}.lambdaQuery().in(${entity}::getId, ids).list();
+		Map<String, ${entity}> idEntityMap = list.stream().collect(Collectors.toMap(${entity}::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
                 disApproveResult = ${serviceBean}.disApprove(id);
             }catch (Exception e){
                 log.error("${docName}反审核失败",e);
-                ${entity} entity = ${serviceBean}.getById(id);
+                ${entity} entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     disApproveResult = BatchResultDTO.fail(id, id, "${docName}不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
@@ -306,14 +318,18 @@ public class ${table.controllerName} {
     </#if>
     @LogAction(value = LogActionEnum.DELETE, desc = "${table.comment!}删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+		List<${entity}> list = ${serviceBean}.lambdaQuery().in(${entity}::getId, ids).list();
+		Map<String, ${entity}> idEntityMap = list.stream().collect(Collectors.toMap(${entity}::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
                 deleteResult = ${serviceBean}.delete(id);
             }catch (Exception e){
                 log.error("${docName}删除失败",e);
-                ${entity} entity = ${serviceBean}.getById(id);
+                ${entity} entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "${docName}不存在, 删除失败");
                     resultDTOS.add(deleteResult);
@@ -343,14 +359,18 @@ public class ${table.controllerName} {
     </#if>
     @LogAction(value = LogActionEnum.INVALID, desc = "${table.comment!}作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+		List<${entity}> list = ${serviceBean}.lambdaQuery().in(${entity}::getId, ids).list();
+		Map<String, ${entity}> idEntityMap = list.stream().collect(Collectors.toMap(${entity}::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO invalidResult;
             try {
                 invalidResult = ${serviceBean}.invalid(id,dto.getRemark());
             }catch (Exception e){
                 log.error("${docName}作废失败",e);
-                ${entity} entity = ${serviceBean}.getById(id);
+                ${entity} entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     invalidResult = BatchResultDTO.fail(id, id, "${docName}不存在, 作废失败");
                     resultDTOS.add(invalidResult);
@@ -381,14 +401,18 @@ public class ${table.controllerName} {
     </#if>
     @LogAction(value = LogActionEnum.CANCEL, desc = "${table.comment!}撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // TODO 数据查询放入外层，处理结果统一更新或单条更新
+        List<${entity}> list = ${serviceBean}.lambdaQuery().in(${entity}::getId, ids).list();
+        Map<String, ${entity}> idEntityMap = list.stream().collect(Collectors.toMap(${entity}::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
                 cancelResult = ${serviceBean}.cancelProcess(id);
             }catch (Exception e){
                 log.error("${docName}撤回流程失败",e);
-                ${entity} entity = ${serviceBean}.getById(id);
+                ${entity} entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "${docName}不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
