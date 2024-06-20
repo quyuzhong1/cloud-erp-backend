@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -363,6 +364,19 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseDTO.ListDTO> list = records.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
         pagResult.setRecords(list);
         return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public List<WarehouseDTO.ListDTO> listSupplierWarehouse() {
+        DictBasicEntity basic = dictBasicService.getOne(Wrappers.<DictBasicEntity>lambdaQuery().eq(DictBasicEntity::getValue, WmsConstant.SUPPLIER));
+        List<WarehouseEntity> list = list(Wrappers.<WarehouseEntity>lambdaQuery().eq(WarehouseEntity::getTypeId, basic.getId())
+                .orderByAsc(WarehouseEntity::getDisabled));
+        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+        // 填充信息
+        this.fillListData(resultList, warehouseBindMap);
+        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
 
     /**

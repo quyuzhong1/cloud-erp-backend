@@ -378,4 +378,13 @@ public class WarehouseController extends BaseController {
         PagingVO<WarehouseDTO.PagingProductViewDTO> pagingVO = warehouseService.pagingProduct(dto);
         return success(pagingVO);
     }
+
+    /**
+     * 仓库列表(所有供应商仓库)
+     */
+    @GetMapping("/listSupplierWarehouse")
+    public ApiResult<List<WarehouseDTO.ListDTO>> listSupplierWarehouse() {
+        List<WarehouseDTO.ListDTO> list = warehouseService.listSupplierWarehouse();
+        return success(list);
+    }
 }
