@@ -73,4 +73,7 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * 根据来源id查询拣货单及明细
      */
     List<PickingListsDTO.SourceView> listBySourceIds(List<String> sourceIds);
+
+    void exist(String id);
+    void exist(List<String> id);
 }

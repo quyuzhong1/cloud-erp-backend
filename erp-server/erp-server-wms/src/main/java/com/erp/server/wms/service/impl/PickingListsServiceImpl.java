@@ -201,13 +201,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         }
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             //要货申请下推发货单后，拣货单不允许修改和删除
-            int count = firstMileDeliveryService.countNotVoided(entity.getId());
+            int count = firstMileDeliveryService.countNotVoided(entity.getSourceId());
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_99086);
             }
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             //销售通知单下推销售出库单后，拣货单不允许修改和删除
-            int count = soOutstockService.countNotVoided(entity.getId());
+            int count = soOutstockService.countNotVoided(entity.getSourceId());
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_99086);
             }
@@ -369,6 +369,22 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public List<PickingListsDTO.SourceView> listBySourceIds(List<String> sourceIds) {
 
         return baseMapper.listBySourceIds(sourceIds);
+    }
+
+    @Override
+    public void exist(String id) {
+        int count = count(Wrappers.<PickingListsEntity>lambdaQuery().eq(PickingListsEntity::getSourceId, id));
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_99102);
+        }
+    }
+
+    @Override
+    public void exist(List<String> ids) {
+        int count = count(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_99102);
+        }
     }
 
     /**
