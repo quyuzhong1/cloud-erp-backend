@@ -1586,6 +1586,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     detail.setSourceDetailId(item.getSourceDetailId());
                     detail.setSkuId(item.getSkuId());
                     detail.setRemark(item.getRemark());
+                    detail.setWarehouseId(item.getWarehouseId());
                     detail.setWarehouseLocation(item.getWarehouseLocation());
                     detail.setActualQty(item.getQty());
                     detail.setPlanQty(item.getQty());
