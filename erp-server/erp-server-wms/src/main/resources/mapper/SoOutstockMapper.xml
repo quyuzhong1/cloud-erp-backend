@@ -157,6 +157,7 @@
         sod.id AS sourceDetailId,
         sod.sku_id,sod.sku_no,
         sod.warehouse_location,
+        sod.virtual_warehouse_id,
         sod.actual_qty AS qty,
         so.bill_date
         FROM so_outstock so
