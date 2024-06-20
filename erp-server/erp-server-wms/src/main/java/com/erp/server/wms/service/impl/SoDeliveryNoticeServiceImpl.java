@@ -585,6 +585,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count != deliveryNoticeEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        pickingListsService.exist(ids);
         //撤销现有流程
         workflowFeign.cancelProcess(ids);
         //修改状态为待提交
@@ -616,7 +617,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count != deliveryNoticeEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
-
+        pickingListsService.exist(ids);
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.TRUE)
                 .set(SoDeliveryNoticeEntity::getInvalidRemark, remark)
@@ -640,6 +641,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        pickingListsService.exist(ids);
         //待提交支持删除
         long count = deliveryNoticeEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
