@@ -22,6 +22,7 @@ import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -929,4 +930,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     BatchResultDTO updateReceiverInfo(SoB2cReceiverDTO.UpdateBaseDTO dto);
+
+    /**
+     * 根据订单创建时间查询订单
+     */
+    List<SoB2cEntity> listByCreateTime(LocalDateTime startTime, LocalDateTime endTime);
+
 }
