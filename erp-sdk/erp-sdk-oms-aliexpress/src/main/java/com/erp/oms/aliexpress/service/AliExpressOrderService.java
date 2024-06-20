@@ -84,7 +84,15 @@ public class AliExpressOrderService {
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("current_page", orderRequest.getCurrentPage());
         paramMap.put("page_size", pageSize);
-//        paramMap.put("create_date_start", orderRequest.getStartTime());
+
+        if (StringUtils.isNotBlank(orderRequest.getCreateDateStart())){
+            // 按指定创建时间
+            paramMap.put("create_date_start", orderRequest.getCreateDateStart());
+        } else {
+            // 默认:更新开始时间往前推3个月
+            paramMap.put("create_date_start", orderRequest.convertStartTime3MonthAgo());
+        }
+
 //        paramMap.put("create_date_end", orderRequest.getEndTime());
         paramMap.put("modified_date_start", orderRequest.getStartTime());
         paramMap.put("modified_date_end", orderRequest.getEndTime());
@@ -98,7 +106,7 @@ public class AliExpressOrderService {
         request.addApiParameter("param_aeop_order_query", JSONUtil.toJsonStr(paramMap));
         String token = orderRequest.getToken();
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        log.info("拉取速卖通订单>>>>>>>{}", JSONUtil.toJsonStr(response));
+        log.info("拉取速卖通订单>>>>>>>请求={}， 响应={}",JSONUtil.toJsonStr(request), JSONUtil.toJsonStr(response));
         JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("result");
         if (null == resultJsONObject) {
@@ -374,32 +382,31 @@ public class AliExpressOrderService {
     }
 
     public static void main(String[] args) throws ApiException {
-
-
-        String appKey = "503630";
-        String appSecret = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
-        String baseUrl = "https://api-sg.aliexpress.com";
-        String apiName = AliexpressConstants.LIST_ORDER;
-        String token = "50000200231zNXSmacwPjwEkHuvqrbecKVdjpbsrifD1818acdbhxhOyuDo62BrXG7tj";
-        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
-        IopRequest request = new IopRequest();
-        Map<String,String> map=new HashMap<>();
-        map.put("order_id","1102876023215566");
-        request.addApiParameter("simplify", "true");
-        request.addApiParameter("param1",JSONUtil.toJsonStr(map));
-        request.setApiName(apiName);
-        IopResponse response = client.execute(request, token, Protocol.TOP);
-        String body = response.getBody();
-        System.out.println(body);
+//        String appKey = "502978";
+//        String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+//        String baseUrl = "https://api-sg.aliexpress.com";
+//        String apiName = AliexpressConstants.LIST_ORDER;
+//        String token = "50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG";
+//        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+//        IopRequest request = new IopRequest();
+//        Map<String,String> map=new HashMap<>();
+//        map.put("order_id","1102876023215566");
+//        request.addApiParameter("simplify", "true");
+//        request.addApiParameter("param1",JSONUtil.toJsonStr(map));
+//        request.setApiName(apiName);
+//        IopResponse response = client.execute(request, token, Protocol.TOP);
+//        String body = response.getBody();
+//        System.out.println(body);
         OrderRequest orderRequest = OrderRequest.builder()
                 .clientId("502978")
                 .clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY")
                 .baseUrl("https://api-sg.aliexpress.com")
                 .apiName(AliexpressConstants.LIST_ORDER)
                 .currentPage(1)
-                .token("50000200231zNXSmacwPjwEkHuvqrbecKVdjpbsrifD1818acdbhxhOyuDo62BrXG7tj")
-                .startTime("2024-05-01 00:00:00")
-                .endTime("2024-05-02 00:00:00")
+                .orderStatus("FINISH")
+                .token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG")
+                .startTime("2024-03-01 00:00:00")
+                .endTime("2024-03-05 00:00:00")
                 .build();
 
         AliExpressOrderService aliExpressOrderService = new AliExpressOrderService();
