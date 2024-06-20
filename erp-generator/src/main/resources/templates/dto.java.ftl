@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 </#if>
 <#if dtoValidate>
 import javax.validation.constraints.NotNull;
