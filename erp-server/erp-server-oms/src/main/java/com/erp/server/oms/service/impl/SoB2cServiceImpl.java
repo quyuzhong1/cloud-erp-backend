@@ -105,7 +105,6 @@ import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
-import com.erp.server.oms.sdk.sob2c.AliExpressSoB2cHandle;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -316,9 +315,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private CfgRuleOrderHandleService cfgRuleOrderHandleService;
-
-    @Resource
-    private AliExpressSoB2cHandle aliExpressSoB2cHandle;
 
 
     @Override
@@ -6134,7 +6130,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         platformDeliveryDetailDTO.setScItemId(deliveryDetailDTO.getScItemId());
                         platformDeliveryDetailDTOList.add(platformDeliveryDetailDTO);
                     }
-                    platformDeliveryDetailDTOList = aliExpressSoB2cHandle.handleData(platformDeliveryDetailDTOList);
+                    platformDeliveryDetailDTOList = aliExpressDliveryOrderService.handleData(platformDeliveryDetailDTOList);
                     List<String> skuIds = platformDeliveryDetailDTOList.stream().map(PlatformDeliveryDetailDTO::getSkuId).collect(Collectors.toList());
                     PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
                             .platformDeliveryDetailDTOList(platformDeliveryDetailDTOList)

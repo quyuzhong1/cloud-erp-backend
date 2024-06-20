@@ -21,6 +21,7 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
+import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.AliexpressDeliveryFeign;
@@ -31,6 +32,7 @@ import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,6 +76,8 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private SoB2cService soB2cService;
+    @Autowired
+    private AliExpressDliveryOrderService aliExpressDliveryOrderService;
 
     @Override
     public Boolean handleRule(SoB2cEntity mainEntity) {
@@ -188,7 +192,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                     deliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
                     deliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
                 }
-                val = this.handleData(val);
+                val = aliExpressDliveryOrderService.handleData(val);
                 List<String> skuIdList = val.stream().map(PlatformDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
                 PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
                         .platformDeliveryDetailDTOList(val)
@@ -275,19 +279,5 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
             }
         }
         return map;
-    }
-
-    public List<PlatformDeliveryDetailDTO> handleData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList) {
-        List<PlatformDeliveryDetailDTO> resultList = new ArrayList<>();
-        //相同平台skuId汇总后将数量除以scItemId 的种类数
-        Map<String,List<PlatformDeliveryDetailDTO>> groupMap = platformDeliveryDetailDTOList.stream().collect(Collectors.groupingBy(PlatformDeliveryDetailDTO::getPlatformSkuId));
-        groupMap.forEach((key,val)->{
-            PlatformDeliveryDetailDTO platformDeliveryDetailDTO = val.get(0);
-            Integer allQty = val.stream().mapToInt(PlatformDeliveryDetailDTO::getQty).sum();
-            Integer scItemIdCount = Math.toIntExact(val.stream().map(PlatformDeliveryDetailDTO::getScItemId).distinct().count());
-            platformDeliveryDetailDTO.setQty(allQty/scItemIdCount);
-            resultList.add(platformDeliveryDetailDTO);
-        });
-        return resultList;
     }
 }
