@@ -360,7 +360,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         }else{
             //原始禁用状态变成启用时，校验当前虚拟仓绑定的渠道是否已被选择
             //获取当前已经绑定的所有渠道
-            List<VirtualWarehouseDTO.BindChannelDto> bindedDictPlatform = virtualWarehouseChannelService.getBindedDictPlatformNoGroup();
+//            List<VirtualWarehouseDTO.BindChannelDto> bindedDictPlatform = virtualWarehouseChannelService.getBindedDictPlatformNoGroup();
 //            if (CollectionUtils.isNotEmpty(bindedDictPlatform)) {
 //                Map<String, List<VirtualWarehouseDTO.BindChannelDto>> allBindedMap = bindedDictPlatform.stream().collect(Collectors.groupingBy(VirtualWarehouseDTO.BindChannelDto::getDictPlatform));
 //                //获取当前虚拟仓绑定的渠道

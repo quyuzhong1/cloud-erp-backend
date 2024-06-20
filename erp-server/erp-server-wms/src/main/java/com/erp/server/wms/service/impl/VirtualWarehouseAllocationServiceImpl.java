@@ -31,6 +31,7 @@ import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
+import com.erp.model.wms.enums.VwAllocationDirectionEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.*;
@@ -566,7 +567,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
         //获取调转方向：调拨方向-1
         if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(virtualWarehouseAllocationEntity.getType())) {
-            virtualWarehouseAllocationEntity.setDirection(-1);
+            virtualWarehouseAllocationEntity.setDirection(VwAllocationDirectionEnum.REVERSE.getCode());
         }
         checkInfoAndQty(virtualWarehouseAllocationEntity, detailList);
     }
