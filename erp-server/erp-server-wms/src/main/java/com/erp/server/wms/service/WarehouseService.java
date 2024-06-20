@@ -285,9 +285,5 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> dto);
 
-    /**
-     * 仓库列表(所有供应商仓库)
-     */
-    List<WarehouseDTO.ListDTO> listSupplierWarehouse();
 
 }

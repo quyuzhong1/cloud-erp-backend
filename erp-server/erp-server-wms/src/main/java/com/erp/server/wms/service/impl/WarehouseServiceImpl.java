@@ -40,8 +40,8 @@ import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WarehouseManageTypeEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
-import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -366,18 +366,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return new PagingVO<>(pagResult);
     }
 
-    @Override
-    public List<WarehouseDTO.ListDTO> listSupplierWarehouse() {
-        DictBasicEntity basic = dictBasicService.getOne(Wrappers.<DictBasicEntity>lambdaQuery().eq(DictBasicEntity::getValue, WmsConstant.SUPPLIER));
-        List<WarehouseEntity> list = list(Wrappers.<WarehouseEntity>lambdaQuery().eq(WarehouseEntity::getTypeId, basic.getId())
-                .orderByAsc(WarehouseEntity::getDisabled));
-        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-        // 查询仓库关联服务商
-        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
-        // 填充信息
-        this.fillListData(resultList, warehouseBindMap);
-        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
-    }
 
     /**
      * @description: 分页下拉处理
@@ -1105,7 +1093,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
-
+        DictBasicEntity basic = dictBasicService.getOne(Wrappers.<DictBasicEntity>lambdaQuery().eq(DictBasicEntity::getValue, WmsConstant.SUPPLIER));
         // 填充信息
         this.fillListData(resultList, warehouseBindMap);
 
@@ -1113,6 +1101,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 .filter(e -> StringUtils.isBlank(dto.getDictPlatform()) ||
                         (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
                 )
+                .filter(e -> Boolean.TRUE.equals(dto.getIsSupplier()) && e.getTypeId().equals(basic.getId()))
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
                 .collect(Collectors.toList());
     }
