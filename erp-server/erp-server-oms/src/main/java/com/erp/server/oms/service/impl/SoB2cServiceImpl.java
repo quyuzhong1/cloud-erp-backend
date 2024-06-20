@@ -6457,7 +6457,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .gt(SoB2cEntity::getCreateTime, startTime)
                 .lt(SoB2cEntity::getCreateTime, endTime)
                 .eq(SoB2cEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
-                .eq(SoB2cEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED)
+                .eq(SoB2cEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
                 .list();
         return entityList;
     }
