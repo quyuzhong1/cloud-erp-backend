@@ -1,5 +1,4 @@
 package com.erp.server.wms.mapper;
-
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
@@ -46,5 +45,13 @@ public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehou
      * @author will
      * @date 2024/6/13 12:27
      */
-    VirtualWarehouseChannelEntity getByPlatform(@Param("platformDTO") VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
+    VirtualWarehouseChannelEntity getByPlatform(@Param("platformDTO")VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
+    /**
+     * 根据平台参数查询
+     * @author will
+     * @date 2024/6/13 12:27
+     * @param listPlatformDTO
+     * @return List<VirtualWarehouseChannelEntity>
+     */
+    List<VirtualWarehouseChannelEntity> listVirtualWarehouseByPlatform(@Param("listPlatformDTO")VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO);
 }

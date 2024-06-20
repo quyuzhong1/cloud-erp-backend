@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -159,4 +160,27 @@ public class VirtualWarehouseRelationDTO implements Serializable {
         private Boolean canCheck = true;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ListPlatformDTO {
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+
+        /**
+         * 关联id（如店铺id）,无关联id时传空字符
+         */
+        private List<String> relationIdList;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+    }
 }

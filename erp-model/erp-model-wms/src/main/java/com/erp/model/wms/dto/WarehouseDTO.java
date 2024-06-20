@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -280,26 +279,34 @@ public class WarehouseDTO implements Serializable {
     public static class ListInventoryQtyParamDTO {
 
         /**
-         * sku
+         * 明细信息
          */
-        @NotEmpty(message = "SKU不能为空")
-        private List<String> skuIdList;
-
-        /**
-         * 平台
-         */
-        private String dictPlatform;
-
-        /**
-         * 关联id
-         */
-        private String relationId;
+        @NotEmpty(message = "明细信息不能为空")
+        private List<ListInventoryDetailParamDTO> detailList;
 
         /**
          * 关键词
          */
         private String searchKeyword;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryDetailParamDTO {
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 关联id
+         */
+        private String relationId;
     }
 
 

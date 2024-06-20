@@ -12,6 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
@@ -191,11 +192,38 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         if (ObjectUtil.isEmpty(channelEntity)) {
             return Collections.EMPTY_LIST;
         }
-        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(),channelEntity.getVirtualWarehouseId());
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(),Arrays.asList(channelEntity.getVirtualWarehouseId()));
         if (ObjectUtil.isEmpty(warehouseEntityList)) {
             return Collections.EMPTY_LIST;
         }
         return warehouseEntityList;
+    }
+
+    @Override
+    public List<VirtualWarehouseRelationDTO.ListPlatformDTO> listVirtualWarehouseByPlatform(VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO) {
+        List<VirtualWarehouseChannelEntity> channelEntityList = baseMapper.listVirtualWarehouseByPlatform(listPlatformDTO);
+        if (CollectionUtils.isEmpty(channelEntityList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> virtualWarehouseIdList = channelEntityList.stream().map(VirtualWarehouseChannelEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(listPlatformDTO.getWarehouseIdList(),virtualWarehouseIdList);
+        if (ObjectUtil.isEmpty(warehouseEntityList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<VirtualWarehouseRelationDTO.ListPlatformDTO> resultList =new ArrayList<>();
+        for (VirtualWarehouseRelationEntity entity : warehouseEntityList) {
+            VirtualWarehouseRelationDTO.ListPlatformDTO platformDTO = new VirtualWarehouseRelationDTO.ListPlatformDTO();
+            platformDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
+            platformDTO.setWarehouseId(entity.getWarehouseId());
+            String dictPlatform = channelEntityList.stream().filter(obj -> StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
+                    .map(VirtualWarehouseChannelEntity::getDictPlatform).findFirst().orElse("");
+            platformDTO.setDictPlatform(dictPlatform);
+            List<String> relationIdList = channelEntityList.stream().filter(obj -> StrUtil.isNotBlank(obj.getRelationId()) && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
+                    .map(VirtualWarehouseChannelEntity::getRelationId).collect(Collectors.toList());
+            platformDTO.setRelationIdList(relationIdList);
+            resultList.add(platformDTO);
+        }
+        return resultList;
     }
 
     /**

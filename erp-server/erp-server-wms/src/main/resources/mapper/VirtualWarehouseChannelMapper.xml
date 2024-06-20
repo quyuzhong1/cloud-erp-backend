@@ -79,4 +79,18 @@
     </select>
 
 
+    <!-- 根据平台参数查询 -->
+    <select id="listVirtualWarehouseByPlatform" resultType="com.erp.model.wms.entity.VirtualWarehouseChannelEntity">
+        select
+        <include refid="Base_Column_List" />
+        from  virtual_warehouse_channel vwc
+        inner join  virtual_warehouse vw on vwc.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+            vwc.is_deleted = false and vw.disabled = false
+            and vwc.dict_platform in
+            <foreach collection="listPlatformDTO.dictPlatformList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
 </mapper>

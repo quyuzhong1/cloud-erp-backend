@@ -1079,6 +1079,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             SoB2cDTO.ViewSoB2cDistributionDTO viewDTO = new SoB2cDTO.ViewSoB2cDistributionDTO();
             viewDTO.setId(soB2cEntity.getId());
+            viewDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+            viewDTO.setShopId(soB2cEntity.getShopId());
+            viewDTO.setShopName(soB2cEntity.getShopName());
             viewDTO.setDetailId(soB2cDetailEntity.getId());
             viewDTO.setCode(soB2cEntity.getCode());
             viewDTO.setSourceAmount(soB2cEntity.getAmount());
@@ -3295,17 +3298,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))) {
                         Boolean isOutStock = isOutStock(bomChildrenList, inventoryList, detailDTO,ignoreInventorySkuIds);
                         detailLabelDTO.setIsOutStock(isOutStock);
+
+                        //虚拟仓是否缺货
+                        Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailDTO.getSkuId())
+                                        && StrUtil.equals(obj.getVirtualWarehouseId(), detailDTO.getVirtualWarehouseId())
+                                        && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId()))
+                                .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
+                                .findFirst().orElse(MathUtil.ZERO);
+                        Boolean isVirtualOutStock = MathUtil.compareTo(virtualUsableQty, detailDTO.getQty()) >= MathUtil.ZERO ? Boolean.FALSE : Boolean.TRUE;
+                        detailLabelDTO.setIsVirtualOutStock(isVirtualOutStock);
                     }
                 }
-
-                //虚拟仓是否缺货
-                Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailDTO.getSkuId())
-                        && StrUtil.equals(obj.getVirtualWarehouseId(), detailDTO.getVirtualWarehouseId())
-                        && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId()))
-                        .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
-                        .findFirst().orElse(MathUtil.ZERO);
-                Boolean isVirtualOutStock = MathUtil.compareTo(virtualUsableQty, detailDTO.getQty()) >= MathUtil.ZERO ? Boolean.FALSE : Boolean.TRUE;
-                detailLabelDTO.setIsVirtualOutStock(isVirtualOutStock);
 
                 detailDTO.setDetailLabelDTO(detailLabelDTO);
                 //申报信息
