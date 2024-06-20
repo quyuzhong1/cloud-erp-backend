@@ -356,7 +356,7 @@
 
     <select id="pagingSelect" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
         select id,createUserName,createTime,name,typeId,chargeId,contacts,contactTelNumber,disabled,address,
-            warehouseManageType,geographyLocation,orgId,kingdeeWarehouseCode,isVirtual,approveStatus,isEnableLocation
+        warehouseManageType,geographyLocation,orgId,kingdeeWarehouseCode,isVirtual,approveStatus,isEnableLocation
         from
         (
             select

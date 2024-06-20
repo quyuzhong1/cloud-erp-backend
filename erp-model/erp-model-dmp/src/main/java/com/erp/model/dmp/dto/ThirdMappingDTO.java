@@ -111,6 +111,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 第三方id
          */
+        @NotBlank(message = "第三方id不能为空")
         private String thirdId;
 
         /**
@@ -307,5 +308,14 @@ public class ThirdMappingDTO implements Serializable {
 
 
         private List<ThirdMappingDTO.ThirdAddDTO> addDTOList;
+    }
+    @Data
+    public static class WarehouseListDto
+    {
+
+        private String virtual_warehouse_id;
+        private String warehouse_no;
+        private String sys_warehouse_id;
+        private Integer is_start_up;
     }
 }

@@ -192,4 +192,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     Boolean generateDeliverSave(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
 
     Boolean generateDeliverSaveAndSubmit(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
+
+    PagingVO<RequisitionApplicationDTO.WarehouseListDTO> pagingSelect(PagingDTO<RequisitionApplicationDTO.WarehouseSelectDTO> dto);
 }

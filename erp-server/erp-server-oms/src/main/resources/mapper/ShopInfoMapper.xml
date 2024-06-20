@@ -137,6 +137,12 @@
         <if test="params.dictPlatform != null and params.dictPlatform != ''">
             and si.dict_platform = #{params.dictPlatform}
         </if>
+        <if test="params.shopIdList != null and params.shopIdList.size > 0">
+            and si.id in
+            <foreach collection="params.shopIdList" item="item" open="(" close=")" separator=",">
+                (#{item})
+            </foreach>
+        </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             case when si.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1

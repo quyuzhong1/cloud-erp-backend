@@ -25,6 +25,12 @@ public interface DmpThirdMappingFeign {
     @GetMapping("/getBySysId")
     ThirdWarehouseEntity getBySysId(@RequestParam String sysId);
 
+    @GetMapping("/getListBySysIds")
+    List<ThirdMappingEntity> getListBySysIds(@RequestParam List<String> sysIds);
+
+    @GetMapping("/getVwListBySysIds")
+    List<ThirdMappingEntity> getVwListBySysIds(@RequestParam List<String> sysIds);
+
     /**
      * 查询绑定关系
      */
@@ -43,4 +49,12 @@ public interface DmpThirdMappingFeign {
     @PostMapping("/batchAdd")
     BaseResultDTO.AddDTO batchAdd(@RequestBody @Validated ThirdMappingDTO.FeignMappingDTO feignMappingDTO);
 
+    /**
+     * 新增、编辑
+     */
+    @PostMapping("/add")
+    BaseResultDTO.AddDTO add(@RequestBody @Validated ThirdMappingDTO.AddDTO dto);
+
+    @PostMapping("/view")
+    ThirdMappingDTO.MappingViewDTO view(@RequestBody @Validated ThirdMappingDTO.ViewParamDTO viewParamDTO);
 }
