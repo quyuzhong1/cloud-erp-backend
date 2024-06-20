@@ -34,6 +34,11 @@ public class PlatformDeliveryDetailDTO {
     private String platformSkuNo;
 
     /**
+     * 货品id
+     */
+    private String scItemId;
+
+    /**
      * 平台skuId
      */
     private String platformSkuId;

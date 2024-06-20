@@ -27,6 +27,7 @@ import com.erp.rpc.wms.feign.AliexpressDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WarehouseMappingFeign;
 import com.erp.server.oms.service.*;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -187,6 +188,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                     deliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
                     deliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
                 }
+                val = this.handleData(val);
                 List<String> skuIdList = val.stream().map(PlatformDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
                 PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
                         .platformDeliveryDetailDTOList(val)
@@ -273,5 +275,19 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
             }
         }
         return map;
+    }
+
+    public List<PlatformDeliveryDetailDTO> handleData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList) {
+        List<PlatformDeliveryDetailDTO> resultList = new ArrayList<>();
+        //相同平台skuId汇总后将数量除以scItemId 的种类数
+        Map<String,List<PlatformDeliveryDetailDTO>> groupMap = platformDeliveryDetailDTOList.stream().collect(Collectors.groupingBy(PlatformDeliveryDetailDTO::getPlatformSkuId));
+        groupMap.forEach((key,val)->{
+            PlatformDeliveryDetailDTO platformDeliveryDetailDTO = val.get(0);
+            Integer allQty = val.stream().mapToInt(PlatformDeliveryDetailDTO::getQty).sum();
+            Integer scItemIdCount = Math.toIntExact(val.stream().map(PlatformDeliveryDetailDTO::getScItemId).distinct().count());
+            platformDeliveryDetailDTO.setQty(allQty/scItemIdCount);
+            resultList.add(platformDeliveryDetailDTO);
+        });
+        return resultList;
     }
 }
