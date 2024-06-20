@@ -2841,8 +2841,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> customerIds = soInfoEntityList.stream().map(SoInfoEntity::getCustomerId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.listByIds(customerIds);
         List<SoInfoDTO.GenerateSoOutView> viewList = new ArrayList<>();
+        //根据ids查询sku信息
+        List<String> skuIdList = soDetailEntityList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
         for (SoDetailEntity soDetailEntity : soDetailEntityList) {
             SoInfoEntity soInfoEntity = soInfoEntityList.stream().filter(v->v.getId().equals(soDetailEntity.getMainId())).findFirst().orElse(null);
+            ProductDetailEntity productDetailEntity  = productDetailEntityList.stream().filter(v->v.getId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             if(Objects.isNull(soInfoEntity)){
                 throw new ServiceException("销售订单为空"+soDetailEntity.getId());
             }
@@ -2854,6 +2858,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             SoInfoDTO.GenerateSoOutView soOutView = SoInfoConverter.INSTANCE.soDetailToGenerateSoOutView(soDetailEntity,soInfoEntity,customerInfo);
             Integer actualDeliveryQty = deliveryQtyDTOList.stream().mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
             soOutView.setWaitDeliveryQty(soDetailEntity.getQty() - actualDeliveryQty);
+            soOutView.setProductName(productDetailEntity.getName());
             viewList.add(soOutView);
         }
         return viewList;
