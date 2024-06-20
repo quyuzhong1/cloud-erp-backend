@@ -1320,6 +1320,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public Integer getQtyByLocation(String warehouseId, String warehouseLocation) {
-        return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation);
+        return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation == null ? "" : warehouseLocation);
     }
 }
