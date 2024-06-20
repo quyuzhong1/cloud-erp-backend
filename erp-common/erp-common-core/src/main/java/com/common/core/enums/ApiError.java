@@ -842,6 +842,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99101(99101,"{}未生成拣货单，不允许下推销售出库单"),
     ERROR_99102(99102,"存在拣货单，不允许作废、删除和撤销"),
+    ERROR_99103(99103,"sku【{}】的出库数量不能大于销售订单的销售数量"),
 
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
