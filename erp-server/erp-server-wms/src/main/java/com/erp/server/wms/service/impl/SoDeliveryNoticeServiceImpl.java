@@ -563,11 +563,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //回滚虚拟库存
         virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
-        //回滚实体库存
-        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-        //删除拣货详情
-        pickingDetailService.deleteBySourceId(Arrays.asList(id));
-
         //操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "反审核操作");
