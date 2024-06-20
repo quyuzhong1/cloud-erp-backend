@@ -60,7 +60,6 @@ public class KingdeeSoReturnConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID," +
                 "FBillTypeID," +
-                "FEntity_FEntryId," +
                 "FBillTypeID.FName," +
                 "FBillTypeID.FNumber," +
                 "FBillNo," +
@@ -91,6 +90,7 @@ public class KingdeeSoReturnConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
                 "FAmount," +
                 "FMustqty," +
                 "FUnitID.FName," +
+                "FEntity_FEntryId," +
                 "FMaterialId," +
                 "FMaterialId.FNumber," +
                 "FMaterialName," +
@@ -115,7 +115,8 @@ public class KingdeeSoReturnConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
                 "FAllAmount," +
                 "FReturnType," +
                 "FSOEntryId," +
-                "F_ULZ_data_sources,FISGENFORIOS";
+                "F_ULZ_data_sources,FISGENFORIOS," +
+                "FETHIRDBILLNO";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 2);
         System.out.println(queryList);
     }

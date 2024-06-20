@@ -20,6 +20,7 @@ import ${package.Entity}.${entity};
 import ${package.Mapper}.${table.mapperName};
 import ${package.Service}.${table.serviceName};
 import ${superServiceImplClassPackage};
+import com.common.business.threadlocal.UserContext;
 import ${package.Service}.OperateLogService;
 import ${package.Service}.CommonService;
 import com.common.core.exception.ServiceException;

@@ -14,6 +14,10 @@ import java.util.List;
 @ToString
 public class ReturnOrderItemEntity {
     /**
+     * 详情id
+     */
+    private String detailId;
+    /**
      * 商品图片地址
      */
     private String pictureUrl;
