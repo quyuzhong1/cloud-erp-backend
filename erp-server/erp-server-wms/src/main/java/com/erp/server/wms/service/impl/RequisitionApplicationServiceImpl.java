@@ -765,7 +765,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         allocationHandleEntity.setAllocationCode(entity.getCode());
         allocationHandleEntity.setType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
         allocationHandleEntity.setStatus(entity.getStatus());
-        allocationHandleEntity.setDirection(-1);
+        allocationHandleEntity.setDirection(1);
         virtualWarehouseAllocationHandleService.save(allocationHandleEntity);
         List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
         haveFromVwMap.forEach((fromVmId, fromHandleList) -> {
