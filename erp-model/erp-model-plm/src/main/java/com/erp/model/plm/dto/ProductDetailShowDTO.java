@@ -331,4 +331,40 @@ public class ProductDetailShowDTO implements Serializable {
      * 迭代产品关联skuNo
      */
     private String iterateRefSkuNo;
+
+    /**
+     * 毛重
+     */
+    private BigDecimal grossWeight;
+    /**
+     * 净重
+     */
+    private BigDecimal netWeight;
+
+    /**
+     * 产品尺寸（长）
+     */
+    private BigDecimal productLength;
+
+    /**
+     * 产品尺寸（宽）
+     */
+    private BigDecimal productWidth;
+
+    /**
+     * 产品尺寸（高）
+     */
+    private BigDecimal productHeight;
+    /**
+     * 箱规长
+     */
+    private BigDecimal boxLength;
+    /**
+     * 箱规宽
+     */
+    private BigDecimal boxWidth;
+    /**
+     * 箱规高
+     */
+    private BigDecimal boxHeight;
 }

@@ -942,11 +942,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public void checkHistory(String id, String listingId, String shopId, String productSkuId) {
-        SkuMappingEntity oldEntity = this.baseMapper.findHistory(id, listingId, shopId, productSkuId);
-        if(null == oldEntity){
+        List<SkuMappingEntity> oldEntities = this.baseMapper.findHistory(id, listingId, shopId, productSkuId);
+        if(CollectionUtils.isEmpty(oldEntities)){
             return;
         }
-        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntity.getExpireTime().toString());
+        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntities.get(0).getExpireTime().toString());
     }
 
     /**

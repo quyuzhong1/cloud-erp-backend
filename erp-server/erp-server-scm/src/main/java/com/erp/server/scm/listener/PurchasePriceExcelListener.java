@@ -64,7 +64,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
     private static final String DEFAULT_PURCHASE_ORG_NAME = "东莞市简拍智造科技有限公司";
 
-    private static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy/M/d");
+    private static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+    private static DateTimeFormatter TIME_FORMAT2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private static final String DEFAULT_CURRENCY = "CNY";
 
@@ -119,7 +120,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             if(!isDate(quotedDateStr)) {
                 errorMsgList.add("报价日期格式错误");
             } else {
-                LocalDate quotedDate = LocalDate.parse(quotedDateStr, TIME_FORMAT);
+                LocalDate quotedDate = getDate(quotedDateStr);
                 addDTO.setQuotedDate(quotedDate);
             }
         } else {
@@ -261,7 +262,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             if(!isDate(effectiveDateStr)) {
                 errorMsgList.add("生效日期格式错误");
             } else {
-                LocalDate effectiveDate = LocalDate.parse(effectiveDateStr, TIME_FORMAT);
+                LocalDate effectiveDate = getDate(effectiveDateStr);
                 detailDTO.setEffectiveDate(effectiveDate);
             }
         } else {
@@ -383,10 +384,34 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
                 LocalDate.parse(dateStr, TIME_FORMAT);
                 return true;
             } catch (Exception e) {
-                return false;
+                try {
+                    LocalDate.parse(dateStr, TIME_FORMAT2);
+                    return true;
+                }catch (Exception e2){
+                    return false;
+                }
             }
         }
         return true;
+    }
+    /**
+     * 判断是否日期格式
+     * @param dateStr
+     * @return
+     */
+    private static LocalDate getDate(String dateStr) {
+        if(StrUtils.isNotEmpty(dateStr)) {
+            try {
+                return LocalDate.parse(dateStr, TIME_FORMAT);
+            } catch (Exception e) {
+                try {
+                    return LocalDate.parse(dateStr, TIME_FORMAT2);
+                }catch (Exception e2){
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 
     private static boolean checkCross(int[] range0, int[] range1) {
