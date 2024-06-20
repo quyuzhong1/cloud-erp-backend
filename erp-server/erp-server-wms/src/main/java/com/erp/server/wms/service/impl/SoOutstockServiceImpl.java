@@ -748,7 +748,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SoOutstockDetailEntity outstockDetail = soOutstockDetails.stream().filter(v -> v.getSourceDetailId().equals(detail.getSourceDetailId()))
                         .findFirst()
                         .orElse(new SoOutstockDetailEntity());
-                InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, outstockDetail.getId(), detail.getSkuId(),detail.getSkuNo(),detail.getWarehouseLocation(),detail.getQty());
+                InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, outstockDetail, detail.getSkuId(),detail.getSkuNo(),detail.getWarehouseLocation(),detail.getQty());
                 members.add(stockDTO);
             }
         }else {
@@ -859,7 +859,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoOutstockDetailEntity outstockDetail = soOutstockDetails.stream().filter(v -> v.getSourceDetailId().equals(detail.getSourceDetailId()))
                     .findFirst()
                     .orElse(new SoOutstockDetailEntity());
-            InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, outstockDetail.getId(),detail.getSkuId(), detail.getSkuNo(),detail.getStagingLocation(),detail.getQty());
+            InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, outstockDetail,detail.getSkuId(), detail.getSkuNo(),detail.getStagingLocation(),detail.getQty());
             members.add(stockDTO);
         }
         for (InOutStockDTO member : members) {
