@@ -179,7 +179,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     private List<WarehouseDTO.ListInventoryQtyDTO> fillListInventoryQty (WarehouseDTO.ListInventoryQtyParamDTO dto, List<WarehouseDTO.ListDTO> list) {
         //sku去重
-       List<String> skuIdList =  dto.getSkuIdList().stream().distinct().collect(Collectors.toList());
+       List<String> skuIdList =  dto.getDetailList().stream().map(WarehouseDTO.ListInventoryDetailParamDTO::getSkuId).distinct().collect(Collectors.toList());
 
         //仓库id集合
         List<String> warehouseIdList = list.stream().map(WarehouseDTO.ListDTO::getId).distinct().collect(Collectors.toList());
@@ -191,16 +191,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
 
         //查询虚拟仓库信息
-        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
-        platformDTO.setWarehouseIdList(warehouseIdList);
-        platformDTO.setRelationId(dto.getRelationId());
-        platformDTO.setDictPlatform(dto.getDictPlatform());
-        List<VirtualWarehouseRelationEntity> virtualWarehouseList = virtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
+        VirtualWarehouseChannelDTO.ListPlatformDTO ListPlatformDTO = new VirtualWarehouseChannelDTO.ListPlatformDTO();
+        ListPlatformDTO.setWarehouseIdList(warehouseIdList);
+        List<String> dictPlatformList = dto.getDetailList().stream().map(WarehouseDTO.ListInventoryDetailParamDTO::getDictPlatform).distinct().collect(Collectors.toList());
+        ListPlatformDTO.setDictPlatformList(dictPlatformList);
+        List<VirtualWarehouseRelationDTO.ListPlatformDTO> virtualWarehouseList = virtualWarehouseChannelService.listVirtualWarehouseByPlatform(ListPlatformDTO);
 
         //查询虚拟仓可用库存
         List<VirtualInventoryDTO.ViewQtyDTO> virtualUsableQtyList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(virtualWarehouseList)) {
-            List<String> virtualWarehouseIdList = virtualWarehouseList.stream().map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+            List<String> virtualWarehouseIdList = virtualWarehouseList.stream().map(VirtualWarehouseRelationDTO.ListPlatformDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
             VirtualInventoryDTO.ParamDTO vmParamDto = new VirtualInventoryDTO.ParamDTO();
             vmParamDto.setSkuIdList(skuIdList);
             vmParamDto.setWarehouseIdList(warehouseIdList);
@@ -209,14 +209,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
 
         List<WarehouseDTO.ListInventoryQtyDTO> resultList = new ArrayList<>();
-        for (String skuId : skuIdList) {
+        for (WarehouseDTO.ListInventoryDetailParamDTO paramDTO : dto.getDetailList()) {
             WarehouseDTO.ListInventoryQtyDTO inventoryQtyDTO = new WarehouseDTO.ListInventoryQtyDTO();
-            inventoryQtyDTO.setSkuId(skuId);
+            inventoryQtyDTO.setSkuId(paramDTO.getSkuId());
             List<WarehouseDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList = new ArrayList<>();
             for (WarehouseDTO.ListDTO listDTO : list) {
                 WarehouseDTO.WarehouseInventoryQtyDTO warehouseInventoryQtyDTO = BeanMapperUtils.map(WarehouseDTO.WarehouseInventoryQtyDTO.class, listDTO);
                 //即时库存
-                Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), skuId)
+                Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), paramDTO.getSkuId())
                                 && Objects.equals(r.getWarehouseId(), listDTO.getId()))
                         .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal)
                         .reduce(MathUtil.ZERO,Integer::sum);
@@ -224,14 +224,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
 
                 //实体仓库下的虚拟仓
-                List<String> virtualWarehouseIdList = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), listDTO.getId())).map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).collect(Collectors.toList());
+                List<String> virtualWarehouseIdList = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), listDTO.getId())
+                        && StrUtil.equals(obj.getDictPlatform(),paramDTO.getDictPlatform()))
+                        .map(VirtualWarehouseRelationDTO.ListPlatformDTO::getVirtualWarehouseId).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(virtualUsableQtyList)) {
                     warehouseInventoryQtyList.add(warehouseInventoryQtyDTO);
                     continue;
                 }
                 //实体仓下可用虚拟库存
                 Integer virtualInventoryQty = virtualUsableQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), listDTO.getId())
-                                && StrUtil.equals(obj.getSkuId(),skuId)
+                                && StrUtil.equals(obj.getSkuId(),paramDTO.getSkuId())
                                 && virtualWarehouseIdList.contains(obj.getToVirtualWarehouseId()))
                         .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseUsableQty).reduce(MathUtil.ZERO, Integer::sum);
                 warehouseInventoryQtyDTO.setVirtualInventoryQty(virtualInventoryQty);
