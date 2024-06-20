@@ -1,9 +1,9 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -21,7 +21,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -530,4 +533,31 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto);
 
+
+    /**
+     * 新增平台仓B2C销售出库单
+     */
+    void generatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> generateSourceDetailList);
+
+    /**
+     * 更新平台仓B2C销售出库单
+     */
+
+    void updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO,
+                                   PlatformSoOutStockDTO dto,
+                                   SoB2cEntity soB2cEntity,
+                                   Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList,
+                                   Map<String, SoOutstockEntity> mainEntityMap,
+                                   Map<String, SoOutstockDetailEntity> detailEntityListMap
+    );
+
+    /**
+     * 检查清理历史销售出库单异常信息
+     */
+    void checkAndDeletePlatformB2cOutStock(List<PlatformSoOutStockDetailDTO> existSourceDetailList, SoB2cEntity soB2cEntity, Collection<SoOutstockDetailEntity> detailEntityList);
+
+    /**
+     * 停止更新销售出库单数据的日期
+     */
+    LocalDate getStopSoOutStockDate();
 }
