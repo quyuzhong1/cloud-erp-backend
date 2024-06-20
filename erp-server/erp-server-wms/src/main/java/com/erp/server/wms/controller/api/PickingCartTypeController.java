@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 拣货车类型
@@ -34,15 +35,26 @@ public class PickingCartTypeController extends BaseController {
     * 编辑
     * @author will
     * @date:  2024-06-20
-    * @param dto
+    * @param list
     * @return ApiResult
     */
     @PostMapping("/batchUpdate")
-    public ApiResult<?> batchUpdate(@RequestBody @Validated PickingCartTypeDTO.UpdateDTO dto) {
-        pickingCartTypeService.update(dto);
+    public ApiResult<?> batchUpdate(@RequestBody @Validated List<PickingCartTypeDTO.batchUpdateDTO> list) {
+        pickingCartTypeService.batchUpdate(list);
         return success();
     }
 
-
+    /**
+     * 拣货车类型
+     * @author will
+     * @date 2024/6/20 18:22
+     * @param selectDTO
+     * @return ApiResult<ListDTO>
+     */
+    @PostMapping("/select")
+    public ApiResult<List<PickingCartTypeDTO.ListDTO>> select(@RequestBody @Validated PickingCartTypeDTO.SelectDTO selectDTO) {
+        List<PickingCartTypeDTO.ListDTO> list = pickingCartTypeService.select(selectDTO);
+        return success(list);
+    }
 
 }

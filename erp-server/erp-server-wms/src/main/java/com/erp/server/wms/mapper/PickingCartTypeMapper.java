@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.PickingCartTypeDTO;
 import com.erp.model.wms.entity.PickingCartTypeEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +19,12 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface PickingCartTypeMapper extends BaseMapper<PickingCartTypeEntity> {
-
+    /**
+     * 拣货车类型查询
+     * @author will
+     * @date 2024/6/20 18:24
+     * @param selectDTO
+     * @return List<ListDTO>
+     */
+    List<PickingCartTypeDTO.ListDTO> select(@Param("selectDTO") PickingCartTypeDTO.SelectDTO selectDTO);
 }

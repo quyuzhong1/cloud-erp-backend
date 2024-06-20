@@ -29,5 +29,7 @@
         name
     </sql>
 
-
+    <!-- 拣货车类型查询 -->
+    <select id="select" resultType="com.erp.model.wms.dto.PickingCartTypeDTO$ListDTO">
+    </select>
 </mapper>

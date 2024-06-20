@@ -1,8 +1,9 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.PickingCartTypeEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PickingCartTypeDTO;
+import com.erp.model.wms.entity.PickingCartTypeEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,23 +15,21 @@ import com.erp.model.wms.dto.PickingCartTypeDTO;
  */
 public interface PickingCartTypeService extends SuperService<PickingCartTypeEntity> {
 
-    /**
-    * 新增
-    * @author will
-    * @date: 2024-06-20
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(PickingCartTypeDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-06-20
-    * @param dto
-    * @return
-    */
-    Boolean update(PickingCartTypeDTO.UpdateDTO dto);
-
-
+     * 批量更新
+     * @author will
+     * @date 2024/6/20 17:11
+     * @param list
+     * @return Boolean
+     */
+    Boolean batchUpdate(List<PickingCartTypeDTO.batchUpdateDTO> list);
+    /**
+     * 拣货车类型查询
+     * @author will
+     * @date 2024/6/20 18:22
+     * @param selectDTO
+     * @return List<ListDTO>
+     */
+    List<PickingCartTypeDTO.ListDTO> select(PickingCartTypeDTO.SelectDTO selectDTO);
 }

@@ -63,5 +63,33 @@ public class PickingCartTypeDTO implements Serializable {
         private String name;
     }
 
+    /**
+     * 下拉
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
 
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
+
+    /**
+     * 下拉
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 主键id
+         */
+       private String id;
+        /**
+         * 类型名称
+         */
+       private String name;
+    }
 }
