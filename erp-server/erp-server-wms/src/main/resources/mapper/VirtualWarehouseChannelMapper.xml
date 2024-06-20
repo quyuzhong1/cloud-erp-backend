@@ -37,7 +37,7 @@
         vwc.virtual_warehouse_id, vwc.virtual_warehouse_code, vwc.virtual_warehouse_name, vwc.dict_platform, vwc.type, vwc.relation_id, vwc.relation_name, vwc.dict_platform_type
     </sql>
     <select id="getBindedDictPlatform" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
-        SELECT vwc.dict_platform, vwc.type,vwc.virtual_warehouse_id,vwc.relation_id
+        SELECT vwc.dict_platform, vwc.type
         FROM "virtual_warehouse_channel" vwc
                  inner join virtual_warehouse vw
                             on vw.id = vwc.virtual_warehouse_id and vw.is_deleted = false and vw.disabled = false
@@ -45,7 +45,7 @@
         group by vwc.dict_platform, vwc.type
     </select>
     <select id="getBindedDictPlatformNoGroup" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
-        SELECT vwc.dict_platform, vwc.type
+        SELECT vwc.dict_platform, vwc.type,vwc.virtual_warehouse_id,vwc.relation_id
              ,vwc.virtual_warehouse_id
         FROM "virtual_warehouse_channel" vwc
                  inner join virtual_warehouse vw
