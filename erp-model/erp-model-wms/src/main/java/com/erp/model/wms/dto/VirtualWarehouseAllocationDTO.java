@@ -368,17 +368,9 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String sysTypeName;
         /**
-         * 同步平台名称
-         */
-        private List<String> sysTypeNameList;
-        /**
          * 同步平台单号（字符串）
          */
         private String thirdCode;
-        /**
-         * 同步平台单号
-         */
-        private List<String> thirdCodeList;
         /**
          * 附件名集合
          */
@@ -541,6 +533,20 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private Integer warehouseUsableQty;
         private Integer toVirtualWarehouseUsableQty;
         private Integer fromVirtualWarehouseUsableQty;
+
+        /**
+         * 同步平台名称（字符串）
+         */
+        private String sysType;
+        /**
+         * 同步平台名称（字符串）
+         */
+        private String sysTypeName;
+        /**
+         * 同步平台单号（字符串）
+         */
+        private String thirdCode;
+
         /**
          * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
          */

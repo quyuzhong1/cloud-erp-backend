@@ -150,7 +150,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
         // 记录主单操作日志
         log.info("编辑 开始记录分货单日志数据，单号：【{}】", virtualWarehouseAllocationEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), "分货单", virtualWarehouseAllocationEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), "编辑操作");
 
         // 新增明细
@@ -551,7 +551,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         allocationEntity.setInvalidDescription(invalidDescription);
         this.updateById(allocationEntity);
         log.info("作废 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
-        String msg = StrUtil.format("用户【{}】作废了【{}】单据【{}】，作废说明（invalidDescription）", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单主单");
+        String msg = StrUtil.format("用户【{}】作废了【{}】单据【{}】，作废说明（{}）", UserContext.getDefaultLoginUser().getUserName(), "分货单", allocationEntity.getCode(), invalidDescription);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "作废操作");
 
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.INVALID);

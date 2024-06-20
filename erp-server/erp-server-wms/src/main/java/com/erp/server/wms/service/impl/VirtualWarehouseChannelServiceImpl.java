@@ -161,13 +161,25 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public List<VirtualWarehouseChannelEntity> getByVirtualWarehouseId(String virtualWarehouseId) {
         return baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>().eq(VirtualWarehouseChannelEntity::getVirtualWarehouseId, virtualWarehouseId));
     }
-
+    /**
+     * 获取所有绑定的平台（聚合）
+     */
     @Override
     public List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatform() {
         return baseMapper.getBindedDictPlatform();
     }
-
-
+    /**
+     * 获取所有绑定的平台（不聚合）
+     */
+    @Override
+    public List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatformNoGroup() {
+        return baseMapper.getBindedDictPlatformNoGroup();
+    }
+    /**
+     * 获取当前渠道绑定的店铺
+     * @param dictPlatform
+     * @return
+     */
     @Override
     public List<String> getBindedShopByDictPlatform(String dictPlatform) {
         return baseMapper.getBindedShopByDictPlatform(dictPlatform);

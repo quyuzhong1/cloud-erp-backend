@@ -22,6 +22,7 @@ import com.sdk.wangdian.sdk.api.virtualWarehouse.VwAllocationHandleDetailAPI;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwAllocationHandelDetailPushDTO;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwAllocationHandelDetailResponse;
 import com.sdk.wangdian.server.WangDianClientService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
  * 分货单处理明细
  */
 @Service
+@Slf4j
 public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAllocationHandleDetailService {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -49,7 +51,7 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
     @Resource
     private RedissonClient redissonClient;
 
-    private static final String LOCK = "wdt:push:virtualWarehouse:sku:";
+    private static final String LOCK = "wdt:push:virtualWarehouseSync:";
 
 
     @Override
@@ -63,10 +65,12 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
             boolean locked = lock.tryLock(10, 30, TimeUnit.SECONDS);
             if (locked) {
                 VwAllocationHandleDetailAPI api = wangDianClientService.get(VwAllocationHandleDetailAPI.class);
-                Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {
-                });
+                log.info("旺店通虚拟仓订单创建：消费者接收数据：{}",pushDTOS);
+                Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {});
                 Map<String, Object> request = commonService.makeApiFieldMap(map, platformEntity.getId(), ApiModuleTypeEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL.getCode());
+                log.info("旺店通虚拟仓订单创建：请求参数：{}",request);
                 VwAllocationHandelDetailResponse pushResult = api.push(request, request.get("detailList"));
+                log.info("旺店通虚拟仓订单创建：响应结果：{}",pushResult);
                 String msg = null;
                 if (pushResult.getStatus() !=0) {
                     msg = pushResult.getMessage();
@@ -74,15 +78,16 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
                 //查询分货单明细
                 if (Objects.equals(map.get("bizType"), "allocation")) {
                     VirtualWarehouseAllocationDTO.SyncUpdateDto dto = new VirtualWarehouseAllocationDTO.SyncUpdateDto();
-                    if (Objects.nonNull(pushResult/*.getData()*/.getMessage())) {
+                    if (Objects.nonNull(pushResult.getMessage())) {
                         dto.setSysType(ThirdSysTypeEnum.WDT.getCode());
                         dto.setSysTypeName(ThirdSysTypeEnum.WDT.getName());
-                        dto.setThirdCode(pushResult/*.getData()*/.getMessage());
+                        dto.setThirdCode(pushResult.getMessage());
                         dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.SUCCESS_SYNC.getCode());
                     } else {
                         dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
                     }
                     dto.setHandelDetailId(map.get("sourceId").toString());
+                    log.info("旺店通虚拟仓订单创建：同步分货单：{}",dto);
                     allocationDetailFeign.updateSyncStatus(dto);
                 }
                 if (StringUtils.isNotBlank(msg)) {

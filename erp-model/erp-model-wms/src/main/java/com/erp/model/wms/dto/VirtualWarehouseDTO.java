@@ -306,5 +306,14 @@ public class VirtualWarehouseDTO implements Serializable {
          * 类型
          */
         private String type;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String relationId;
+
     }
 }

@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
@@ -20,16 +21,30 @@ import java.util.List;
  */
 @Mapper
 public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehouseChannelEntity> {
-
+    /**
+     * 获取所有绑定的平台（聚合）
+     */
     List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatform();
 
+    /**
+     * 获取所有绑定的平台（不聚合）
+     */
+    List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatformNoGroup();
+
+    /**
+     * 获取当前渠道绑定的店铺
+     * @param dictPlatform
+     * @return
+     */
     List<String> getBindedShopByDictPlatform(@Param("dictPlatform") String dictPlatform);
+
     /**
      * 根据平台参数查询
-     * @author will
-     * @date 2024/6/13 12:27
+     *
      * @param platformDTO
      * @return VirtualWarehouseChannelEntity
+     * @author will
+     * @date 2024/6/13 12:27
      */
-    VirtualWarehouseChannelEntity getByPlatform(@Param("platformDTO")VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
+    VirtualWarehouseChannelEntity getByPlatform(@Param("platformDTO") VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
 }
