@@ -66,4 +66,8 @@ public interface WmsConstant {
      * 虚拟仓分货单
      */
     String VIRTUAL_WAREHOUSE_ALLOCATION = "virtualWarehouseAllocation";
+    /**
+     * 供应商仓库类型
+     */
+    String SUPPLIER = "supplier";
 }
