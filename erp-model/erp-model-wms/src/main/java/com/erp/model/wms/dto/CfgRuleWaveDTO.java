@@ -1,0 +1,223 @@
+package com.erp.model.wms.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+/**
+ * <p>
+ * 波次规则请求响应实体
+ * </p>
+ *
+ * @author will
+ * @since 2024-06-20
+*/
+@Data
+@NoArgsConstructor
+public class CfgRuleWaveDTO implements Serializable {
+
+
+
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 名称
+        */
+        private String name;
+
+        /**
+        * 波次类型((waveType类型)
+        */
+        private String waveType;
+
+        /**
+        * 优先级
+        */
+        private Integer priority;
+
+        /**
+        * 拣货车类型id
+        */
+        private String pickingCartTypeId;
+
+        /**
+        * 最小单数
+        */
+        private Integer minOrderQty;
+
+        /**
+        * 最大单数
+        */
+        private Integer maxOrderQty;
+
+        /**
+        * 最少商品数量
+        */
+        private Integer minQty;
+
+        /**
+        * 最多商品数量
+        */
+        private Integer maxQty;
+
+        /**
+        * 状态,true禁用，false启用
+        */
+        private Boolean disabled;
+
+        /**
+        * 执行时间JSON
+        */
+        private String executionTimeJson;
+
+        /**
+        * 执行类型（自动执行，手动执行）
+        */
+        private String executionType;
+
+        /**
+        * 分拣方式（边拣边分，先拣后分）
+        */
+        private String sortingMethod;
+
+        /**
+        * 规则描述
+        */
+        private String remark;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 名称
+        */
+        @NotBlank(message = "名称不能为空")
+        @Size(max = 64,message = "名称最大长度不能超过64位")
+        private String name;
+
+        /**
+        * 波次类型((waveType类型)
+        */
+        @NotBlank(message = "波次类型((waveType类型)不能为空")
+        @Size(max = 32,message = "波次类型((waveType类型)最大长度不能超过32位")
+        private String waveType;
+
+        /**
+        * 优先级
+        */
+        @NotNull(message = "优先级不能为空")
+        private Integer priority;
+
+        /**
+        * 拣货车类型id
+        */
+        @NotBlank(message = "拣货车类型id不能为空")
+        @Size(max = 19,message = "拣货车类型id最大长度不能超过19位")
+        private String pickingCartTypeId;
+
+        /**
+        * 最小单数
+        */
+        @NotNull(message = "最小单数不能为空")
+        private Integer minOrderQty;
+
+        /**
+        * 最大单数
+        */
+        @NotNull(message = "最大单数不能为空")
+        private Integer maxOrderQty;
+
+        /**
+        * 最少商品数量
+        */
+        @NotNull(message = "最少商品数量不能为空")
+        private Integer minQty;
+
+        /**
+        * 最多商品数量
+        */
+        @NotNull(message = "最多商品数量不能为空")
+        private Integer maxQty;
+
+        /**
+        * 状态,true禁用，false启用
+        */
+        @NotNull(message = "状态,true禁用，false启用不能为空")
+        private Boolean disabled;
+
+        /**
+        * 执行时间JSON
+        */
+        @NotBlank(message = "执行时间JSON不能为空")
+        private String executionTimeJson;
+
+        /**
+        * 执行类型（自动执行，手动执行）
+        */
+        @NotBlank(message = "执行类型（自动执行，手动执行）不能为空")
+        @Size(max = 32,message = "执行类型（自动执行，手动执行）最大长度不能超过32位")
+        private String executionType;
+
+        /**
+        * 分拣方式（边拣边分，先拣后分）
+        */
+        @NotBlank(message = "分拣方式（边拣边分，先拣后分）不能为空")
+        @Size(max = 32,message = "分拣方式（边拣边分，先拣后分）最大长度不能超过32位")
+        private String sortingMethod;
+
+        /**
+        * 规则描述
+        */
+        @NotBlank(message = "规则描述不能为空")
+        @Size(max = 32,message = "规则描述最大长度不能超过32位")
+        private String remark;
+
+
+    }
+
+
+}
