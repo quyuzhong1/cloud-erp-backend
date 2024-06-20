@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.DmpPushTaskHistoryService;
 import lombok.With;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,7 @@ public class DmpPushTaskHistoryController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
     public ApiResult<PagingVO<DmpPushTaskDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpPushTaskDTO.ParamDTO> dto) {
         PagingVO<DmpPushTaskDTO.ListDTO> pagingVO = dmpPushTaskHistoryService.paging(dto);
         return success(pagingVO);
@@ -53,7 +54,7 @@ public class DmpPushTaskHistoryController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
     public ApiResult<String> exportExcel(@RequestBody DmpPushTaskDTO.ParamDTO dto, HttpServletResponse response) {
         Boolean flag = dmpPushTaskHistoryService.exportExcel(dto, response);
         return Boolean.TRUE.equals(flag) ? success() : failure();
