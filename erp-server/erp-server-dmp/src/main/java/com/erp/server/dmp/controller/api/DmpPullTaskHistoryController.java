@@ -1,5 +1,6 @@
 package com.erp.server.dmp.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -35,6 +36,7 @@ public class DmpPullTaskHistoryController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<DmpPullTaskDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpPullTaskDTO.ParamDTO> dto) {
         PagingVO<DmpPullTaskDTO.ListDTO> pagingVO = dmpPullTaskHistoryService.paging(dto);
         return success(pagingVO);
@@ -50,6 +52,7 @@ public class DmpPullTaskHistoryController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery
     public ApiResult<String> exportExcel(@RequestBody DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response) {
         Boolean flag = dmpPullTaskHistoryService.exportExcel(dto, response);
         return Boolean.TRUE.equals(flag) ? success() : failure();
