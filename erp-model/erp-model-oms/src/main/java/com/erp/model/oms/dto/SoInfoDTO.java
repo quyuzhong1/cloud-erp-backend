@@ -2055,6 +2055,11 @@ public class SoInfoDTO implements Serializable {
         private String sellerId;
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
          * 销售员名称
          */
         private String sellerName;
