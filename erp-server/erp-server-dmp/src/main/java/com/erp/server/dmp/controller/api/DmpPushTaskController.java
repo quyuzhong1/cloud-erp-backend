@@ -1,6 +1,7 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -11,6 +12,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +61,7 @@ public class DmpPushTaskController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
     public ApiResult<PagingVO<DmpPushTaskDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpPushTaskDTO.ParamDTO> dto) {
         PagingVO<DmpPushTaskDTO.ListDTO> pagingVO = dmpPushTaskService.paging(dto);
         return success(pagingVO);
@@ -74,6 +77,7 @@ public class DmpPushTaskController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
     public ApiResult exportExcel(@RequestBody DmpPushTaskDTO.ParamDTO dto, HttpServletResponse response) {
         Boolean flag = dmpPushTaskService.exportExcel(dto, response);
         return flag == true ? success() : failure();
