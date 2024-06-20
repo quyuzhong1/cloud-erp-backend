@@ -5173,7 +5173,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setPlanDeliveryDate(entity.getCreateTime().toLocalDate());
         String sourceId = "";
 //        String sourceType = SourceTypeEnum.SO_B2C.getCode();
-        String sourceCode = "";
+        String sourceCode = entity.getPlatformCode();
         dto.setSourceId(sourceId);
         dto.setSourceCode(sourceCode);
         String chargeId = shopInfoEntity.getChargeId();
