@@ -279,7 +279,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         //同步中
         DmpPullTaskDTO.TabListDTO syncIng = new DmpPullTaskDTO.TabListDTO();
         syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getCode());
-        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(syncIng.getTabFlag())).findFirst().
+        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(syncIng.getTabFlag()) || a.getTabFlag().equals(SyncStatusEnum.TO_BE_SYNC.getCode())).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
