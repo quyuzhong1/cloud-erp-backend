@@ -233,7 +233,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
             List<InventoryDTO.InventoryViewQtyDTO> inventoryViewQtyDTOS = inventoryUsableQtyList.stream()
-                    .filter(inventoryViewQtyDTO -> Objects.nonNull(inventoryViewQtyDTO.getSkuId()) && Objects.nonNull(inventoryViewQtyDTO.getWarehouseId()))
+                    .filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(),qtySearchDTO.getSkuId())
+                            && Objects.equals(inventoryViewQtyDTO.getWarehouseId(),qtySearchDTO.getWarehouseId()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(inventoryViewQtyDTOS)) {
                 Integer warehouseAllocationQty = inventoryViewQtyDTOS.get(0).getUsableQty();
@@ -289,10 +290,12 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
             List<InventoryDTO.InventoryViewQtyDTO> inventoryViewQtyDTOS = inventoryUsableQtyList.stream()
-                    .filter(inventoryViewQtyDTO -> Objects.nonNull(inventoryViewQtyDTO.getSkuId()) && Objects.nonNull(inventoryViewQtyDTO.getWarehouseId()))
+                    .filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(),qtySearchDTO.getSkuId())
+                            && Objects.equals(inventoryViewQtyDTO.getWarehouseId(),qtySearchDTO.getWarehouseId()))
                     .collect(Collectors.toList());
             List<VirtualInventoryDTO.ViewQtyDTO> vmRealDTOS = vmRealQtyList.stream().filter(inventoryViewQtyDTO ->
-                    Objects.nonNull(inventoryViewQtyDTO.getSkuId()) && Objects.nonNull(inventoryViewQtyDTO.getWarehouseId())).collect(Collectors.toList());
+                    Objects.equals(inventoryViewQtyDTO.getSkuId(),qtySearchDTO.getSkuId()) && Objects.equals(inventoryViewQtyDTO.getWarehouseId(),qtySearchDTO.getWarehouseId()))
+                    .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(inventoryViewQtyDTOS)) {
                 Integer warehouseAllocationQty = inventoryViewQtyDTOS.get(0).getUsableQty();
                 if (CollectionUtils.isNotEmpty(vmRealDTOS)) {
@@ -300,8 +303,9 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 }
                 viewQtyDTO.setWarehouseAllocationQty(warehouseAllocationQty);
             }
-            VirtualInventoryDTO.ViewQtyDTO vmUsableQtyDto = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.nonNull(inventoryViewQtyDTO.getSkuId())
-                    && Objects.nonNull(inventoryViewQtyDTO.getWarehouseId()) && Objects.nonNull(inventoryViewQtyDTO.getToVirtualWarehouseId())).findFirst().orElse(null);
+            VirtualInventoryDTO.ViewQtyDTO vmUsableQtyDto = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(),qtySearchDTO.getSkuId())
+                    && Objects.equals(inventoryViewQtyDTO.getWarehouseId(),qtySearchDTO.getWarehouseId())
+                    && Objects.equals(inventoryViewQtyDTO.getToVirtualWarehouseId(),qtySearchDTO.getToVirtualWarehouseId())).findFirst().orElse(null);
             if (Objects.nonNull(vmUsableQtyDto)) {
                 viewQtyDTO.setToVirtualWarehouseUsableQty(vmUsableQtyDto.getToVirtualWarehouseUsableQty());
             }

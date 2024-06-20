@@ -640,7 +640,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                             msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2], split[3]));
                             break;
                         case CANCEL:
-                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
+                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
                             break;
                         default:
                             throw new ServiceException(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR);
