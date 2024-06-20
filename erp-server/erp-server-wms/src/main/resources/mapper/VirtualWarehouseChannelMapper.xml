@@ -61,7 +61,7 @@
         where vwc.is_deleted = false
           and vwc.type = 'shop'
           and vwc.dict_platform = #{dictPlatform}
-        group by vwc.dict_platform
+        group by vwc.dict_platform,vwc.relation_id
     </select>
 
     <!-- 根据平台参数查询 -->
