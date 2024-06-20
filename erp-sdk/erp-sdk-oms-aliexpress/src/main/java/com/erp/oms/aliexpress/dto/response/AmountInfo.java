@@ -6,7 +6,6 @@ package com.erp.oms.aliexpress.dto.response;/**
  * @Created by yl
  */
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
