@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -66,4 +67,12 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
      * @return List<VirtualWarehouseRelationEntity>
      */
     List<VirtualWarehouseRelationEntity> getVirtualWarehouse(VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
+    /**
+     * 根据关联id、平台、实体仓库id查询
+     * @author will
+     * @date 2024/6/19 19:28
+     * @param listPlatformDTO
+     * @return List<VirtualWarehouseRelationDTO.ListPlatformDTO>
+     */
+    List<VirtualWarehouseRelationDTO.ListPlatformDTO> listVirtualWarehouseByPlatform(VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO);
 }

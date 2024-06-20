@@ -231,4 +231,20 @@ public class VirtualWarehouseChannelDTO implements Serializable {
         private List<String> warehouseIdList;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListPlatformDTO{
+
+        /**
+         * 平台
+         */
+        @NotEmpty(message = "平台不能为空")
+        private List<String> dictPlatformList;
+
+        /**
+         * 实体仓Id集合
+         */
+        @NotEmpty(message = "实体仓不能为空")
+        private List<String> warehouseIdList;
+    }
 }

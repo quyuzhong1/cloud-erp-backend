@@ -189,13 +189,13 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     }
 
     @Override
-    public List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList,String virtualWarehouseId) {
+    public List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList,List<String> virtualWarehouseIdList) {
         if (CollectionUtil.isEmpty(warehouseIdList)) {
             return Collections.EMPTY_LIST;
         }
         List<VirtualWarehouseRelationEntity> list = lambdaQuery()
                 .in(VirtualWarehouseRelationEntity::getWarehouseId, warehouseIdList)
-                .eq(VirtualWarehouseRelationEntity::getVirtualWarehouseId,virtualWarehouseId)
+                .in(VirtualWarehouseRelationEntity::getVirtualWarehouseId,virtualWarehouseIdList)
                 .list();
         return list;
     }
