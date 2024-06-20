@@ -23,7 +23,7 @@ import java.util.List;
 public interface DmpThirdMappingFeign {
 
     @GetMapping("/getBySysId")
-    ThirdWarehouseEntity getBySysId(@RequestParam String sysId);
+    ThirdWarehouseEntity getBySysId(@RequestParam String sysId, @RequestParam String sysType);
 
     /**
      * 查询绑定关系

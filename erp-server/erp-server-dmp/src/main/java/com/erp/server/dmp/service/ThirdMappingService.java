@@ -6,8 +6,6 @@ import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -89,12 +87,13 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
     /**
      * 根据erp内部仓库/店铺的id查询映射关系
      *
-     * @param sysId erp内部仓库/店铺ID
+     * @param sysId   erp内部仓库/店铺ID
+     * @param sysType
      * @return ThirdMappingEntity 三方映射实体
      * @date: 2024-05-27
      * @author: tanmujin
      */
-    ThirdWarehouseEntity getBySysId(String sysId);
+    ThirdWarehouseEntity getBySysId(String sysId, String sysType);
 
     Boolean getWhetherBind(ThirdMappingDTO.ViewParamDTO viewParamDTO);
 
