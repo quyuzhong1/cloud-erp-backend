@@ -352,6 +352,17 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     }
 
     /**
+     * 根据sku和虚拟仓id获取是否存在关联关系
+     * @param skuId
+     * @param virtualWarehouseId
+     * @return
+     */
+    @Override
+    public List<VirtualInventoryDTO.CommonDTO> getBySkuIdAndVwId(String skuId, String virtualWarehouseId) {
+        return baseMapper.getBySkuIdAndVwId(skuId,virtualWarehouseId);
+    }
+
+    /**
      * 虚拟库存分页查询数据处理
      *
      * @param list

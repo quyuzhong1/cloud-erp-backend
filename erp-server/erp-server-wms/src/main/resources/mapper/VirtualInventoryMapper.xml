@@ -305,5 +305,10 @@
         </where>
         group by vi.warehouse_id,vi.sku_id
     </select>
+    <select id="getBySkuIdAndVwId" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$CommonDTO">
+        select <include refid="Base_Column_List"/>
+            from virtual_inventory
+        where sku_id=#{skuId} and virtual_warehouse_id=#{virtualWarehouseId}
+    </select>
 
 </mapper>

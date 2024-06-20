@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.DmpSyncTaskDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -415,8 +414,8 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                 List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                         .in(VirtualWarehouseAllocationDetailEntity::getId, handleRelationEntityList.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList())));
                 thirdCodeDto.setType(vwAllocationEntity.getType());
-                thirdCodeDto.setSysType(detailList.get(0).getSyncType());
-                thirdCodeDto.setSysTypeName(detailList.get(0).getSyncTypeName());
+                thirdCodeDto.setSysType(detailList.get(0).getSysType());
+                thirdCodeDto.setSysTypeName(detailList.get(0).getSysTypeName());
                 thirdCodeDto.setThirdCode(detailList.get(0).getThirdCode());
                 thirdCodeDto.setThirdCode(detailList.get(0).getThirdCode());
                 List<VirtualWarehouseAllocationDTO.DetailDto> detailDtos = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailList);

@@ -7,7 +7,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -109,12 +108,12 @@ public class VirtualWarehouseAllocationDetailEntity extends BaseEntity<VirtualWa
      * 同步平台
      */
     @TableField("sys_type")
-    private String syncType;
+    private String sysType;
     /**
      * 同步平台
      */
     @TableField("sys_type_name")
-    private String syncTypeName;
+    private String sysTypeName;
 
     public static final String DISABLED = "disabled";
 

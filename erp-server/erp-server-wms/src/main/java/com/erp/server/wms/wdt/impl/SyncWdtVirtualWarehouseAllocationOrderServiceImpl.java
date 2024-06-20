@@ -55,6 +55,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                                                 String vwAllocationCode, String operateCode, String sourceType) {
 
         List<DmpPushTaskFeignDTO> dmpPushTaskEntityList = new ArrayList<>();
+        //单据类型:1:锁定分配,2:释放出库,3:虚拟仓间调拨,4:采购入库
         handleDetailList.forEach(handleDetail -> {
             VwAllocationHandelDetailPushDTO request = new VwAllocationHandelDetailPushDTO();
             //获取调出仓 调入仓关联的第三方仓（旺店通）
