@@ -58,6 +58,11 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
         // @Min(value = 1,message = "库存变更数量不能小于1")
         private Integer qty;
 
+        /**
+         * 虚拟仓库Id
+         */
+        private String virtualWarehouseId;
+
 
         public static InOutStockDTO initByReturnOrder(PoReturnEntity entity, PoReturnDetailEntity detail, InventorySourceTypeEnum sourceType, Integer qty, InventoryStatusEnum inventoryStatus) {
                 InOutStockDTO inOutStockDTO = new InOutStockDTO();
