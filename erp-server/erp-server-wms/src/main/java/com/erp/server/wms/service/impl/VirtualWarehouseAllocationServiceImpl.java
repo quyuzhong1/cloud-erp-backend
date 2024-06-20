@@ -150,8 +150,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
         // 记录主单操作日志
         log.info("编辑 开始记录分货单日志数据，单号：【{}】", virtualWarehouseAllocationEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationEntity.getCode(), "分货单");
-        operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), msg);
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), "分货单", virtualWarehouseAllocationEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), "编辑操作");
+
         // 新增明细
         virtualWarehouseAllocationDetailService.batchUpdate(updateDTO, virtualWarehouseAllocationEntity.getId());
         //保存附件
@@ -639,7 +640,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                             msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2], split[3]));
                             break;
                         case CANCEL:
-                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
+                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
                             break;
                         default:
                             throw new ServiceException(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR);

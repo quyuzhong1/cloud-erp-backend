@@ -136,14 +136,14 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         if (!save) {
             throw new ServiceException(ApiError.ERROR_VMALLOCATION_DETAIL_ADD);
         }
-        //添加操作日志
-        List<String> addList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).filter(StringUtils::isBlank).collect(Collectors.toList());
-        //添加操作日志
-        if (CollectionUtils.isNotEmpty(addList)) {
-            List<VirtualWarehouseAllocationDetailEntity> receiveDetailEntityList = this.listByIds(addList);
-            List<Pair<String, String>> addPairList = receiveDetailEntityList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加了一个分货单明细【%s】", ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), addPairList, "新增操作");
-        }
+//        //添加操作日志
+//        List<String> addList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).filter(StringUtils::isBlank).collect(Collectors.toList());
+//        //添加操作日志
+//        if (CollectionUtils.isNotEmpty(addList)) {
+//            List<VirtualWarehouseAllocationDetailEntity> receiveDetailEntityList = this.listByIds(addList);
+//            List<Pair<String, String>> addPairList = receiveDetailEntityList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+//            operateLogService.batchAddModuleOperateLog("添加了一个分货单明细【%s】", ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), addPairList, "新增操作");
+//        }
     }
 
     @Override
@@ -155,10 +155,10 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         List<VirtualWarehouseAllocationDetailEntity> oldList = this.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>().eq(VirtualWarehouseAllocationDetailEntity::getMainId, mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            List<VirtualWarehouseAllocationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
-            //操作日志
-            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个分货单明细【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "编辑操作");
+//            List<VirtualWarehouseAllocationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+//            //操作日志
+//            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+//            operateLogService.batchAddModuleOperateLog("删除了一个分货单明细【%s】", ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
         }
 

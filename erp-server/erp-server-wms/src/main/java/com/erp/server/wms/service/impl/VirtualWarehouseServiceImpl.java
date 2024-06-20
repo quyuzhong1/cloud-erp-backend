@@ -430,10 +430,24 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                 List<VirtualWarehouseDTO.BindChannelDto> bindChannelDtos = allBindedMap.get(childTree.getCode());
                 if (Objects.nonNull(bindChannelDtos)) {
                     if (Objects.nonNull(virtualWarehouseChannelEntity) /*&& Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())*/) {
-                        //如果是本虚拟仓绑定需要设置为可选
-                        childTree.setDisabled(false);
-                        childTree.setShopDisabled(false);
-                        childTree.setPlatformDisabled(false);
+                        if (Objects.equals(virtualWarehouseChannelEntity.getDictPlatform(), childTree.getCode())) {
+                            //如果是本虚拟仓绑定需要设置为可选
+                            childTree.setDisabled(false);
+                            childTree.setShopDisabled(false);
+                            childTree.setPlatformDisabled(false);
+                        }else{
+                            if (Objects.equals(virtualWarehouseChannelEntity.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())){
+                                //如果是非本虚拟仓绑定需要设置为不可选
+                                childTree.setDisabled(true);
+                                childTree.setShopDisabled(true);
+                                childTree.setPlatformDisabled(true);
+                            }else {
+                                //如果是非本虚拟仓绑定需要设置平台为不可选
+                                childTree.setDisabled(false);
+                                childTree.setShopDisabled(false);
+                                childTree.setPlatformDisabled(true);
+                            }
+                        }
                     } else {
                         //如果是别的虚拟仓已绑定，如果是绑定平台，当前渠道不可选，如果是店铺则只禁用平台
                         String bindedType = bindChannelDtos.get(0).getDictPlatform();
