@@ -381,8 +381,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Transactional(rollbackFor = Exception.class)
     public void saveWdtOrder(List<String> fromVmIds, RequisitionApplicationEntity requisitionApplication, Map<String, List<RequisitionApplicationDTO.HandleListDTO>> haveFromVwMap) {
         List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        Map<String, List<ThirdMappingEntity>> fromThirdMappingMap = dmpThirdMappingFeign.getVwListBySysIds(fromVwId).stream()
-                .collect(Collectors.groupingBy(ThirdMappingEntity::getThirdId));
+//        Map<String, List<ThirdMappingEntity>> fromThirdMappingMap = dmpThirdMappingFeign.getVwListBySysIds(fromVwId).stream()
+//                .collect(Collectors.groupingBy(ThirdMappingEntity::getThirdId));
+        List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
         //保存要货申请主单
         VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
         allocationHandleEntity.setAllocationId(requisitionApplication.getId());
@@ -394,8 +395,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
         haveFromVwMap.forEach((fromVmId, fromHandleList) -> {
             //获取调出仓绑定的旺店通虚拟仓
-            if (CollectionUtils.isNotEmpty(fromThirdMappingMap.get(fromVmId))) {
-                fromThirdMappingMap.get(fromVmId).forEach(thirdMapping -> {
+            if (CollectionUtils.isNotEmpty(fromThirdMappingList)) {
+                fromThirdMappingList.forEach(thirdMapping -> {
                         //保存合单明细
                     VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = new VirtualWarehouseAllocationHandleDetailEntity();
                     handleDetailEntity.setAllocationId(requisitionApplication.getId());
@@ -757,21 +758,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Transactional(rollbackFor = Exception.class)
     public void cancelWdtOrder(List<String> fromVmIds, RequisitionApplicationEntity entity, Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap) {
         List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        Map<String, List<ThirdMappingEntity>> fromThirdMappingMap = dmpThirdMappingFeign.getVwListBySysIds(fromVwId).stream()
-                .collect(Collectors.groupingBy(ThirdMappingEntity::getThirdId));
+        List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
         //保存要货申请主单
-        VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity();
-        allocationHandleEntity.setAllocationId(entity.getId());
-        allocationHandleEntity.setAllocationCode(entity.getCode());
-        allocationHandleEntity.setType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
-        allocationHandleEntity.setStatus(entity.getStatus());
-        allocationHandleEntity.setDirection(1);
+        VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity(entity.getId(),
+                entity.getCode(),SourceTypeEnum.REQUISITION_APPLICATION.getCode(),entity.getStatus(),VwAllocationDirectionEnum.FORWARD.getCode());
         virtualWarehouseAllocationHandleService.save(allocationHandleEntity);
         List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
         haveFromVwMap.forEach((fromVmId, fromHandleList) -> {
             //获取调出仓绑定的旺店通虚拟仓
-            if (CollectionUtils.isNotEmpty(fromThirdMappingMap.get(fromVmId))) {
-                fromThirdMappingMap.get(fromVmId).forEach(thirdMapping -> {
+            if (CollectionUtils.isNotEmpty(fromThirdMappingList)) {
+                fromThirdMappingList.forEach(thirdMapping -> {
                     //保存合单明细
                     VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = new VirtualWarehouseAllocationHandleDetailEntity();
                     handleDetailEntity.setAllocationId(entity.getId());

@@ -1,6 +1,7 @@
 package com.sdk.wangdian.sdk.api.virtualWarehouse;
 
 import com.sdk.wangdian.sdk.Pager;
+import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.Result;
 import com.sdk.wangdian.sdk.api.goods.dto.GoodsPushRequest;
 import com.sdk.wangdian.sdk.api.goods.dto.GoodsSearchRequest;
@@ -14,5 +15,5 @@ import java.util.Map;
 public interface VwAllocationHandleDetailAPI
 {
 	@Api(value = "setting.strategy.VirtualWarehouse.create")
-	VwAllocationHandelDetailResponse push(Map<String, Object> request, Object detailList);
+	VwAllocationHandelDetailResponse push(Map<String, Object> request, Object detailList) throws WdtErpException;
 }

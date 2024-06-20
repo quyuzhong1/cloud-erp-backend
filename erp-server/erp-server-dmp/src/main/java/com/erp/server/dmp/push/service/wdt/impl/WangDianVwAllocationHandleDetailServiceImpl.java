@@ -3,6 +3,7 @@ package com.erp.server.dmp.push.service.wdt.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -17,6 +18,7 @@ import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WangDianVwAllocationHandleDetailService;
+import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.Result;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.VwAllocationHandleDetailAPI;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwAllocationHandelDetailPushDTO;
@@ -67,31 +69,31 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
                 VwAllocationHandleDetailAPI api = wangDianClientService.get(VwAllocationHandleDetailAPI.class);
                 log.info("旺店通虚拟仓订单创建：消费者接收数据：{}",pushDTOS);
                 Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {});
+                Object bizType = map.get("bizType");
                 Map<String, Object> request = commonService.makeApiFieldMap(map, platformEntity.getId(), ApiModuleTypeEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL.getCode());
                 log.info("旺店通虚拟仓订单创建：请求参数：{}",request);
-                VwAllocationHandelDetailResponse pushResult = api.push(request, request.get("detailList"));
-                log.info("旺店通虚拟仓订单创建：响应结果：{}",pushResult);
                 String msg = null;
-                if (pushResult.getStatus() !=0) {
-                    msg = pushResult.getMessage();
-                }
-                //查询分货单明细
-                if (Objects.equals(map.get("bizType"), "allocation")) {
-                    VirtualWarehouseAllocationDTO.SyncUpdateDto dto = new VirtualWarehouseAllocationDTO.SyncUpdateDto();
-                    if (Objects.nonNull(pushResult.getMessage())) {
+                VirtualWarehouseAllocationDTO.SyncUpdateDto dto = new VirtualWarehouseAllocationDTO.SyncUpdateDto();
+                try {
+                    VwAllocationHandelDetailResponse pushResult = api.push(request, request.get("detailList"));
+                    log.info("旺店通虚拟仓订单创建：响应结果：{}", pushResult);
+                    if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
                         dto.setSysType(ThirdSysTypeEnum.WDT.getCode());
                         dto.setSysTypeName(ThirdSysTypeEnum.WDT.getName());
                         dto.setThirdCode(pushResult.getMessage());
                         dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.SUCCESS_SYNC.getCode());
-                    } else {
-                        dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
+                        dto.setHandelDetailId(map.get("sourceId").toString());
+                        log.info("旺店通虚拟仓订单创建：成功同步分货单：{}",dto);
+                        allocationDetailFeign.updateSyncStatus(dto);
                     }
-                    dto.setHandelDetailId(map.get("sourceId").toString());
-                    log.info("旺店通虚拟仓订单创建：同步分货单：{}",dto);
-                    allocationDetailFeign.updateSyncStatus(dto);
-                }
-                if (StringUtils.isNotBlank(msg)) {
-                    throw new ServiceException(msg);
+                }catch (WdtErpException e){
+                    if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
+                        dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
+                        dto.setHandelDetailId(map.get("sourceId").toString());
+                        log.info("旺店通虚拟仓订单创建：失败同步分货单：{}",dto);
+                        allocationDetailFeign.updateSyncStatus(dto);
+                    }
+                    throw new ServiceException((e.getMessage()));
                 }
             }
         } catch (InterruptedException e) {

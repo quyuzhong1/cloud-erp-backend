@@ -73,7 +73,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             request.setPre_time(LocalDateTime.now().minusMinutes(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             request.setVirtual_warehouse_no(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseNo()) ? handleDetail.getThirdFromVirtualWarehouseNo() : handleDetail.getThirdToVirtualWarehouseNo());
             request.setTo_virtual_warehouse_no(handleDetail.getThirdToVirtualWarehouseNo());
-            request.setBizType(type);
+            request.setBizType(sourceType);
             request.setSourceId(handleDetail.getId());
             List<VwAllocationHandelDetailPushDTO.DetailList> detailList = new ArrayList<>();
             //获取明细
