@@ -257,13 +257,24 @@ public class AliExpressOrder implements Serializable {
         if ("WAIT_BUYER_ACCEPT_GOODS".equals(orderStatus)
                 || "FUND_PROCESSING".equals(orderStatus)
                 || "IN_ISSUE".equals(orderStatus)
-                || "WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)) {
+                || "WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)
+                // 完结已发货
+                || finishShipped()
+        ) {
             return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         }
 
 
         // 待配货
         return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+    }
+
+    /**
+     * 完结已发货
+     */
+    public boolean finishShipped() {
+        return "FINISH".equalsIgnoreCase(orderStatus)
+                && ("buyer_confirm_goods".equalsIgnoreCase(this.endReason) || "buyer_confirm_goods_timeout".equalsIgnoreCase(this.endReason));
     }
 
     /**
