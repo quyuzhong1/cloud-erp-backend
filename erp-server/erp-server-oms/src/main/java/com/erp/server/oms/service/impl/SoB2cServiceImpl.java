@@ -6445,6 +6445,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+    @Override
+    public List<SoB2cEntity> listByCreateTime(LocalDateTime startTime, LocalDateTime endTime) {
+        List<SoB2cEntity> entityList = lambdaQuery()
+                .gt(SoB2cEntity::getCreateTime, startTime)
+                .lt(SoB2cEntity::getCreateTime, endTime)
+                .eq(SoB2cEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
+                .eq(SoB2cEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED)
+                .list();
+        return entityList;
+    }
+
     /**
      * 具体同步动作处理
      *
@@ -7913,4 +7924,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         });
         map.put("detailList", mapList);
     }
+
+
+
 }
