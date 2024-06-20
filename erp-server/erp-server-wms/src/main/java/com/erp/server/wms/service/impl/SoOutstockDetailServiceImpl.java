@@ -642,11 +642,12 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Override
     public List<SoOutstockDetailDTO.AddDTO> checkAndGenerateDetail(SoOutstockDTO.GenerateB2cDTO dto) {
-        boolean notExistMapping = dto.getDetailList()
+        List<String> notExistMapping = dto.getDetailList()
                 .stream()
-                .anyMatch(e -> CollectionUtils.isEmpty(e.getHistorySkuMappingList()));
-        if (notExistMapping){
-            throw new ServiceException("找不到历史映射关系");
+                .filter(v->CollectionUtils.isEmpty(v.getHistorySkuMappingList()))
+                .map(SoOutstockDetailDTO.AddDTO::getSkuNo).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notExistMapping)){
+            throw new ServiceException(StrUtil.format("{}找不到历史映射关系",notExistMapping));
         }
         // 生成库存检查参数
         List<String> skuIdList = new LinkedList<>();
