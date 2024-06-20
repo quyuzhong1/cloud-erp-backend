@@ -128,9 +128,7 @@ public class DmpInputBaseDmpHandler extends DmpInputDmpHandler{
 							}
 						});
 						waitEntity.put(BaseEntity.CREATE_TIME, findEntity.get(BaseEntity.CREATE_TIME));
-						if(!findEntity.get(DATA_ENCRYPT).toString().equals(waitEntity.get(DATA_ENCRYPT).toString())) {
-							deleteDmpIdList.add(dmpId);
-						}
+						deleteDmpIdList.add(dmpId);
 						updateDmpInputDmpEntityList.add(JSON.parseObject(JSON.toJSONString(waitEntity), dmpEntityClass));
 					}else {
 						saveDmpInputDmpEntityList.add(JSON.parseObject(JSON.toJSONString(waitEntity), dmpEntityClass));
@@ -170,11 +168,20 @@ public class DmpInputBaseDmpHandler extends DmpInputDmpHandler{
 			TreeMap dmpInputDmpBaseEntity = new TreeMap<>();
 			Set<Entry> entrySet = dmpInputMongoBaseEntity.entrySet();
 			for (Map.Entry entry : entrySet) {
-				dmpInputDmpBaseEntity.put(entry.getKey().toString(), entry.getValue());
+				dmpInputDmpBaseEntity.put(this.convertKey(entry.getKey().toString()), entry.getValue());
 			}
 			dmpInputDataDmpRelationMaps.put(Collections.singletonList(dmpInputMongoBaseEntity), Collections.singletonList(dmpInputDmpBaseEntity));
 		}
 		return dmpInputDataDmpRelationMaps;
+	}
+	
+	/**
+	 * 转换key
+	 * @param originalKey
+	 * @return
+	 */
+	protected String convertKey(String originalKey) {
+		return originalKey;
 	}
 	
 	private void afterDmpInputDmpEntity(Map<String, Object> beanDmpInputDmpEntity) {

@@ -66,7 +66,7 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 					List<Map<String, Object>> dataList = this.getDataList(dmpInputTaskFileEntity.getContentType(), dmpInputTaskFileEntity.getFileUrl());
 					int currParseCount = 0;
 					for(Map<String, Object> data : dataList) {
-						this.putDmpInputMongoEntity(dmpInputTaskFileEntity.getId(), currParseCount, data, allFieldFlag, uniqueFieldSet, md5DmpInputMongoEntityMaps);
+						this.putDmpInputMongoEntity(dmpInputTaskFileEntity, currParseCount, data, allFieldFlag, uniqueFieldSet, md5DmpInputMongoEntityMaps);
 						currParseCount = currParseCount + 1;
 					}
 					dmpInputTaskFileEntity.setCurrParseCount(currParseCount);
@@ -164,15 +164,15 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 	 * @param uniqueFieldSet
 	 * @param md5DmpInputMongoEntityMaps
 	 */
-	private void putDmpInputMongoEntity(String fileId , Integer i , Map<String, Object> data , boolean allFieldFlag , Set<String> uniqueFieldSet , Map<String, Map> md5DmpInputMongoEntityMaps) {
-		StringBuilder uniqueFieldMd5Sb = new StringBuilder();
-		uniqueFieldMd5Sb.append(nextLevelId);
-		StringBuilder dataMd5Sb = new StringBuilder();
-		dataMd5Sb.append(nextLevelId);
-		
+	private void putDmpInputMongoEntity(DmpInputTaskFileEntity dmpInputTaskFileEntity , Integer i , Map<String, Object> data , boolean allFieldFlag , Set<String> uniqueFieldSet , Map<String, Map> md5DmpInputMongoEntityMaps) {
 		List<TreeMap> resultDataList = this.convertData(data);
 		if(CollUtil.isNotEmpty(resultDataList)) {
 			for(Map dmpInputMongoEntity : resultDataList) {
+				Integer rowNumber = i + 1;
+				StringBuilder uniqueFieldMd5Sb = new StringBuilder();
+				uniqueFieldMd5Sb.append(nextLevelId);
+				StringBuilder dataMd5Sb = new StringBuilder();
+				dataMd5Sb.append(nextLevelId);
 				Set<Entry> entrySet = dmpInputMongoEntity.entrySet();
 				for(Map.Entry dmpInputMongo : entrySet) {
 					String key = dmpInputMongo.getKey().toString();
@@ -184,7 +184,12 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 						dataMd5Sb.append(value);
 					}
 				}
-				this.afterDmpInputMongoEntity(dmpInputMongoEntity, fileId , i ,uniqueFieldMd5Sb.toString(), dataMd5Sb.toString());
+				String contentType = dmpInputTaskFileEntity.getContentType();
+				if(DmpInputTaskFileContentTypeEnum.TXT.getCode().equals(contentType) || DmpInputTaskFileContentTypeEnum.CSV.getCode().equals(contentType)) {
+					uniqueFieldMd5Sb.append(rowNumber);
+					dataMd5Sb.append(rowNumber);
+				}
+				this.afterDmpInputMongoEntity(dmpInputMongoEntity, dmpInputTaskFileEntity.getId() , rowNumber ,uniqueFieldMd5Sb.toString(), dataMd5Sb.toString());
 				md5DmpInputMongoEntityMaps.put(dmpInputMongoEntity.get(MONGO_BASE_UNIQUEENCRYPT).toString(), dmpInputMongoEntity);
 			}
 		}
@@ -200,10 +205,19 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 		for(Map.Entry<String, Object> d : data.entrySet()) {
 			String key = d.getKey();
 			Object value = d.getValue();
-			dmpInputMongoEntity.put(key, value);
+			dmpInputMongoEntity.put(this.convertKey(key).replace(".", ""), value);
 		}
 		resultDataList.add(dmpInputMongoEntity);
 		return resultDataList;
+	}
+	
+	/**
+	 * 转换key
+	 * @param originalKey
+	 * @return
+	 */
+	protected String convertKey(String originalKey) {
+		return originalKey;
 	}
 	
 	
@@ -215,13 +229,13 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 	 * @param uniqueFieldString
 	 * @param dataString
 	 */
-	private void afterDmpInputMongoEntity(Map dmpInputMongoEntity ,String fileId , Integer i ,  String uniqueFieldString , String dataString) {
+	private void afterDmpInputMongoEntity(Map dmpInputMongoEntity ,String fileId , Integer rowNumber ,  String uniqueFieldString , String dataString) {
 		dmpInputMongoEntity.put(MONGO_BASE_ID, DmpHandlerUtils.getId());
 		dmpInputMongoEntity.put(MONGO_BASE_INPUTTASKID , inputTaskId);
 		dmpInputMongoEntity.put(MONGO_BASE_NEXTLEVELID , nextLevelId);
 		dmpInputMongoEntity.put(MONGO_BASE_FILEID, fileId);
 		dmpInputMongoEntity.put(MONGO_BASE_CONVERTID, convertId);
-		dmpInputMongoEntity.put(MONGO_BASE_ROWNUMBER, i + 1);
+		dmpInputMongoEntity.put(MONGO_BASE_ROWNUMBER, rowNumber);
 		dmpInputMongoEntity.put(MONGO_BASE_UNIQUEENCRYPT, md5.digestHex(uniqueFieldString));
 		dmpInputMongoEntity.put(MONGO_BASE_DATAENCRYPT, md5.digestHex(dataString));
 		String now = DateUtil.now();
