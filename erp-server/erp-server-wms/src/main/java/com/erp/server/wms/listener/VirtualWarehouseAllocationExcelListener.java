@@ -109,6 +109,8 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
         }
         if (!StrUtils.isDigit(String.valueOf(vwAllocationAllocationExcelDTO.getQty())) || ObjectUtil.isEmpty(vwAllocationAllocationExcelDTO.getQty())) {
             errorMsgList.add("移动数量只能是数字");
+        }else {
+            detailDto.setQty(Integer.valueOf(vwAllocationAllocationExcelDTO.getQty()));
         }
         if (StringUtils.isBlank(vwAllocationAllocationExcelDTO.getWarehouseName())) {
             errorMsgList.add("实体仓不能为空");
