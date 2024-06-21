@@ -74,6 +74,7 @@
         vma.code,
         vma.status,
         vma.type,
+        vma.remark,
         vmad.sku_id as skuId,
         vmad.sku_no as skuNo,
         vmad.product_name as productName,

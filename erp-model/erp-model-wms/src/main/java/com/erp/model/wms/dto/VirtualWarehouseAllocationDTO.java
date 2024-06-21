@@ -286,6 +286,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
          */
         private String typeName;
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * skuId
@@ -667,5 +671,9 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 完结说明
          */
         private String finishDescription;
+        /**
+         * 作废说明
+         */
+        private String invalidDescription;
     }
 }
