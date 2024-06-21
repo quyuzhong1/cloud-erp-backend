@@ -1048,7 +1048,8 @@ public enum ApiError implements Serializable {
     ERROR_CHECK_OUT_VIRTUAL_INVENTORY(92233,"虚拟仓库存已分配【{}】，出库数量不能超过【{}】"),
     ERROR_VW_CHANNEL_ERROR(92234,"虚拟仓【{}】已绑定当前渠道"),
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
-    ERROR_WAREHOUSE_INVENTORY_ERROR(92235,"实体仓【{}】库存不足"),
+    ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
+    ERROR_VW_INVENTORY_ERROR(92235,"虚拟仓【{}】库存不足"),
 
 
     /**
