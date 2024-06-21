@@ -1297,7 +1297,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         //明细仓库更新
-        soB2cDetailService.updateWarehouseId(dto.getDetailList(), isCover);
+        soB2cDetailService.updateWarehouseId(entity,dto.getDetailList(), isCover);
         //订单明细数据
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
