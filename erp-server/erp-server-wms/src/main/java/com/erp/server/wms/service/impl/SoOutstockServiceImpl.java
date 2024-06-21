@@ -2178,6 +2178,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         SoOutstockEntity outstock = this.getBySoId(soB2cId);
         if (Objects.isNull(outstock)) {
             SoOutstockDTO.GenerateB2cDTO dto = soB2cFeign.getSoOutstockInfoById(soB2cId);
+            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(dto.getSourceType())) {
+                SoB2cDeliveryEntity notCancelBySoId = soB2cDeliveryService.getNotCancelBySoId(soB2cId);
+                dto.setSourceId(notCancelBySoId.getId());
+                dto.setSourceCode(notCancelBySoId.getCode());
+            }
             Boolean result = createB2cSoOutstock(dto);
             return result;
         } else {
