@@ -423,11 +423,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (!cancelResult.isSuccess() && cancelResult.getCode()!=-1) {
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),cancelResult.getMsg());
         }else{
+            String msg = StrUtil.format("取消物流单单号成功,单号:【{}/{}】 ", soB2cLogisticsEntity.getCode(),soB2cLogisticsEntity.getTrackNo());
+            operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "取消物流单");
             soB2cLogisticsEntity.setCode("");
             soB2cLogisticsEntity.setTrackNo("");
             this.updateById(soB2cLogisticsEntity);
-            String msg = StrUtil.format("用户【{}】取消物流单,运单号:{} ", UserContext.getDefaultLoginUser().getUserName(),soB2cLogisticsEntity.getCode());
-            operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "取消物流单");
             return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
 

@@ -89,6 +89,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         //修改订单状态已发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
         updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(soId));
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(soId,deliveryEntity.getCode())));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
