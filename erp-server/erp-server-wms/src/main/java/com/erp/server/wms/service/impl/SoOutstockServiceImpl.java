@@ -627,7 +627,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                             .collect(Collectors.toList());
                     List<SoOutstockDetailEntity> soOutstockDetailEntityList = baseMapper.listApproveBySourceDetailIds(ids);
                     Map<String, Integer> outDetailMap = soOutstockDetailEntityList.stream().collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getActualQty, Integer::sum));
-                    if (skuQty < detail.getActualQty() + outDetailMap.get(detail.getSkuNo())) {
+                    if (skuQty < detail.getActualQty() + Optional.ofNullable(outDetailMap.get(detail.getSkuNo())).orElse(0)) {
                         throw new ServiceException(ApiError.ERROR_99103, detail.getSkuNo());
                     }
                 }
