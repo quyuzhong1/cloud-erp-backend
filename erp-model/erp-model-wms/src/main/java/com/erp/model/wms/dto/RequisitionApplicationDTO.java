@@ -1012,6 +1012,8 @@ public class RequisitionApplicationDTO implements Serializable {
         private String country;
 
         private String type;
+
+        private String status;
     }
 
 }
