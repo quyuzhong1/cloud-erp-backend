@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -9,6 +10,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 采购单
@@ -26,6 +30,7 @@ import java.util.List;
  * @Date 2023/5/15 9:12
  **/
 @RestController
+@Slf4j
 @RequestMapping("feign/soInfo")
 public class SoInfoFeignController extends BaseController {
     @Resource
@@ -141,8 +146,24 @@ public class SoInfoFeignController extends BaseController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/approve")
-    public Boolean approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return soInfoService.approve(dto);
+    public List<BatchResultDTO> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(ids);
+        for (String id : ids) {
+            SoInfoEntity entity = soInfoEntityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"销售订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soInfoService.approve(dto, entity));
+            }catch (Exception e){
+                log.error("B2B销售订单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 
  
