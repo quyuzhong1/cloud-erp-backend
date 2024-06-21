@@ -189,7 +189,8 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
                 throw new ServiceException(ApiError.ERROR_1027);
             }
             //添加流水
-            virtualTransFlowService.add(txnFlow, txnFlow.getQty());
+            VirtualInventoryEntity entity = virtualInventoryService.getById(virtualInventoryEntity.getId());
+            virtualTransFlowService.add(txnFlow, entity.getQty());
 
             // 6,更新原交易流水为已反审核
             virtualTransFlowService.updateUnapprovedById(txnFlow.getId(), txnFlow.getVersion());
