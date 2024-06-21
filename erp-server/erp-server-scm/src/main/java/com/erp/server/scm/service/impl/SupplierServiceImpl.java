@@ -79,6 +79,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.rtfparserkit.rtf.Command.i;
+import static com.rtfparserkit.rtf.Command.list;
+
 /**
  * <p>
  * 供应商表 服务实现类
@@ -672,12 +675,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         if (Objects.nonNull(data) && ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             //无需走流程的数据则直接更新状态
-            BaseApproveParamDTO dto = new BaseApproveParamDTO();
-            dto.setIds(Collections.singletonList(entity.getId()));
-            dto.setComment(comment);
-            dto.setType(type);
-            dto.setIsNeedProcess(isNeedProcess);
-            approveEnd(dto, Collections.singletonList(entity));
+            approveEnd(entity,type,comment,isNeedProcess);
         }
         //添加日志
         addModuleOperateLog(String.format("审核【%s】了一个供应商信息", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "审核操作");
@@ -685,8 +683,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     /**
-     * @param dto
-     * @param list
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 15:25
@@ -694,25 +694,25 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(BaseApproveParamDTO dto, List<SupplierEntity> list) {
-        if (CollectionUtils.isEmpty(list)) {
+    public Boolean approveEnd(SupplierEntity entity,String type, String comment, Boolean isNeedProcess) {
+        if (Objects.isNull(entity)) {
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
+        if (ApproveType.PASS.equals(type)) {
             //审核通过
             approveStatus = ApproveStatusEnum.APPROVE;
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
         }
-        Boolean result = this.updateApproveStatus(list, approveStatus);
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        if (dto.getType().equals(ApproveType.PASS)) {
+        if (ApproveType.PASS.equals(type)) {
             //发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendSinglePushTask(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -840,7 +840,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     /**
      * 反审核
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-23 10:26
@@ -848,37 +848,25 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        List<SupplierEntity> list = this.listByIds(ids);
-        //审核中
-//        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-
+    public BatchResultDTO disApprove(SupplierEntity entity){
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-//        List<String> statusList = new ArrayList<>(2);
-//        statusList.add(approveIngStatus);
-//        statusList.add(approveStatus);
-        long count = list.stream().filter(s -> !approveStatus.equals(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+        if (!approveStatus.equals(entity.getApproveStatus().getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
-
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(waitSubmitStatus));
         //反审核
         if (result) {
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+            addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");
 
             //发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            sendSinglePushTask(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
-        return result;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
 
@@ -1653,6 +1641,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             @Override
             public void afterCommit() {
                 dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param entity
+     */
+    private void sendSinglePushTask(SupplierEntity entity, String operate) {
+        //审核通过发送金蝶
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeSupplierService.syncDataToKingdee(entity, operate);
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(pushTaskEntity));
             }
         });
     }
