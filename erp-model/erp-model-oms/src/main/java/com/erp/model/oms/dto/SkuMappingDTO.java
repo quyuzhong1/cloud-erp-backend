@@ -579,6 +579,14 @@ public class SkuMappingDTO implements Serializable {
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime updateTime;
+        /**
+         * 启用时间
+         */
+        private LocalDateTime effectiveTime;
+        /**
+         * 失效时间
+         */
+        private LocalDateTime expireTime;
 
         /**
          * 平台产品SPU编号

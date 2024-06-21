@@ -66,6 +66,8 @@
         li.platform_spu_name,
         li.platform_fn_sku,
         sm.update_user_name,
+        sm.effective_time,
+        sm.expire_time,
         sm.update_time
         FROM sku_mapping sm
         LEFT JOIN shop_info si ON sm.shop_id=si.id AND si.is_deleted=FALSE
