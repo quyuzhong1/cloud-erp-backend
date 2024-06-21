@@ -1101,7 +1101,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 .filter(e -> StringUtils.isBlank(dto.getDictPlatform()) ||
                         (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
                 )
-                .filter(e -> Boolean.TRUE.equals(dto.getIsSupplier()) && e.getTypeId().equals(basic.getId()))
+                .filter(e -> ObjectUtil.isEmpty(dto.getIsSupplier()) || (Boolean.TRUE.equals(dto.getIsSupplier()) && e.getTypeId().equals(basic.getId())))
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
                 .collect(Collectors.toList());
     }
