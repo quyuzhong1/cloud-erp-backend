@@ -439,32 +439,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     saveOrUpdateEntity.setWarehouseName("");
                     saveOrUpdateEntity.setWarehouseOrgId("");
                     saveOrUpdateEntity.setWarehouseOrgName("");
-
-                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                    addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                    addError.setParamJson("");
-                    addError.setReturnJson("");
-                    addError.setMainId(mainEntity.getId());
-                    addError.setMessage(StrUtil.format("生成销售出库单失败：发货单仓库【{}】未匹配系统仓库", detailDTO.getWarehouseName()));
-                    soB2cErrorService.add(addError);
                 }
             }
-
-
-            //建议售价
-//            if (StringUtils.isNotBlank(skuId)){
-//                List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Collections.singletonList(skuId));
-//                if (CollectionUtils.isNotEmpty(skuList)){
-//                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
-//                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
-//                }
-//            }else if (StringUtils.isNotBlank(skuNO)){
-//                List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNO));
-//                if (CollectionUtils.isNotEmpty(skuList)){
-//                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
-//                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
-//                }
-//            }
             return saveOrUpdateEntity;
         }).collect(Collectors.toList());
 

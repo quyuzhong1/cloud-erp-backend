@@ -64,6 +64,11 @@ public class OrderRequest implements Serializable {
      */
     private String createDateStart;
 
+    /**
+     * 订单创建结束时间
+     */
+    private String createDateEnd;
+
 
 
     public static OrderRequest builderByShopInfo(String apiName, AliExpressShopInfoDTO shopInfoDTO) {
@@ -74,14 +79,5 @@ public class OrderRequest implements Serializable {
                 apiName(apiName).
                 currentPage(1).
                 token(shopInfoDTO.getToken()).build();
-    }
-
-    /**
-     * 更新开始时间3个月前日期
-     */
-    public String convertStartTime3MonthAgo() {
-        LocalDateTime startLocalDateTime = LocalDateTime.parse(this.startTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-        return LocalDateUtil.formatTime(startLocalDateTime.minusMonths(3), DateUtil.fmt);
     }
 }

@@ -5166,7 +5166,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         updateDTO.setSkuId(handleDetailEntity.getSkuId());
         updateDTO.setMsku(handleDetailEntity.getPlatformSkuNo());
         updateDTO.setShopId(entity.getShopId());
-        updateDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        updateDTO.setPlatform(entity.getDictPlatform());
         updateDTO.setId(skuDTOS.get(0).getId());
         Boolean flag = listingInfoService.skuMapping(updateDTO);
         if (flag) {
