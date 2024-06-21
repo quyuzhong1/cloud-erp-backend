@@ -211,7 +211,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public Boolean updateWarehouseId(List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> saveDetailList,Boolean isCover) {
+    public Boolean updateWarehouseId(SoB2cEntity entity,List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> saveDetailList,Boolean isCover) {
         //明细数据
         List<String> ids = saveDetailList.stream().map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getDetailId).collect(Collectors.toList());
         List<SoB2cDetailEntity> detailList = this.listByIds(ids);
@@ -241,6 +241,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         listSkuParamList.setList(listParamList);
         List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
 
+        //虚拟仓库查询
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(entity.getDictPlatform());
+        platformDTO.setRelationId(entity.getShopId());
+        platformDTO.setWarehouseIdList(warehouseIdList);
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = WwmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+
         for (SoB2cDetailEntity detailEntity :detailList) {
             //仓库
             String warehouseId = saveDetailList.stream().filter(obj -> StrUtil.equals(obj.getDetailId(), detailEntity.getId()))
@@ -249,6 +256,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if (ObjectUtil.isEmpty(updateDTO)) {
                 throw new ServiceException(ApiError.ERROR_99002);
             }
+
+            //虚拟仓信息
+            String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
+                    .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).findFirst().orElse("");
+            if (StrUtil.isBlank(virtualWarehouseId) && !entity.isFbaOrder()) {
+                throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST);
+            }
+            detailEntity.setVirtualWarehouseId(virtualWarehouseId);
+
             //组织
             BaseIdDTO.CodeDTO companyDTO = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getOrgId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(companyDTO)) {
@@ -726,11 +742,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
             }
             //虚拟仓信息
-            String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId())).map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).findFirst().orElse("");
-            if (StrUtil.isBlank(virtualWarehouseId)) {
-                throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST);
+            String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
+                    .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).findFirst().orElse("");
+            if (StrUtil.isNotBlank(virtualWarehouseId)) {
+                detailEntity.setVirtualWarehouseId(virtualWarehouseId);
             }
-            detailEntity.setVirtualWarehouseId(virtualWarehouseId);
 
             //仓库名称
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream()
