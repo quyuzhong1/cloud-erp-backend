@@ -36,6 +36,7 @@ import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.regexp.RE;
+import org.python.antlr.ast.Str;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -56,6 +57,8 @@ import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
 public class AliExpressOrderService {
 
     public static final Integer aliExpressPageSize = 50;
+
+    public static final String ALIEXPRESS_TIME_ZONE = "America/Tijuana";
 
     private static RedisUtil redisUtil;
 
@@ -490,8 +493,8 @@ public class AliExpressOrderService {
                 .token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG")
 //                .startTime("2024-05-10 00:00:00")
 //                .endTime("2024-05-16 00:00:00")
-                .createDateStart("2024-06-01 00:00:00")
-                .createDateEnd("2024-6-21 00:00:00")
+                .createDateStart("2024-05-17 00:00:00")
+                .createDateEnd("2024-05-18 00:00:00")
                 .build();
 //        OrderRequest(clientId=502978, clientSecret=DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY,
 //                baseUrl=https://api-sg.aliexpress.com, apiName=aliexpress.trade.seller.orderlist.get,
@@ -510,4 +513,25 @@ public class AliExpressOrderService {
         System.out.println(aliExpressOrders);
         System.out.println("数量" + aliExpressOrders.size());
     }
+
+//    public static void main(String[] args) throws Exception{
+//        String orderId = "8188116597867872";
+//        String oaid = "bmDgBQHJPDmDInmawpwirA";
+//
+//        AddressRequest request=AddressRequest.builder()
+//                .clientId("502978")
+//                .clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY")
+//                .baseUrl("https://api-sg.aliexpress.com")
+//                .token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG")
+//                .oaid(oaid).
+//                orderId(orderId).build();
+//
+//        AliExpressOrderService aliExpressOrderService = new AliExpressOrderService();
+//        try {
+//            BuyerTradeAddress address=aliExpressOrderService.getBuyerTradeAddress(request);
+//            System.out.println(JSONUtil.toJsonStr(address));
+//        }catch (Exception e){
+//            throw new ServiceException("查询速卖通订单地址失败"+ JSONUtil.toJsonStr(e));
+//        }
+//    }
 }
