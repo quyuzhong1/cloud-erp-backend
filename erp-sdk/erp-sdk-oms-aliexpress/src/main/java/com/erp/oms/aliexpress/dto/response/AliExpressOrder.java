@@ -354,8 +354,8 @@ public class AliExpressOrder implements Serializable {
             return false;
         }
         if (StringUtils.isBlank(this.endReason)){
-            // 无完结原因
-            return false;
+            // 无完结原因（平台自动取消）
+            return true;
         }
         // 非买家确认货物 和 买家确认货物超时 都视为取消
         return !"buyer_confirm_goods".equalsIgnoreCase(this.endReason)
