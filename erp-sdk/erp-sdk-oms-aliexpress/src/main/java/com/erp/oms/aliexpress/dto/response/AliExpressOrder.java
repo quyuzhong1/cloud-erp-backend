@@ -302,6 +302,11 @@ public class AliExpressOrder implements Serializable {
         if (StringUtils.isBlank(orderStatus)) {
             return ApproveStatusEnum.WAIT_SUBMIT.getCode();
         }
+        // 完结已发货(自动已审核)
+        if (finishShipped()){
+            return ApproveStatusEnum.APPROVE.getCode();
+        }
+
         if (isPlatformWarehouseOrder) {
             if ("PLACE_ORDER_SUCCESS".equals(orderStatus)) {
                 return ApproveStatusEnum.WAIT_SUBMIT.getCode();

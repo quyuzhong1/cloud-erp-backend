@@ -55,6 +55,8 @@ import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
 @Component
 public class AliExpressOrderService {
 
+    public static final Integer aliExpressPageSize = 50;
+
     private static RedisUtil redisUtil;
 
     @Resource
@@ -85,7 +87,7 @@ public class AliExpressOrderService {
         request.setApiName(apiName);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("current_page", orderRequest.getCurrentPage());
-        paramMap.put("page_size", pageSize);
+        paramMap.put("page_size", aliExpressPageSize);
 
         paramMap.put("create_date_start", orderRequest.getCreateDateStart());
         paramMap.put("create_date_end", orderRequest.getCreateDateEnd());
@@ -185,7 +187,7 @@ public class AliExpressOrderService {
         request.setApiName(apiName);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("current_page", orderRequest.getCurrentPage());
-        paramMap.put("page_size", pageSize);
+        paramMap.put("page_size", aliExpressPageSize);
 
         paramMap.put("create_date_start", orderRequest.getCreateDateStart());
         paramMap.put("create_date_end", orderRequest.getCreateDateEnd());
@@ -488,8 +490,8 @@ public class AliExpressOrderService {
                 .token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG")
 //                .startTime("2024-05-10 00:00:00")
 //                .endTime("2024-05-16 00:00:00")
-                .createDateStart("2024-04-30 00:00:00")
-                .createDateEnd("2024-05-01 00:00:00")
+                .createDateStart("2024-06-01 00:00:00")
+                .createDateEnd("2024-6-21 00:00:00")
                 .build();
 //        OrderRequest(clientId=502978, clientSecret=DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY,
 //                baseUrl=https://api-sg.aliexpress.com, apiName=aliexpress.trade.seller.orderlist.get,
