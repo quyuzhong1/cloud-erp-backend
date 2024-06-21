@@ -19,7 +19,7 @@ public class DmpTaskQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("tab".equals(field)){
             String searchType = value.toString();
-            if ("all".equals(searchType)) {
+            if ("all".equals(searchType) ||"-1".equals(searchType)  ) {
                 return getQueryAllSql();
             }
             if ("2".equals(searchType)) {

@@ -59,10 +59,8 @@
         select
         <include refid="Base_Column_List"></include>
         from dmp_pull_task
-        where is_deleted = false
-
-        ${params.sqlMap.default}
-
+        where         ${params.sqlMap.default}
+         and   is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -75,8 +73,8 @@
         select
         <include refid="Base_Column_List"></include>
         from dmp_pull_task
-        where is_deleted = false
-        ${params.sqlMap.default}
+        where ${params.sqlMap.default}
+          and is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
