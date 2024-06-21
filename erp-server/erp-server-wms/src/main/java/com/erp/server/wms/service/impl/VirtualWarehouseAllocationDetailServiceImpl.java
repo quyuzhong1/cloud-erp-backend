@@ -327,7 +327,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                 dmpMqFeign.batchSyncBySourceId(sourceIds);
             }
         }
-        return null;
+        return new BatchResultDTO();
     }
 
     /**
