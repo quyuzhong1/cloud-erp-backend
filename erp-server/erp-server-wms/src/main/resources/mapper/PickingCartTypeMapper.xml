@@ -31,5 +31,17 @@
 
     <!-- 拣货车类型查询 -->
     <select id="select" resultType="com.erp.model.wms.dto.PickingCartTypeDTO$ListDTO">
+        select
+            pct.id,
+            pct.name
+        from picking_cart_type pct
+        <where>
+            pct.is_deleted = false
+            <if test="selectDTO.searchKeyword != null and selectDTO.searchKeyword != ''">
+                and (pct.name = #{selectDTO.searchKeyword} or pct.id ilike concat('%', #{selectDTO.searchKeyword}::text ,'%'))
+            </if>
+        </where>
+
+
     </select>
 </mapper>

@@ -2,11 +2,10 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -88,13 +87,6 @@ public class PickingCartDTO implements Serializable {
         @NotBlank(message = "拣货车类型id不能为空")
         @Size(max = 19,message = "拣货车类型id最大长度不能超过19位")
         private String typeId;
-
-        /**
-        * 状态,true是，false否
-        */
-        @NotNull(message = "状态,true是，false否不能为空")
-        private Boolean disabled;
-
 
     }
 

@@ -136,4 +136,7 @@ public interface BusinessNoConstant {
     String DQDD = "DQDD";
 
     String JHD = "JHD";
+
+    //拣货车
+    String JHC = "JHC";
 }
