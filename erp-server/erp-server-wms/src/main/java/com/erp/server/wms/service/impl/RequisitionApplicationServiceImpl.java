@@ -411,7 +411,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (CollectionUtils.isNotEmpty(handleDetailList)) {
             //推送中台任务:保存任务+发送mq
             List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
-                    requisitionApplication.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+                    requisitionApplication.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(),
+                    SourceTypeEnum.REQUISITION_APPLICATION.getCode());
             if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                     @Override
@@ -439,9 +440,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     handleDetailEntity.setDirection(allocationHandleEntity.getDirection());
                     handleDetailEntity.setType(requisitionApplication.getType());
                     handleDetailEntity.setStatus(allocationHandleEntity.getStatus());
-//                    handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
-//                    handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-//                    handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
                     switch (code){
                         case FORWARD:
                             handleDetailEntity.setToVirtualWarehouseId(fromVmId);
@@ -465,7 +463,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     fromHandleList.forEach(allocationDetail -> {
                         VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehouseAllocationHandleRelationEntity();
                         vmAllocationHandleRelationEntity.setAllocationId(requisitionApplication.getId());
-                        vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getSourceDetailId());
+                        switch (code) {
+                            case FORWARD:
+                                vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getId());
+                                break;
+                            default:
+                                vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getSourceDetailId());
+                                break;
+                        }
                         vmAllocationHandleRelationEntity.setHandleId(allocationHandleEntity.getId());
                         vmAllocationHandleRelationEntity.setHandleDetailId(handleDetailEntity.getId());
                         virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
