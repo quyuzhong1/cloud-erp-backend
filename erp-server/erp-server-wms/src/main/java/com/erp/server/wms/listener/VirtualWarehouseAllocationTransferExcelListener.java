@@ -139,13 +139,6 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
                     errorMsgList.add("调入虚拟仓非启用状态");
                 }else{
                     detailDto.setToVirtualWarehouseId(toVwDTO.getId());
-                    //判断sku在此调入仓是否存在
-                    if (StringUtils.isNotBlank(detailDto.getSkuId())) {
-                        List<VirtualInventoryDTO.CommonDTO> existVirtualInventoryList = virtualInventoryService.getBySkuIdAndVwId(detailDto.getSkuId(), toVwDTO.getId());
-                        if (CollectionUtils.isEmpty(existVirtualInventoryList)){
-                            errorMsgList.add("sku在此调入仓不存在");
-                        }
-                    }
                 }
             }
         }
