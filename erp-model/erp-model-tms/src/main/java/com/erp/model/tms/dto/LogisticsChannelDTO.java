@@ -108,6 +108,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 渠道id
          */
         private String  channelId;
+        /**
+         * 物流平台（下单平台）
+         */
+        private String  logisticsPlatform;
 
         /**
          * 国家二字码

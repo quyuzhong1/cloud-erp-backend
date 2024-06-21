@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
@@ -157,36 +158,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<LogisticsSupplierDTO.PagingViewDTO> list = pageData.getRecords();
-        fillPagingData(list);
+        fillPagingData(list,params);
         return new PagingVO<>(pageData);
-    }
-
-    @Override
-    public List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id, String name) {
-        LogisticsSupplierEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
-        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
-        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(Collections.singletonList(id), name);
-
-        List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
-        if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
-            for (LogisticsWarehouseEntity item : logisticsWarehouseList) {
-                LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
-                channelView.setWarehouseId(item.getOverseasWarehouseId());
-                channelView.setWarehouseName(item.getOverseasWarehouseName());
-                List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getSourceId())
-                        && c.getSourceId().equals(item.getId())).collect(Collectors.toList());
-                channelView.setChannelList(channelList);
-                viewList.add(channelView);
-            }
-        } else {
-            LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
-            channelView.setWarehouseId("");
-            channelView.setWarehouseName("");
-            channelView.setChannelList(allChannelList);
-            viewList.add(channelView);
-        }
-        return viewList;
     }
 
     @Override
@@ -365,7 +338,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Override
     public Boolean export(LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
         List<LogisticsSupplierDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        fillPagingData(list);
+        fillPagingData(list,dto);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/logisticsSupplier.xlsx";
         String name = "物流商列表";
@@ -450,7 +423,16 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      *
      * @param list
      */
-    private void fillPagingData(List<LogisticsSupplierDTO.PagingViewDTO> list) {
+    private void fillPagingData(List<LogisticsSupplierDTO.PagingViewDTO> list,LogisticsSupplierDTO.PagingParamDTO params) {
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        List<String> supplierIds = list.stream().map(LogisticsSupplierDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+        //物流仓库列表
+        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierIds(supplierIds);
+        //渠道列表
+        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(supplierIds, params);
+        List<LogisticsAuthEntity> authList = logisticsAuthService.listByMainIds(supplierIds);
         for (LogisticsSupplierDTO.PagingViewDTO item : list) {
             LogisticsSupplierTypeEnum type = item.getType();
             item.setTypeName(type.getName());
@@ -460,13 +442,12 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             String authStatus = item.getAuthStatus();
             String authStatusName = LogisticsAuthStatusEnum.getName(authStatus);
             item.setAuthStatusName(authStatusName);
-
             //获取服务商编号
-            LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getId());
-            if (ObjectUtil.isNotEmpty(authEntity)) {
+            LogisticsAuthEntity authEntity = authList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(item.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(authEntity)) {
                 String logisticsPlatform = authEntity.getLogisticsPlatform();
                 item.setLogisticsPlatform(logisticsPlatform);
-                String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
+                String printDelivery = Objects.requireNonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform)).getPrintDelivery();
                 if ("N".equals(printDelivery)) {
                     item.setIsPrintPlatform(Boolean.FALSE);
                 } else {
@@ -475,7 +456,33 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             } else {
                 item.setIsPrintPlatform(Boolean.TRUE);
             }
-
+            //包装仓库/渠道信息
+            List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>();
+            List<LogisticsWarehouseEntity> warehouseEntityList = logisticsWarehouseList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getMainId()) && e.getMainId().equals(item.getId()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(warehouseEntityList)){
+                for(LogisticsWarehouseEntity logisticsWarehouseEntity: warehouseEntityList){
+                    LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
+                    channelView.setWarehouseId(logisticsWarehouseEntity.getOverseasWarehouseId());
+                    channelView.setWarehouseName(logisticsWarehouseEntity.getOverseasWarehouseName());
+                    List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getSourceId())
+                                    && c.getSourceId().equals(logisticsWarehouseEntity.getId()) && c.getMainId().equals(item.getId()))
+                            .collect(Collectors.toList());
+                    channelView.setChannelList(channelList);
+                    viewList.add(channelView);
+                }
+            }else {
+                LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
+                channelView.setWarehouseId("");
+                channelView.setWarehouseName("");
+                List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getMainId())
+                                && c.getMainId().equals(item.getId()))
+                        .sorted(Comparator.comparing(LogisticsChannelDTO.BaseDTO::getDisabled)).collect(Collectors.toList());
+                channelView.setChannelList(channelList);
+                viewList.add(channelView);
+            }
+            item.setChannelViewDTOList(viewList);
         }
     }
 

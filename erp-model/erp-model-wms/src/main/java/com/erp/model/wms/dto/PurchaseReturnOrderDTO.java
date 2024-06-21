@@ -991,9 +991,13 @@ public class PurchaseReturnOrderDTO {
         private Integer receiveQty;
 
         /**
-         * 库位名称
+         * 库位编码
          */
         private String warehouseLocation;
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
 
         /**
          * 币种

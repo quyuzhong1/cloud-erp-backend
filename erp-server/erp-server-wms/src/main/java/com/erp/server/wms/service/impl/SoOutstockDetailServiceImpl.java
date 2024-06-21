@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -37,6 +38,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -954,5 +956,42 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             groupSkuDTO.setProductName(skuVO.getSkuName());
         }
         return list;
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateSoOutPrice(List<SoDetailEntity> soDetailEntityList) {
+        soDetailEntityList = soDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getId())).collect(Collectors.toList());
+        List<String> soDetailIds = soDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(soDetailIds)){
+            return true;
+        }
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = this.lambdaQuery().in(SoOutstockDetailEntity::getSoDetailId,soDetailIds).list();
+        List<SoOutstockDetailEntity> updateList = new ArrayList<>();
+        for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
+            //销售订单明细
+            SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soDetailEntity)) {
+                continue;
+            }
+            BigDecimal price=soDetailEntity.getPrice();
+            //单价信息
+            detailEntity.setPrice(price);
+            BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
+            BigDecimal amount=MathUtil.multiply(price, detailEntity.getActualQty());
+            detailEntity.setAmount(amount);
+            BigDecimal amountLocalCurrency=amount;
+            if(Objects.nonNull(exchangeRate) && BigDecimal.ZERO.compareTo(exchangeRate)!=0){
+                amountLocalCurrency=MathUtil.multiply(amount,exchangeRate,4);
+            }
+            detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
+            updateList.add(detailEntity);
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        
+        return true;
     }
 }

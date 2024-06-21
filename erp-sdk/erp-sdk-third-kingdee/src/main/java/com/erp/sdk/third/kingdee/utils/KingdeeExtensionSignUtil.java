@@ -1,9 +1,7 @@
-package com.erp.server.wms.utils;
+package com.erp.sdk.third.kingdee.utils;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
-import cn.hutool.crypto.digest.HMac;
-import cn.hutool.crypto.digest.HmacAlgorithm;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +27,7 @@ public class KingdeeExtensionSignUtil {
      * 生成签名
      * 以「key=value&key2=value2」的方式组合成字符串然后进行加密，将加密后的十六进制字符串放入参数sign中一并传入
      */
-    public static String sign(TreeMap<String, String> map, final String secret, String... ignoreKeys) {
+    public static String sign(TreeMap<String, Object> map, final String secret, String... ignoreKeys) {
         List<String> ignoreKeyList = Stream.of(ignoreKeys).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         String mapStr = convertString(map, ignoreKeyList);
         return SecureUtil.hmacSha256(secret).digestHex(mapStr);
@@ -38,10 +36,10 @@ public class KingdeeExtensionSignUtil {
     /**
      * 以「key=value&key2=value2」的方式组合成字符串
      */
-    private static String convertString(TreeMap<String, String> map, List<String> ignoreKeyList) {
+    private static String convertString(TreeMap<String, Object> map, List<String> ignoreKeyList) {
         return map.entrySet().stream()
                 .filter(e -> !ignoreKeyList.contains(e.getKey()))
-                .map(e -> StrUtil.format("{}={}", e.getKey(), e.getValue()))
+                .map(e -> StrUtil.format("{}={}", e.getKey(), e.getValue().toString().replace(" ","")))
                 .collect(Collectors.joining("&"));
     }
 
@@ -49,9 +47,9 @@ public class KingdeeExtensionSignUtil {
     /**
      * 验证签名(原签名在MAP中)
      */
-    public static void verify(TreeMap<String, String> map, final String secret, String... ignoreKeys) {
+    public static void verify(TreeMap<String, Object> map, final String secret, String... ignoreKeys) {
         // 参数中的签名
-        String paramSign = map.get(SIGN_KEY);
+        String paramSign = map.get(SIGN_KEY).toString();
         if (StringUtils.isBlank(paramSign)) {
             // 签名字段不能为空
             throw new ServiceException("签名字段不能为空");
@@ -70,12 +68,5 @@ public class KingdeeExtensionSignUtil {
         }
     }
 
-    public static void main(String[] args) {
-        TreeMap<String, String> map = new TreeMap<>();
-        map.put("c", "c");
-        map.put("a", "a");
-        map.put("b", "b");
-        System.out.println(sign(map, "123456"));
-    }
 
 }

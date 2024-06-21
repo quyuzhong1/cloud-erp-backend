@@ -234,4 +234,6 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return List<LogisticsBillEntity>
      */
     List<LogisticsBillEntity> listBySoOutStockIdList(List<String> outstockIdList);
+
+    ApiResult<String> updateLogisticWeight(LogisticsBillDTO.UpdateWeight dto);
 }

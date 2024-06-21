@@ -66,7 +66,10 @@ public class LoginAuthService {
                 if(Objects.isNull(supplier)){
                     return ApiResult.error(ApiError.ERROR_96001);
                 }
-                if(supplier.getSrmDisabled() || supplier.getDisabled()){
+                if(supplier.getDisabled()){
+                    return ApiResult.error(ApiError.ERROR_LOGIN_DISABLE);
+                }
+                if(supplier.getSrmDisabled()){
                     return ApiResult.error(ApiError.ERROR_LOGIN_SRM_DISABLE);
                 }
             }
