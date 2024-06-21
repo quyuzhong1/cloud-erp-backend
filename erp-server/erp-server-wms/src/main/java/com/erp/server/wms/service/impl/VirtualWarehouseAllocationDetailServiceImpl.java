@@ -388,7 +388,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      * @return
      */
     @Override
-    public VirtualWarehouseAllocationDTO.ThirdCodeDto viewByThirdCode(String id) {
+    public VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id) {
         VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity = virtualWarehouseAllocationDetailService.getById(id);
         VirtualWarehouseAllocationEntity vwAllocationEntity;
         if (Objects.isNull(vwAllocationDetailEntity)) {
