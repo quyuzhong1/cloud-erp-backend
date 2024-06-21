@@ -1075,9 +1075,23 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "产品详情批量反审核")
     @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = productDetailService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<ProductDetailEntity> entityList = productDetailService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            ProductDetailEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(productDetailService.disApprove(entity));
+            }catch (Exception e){
+                log.error("产品sku审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

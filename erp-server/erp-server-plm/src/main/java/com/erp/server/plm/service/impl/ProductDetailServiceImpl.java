@@ -3682,32 +3682,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        List<ProductDetailEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(entityList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
-        }
+    public BatchResultDTO disApprove(ProductDetailEntity entity) {
         //已审核支持反审核
-        long count = entityList.stream().filter(entity ->
-                entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())
-        ).count();
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_99003);
+        if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_99003.msg);
         }
-        entityList.forEach(obj -> {
-            //新增操作日志
-            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
-                    .setBusinessId(obj.getId()).setOperation("状态变更").setContent("反审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
-        });
+        //新增操作日志
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
+                .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         //修改状态为审核中
         boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_COMMIT.getCode())
                 .in(ProductDetailEntity::getIsChange, IsConstant.NO)
-                .in(ProductDetailEntity::getId, ids)
+                .in(ProductDetailEntity::getId, entity.getProductId())
                 .update();
 
         //发送金蝶
-        sendPushTask(entityList,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-        return flag;
+        sendSinglePushTask(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "操作成功");
     }
 
     @Override

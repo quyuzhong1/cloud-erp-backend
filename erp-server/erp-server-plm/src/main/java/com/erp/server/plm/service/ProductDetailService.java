@@ -499,10 +499,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/6/14 17:18
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      **/
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(ProductDetailEntity entity);
 
     /**
      * 取消流程
