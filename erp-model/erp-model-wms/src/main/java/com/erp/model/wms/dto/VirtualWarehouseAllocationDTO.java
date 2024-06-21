@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -639,5 +640,32 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ManualFinishViewDTO {
+
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+        /**
+         * 完结说明
+         */
+        private String finishDescription;
     }
 }

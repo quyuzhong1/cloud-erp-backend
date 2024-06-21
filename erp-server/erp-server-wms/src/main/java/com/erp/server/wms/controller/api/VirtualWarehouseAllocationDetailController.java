@@ -194,7 +194,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
     }
 
     /**
-     * 根据单号展示信息
+     * 展示信息
      *
      * @param detailId
      * @return
@@ -203,12 +203,29 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:virtualWarehouseAllocationDetail:viewByThirdCode",
+            menuCode = "wms:virtualWarehouseAllocationDetail:view",
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
     )
     public ApiResult<VirtualWarehouseAllocationDTO.ThirdCodeDto> view(@RequestParam(value = "detailId") String detailId) {
        return success(virtualWarehouseAllocationDetailService.view(detailId));
+    }
+    /**
+     * 展示完结信息
+     *
+     * @param detailId
+     * @return
+     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "展示分货单同步信息")
+    @GetMapping("/viewManualFinish")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocationDetail:viewManualFinish",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<VirtualWarehouseAllocationDTO.ManualFinishViewDTO> viewManualFinish(@RequestParam(value = "detailId") String detailId) {
+       return success(virtualWarehouseAllocationDetailService.viewManualFinish(detailId));
     }
 
 }
