@@ -37,15 +37,13 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -1024,8 +1022,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
 
         List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
+        long count = list.stream().filter(e -> !RequisitionApplicationStatusEnum.HANDLE.getCode().equals(e.getStatus())).count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.ERROR_99104);
+        }
+        List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(entities)) {
+            throw new ServiceException(ApiError.ERROR_99104);
+        }
+
         //根据skuId查询拥有的子sku
-        List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> skuIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         Map<String, Set<String>> sourceIdByType = list.stream()
                 .collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getType, Collectors.mapping(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId, Collectors.toSet())));
@@ -1128,6 +1135,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         detailAddDto.setProductSizeWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
                         detailAddDto.setProductSizeHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
                     }
+                    detailAddDto.setDeliveryQty(pickingDetail.getQty());
+                    detailAddDto.setPlanQty(pickingDetail.getQty());
                     detailAddDto.setWarehouseLocation(pickingDetail.getStagingLocation());
                     detailAddList.add(detailAddDto);
                 }

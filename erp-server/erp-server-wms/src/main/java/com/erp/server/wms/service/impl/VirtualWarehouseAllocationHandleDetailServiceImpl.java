@@ -269,7 +269,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap = fromVmList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId));
         List<String> fromVwId = fromVmList.stream().map(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
         List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
-        saveList(allocationEntity, allocationHandleEntity, handleDetailList, noSyncDetailList, cancelMap, fromThirdMappingList, VwAllocationDirectionEnum.FORWARD);
+        saveList(allocationEntity, allocationHandleEntity, handleDetailList, noSyncDetailList, cancelMap, fromThirdMappingList, VwAllocationDirectionEnum.REVERSE);
     }
 
     public void saveList(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity,
@@ -332,7 +332,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> toVmMap = toVwResultList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId));
         List<String> toVwIds = toVwResultList.stream().map(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId).collect(Collectors.toList());
         List<ThirdMappingEntity> toMappingList = dmpThirdMappingFeign.getVwListBySysIds(toVwIds);
-        saveList(allocationEntity, allocationHandleEntity, handleDetailList, noSyncDetailList, toVmMap, toMappingList, VwAllocationDirectionEnum.REVERSE);
+        saveList(allocationEntity, allocationHandleEntity, handleDetailList, noSyncDetailList, toVmMap, toMappingList, VwAllocationDirectionEnum.FORWARD);
     }
 
     private void saveToList(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity,

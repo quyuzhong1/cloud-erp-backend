@@ -848,6 +848,7 @@ public enum ApiError implements Serializable {
     ERROR_99101(99101,"{}未生成拣货单，不允许下推销售出库单"),
     ERROR_99102(99102,"存在拣货单，不允许作废、删除和撤销"),
     ERROR_99103(99103,"sku【{}】的出库数量不能大于销售订单的销售数量"),
+    ERROR_99104(99104,"只有已处理的要货申请可以下推发货单，且只能下推一次"),
 
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
@@ -1072,6 +1073,7 @@ public enum ApiError implements Serializable {
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
     ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
     ERROR_VW_INVENTORY_ERROR(92235,"虚拟仓【{}】库存不足"),
+    ERROR_VW_SHOP_BINDED_ERROR(92236,"当前店铺【{}】已经被虚拟仓【{}】绑定"),
 
 
     /**

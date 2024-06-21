@@ -535,6 +535,23 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return service.submit(allocationEntity);
     }
 
+    /**
+     * 展示作废信息
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public VirtualWarehouseAllocationDTO.ManualFinishViewDTO viewInvalid(String id) {
+        VirtualWarehouseAllocationEntity vmAllocation = getById(id);
+        if (Objects.isNull(vmAllocation)) {
+            throw new ServiceException(ApiError.ERROR_VMALLOCATION_NOTFOUND, id);
+        }
+        VirtualWarehouseAllocationDTO.ManualFinishViewDTO manualFinishViewDTO=new VirtualWarehouseAllocationDTO.ManualFinishViewDTO();
+        BeanUtils.copyProperties(vmAllocation,manualFinishViewDTO);
+        return manualFinishViewDTO;
+    }
+
 
     private void checkDetail(VirtualWarehouseAllocationEntity allocationEntity) {
         //获取明细

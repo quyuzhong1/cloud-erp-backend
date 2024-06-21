@@ -296,4 +296,22 @@ public class VirtualWarehouseAllocationController extends BaseController {
     public ApiResult<List<VirtualWarehouseAllocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(virtualWarehouseAllocationService.tabList(dto));
     }
+
+    /**
+     * 展示作废信息
+     *
+     * @param detailId
+     * @return
+     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "展示作废信息")
+    @GetMapping("/viewInvalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:viewInvalid",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<VirtualWarehouseAllocationDTO.ManualFinishViewDTO> viewInvalid(@RequestParam(value = "id") String id) {
+        return success(virtualWarehouseAllocationService.viewInvalid(id));
+    }
 }

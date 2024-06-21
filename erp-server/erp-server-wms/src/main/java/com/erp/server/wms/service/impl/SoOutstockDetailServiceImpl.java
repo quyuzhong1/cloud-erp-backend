@@ -113,6 +113,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-19 10:18
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
