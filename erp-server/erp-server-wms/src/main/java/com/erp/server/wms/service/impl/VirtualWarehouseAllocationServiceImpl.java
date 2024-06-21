@@ -99,7 +99,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Resource
     @Lazy
     private VirtualWarehouseAllocationServiceImpl service;
-    private int size=20;
+    private static final int size = 20;
+    private static final String splitStr = "_&_";
 
     /**
      * 新增
@@ -384,8 +385,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
-        if (successList.size()>size){
-            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR,size);
+        if (successList.size() > size) {
+            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR, size);
         }
         String url = "";
         List<VwAllocationAllocationExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -419,8 +420,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
-        if (successList.size()>size){
-            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR,size);
+        if (successList.size() > size) {
+            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR, size);
         }
         String url = "";
         List<VwAllocationAllocationTransferExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -454,8 +455,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
-        if (successList.size()>size){
-            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR,size);
+        if (successList.size() > size) {
+            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR, size);
         }
         String url = "";
         List<VwAllocationAllocationCancelExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -589,13 +590,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * @param detailList
      */
     private void checkInfoAndQty(VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity, List<VirtualWarehouseAllocationDTO.DetailDto> detailList) {
-        String type = virtualWarehouseAllocationEntity.getType();
-        //校验总库存数量
-        List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryQtyList = getQty(detailList, type);
-//        //获取根据sku和实体仓获取需要分配的数量
-//        detailList.stream().collect(Collectors.groupingBy(detail -> detail.getSkuNo() + "_&_" + detail.getWarehouseName()));
-
-
         List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> warehouseIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> vmIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getToVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -605,6 +599,35 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
         List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(vmIds);
+        String type = virtualWarehouseAllocationEntity.getType();
+        //校验总库存数量
+        List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryQtyList = getQty(detailList, type);
+//        //获取根据sku和实体仓获取需要分配的数量
+        Map<String, List<VirtualWarehouseAllocationDTO.DetailDto>> skuWarehouseGroupMap = detailList.stream().collect(groupingBy(detail -> detail.getSkuId() + splitStr + detail.getWarehouseId()));
+        skuWarehouseGroupMap.forEach((key, list) -> {
+            String[] split = key.split(splitStr);
+            //获取实体仓
+            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(item -> Objects.equals(item.getId(), list.get(0).getWarehouseId())).findFirst().orElse(null);
+            if (Objects.isNull(updateDTO)) {
+                throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTFOUND, list.get(0).getWarehouseId());
+            } else {
+                if (Boolean.TRUE.equals(updateDTO.getDisabled())) {
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTACTIVE, list.get(0).getWarehouseId());
+                }
+            }
+            VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = virtualInventoryQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), split[0]) && Objects.equals(item.getWarehouseId(), split[1])).findFirst().orElse(null);
+            if (Objects.nonNull(viewQtyDTO)) {
+                Integer warehouseUsableQty = viewQtyDTO.getWarehouseUsableQty();
+                Integer reduce = list.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getQty).reduce(0, Integer::sum);
+                if (warehouseUsableQty < reduce) {
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_INVENTORY_ERROR, updateDTO.getName());
+                }
+            } else {
+                throw new ServiceException(ApiError.ERROR_WAREHOUSE_INVENTORY_ERROR, updateDTO.getName());
+            }
+        });
+
+
         //根据实体仓获取虚拟仓
         List<VirtualWarehouseRelationEntity> vwRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIds);
         if (CollUtil.isEmpty(vwRelationList) || Objects.isNull(vwRelationList.get(0))) {
@@ -632,8 +655,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         Map<String, Integer> keyMap = new HashMap<>();
 
         detailList.forEach(detail -> {
-            String key = detail.getSkuNo() + "_&_" + detail.getWarehouseName() + "_&_"
-                    + detail.getFromVirtualWarehouseName() + "_&_" + detail.getToVirtualWarehouseName();
+            String key = detail.getSkuNo() + splitStr + detail.getWarehouseName() + splitStr
+                    + detail.getFromVirtualWarehouseName() + splitStr + detail.getToVirtualWarehouseName();
             Integer value = keyMap.get(key);
             if (Objects.isNull(value)) {
                 value = 1;
@@ -645,7 +668,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         StringBuilder msg = new StringBuilder();
         keyMap.forEach((k, v) -> {
             if (v > 1) {
-                String[] split = k.split("_&_");
+                String[] split = k.split(splitStr);
                 if (v > 1) {
                     switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
                         case ALLOCATION:
