@@ -49,14 +49,34 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
     void submit(VirtualWarehouseAllocationEntity allocationEntity);
 
     void updateByMainId(String mainId, String syncStatus);
-
+    /**
+     * 同步
+     *
+     * @param vmAllocationDetailEntity
+     * @return
+     */
     BatchResultDTO sync(VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity, VirtualWarehouseAllocationEntity vmAllocationEntity);
 
+    /**
+     * 展示分货单同步信息
+     *
+     * @param id
+     * @return
+     */
     DmpPushTaskEntity viewSyncInfo(String id);
 
     VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id);
+
     /**
      * 修改同步状态
      */
     void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto);
+
+    /**
+     * 获取同步信息
+     *
+     * @param id
+     * @author hyj
+     */
+    VirtualWarehouseAllocationDTO.ManualFinishViewDTO viewManualFinish(String id);
 }

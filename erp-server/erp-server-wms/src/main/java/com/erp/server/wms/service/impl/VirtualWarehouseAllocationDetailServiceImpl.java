@@ -15,6 +15,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
@@ -33,6 +34,7 @@ import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -389,7 +391,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      */
     @Override
     public VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id) {
-        VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity = virtualWarehouseAllocationDetailService.getById(id);
+        VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity = this.getById(id);
         VirtualWarehouseAllocationEntity vwAllocationEntity;
         if (Objects.isNull(vwAllocationDetailEntity)) {
             throw new ServiceException("分货单明细不存在");
@@ -416,7 +418,6 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                 thirdCodeDto.setType(vwAllocationEntity.getType());
                 thirdCodeDto.setSysType(detailList.get(0).getSysType());
                 thirdCodeDto.setSysTypeName(detailList.get(0).getSysTypeName());
-                thirdCodeDto.setThirdCode(detailList.get(0).getThirdCode());
                 thirdCodeDto.setThirdCode(detailList.get(0).getThirdCode());
                 List<VirtualWarehouseAllocationDTO.DetailDto> detailDtos = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailList);
                 //获取所有的sku信息
@@ -445,6 +446,28 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             baseMapper.updateSyncStatus(dto, handleRelationEntityList.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList()));
             log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态成功：{}",dto);
         }
+    }
+    /**
+     * 获取同步信息
+     *
+     * @param id
+     * @author hyj
+     */
+    @Override
+    public VirtualWarehouseAllocationDTO.ManualFinishViewDTO viewManualFinish(String id) {
+        VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity = this.getById(id);
+        VirtualWarehouseAllocationEntity vwAllocationEntity;
+        if (Objects.isNull(vwAllocationDetailEntity)) {
+            throw new ServiceException("分货单明细不存在");
+        } else {
+            vwAllocationEntity = virtualWarehouseAllocationService.getById(vwAllocationDetailEntity.getMainId());
+            if (Objects.isNull(vwAllocationEntity)) {
+                throw new ServiceException("分货单不存在");
+            }
+        }
+        VirtualWarehouseAllocationDTO.ManualFinishViewDTO manualFinishViewDTO=new VirtualWarehouseAllocationDTO.ManualFinishViewDTO();
+        BeanUtils.copyProperties(vwAllocationDetailEntity,manualFinishViewDTO);
+        return manualFinishViewDTO;
     }
 
 }

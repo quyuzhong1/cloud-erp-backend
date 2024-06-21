@@ -1070,6 +1070,7 @@ public enum ApiError implements Serializable {
 
     ERROR_VW_CHANNEL_ERROR(92234,"虚拟仓【{}】已绑定当前渠道"),
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
+    ERROR_WAREHOUSE_INVENTORY_ERROR(92235,"实体仓【{}】库存不足"),
 
 
     /**
