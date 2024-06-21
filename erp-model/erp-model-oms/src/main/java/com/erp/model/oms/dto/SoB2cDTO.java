@@ -1956,6 +1956,11 @@ public class SoB2cDTO implements Serializable {
          */
         private String soId;
 
+        /**
+         * 是否来自第三方仓
+         */
+        private boolean fromThirdWarehouseFlag = false ;
+
 
     }
 
@@ -2152,6 +2157,21 @@ public class SoB2cDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SoDeliveryDTO {
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+    }
+
 
     /**
      * 修改订单发货时间
@@ -2163,6 +2183,8 @@ public class SoB2cDTO implements Serializable {
          * id
          */
         private List<String> soB2cIds;
+
+        private List<SoDeliveryDTO> soDeliveryDTOList;
         /**
          * 状态
          */
