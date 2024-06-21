@@ -2007,6 +2007,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (StringUtils.isNotBlank(flagId)) {
             //回滚库存
             InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Arrays.asList(flagId));
+           //回滚虚拟库存
+            virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+
             inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
             this.removeById(flagId);
             soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
