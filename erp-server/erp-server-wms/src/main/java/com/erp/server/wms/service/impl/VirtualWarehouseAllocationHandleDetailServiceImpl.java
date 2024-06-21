@@ -274,7 +274,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         saveList(allocationEntity, allocationHandleEntity, handleDetailList, noSyncDetailList, cancelMap, fromThirdMappingList, VwAllocationDirectionEnum.FORWARD);
     }
 
-    private void saveList(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity,
+    public void saveList(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity,
                           List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList,
                           Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap,
                           List<ThirdMappingEntity> fromThirdMappingList, VwAllocationDirectionEnum code) {
