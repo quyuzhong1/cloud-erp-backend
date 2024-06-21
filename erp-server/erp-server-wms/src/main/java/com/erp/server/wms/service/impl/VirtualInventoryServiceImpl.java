@@ -267,10 +267,10 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                             && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
                     .findFirst().orElse(null);
             VirtualInventoryDTO.ViewQtyDTO toQtyDto = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
-                            && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getFromVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
+                            && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId()))
                     .findFirst().orElse(null);
-            viewQtyDTO.setToVirtualWarehouseUsableQty(Objects.isNull(fromQtyDto) ? 0 : fromQtyDto.getToVirtualWarehouseUsableQty());
-            viewQtyDTO.setFromVirtualWarehouseUsableQty(Objects.isNull(toQtyDto) ? 0 : fromQtyDto.getToVirtualWarehouseUsableQty());
+            viewQtyDTO.setToVirtualWarehouseUsableQty(Objects.isNull(toQtyDto) ? 0 : toQtyDto.getToVirtualWarehouseUsableQty());
+            viewQtyDTO.setFromVirtualWarehouseUsableQty(Objects.isNull(fromQtyDto) ? 0 : fromQtyDto.getToVirtualWarehouseUsableQty());
             resultList.add(viewQtyDTO);
         }
     }

@@ -248,16 +248,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             return new PagingVO(pageData);
         }
         List<VirtualWarehouseAllocationDTO.ListDTO> records = pageData.getRecords();
-        setSkuInfo(records);
+        setInfo(records);
         return new PagingVO(pageData);
     }
 
     /**
-     * 设置sku
+     * 设置明细
      *
      * @param records
      */
-    private void setSkuInfo(List<VirtualWarehouseAllocationDTO.ListDTO> records) {
+    private void setInfo(List<VirtualWarehouseAllocationDTO.ListDTO> records) {
         List<String> skuIds = records.stream().map(record -> record.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
         if (CollectionUtils.isNotEmpty(skuVOList)) {
@@ -268,6 +268,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                     record.setImageUrl(skuVO.getSkuImagesUrl());
                     record.setProductName(skuVO.getSkuName());
                 }
+                record.setSyncStatusName(VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(record.getSyncStatus()));
             });
         }
     }
@@ -322,7 +323,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualWarehouseAllocationDTO.ListDTO> list = baseMapper.listExport(dto);
         if (CollectionUtils.isNotEmpty(list)) {
             //填充数据
-            setSkuInfo(list);
+            setInfo(list);
         }
         StringBuffer stringBuffer = new StringBuffer();
         String excelPath = "excel/VirtualWarehouseAllocation.xlsx";
@@ -604,31 +605,19 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryQtyList = getQty(detailList, type);
         //获取根据sku和实体仓获取需要分配的数量
         Map<String, List<VirtualWarehouseAllocationDTO.DetailDto>> skuWarehouseGroupMap = detailList.stream().collect(groupingBy(detail -> detail.getSkuId() + splitStr + detail.getWarehouseId()));
-        skuWarehouseGroupMap.forEach((key, list) -> {
-            String[] split = key.split(splitStr);
-            //获取实体仓
-            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(item -> Objects.equals(item.getId(), list.get(1).getWarehouseId())).findFirst().orElse(null);
-            if (Objects.isNull(updateDTO)) {
-                throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTFOUND, list.get(0).getWarehouseId());
-            } else {
-                if (Boolean.TRUE.equals(updateDTO.getDisabled())) {
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTACTIVE, list.get(0).getWarehouseId());
-                }
-            }
-            switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
-                case ALLOCATION:
-                    VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = virtualInventoryQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), split[0]) && Objects.equals(item.getWarehouseId(), split[1])).findFirst().orElse(null);
-                    if (Objects.nonNull(viewQtyDTO)) {
-                        Integer warehouseAllocationQty = viewQtyDTO.getWarehouseAllocationQty();
-                        Integer reduce = list.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getQty).reduce(0, Integer::sum);
-                        if (warehouseAllocationQty < reduce) {
-                            throw new ServiceException(ApiError.ERROR_WAREHOUSE_INVENTORY_ERROR, updateDTO.getName());
-                        }
-                    } else {
-                        throw new ServiceException(ApiError.ERROR_WAREHOUSE_INVENTORY_ERROR, updateDTO.getName());
-                    }
-                    break;
-                case TRANSFER:
+//        skuWarehouseGroupMap.forEach((key, list) -> {
+//            String[] split = key.split(splitStr);
+//            //获取实体仓
+//            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(item -> Objects.equals(item.getId(), list.get(1).getWarehouseId())).findFirst().orElse(null);
+//            if (Objects.isNull(updateDTO)) {
+//                throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTFOUND, list.get(0).getWarehouseId());
+//            } else {
+//                if (Boolean.TRUE.equals(updateDTO.getDisabled())) {
+//                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTACTIVE, list.get(0).getWarehouseId());
+//                }
+//            }
+//            switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
+//                case ALLOCATION:
 //                    VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = virtualInventoryQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), split[0]) && Objects.equals(item.getWarehouseId(), split[1])).findFirst().orElse(null);
 //                    if (Objects.nonNull(viewQtyDTO)) {
 //                        Integer warehouseAllocationQty = viewQtyDTO.getWarehouseAllocationQty();
@@ -639,15 +628,27 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 //                    } else {
 //                        throw new ServiceException(ApiError.ERROR_WAREHOUSE_INVENTORY_ERROR, updateDTO.getName());
 //                    }
-                    break;
-                case CANCEL:
-                    break;
-                default:
-                    break;
-
-            }
-
-        });
+//                    break;
+//                case TRANSFER:
+////                    VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = virtualInventoryQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), split[0]) && Objects.equals(item.getWarehouseId(), split[1])).findFirst().orElse(null);
+////                    if (Objects.nonNull(viewQtyDTO)) {
+////                        Integer warehouseAllocationQty = viewQtyDTO.getWarehouseAllocationQty();
+////                        Integer reduce = list.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getQty).reduce(0, Integer::sum);
+////                        if (warehouseAllocationQty < reduce) {
+////                            throw new ServiceException(ApiError.ERROR_WAREHOUSE_INVENTORY_ERROR, updateDTO.getName());
+////                        }
+////                    } else {
+////                        throw new ServiceException(ApiError.ERROR_WAREHOUSE_INVENTORY_ERROR, updateDTO.getName());
+////                    }
+//                    break;
+//                case CANCEL:
+//                    break;
+//                default:
+//                    break;
+//
+//            }
+//
+//        });
 
 
         //根据实体仓获取虚拟仓
