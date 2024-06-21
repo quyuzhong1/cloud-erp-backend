@@ -537,7 +537,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count != deliveryNoticeEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        pickingListsService.exist(ids);
         //撤销现有流程
         workflowFeign.cancelProcess(ids);
         //修改状态为待提交

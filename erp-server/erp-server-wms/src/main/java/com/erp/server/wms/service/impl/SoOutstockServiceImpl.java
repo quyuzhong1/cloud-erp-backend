@@ -221,6 +221,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private SoB2cDeliveryService soB2cDeliveryService;
 
     @Resource
+    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+
+    @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     @Lazy
@@ -2182,6 +2185,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SoB2cDeliveryEntity notCancelBySoId = soB2cDeliveryService.getNotCancelBySoId(soB2cId);
                 dto.setSourceId(notCancelBySoId.getId());
                 dto.setSourceCode(notCancelBySoId.getCode());
+                List<SoB2cDeliveryDetailEntity> entities = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(notCancelBySoId.getId()));
+                for (SoOutstockDetailDTO.AddDTO addDTO : dto.getDetailList()) {
+                    SoB2cDeliveryDetailEntity entity = entities.stream()
+                            .filter(e ->e.getSkuId().equals(addDTO.getSkuId()))
+                            .filter(e ->e.getSourceDetailId().equals(addDTO.getSoDetailId())).findFirst().orElse(new SoB2cDeliveryDetailEntity());
+                    addDTO.setSourceDetailId(entity.getId());
+                }
             }
             Boolean result = createB2cSoOutstock(dto);
             return result;
