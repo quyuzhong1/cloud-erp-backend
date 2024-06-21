@@ -100,7 +100,11 @@ public class SkuMappingDTO implements Serializable {
 
         @NotBlank(message = "产品sku不能为空")
         private String productSkuId;
-
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效时间不能为空")
+        private LocalDateTime effectiveTime;
 //        /**
 //         * 平台类型: goodcang=谷仓，iml=艾姆勒
 //         */
@@ -431,7 +435,11 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotBlank(message = "产品sku不能为空")
         private String productSkuId;
-
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效时间不能为空")
+        private LocalDateTime effectiveTime;
 
     }
 

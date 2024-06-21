@@ -479,6 +479,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String warehouseSkuNo = dto.getWarehouseSkuNo();
         String warehouseId = dto.getWarehouseId();
         String warehouseProductName = dto.getWarehouseProductName();
+        LocalDateTime effectiveTime = dto.getEffectiveTime();
 //        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         // 查询当前仓库的平台类型
         List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(Collections.singletonList(dto.getWarehouseId()));
@@ -515,10 +516,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setListingId(listingId);
         skuMappingEntity.setDictPlatform("");
         skuMappingEntity.setHasMappingAll(false);
-        LocalDateTime now = LocalDateTime.now();
+//        LocalDateTime now = LocalDateTime.now();
         //生效时间
-        skuMappingEntity.setEffectiveTime(now);
-        skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        skuMappingEntity.setEffectiveTime(effectiveTime);
+        skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
         if (this.save(skuMappingEntity)) {
             // 操作日志
             String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getId());
@@ -585,7 +586,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.isNull(skuMapping)) {
             throw new ServiceException(ApiError.ERROR_92051);
         }
-
+        //启用日期不能大于上个映射关系的开始时间
+        if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
+            throw new ServiceException(ApiError.ERROR_92151,skuMapping.getEffectiveTime());
+        }
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
@@ -626,8 +630,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("该仓库下已存在该sku");
         }
         //更改原有的
-        LocalDateTime now = LocalDateTime.now();
-        skuMapping.setExpireTime(now);
+//        LocalDateTime now = LocalDateTime.now();
+        skuMapping.setExpireTime(dto.getEffectiveTime());
         skuMapping.setIsExpire(Boolean.TRUE);
 //        skuMapping.setIsDeleted(true);
         boolean updateResult = this.updateById(skuMapping);
@@ -650,8 +654,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMapping.setPlatformName(skuMapping.getPlatformName());
         addSkuMapping.setHasMappingAll(!StringUtils.isBlank(skuMapping.getDictPlatform()) && dto.checkAndGetHasMappingAll());
         //生效时间
-        addSkuMapping.setEffectiveTime(now);
-        addSkuMapping.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        addSkuMapping.setEffectiveTime(dto.getEffectiveTime());
+        addSkuMapping.setExpireTime(dto.getEffectiveTime().plusYears(MathUtil.NUMBER_100));
         if (!this.save(addSkuMapping)) {
             throw new ServiceException("[SkuMapping] 数据新增失败");
         }
