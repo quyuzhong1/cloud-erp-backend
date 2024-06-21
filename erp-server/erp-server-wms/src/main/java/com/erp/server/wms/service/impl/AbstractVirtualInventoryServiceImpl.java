@@ -319,8 +319,16 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         if(CollUtil.isEmpty(ruleList)) {
             throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
         }
-        // 直接过滤得到出库类型的数据
-        List<VirtualTransRuleDTO.StockParamDTO>  outTransactionRules = ruleList.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)).collect(Collectors.toList());
+        //对需要出库的仓库库存进行校验
+        List<VirtualTransRuleDTO.StockParamDTO> outTransactionRules;
+        if(Objects.nonNull(param.getWarehouseOption())) {
+            // 调拨类业务，包含当前仓和目的仓
+            outTransactionRules = ruleList.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)
+                    && Objects.equals(r.getWarehouseOption().getCode(), param.getWarehouseOption().getCode())).collect(Collectors.toList());
+        } else {
+            // 直接过滤得到出库类型的数据
+            outTransactionRules = ruleList.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)).collect(Collectors.toList());
+        }
         if (CollectionUtil.isEmpty(outTransactionRules)) {
             return;
         }

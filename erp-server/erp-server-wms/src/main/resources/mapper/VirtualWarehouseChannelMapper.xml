@@ -72,8 +72,12 @@
         inner join  virtual_warehouse vw on vwc.virtual_warehouse_id = vw.id and vw.is_deleted = false
         <where>
             vwc.is_deleted = false and vw.disabled = false
-            and ((vwc.type = 'platform' and  vwc.dict_platform = #{platformDTO.dictPlatform})
-            or (vwc.type = 'shop' and vwc.dict_platform = #{platformDTO.dictPlatform} and vwc.relation_id = #{platformDTO.relationId}))
+            <if test="platformDTO.relationId != null and platformDTO.relationId != ''">
+                and vwc.type = 'shop' and vwc.dict_platform = #{platformDTO.dictPlatform} and vwc.relation_id = #{platformDTO.relationId}
+            </if>
+            <if test="platformDTO.relationId != null and platformDTO.relationId == ''">
+                and vwc.type in('shop','platform')  and  vwc.dict_platform = #{platformDTO.dictPlatform}
+            </if>
             order by vwc.id limit 1
         </where>
     </select>
