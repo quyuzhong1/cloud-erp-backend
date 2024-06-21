@@ -12,7 +12,6 @@ import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.message.constant.RedisKeyConstant;
@@ -622,8 +621,8 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         if(inventory.getQty() < qty && !allowNegativeInventory(warehouseId)) {
             throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, skuNo, warehouseDetail.getName(), warehouseLocationEntity.getName(), inventoryStatusName,inventory.getQty(),qty));
         }
-
-        //虚拟库存校验
+        //后面会放开
+       /* //虚拟库存校验
         if (InventoryStatusEnum.USABLE.equals(status)) {
             //虚拟库存
             Integer virtualQty = virtualInventoryService.getInventoryQtyByWarehouseId(warehouseId,skuId);
@@ -634,7 +633,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             if (qty > usableInventoryTotal - virtualQty) {
                 throw new ServiceException(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,virtualQty,usableInventoryTotal - virtualQty);
             }
-        }
+        }*/
     }
 
     /**
