@@ -8,7 +8,7 @@ public class DictKindgeeConstant {
     /**
      * 其他出库单出库类型
      */
-    public static final String OTHER_OUT_TYPE_NAME = "出库类型";
+    public static final String OTHER_OUT_TYPE_NAME = "其他出库单类型";
 
     /**
      * 其他出库单多渠道订单名称
