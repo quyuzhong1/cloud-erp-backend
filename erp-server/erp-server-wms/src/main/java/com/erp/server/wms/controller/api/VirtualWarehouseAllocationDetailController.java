@@ -1,23 +1,17 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
-import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
 import com.erp.server.wms.service.VirtualWarehouseAllocationService;
-import com.erp.server.wms.service.WarehouseLocationMoveService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +28,6 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -207,15 +200,15 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.SUBMIT, desc = "展示分货单同步信息")
-    @GetMapping("/viewByThirdCode")
+    @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:virtualWarehouseAllocationDetail:viewByThirdCode",
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
     )
-    public ApiResult<VirtualWarehouseAllocationDTO.ThirdCodeDto> viewByThirdCode(@RequestParam(value = "detailId") String detailId) {
-       return success(virtualWarehouseAllocationDetailService.viewByThirdCode(detailId));
+    public ApiResult<VirtualWarehouseAllocationDTO.ThirdCodeDto> view(@RequestParam(value = "detailId") String detailId) {
+       return success(virtualWarehouseAllocationDetailService.view(detailId));
     }
 
 }

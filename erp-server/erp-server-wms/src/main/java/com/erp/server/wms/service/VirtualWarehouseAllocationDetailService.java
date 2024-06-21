@@ -2,16 +2,11 @@ package com.erp.server.wms.service;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.List;
 
 /**
  * <p>
@@ -59,7 +54,7 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
 
     DmpPushTaskEntity viewSyncInfo(String id);
 
-    VirtualWarehouseAllocationDTO.ThirdCodeDto viewByThirdCode(String id);
+    VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id);
     /**
      * 修改同步状态
      */
