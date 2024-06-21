@@ -342,6 +342,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String updatePlatformSku(SkuMappingDTO.UpdatePlatformDTO dto) {
+        //step1 参数校验
         String id = dto.getId();
         SkuMappingEntity skuMaping = this.getById(id);
         if (Objects.isNull(skuMaping)) {
@@ -350,6 +351,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         // 历史skuId
         String historyProductSkuId = skuMaping.getProductSkuId();
         // 当前skuId
+        //启用日期不能大于上个映射关系的开始时间
+        if (dto.getEffectiveTime().isBefore(skuMaping.getEffectiveTime())){
+            throw new ServiceException(ApiError.ERROR_92151,skuMaping.getEffectiveTime());
+        }
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
@@ -365,9 +370,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (null == listing) {
             throw new ServiceException("listing记录不存在");
         }
-
+        //检查映射关系是否存在
         checkExist(id, listing.getId(), dto.getShopId());
-
+        //检查历史映射关系是否存在
         checkHistory(id, listing.getId(), dto.getShopId(), dto.getProductSkuId());
 
         // 平台sku校验
@@ -387,7 +392,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("[listing] 更新失败");
         }
         // 无修改
-        if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId)) {
+        if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId) && dto.getEffectiveTime().equals(skuMaping.getEffectiveTime())) {
             // 检查仓库发货配置
             skuMappingExtendService.checkAndSave(skuMaping, dto.getExtendList());
             return skuMaping.getId();
@@ -396,7 +401,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         // 历史SkuId为设置过期
         boolean update = lambdaUpdate()
                 .set(SkuMappingEntity::getIsExpire, true)
-                .set(SkuMappingEntity::getExpireTime, now)
+                .set(SkuMappingEntity::getExpireTime, dto.getEffectiveTime())
                 //       // 历史SkuId为空逻辑删除
                 .set(StringUtils.isBlank(historyProductSkuId), BaseEntity::getIsDeleted, true)
                 .eq(BaseEntity::getId, skuMaping.getId())
@@ -414,8 +419,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMaping.setListingId(listing.getId());
         addSkuMaping.setType(RuleTypeEnum.PLATFORM);
         addSkuMaping.setIsExpire(Boolean.FALSE);
-        addSkuMaping.setEffectiveTime(now);
-        addSkuMaping.setExpireTime(now.plusYears(100));
+        addSkuMaping.setEffectiveTime(dto.getEffectiveTime());
+        addSkuMaping.setExpireTime(dto.getEffectiveTime().plusYears(100));
         if (!this.save(addSkuMaping)) {
             throw new ServiceException("[SkuMapping] 映射修改新增失败");
         }
@@ -943,11 +948,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public void checkHistory(String id, String listingId, String shopId, String productSkuId) {
-        SkuMappingEntity oldEntity = this.baseMapper.findHistory(id, listingId, shopId, productSkuId);
-        if(null == oldEntity){
+        List<SkuMappingEntity> oldEntities = this.baseMapper.findHistory(id, listingId, shopId, productSkuId);
+        if(CollectionUtils.isEmpty(oldEntities)){
             return;
         }
-        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntity.getExpireTime().toString());
+        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntities.get(0).getExpireTime().toString());
     }
 
     /**
@@ -1274,5 +1279,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .filter(e->e.getPlatformSpuNo().equalsIgnoreCase(platformSpuNo))
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * 根据平台sku记录获取变更历史记录
+     * @param id
+     * @return
+     */
+    @Override
+    public List<SkuMappingEntity> listHistoryByListingId(String id) {
+        if (StringUtils.isBlank(id)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(SkuMappingEntity::getListingId, id).orderByAsc(SkuMappingEntity::getEffectiveTime).list();
     }
 }

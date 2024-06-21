@@ -607,6 +607,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         poInstockDetailList = poInstockDetailList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
         List<String> errorCodes = new ArrayList<>();
         for (PoReturnEntity purchaseReturnOrderEntity : purchaseReturnOrderEntities) {
+            if(!SourceTypeEnum.QC_INFO.getCode().equals(purchaseReturnOrderEntity.getSourceType())){
+                continue;
+            }
             List<PoReturnDetailEntity> poReturnDetailEntityList = allPoReturnDetailEntities.stream().filter(v->v.getMainId().equals(purchaseReturnOrderEntity.getId())).collect(Collectors.toList());
             for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailEntityList) {
                 Integer receiveQty = receiveDetails.stream().filter(v->v.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);

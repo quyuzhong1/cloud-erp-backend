@@ -1,11 +1,13 @@
 package com.erp.server.dmp.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
+import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.DmpPullTaskHistoryService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +37,7 @@ public class DmpPullTaskHistoryController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
     public ApiResult<PagingVO<DmpPullTaskDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpPullTaskDTO.ParamDTO> dto) {
         PagingVO<DmpPullTaskDTO.ListDTO> pagingVO = dmpPullTaskHistoryService.paging(dto);
         return success(pagingVO);
@@ -50,6 +53,7 @@ public class DmpPullTaskHistoryController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
     public ApiResult<String> exportExcel(@RequestBody DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response) {
         Boolean flag = dmpPullTaskHistoryService.exportExcel(dto, response);
         return Boolean.TRUE.equals(flag) ? success() : failure();

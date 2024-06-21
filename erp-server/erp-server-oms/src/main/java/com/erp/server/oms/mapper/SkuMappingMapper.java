@@ -98,5 +98,5 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
 
     List<ListingAdvanceQueryDTO> advanceQuerySku(@Param("params") AdvanceQueryContainer advanceQueryContainer);
 
-    SkuMappingEntity findHistory(@Param("id")String id, @Param("listingId")String listingId, @Param("shopId")String shopId, @Param("productSkuId")String productSkuId);
+    List<SkuMappingEntity> findHistory(@Param("id")String id, @Param("listingId")String listingId, @Param("shopId")String shopId, @Param("productSkuId")String productSkuId);
 }

@@ -68,12 +68,9 @@
         sm.update_user_name,
         sm.update_time
         FROM sku_mapping sm
-        LEFT JOIN shop_info si
-        ON sm.shop_id=si.id AND si.is_deleted=FALSE
-        LEFT JOIN listing_info li
-        ON sm.listing_id=li.id AND li.is_deleted=FALSE
-        WHERE sm.is_deleted=FALSE
-        AND sm.is_expire = FALSE
+        LEFT JOIN shop_info si ON sm.shop_id=si.id AND si.is_deleted=FALSE
+        LEFT JOIN listing_info li ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
         </if>
@@ -771,5 +768,6 @@
         and listing_id = #{listingId}
         and shop_id = #{shopId}
         and product_sku_id = #{productSkuId}
+        order by expire_time asc
     </select>
 </mapper>
