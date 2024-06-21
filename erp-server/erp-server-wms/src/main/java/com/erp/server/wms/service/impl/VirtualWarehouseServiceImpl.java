@@ -357,7 +357,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             }
             //禁用时如果绑定第三方仓，需要清除
             dmpThirdMappingFeign.add(bindThirdMapping(new ArrayList<>(), vwEntity));
-        }else{
+        } else {
             //原始禁用状态变成启用时，校验当前虚拟仓绑定的渠道是否已被选择
             //获取当前已经绑定的所有渠道
 //            List<VirtualWarehouseDTO.BindChannelDto> bindedDictPlatform = virtualWarehouseChannelService.getBindedDictPlatformNoGroup();
@@ -397,6 +397,12 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         return Boolean.TRUE;
     }
 
+    /**
+     * 预览
+     *
+     * @param id
+     * @return
+     */
     @Override
     public VirtualWarehouseDTO.ViewDTO view(String id) {
         VirtualWarehouseEntity vmEntity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST));
@@ -460,20 +466,20 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             childTreeList.forEach(childTree -> {
                 List<VirtualWarehouseDTO.BindChannelDto> bindChannelDtos = allBindedMap.get(childTree.getCode());
                 if (Objects.nonNull(bindChannelDtos)) {
-                    String bindedType = bindChannelDtos.get(0).getDictPlatform();
-                    if (Objects.nonNull(virtualWarehouseChannelEntity) ) {
+                    String bindedType = bindChannelDtos.get(0).getType();
+                    if (Objects.nonNull(virtualWarehouseChannelEntity)) {
                         if (Objects.equals(virtualWarehouseChannelEntity.getDictPlatform(), childTree.getCode())) {
                             //如果是本虚拟仓绑定需要设置为可选
                             childTree.setDisabled(false);
                             childTree.setShopDisabled(false);
                             childTree.setPlatformDisabled(false);
-                        }else{
-                            if (Objects.equals(bindedType, VitualWarehouseChannelTypeEnum.PLATFORM.getCode())){
+                        } else {
+                            if (Objects.equals(bindedType, VitualWarehouseChannelTypeEnum.PLATFORM.getCode())) {
                                 //如果是非本虚拟仓绑定需要设置为不可选
                                 childTree.setDisabled(true);
                                 childTree.setShopDisabled(true);
                                 childTree.setPlatformDisabled(true);
-                            }else {
+                            } else {
                                 //如果是非本虚拟仓绑定需要设置平台为不可选
                                 childTree.setDisabled(false);
                                 childTree.setShopDisabled(false);
@@ -502,6 +508,12 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         return trees;
     }
 
+    /**
+     * 展示已选择的店铺
+     *
+     * @param dto
+     * @return
+     */
     @Override
     public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<VirtualWarehouseDTO.ShopSelectDTO> dto) {
         PagingDTO<ShopDTO.SelectDTO> shopDto = new PagingDTO<>();
@@ -537,6 +549,12 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         return pagingSelect;
     }
 
+    /**
+     * 根据名称查询
+     *
+     * @param nameList
+     * @return
+     */
     @Override
     public List<VirtualWarehouseDTO.VwDTO> getByNames(List<String> nameList) {
         return baseMapper.getByNames(nameList);

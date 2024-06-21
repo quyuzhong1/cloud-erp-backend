@@ -12,6 +12,7 @@ import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleRelationEntity;
+import com.erp.model.wms.enums.VwAllocationDirectionEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.service.RequisitionApplicationDetailService;
 import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
@@ -71,7 +72,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             }
 
             String type = handleDetail.getType();
-            request.setPre_time(LocalDateTime.now().minusMinutes(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            request.setPre_time(LocalDateTime.now().minusMinutes(3).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
             request.setVirtual_warehouse_no(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseNo()) ? handleDetail.getThirdFromVirtualWarehouseNo() : handleDetail.getThirdToVirtualWarehouseNo());
             request.setTo_virtual_warehouse_no(handleDetail.getThirdToVirtualWarehouseNo());
             request.setBizType(sourceType);
@@ -83,11 +84,8 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                             .eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetail.getId()));
             //根据sku和调入虚拟仓进行聚合
             List<String> allocationDetailIds = allocationHandleRelationEntities.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList());
-
             switch (SourceTypeEnum.getByCode(sourceType)) {
                 case VIRTUAL_WAREHOUSE_ALLOCATION:
-//                    switch (VirtualWarehouseAllocationTypeEnum.getByCode(type)) {
-//                        case ALLOCATION:
                     Map<String, List<VirtualWarehouseAllocationDetailEntity>> skuMap = virtualWarehouseAllocationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getSkuNo));
                     skuMap.forEach((skuNo, list) -> {
                         VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
