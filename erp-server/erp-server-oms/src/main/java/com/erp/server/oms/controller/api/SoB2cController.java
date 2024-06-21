@@ -928,8 +928,8 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单取消拆分失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消拆分失败");
-                    resultDTOS.add(result);
+//                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消拆分失败");
+//                    resultDTOS.add(result);
                     continue;
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
