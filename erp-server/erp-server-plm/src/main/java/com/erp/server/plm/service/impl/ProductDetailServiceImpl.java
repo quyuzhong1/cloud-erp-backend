@@ -21,6 +21,7 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
@@ -3644,60 +3645,37 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        List<ProductDetailEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(entityList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+    public BatchResultDTO approve(ProductDetailEntity entity, String type, String comment, Boolean isNeedProcess) {
+        if (!(entity.getStatus().equals(ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
+                || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode()))) {
+            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_95038.msg);
         }
-        //判断是否是审核中的状态
-        long count = entityList.stream().filter(entity ->
-                entity.getStatus().equals(ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
-                        || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())
-        ).count();
-
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_95038);
-        }
-
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        //TODO 待加审核流程
-
-        Integer approveStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
+        Integer approveStatus;
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             approveStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-
-            //workflowFeign.taskPass(approveProcess);
-            entityList.forEach(obj -> {
-                //发送通知
-                noticeMessageService.approveProductNotice(UserContext.getLoginUser().getUserName(), obj);
-                //新增操作日志
-                sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
-                        .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));
-            });
+            //发送通知
+            noticeMessageService.approveProductNotice(UserContext.getLoginUser().getUserName(), entity);
             //发送金蝶
-            sendPushTask(entityList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendSinglePushTask(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         } else {
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
             //新增审核不通过意见
-            List<ProductDetailCommentEntity> commentEntityList = new ArrayList<>();
-            entityList.forEach(obj -> {
-                sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
-                        .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "]操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_NO_PASS.getName() + "]，原因：" + baseApproveParamDTO.getComment()));
-                //新增审核不通过意见
-                ProductDetailCommentEntity commentEntity = new ProductDetailCommentEntity();
-                commentEntity.setComment("[审核结果-审核不通过]" + baseApproveParamDTO.getComment());
-                commentEntity.setProductDetailId(obj.getId());
-                commentEntityList.add(commentEntity);
-            });
-            productDetailCommentService.saveBatch(commentEntityList);
+            ProductDetailCommentEntity commentEntity = new ProductDetailCommentEntity();
+            commentEntity.setComment("[审核结果-审核不通过]" + comment);
+            commentEntity.setProductDetailId(entity.getId());
+            productDetailCommentService.save(commentEntity);
         }
-        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, approveStatus)
+        //操作日志
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
+                .setBusinessId(entity.getId()).setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ApproveTypeEnum.getName(type) + "]，审批意见：" + comment));
+        //更新sku记录
+        lambdaUpdate().set(ProductDetailEntity::getStatus, approveStatus)
                 .set(ProductDetailEntity::getUpdateUserId, userInfo.getUid())
                 .set(ProductDetailEntity::getUpdateUserName, userInfo.getUserName())
-                .in(ProductDetailEntity::getId, ids)
+                .eq(ProductDetailEntity::getId, entity.getId())
                 .update();
-        return flag;
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "操作成功");
     }
 
 
@@ -4960,7 +4938,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return baseMapper.getSkuBaseBySkuIds(skuIds);
     }
-
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param entity
+     * @param operate
+     */
+    private void sendSinglePushTask (ProductDetailEntity entity, String operate) {
+        //审核通过发送金蝶
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(entity, operate);
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(pushTaskEntity));
+            }
+        });
+    }
     /**
      * @description: 推送金蝶
      * @author Will
