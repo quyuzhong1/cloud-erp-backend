@@ -1690,8 +1690,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setQty(detailEntity.getDeliveryQty());
             outInStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            if (StrUtil.isBlank(detailEntity.getVirtualWarehouseId())) {
+                continue;
+            }
             outInStockDTO.setVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
             paramList.add(outInStockDTO);
+        }
+        //无虚拟仓库不扣虚拟库存
+        if (CollectionUtils.isEmpty(paramList)) {
+            return;
         }
         //添加冻结库存
         VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();

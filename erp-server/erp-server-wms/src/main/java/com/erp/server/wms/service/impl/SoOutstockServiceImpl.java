@@ -789,16 +789,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
         }
         if (CollectionUtils.isNotEmpty(members)) {
-            //虚拟出库扣库存
-            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-            List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, members);
-            stockParamDTO.setParamList(outInStockDTOS);
-            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())) {
-                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
-            } else {
-                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
+            //无虚拟仓无需扣减库存
+            List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(virtualInOutStockList)) {
+                //虚拟出库扣库存
+                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+                List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
+                stockParamDTO.setParamList(outInStockDTOS);
+                if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())) {
+                    stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
+                } else {
+                    stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
+                }
+                virtualInventoryTransCoreService.approve(stockParamDTO);
             }
-            virtualInventoryTransCoreService.approve(stockParamDTO);
 
             //扣实体仓库存
             inventoryInOutStockDTO.setParamList(members);
@@ -896,12 +900,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
         }
         if (CollectionUtils.isNotEmpty(members)) {
-            //虚拟出库扣库存
-            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-            List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, members);
-            stockParamDTO.setParamList(outInStockDTOS);
-            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
-            virtualInventoryTransCoreService.approve(stockParamDTO);
+            //无虚拟仓无需扣减库存
+            List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(virtualInOutStockList)) {
+                //虚拟出库扣库存
+                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+                List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
+                stockParamDTO.setParamList(outInStockDTOS);
+                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
+                virtualInventoryTransCoreService.approve(stockParamDTO);
+            }
 
             //扣实体仓库库存
             inventoryInOutStockDTO.setParamList(members);
