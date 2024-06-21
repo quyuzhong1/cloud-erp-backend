@@ -653,39 +653,32 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(SupplierEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //调用审核流程
-//        {
-//            ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
-//            list.forEach(obj -> {
-                ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-                approveDTO.setBusinessId(entity.getId());
-                approveDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
-                approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
-                approveDTO.setComment(comment);
-                approveDTO.setUserId(userInfo.getUid());
-                approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
-//                resultList.add(approveDTO);
-//            });
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
+        approveDTO.setComment(comment);
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
-            Integer code = result.getCode();
-            if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_94006);
-            }
-            ProcessManagementDTO.ApproveResultDTO data = result.getData();
-//            List<String> updateIdList = data.stream()
-//                    .filter(obj -> ObjectUtils.isEmpty(obj.getIsExistProcess()) || !obj.getIsExistProcess())
-//                    .map(ProcessManagementDTO.ApproveResultDTO::getBusinessId)
-//                    .collect(Collectors.toList());
-//
-            if (Objects.nonNull(data) && ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-                //无需走流程的数据则直接更新状态
-//                List<SupplierEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
-//                approveEnd(dto, updateList);
-            }
-//        }
+        Integer code = result.getCode();
+        if (200 != code) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_94006.msg);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = result.getData();
+        if (Objects.nonNull(data) && ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            //无需走流程的数据则直接更新状态
+            BaseApproveParamDTO dto = new BaseApproveParamDTO();
+            dto.setIds(Collections.singletonList(entity.getId()));
+            dto.setComment(comment);
+            dto.setType(type);
+            dto.setIsNeedProcess(isNeedProcess);
+            approveEnd(dto, Collections.singletonList(entity));
+        }
         //添加日志
         addModuleOperateLog(String.format("审核【%s】了一个供应商信息", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
