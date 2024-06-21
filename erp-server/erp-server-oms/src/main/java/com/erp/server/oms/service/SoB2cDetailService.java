@@ -11,7 +11,6 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +79,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @param isCover
      * @return Boolean
      */
-    Boolean updateWarehouseId(List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList, Boolean isCover);
+    Boolean updateWarehouseId(SoB2cEntity entity,List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList, Boolean isCover);
     /**
      * @description: 根据主表id删除
      * @author Will
