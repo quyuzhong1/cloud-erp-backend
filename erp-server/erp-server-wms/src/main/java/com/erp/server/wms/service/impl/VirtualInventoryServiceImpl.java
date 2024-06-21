@@ -118,14 +118,13 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
     @Override
     public VirtualInventoryEntity findVirtualInventoryStock(String virtualWarehouseId, String warehouseId, String skuId, String inventoryStatus) {
-        VirtualInventoryEntity entity = lambdaQuery()
+        return lambdaQuery()
                 .eq(VirtualInventoryEntity::getVirtualWarehouseId, virtualWarehouseId)
                 .eq(VirtualInventoryEntity::getWarehouseId, warehouseId)
                 .eq(VirtualInventoryEntity::getSkuId, skuId)
                 .eq(VirtualInventoryEntity::getDictInventoryStatus, inventoryStatus)
                 .last("limit 1")
                 .one();
-        return entity;
     }
 
     @Override
@@ -203,7 +202,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 getTransferInfo(qtySearchDTOS, vmParamDto, qtySearchList, resultList);
                 break;
             case CANCEL:
-                getCancelInfo(qtySearchDTOS,skuIds, warehouseIds,  vmParamDto, qtySearchList, resultList);
+                getCancelInfo(qtySearchDTOS, skuIds, warehouseIds, vmParamDto, qtySearchList, resultList);
                 break;
             default:
                 resultList.addAll(qtySearchList.stream().map(item -> {
@@ -233,8 +232,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
             List<InventoryDTO.InventoryViewQtyDTO> inventoryViewQtyDTOS = inventoryUsableQtyList.stream()
-                    .filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(),qtySearchDTO.getSkuId())
-                            && Objects.equals(inventoryViewQtyDTO.getWarehouseId(),qtySearchDTO.getWarehouseId()))
+                    .filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
+                            && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(inventoryViewQtyDTOS)) {
                 Integer warehouseAllocationQty = inventoryViewQtyDTOS.get(0).getUsableQty();
@@ -243,8 +242,10 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             }
 
             //获取调出仓可用库存
-            VirtualInventoryDTO.ViewQtyDTO qtyDTO = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
-                    && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId())).findFirst().orElse(null);
+            VirtualInventoryDTO.ViewQtyDTO qtyDTO = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId())
+                            && Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
+                            && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
+                    .findFirst().orElse(null);
             if (Objects.nonNull(qtyDTO)) {
                 viewQtyDTO.setFromVirtualWarehouseUsableQty(qtyDTO.getToVirtualWarehouseUsableQty());
             }
@@ -257,18 +258,19 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         //获取调入、调出虚拟仓可用数量
         List<String> fromVmIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         vmIds.addAll(fromVmIds);
-        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList = getVmUsableQty(vmParamDto, vmIds);
+        List<VirtualInventoryDTO.ViewQtyDTO> vwUsableQtyList = getVmUsableQty(vmParamDto, vmIds);
         for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {//获取调入仓、调出仓可用库存
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
-            for (VirtualInventoryDTO.ViewQtyDTO vmUsableQty : vmUsableQtyList) {
-                if (Objects.equals(vmUsableQty.getToVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId())) {
-                    viewQtyDTO.setToVirtualWarehouseUsableQty(vmUsableQty.getToVirtualWarehouseUsableQty());
-                }
-                if (Objects.equals(vmUsableQty.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId())) {
-                    viewQtyDTO.setFromVirtualWarehouseUsableQty(vmUsableQty.getToVirtualWarehouseUsableQty());
-                }
-            }
+            //获取调出仓可用库存
+            VirtualInventoryDTO.ViewQtyDTO fromQtyDto = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
+                            && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
+                    .findFirst().orElse(null);
+            VirtualInventoryDTO.ViewQtyDTO toQtyDto = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
+                            && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getFromVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
+                    .findFirst().orElse(null);
+            viewQtyDTO.setToVirtualWarehouseUsableQty(Objects.isNull(fromQtyDto) ? 0 : fromQtyDto.getToVirtualWarehouseUsableQty());
+            viewQtyDTO.setFromVirtualWarehouseUsableQty(Objects.isNull(toQtyDto) ? 0 : fromQtyDto.getToVirtualWarehouseUsableQty());
             resultList.add(viewQtyDTO);
         }
     }
@@ -290,11 +292,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
             List<InventoryDTO.InventoryViewQtyDTO> inventoryViewQtyDTOS = inventoryUsableQtyList.stream()
-                    .filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(),qtySearchDTO.getSkuId())
-                            && Objects.equals(inventoryViewQtyDTO.getWarehouseId(),qtySearchDTO.getWarehouseId()))
+                    .filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
+                            && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId()))
                     .collect(Collectors.toList());
             List<VirtualInventoryDTO.ViewQtyDTO> vmRealDTOS = vmRealQtyList.stream().filter(inventoryViewQtyDTO ->
-                    Objects.equals(inventoryViewQtyDTO.getSkuId(),qtySearchDTO.getSkuId()) && Objects.equals(inventoryViewQtyDTO.getWarehouseId(),qtySearchDTO.getWarehouseId()))
+                            Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(inventoryViewQtyDTOS)) {
                 Integer warehouseAllocationQty = inventoryViewQtyDTOS.get(0).getUsableQty();
@@ -303,9 +305,9 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 }
                 viewQtyDTO.setWarehouseAllocationQty(warehouseAllocationQty);
             }
-            VirtualInventoryDTO.ViewQtyDTO vmUsableQtyDto = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(),qtySearchDTO.getSkuId())
-                    && Objects.equals(inventoryViewQtyDTO.getWarehouseId(),qtySearchDTO.getWarehouseId())
-                    && Objects.equals(inventoryViewQtyDTO.getToVirtualWarehouseId(),qtySearchDTO.getToVirtualWarehouseId())).findFirst().orElse(null);
+            VirtualInventoryDTO.ViewQtyDTO vmUsableQtyDto = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
+                    && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId())
+                    && Objects.equals(inventoryViewQtyDTO.getToVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId())).findFirst().orElse(null);
             if (Objects.nonNull(vmUsableQtyDto)) {
                 viewQtyDTO.setToVirtualWarehouseUsableQty(vmUsableQtyDto.getToVirtualWarehouseUsableQty());
             }
@@ -324,6 +326,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
     /**
      * 根据skuIds warehouseIds vmIds获取虚拟仓可用库存
+     *
      * @param vmParamDto
      * @return
      */
@@ -347,19 +350,20 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     }
 
     @Override
-    public Integer getInventoryQtyByWarehouseId(String warehouseId,String skuId) {
+    public Integer getInventoryQtyByWarehouseId(String warehouseId, String skuId) {
         return baseMapper.getInventoryQtyByWarehouseId(warehouseId, skuId);
     }
 
     /**
      * 根据sku和虚拟仓id获取是否存在关联关系
+     *
      * @param skuId
      * @param virtualWarehouseId
      * @return
      */
     @Override
     public List<VirtualInventoryDTO.CommonDTO> getBySkuIdAndVwId(String skuId, String virtualWarehouseId) {
-        return baseMapper.getBySkuIdAndVwId(skuId,virtualWarehouseId);
+        return baseMapper.getBySkuIdAndVwId(skuId, virtualWarehouseId);
     }
 
     /**
@@ -432,7 +436,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                         .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
 
                 String indexId = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getId).collect(Collectors.joining(","));
-                listDetailDTO.setIndexId(StrUtil.format("{}_{}",indexId,warehouseId));
+                listDetailDTO.setIndexId(StrUtil.format("{}_{}", indexId, warehouseId));
                 listDetailDTO.setSkuNo(listDTO.getSkuNo());
                 listDetailDTO.setWarehouseId(warehouseId);
                 listDetailDTO.setWarehouseName(warehouseName);
@@ -453,7 +457,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 listDetailDTO.setDistributionQty(distributionQty);
 
                 //虚拟仓数量
-                listDetailDTO.setVirtualQty(MathUtil.add(listDetailDTO.getVirtualUsableQty(),listDetailDTO.getVirtualFrozenQty()));
+                listDetailDTO.setVirtualQty(MathUtil.add(listDetailDTO.getVirtualUsableQty(), listDetailDTO.getVirtualFrozenQty()));
                 //未分配数量
                 listDetailDTO.setUnDistributionQty(listDetailDTO.getUsableQty() - distributionQty);
 
