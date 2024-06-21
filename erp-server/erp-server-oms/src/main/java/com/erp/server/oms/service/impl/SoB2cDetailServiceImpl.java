@@ -256,15 +256,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if (ObjectUtil.isEmpty(updateDTO)) {
                 throw new ServiceException(ApiError.ERROR_99002);
             }
-
-            //虚拟仓信息
-            String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
-                    .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).findFirst().orElse("");
-            if (StrUtil.isBlank(virtualWarehouseId) && !entity.isFbaOrder()) {
-                throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST);
-            }
-            detailEntity.setVirtualWarehouseId(virtualWarehouseId);
-
             //组织
             BaseIdDTO.CodeDTO companyDTO = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getOrgId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(companyDTO)) {
@@ -278,6 +269,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
                 detailEntity.setWarehouseOrgName(companyDTO.getName());
             }
+
+            //虚拟仓信息
+            String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
+                    .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).findFirst().orElse("");
+            if (StrUtil.isBlank(virtualWarehouseId) && !entity.isFbaOrder()) {
+                throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST);
+            }
+            detailEntity.setVirtualWarehouseId(virtualWarehouseId);
+
             //库存SKU
             SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
