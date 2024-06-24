@@ -303,7 +303,8 @@
     <select id="getByNames" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
         SELECT
         id,
-        name
+        name,
+        disabled
         FROM warehouse  WHERE is_deleted=false and approve_status = 'approve'
         <if test="nameList != null and nameList.size > 0">
             and name in
