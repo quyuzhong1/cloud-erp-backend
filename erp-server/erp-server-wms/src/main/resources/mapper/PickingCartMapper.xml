@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.PickingCartMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.PickingCartEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="type_id" property="typeId" />
+       <result column="disabled" property="disabled" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        pc.id,
+        pc.create_time,
+        pc.update_time,
+        pc.create_user_name,
+        pc.create_user_id,
+        pc.update_user_name,
+        pc.update_user_id,
+        pc.version,
+        pc.is_deleted,
+        pc.code, pc.type_id, pc.disabled,pct.name as typeName
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.PickingCartDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from picking_cart pc
+        left join picking_cart_type pct on pc.type_id = pct.id and pct.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and pc.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            pc.id desc
+        </where>
+    </select>
+</mapper>
