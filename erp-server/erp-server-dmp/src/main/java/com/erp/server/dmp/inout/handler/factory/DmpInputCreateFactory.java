@@ -17,6 +17,7 @@ import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
 import com.erp.server.dmp.inout.handler.input.all.DmpInputTaskStatusHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputNormalCreateHandler;
+import com.erp.server.dmp.inout.handler.input.create.DmpInputHistoryCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputHotfixCreateHandler;
 
 @Component
@@ -24,6 +25,8 @@ public class DmpInputCreateFactory{
 	
 	@Autowired
 	private DmpInputNormalCreateHandler dmpInputNormalCreateHandler;
+	@Autowired
+	private DmpInputHistoryCreateHandler dmpInputHistoryCreateHandler;
 	@Autowired
 	private DmpInputHotfixCreateHandler dmpInputHotfixCreateHandler;
 	@Autowired
@@ -38,6 +41,17 @@ public class DmpInputCreateFactory{
 	public void createNormalInputTask(DmpInputCreateRequest dmpInputCreateRequest) {
 		DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
 		bean.addDmpHandler(dmpInputNormalCreateHandler);
+		bean.addDmpHandler(dmpInputTaskStatusHandler);
+		bean.doDmpHandler(dmpInputCreateRequest, new DmpInputCreateResponse());
+	}
+	
+	/**
+	 * 创建历史任务
+	 * @param dmpInputCreateRequest
+	 */
+	public void createHistoryInputTask(DmpInputCreateRequest dmpInputCreateRequest) {
+		DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
+		bean.addDmpHandler(dmpInputHistoryCreateHandler);
 		bean.addDmpHandler(dmpInputTaskStatusHandler);
 		bean.doDmpHandler(dmpInputCreateRequest, new DmpInputCreateResponse());
 	}
