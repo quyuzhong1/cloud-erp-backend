@@ -115,7 +115,7 @@ public class AmazonShopInfoDTO {
         private String shopId;
 
         /**
-         * 数量
+         * 名称
          */
         private String shopName;
 

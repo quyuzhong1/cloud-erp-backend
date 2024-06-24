@@ -43,12 +43,12 @@ public class AmzReportAllListingHandler extends DmpMongoHandler {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Integer findAndFillDataOrHandle(DmpMongoHandleTaskEntity mongoHandleTaskEntity) {
+    public Integer findAndFillDataOrHandle(DmpMongoHandleTaskEntity mongoHandleTaskEntity, Boolean queryIsAddOrUpdate) {
         // 任务每次处理数量
         Integer handleCount = mongoHandleTaskEntity.getHandleCount();
         // 指定的mongo表
         String mongoTableName = MongoTableNameContant.DATA_REPORT_AMZ_LISTING;
-        List<ReportListingMongoDTO> allList = dmpMongoHandleTaskService.findMongoData(mongoHandleTaskEntity.getLastId(), handleCount, mongoTableName, ReportListingMongoDTO.class);
+        List<ReportListingMongoDTO> allList = dmpMongoHandleTaskService.findMongoData(mongoHandleTaskEntity.getLastId(), handleCount, mongoTableName, ReportListingMongoDTO.class, queryIsAddOrUpdate);
         if (CollectionUtils.isEmpty(allList)) {
             log.warn("Listing报告处理服务处理结束：处理数据为空:handleType={}", mongoHandleTaskEntity.getHandleType());
             return 0;

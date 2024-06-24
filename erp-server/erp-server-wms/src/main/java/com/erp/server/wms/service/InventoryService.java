@@ -278,4 +278,12 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return
      */
     InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO);
+
+    /**
+     * 统计冻结库存数量
+     * @param warehouseId
+     * @param skuId
+     * @return
+     */
+    Integer getFrozenInventoryTotal(String warehouseId, String skuId);
 }

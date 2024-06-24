@@ -18,6 +18,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -34,10 +35,10 @@ public abstract class AbstractShipOrder implements IPlatformService {
 
     /**
      * 处理拆分（拆单，拆BOM）相关逻辑
-     * 非虚假发货：
+     * 非手动标发：
      *   拆单逻辑：直接标发，数量取明细数量
      *   捆绑拆分逻辑：查询关联订单发货状态，当关联订单都是已发货，并且全部相同明细来源的明细是否标发标识是否 ，找到原单明细做标发，数量取原单数量
-     * 虚假发货：
+     * 手动标发：
      *   拆单逻辑：直接标发，数量取明细数量
      *   捆绑拆分逻辑：查询关联订单发货状态，当全部的相同明细来源的明细是否标发标识是否 ，找到原单明细做标发，数量取原单数量
      * @param detailList
@@ -99,7 +100,6 @@ public abstract class AbstractShipOrder implements IPlatformService {
     public Tuple allSourceOrderInfo(PlatformShipOrderDTO dto) {
         List<SoB2cEntity> sourceOrderList;
         Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = new HashMap<>();
-        Map<String, SoB2cLogisticsEntity> logisticsEntityMap= new HashMap<>();
 
         // 查询合并来源关系
         List<SoB2cRefEntity> refEntityList = soB2cFeign.findMergeByTargetId(dto.getSoB2cId());
@@ -111,12 +111,6 @@ public abstract class AbstractShipOrder implements IPlatformService {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
             }
             sourceOrderList = Collections.singletonList(mainEntity);
-            //检查销售订单物流信息是否存在
-            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(mainEntity.getId()));
-            if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-            }
-            logisticsEntityMap.put(dto.getSoB2cId(), soB2cLogisticsEntities.get(0));
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
@@ -132,19 +126,17 @@ public abstract class AbstractShipOrder implements IPlatformService {
             if (CollectionUtils.isEmpty(sourceOrderList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
             }
-            sourceOrderList = sourceOrderList.stream()
-                    .filter(e-> SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(e.getSourceType()) && PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(e.getDictPlatform()))
-                    .collect(Collectors.toList());
-            //检查销售订单物流信息是否存在
-            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(mainIds);
-            if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-            }
-            logisticsEntityMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
             // 查询所有明细
             List<SoB2cDetailEntity> allDetailList = soB2cFeign.listDetailByIds(detailIds);
             soB2cDetailEntityListMap = allDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
         }
-        return new Tuple(sourceOrderList, soB2cDetailEntityListMap, logisticsEntityMap);
+        //检查销售订单物流信息是否存在（按当前订单的物流信息）
+        SoB2cLogisticsEntity logisticsEntity = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(dto.getSoB2cId()))
+                .stream().findFirst().orElse(null);
+        if (null == logisticsEntity) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        return new Tuple(sourceOrderList, soB2cDetailEntityListMap, logisticsEntity);
     }
+
 }

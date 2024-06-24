@@ -140,7 +140,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<FirstMileCartonMapper
 
             //查询产品信息
             List<String> skuIdList = packDateDTOList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
             List<WmsCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(packDateDTOList, WmsCartonDetailDTO.ViewDTO.class);
             for (WmsCartonDetailDTO.ViewDTO dto : detailList) {

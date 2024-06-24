@@ -25,7 +25,7 @@ public class WeiShiService {
      * @return List<YanWenChannel>
      */
     public WeiShiResponse<List<WeiShiChannel>> getAllChannel(Map<String, String> authMap){
-        String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.METHOD_GET_SHIPPING,null,authMap.get("clientId"),authMap.get("clientSecret"));
+        String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.METHOD_GET_SHIPPING,"",authMap.get("clientId"),authMap.get("clientSecret"));
         return JSONObject.parseObject(response,new TypeReference<WeiShiResponse<List<WeiShiChannel>>>() {}.getType());
     }
 
@@ -78,5 +78,14 @@ public class WeiShiService {
     public WeiShiResponse<List<WeiShiGetTrackNumber>> getTrackNumber(@Valid WeiShiGetTrackNumberRequest request,Map<String, String> authMap){
         String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.METHOD_GET_TRACK_NUMBER,JSONObject.toJSONString(request),authMap.get("clientId"),authMap.get("clientSecret"));
         return JSONObject.parseObject(response,new TypeReference<WeiShiResponse<List<WeiShiGetTrackNumber>>>() {}.getType());
+    }
+
+
+    /**
+     * 更新重量
+     */
+    public WeiShiResponse<String> updateWeight(@Valid List<WeiShiUpdateWeightRequest> request,Map<String, String> authMap){
+        String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.MODIFY_ORDER_WEIGHT,request,authMap.get("clientId"),authMap.get("clientSecret"));
+        return JSONObject.parseObject(response,new TypeReference<WeiShiResponse<String>>() {}.getType());
     }
 }

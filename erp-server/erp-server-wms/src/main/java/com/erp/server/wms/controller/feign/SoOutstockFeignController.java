@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -214,6 +215,15 @@ public class SoOutstockFeignController {
     @PostMapping("/afreshGenerateB2cOutstock")
     Boolean afreshGenerateB2cOutstock(@RequestBody List<String> ids) {
         return soOutstockService.afreshGenerateB2cOutstock(ids);
+    }
+
+
+    /**
+     * 更新销售出库单价格
+     */
+    @PostMapping("/updateSoOutPrice")
+    Boolean updateSoOutPrice(@RequestBody List<SoDetailEntity> soDetailEntityList) {
+        return soOutstockDetailService.updateSoOutPrice(soDetailEntityList);
     }
 }
 

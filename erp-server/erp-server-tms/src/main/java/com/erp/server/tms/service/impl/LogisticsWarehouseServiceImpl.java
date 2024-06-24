@@ -15,10 +15,12 @@ import com.erp.server.tms.service.LogisticsWarehouseService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 /**
@@ -90,6 +92,14 @@ public class LogisticsWarehouseServiceImpl extends SuperServiceImpl<LogisticsWar
     @Override
     public List<LogisticsWarehouseEntity> listByLogisticsSupplierId(String logisticsSupplierId) {
         return this.lambdaQuery().eq(LogisticsWarehouseEntity::getMainId,logisticsSupplierId).list();
+    }
+
+    @Override
+    public List<LogisticsWarehouseEntity> listByLogisticsSupplierIds(List<String> logisticsSupplierIds) {
+        if (CollectionUtils.isEmpty(logisticsSupplierIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsWarehouseEntity::getMainId,logisticsSupplierIds).list();
     }
 
 

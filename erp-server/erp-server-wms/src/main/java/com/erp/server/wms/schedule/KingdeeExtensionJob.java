@@ -6,8 +6,8 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.wms.dto.extension.TStkCloseProfileDTO;
 import com.erp.model.wms.entity.InventoryClosedRecordEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.third.kingdee.utils.KingdeeExtensionUtils;
 import com.erp.server.wms.service.InventoryClosedRecordService;
-import com.erp.server.wms.utils.KingdeeExtensionUtils;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +94,5 @@ public class KingdeeExtensionJob {
         XxlJobHelper.log("[拉取【关账时间】(金蝶->WMS)]：执行结束-无需要金蝶最新库存组织关账时间保存记录");
         return ReturnT.SUCCESS;
     }
-
 
 }

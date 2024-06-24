@@ -889,6 +889,10 @@ public class SoReturnInstockDTO {
          */
         private String childWarehouseLocation;
         /**
+         * 子级SKU仓位名称
+         */
+        private String childWarehouseLocationName;
+        /**
          * 子级SKU数量(前端需要的标识)
          */
         private Integer childLength;

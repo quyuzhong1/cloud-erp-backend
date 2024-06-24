@@ -18,5 +18,5 @@ public abstract class DmpMongoHandler {
      * @date 2024/1/24
      *
      */
-    public abstract Integer findAndFillDataOrHandle(DmpMongoHandleTaskEntity mongoHandleTaskEntity);
+    public abstract Integer findAndFillDataOrHandle(DmpMongoHandleTaskEntity mongoHandleTaskEntity, Boolean skipHistory);
 }

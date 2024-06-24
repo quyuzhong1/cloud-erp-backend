@@ -1,10 +1,13 @@
 package com.erp.server.tms.schedule;
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -24,6 +27,9 @@ import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.rtfparserkit.rtf.Command.li;
+import static com.rtfparserkit.rtf.Command.page;
 
 /**
  * @author zdy
@@ -180,39 +186,37 @@ public class LogisticsChannelJob {
     }
 
     private void getTrackData(LogisticsBillDetailQueryDTO query) {
-        PagingVO<LogisticsTrackDTO.UpdateTrackDTO> page = logisticsBillDetailService.getTrackDtoPage(query);
-        //业务处理
-        processTrackData((List<LogisticsTrackDTO.UpdateTrackDTO>) page.getList(),query.getTransportType());
-        long pages = page.getTotalPage();
-        if (pages > page.getCurrPage()) {
-            //下一页
-            query.setCurrent(page.getCurrPage() + 1);
-            getTrackData(query);
-        } else {
-            //无数据
-            log.info("========同步物流轨迹数据完成==========");
+        XxlJobHelper.log("获取列表请求参数：{}", JSONObject.toJSONString(query));
+        //列表查询
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
+        XxlJobHelper.log("获取列表数：{}", list.size());
+        if (list.size() > MathUtil.NUMBER_100){
+            //列表数据较多情况下，进行分割集合
+            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+            XxlJobHelper.log("拆分列表数：{}", partition.size());
+            //物流商数据处理
+            partition.forEach(e -> logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType()));
+        }else {
+            //物流商数据处理
+            logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(),list, query.getTransportType());
         }
+        log.info("========同步物流轨迹数据完成==========");
     }
 
     private void getRegisterData(LogisticsBillDetailQueryDTO query) {
-        PagingVO<LogisticsTrackDTO.UpdateTrackDTO> page = logisticsBillDetailService.getTrackDtoPage(query);
-        //业务处理
-        processRegisterData((List<LogisticsTrackDTO.UpdateTrackDTO>) page.getList(),query.getTransportType());
-        long pages = page.getTotalPage();
-        if (pages > page.getCurrPage()) {
-            //下一页
-            query.setCurrent(page.getCurrPage() + 1);
-            getRegisterData(query);
-        } else {
-            //无数据
-            log.info("========同步物流轨迹数据完成==========");
+        XxlJobHelper.log("获取列表请求参数：{}", JSONObject.toJSONString(query));
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
+        XxlJobHelper.log("获取列表数：{}", list.size());
+        if (list.size() > MathUtil.NUMBER_100){
+            //列表数据较多情况下，进行分割集合
+            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+            XxlJobHelper.log("拆分列表数：{}", partition.size());
+            //物流商数据处理
+            partition.forEach(e -> logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType()));
+        }else {
+            logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), list,query.getTransportType());
         }
-    }
-
-    private void processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType) {
-        if (CollectionUtils.isNotEmpty(records)) {
-            logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), records,transportType);
-        }
+        log.info("========同步物流轨迹数据完成==========");
     }
 
     private void processRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType) {

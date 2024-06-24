@@ -15,7 +15,7 @@ public class AmzReportLedgerDetailViewHandler extends DmpMongoHandler {
 
 
     @Override
-    public Integer findAndFillDataOrHandle(DmpMongoHandleTaskEntity mongoHandleTaskEntity) {
+    public Integer findAndFillDataOrHandle(DmpMongoHandleTaskEntity mongoHandleTaskEntity, Boolean queryIsAddOrUpdate) {
         return null;
     }
 }
