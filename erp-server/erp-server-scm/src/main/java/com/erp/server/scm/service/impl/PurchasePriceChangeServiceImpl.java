@@ -481,10 +481,12 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //调用审核流程
-        approveProcess(entity, type, comment, isNeedProcess);
-        //添加日志
-        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购价目", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), entity.getId(), "审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+        BatchResultDTO resultDTO = approveProcess(entity, type, comment, isNeedProcess);
+        if (resultDTO.getSuccess()){
+            //添加日志
+            moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购价目", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), entity.getId(), "审核操作");
+        }
+        return resultDTO;
     }
 
     /**
@@ -499,9 +501,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
+    public BatchResultDTO approveEnd(PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (ObjectUtils.isEmpty(entity)) {
-            return Boolean.TRUE;
+            return BatchResultDTO.success();
         }
         Boolean result;
         if (type.equals(ScmConstant.PASS)) {
@@ -529,7 +531,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 }
             });
         }
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     /**
@@ -898,7 +900,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @author Will
      * @date: 2023/7/3 15:24
      */
-    private void approveProcess(PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
+    private BatchResultDTO approveProcess(PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -910,13 +912,14 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_94006.msg);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
 
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-            approveEnd(entity, type,comment,isNeedProcess);
+            return approveEnd(entity, type,comment,isNeedProcess);
         }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
 
