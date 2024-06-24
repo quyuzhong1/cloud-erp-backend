@@ -5,7 +5,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.server.dmp.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

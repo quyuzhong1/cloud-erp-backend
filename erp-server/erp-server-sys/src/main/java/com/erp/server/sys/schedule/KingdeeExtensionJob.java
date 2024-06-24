@@ -40,7 +40,7 @@ public class KingdeeExtensionJob {
         XxlJobHelper.log("拉取枚举(金蝶->WMS)：开始执行");
         // Disable Bouncy Castle
         SecureUtil.disableBouncyCastle();
-        String json = KingdeeExtensionUtils.getKingdeeEnum(Arrays.asList("其他出库单业务类型","出库类型"));
+        String json = KingdeeExtensionUtils.getKingdeeEnum(Arrays.asList("其他出库单业务类型","其他出库单类型"));
         List<DictKingdeeDTO.CommonDTO> list = JSONObject.parseObject(json,new TypeReference<List<DictKingdeeDTO.CommonDTO>>() {}.getType());
         dictKingdeeService.addOrUpdate(list);
         XxlJobHelper.log("拉取枚举(金蝶->WMS)");

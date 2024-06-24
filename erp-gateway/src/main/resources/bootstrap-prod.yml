@@ -8,7 +8,7 @@ spring:
         server-addr: 172.16.100.10
         namespace: prod
         file-extension: yml
-        shared-configs: gateway.yml,common.yml
+        shared-configs: gateway.yml,common.yml,db-gateway.yml
 #    gateway:
 #      routes:
 #        - id: admin_route

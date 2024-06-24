@@ -1,4 +1,6 @@
 package com.erp.server.wms.service;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
@@ -78,4 +80,7 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      * @Date 2023/12/05
      **/
     OverseasProviderEntity findPlatformByWarehouseId(String destWarehouseId);
+
+    PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(PagingDTO<OverseasProviderWarehouseDTO.SelectDTO> dto);
+    Boolean feignBind(OverseasProviderDTO.FeignDTO feignDTO);
 }

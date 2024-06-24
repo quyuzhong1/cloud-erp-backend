@@ -59,7 +59,7 @@
         li.platform_sku_name AS platformProductName,
         li.match_result,
         li.product_image_url,
-        li.product_spec,
+        case when li.platform = 'AliExpress' then li.platform_sku_id else li.product_spec end as product_spec,
         li.product_packing,
         li.platform_update_time,
         li.platform_spu_no,
@@ -644,7 +644,7 @@
             </foreach>
         </if>
         <!--平台sku id 列表-->
-        <if test="params.platformSkuIdList !=null and params.platformSkuIdList.size>0">
+        <if test="params.platformSkuIdList != null and params.platformSkuIdList.size>0">
             AND li.platform_sku_id IN
             <foreach collection="params.platformSkuIdList" item="item" open="(" separator="," close=")">
                 #{item}
