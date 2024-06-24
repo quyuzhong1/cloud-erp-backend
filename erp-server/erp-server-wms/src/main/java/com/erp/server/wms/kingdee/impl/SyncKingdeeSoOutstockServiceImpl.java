@@ -899,7 +899,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 entity.setCustomerName(view.getReceiverDTO().getReceiverName());
 
             }
-
+        }
 
         entity.setOrderNo(soCode);
         entity.setManStreet(receiveAddress);

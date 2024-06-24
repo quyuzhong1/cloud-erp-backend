@@ -151,7 +151,7 @@ public class SoOutstockFeignController {
      * @return
      */
     @PostMapping("/generateB2cSoOutstockByPlatformData")
-    Boolean generateB2cSoOutstockByPlatformData(@RequestBody List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO) {
+    Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformDeliveryDetailDTO) {
         return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO);
     }
 
