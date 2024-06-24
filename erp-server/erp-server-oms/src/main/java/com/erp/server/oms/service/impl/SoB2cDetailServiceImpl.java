@@ -273,9 +273,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             //虚拟仓信息
             String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
                     .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).findFirst().orElse("");
-            if (StrUtil.isBlank(virtualWarehouseId) && !entity.hasPlatformWarehouseOrder()) {
-                throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST);
-            }
             detailEntity.setVirtualWarehouseId(virtualWarehouseId);
 
             //库存SKU
