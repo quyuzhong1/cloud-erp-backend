@@ -3305,7 +3305,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                         && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId()))
                                 .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                                 .findFirst().orElse(MathUtil.ZERO);
-                        Boolean isVirtualOutStock = MathUtil.compareTo(virtualUsableQty, detailDTO.getQty()) >= MathUtil.ZERO ? Boolean.FALSE : Boolean.TRUE;
+                        //无虚拟仓或者有虚拟库存则显示不缺货
+                        Boolean isVirtualOutStock = (StrUtil.isBlank(detailDTO.getVirtualWarehouseId()) || MathUtil.compareTo(virtualUsableQty, detailDTO.getQty()) >= MathUtil.ZERO)? Boolean.FALSE : Boolean.TRUE;
                         detailLabelDTO.setIsVirtualOutStock(isVirtualOutStock);
                     }
                 }
