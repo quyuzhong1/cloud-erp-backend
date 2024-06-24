@@ -267,7 +267,7 @@ public class PickingDetailDTO implements Serializable {
 
     @Getter
     @Setter
-    public static class Add {
+    public static class AddDTO {
 
         /**
          * skuId

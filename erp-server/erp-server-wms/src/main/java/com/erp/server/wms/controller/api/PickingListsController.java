@@ -52,7 +52,7 @@ public class PickingListsController extends BaseController {
      * @param dto 编辑参数
      **/
     @PostMapping("/update")
-    public ApiResult<String> update(@RequestBody @Validated PickingListsDTO.Update dto) {
+    public ApiResult<String> update(@RequestBody @Validated PickingListsDTO.UpdateDTO dto) {
         pickingListsService.update(dto);
         return success();
     }

@@ -679,6 +679,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
+
         List<PickingListsEntity> pickingLists = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, idList));
         List<String> pickSourceId = pickingLists.stream().map(PickingListsEntity::getSourceId).distinct().collect(Collectors.toList());
         if (pickSourceId.size() != idList.size()){
@@ -981,20 +982,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (Boolean.FALSE.equals(checkUnpickedQty)) {
             throw new ServiceException(ApiError.UNPICKED_QUANTITY_SHORTAGE);
         }
-        PickingListsDTO.Add add = new PickingListsDTO.Add();
-        add.setBillType(PickingBillTypeEnum.B2B.getCode());
-        add.setCustomerId(soDeliveryNotice.getCustomerId());
-        add.setWarehouseId(soDeliveryNotice.getWarehouseId());
-        add.setWarehouseName(soDeliveryNotice.getWarehouseName());
-        add.setSourceId(soDeliveryNotice.getId());
-        add.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
-        add.setSourceCode(soDeliveryNotice.getCode());
+        PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
+        addDTO.setBillType(PickingBillTypeEnum.B2B.getCode());
+        addDTO.setCustomerId(soDeliveryNotice.getCustomerId());
+        addDTO.setWarehouseId(soDeliveryNotice.getWarehouseId());
+        addDTO.setWarehouseName(soDeliveryNotice.getWarehouseName());
+        addDTO.setSourceId(soDeliveryNotice.getId());
+        addDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        addDTO.setSourceCode(soDeliveryNotice.getCode());
         List<SoDeliveryNoticeDetailEntity> updateDetails = new ArrayList<>();
-        List<PickingDetailDTO.Add> detailList = picking.getDetailIds().stream()
+        List<PickingDetailDTO.AddDTO> detailList = picking.getDetailIds().stream()
                 .map(id -> {
                     SoDeliveryNoticeDetailEntity detailEntity = details.stream().filter(v -> v.getId().equals(id))
                             .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
-                    PickingDetailDTO.Add detail = new PickingDetailDTO.Add();
+                    PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
                     detail.setSkuId(detailEntity.getSkuId());
                     detail.setSkuNo(detailEntity.getSkuNo());
                     detail.setQty(detailEntity.getDeliveryQty() - detailEntity.getPickingQty());
@@ -1003,8 +1004,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     updateDetails.add(detailEntity);
                     return detail;
                 }).collect(Collectors.toList());
-        add.setDetails(detailList);
-        pickingListsService.add(add);
+        addDTO.setDetails(detailList);
+        pickingListsService.add(addDTO);
         soDeliveryNoticeDetailService.updateBatchById(updateDetails);
     }
 

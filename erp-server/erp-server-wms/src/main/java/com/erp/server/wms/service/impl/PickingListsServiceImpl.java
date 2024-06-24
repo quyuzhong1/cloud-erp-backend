@@ -91,7 +91,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     }
 
     @Override
-    public void add(PickingListsDTO.Add dto) {
+    public void add(PickingListsDTO.AddDTO dto) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JHD);
         // 生成拣货单主表数据
         PickingListsEntity entity = new PickingListsEntity();
@@ -102,14 +102,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(dto.getSourceCode());
         entity.setSourceType(dto.getSourceType());
-        int skuTotal = dto.getDetails().stream().map(PickingDetailDTO.Add::getQty).reduce(0, Math::addExact);
+        int skuTotal = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getQty).reduce(0, Math::addExact);
         entity.setSkuTotal(skuTotal);
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
-        List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.Add::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
-        Map<String, Integer> sku = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getQty, Integer::sum));
-        Map<String, String> skuMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSkuNo, (o1, o2) -> o1));
-        Map<String, String> sourceDetailMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSourceDetailId, (o1, o2) -> o1));
+        Map<String, Integer> sku = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getQty, Integer::sum));
+        Map<String, String> skuMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getSkuNo, (o1, o2) -> o1));
+        Map<String, String> sourceDetailMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getSourceDetailId, (o1, o2) -> o1));
         Map<String, Object> map = new HashMap<>();
         map.put("billType", dto.getBillType());
         map.put("customerId", dto.getCustomerId());
@@ -209,7 +209,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //销售通知单下推销售出库单后，拣货单不允许修改和删除
             int count = soOutstockService.countNotVoided(entity.getSourceId());
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_99086);
+                throw new ServiceException(ApiError.ERROR_99087);
             }
         }
     }
@@ -310,7 +310,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(PickingListsDTO.Update dto) {
+    public void update(PickingListsDTO.UpdateDTO dto) {
         PickingListsEntity entity = getById(dto.getId());
         checkStatus(entity);
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, dto.getId()));
@@ -395,7 +395,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
      * @param entity     拣货单
      * @param addDTOS    仓位移动
      */
-    private void handlerUpdateData(PickingListsDTO.Update dto, List<PickingDetailEntity> detailList, List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS, PickingListsEntity entity) {
+    private void handlerUpdateData(PickingListsDTO.UpdateDTO dto, List<PickingDetailEntity> detailList, List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS, PickingListsEntity entity) {
         List<PickingDetailDTO.View> updateData = dto.getDetails()
                 .stream()
                 .filter(detail -> ObjectUtil.isNotEmpty(detail.getId()))
@@ -446,7 +446,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
      * @param entity     拣货单
      * @param addDTOS    仓位移动
      */
-    private void handlerRemoveData(PickingListsDTO.Update dto, List<PickingDetailEntity> detailList, List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS, PickingListsEntity entity) {
+    private void handlerRemoveData(PickingListsDTO.UpdateDTO dto, List<PickingDetailEntity> detailList, List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS, PickingListsEntity entity) {
         List<String> newDetailIds = dto.getDetails()
                 .stream().map(PickingDetailDTO.View::getId)
                 .distinct().collect(Collectors.toList());
@@ -476,7 +476,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
      * @param entity           拣货单
      * @param addDTOS          仓位移动
      */
-    private void handlerAddData(PickingListsDTO.Update dto, List<PickingDetailEntity> detailList, List<ProductDetailEntity> detailEntityList, PickingListsEntity entity, List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS) {
+    private void handlerAddData(PickingListsDTO.UpdateDTO dto, List<PickingDetailEntity> detailList, List<ProductDetailEntity> detailEntityList, PickingListsEntity entity, List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS) {
         List<PickingDetailDTO.View> newAddDataList = dto.getDetails().stream()
                 .filter(detail -> ObjectUtil.isEmpty(detail.getId()))
                 .collect(Collectors.toList());

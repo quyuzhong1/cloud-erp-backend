@@ -202,15 +202,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<String> childSkuIds = bomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
         skuIds.addAll(childSkuIds);
-        PickingListsDTO.Add add = new PickingListsDTO.Add();
-        add.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
-        add.setBillType(PickingBillTypeEnum.B2C.getCode());
-        add.setSourceId(soB2cDeliveryEntity.getId());
-        add.setSourceCode(soB2cDeliveryEntity.getCode());
-        List<PickingDetailDTO.Add> details = new ArrayList<>();
+        PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
+        addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        addDTO.setBillType(PickingBillTypeEnum.B2C.getCode());
+        addDTO.setSourceId(soB2cDeliveryEntity.getId());
+        addDTO.setSourceCode(soB2cDeliveryEntity.getCode());
+        List<PickingDetailDTO.AddDTO> details = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailEntities) {
-            add.setWarehouseId(detailEntity.getWarehouseId());
-            add.setWarehouseName(detailEntity.getWarehouseName());
+            addDTO.setWarehouseId(detailEntity.getWarehouseId());
+            addDTO.setWarehouseName(detailEntity.getWarehouseName());
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
@@ -218,45 +218,45 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
-                    PickingDetailDTO.Add detailAdd = new PickingDetailDTO.Add();
-                    detailAdd.setSkuId(bomChildrenSkuDTO.getSkuId());
-                    detailAdd.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                    detailAdd.setQty(detailEntity.getDeliveryQty() * bomChildrenSkuDTO.getQuantity());
-                    detailAdd.setSourceDetailId(detailEntity.getId());
-                    details.add(detailAdd);
+                    PickingDetailDTO.AddDTO detailAddDTO = new PickingDetailDTO.AddDTO();
+                    detailAddDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                    detailAddDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                    detailAddDTO.setQty(detailEntity.getDeliveryQty() * bomChildrenSkuDTO.getQuantity());
+                    detailAddDTO.setSourceDetailId(detailEntity.getId());
+                    details.add(detailAddDTO);
                 }
             } else {
-                PickingDetailDTO.Add detailAdd = new PickingDetailDTO.Add();
-                detailAdd.setSkuId(detailEntity.getSkuId());
-                detailAdd.setSkuNo(detailEntity.getSkuNo());
-                detailAdd.setQty(detailEntity.getDeliveryQty());
-                detailAdd.setSourceDetailId(detailEntity.getId());
-                details.add(detailAdd);
+                PickingDetailDTO.AddDTO detailAddDTO = new PickingDetailDTO.AddDTO();
+                detailAddDTO.setSkuId(detailEntity.getSkuId());
+                detailAddDTO.setSkuNo(detailEntity.getSkuNo());
+                detailAddDTO.setQty(detailEntity.getDeliveryQty());
+                detailAddDTO.setSourceDetailId(detailEntity.getId());
+                details.add(detailAddDTO);
             }
         }
-        add.setDetails(details);
+        addDTO.setDetails(details);
 //        pickingListsService.add(add);
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JHD);
         // 生成拣货单主表数据
         PickingListsEntity entity = new PickingListsEntity();
         entity.setId(IdWorker.getIdStr());
         entity.setCode(code);
-        entity.setWarehouseId(add.getWarehouseId());
-        entity.setWarehouseName(add.getWarehouseName());
-        entity.setSourceId(add.getSourceId());
-        entity.setSourceCode(add.getSourceCode());
-        entity.setSourceType(add.getSourceType());
-        int skuTotal = add.getDetails().stream().map(PickingDetailDTO.Add::getQty).reduce(0, Math::addExact);
+        entity.setWarehouseId(addDTO.getWarehouseId());
+        entity.setWarehouseName(addDTO.getWarehouseName());
+        entity.setSourceId(addDTO.getSourceId());
+        entity.setSourceCode(addDTO.getSourceCode());
+        entity.setSourceType(addDTO.getSourceType());
+        int skuTotal = addDTO.getDetails().stream().map(PickingDetailDTO.AddDTO::getQty).reduce(0, Math::addExact);
         entity.setSkuTotal(skuTotal);
-        List<String> skuIdList = add.getDetails().stream().map(PickingDetailDTO.Add::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = addDTO.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        Map<String, Integer> sku = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getQty, Integer::sum));
-        Map<String, String> skuMap = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSkuNo, (o1, o2) -> o1));
-        Map<String, String> sourceDetailMap = add.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.Add::getSkuId, PickingDetailDTO.Add::getSourceDetailId, (o1, o2) -> o1));
+        Map<String, Integer> sku = addDTO.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getQty, Integer::sum));
+        Map<String, String> skuMap = addDTO.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getSkuNo, (o1, o2) -> o1));
+        Map<String, String> sourceDetailMap = addDTO.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getSourceDetailId, (o1, o2) -> o1));
         Map<String, Object> map = new HashMap<>();
-        map.put("billType", add.getBillType());
-        map.put("customerId", add.getCustomerId());
-        map.put("warehouseId", add.getWarehouseId());
+        map.put("billType", addDTO.getBillType());
+        map.put("customerId", addDTO.getCustomerId());
+        map.put("warehouseId", addDTO.getWarehouseId());
         map.put("sku", sku);
         map.put("skuMap", skuMap);
         List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(map);
