@@ -348,13 +348,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.isNull(skuMaping)) {
             throw new ServiceException(ApiError.ERROR_92051);
         }
-        // 历史skuId
-        String historyProductSkuId = skuMaping.getProductSkuId();
-        // 当前skuId
         //启用日期不能大于上个映射关系的开始时间
         if (dto.getEffectiveTime().isBefore(skuMaping.getEffectiveTime())){
             throw new ServiceException(ApiError.ERROR_92151,skuMaping.getEffectiveTime());
         }
+        // 历史skuId
+        String historyProductSkuId = skuMaping.getProductSkuId();
+        // 当前skuId
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
@@ -397,7 +397,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             skuMappingExtendService.checkAndSave(skuMaping, dto.getExtendList());
             return skuMaping.getId();
         }
-        LocalDateTime now = LocalDateTime.now();
         // 历史SkuId为设置过期
         boolean update = lambdaUpdate()
                 .set(SkuMappingEntity::getIsExpire, true)

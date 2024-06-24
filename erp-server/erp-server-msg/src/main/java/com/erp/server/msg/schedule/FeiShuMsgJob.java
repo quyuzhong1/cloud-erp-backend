@@ -69,12 +69,7 @@ public class FeiShuMsgJob {
         //mongodb更新状态
         Query query = new Query();
         query.addCriteria(Criteria.where("msgId").in(msgIds));
-//        Update update = new Update();
-//         设置需要更新的字段和值
-//        update.set("isSend", MathUtil.TWO);
-//        UpdateResult result = mongoTemplate.updateMulti(query,update,WarnMsgInfoDTO.class,MongoTableConstant.FEISHU_WARN_MSG);
         mongoTemplate.remove(query,WarnMsgInfoDTO.class,MongoTableConstant.FEISHU_WARN_MSG);
-//        XxlJobHelper.log("批量发送飞书预警消息结果:{}", result.getMatchedCount());
         try {
             XxlJobHelper.log("发送飞书预警消息休眠 start:{}", System.currentTimeMillis());
             //增加休眠，避免飞书请求限制
