@@ -465,7 +465,7 @@ public class AliExpressOrderService {
         return detailList;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
 //        String appKey = "502978";
 //        String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
 //        String baseUrl = "https://api-sg.aliexpress.com";
