@@ -140,14 +140,10 @@
     <select id="diffPagingCount" resultType="java.lang.Integer">
         select count(0) from (
             select
-            vi.sku_id,vi.warehouse_id
+            vi.sku_id,vi.warehouse_id,
+            COALESCE(sum(vi.qty),0) as virtualQty,
+            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty
             from virtual_inventory vi
-            left join (
-            select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
-            and inv.dict_inventory_status = 'usable'
-            group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
-            ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
-            and vi.dict_inventory_status = inv.dict_inventory_status
             <where>
                vi.is_deleted = false
                 <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -155,8 +151,7 @@
                 </if>
             </where>
             group by vi.sku_id,vi.warehouse_id
-            having COALESCE(sum(vi.qty),0) > COALESCE(sum(inv.qty),0)
-            ) a;
+            ) a where virtualQty > usableQty;
     </select>
 
     <!-- 库存差异明细分页查询 -->
