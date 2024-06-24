@@ -176,10 +176,6 @@ public class VirtualWarehouseAllocationController extends BaseController {
             resultDTOS.add(submit);
         }
 
-//        //进行拆单并创建中台任务数据进行同步
-//        if (CollectionUtils.isNotEmpty(resultDTOS)) {
-//            virtualWarehouseAllocationDetailService.handleDetail(resultDTOS.stream().filter(BatchResultDTO::getSuccess).collect(Collectors.toList()));
-//        }
         return resultDTOS.stream().anyMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

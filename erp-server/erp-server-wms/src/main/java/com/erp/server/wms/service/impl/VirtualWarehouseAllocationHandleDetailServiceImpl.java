@@ -181,7 +181,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                         String[] split = fromToGroupId.split(splitStr);
                         List<ThirdMappingEntity> fromMappingList = fromToThirdMappingMap.get(split[0]);
                         List<ThirdMappingEntity> toMappingList = fromToThirdMappingMap.get(split[1]);
-                        fromToGroupMap.forEach((toVmId, allocationDetailList) -> {
+//                        fromToGroupMap.forEach((toVmId, allocationDetailList) -> {
                             //获取调出仓绑定的旺店通虚拟仓
                             if (CollectionUtils.isNotEmpty(toMappingList)) {
 //                                toMappingList.forEach(thirdMapping -> {
@@ -195,19 +195,19 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                                 handleDetailEntity.setThirdToVirtualWarehouseNo(toMappingList.get(0).getThirdCode());
                                 handleDetailEntity.setSysType(fromMappingList.get(0).getThirdSysType());
                                 handleDetailEntity.setMainId(allocationHandleEntity.getId());
-                                handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
+                                handleDetailEntity.setWarehouseId(groupList.get(0).getWarehouseId());
                                 handleDetailEntity.setThirdWarehouseId(toMappingList.get(0).getRemark());
-                                Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
+                                Integer sumQty = groupList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
                                 handleDetailEntity.setQty(sumQty);
                                 this.save(handleDetailEntity);
                                 handleDetailList.add(handleDetailEntity);
-                                allocationDetailList.forEach(allocationDetail -> {
+                                groupList.forEach(allocationDetail -> {
                                     VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, allocationHandleEntity, allocationDetail, handleDetailEntity);
                                     virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
                                 });
 //                                });
                             }
-                        });
+//                        });
                     });
                 }
                 if (CollectionUtils.isNotEmpty(fromVwResultList)) {
