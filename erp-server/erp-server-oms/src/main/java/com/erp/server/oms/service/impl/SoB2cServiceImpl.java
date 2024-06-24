@@ -46,9 +46,11 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
@@ -1421,7 +1423,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 组装打印面单需要的数据
-     *
      * @param logisticsChannelId 订单渠道id
      * @param soB2cEntity        订单信息
      * @param transportNo        物流单号
@@ -1683,12 +1684,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * @param entity
-     * @param list
-     * @param deliveryWarehouseIdList
      * @description: 校验库存
      * @author Will
      * @date: 2024/4/22 14:59
+     * @param entity
+     * @param list
+     * @param deliveryWarehouseIdList
      */
     private void checkInventory(SoB2cEntity entity, List<SoB2cDetailEntity> list, List<String> deliveryWarehouseIdList) {
         /**
@@ -1799,11 +1800,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 获取到发货的sku 信息
-     *
-     * @param skuIdList           sku id
-     * @param warehouseManageType 仓库的经营类型
-     * @return
      * @description
+     * @param skuIdList sku id
+     * @param warehouseManageType  仓库的经营类型
+     * @return
      * @date 2024-02-27 15:38
      * @author Lambda
      */
@@ -3115,13 +3115,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
+     * @description: 判断是否缺货
+     * @author Will
+     * @date: 2024/4/22 14:46
      * @param bomChildrenList
      * @param inventoryList
      * @param detailDTO
      * @return Boolean
-     * @description: 判断是否缺货
-     * @author Will
-     * @date: 2024/4/22 14:46
      */
     private Boolean isOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList
             , SoB2cDetailDTO.ListDTO detailDTO, List<String> ignoreInventorySkuIds) {
@@ -3171,9 +3171,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param qty
      * @param ignoreInventorySkuIds
      * @return Boolean
-     * @description: 明细子件是否缺货
-     * @author Will
-     * @date: 2024/4/22 15:28
      */
     @Override
     public Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
@@ -5378,7 +5375,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoById(String id) {
         return getSoOutstockByIdAndWarehouseId(id,"");
     }
-
 
     @Override
     public SoB2cEntity getByCode(String soCode) {

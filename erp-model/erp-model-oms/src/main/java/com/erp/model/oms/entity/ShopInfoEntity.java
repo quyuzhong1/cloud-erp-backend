@@ -185,6 +185,11 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField("default_currency")
     private String defaultCurrency;
+    /**
+     * 类型：overseas 海外, internal 国内
+     */
+    @TableField("type")
+    private String type;
 
 
     public static final String PLATFORM_DICT = "platform_dict";

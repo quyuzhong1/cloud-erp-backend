@@ -4,16 +4,16 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.db.Page;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -657,5 +657,17 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             throw new ServiceException("对应销售平台物流渠道信息不存在");
         }
         return new LogisticsChannelDTO.SignShipDTO(entity.getId(),logisticsChannelId, entity.getCode(), entity.getCnName(), viewDTO.getOrderDeliveryMarkType());
+    }
+    @Override
+    public PagingVO<BaseDropDownDTO.DisabledDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        BaseDropDownDTO.SelectDTO params = dto.getParams();
+        IPage<BaseDropDownDTO.DisabledDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<BaseDropDownDTO.DisabledDTO> records = pagResult.getRecords();
+//        handleSelect(records);
+        //排序
+        List<BaseDropDownDTO.DisabledDTO> list = records.stream().sorted(Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled)).collect(Collectors.toList());
+        pagResult.setRecords(list);
+        return new PagingVO<>(pagResult);
     }
 }

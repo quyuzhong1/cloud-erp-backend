@@ -53,6 +53,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(WarehouseLocationMoveDTO.AddDTO addDTO, String mainId) {
@@ -169,7 +170,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                     || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
                 throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
             }
-            paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
+            paramDTO.setWarehouseLocations(Arrays.asList(detailEntity.getOutWarehouseLocation()));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
             InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
                     && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);

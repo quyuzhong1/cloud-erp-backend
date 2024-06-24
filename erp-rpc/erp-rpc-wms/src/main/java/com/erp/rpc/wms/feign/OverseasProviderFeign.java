@@ -1,8 +1,11 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "erp-wms", contextId = "overseasProviderFeign")
@@ -16,4 +19,14 @@ public interface OverseasProviderFeign {
      **/
     @GetMapping("/feign/overseasProvider/getByPlatformCode")
     OverseasProviderEntity getByPlatformCode(@RequestParam("code") String code);
+    /**
+     * 查询仓库信息
+     *
+     * @param feignDTO
+     * @return com.erp.model.wms.entity.OverseasProviderEntity
+     **/
+    @PostMapping("/feign/overseasProvider/getOverseasWarehouse")
+    OverseasProviderDTO.FeignDTO getOverseasWarehouse(@RequestBody OverseasProviderDTO.FeignDTO feignDTO);
+    @PostMapping("/feign/overseasProvider/feignBind")
+    void feignBind(@RequestBody OverseasProviderDTO.FeignDTO feignDTO);
 }

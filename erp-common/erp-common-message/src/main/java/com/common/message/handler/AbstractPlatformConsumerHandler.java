@@ -32,6 +32,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
 	
     @Override
     public void onMessage(Object obj) {
+        log.info("监听到消息：{}", JSONUtil.toJsonStr(obj));
         String dmpSyncTaskId = "";
         String platform = "";
         String uniqueId = "";
