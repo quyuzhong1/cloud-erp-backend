@@ -102,7 +102,7 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @param isNeedProcess
      * @return Boolean
      */
-    Boolean approveEnd (PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess);
+    BatchResultDTO approveEnd (PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * 取消流程
