@@ -12,6 +12,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
@@ -83,10 +84,11 @@ public class ShopInfoController extends BaseController {
             String id = shopInfoService.autoCreateShopCustomer(shop.getId());
             if (StringUtils.isNotBlank(id)) {
                 List<String> ids = Arrays.asList(id);
+                CustomerInfoEntity customerInfo = customerInfoService.getById(id);
                 //提交
                 Boolean submitResult = customerInfoService.submit(ids);
                 if (submitResult) {
-                    customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(),"",Boolean.FALSE));
+                    customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(),"",Boolean.FALSE), customerInfo);
                 }
             }
         }
