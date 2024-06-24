@@ -130,8 +130,23 @@ public class ScmWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/purchasePriceChangeApprove")
-    public Boolean purchasePriceChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return purchasePriceChangeService.approve(dto);
+    public List<BatchResultDTO> purchasePriceChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchasePriceChangeEntity> entityList = purchasePriceChangeService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceChangeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目变更记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchasePriceChangeService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("采购价目审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 
     /**

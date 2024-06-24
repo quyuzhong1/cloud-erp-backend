@@ -89,11 +89,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      **/
     private Boolean purchasePriceChangeApproveEnd(EndProcessDTO dto) {
         //销售变更单
-        List<PurchasePriceChangeEntity> list = purchasePriceChangeService.listByIds(Arrays.asList(dto.getBusinessId()));
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-        return purchasePriceChangeService.approveEnd(baseApproveParamDTO,list);
+        PurchasePriceChangeEntity entity = purchasePriceChangeService.getById(dto.getBusinessId());
+        return purchasePriceChangeService.approveEnd(entity,dto.getApproveStatus().getStatus(), "", null);
     }
 
     /**
