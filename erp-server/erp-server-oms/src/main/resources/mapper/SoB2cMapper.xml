@@ -552,6 +552,7 @@
            sb2c.id,
            sb2c.code,
            sb2c.platform_code,
+           sb2c.shop_id,
            sb2cl.logistics_channel_id AS logisticsChannelId,
            sb2cl.track_no  AS logisticsTrackNo,
            sb2cl.code AS logisticsTransportNo
