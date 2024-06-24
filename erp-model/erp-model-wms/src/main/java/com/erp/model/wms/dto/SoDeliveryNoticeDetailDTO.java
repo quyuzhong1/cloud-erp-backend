@@ -113,10 +113,15 @@ public class SoDeliveryNoticeDetailDTO {
          * 主表id
          */
          private String mainId;
+
         /**
          * 来源明细id
          */
         private String sourceDetailId;
+        /**
+         * 销售订单明细id
+         */
+        private String soDetailId;
         /**
          * sku表id
          */

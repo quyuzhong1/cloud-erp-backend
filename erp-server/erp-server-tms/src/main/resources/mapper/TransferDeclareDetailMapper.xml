@@ -35,7 +35,8 @@
         update_time,
         version,
         is_deleted,
-        main_id, so_id, so_code, logistics_channel_id, logistics_channel_name, track_no, package_weight, weight_unit, outstock_status, transfer_staus
+        main_id, so_id, so_code, logistics_channel_id, logistics_channel_name, track_no, package_weight, weight_unit, outstock_status, transfer_status,
+        order_upload_status,failure_reason,shipping_order_no
     </sql>
 
     <!--详情明细高级查询-->
@@ -72,6 +73,21 @@
         <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">
             and tdd.logistics_channel_id in
             <foreach collection="params.logisticsChannelIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="listByCondition" resultType="com.erp.model.tms.entity.TransferDeclareDetailEntity">
+        SELECT
+            <include refid="Base_Column_List"/>
+        FROM  transfer_declare_detail tdd
+        where tdd.is_deleted = FALSE
+        <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+            and ${params.sqlMap.detail}
+        </if>
+        <if test="mainIds != null and mainIds.size > 0">
+            and tdd.main_id in
+            <foreach collection="mainIds" open="(" close=")" item="item" separator=",">
                 #{item}
             </foreach>
         </if>

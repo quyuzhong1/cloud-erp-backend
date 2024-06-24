@@ -47,4 +47,9 @@ public class PlatformOutboundDTO extends UniqueDto {
      * 跟踪号
      */
     private String trackNo;
+
+    /**
+     * 异常原因
+     */
+    private String abnormalProblemReason;
 }

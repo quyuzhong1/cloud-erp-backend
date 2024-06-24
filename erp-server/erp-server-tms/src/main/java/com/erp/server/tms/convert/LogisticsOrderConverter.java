@@ -315,8 +315,9 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "packageCount" ,constant = "1"),
             @Mapping(target = "sourceCode" ,source = "orderSource"),
             @Mapping(target = "returnOption" ,source = "returnOption"),
+            @Mapping(target = "insuranceOption" ,constant = "0"),
             @Mapping(target = "iossCode" ,source = "iossCode"),
-            @Mapping(target = "coverage" ,source = "parceInfoVO.insuranceValue"),
+//            @Mapping(target = "coverage" ,source = "parceInfoVO.insuranceValue"),
             @Mapping(target = "receiver.countryCode",source = "receiverInfoVO.country"),
             @Mapping(target = "receiver.firstName",source = "receiverInfoVO.contact"),
 //            @Mapping(target = "receiver.lastName",source = "receiverInfoVO.name"),
@@ -351,7 +352,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "unitPrice" ,source = "destDeclarePrice"),
             @Mapping(target = "unitWeight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
             @Mapping(target = "remark" ,source = "remark"),
-            @Mapping(target = "productUrl" ,source = "url"),
+            @Mapping(target = "productUrl" ,ignore = true),
             @Mapping(target = "sku" ,source = "skuNo"),
             @Mapping(target = "invoiceRemark" ,source = "distributionInfo"),
             @Mapping(target = "currencyCode" ,source = "destCurrency"),
@@ -501,6 +502,7 @@ public interface LogisticsOrderConverter {
 
 
     @Mappings({
+            @Mapping(target = "aneroid_markup" ,source = "isLiquid"),
             @Mapping(target = "category_cn_desc" ,source = "declareChineseName"),
             @Mapping(target = "category_en_desc" ,source = "declareEnglishName"),
             @Mapping(target = "contains_battery" ,source = "isElectric"),

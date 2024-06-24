@@ -153,7 +153,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
 
         //SKU信息
         List<String> skuIds = newList.stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }

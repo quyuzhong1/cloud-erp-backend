@@ -1,35 +1,27 @@
 package com.erp.oms.aliexpress.service;
 
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.utils.RedisUtil;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.entity.ShopAuthEntity;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
 import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
-import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
-import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.request.ProductRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressItem;
-import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.dto.response.AliExpressProduct;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
 
@@ -60,23 +52,30 @@ public class AliExpressProductService {
         paramMap.put("gmt_modified_start", productRequest.getStartTime());
         paramMap.put("gmt_modified_end", productRequest.getEndTime());
         request.addApiParameter("simplify", "true");
-        request.addApiParameter("aeop_a_e_product_list_query", JSONObject.toJSONString(paramMap));
+        request.addApiParameter("aeop_a_e_product_list_query", JSONUtil.toJsonStr(paramMap));
         String token = productRequest.getToken();
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("result");
-        Boolean success = resultJsONObject.getBooleanValue("success");
+        if (null == resultJsONObject) {
+            String msg = StrUtil.format("拉取速卖通商品失败:无result, response={}", JSONUtil.toJsonStr(response));
+            throw new ServiceException(msg);
+        }
+        boolean success = resultJsONObject.getBool("success", false);
         //失败
         if (!success) {
             log.error("拉取速卖通商品失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
-            return;
+            String msg = StrUtil.format("拉取速卖通商品失败: response={}", JSONUtil.toJsonStr(response));
+            throw new ServiceException(msg);
         }
-        JSONArray jsonArray = (JSONArray) resultJsONObject.get("aeop_a_e_product_display_d_t_o_list");
+        resultJsONObject.get("aeop_a_e_product_display_d_t_o_list");
+        JSONArray jsonArray = resultJsONObject.getJSONArray("aeop_a_e_product_display_d_t_o_list");
         if (Objects.isNull(jsonArray) || jsonArray.isEmpty()) {
             return;
         }
         //产品ids
-        List<AliExpressItem> productInfoList = JSONObject.parseArray(jsonArray.toJSONString(), AliExpressItem.class);
+        List<AliExpressItem> productInfoList = JSONUtil.toList(jsonArray, AliExpressItem.class);
+
         for (AliExpressItem item : productInfoList) {
             Long productId = item.getProductId();
             AliExpressProduct product = this.getProductInfo(productId, productRequest);
@@ -86,7 +85,7 @@ public class AliExpressProductService {
         }
 
         //总页数
-        Integer totalPage = resultJsONObject.getInteger("total_page");
+        Integer totalPage = resultJsONObject.getInt("total_page");
         //表示还有
         if (Objects.nonNull(totalPage) && !totalPage.equals(currentPage)) {
             productRequest.setCurrentPage(currentPage + 1);
@@ -113,14 +112,24 @@ public class AliExpressProductService {
 //        request.addApiParameter("simplify", "true");
         request.addApiParameter("product_id", productId.toString());
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         //表示成功
-        if (Objects.nonNull(jsonObject)) {
+        if (null != jsonObject) {
             JSONObject json = jsonObject.getJSONObject("aliexpress_offer_product_query_response");
+            if (null == json){
+                log.error("【速卖通】获取到具体的产品信息异常：productId={}, response={}", productId, JSONUtil.toJsonStr(response.getBody()));
+                // 临时跳过
+                return null;
+            }
             JSONObject json2 = json.getJSONObject("result");
-            AliExpressProduct product = JSONObject.parseObject(json2.toJSONString(), AliExpressProduct.class);
-            return product;
+            if (null == json2){
+                log.error("【速卖通】获取到具体的产品信息异常：productId={}, response={}", productId, JSONUtil.toJsonStr(response.getBody()));
+                // 临时跳过
+                return null;
+            }
+            return JSONUtil.toBean(json2, AliExpressProduct.class);
         }
+        log.error("【速卖通】获取到具体的产品信息异常：productId={}, response={}", productId, JSONUtil.toJsonStr(response.getBody()));
         return null;
     }
 
@@ -150,13 +159,14 @@ public static void main(String[] args) {
             endTime("2022-11-25 00:00:00").
             clientId("502978").
             clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY").
-            token("50000200216zwXSmacvxdR9mlN3Q173edb18whDaGtElRAyxCAEBR9sxVko62BrXG7tj").
+            token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG").
             apiName("aliexpress.postproduct.redefining.findproductinfolistquery").
             baseUrl("https://api-sg.aliexpress.com")
             .build();
 
     try {
-        service.getProductInfo(1005004988974205l,productRequest);
+        AliExpressProduct productInfo = service.getProductInfo(1005006502798243L, productRequest);
+        System.out.println(JSONUtil.toJsonStr(productInfo));
     } catch (ApiException e) {
         e.printStackTrace();
     }

@@ -14,21 +14,15 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
-import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -84,7 +78,10 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
                         e.getAmazonOrderId(),
                         e.getShopId(),
                         e.getUniqueId(),
-                        Collections.singletonList(e)
+                        Collections.singletonList(e),
+                        e.getWarehouseId(),
+                        e.getWarehouseName(),
+                        e.getFulfillmentCenter()
                 )).collect(Collectors.toList());
 
         // 亚马逊物流销售报告转为发送mq数据

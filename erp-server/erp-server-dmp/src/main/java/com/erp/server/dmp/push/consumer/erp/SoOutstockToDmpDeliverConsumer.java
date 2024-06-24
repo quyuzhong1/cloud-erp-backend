@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.consumer.erp;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -7,6 +8,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.utils.CollectionUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -63,6 +65,10 @@ public class SoOutstockToDmpDeliverConsumer <T extends DmpSyncTaskIdDTO> extends
         String operate = String.valueOf(map.get("operate"));
 
         DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity = JSON.parseObject(String.valueOf(map.get("entity")), DmpDeliveryDetailInfoEntity.class);
+
+        if (CollectionUtil.isEmpty(dmpDeliveryDetailInfoEntity.getDetails())) {
+            return ApiResult.success();
+        }
         this.cleanOrderField(dmpDeliveryDetailInfoEntity, operate);
         return ApiResult.success();
     }

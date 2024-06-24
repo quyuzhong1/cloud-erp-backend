@@ -108,6 +108,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 渠道id
          */
         private String  channelId;
+        /**
+         * 物流平台（下单平台）
+         */
+        private String  logisticsPlatform;
 
         /**
          * 国家二字码
@@ -454,7 +458,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 仓库设置
          */
-        @NotEmpty(message = "仓库设置不能为空")
+        @NotNull(message = "仓库设置不能为空")
         private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
     }
 

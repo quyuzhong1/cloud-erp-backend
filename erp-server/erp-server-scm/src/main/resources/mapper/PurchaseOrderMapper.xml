@@ -276,6 +276,7 @@
             </foreach>
         </if>
         po.create_time desc
+        limit 50000
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
@@ -356,6 +357,7 @@
         po.id AS purchaseOrderId,
         pod.id AS sourceDetailId,
         pod.id AS purchaseOrderDetailId,
+        pod.warehouse_location AS warehouseLocation,
         po.code AS purchaseOrderCode,
         po.delivery_warehouse_name AS deliveryWarehouseName,
         po.delivery_warehouse_id AS deliveryWarehouseId,

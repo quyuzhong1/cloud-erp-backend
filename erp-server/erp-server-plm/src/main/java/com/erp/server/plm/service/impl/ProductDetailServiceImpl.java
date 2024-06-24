@@ -1008,6 +1008,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //1.修改产品表 主表信息
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
+
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
         //2.修改/新增 sku信息
@@ -2163,6 +2164,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //发送金蝶
         sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         syncWangDianProductDetailService.syncDataToWangDian(entity);
+        //增加缓存清除
+        redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, entity.getId());
         return true;
     }
 
@@ -4995,6 +4998,44 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
     }
 
+    @Override
+    public void initProductSizeAndBoxSize() {
+        // 查询出所有需要进行初始化的产品尺寸或箱规
+        List<ProductPackEntity> productPacks = productPackService.list();
+        List<List<ProductPackEntity>> partition = Lists.partition(productPacks, 500);
+        partition.parallelStream()
+                .forEach(packs ->{
+                    try {
+                        packs.forEach(this::convertSize);
+                    } catch (Exception e) {
+                        log.error("数据异常{}", e.getMessage(), e);
+                    }
+                    productPackService.updateBatchById(packs);
+                });
+    }
+
+    private void convertSize(ProductPackEntity pack) {
+        List<BigDecimal> productSizeList = Arrays.stream(Optional.ofNullable(pack.getProductSize()).orElse("").split("X"))
+                .filter(StrUtil::isNotBlank)
+                .map(BigDecimal::new)
+                .collect(Collectors.toList());
+        //产品尺寸-长
+        pack.setProductLength(LengthConverterUtil.cmToMm(productSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
+        //产品尺寸-宽
+        pack.setProductWidth(LengthConverterUtil.cmToMm(productSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
+        //产品尺寸-高
+        pack.setProductHeight(LengthConverterUtil.cmToMm(productSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
+        List<BigDecimal> boxSizeList = Arrays.stream(Optional.ofNullable(pack.getBoxSize()).orElse("").split("X"))
+                .filter(StrUtil::isNotBlank)
+                .map(BigDecimal::new)
+                .collect(Collectors.toList());
+        //箱规-长
+        pack.setBoxLength(LengthConverterUtil.cmToMm(boxSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
+        //箱规-宽
+        pack.setBoxWidth(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
+        //箱规-高
+        pack.setBoxHeight(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
+    }
 
     @Override
     public List<SkuVO> accessoriesSku(String searchKeyword) {
@@ -5010,6 +5051,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return baseMapper.getProductDetailByDestDeclarePrice();
     }
 
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 采购信息（产品采购信息+产品采购含税单价）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
     @Override
     public List<SkuVO> getSkuBaseByIds(List<String> skuIds) {
         if(CollectionUtils.isEmpty(skuIds)){
@@ -5038,5 +5087,115 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 dmpMqFeign.sendTask(resultList);
             }
         });
+    }
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 采购信息（产品采购信息+产品采购含税单价）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @Override
+    public List<SkuVO> listSkuCostByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuCostByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)){
+            return Collections.emptyList();
+        }
+        List<String> skuNoList = skuList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuNo())).map(SkuVO::getSkuNo).distinct().collect(Collectors.toList());
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
+        for (SkuVO skuVO : skuList) {
+            if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
+                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
+                skuVO.setNotTaxCostPrice(dmpSkuCost.getNotTaxCostPrice());
+            }
+        }
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuProductByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuProductByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuAllAttributeByIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuVOS = redisUtil.multiGet(RedisKeyConstant.LIST_SKU_INFO, skuIds);
+        //过滤空数据
+        skuVOS = skuVOS.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        //汇总已查询到的sku
+        List<String> existSkuIds = skuVOS.stream().filter(Objects::nonNull).map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<String> noExistSkuIds = skuIds.stream().filter(e -> CollectionUtils.isEmpty(existSkuIds)
+                || !existSkuIds.contains(e)).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(noExistSkuIds)){
+            return skuVOS;
+        }
+        List<SkuVO> skuInfos = this.getSkuInfoBySkuIds(noExistSkuIds);
+        if (CollectionUtils.isEmpty(skuInfos)){
+            return skuVOS;
+        }
+        redisUtil.putAllHashMap(RedisKeyConstant.LIST_SKU_INFO, skuInfos.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity())));
+        if (CollectionUtils.isEmpty(skuVOS)){
+            skuVOS = skuInfos;
+        }else {
+            skuVOS.addAll(skuInfos);
+        }
+        return skuVOS;
+    }
+
+    @Override
+    public List<SkuVO> listSkuPackByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPackByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuSaleByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuSaleByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuLogisticsByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuLogisticsByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuCategoryByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuCategoryByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuPurchaseByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPurchaseByIds(skuIds);
+        return skuList;
     }
 }

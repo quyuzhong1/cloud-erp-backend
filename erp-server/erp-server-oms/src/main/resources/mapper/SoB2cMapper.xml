@@ -78,6 +78,8 @@
         sb2cr.name as buyerName,
         sb2cr.country_name as countryName,
         sb2cr.country as country,
+        sb2cr.email as email,
+        sb2cr.tel_number as telNumber,
         sb2c.create_time as createTime,
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
         sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
@@ -156,6 +158,18 @@
         si.country_name as countryName,
         sbrc.categoryNames
     </sql>
+    <update id="updateBatchApproveById">
+        <foreach collection="updateList" item="item" index="index" separator=";">
+            UPDATE so_b2c
+            SET
+            <trim suffixOverrides=",">
+                <if test="item.approveTime != null">approve_time = #{item.approveTime},</if>
+                <if test="item.approveUserId != null">approve_user_id = #{item.approveUserId},</if>
+                <if test="item.approveUserName != null">approve_user_name = #{item.approveUserName},</if>
+            </trim>
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
 
     <!-- 列表分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
@@ -530,6 +544,7 @@
         sb.dict_platform,
         sb.shop_id,
         sbd.platform_spu_no
+        limit 50000
     </select>
     <!--获取标记发货信息-->
     <select id="getSignShipParam" resultType="com.erp.model.oms.dto.SoB2cDTO$SignShipOrderDTO">
@@ -770,6 +785,7 @@
             </if>
         </where>
         order by sb2c.id desc
+        limit 50000
     </select>
 
     <!-- 异常订单分页 -->
@@ -843,6 +859,57 @@
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
         </where>
+        order by sb2c.id desc
+        limit 50000
+    </select>
+    <select id="getForeignOrderDeliveryInfo"
+            resultType="com.erp.model.oms.dto.SoB2cForeignDTO$OrderDeliveryResp">
+        SELECT
+            sb2c.id,
+            sb2c.invalid_status as invalidStatus,
+        sb2c.code as erpOrderCode,
+        sb2c.platform_code as platformOrderCode,
+        sb2c.seller_order_code as sellerOrderCode,
+        sb2c.seller_order_code as sellerOrderCode,
+        sb2c.source_type as orderSource,
+        sb2c.bill_status as orderStatus,
+        sb2c.approve_status as approveStatus,
+        sbd.code as deliveryCode,
+        sbl.logistics_channel_id as logisticChannelId,
+        sbl.code as transportCode,
+        sbl.track_no as trackingNumber,
+        sb2c.approve_time as approveTime,
+        sout.bill_date as deliveryDate
+        from so_b2c sb2c
+        inner join so_b2c_logistics sbl on sb2c.id = sbl.main_id and sbl.is_deleted = false
+        left join so_outstock sout on sout.so_id = sb2c.id and sout.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sbd.is_deleted = false
+        where sb2c.is_deleted = false and sb2c.shop_id = #{params.erpShopId}
+        <if test="params.platformOrderCodeList != null and params.platformOrderCodeList.size > 0">
+            and sb2c.platform_code in
+            <foreach collection="params.platformOrderCodeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sellerOrderCodeList != null and params.sellerOrderCodeList.size > 0">
+            and sb2c.seller_order_code in
+            <foreach collection="params.sellerOrderCodeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.orderStatus!=null and params.orderStatus !=''">
+            AND sb2c.bill_status = #{params.orderStatus}
+        </if>
+        <if test="params.approveStatus!=null and params.approveStatus !=''">
+            AND sb2c.approve_status = #{params.approveStatus}
+        </if>
+        <if test="params.deliveryStartTime != null">
+            and sout.bill_date >= #{params.deliveryStartTime}
+        </if>
+        <if test="params.deliveryEndTime != null">
+            and sout.bill_date <![CDATA[ <= ]]> #{params.deliveryEndTime}
+        </if>
         order by sb2c.id desc
     </select>
 

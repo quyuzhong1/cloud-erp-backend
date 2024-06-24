@@ -70,7 +70,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     BatchResultDTO manualDelivery(String id);
 
     /**
-     * 虚假发货
+     * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/13 19:30
      * @param id
@@ -191,22 +191,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
-     * 虚假发货(批量)
+     * 手动标发(批量)
      * @Author Luo_WG
      * @Date 2024/4/22 18:06
      * @param ids
      * @return java.lang.Boolean
      **/
     Boolean falseDeliveryBatch(List<String> ids);
-
-    /**
-     * 添加发货单日志
-     * @Author Luo_WG
-     * @Date 2023/12/27 16:00
-     * @param deliveryEntities
-     * @return java.lang.Boolean
-     **/
-    Boolean addDeliveryLog(List<SoB2cDeliveryEntity> deliveryEntities);
 
     /**
      * 合并组包发货

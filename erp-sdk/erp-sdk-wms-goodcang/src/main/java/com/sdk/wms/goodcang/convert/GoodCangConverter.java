@@ -109,6 +109,7 @@ public interface GoodCangConverter {
             @Mapping(target = "trackNo",  source = "trackNo"),
             @Mapping(target = "orderStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
             @Mapping(target = "thirdOrderStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OrderStatusEnum.getName(sourceData.getOrderStatus()))"),
+            @Mapping(target = "abnormalProblemReason",  source = "abnormalProblemReason"),
     })
     PlatformOutboundDTO outboundConversion(GoodCangOutboundResp sourceData);
     List<PlatformOutboundDTO> outboundConversion(List<GoodCangOutboundResp> sourceDataList);

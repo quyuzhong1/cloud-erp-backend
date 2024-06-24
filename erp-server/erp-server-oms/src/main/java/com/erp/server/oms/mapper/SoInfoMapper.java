@@ -62,10 +62,10 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * 下推销售退货订单-列表查询
      * @Author Luo_WG
      * @Date 2023/5/25 15:19
-     * @param ids ids
+     * @param detailIds detailIds
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>
      **/
-    List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(@Param("ids") List<String> ids);
+    List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(@Param("detailIds") List<String> detailIds);
 
     /**
      * 获取折扣额大于0 的

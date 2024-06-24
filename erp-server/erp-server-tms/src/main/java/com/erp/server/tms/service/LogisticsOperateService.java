@@ -16,7 +16,7 @@ public interface LogisticsOperateService {
     /**
      * 增加接口调用记录
      *
-     * @param authId
+     * @param sourceCode
      * @param sourceId
      * @param businessType
      * @param logisticsPlatform
@@ -24,7 +24,7 @@ public interface LogisticsOperateService {
      * @param requestParamJson
      * @param responseParamJson
      */
-    String pullOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson);
+    String pullOperateLog(String sourceId,String sourceCode, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson);
     /**
      * 增加接口调用记录
      *

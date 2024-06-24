@@ -10,6 +10,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.server.wms.query.SupplierDeliveryQueryHandler;
@@ -150,7 +151,7 @@ public class SupplierDeliveryOrderController extends BaseController {
     @PostMapping("/listGenerateReceive")
     public ApiResult<List<DeliveryOrderDTO.GenerateReceiveListDTO>> listGenerateReceive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<DeliveryOrderDTO.GenerateReceiveListDTO> receiveListDTOList = srmDeliveryFeign.listGenerateReceive(dto);
-        return receiveListDTOList.stream().anyMatch(v-> StringUtils.isNotBlank(v.getReceiptStatus()))?failure("仅无收货状态的收货单支持下推"):success(receiveListDTOList);
+        return success(receiveListDTOList);
     }
 
 

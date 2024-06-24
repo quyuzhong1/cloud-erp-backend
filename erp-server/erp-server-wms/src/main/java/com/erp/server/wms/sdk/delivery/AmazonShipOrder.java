@@ -1,6 +1,7 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -14,7 +15,7 @@ import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.service.IPlatformService;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
@@ -64,56 +65,16 @@ public class AmazonShipOrder extends AbstractShipOrder {
     private ShopInfoFeign shopInfoFeign;
 
     @Override
-    public void shipOrder(PlatformShipOrderDTO dto) {
-        List<SoB2cEntity> sourceOrderList;
-        Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = new HashMap<>();
-        Map<String, SoB2cLogisticsEntity> logisticsEntityMap= new HashMap<>();
+    public List<String> shipOrder(PlatformShipOrderDTO dto) {
+        Tuple tuple = super.allSourceOrderInfo(dto);
+        // 所有源单信息
+        List<SoB2cEntity> sourceOrderList = tuple.get(0);
+        // 对应明细
+        Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = tuple.get(1);
+        // 当前单据物流信息
+        SoB2cLogisticsEntity logisticsEntity = tuple.get(2);
 
-        // 查询合并来源关系
-        List<SoB2cRefEntity> refEntityList = soB2cFeign.findMergeByTargetId(dto.getSoB2cId());
-        if (CollectionUtils.isEmpty(refEntityList)){
-            // 无合并
-            //检查销售订单是否存在
-            SoB2cEntity mainEntity = soB2cFeign.getById(dto.getSoB2cId());
-            if (ObjectUtil.isEmpty(mainEntity)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-            }
-            sourceOrderList = Collections.singletonList(mainEntity);
-            //检查销售订单物流信息是否存在
-            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(mainEntity.getId()));
-            if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-            }
-            logisticsEntityMap.put(dto.getSoB2cId(), soB2cLogisticsEntities.get(0));
-            //检查销售订单详情是否存在
-            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
-            if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
-            }
-            soB2cDetailEntityListMap.put(dto.getSoB2cId(),soB2cDetailEntityList);
-        } else {
-            // 有合并
-            List<String> mainIds = refEntityList.stream().map(SoB2cRefEntity::getSourceId).distinct().collect(Collectors.toList());
-            List<String> detailIds = refEntityList.stream().map(SoB2cRefEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-            sourceOrderList = soB2cFeign.listByIds(mainIds);
-            //检查销售订单是否存在
-            if (CollectionUtils.isEmpty(sourceOrderList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-            }
-            sourceOrderList = sourceOrderList.stream()
-                    .filter(e-> SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(e.getSourceType()) && PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(e.getDictPlatform()))
-                    .collect(Collectors.toList());
-            //检查销售订单物流信息是否存在
-            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(mainIds);
-            if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-            }
-            logisticsEntityMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
-            // 查询所有明细
-            List<SoB2cDetailEntity> allDetailList = soB2cFeign.listDetailByIds(detailIds);
-            soB2cDetailEntityListMap = allDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
-        }
-
+        List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
@@ -128,17 +89,13 @@ public class AmazonShipOrder extends AbstractShipOrder {
 //            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
 //                throw new ServiceException("平台来源详情ID为空");
 //            }
-            detailEntityList = super.handleBomSplit(detailEntityList);
+            detailEntityList = super.handleSplit(detailEntityList, dto.isFalseDeliveryFlag());
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
                 continue;
             }
 
             //检查销售订单物流信息是否存在
-            SoB2cLogisticsEntity logisticsEntity = logisticsEntityMap.get(mainEntity.getId());
-            if (null == logisticsEntity) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-            }
             if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())){
                 throw new ServiceException("订单渠道ID为空");
             }
@@ -213,12 +170,14 @@ public class AmazonShipOrder extends AbstractShipOrder {
                 List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
                 if (CollectionUtils.isEmpty(warehouseTypes)){
                     log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
+                    signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
                     continue;
                 }
                 // 允许通过的ID
                 DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
                 if (null == configAllowPlatformOrderDTO){
                     log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
+                    signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
                     continue;
                 }
             }
@@ -227,12 +186,14 @@ public class AmazonShipOrder extends AbstractShipOrder {
                 log.warn("【{}】亚马逊标记发货:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
                 ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, mainEntity.getPlatformCode());
                 log.warn("【{}】亚马逊标记发货:响应结果={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(voidApiResponse));
+                signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (ApiException e){
                 confirmShipmentApiExceptionHandle(e, mainEntity.getPlatformCode(), api);
             } catch (Exception e) {
                 throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
             }
         }
+        return signShippedDetailList;
     }
 
 

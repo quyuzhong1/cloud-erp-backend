@@ -148,5 +148,8 @@ public class ReportFbaMyiAllInventoryMongoDTO extends ReportSuperMongoDTO {
         return Integer.parseInt(this.afnUnsellableQuantity);
     }
 
-
+    @Override
+    public String convertBusinessUniqueKey() {
+        return super.getUniqueId();
+    }
 }

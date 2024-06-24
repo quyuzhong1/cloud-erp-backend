@@ -13,5 +13,6 @@ public class WeiShiConstants {
     public static final String METHOD_GET_SHIPPING= "getShippingMethod";
     public static final String METHOD_GET_TRACK_NUMBER= "getTrackNumber";
     public static final String GET_ORDER= "getOrder";
+    public static final String MODIFY_ORDER_WEIGHT = "modifyOrderWeight";
 
 }

@@ -108,6 +108,22 @@ public class CfgAmzReportTypeEntity extends BaseEntity<CfgAmzReportTypeEntity> {
      */
     @TableField("parse_row_count")
     private Integer parseRowCount;
+    /**
+     * 报告数据间隔时间:PT5M，PT15M，PT30M，PT1H，PT2H，PT4H，PT8H，PT12H，P1D，P2D，P3D，PT84H，P7D，P14D，P15D，P18D，P30D，P1M
+     * {@link com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification.PeriodEnum}
+     */
+    @TableField("data_period")
+    private String dataPeriod;
+    /**
+     * 报告数据开始时间类型:now/day/week/month
+     */
+    @TableField("data_time_type")
+    private String dataTimeType;
+    /**
+     * 优先级(正序)
+     */
+    @TableField("priority")
+    private Integer priority;
 
 
     public static final String REPORT_TYPE = "report_type";

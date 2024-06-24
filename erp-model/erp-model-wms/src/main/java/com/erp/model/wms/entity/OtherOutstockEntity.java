@@ -42,7 +42,7 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     private String approveStatus;
 
     /**
-     * 出库类型
+     * 业务类型
      */
     @TableField("type")
     private String type;
@@ -172,6 +172,12 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
+
+    /**
+     * 出库类型
+     */
+    @TableField("out_type")
+    private String outType;
 
     @TableField(exist = false)
     private List<OtherOutstockDetailEntity> detailEntityList;

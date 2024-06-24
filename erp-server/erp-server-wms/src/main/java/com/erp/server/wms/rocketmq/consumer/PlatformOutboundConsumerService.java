@@ -7,9 +7,7 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOutboundDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.*;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
@@ -38,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.json.JsonObject;
 import java.util.Objects;
 
 /**
@@ -131,8 +130,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
         updateStatus.setSoCode(soB2cCode);
         updateStatus.setSoId(mainEntity.getId());
-        updateStatus.setBillStatus(billStatus);
+        if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
+            updateStatus.setBillStatus(billStatus);
+        }
         updateStatus.setTrackNo(dto.getTrackNo());
+        updateStatus.setFromThirdWarehouseFlag(true);
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
 
@@ -144,7 +146,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         mainEntity.getCode(),
                         mainEntity.getDictPlatform(),
                         JSONUtil.toJsonStr(dto),
-                        businessDesc);
+                        businessDesc, false);
             }
 
             // 校验是否已生成销售出库单
@@ -156,6 +158,19 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
             // 第三方仓出库生成销售出库单（独立事务）
             soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
+        }
+
+        if (SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode().equals(dto.getOrderStatus())) {
+            //更新异常订单信息
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
+                    mainEntity.getId(),
+                    SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode(),
+                    null,
+                    dto.getAbnormalProblemReason(),
+                    JSONUtil.toJsonStr(dto),
+                    ""
+            );
+            soB2cFeign.addSoB2cError(addError);
         }
         return ApiResult.success();
     }

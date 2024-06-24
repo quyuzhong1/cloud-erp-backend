@@ -124,6 +124,7 @@ public interface ImlConverter {
             @Mapping(target = "trackNo",  source = "trackNo"),
             @Mapping(target = "orderStatus",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
             @Mapping(target = "thirdOrderStatus",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.OrderStatusEnum.getName(sourceData.getOrderStatus()))"),
+            @Mapping(target = "abnormalProblemReason",  source = "abnormalReason"),
     })
     PlatformOutboundDTO outboundConversion(ImlOutboundResp sourceData);
     List<PlatformOutboundDTO> outboundConversion(List<ImlOutboundResp> sourceDataList);
