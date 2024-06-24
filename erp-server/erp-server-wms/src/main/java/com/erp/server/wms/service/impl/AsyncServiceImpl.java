@@ -75,6 +75,12 @@ public class AsyncServiceImpl implements AsyncService {
             );
             soB2cFeign.addSoB2cError(addError);
             log.warn("【{}】销售单【{}】标记发货失败记录结束", businessDesc, soCode);
+            return;
         }
+        // 成功后删除历史(独立事务)
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setType(SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode());
+        deleteDTO.setMainId(soId);
+        soB2cFeign.deleteError(deleteDTO);
     }
 }
