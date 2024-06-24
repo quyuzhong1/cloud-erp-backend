@@ -3,9 +3,11 @@ package com.erp.server.scm.controller.feign;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import com.erp.model.scm.entity.SalesDemandEntity;
+import com.erp.model.scm.entity.*;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -18,6 +20,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 采购订单feign
@@ -49,7 +52,12 @@ public class ScmWorkOptionFeignController {
 
     @Resource
     private PurchaseApplicationService purchaseApplicationService;
-
+    @Resource
+    private PurchaseChangeDetailService purchaseChangeDetailService;
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
     /**
      * 根据入参查询单据数量
      * @Author Luo_WG
@@ -132,8 +140,32 @@ public class ScmWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/purchaseChangeApprove")
-    public Boolean purchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return purchaseChangeService.approve(dto);
+    public List<BatchResultDTO> purchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchaseChangeEntity> entityList = purchaseChangeService.listByIds(dto.getIds());
+        //查询原采购订单明细信息
+        List<PurchaseChangeDetailEntity> purchaseChangeDetailEntityList = purchaseChangeDetailService.listByPurchaseChangeIds(dto.getIds());
+        List<String> purchaseOrderDetailIds = purchaseChangeDetailEntityList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList =  purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
+        //修改到货状态
+        List<String> podIds = purchaseChangeDetailEntityList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PoReturnDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        List<WarehouseReceiveDetailEntity> receiveDetailEntityList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        for (String id : dto.getIds()) {
+            PurchaseChangeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购变更单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseChangeService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess(),
+                        purchaseChangeDetailEntityList, purchaseOrderDetailEntityList,returnDetailEntityList, receiveDetailEntityList));
+            }catch (Exception e){
+                log.error("采购变更单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 
     /**
