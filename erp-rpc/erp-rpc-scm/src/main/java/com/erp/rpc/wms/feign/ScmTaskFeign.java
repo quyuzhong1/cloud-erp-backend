@@ -227,7 +227,7 @@ public interface ScmTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/scmWorkOption/purchasePriceApprove")
-    Boolean purchasePriceApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+    List<BatchResultDTO> purchasePriceApprove(@RequestBody @Validated BaseApproveParamDTO dto);
 
     /**
      * 审核
