@@ -215,6 +215,11 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 虚拟仓库名称
          */
         private String virtualWarehouseName;
+
+        /**
+         * 实体仓下虚拟仓总库存
+         */
+        private Integer totalVirtualQty;
         /**
          * 虚拟仓库存
          */

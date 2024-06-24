@@ -215,8 +215,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getWarehouseId()))
                     .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
             listDTO.setWarehouseName(warehouseName);
-            //已分配数量
-            listDTO.setDistributionQty(listDTO.getVirtualQty());
+            listDTO.setDistributionQty(listDTO.getTotalVirtualQty());
             //未分配数量
             listDTO.setUnDistributionQty(listDTO.getUsableQty() - listDTO.getDistributionQty());
 

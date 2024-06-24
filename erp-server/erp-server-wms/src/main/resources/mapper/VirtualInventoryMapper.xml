@@ -181,7 +181,7 @@
 
     <!-- 虚拟库存数据 -->
     <select id="listDiffExportData" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDiffExportDataDTO">
-        select skuId,warehouseId,virtualWarehouseId,virtualQty,virtualUsableQty,virtualFrozenQty,usableQty from (select
+        select skuId,warehouseId,virtualWarehouseId,virtualQty,virtualUsableQty,virtualFrozenQty,usableQty,totalVirtualQty from (select
         vi.sku_id as skuId,
         vi.warehouse_id as warehouseId,
         vi.virtual_warehouse_id as virtualWarehouseId,
