@@ -293,7 +293,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                     }
                 }
             }
-        }else{
+        } else {
             virtualWarehouseEntity.setDisabled(false);
         }
 
@@ -356,28 +356,35 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                     Map<String, List<VirtualWarehouseChannelEntity>> existChannelMap = vwChannelEntitieList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
                     existChannelMap.forEach((dictPlatform, list) -> {
                         List<VirtualWarehouseDTO.BindChannelDto> bindedChannelDtos = allBindedMap.get(dictPlatform);
-                         if (CollectionUtils.isNotEmpty(bindedChannelDtos)) {
+                        if (CollectionUtils.isNotEmpty(bindedChannelDtos)) {
                             //如果当前渠道绑定类型是平台，则当前虚拟仓不能绑定此渠道
                             if (Objects.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(), list.get(0).getType())) {
                                 //获取已绑定渠道的虚拟仓
-                                VirtualWarehouseEntity virtualWarehouse = this.getById(list.get(0).getVirtualWarehouseId());
+                                VirtualWarehouseEntity virtualWarehouse = this.getById(bindedChannelDtos.get(0).getVirtualWarehouseId());
                                 throw new ServiceException(ApiError.ERROR_VW_CHANNEL_ERROR, virtualWarehouse.getName());
                             } else {
-                                //如果当前渠道绑定类型是店铺，判断是否重复绑定店铺
-                                List<String> relationIds = bindedChannelDtos.stream().map(VirtualWarehouseDTO.BindChannelDto::getRelationId).collect(Collectors.toList());
-                                List<String> curBindedRelationList = curBindedList.stream().map(VirtualWarehouseDTO.BindChannelDto::getRelationId).collect(Collectors.toList());
-                                List<String> existRelationIds=new ArrayList<>();
-                                curBindedRelationList.forEach(curBindedRelationId->{
-                                    if (relationIds.contains(curBindedRelationId)){
-                                        existRelationIds.add(curBindedRelationId);
-                                    }
-                                });
-                                if (CollectionUtils.isNotEmpty(existRelationIds)){
-                                    //获取绑定过的店铺
-                                    List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(existRelationIds);
-                                    if (CollectionUtils.isNotEmpty(shopInfoEntities)){
-                                        VirtualWarehouseEntity virtualWarehouse = this.getById(list.get(0).getVirtualWarehouseId());
-                                        throw new ServiceException(ApiError.ERROR_VW_SHOP_BINDED_ERROR,shopInfoEntities.stream().map(ShopInfoEntity::getName).collect(Collectors.joining()),virtualWarehouse.getName());
+                                //判断是否有其他虚拟仓关联此渠道的平台类型
+                                if (Objects.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(), bindedChannelDtos.get(0).getType())) {
+                                    //获取已绑定渠道的虚拟仓
+                                    VirtualWarehouseEntity virtualWarehouse = this.getById(bindedChannelDtos.get(0).getVirtualWarehouseId());
+                                    throw new ServiceException(ApiError.ERROR_VW_CHANNEL_ERROR, virtualWarehouse.getName());
+                                } else {
+                                    //如果当前渠道绑定类型是店铺，判断是否重复绑定店铺
+                                    List<String> relationIds = bindedChannelDtos.stream().map(VirtualWarehouseDTO.BindChannelDto::getRelationId).collect(Collectors.toList());
+                                    List<String> curBindedRelationList = curBindedList.stream().map(VirtualWarehouseDTO.BindChannelDto::getRelationId).collect(Collectors.toList());
+                                    List<String> existRelationIds = new ArrayList<>();
+                                    curBindedRelationList.forEach(curBindedRelationId -> {
+                                        if (relationIds.contains(curBindedRelationId)) {
+                                            existRelationIds.add(curBindedRelationId);
+                                        }
+                                    });
+                                    if (CollectionUtils.isNotEmpty(existRelationIds)) {
+                                        //获取绑定过的店铺
+                                        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(existRelationIds);
+                                        if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
+                                            VirtualWarehouseEntity virtualWarehouse = this.getById(bindedChannelDtos.get(0).getVirtualWarehouseId());
+                                            throw new ServiceException(ApiError.ERROR_VW_SHOP_BINDED_ERROR, shopInfoEntities.stream().map(ShopInfoEntity::getName).collect(Collectors.joining(",")), virtualWarehouse.getName());
+                                        }
                                     }
                                 }
                             }
