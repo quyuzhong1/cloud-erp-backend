@@ -402,7 +402,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && mainEntity.hasPlatformWarehouseOrder() && isShipped) {
                 //查询映射的仓库信息
-                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream().filter(req -> detailDTO.getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
+                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream()
+                        .filter(req -> StringUtils.isNotBlank(detailDTO.getWarehouseName()) && detailDTO.getWarehouseName().equals(req.getThirdWarehouseName()))
+                        .findFirst()
+                        .orElse(null);
                 if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
                     saveOrUpdateEntity.setWarehouseId(mappingViewDTO.getWarehouseId());
                     saveOrUpdateEntity.setWarehouseName(mappingViewDTO.getWarehouseName());
@@ -413,32 +416,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     saveOrUpdateEntity.setWarehouseName("");
                     saveOrUpdateEntity.setWarehouseOrgId("");
                     saveOrUpdateEntity.setWarehouseOrgName("");
-
-                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                    addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                    addError.setParamJson("");
-                    addError.setReturnJson("");
-                    addError.setMainId(mainEntity.getId());
-                    addError.setMessage(StrUtil.format("生成销售出库单失败：发货单仓库【{}】未匹配系统仓库", detailDTO.getWarehouseName()));
-                    soB2cErrorService.add(addError);
                 }
             }
-
-
-            //建议售价
-//            if (StringUtils.isNotBlank(skuId)){
-//                List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Collections.singletonList(skuId));
-//                if (CollectionUtils.isNotEmpty(skuList)){
-//                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
-//                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
-//                }
-//            }else if (StringUtils.isNotBlank(skuNO)){
-//                List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNO));
-//                if (CollectionUtils.isNotEmpty(skuList)){
-//                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
-//                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
-//                }
-//            }
             return saveOrUpdateEntity;
         }).collect(Collectors.toList());
 
@@ -739,7 +718,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
         //产品信息
         List<String> skuIds = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             log.error("未找到SKU，warehouseIds = {}",skuList);
             throw new ServiceException(ApiError.ERROR_95084);

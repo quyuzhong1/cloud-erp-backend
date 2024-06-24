@@ -377,6 +377,17 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         }
     }
 
+    @Override
+    public List<WarehouseLocationEntity> findByWarehouseIdsAndCode(List<String> warehouseIds, String warehouseLocation) {
+        if (CollectionUtils.isEmpty(warehouseIds) && StringUtils.isBlank(warehouseLocation)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .in(CollectionUtils.isNotEmpty(warehouseIds), WarehouseLocationEntity::getWarehouseId,warehouseIds)
+                .eq(StrUtil.isNotBlank(warehouseLocation), WarehouseLocationEntity::getCode, warehouseLocation)
+                .list();
+    }
+
 
     /**
      * @description: 下拉数据处理

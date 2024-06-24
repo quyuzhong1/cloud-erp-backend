@@ -14,6 +14,7 @@ import com.erp.model.bi.vo.SelectShowVO;
 import com.erp.model.bi.vo.ShopDropDownVO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.bi.enums.*;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import com.erp.server.bi.service.BiDictService;
@@ -61,8 +62,9 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/platform/list")
     public ApiResult<List<SalesPlatformEnumVO>> listPlatformDropDown() {
-        List<SalesPlatformEnumVO> result = Arrays.stream(PlatformDictEnum.values())
-                .map(x -> new SalesPlatformEnumVO(x.getCode(), x.getName(), x.getDesc()))
+        List<BiDictEntity> biDictEntities = biDictService.listEntityByType(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<SalesPlatformEnumVO> result = biDictEntities.stream()
+                .map(x -> new SalesPlatformEnumVO(x.getValue(), x.getName(), x.getRemark()))
                 .collect(Collectors.toList());
         return success(result);
     }

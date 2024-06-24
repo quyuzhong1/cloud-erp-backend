@@ -143,5 +143,10 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      */
     void updateLogisticsAuthStatus(String mainId, String authStatus);
 
-
+    /**
+     * 根据供应商获取授权列表
+     * @param supplierIds
+     * @return
+     */
+    List<LogisticsAuthEntity> listByMainIds(List<String> supplierIds);
 }

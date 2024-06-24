@@ -101,4 +101,9 @@ public class ReportListingMongoDTO extends ReportSuperMongoDTO  {
 
     @Panno(findType = PannoEnum.EQ, field = "status")
     private String status;
+
+    @Override
+    public String convertBusinessUniqueKey() {
+        return super.getUniqueId();
+    }
 }

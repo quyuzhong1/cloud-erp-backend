@@ -153,15 +153,16 @@
         select
             <include refid="Base_Column_List"/>
         from  logistics_channel lc
-        where lc.is_deleted = false
+        where
+        lc.is_deleted = false
+        <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+            and ${params.sqlMap.detail}
+        </if>
         <if test="mainIdList != null and mainIdList.size > 0">
             and lc.main_id in
             <foreach collection="mainIdList" open="(" close=")" item="item" separator=",">
                 #{item}
             </foreach>
-        </if>
-        <if test="name != null and name != ''">
-            and lc.name ILIKE concat('%',#{name}::text,'%')
         </if>
         order by  lc.disabled asc,lc.create_time desc
     </select>

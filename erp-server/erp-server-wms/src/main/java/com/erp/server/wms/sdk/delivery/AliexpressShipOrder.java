@@ -65,7 +65,20 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         Tuple tuple = super.allSourceOrderInfo(dto);
         List<SoB2cEntity> sourceOrderList = tuple.get(0);
         Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = tuple.get(1);
-//        Map<String, SoB2cLogisticsEntity> logisticsEntityMap = tuple.get(2);
+        // 当前单据物流信息
+        String soB2cId = dto.getSoB2cId();
+        SoB2cDTO.SignShipOrderDTO signShipOrderDTO = soB2cFeign.getSignShipParam(soB2cId);
+        //渠道
+        String channelId = signShipOrderDTO.getLogisticsChannelId();
+
+        //获取销售渠道信息
+        LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                channelId,
+                PlatformDictEnum.ALI_EXPRESS.getCode()
+        );
+        if (null == tmsSignShipDTO) {
+            throw new ServiceException("找不到渠道信息");
+        }
 
         List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
@@ -86,20 +99,6 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
                 continue;
-            }
-
-            String soB2cId = dto.getSoB2cId();
-            SoB2cDTO.SignShipOrderDTO signShipOrderDTO = soB2cFeign.getSignShipParam(soB2cId);
-            //渠道
-            String channelId=signShipOrderDTO.getLogisticsChannelId();
-
-            //获取销售渠道信息
-            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
-                    channelId,
-                    PlatformDictEnum.ALI_EXPRESS.getCode()
-            );
-            if (null == tmsSignShipDTO) {
-                throw new ServiceException("找不到渠道信息");
             }
 
             //获取渠道标发单号

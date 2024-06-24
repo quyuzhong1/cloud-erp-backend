@@ -139,6 +139,16 @@ public class PurchaseOrderDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 报关型号
+         */
+        private String declareModel;
+
+        /**
+         * 报关名称
+         */
+        private String declareName;
+
+        /**
          * 产品名称【可排序】
          */
         private String productName;
@@ -976,6 +986,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
     }
 
     @Data

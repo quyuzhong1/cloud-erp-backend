@@ -42,7 +42,7 @@ public interface PackageForecastMapper extends BaseMapper<PackageForecastEntity>
      * @param dto
      * @return
      */
-    List<PackageForecastDTO.PagingViewDTO> listExcel(@Param("params") PackageForecastDTO.ExportDTO dto);
+    List<PackageForecastDTO.ExportViewDTO> listExcel(@Param("params") PackageForecastDTO.ExportDTO dto);
 
     /**
      * 获取订单查询列表（速卖通订单更新使用）

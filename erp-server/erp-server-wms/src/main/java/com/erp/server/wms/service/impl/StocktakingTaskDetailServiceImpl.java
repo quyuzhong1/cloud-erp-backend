@@ -14,11 +14,9 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
-import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
-import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.model.wms.entity.StocktakingTaskUserEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
@@ -71,7 +69,8 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Resource
     private StocktakingTaskMapper stocktakingTaskMapper;
-
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
     @Override
     public Boolean exportExcel(BaseIdDTO dto, HttpServletResponse response) {
         String mainId = dto.getId();
@@ -280,11 +279,15 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         List<StocktakingTaskDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, StocktakingTaskDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(StocktakingTaskDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = dbList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         for (StocktakingTaskDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
             String skuName = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().
                     map(ProductDetailEntity::getName).orElse("");
             item.setProductName(skuName);
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(item.getWarehouseId()) && e.getCode().equals(item.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            item.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
         return resultList;
     }

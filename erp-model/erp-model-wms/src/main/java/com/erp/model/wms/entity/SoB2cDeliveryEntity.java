@@ -33,7 +33,7 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     @TableField("code")
     private String code;
     /**
-    * 状态 waitHandle:待处理  picking:拣货中 falseShipment:虚假发货 shipped:已发货  cancelDelivery:取消发货
+    * 状态 waitHandle:待处理  picking:拣货中 falseShipment:手动标发 shipped:已发货  cancelDelivery:取消发货
     */
     @TableField("status")
     private String status;

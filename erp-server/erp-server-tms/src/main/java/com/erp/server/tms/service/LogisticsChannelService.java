@@ -4,6 +4,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 
 import java.util.List;
@@ -47,10 +48,10 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     /**
      * 物流商id 获取渠道列表
      * @param mainIdList
-     * @param name
+     * @param params
      * @return
      */
-    List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList,String name);
+    List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, LogisticsSupplierDTO.PagingParamDTO params);
 
     /**
      * 详情

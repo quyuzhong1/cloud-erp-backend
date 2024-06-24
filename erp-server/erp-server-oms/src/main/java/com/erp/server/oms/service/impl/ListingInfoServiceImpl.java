@@ -152,7 +152,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         List<SkuVO> skuVOList;
         if(StringUtils.isNotBlank(dto.getSkuId())){
-            skuVOList = plmTaskFeign.getSkuInfoByIds(Collections.singletonList(dto.getSkuId()));
+            skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(dto.getSkuId()));
         } else {
             skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(dto.getSkuNo()));
         }
@@ -275,6 +275,10 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 operateLogService.addModuleOperateLogByObj(skuMappingEntity, addSkuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
             }
         }
+        lambdaUpdate()
+                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .in(ListingInfoEntity::getId, listingIds)
+                .update();
         service.batchOperation(updateList,addList);
     }
 

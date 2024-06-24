@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -302,6 +303,14 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     @Override
     public List<PackageForecastDetailEntity> listDbByMainId(String mainId) {
         return this.lambdaQuery().eq(PackageForecastDetailEntity::getMainId, mainId).list();
+    }
+
+    @Override
+    public List<PackageForecastDetailEntity> listDbByMainIds(List<String> mainIds) {
+        if(CollectionUtils.isEmpty(mainIds)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(PackageForecastDetailEntity::getMainId, mainIds).list();
     }
 
 

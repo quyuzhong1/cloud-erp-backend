@@ -248,13 +248,14 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         String errorType = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
         SoB2cErrorEntity soB2cError = this.getByMainIdAndType(soB2cId, errorType);
         if (null == soB2cError){
-            return BatchResultDTO.fail(soB2cId, soB2cId, "无异常信息");
+            if (errorType.equalsIgnoreCase(mainEntity.getSignOrderError())){
+                soB2cService.removeSignError(soB2cId, errorType);
+                return BatchResultDTO.success(soB2cId, mainEntity.getCode(), "移除头部异常信息成功");
+            }
+            return BatchResultDTO.fail(soB2cId, mainEntity.getCode(), "无异常信息");
         }
         // 移除已有异常
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setType(errorType);
-        deleteDTO.setMainId(soB2cId);
-        baseMapper.deleteB2cError(deleteDTO);
+        removeErrorOrder(soB2cId, errorType);
 
         String soCode = mainEntity.getCode();
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
