@@ -81,7 +81,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         //新增变更时验证采购订单是否关闭
         checkPoPushDown(list);
         //验证数量、单价是否符合供应商报价
-        checkPurchasePrice(list,Arrays.asList(purchaseChangeId));
+        checkPurchasePrice(list,purchaseChangeId);
         //计算金额
         doOpCalculateAmount(list,purchaseChangeId,Boolean.TRUE);
         this.saveBatch(list);
@@ -135,7 +135,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         //采购变更id赋值
         newList.forEach(obj -> obj.setPurchaseChangeId(purchaseChangeId));
         //验证数量、单价是否符合供应商报价
-        checkPurchasePrice(newList,Arrays.asList(purchaseChangeId));
+        checkPurchasePrice(newList,purchaseChangeId);
         //计算金额
         doOpCalculateAmount(newList,purchaseChangeId,Boolean.FALSE);
         this.saveOrUpdateBatch(newList);
@@ -198,12 +198,12 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
      * @date: 2023/4/3 16:44
      */
     @Override
-    public void checkPurchasePrice (List<PurchaseChangeDetailEntity> list,List<String> purchaseChangeIdList) {
+    public void checkPurchasePrice (List<PurchaseChangeDetailEntity> list,String purchaseChangeId) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<PurchaseChangeEntity> purchaseChangeEntityList = purchaseChangeService.listByIds(purchaseChangeIdList);
-        if (CollectionUtils.isEmpty(purchaseChangeEntityList)) {
+        PurchaseChangeEntity purchaseChangeEntity = purchaseChangeService.getById(purchaseChangeId);
+        if (ObjectUtils.isEmpty(purchaseChangeEntity)) {
             throw new ServiceException(ApiError.ERROR_98042);
         }
         List<String> purchaseOrderDetailIds = list.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
@@ -275,11 +275,6 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                 if (StrUtil.isNotBlank(stockInMsg)) {
                     throw new ServiceException(ApiError.Default.code,stockInMsg);
                 }
-            }
-            //采购变更单主表
-            PurchaseChangeEntity purchaseChangeEntity = purchaseChangeEntityList.stream().filter(obj -> obj.getId().equals(purchaseChangeDetailEntity.getPurchaseChangeId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(purchaseChangeEntity)) {
-                throw new ServiceException(ApiError.ERROR_98042);
             }
 
             //采购订单明细
