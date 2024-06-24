@@ -1,6 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -34,6 +37,14 @@ public class CfgRuleWaveController extends BaseController {
 
     @Resource
     private CfgRuleWaveService cfgRuleWaveService;
+
+
+    @PostMapping("/paging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<CfgRuleWaveDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgRuleWaveDTO.PagingParamDTO> dto) {
+        PagingVO<CfgRuleWaveDTO.ListDTO> pagingVO = cfgRuleWaveService.paging(dto);
+        return success(pagingVO);
+    }
 
     /**
     * 新增

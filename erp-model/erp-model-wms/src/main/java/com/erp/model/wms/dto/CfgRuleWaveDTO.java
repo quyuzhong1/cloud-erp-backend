@@ -2,11 +2,11 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -20,7 +20,79 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class CfgRuleWaveDTO implements Serializable {
 
+    /**
+     * 列表参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO {
 
+    }
+
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 优先级
+         */
+        private String priority;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 波次类型
+         */
+        private String waveType;
+        /**
+         * 波次类型名称
+         */
+        private String waveTypeName;
+        /**
+         * 拣货车类型
+         */
+        private String pickingCartTypeId;
+        /**
+         * 拣货车类型名称
+         */
+        private String    pickingCartTypeName;
+        /**
+         * 最小单数
+         */
+        private String    minOrderQty;
+        /**
+         * 最大单数
+         */
+        private String     maxOrderQty;
+        /**
+         * 最少商品数量
+         */
+        private String    minQty;
+        /**
+         * 最大商品数量
+         */
+        private String     maxQty;
+        /**
+         * 状态
+         */
+        private String    disabled;
+        /**
+         * 更新时间
+         */
+        private String   updateTime;
+        /**
+         * 更新人
+         */
+        private String    updateUserName;
+
+    }
 
 
     /**

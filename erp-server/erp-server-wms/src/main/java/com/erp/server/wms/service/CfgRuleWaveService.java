@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.CfgRuleWaveEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -32,5 +33,12 @@ public interface CfgRuleWaveService extends SuperService<CfgRuleWaveEntity> {
     */
     Boolean update(CfgRuleWaveDTO.UpdateDTO dto);
 
-
+    /**
+     * 分页查询
+     * @author will
+     * @date 2024/6/24 12:34
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<CfgRuleWaveDTO.ListDTO> paging(PagingDTO<CfgRuleWaveDTO.PagingParamDTO> dto);
 }
