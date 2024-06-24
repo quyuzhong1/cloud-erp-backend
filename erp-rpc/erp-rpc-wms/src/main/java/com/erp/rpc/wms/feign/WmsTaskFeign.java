@@ -128,7 +128,7 @@ public interface WmsTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/wmsWorkOption/warehouseReceiveApprove")
-    Boolean warehouseReceiveApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+    List<BatchResultDTO> warehouseReceiveApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * 采购入库审核
