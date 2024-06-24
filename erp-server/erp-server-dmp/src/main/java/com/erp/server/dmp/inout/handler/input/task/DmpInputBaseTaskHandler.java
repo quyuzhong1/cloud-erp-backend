@@ -17,8 +17,10 @@ import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgInputHistoryEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputResponse;
@@ -28,9 +30,11 @@ import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgInputConvertService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.DmpCfgInputHistoryService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,6 +52,8 @@ public class DmpInputBaseTaskHandler extends DmpInputTaskHandler{
 	private DmpCfgInputService dmpCfgInputService;
 	@Autowired
 	private DmpCfgInputDetailService dmpCfgInputDetailService;
+	@Autowired
+	private DmpCfgInputHistoryService dmpCfgInputHistoryService;
 	@Autowired
 	private DmpCfgInputConvertService dmpCfgInputConvertService;
 	@Autowired
@@ -82,13 +88,30 @@ public class DmpInputBaseTaskHandler extends DmpInputTaskHandler{
 		
 		String redisKey = "dmp:input:task:" + inputTaskId;
 		Integer execTimeout = 3600;
-		DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpCfgInputDetailService.getById(dmpInputTaskEntity.getInputDetailId());
-		if(dmpCfgInputDetailEntity != null && dmpCfgInputDetailEntity.getExecTimeout() != null && dmpCfgInputDetailEntity.getExecTimeout() > 0) {
-			execTimeout = dmpCfgInputDetailEntity.getExecTimeout();
+		List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityList = dmpCfgInputDetailService.lambdaQuery()
+				.eq(DmpCfgInputDetailEntity::getMainId, dmpInputTaskEntity.getCfgInputId())
+				.eq(DmpCfgInputDetailEntity::getNextLevelId, dmpInputTaskEntity.getNextLevelId())
+				.list();
+		DmpCfgInputDetailEntity dmpCfgInputDetailEntity = null;
+		if(CollUtil.isNotEmpty(dmpCfgInputDetailEntityList)) {
+			dmpCfgInputDetailEntity = dmpCfgInputDetailEntityList.get(0);
+			if(dmpInputTaskEntity.getTaskType().equals(DmpInputTaskTaskTypeEnum.NORMAL.getCode()) || dmpInputTaskEntity.getTaskType().equals(DmpInputTaskTaskTypeEnum.HOTFIX.getCode())) {
+				if(dmpCfgInputDetailEntity.getExecTimeout() != null && dmpCfgInputDetailEntity.getExecTimeout() > 0) {
+					execTimeout = dmpCfgInputDetailEntity.getExecTimeout();
+				}
+			}else if(dmpInputTaskEntity.getTaskType().equals(DmpInputTaskTaskTypeEnum.HISTORY.getCode())) {
+				List<DmpCfgInputHistoryEntity> dmpCfgInputHistoryEntityList = dmpCfgInputHistoryService.lambdaQuery().eq(DmpCfgInputHistoryEntity::getMainId, dmpInputTaskEntity.getId()).list();
+				if(CollUtil.isNotEmpty(dmpCfgInputHistoryEntityList)) {
+					DmpCfgInputHistoryEntity dmpCfgInputHistoryEntity = dmpCfgInputHistoryEntityList.get(0);
+					if(dmpCfgInputHistoryEntity.getExecTimeout() != null && dmpCfgInputHistoryEntity.getExecTimeout() > 0) {
+						execTimeout = dmpCfgInputHistoryEntity.getExecTimeout();
+					}
+				}
+			}
 		}
 		if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), execTimeout, TimeUnit.SECONDS)) {
 			try {
-				DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputService.getById(dmpCfgInputDetailEntity.getMainId());
+				DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputService.getById(dmpInputTaskEntity.getCfgInputId());
 				DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.getById(dmpCfgInputEntity.getSystemId());
 				
 				List<DmpInputTaskEntity> beforeDmpInputTaskEntityList = new ArrayList<>();
@@ -124,12 +147,7 @@ public class DmpInputBaseTaskHandler extends DmpInputTaskHandler{
 	
 	
 	private void addDmpHandler(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse , List<DmpHandler> dmpHandlerList , DmpInputTaskStatusEnum dmpInputTaskStatusEnum) {
-		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
-				.eq(DmpCfgInputConvertEntity::getMainId, dmpResponse.getDmpCfgInputEntity().getId())
-				.eq(DmpCfgInputConvertEntity::getDisabled, Boolean.FALSE)
-				.eq(DmpCfgInputConvertEntity::getInputStatus, dmpInputTaskStatusEnum.getCode())
-				.orderByAsc(DmpCfgInputConvertEntity::getOrder)
-				.list();
+		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = this.getDmpCfgInputConvertEntityListByStatus(dmpResponse.getDmpCfgInputEntity().getId(), dmpInputTaskStatusEnum);
 		
 		int size = dmpCfgInputConvertEntityList.size();
 		for(int i = 0; i < size ; i++) {

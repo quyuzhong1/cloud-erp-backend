@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-public abstract class DmpInputCreateHandler extends DmpInputHandler{
+public abstract class DmpInputBaseCreateHandler extends DmpInputHandler{
 	
 	@Autowired
 	private DmpCfgInputService dmpCfgInputService;

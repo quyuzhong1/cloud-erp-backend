@@ -11,6 +11,7 @@ public class DmpInputTaskResponse extends DmpInputResponse{
 	
 	/**
 	 * 推送数据配置明细
+	 * 可能为空，赋值在com.erp.server.dmp.inout.handler.input.task.DmpInputBaseTaskHandler.doDmpHandler(DmpInputTaskRequest, DmpInputTaskResponse, DmpHandlerChain)
 	 */
 	private DmpCfgInputDetailEntity dmpCfgInputDetailEntity;
 	
@@ -24,13 +25,4 @@ public class DmpInputTaskResponse extends DmpInputResponse{
 	 */
 	private DmpBasicSystemEntity dmpBasicSystemEntity;
 	
-	/**
-	 * 执行输出handler
-	 */
-	private boolean doOutputChain = true;
-	
-	/**
-	 * 执行后续handler
-	 */
-	private boolean doNextChain = true;
 }

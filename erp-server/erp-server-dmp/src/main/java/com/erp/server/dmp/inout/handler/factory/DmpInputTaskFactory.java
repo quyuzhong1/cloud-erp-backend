@@ -36,8 +36,11 @@ public class DmpInputTaskFactory{
 					bean.addDmpHandler(dmpInputTaskStatusHandler);
 					bean.doDmpHandler(dmpInputFinishRequest, dmpResponse);
 				} catch (Exception e) {
+					Integer maxRetryCount = 3;
 					DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpResponse.getDmpCfgInputDetailEntity();
-					Integer maxRetryCount = dmpCfgInputDetailEntity.getMaxRetryCount();
+					if(dmpCfgInputDetailEntity != null) {
+						maxRetryCount = dmpCfgInputDetailEntity.getMaxRetryCount();
+					}
 					DmpInputTaskEntity dmpInputTaskEntity = dmpResponse.getBeforeDmpInputTaskEntityList().get(0);
 					Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
 					boolean errorFlag = errorCount == maxRetryCount;

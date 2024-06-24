@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,7 +18,6 @@ import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgInputHistoryEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.erp.model.dmp.enums.DmpCfgInputHistoryTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputCreateRequest;
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class DmpInputHistoryCreateHandler extends DmpInputCreateHandler{
+public class DmpInputHistoryCreateHandler extends DmpInputBaseCreateHandler{
 
 	@Autowired
 	private DmpCfgInputDetailService dmpCfgInputDetailService;
@@ -57,27 +57,32 @@ public class DmpInputHistoryCreateHandler extends DmpInputCreateHandler{
 			return null;
 		}
 		
-		List<String> dmpCfgInputDetailIdList = dmpCfgInputDetailEntityList.stream().map(DmpCfgInputDetailEntity::getId).collect(Collectors.toList());
+		Map<String, String> idNextLevelIdMap = dmpCfgInputDetailEntityList.stream().collect(Collectors.toMap(DmpCfgInputDetailEntity::getId, DmpCfgInputDetailEntity::getNextLevelId));
 		List<DmpCfgInputHistoryEntity> dmpCfgInputHistoryEntityList = dmpCfgInputHistoryService.lambdaQuery()
-				.in(DmpCfgInputHistoryEntity::getMainId, dmpCfgInputDetailIdList)
+				.in(DmpCfgInputHistoryEntity::getMainId, idNextLevelIdMap.keySet())
 				.eq(DmpCfgInputHistoryEntity::getDisabled, Boolean.FALSE)
 				.le(DmpCfgInputHistoryEntity::getNextTime, new Date())
 				.list();
+		if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
+			log.info("输入信息数据代码【{}】没有符合条件的历史任务" ,  dmpCfgInputEntity.getCode());
+			return null;
+		}
 		
-		Set<String> inputDetailIdSet = dmpInputTaskService.lambdaQuery()
-				.in(DmpInputTaskEntity::getInputDetailId, dmpCfgInputDetailIdList)
+		Set<String> nextLevelIdSet = dmpInputTaskService.lambdaQuery()
+				.eq(DmpInputTaskEntity::getCfgInputId, cfgInputId)
+				.in(DmpInputTaskEntity::getNextLevelId, idNextLevelIdMap.values())
 				.eq(DmpInputTaskEntity::getTaskType, DmpInputTaskTaskTypeEnum.HISTORY.getCode())
 				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
 				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
-				.select(DmpInputTaskEntity::getInputDetailId)
-				.list().stream().map(DmpInputTaskEntity::getInputDetailId).collect(Collectors.toSet());
-		if(CollUtil.isNotEmpty(inputDetailIdSet)) {
+				.select(DmpInputTaskEntity::getNextLevelId)
+				.list().stream().map(DmpInputTaskEntity::getNextLevelId).collect(Collectors.toSet());
+		if(CollUtil.isNotEmpty(nextLevelIdSet)) {
 			Iterator<DmpCfgInputHistoryEntity> iterator = dmpCfgInputHistoryEntityList.iterator();
 			while(iterator.hasNext()) {
-				String dmpCfgInputDetail = iterator.next().getMainId();
-				if(inputDetailIdSet.contains(dmpCfgInputDetail)) {
+				String nextLevelId = idNextLevelIdMap.get(iterator.next().getMainId());
+				if(nextLevelIdSet.contains(nextLevelId)) {
 					iterator.remove();
-					log.info("输入信息数据代码【{}】下，明细任务【{}】还有正在执行中的历史任务，此次不生成任务" ,  dmpCfgInputEntity.getCode() , dmpCfgInputDetail);
+					log.info("输入信息数据代码【{}】下，明细任务下一层级【{}】还有正在执行中的历史任务，此次不生成任务" ,  dmpCfgInputEntity.getCode() , nextLevelId);
 				}
 			}
 		}
@@ -86,8 +91,8 @@ public class DmpInputHistoryCreateHandler extends DmpInputCreateHandler{
 		DmpInputTaskEntity dmpInputTaskEntity = null;
 		for(DmpCfgInputHistoryEntity dmpCfgInputHistoryEntity : dmpCfgInputHistoryEntityList) {
 			dmpInputTaskEntity = new DmpInputTaskEntity();
-			dmpInputTaskEntity.setInputDetailId(dmpCfgInputHistoryEntity.getMainId());
-			
+			dmpInputTaskEntity.setCfgInputId(cfgInputId);
+			dmpInputTaskEntity.setNextLevelId(idNextLevelIdMap.get(dmpCfgInputHistoryEntity.getMainId()));
 			/**
 			currTime	        	overrideTime	StartTime				dealyTime	EndTime					LastTime				NextTime				IntervalTime
 			2024-06-19 18:10:00		1800			2024-06-18 17:30:00		4*3600		2024-06-19 12:00:00		2024-06-19 12:00:00		2024-06-20 18:00:00		24*3600

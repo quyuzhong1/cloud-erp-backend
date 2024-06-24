@@ -1,9 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.create;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,12 +21,11 @@ import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class DmpInputHotfixCreateHandler extends DmpInputCreateHandler{
+public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{
 
 	@Autowired
 	private DmpCfgInputDetailService dmpCfgInputDetailService;
@@ -41,46 +39,42 @@ public class DmpInputHotfixCreateHandler extends DmpInputCreateHandler{
 		DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = (DmpInputHotfixCreateRequest)dmpRequest;
 		DmpCfgInputEntity dmpCfgInputEntity = dmpResponse.getDmpCfgInputEntity();
 		String cfgInputId = dmpCfgInputEntity.getId();
-		List<String> cfgInputDetailIdList = dmpInputHotfixCreateRequest.getCfgInputDetailIdList();
 		List<String> nextLevelIdList = dmpInputHotfixCreateRequest.getNextLevelIdList();
 		
-		List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityList = dmpCfgInputDetailService.lambdaQuery()
-				.eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
-				.eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
-				.in(CollUtil.isNotEmpty(cfgInputDetailIdList) , DmpCfgInputDetailEntity::getId, cfgInputDetailIdList)
-				.in(CollUtil.isNotEmpty(nextLevelIdList) , DmpCfgInputDetailEntity::getNextLevelId, nextLevelIdList)
-				.list();
-		String msg = "";
-		if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
-			msg = "输入信息数据代码【"+ dmpCfgInputEntity.getCode() +"】没有符合条件的明细任务";
-			log.warn(msg);
-			throw new ServiceException(msg);
+		List<String> cfgInputDetailIdList = dmpInputHotfixCreateRequest.getCfgInputDetailIdList();
+		if(CollUtil.isEmpty(nextLevelIdList)) {
+			List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityList = dmpCfgInputDetailService.lambdaQuery()
+					.eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
+					.eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
+					.in(CollUtil.isNotEmpty(cfgInputDetailIdList) , DmpCfgInputDetailEntity::getId, cfgInputDetailIdList)
+					.list();
+			String msg = "";
+			if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
+				msg = "输入信息数据代码【"+ dmpCfgInputEntity.getCode() +"】没有符合条件的明细任务";
+				log.warn(msg);
+				throw new ServiceException(msg);
+			}
+			nextLevelIdList = dmpCfgInputDetailEntityList.stream().map(DmpCfgInputDetailEntity::getNextLevelId).collect(Collectors.toList());
 		}
 		
-		List<DmpInputTaskEntity> dmpInputTaskEntityList = new ArrayList<>(dmpCfgInputDetailEntityList.size());
-		DmpInputTaskEntity dmpInputTaskEntity = null;
-		for(DmpCfgInputDetailEntity dmpCfgInputDetailEntity : dmpCfgInputDetailEntityList) {
-			dmpInputTaskEntity = new DmpInputTaskEntity();
-			dmpInputTaskEntity.setInputDetailId(dmpCfgInputDetailEntity.getId());
-			
-			dmpInputTaskEntity.setStartTime(dmpInputHotfixCreateRequest.getStartTime());
-			
-			LocalDateTime endTime = dmpInputHotfixCreateRequest.getEndTime();
-			if(endTime != null) {
-				Integer dealyTime = dmpCfgInputDetailEntity.getDealyTime();
-				if(dealyTime != null && dealyTime != 0) {
-					endTime = LocalDateTimeUtil.offset(endTime, dealyTime * -1, ChronoUnit.SECONDS);
-				}
+		List<DmpInputTaskEntity> dmpInputTaskEntityList = new ArrayList<>(nextLevelIdList.size());
+		if(CollUtil.isNotEmpty(nextLevelIdList)) {
+			DmpInputTaskEntity dmpInputTaskEntity = null;
+			for(String nextLevelId : nextLevelIdList) {
+				dmpInputTaskEntity = new DmpInputTaskEntity();
+				dmpInputTaskEntity.setCfgInputId(cfgInputId);
+				dmpInputTaskEntity.setNextLevelId(nextLevelId);
+				
+				dmpInputTaskEntity.setStartTime(dmpInputHotfixCreateRequest.getStartTime());
+				dmpInputTaskEntity.setEndTime(dmpInputHotfixCreateRequest.getEndTime());
+				dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
+				dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
+				
+				dmpInputTaskEntityList.add(dmpInputTaskEntity);
+				
 			}
-			
-			dmpInputTaskEntity.setEndTime(endTime);
-			dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
-			dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
-			
-			dmpInputTaskEntityList.add(dmpInputTaskEntity);
-			
+			dmpInputTaskService.saveBatch(dmpInputTaskEntityList);
 		}
-		dmpInputTaskService.saveBatch(dmpInputTaskEntityList);
 		
 		return dmpInputTaskEntityList;
 	}

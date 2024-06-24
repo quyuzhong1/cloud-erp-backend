@@ -26,4 +26,8 @@ public class DmpInputHotfixCreateRequest extends DmpInputCreateRequest{
     */
     private LocalDateTime endTime;
     
+    /**
+     * 父任务id
+     */
+    private String parentInputTaskId;
 }

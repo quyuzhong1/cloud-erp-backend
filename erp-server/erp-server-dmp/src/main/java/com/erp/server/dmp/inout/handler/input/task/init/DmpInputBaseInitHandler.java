@@ -14,12 +14,12 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.utils.date.EnumTimePattern;
-import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.entity.DmpCfgInputChildEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgInputTypeEnum;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputKingdeeApiInitRequest;
@@ -29,10 +29,15 @@ import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputKingdeeApiIn
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpCfgApiService;
+import com.erp.server.dmp.service.DmpCfgInputChildService;
 
+import cn.hutool.core.collection.CollUtil;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputTypeInitHandler extends DmpInputInitHandler{
+public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 
 	@Autowired
 	private DmpCfgApiService dmpCfgApiService;
@@ -40,10 +45,11 @@ public class DmpInputTypeInitHandler extends DmpInputInitHandler{
 	@Autowired
 	private MongoService mongoService;
 	
+	@Autowired
+	private DmpCfgInputChildService dmpCfgInputChildService;
+	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-		DmpCfgInputEntity dmpCfgInputEntity = dmpResponse.getDmpCfgInputEntity();
-		DmpBasicSystemEntity dmpBasicSystemEntity = dmpResponse.getDmpBasicSystemEntity();
 		String type = dmpCfgInputEntity.getType();
 		String typeId = dmpCfgInputEntity.getTypeId();
 		if(DmpCfgInputTypeEnum.API.getCode().equals(type)) {
@@ -52,9 +58,10 @@ public class DmpInputTypeInitHandler extends DmpInputInitHandler{
 			DmpInputApiInitHandler dmpInputApiInitHandler = null;
 			DmpInputKingdeeApiInitRequest dmpInputApiInitRequest = null;
 			
-			DmpInputTaskEntity dmpInputTaskEntity = dmpResponse.getBeforeDmpInputTaskEntityList().get(0);
 			LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
 			LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
+			
+			String parentStorageName = "";
 			
 			if(DmpBasicSystemCodeEnum.KINGDEE.getCode().equals(dmpBasicSystemEntity.getCode())) {
 				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputKingdeeApiInitHandler.class);
@@ -71,13 +78,21 @@ public class DmpInputTypeInitHandler extends DmpInputInitHandler{
 								.replace("{startTime}", sdf.format(startTime))
 								.replace("{endTime}", sdf.format(endTime)));
 					}else if("orderItem".equals(dmpCfgInputEntity.getCode())) {
-						try {
-							Map findMongoDataById = mongoService.findMongoDataById(nextLevelId, "kingdee_order_data", Map.class);
-							dmpInputApiInitRequest.setFilterStr(parseObject.getString("filterStr")
-									.replace("{FBillNo}", findMongoDataById.get("FBillNo").toString())
-									.replace("{FID}", findMongoDataById.get("FID").toString()));
-						} catch (Exception e) {
+						Map findMongoDataById = null;
+						parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
+						if(StringUtils.isNotBlank(parentStorageName)) {
+							try {
+								findMongoDataById = mongoService.findMongoDataById(nextLevelId, parentStorageName, Map.class);
+							} catch (Exception e) {
+								log.error("金蝶orderItem的{}查询mongo的{}错误" , nextLevelId , parentStorageName , e);
+							}
 						}
+						if(findMongoDataById == null) {
+							return null;
+						}
+						dmpInputApiInitRequest.setFilterStr(parseObject.getString("filterStr")
+								.replace("{FBillNo}", findMongoDataById.get("FBillNo").toString())
+								.replace("{FID}", findMongoDataById.get("FID").toString()));
 					}
 					
 					dmpInputApiInitRequest.setFieldKeys(parseObject.getString("fieldKeys"));
@@ -94,5 +109,26 @@ public class DmpInputTypeInitHandler extends DmpInputInitHandler{
 		}
 		return null;
 	}
-
+	
+	private String getParentStorageName(DmpInputTaskStatusEnum taskStatusEnum) {
+		String cfgInputId = dmpCfgInputEntity.getId();
+		String parentStorageName = "";
+		List<DmpCfgInputChildEntity> dmpCfgInputChildEntityList = dmpCfgInputChildService.lambdaQuery()
+				.eq(DmpCfgInputChildEntity::getChildId, cfgInputId)
+				.eq(DmpCfgInputChildEntity::getInputStatus, taskStatusEnum.getCode())
+				.list();
+		if(CollUtil.isNotEmpty(dmpCfgInputChildEntityList)) {
+			String parentId = dmpCfgInputChildEntityList.get(0).getParentId();
+			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
+				.eq(DmpCfgInputConvertEntity::getMainId, parentId)
+				.eq(DmpCfgInputConvertEntity::getInputStatus, taskStatusEnum.getCode())
+				.list();
+			if(DmpInputTaskStatusEnum.MONGO == taskStatusEnum) {
+				parentStorageName = DmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService.getById(parentId), dmpCfgInputConvertEntityList.get(0));
+			}else if(DmpInputTaskStatusEnum.DMP == taskStatusEnum) {
+				parentStorageName = dmpCfgInputConvertEntityList.get(0).getStorageName();
+			}
+		}
+		return parentStorageName;
+	}
 }

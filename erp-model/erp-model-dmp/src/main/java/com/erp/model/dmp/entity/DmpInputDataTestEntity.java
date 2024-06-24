@@ -50,6 +50,12 @@ public class DmpInputDataTestEntity extends BaseEntity<DmpInputDataTestEntity> {
     @TableField("data_encrypt")
     private String dataEncrypt;
     
+    /**
+     * 主表id
+     */
+    @TableField("main_id")
+    private String mainId;
+    
     @TableField("code")
     private String code;
     @TableField("name")

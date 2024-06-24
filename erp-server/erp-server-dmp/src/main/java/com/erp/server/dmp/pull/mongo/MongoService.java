@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.data.domain.Sort.Direction;
 
 import com.common.business.dto.CleanBaseDTO;
+import com.common.core.anno.ParamData;
 import com.common.core.utils.MapUtil;
 
 public interface MongoService {
@@ -185,5 +186,5 @@ public interface MongoService {
 	 * @param table
 	 * @return
 	 */
-	List<Map> findMongoData(Map<String, Object> fieldValueMaps, String table);
+	List<Map<String, Object>> findMongoData(List<ParamData> paramDataList, String table);
 }

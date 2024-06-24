@@ -12,9 +12,25 @@ import lombok.Data;
 @Data
 public class DmpInputInitResponse extends DmpInputTaskResponse{
 	private Map<DmpCfgInputConvertEntity, List<DmpInputTaskInitDTO>> convertInputTaskInitDTOListMaps = new HashMap<>();
+
+	/**
+	 * 执行输出handler
+	 */
+	private boolean doOutputChain = true;
 	
+	/**
+	 * 执行子任务
+	 */
+	private boolean doChildCfgInput = true;
+
 	/**
 	 * 执行更新状态
 	 */
 	private boolean doUpdateStatus = true;
+	
+	
+	/**
+	 * 执行后续handler
+	 */
+	private boolean doNextChain = true;
 }

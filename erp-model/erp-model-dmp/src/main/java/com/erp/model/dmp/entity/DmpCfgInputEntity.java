@@ -59,8 +59,7 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
     */
     @TableField("extend_json")
     private String extendJson;
-
-
+    
     public static final String SYSTEM_ID = "system_id";
 
     public static final String CODE = "code";

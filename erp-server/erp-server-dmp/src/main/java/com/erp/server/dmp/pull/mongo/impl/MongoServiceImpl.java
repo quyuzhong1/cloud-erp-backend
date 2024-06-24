@@ -1,8 +1,11 @@
 package com.erp.server.dmp.pull.mongo.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import com.common.business.dto.CleanBaseDTO;
+import com.common.core.anno.ParamData;
 import com.common.core.utils.MapUtil;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.utils.MongoUtil;
@@ -275,14 +279,23 @@ public class MongoServiceImpl implements MongoService {
 	}
 
 	@Override
-	public List<Map> findMongoData(Map<String, Object> fieldValueMaps, String table) {
-		Criteria criteria = MongoUtil.mongoFilter_duplicateKey(fieldValueMaps);
+	public List<Map<String, Object>> findMongoData(List<ParamData> paramDataList, String table) {
+		Criteria criteria = MongoUtil.mongoFilter_duplicateKey(paramDataList);
 		Query query = new Query(criteria);
 		List<Map> list = orderTemplate.find(query, Map.class, table);
 		if(list == null || list.size() <= 0) {
 			return null;
 		}else {
-			return list;
+			List<Map<String, Object>> resultList = new ArrayList<>();
+			for(Map l : list) {
+				Set<Entry> entrySet = l.entrySet();
+				Map<String, Object> map = new HashMap<>();
+				for(Entry entry : entrySet) {
+					map.put(entry.getKey().toString(), entry.getValue());
+				}
+				resultList.add(map);
+			}
+			return resultList;
 		}
 	}
 

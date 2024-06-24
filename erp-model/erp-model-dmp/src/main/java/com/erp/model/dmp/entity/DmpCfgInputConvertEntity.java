@@ -65,6 +65,12 @@ public class DmpCfgInputConvertEntity extends BaseEntity<DmpCfgInputConvertEntit
      */
      @TableField("\"order\"")
      private Integer order;
+     
+     /**
+      * 固定值json
+      */
+     @TableField("fixed_value_json")
+     private String fixedValueJson;
 
 
     public static final String MAIN_ID = "main_id";

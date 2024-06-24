@@ -26,10 +26,15 @@ import com.common.business.enums.ApproveStatusEnum;
 public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
 
     /**
-    * 拉取数据配置明细id
+    * 拉取数据配置id
     */
-    @TableField("input_detail_id")
-    private String inputDetailId;
+    @TableField("cfg_input_id")
+    private String cfgInputId;
+    /**
+     * 下一层级id
+     */
+     @TableField("next_level_id")
+     private String nextLevelId;
     /**
     * 拉取接口条件的开始时间
     */

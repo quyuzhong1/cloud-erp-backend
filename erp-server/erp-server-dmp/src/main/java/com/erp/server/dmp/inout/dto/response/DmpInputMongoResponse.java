@@ -13,5 +13,5 @@ public class DmpInputMongoResponse extends DmpInputFdsResponse{
 	/**
 	 * mongo业务信息
 	 */
-	private Map<DmpCfgInputConvertEntity , List<Map>> convertInputMongoEntityListMaps = new HashMap<>();
+	private Map<DmpCfgInputConvertEntity , List<Map<String, Object>>> convertInputMongoEntityListMaps = new HashMap<>();
 }

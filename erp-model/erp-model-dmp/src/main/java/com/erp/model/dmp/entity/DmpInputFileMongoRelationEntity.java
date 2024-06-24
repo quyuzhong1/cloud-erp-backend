@@ -34,6 +34,12 @@ public class DmpInputFileMongoRelationEntity extends BaseEntity<DmpInputFileMong
     */
     @TableField("mongo_id")
     private String mongoId;
+    
+    /**
+     * 转换id
+     */
+    @TableField("convert_id")
+    private String convertId;
 
 
     public static final String FILE_ID = "file_id";

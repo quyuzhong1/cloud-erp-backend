@@ -1,5 +1,7 @@
 package com.erp.server.dmp.inout.utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -7,6 +9,9 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 
 import com.baomidou.mybatisplus.core.toolkit.Sequence;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
 
 public class DmpHandlerUtils {
 	
@@ -39,5 +44,13 @@ public class DmpHandlerUtils {
 			return true;
 		}
 		return false;
+	}
+	
+	public static String getMongoStorageName(DmpBasicSystemEntity dmpBasicSystemEntity , DmpCfgInputEntity dmpCfgInputEntity , DmpCfgInputConvertEntity dmpCfgInputConvertEntity) {
+		List<String> mongoStorageNameList = new ArrayList<>();
+		mongoStorageNameList.add(dmpBasicSystemEntity.getCode());
+		mongoStorageNameList.add(dmpCfgInputEntity.getCode());
+		mongoStorageNameList.add(dmpCfgInputConvertEntity.getStorageName());
+		return String.join("_", mongoStorageNameList);
 	}
 }

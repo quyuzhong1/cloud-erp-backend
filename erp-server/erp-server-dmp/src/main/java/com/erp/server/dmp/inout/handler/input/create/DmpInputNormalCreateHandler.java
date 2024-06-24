@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class DmpInputNormalCreateHandler extends DmpInputCreateHandler{
+public class DmpInputNormalCreateHandler extends DmpInputBaseCreateHandler{
 
 	@Autowired
 	private DmpCfgInputDetailService dmpCfgInputDetailService;
@@ -53,20 +54,21 @@ public class DmpInputNormalCreateHandler extends DmpInputCreateHandler{
 			return null;
 		}
 		
-		Set<String> inputDetailIdSet = dmpInputTaskService.lambdaQuery()
-				.in(DmpInputTaskEntity::getInputDetailId, dmpCfgInputDetailEntityList.stream().map(DmpCfgInputDetailEntity::getId).collect(Collectors.toList()))
+		Set<String> nextLevelIdSet = dmpInputTaskService.lambdaQuery()
+				.eq(DmpInputTaskEntity::getCfgInputId, cfgInputId)
+				.in(DmpInputTaskEntity::getNextLevelId, dmpCfgInputDetailEntityList.stream().map(DmpCfgInputDetailEntity::getNextLevelId).collect(Collectors.toList()))
 				.eq(DmpInputTaskEntity::getTaskType, DmpInputTaskTaskTypeEnum.NORMAL.getCode())
 				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
 				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
-				.select(DmpInputTaskEntity::getInputDetailId)
-				.list().stream().map(DmpInputTaskEntity::getInputDetailId).collect(Collectors.toSet());
-		if(CollUtil.isNotEmpty(inputDetailIdSet)) {
+				.select(DmpInputTaskEntity::getNextLevelId)
+				.list().stream().map(DmpInputTaskEntity::getNextLevelId).collect(Collectors.toSet());
+		if(CollUtil.isNotEmpty(nextLevelIdSet)) {
 			Iterator<DmpCfgInputDetailEntity> iterator = dmpCfgInputDetailEntityList.iterator();
 			while(iterator.hasNext()) {
-				String dmpCfgInputDetail = iterator.next().getId();
-				if(inputDetailIdSet.contains(dmpCfgInputDetail)) {
+				String nextLevelId = iterator.next().getNextLevelId();
+				if(nextLevelIdSet.contains(nextLevelId)) {
 					iterator.remove();
-					log.info("输入信息数据代码【{}】下，明细任务【{}】还有正在执行中的正常任务，此次不生成任务" ,  dmpCfgInputEntity.getCode() , dmpCfgInputDetail);
+					log.info("输入信息数据代码【{}】下，明细任务下一层级【{}】还有正在执行中的正常任务，此次不生成任务" ,  dmpCfgInputEntity.getCode() , nextLevelId);
 				}
 			}
 		}
@@ -75,7 +77,8 @@ public class DmpInputNormalCreateHandler extends DmpInputCreateHandler{
 		DmpInputTaskEntity dmpInputTaskEntity = null;
 		for(DmpCfgInputDetailEntity dmpCfgInputDetailEntity : dmpCfgInputDetailEntityList) {
 			dmpInputTaskEntity = new DmpInputTaskEntity();
-			dmpInputTaskEntity.setInputDetailId(dmpCfgInputDetailEntity.getId());
+			dmpInputTaskEntity.setCfgInputId(cfgInputId);
+			dmpInputTaskEntity.setNextLevelId(dmpCfgInputDetailEntity.getNextLevelId());
 			/**
 			currTime	        	overrideTime	StartTime				dealyTime	EndTime					LastTime				NextTime				IntervalTime
 			2024-06-19 18:10:00		1800			2024-06-18 17:30:00		4*3600		2024-06-19 12:00:00		2024-06-19 12:00:00		2024-06-20 18:00:00		24*3600
