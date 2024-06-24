@@ -1469,7 +1469,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //查询订单
         List<String> soIds = records.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
-
+        List<String> ids = records.stream().map(SoB2cDeliveryDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(ids);
         for (SoB2cDeliveryDTO.ListDTO record : records) {
             //拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
@@ -1493,8 +1494,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (ObjectUtil.isNotEmpty(skuVO)) {
                 record.setSkuNo(skuVO.getSkuNo());
                 record.setProductName(skuVO.getSkuName());
-                record.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
+            String warehouseLocation = views.stream().filter(e -> e.getSourceDetailId().equals(record.getDetailId()))
+                    .map(PickingListsDTO.SourceView::getWarehouseLocation)
+                    .distinct()
+                    .collect(Collectors.joining(","));
+            record.setWarehouseLocation(warehouseLocation);
             record.setWeightName(record.getWeight() + record.getWeightUnit());
             record.setInspectionName(record.getIsInspection()? InspectionEnum.YES.getName(): InspectionEnum.NO.getName());
             record.setWeighName(record.getIsWeigh()? WeightEnum.YES.getName(): WeightEnum.NO.getName());
@@ -1514,15 +1519,20 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         data.setPickingTypeName(PickingTypeEnum.getName(data.getPickingType()));
         //详情字段设置
         List<SoB2cDeliveryDetailDTO.ViewDTO> viewDetailList = BeanMapper.copyList(detailList, SoB2cDeliveryDetailDTO.ViewDTO.class);
-
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(data.getId()));
         for (SoB2cDeliveryDetailDTO.ViewDTO viewDTO : viewDetailList) {
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(skuVO)) {
                 viewDTO.setSkuNo(skuVO.getSkuNo());
                 viewDTO.setProductName(skuVO.getSkuName());
-                viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
+
+            String warehouseLocation = views.stream().filter(e -> e.getSourceDetailId().equals(viewDTO.getId()))
+                    .map(PickingListsDTO.SourceView::getWarehouseLocation)
+                    .distinct()
+                    .collect(Collectors.joining(","));
+            viewDTO.setWarehouseLocation(warehouseLocation);
         }
         data.setDetailList(viewDetailList);
     }

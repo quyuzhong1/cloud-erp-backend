@@ -4,6 +4,7 @@
     <sql id="pageSql">
         SELECT
         sbd.id,
+        sbdd.id as detailId,
         sbd.code,
         sbd.source_id,
         sbd.dict_platform AS dictPlatform,

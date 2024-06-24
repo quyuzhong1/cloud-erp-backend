@@ -813,6 +813,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public List<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(String id) {
+        //判断是否存在下游单据，已有下游单据就不能再生成拣货单
+        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(id);
+        if (ObjectUtil.isNotEmpty(firstMileDelivery)) {
+            throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
+        }
         List<RequisitionApplicationDetailEntity> details = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(id));
         List<RequisitionApplicationDTO.PickingViewDTO> result = new ArrayList<>();
         for (RequisitionApplicationDetailEntity detail : details) {
