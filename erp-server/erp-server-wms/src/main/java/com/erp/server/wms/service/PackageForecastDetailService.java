@@ -65,5 +65,5 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
      * @param soIdList
      * @return List<PackageForecastDetailEntity>
      */
-    List<PackageForecastDetailEntity> listBySoIdList(List<String> soIdList);
+    List<PackageForecastDTO.ExportViewDTO> listPackageForecastBySoIdList(List<String> soIdList);
 }
