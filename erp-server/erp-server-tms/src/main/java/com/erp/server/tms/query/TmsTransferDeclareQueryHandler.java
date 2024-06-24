@@ -20,10 +20,10 @@ public class TmsTransferDeclareQueryHandler extends AbstractQueryHandler {
         if(field.equals("tab")){
             if(TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode().equals(value.toString())){
                 //待上传
-                this.buildDefaultDTO("td.upload_status",TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode());
+                this.buildDefaultDTO("td.instock_forecast_status",TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode());
             }else if(TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode().equals(value.toString())){
                 //上传失败
-                this.buildDefaultDTO("td.upload_status",TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode());
+                this.buildDefaultDTO("td.instock_forecast_status",TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode());
             }else if (TransferDeclareTabFlagEnum.LOGISTICS_UN_OUTSTOCK.getCode().equals(value.toString())){
                 //物流商未出库
                 List<String> transferStatusList = new ArrayList<>(5);

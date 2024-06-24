@@ -44,7 +44,6 @@
     <select id="paging" resultType="com.erp.model.tms.dto.TransferDeclareDTO$ListDTO">
         SELECT
             distinct td.id,
---             tdd.id AS detailId,
             td.code AS code,
             td.plan_transfer_date AS planTransferDate,
             td.instock_forecast_date AS instockForecastDate,
@@ -57,14 +56,6 @@
             td.instock_forecast_status AS instockForecastStatus,
             td.instock_forecast_remark AS instockForecastRemark,
             td.total_qty AS totalQty,
---             tdd.so_id AS soId,
---             tdd.so_code AS soCode,
---             tdd.order_upload_status AS uploadOrderStatus,
---             tdd.logistics_channel_name AS logisticsChannelName,
---             tdd.track_no AS trackNo,
---             tdd.outstock_status AS outstockStatus,
---             tdd.transfer_status AS transferStatus,
---             tdd.failure_reason AS failureReason,
             td.create_user_name AS createUserName,
             td.create_time AS createTime
         FROM transfer_declare td
@@ -76,82 +67,6 @@
             <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
                 and ${params.sqlMap.detail}
             </if>
-        <!--单据编号-->
-        <if test="params.code!=null and params.code!='' ">
-            AND td.code ILIKE concat('%',#{params.code}::text,'%')
-        </if>
-        <!--销售单号-->
-        <if test="params.soCodeList != null and params.soCodeList.size != ''">
-            and tdd.so_code in
-            <foreach collection="params.soCodeList" item="soCode" open="(" close=")" separator=",">
-                #{soCode}
-            </foreach>
-        </if>
-        <!--物流渠道id-->
-        <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">
-            and tdd.logistics_channel_id in
-            <foreach collection="params.logisticsChannelIdList" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        <!--发货物流商id-->
-        <if test="params.deliveryLogisticsSupplierIdList != null and params.deliveryLogisticsSupplierIdList.size > 0">
-            and td.delivery_logistics_supplier_id in
-            <foreach collection="params.deliveryLogisticsSupplierIdList" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        <!--中转物流商id-->
-        <if test="params.transferLogisticsSupplierIdList != null and params.transferLogisticsSupplierIdList.size > 0">
-            and td.transfer_logistics_supplier_id in
-            <foreach collection="params.transferLogisticsSupplierIdList" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        <!--上传状态-->
-        <if test="params.uploadStatusList != null and params.uploadStatusList.size > 0">
-            and td.upload_status in
-            <foreach collection="params.uploadStatusList" item="uploadStatus" open="(" separator="," close=")">
-                #{uploadStatus}
-            </foreach>
-        </if>
-        <!--出库状态-->
-        <if test="params.outstockStatusList != null and params.outstockStatusList.size > 0">
-            and tdd.outstock_status in
-            <foreach collection="params.outstockStatusList" item="outstockStatus" open="(" separator="," close=")">
-                #{outstockStatus}
-            </foreach>
-        </if>
-        <!--中转状态-->
-        <if test="params.transferStatusList != null and params.transferStatusList.size > 0">
-            and tdd.transfer_status in
-            <foreach collection="params.transferStatusList" item="transferStatus" open="(" separator="," close=")">
-                #{transferStatus}
-            </foreach>
-        </if>
-        <!--入库预报状态-->
-        <if test="params.instockForecastStatusList != null and params.instockForecastStatusList.size > 0">
-            and td.instock_forecast_status in
-            <foreach collection="params.instockForecastStatusList" item="instockForecastStatus" open="(" separator="," close=")">
-                #{instockForecastStatus}
-            </foreach>
-        </if>
-        <!--创建人id-->
-        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-            AND td.create_user_id IN
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
-        </if>
-        <!--创建时间-->
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND td.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > td.create_time
-        </if>
-        <!--数据权限-->
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -178,9 +93,9 @@
     <!--查询中转状态数量-->
     <select id="listTransferStatusCount" resultType="java.lang.Integer">
         SELECT
-            count(DISTINCT tdd.id)
-        FROM transfer_declare_detail tdd
-        WHERE tdd.is_deleted = FALSE
+            count(DISTINCT td.id)
+        FROM transfer_declare td LEFT JOIN transfer_declare_detail tdd ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
+        WHERE td.is_deleted = FALSE
         <!--中转状态-->
         <if test="params.transferStatusList != null and params.transferStatusList.size > 0">
             and tdd.transfer_status in
@@ -218,81 +133,11 @@
         FROM transfer_declare_detail tdd
         INNER JOIN transfer_declare td ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
         WHERE td.is_deleted = FALSE
-        <!--id-->
-        <if test="params.ids != null and params.ids.size > 0">
-            and td.id in
-            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
-                #{id}
-            </foreach>
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
         </if>
-        <!--单据编号-->
-        <if test="params.code!=null and params.code!='' ">
-            AND td.code ILIKE concat('%',#{params.code}::text,'%')
-        </if>
-        <!--销售单号-->
-        <if test="params.soCodeList != null and params.soCodeList.size != ''">
-            and tdd.so_code in
-            <foreach collection="params.soCodeList" item="soCode" open="(" close=")" separator=",">
-                #{soCode}
-            </foreach>
-        </if>
-        <!--物流渠道id-->
-        <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">
-            and tdd.logistics_channel_id in
-            <foreach collection="params.logisticsChannelIdList" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        <!--发货物流商id-->
-        <if test="params.deliveryLogisticsSupplierIdList != null and params.deliveryLogisticsSupplierIdList.size > 0">
-            and td.delivery_logistics_supplier_id in
-            <foreach collection="params.deliveryLogisticsSupplierIdList" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        <!--中转物流商id-->
-        <if test="params.transferLogisticsSupplierIdList != null and params.transferLogisticsSupplierIdList.size > 0">
-            and td.transfer_logistics_supplier_id in
-            <foreach collection="params.transferLogisticsSupplierIdList" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        <!--上传状态-->
-        <if test="params.uploadStatusList != null and params.uploadStatusList.size > 0">
-            and td.upload_status in
-            <foreach collection="params.uploadStatusList" item="uploadStatus" open="(" separator="," close=")">
-                #{uploadStatus}
-            </foreach>
-        </if>
-        <!--出库状态-->
-        <if test="params.outstockStatusList != null and params.outstockStatusList.size > 0">
-            and tdd.outstock_status in
-            <foreach collection="params.outstockStatusList" item="outstockStatus" open="(" separator="," close=")">
-                #{outstockStatus}
-            </foreach>
-        </if>
-        <!--中转状态-->
-        <if test="params.transferStatusList != null and params.transferStatusList.size > 0">
-            and tdd.transfer_status in
-            <foreach collection="params.transferStatusList" item="transferStatus" open="(" separator="," close=")">
-                #{transferStatus}
-            </foreach>
-        </if>
-        <!--创建人id-->
-        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-            AND td.create_user_id IN
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
-        </if>
-        <!--创建时间-->
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND td.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > td.create_time
-        </if>
-        <!--数据权限-->
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
+        <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+            and ${params.sqlMap.detail}
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
