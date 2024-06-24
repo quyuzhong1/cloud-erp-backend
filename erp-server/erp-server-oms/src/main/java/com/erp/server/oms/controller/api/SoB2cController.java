@@ -24,7 +24,6 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
-import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -140,7 +139,7 @@ public class SoB2cController extends BaseController {
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
@@ -265,7 +264,7 @@ public class SoB2cController extends BaseController {
                         SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
                         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
                         if (warehouseRuleMatch) {
-                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
+                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
                             //表示成功
                             if(logisticsRuleResult.getIsRuleMatch()){
                                 //检查是否备案并修改状态
