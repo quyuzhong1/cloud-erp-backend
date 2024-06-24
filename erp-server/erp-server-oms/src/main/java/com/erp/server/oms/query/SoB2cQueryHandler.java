@@ -250,7 +250,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
         //冻结中
         if (SoB2cTabEnum.ENUM_FROZEN.getCode().equals(value)) {
-            super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,true, QueryDataTypeEnum.BOOLEAN);
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //已作废
