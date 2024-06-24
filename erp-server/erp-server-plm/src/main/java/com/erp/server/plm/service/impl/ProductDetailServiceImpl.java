@@ -7,12 +7,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
-import com.sdk.wangdian.sdk.api.Result;
-import com.sdk.wangdian.sdk.api.goods.GoodsAPI;
-import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
-import com.sdk.wangdian.server.WangDianClientService;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
@@ -68,13 +62,17 @@ import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
+import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -92,6 +90,7 @@ import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -254,6 +253,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
 
+    @Resource
+    private InventoryFeign inventoryFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -514,13 +515,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public ProductNoSpecDetailAllDTO getNoSpecDetailBySkuId(String skuId) {
 
+        ProductDetailEntity productDetailEntity = this.getById(skuId);
+        String productId = productDetailEntity.getProductId();
+        ProductInfoEntity infoEntity = productInfoService.getById(productId);
+        if (ObjectUtil.isNotEmpty(infoEntity)) {
+            if (infoEntity.getSpecType() == 2) {
+                return getNoSpecDetailById(productId);
+            }
+        }
+
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
         //无规格产品信息明细
         ProductNoDetailDTO noSpecDetailById = productDetailMapper.getNoSpecDetailBySkuId(skuId);
+
         if (ObjectUtils.isNotEmpty(noSpecDetailById)) {
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
             noSpecDetailById.setCategoryIdList(categoryIdList);
+
         }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
@@ -630,6 +642,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:plm:getNoInventorySku",keyGenerator = "myKeyGenerator")
     public List<SkuVO> getNoInventorySku() {
         return this.baseMapper.getNoInventorySku();
     }
@@ -1341,9 +1354,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //6.修改/新增 物流信息
         List<ProductLogisticsDTO> productLogisticsList = productManySpecDTO.getProductLogisticsList();
-        if (productLogisticsList.size() > 0) {
+        if (!productLogisticsList.isEmpty()) {
             //操作日志
-            productLogisticsList.stream().forEach(obj -> addProductLogisticsLog(obj, productInfoDTO.getId()));
+            productLogisticsList.forEach(obj -> addProductLogisticsLog(obj, productInfoDTO.getId()));
             productLogisticsService.saveOrUpdateBatch(productLogisticsList);
         }
         //7.修改/新增 包装信息
@@ -1940,14 +1953,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
-    	List<ProductDetailExcelExportDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
-    	if(CollUtil.isNotEmpty(list)) {
-    		Map<String, String> userIdNameMaps = new HashMap<>();
-        	List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<ProductDetailExcelExportDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
+        if(CollUtil.isNotEmpty(list)) {
+            Map<String, String> userIdNameMaps = new HashMap<>();
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
             if(CollUtil.isNotEmpty(userList)) {
-            	userIdNameMaps = userList.stream()
-            			.filter(u -> u != null && StringUtils.isNotBlank(u.getUserId()))
-            			.collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName , (u1 , u2) -> StringUtils.isNotBlank(u1) ? u1 : u2));
+                userIdNameMaps = userList.stream()
+                        .filter(u -> u != null && StringUtils.isNotBlank(u.getUserId()))
+                        .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName , (u1 , u2) -> StringUtils.isNotBlank(u1) ? u1 : u2));
             }
             Map<String, String> finalUserIdNameMaps = userIdNameMaps;
 
@@ -1962,54 +1975,54 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> chargeIds = new ArrayList<>();
             List<String> productPropertyIdAndSaleCountrys = new ArrayList<>();
             for(ProductDetailExcelExportDTO l : list) {
-            	chargeId = l.getChargeId();
-            	if(StringUtils.isNotBlank(chargeId)) {
-            		chargeIds.addAll(Arrays.stream(chargeId.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
-            	}
-            	productPropertyId = l.getProductPropertyId();
-            	if(StringUtils.isNotBlank(productPropertyId)) {
-            		productPropertyIdAndSaleCountrys.addAll(Arrays.stream(productPropertyId.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
-            	}
-            	saleCountry = l.getSaleCountry();
-            	if(StringUtils.isNotBlank(saleCountry)) {
-            		productPropertyIdAndSaleCountrys.addAll(Arrays.stream(saleCountry.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
-            	}
+                chargeId = l.getChargeId();
+                if(StringUtils.isNotBlank(chargeId)) {
+                    chargeIds.addAll(Arrays.stream(chargeId.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
+                }
+                productPropertyId = l.getProductPropertyId();
+                if(StringUtils.isNotBlank(productPropertyId)) {
+                    productPropertyIdAndSaleCountrys.addAll(Arrays.stream(productPropertyId.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
+                }
+                saleCountry = l.getSaleCountry();
+                if(StringUtils.isNotBlank(saleCountry)) {
+                    productPropertyIdAndSaleCountrys.addAll(Arrays.stream(saleCountry.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
+                }
             }
 
             Map<String, String> chargeIdNameMaps = new HashMap<>();
             if(CollUtil.isNotEmpty(chargeIds)) {
-            	List<FindUserDTO> userListByUserIds = sysUserFeign.getUserListByUserIds(chargeIds);
-            	if(CollUtil.isNotEmpty(userListByUserIds)) {
-            		chargeIdNameMaps = userListByUserIds.stream()
-                			.filter(u -> u != null && StringUtils.isNotBlank(u.getUserId()))
-                			.collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName , (u1 , u2) -> StringUtils.isNotBlank(u1) ? u1 : u2));
-            	}
+                List<FindUserDTO> userListByUserIds = sysUserFeign.getUserListByUserIds(chargeIds);
+                if(CollUtil.isNotEmpty(userListByUserIds)) {
+                    chargeIdNameMaps = userListByUserIds.stream()
+                            .filter(u -> u != null && StringUtils.isNotBlank(u.getUserId()))
+                            .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName , (u1 , u2) -> StringUtils.isNotBlank(u1) ? u1 : u2));
+                }
             }
             Map<String, String> finalChargeIdNameMaps = chargeIdNameMaps;
 
             Map<String, String> dictValueMaps = new HashMap<>();
             if(CollUtil.isNotEmpty(productPropertyIdAndSaleCountrys)) {
-            	List<BasicDictEntity> dictList = basicDictService.listByIds(productPropertyIdAndSaleCountrys);
-            	if(CollUtil.isNotEmpty(dictList)) {
-            		dictValueMaps = dictList.stream()
-                			.filter(u -> u != null && StringUtils.isNotBlank(u.getValue()))
-                			.collect(Collectors.toMap(BasicDictEntity::getId, BasicDictEntity::getValue , (u1 , u2) -> StringUtils.isNotBlank(u1) ? u1 : u2));
-            	}
+                List<BasicDictEntity> dictList = basicDictService.listByIds(productPropertyIdAndSaleCountrys);
+                if(CollUtil.isNotEmpty(dictList)) {
+                    dictValueMaps = dictList.stream()
+                            .filter(u -> u != null && StringUtils.isNotBlank(u.getValue()))
+                            .collect(Collectors.toMap(BasicDictEntity::getId, BasicDictEntity::getValue , (u1 , u2) -> StringUtils.isNotBlank(u1) ? u1 : u2));
+                }
             }
             Map<String, String> finalDictValueMaps = dictValueMaps;
 
             Map<String, BasicCategoryEntity> idBasicCategoryMaps = basicCategoryService.list().stream().collect(Collectors.toMap(BasicCategoryEntity::getId, b -> b));
             Map<String, List<BasicCategoryEntity>> idParentBasicCategoryListMaps = new HashMap<>();
             for(Map.Entry<String, BasicCategoryEntity> idBasicCategoryMap : idBasicCategoryMaps.entrySet()) {
-            	String key = idBasicCategoryMap.getKey();
-            	List<BasicCategoryEntity> resultList = new ArrayList<>();
-            	this.getParentBasicCategory(key, idBasicCategoryMaps, resultList);
-				idParentBasicCategoryListMaps.put(key , resultList);
+                String key = idBasicCategoryMap.getKey();
+                List<BasicCategoryEntity> resultList = new ArrayList<>();
+                this.getParentBasicCategory(key, idBasicCategoryMaps, resultList);
+                idParentBasicCategoryListMaps.put(key , resultList);
             }
             list.forEach(req -> {
                 List<BasicCategoryEntity> categoryList = idParentBasicCategoryListMaps.get(req.getCategoryId());
                 if(CollUtil.isNotEmpty(categoryList)) {
-                	//一级品类
+                    //一级品类
                     BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(bestEntity)) {
                         req.setMainCategory(bestEntity.getName());
@@ -2023,12 +2036,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
                 if (StringUtils.isNotBlank(req.getChargeId())) {
                     req.setChargeName(Arrays.stream(req.getChargeId().split(",")).filter(StringUtils::isNotBlank)
-                        	.map(c -> finalChargeIdNameMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
+                            .map(c -> finalChargeIdNameMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
                 }
 
                 if (StringUtils.isNotBlank(req.getProductPropertyId())) {
                     req.setProductProperty(Arrays.stream(req.getProductPropertyId().split(",")).filter(StringUtils::isNotBlank)
-                        	.map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
+                            .map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
                 }
 
                 // 销售平台
@@ -2059,42 +2072,40 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setArrivalState(PurchaseStateEnum.getNameByCode(Integer.valueOf(req.getArrivalState())));
                 }
                 if (StringUtils.isNotBlank(req.getPurchaseUser())) {
-                	String userName = finalUserIdNameMaps.get(req.getPurchaseUser());
-                	if(StringUtils.isNotBlank(userName)) {
-                		req.setPurchaseUser(userName);
-                	}
+                    String userName = finalUserIdNameMaps.get(req.getPurchaseUser());
+                    if(StringUtils.isNotBlank(userName)) {
+                        req.setPurchaseUser(userName);
+                    }
                 }
                 if (StringUtils.isNotBlank(req.getSaleCountry())) {
                     req.setProductProperty(Arrays.stream(req.getSaleCountry().split(",")).filter(StringUtils::isNotBlank)
-                        	.map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
+                            .map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
                 }
                 if(StringUtils.isNotBlank(req.getImageUrl())){
                     String[] imageArr = req.getImageUrl().split(",");
                     req.setImage(FastDFSClientUtil.getFileByte(imageArr[0]));
                 }
             });
-    	}
+        }
         ExcelUtil.export("产品sku明细表", "产品sku明细表", list, ProductDetailExcelExportDTO.class, response,productSkuExcelDTO.getExportFields());
     }
 
     private void getParentBasicCategory(String pid , Map<String, BasicCategoryEntity> idBasicCategoryMaps , List<BasicCategoryEntity> resultList){
-    	BasicCategoryEntity basicCategoryEntity = idBasicCategoryMaps.get(pid);
-    	if(basicCategoryEntity != null) {
-    		resultList.add(basicCategoryEntity);
-    		if (StringUtils.isNotBlank(basicCategoryEntity.getPid()) && !"0".equals(basicCategoryEntity.getPid())) {
-    			getParentBasicCategory(basicCategoryEntity.getPid(), idBasicCategoryMaps, resultList);
-    		}
-    	}
+        BasicCategoryEntity basicCategoryEntity = idBasicCategoryMaps.get(pid);
+        if(basicCategoryEntity != null) {
+            resultList.add(basicCategoryEntity);
+            if (StringUtils.isNotBlank(basicCategoryEntity.getPid()) && !"0".equals(basicCategoryEntity.getPid())) {
+                getParentBasicCategory(basicCategoryEntity.getPid(), idBasicCategoryMaps, resultList);
+            }
+        }
     }
 
     @Override
     public List<ProductDetailEntity> getByIdList(List<String> skuIdList) {
-        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if (CollectionUtils.isNotEmpty(skuIdList)) {
-            queryWrapper.in(ProductDetailEntity::getId, skuIdList);
-            return this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(skuIdList)){
+            return Collections.emptyList();
         }
-        return new ArrayList<>();
+        return baseMapper.selectBatchIds(skuIdList);
     }
 
 
@@ -2316,6 +2327,66 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return new PagingVO<>(pagResult);
 
     }
+    /**
+     * 添加已有sku到现有spu
+     * @param changeSkuToSpuDTO
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<ProductDetailEntity> changeSkuBySpu(ChangeSkuToSpuDTO changeSkuToSpuDTO) {
+        //检查spu编号是否重复
+        if (this.checkSpuNo(changeSkuToSpuDTO.getProductSpuBaseInfoDTO().getSpuNo(), changeSkuToSpuDTO.getProductSpuBaseInfoDTO().getId())) {
+            throw new ServiceException(ApiError.ERROR_95017);
+        }
+
+        ProductInfoDTO productSpuBaseInfoDTO = changeSkuToSpuDTO.getProductSpuBaseInfoDTO();
+        productSpuBaseInfoDTO.setSpecType(2);
+        //产品等级
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
+            //根据id查询字典表中的产品等级
+            BasicDictEntity basicDict = basicDictService.getById(productSpuBaseInfoDTO.getGradeId());
+            if (ObjectUtils.isNotEmpty(basicDict)) {
+                productSpuBaseInfoDTO.setGrade(basicDict.getValue());
+            }
+        }
+        //1.保存产品表 基础信息获取产品id
+        String newProductId = productInfoService.updateSpec(productSpuBaseInfoDTO);
+        List<String> skuIds = changeSkuToSpuDTO.getSkuIds();
+        if (CollectionUtils.isNotEmpty(skuIds)){
+            //校验新增SKU是否已入库，有库存SKU不可变更SPU
+            InventoryQtyDTO.InventoryBySkuDTO dto = InventoryQtyDTO.InventoryBySkuDTO.builder()
+                    .skuIdList(skuIds)
+                    .build();
+            List<InventoryEntity> inventoryEntities = inventoryFeign.listInventoryBySkuIds(dto);
+            List<InventoryEntity> collect = inventoryEntities.stream().filter(e -> Objects.nonNull(e) && e.getQty() > 0).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)){
+                List<String> skuNoList = collect.stream().map(InventoryEntity::getSkuNo).distinct().collect(Collectors.toList());
+                throw new ServiceException(ApiError.ERROR_99131, String.join(",",skuNoList));
+            }
+            //调整sku关联spu
+            List<ProductDetailEntity> oldProductDetailEntityList = baseMapper.selectBatchIds(skuIds);
+            List<String> oldProductIds = oldProductDetailEntityList.stream().map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
+            //校验记录是否存在
+            skuIds.forEach(skuId -> {
+                ProductDetailEntity oldDetailEntity = oldProductDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(skuId)).findFirst().orElse(null);
+                if (Objects.isNull(oldDetailEntity)){
+                    throw new ServiceException(ApiError.ERROR_95162, skuId);
+                }
+            });
+            //批量更新产品明细归属spu
+            this.lambdaUpdate().in(ProductDetailEntity::getId, skuIds).set(ProductDetailEntity::getProductId, newProductId).update();
+            //调整前后校验spu是否存在关联关系，不存在，就删除
+            //根据产品id获取sku明细列表
+            List<ProductDetailEntity> productDetailEntityList = this.lambdaQuery().select(ProductDetailEntity::getId,ProductDetailEntity::getProductId).in(ProductDetailEntity::getProductId, oldProductIds).list();
+            List<String> hasRelationProductIds = productDetailEntityList.stream().filter(Objects::nonNull).map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
+            //过滤存在关联记录的spu
+            List<String> deleteProductIds = oldProductIds.stream().filter(e -> Objects.nonNull(e) && !hasRelationProductIds.contains(e)).distinct().collect(Collectors.toList());
+            productInfoService.removeByIds(deleteProductIds);
+        }
+        return this.queryByProductId(newProductId);
+    }
+
     private void customDataProcess(List<ProductDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)){
             return;
@@ -2334,7 +2405,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         list.forEach(productDetailEntity -> {
             //查询sku product_logistics 目的国申报价不为o 时同步
             ProductLogisticsEntity logistics = logisticsList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(e.getSkuId())
-                                    && e.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(new ProductLogisticsEntity());
+                    && e.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(new ProductLogisticsEntity());
             //查询是否存在默认 product_customs 不存在则赋值 新增，存在则更新
             ProductCustomsEntity customs = customsList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(e.getSkuId())
                     && e.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(new ProductCustomsEntity());
@@ -3961,7 +4032,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);
         }
-        List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, dto.getIds()).list();
+        productLogisticsService.saveOrUpdateParentPropertyIdByChildSkuId(dto.getIds());
         //同步到SCM
 //        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
         //同步到WMS
