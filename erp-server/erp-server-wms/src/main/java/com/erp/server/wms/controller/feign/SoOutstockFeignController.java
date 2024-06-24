@@ -154,6 +154,7 @@ public class SoOutstockFeignController {
     Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformDeliveryDetailDTO) {
         return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO);
     }
+
     /**
      * 生成B2C销售出库单
      * @param generateB2cDTO

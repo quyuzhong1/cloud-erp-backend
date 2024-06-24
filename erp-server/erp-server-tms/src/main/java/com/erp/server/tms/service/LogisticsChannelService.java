@@ -1,10 +1,8 @@
 package com.erp.server.tms.service;
 
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -214,4 +212,10 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     List<BaseDropDownDTO.Tree> tree();
 
     LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform);
+    /**
+     * 所有渠道下拉远程搜索
+     * @return PagingVO<BaseDropDownDTO.DisabledDTO>
+     */
+    PagingVO<BaseDropDownDTO.DisabledDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto);
+
 }

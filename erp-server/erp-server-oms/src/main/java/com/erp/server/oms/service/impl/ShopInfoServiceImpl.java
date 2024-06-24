@@ -4,11 +4,13 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -19,17 +21,16 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
@@ -74,6 +75,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -135,6 +137,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
+    @Resource
+    private KingdeeReceiptConditionService kingdeeReceiptConditionService;
+
     /**
      * 添加店铺
      *
@@ -181,6 +186,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 chargeName = user.getUserName();
             }
         }
+        //设置用户信息
+        setCustom(dto.getCustomerId(), shop);
         shop.setChargeName(chargeName);
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
@@ -209,10 +216,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String autoCreateShopCustomer(String shopId) {
+    public CustomerInfoEntity autoCreateShopCustomer(String shopId) {
         ShopInfoEntity shop = this.getById(shopId);
         if (Objects.isNull(shop)) {
-            return "";
+            return null;
         }
         CustomerDTO.AddDTO customer = new CustomerDTO.AddDTO();
         customer.setUseOrgId(shop.getSalesOrgId());
@@ -237,19 +244,20 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //币种
         customer.setCurrency(currency);
         customer.setSellerId(shop.getChargeId());
-        customer.setConditionDict(DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode());
+        KingdeeReceiptConditionEntity one = kingdeeReceiptConditionService.getOne(new LambdaQueryWrapper<KingdeeReceiptConditionEntity>().eq(KingdeeReceiptConditionEntity::getCode, DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode()));
+        customer.setConditionDict(Objects.nonNull(one) ? one.getId() : "");
         customer.setSourceId(shop.getId());
         customer.setSourceType(SourceTypeEnum.SHOP.getCode());
-        String id = customerInfoService.add(customer);
-        if (StringUtils.isNotBlank(id)) {
-            CustomerInfoEntity customerB2b = customerInfoService.getById(id);
+        CustomerInfoEntity customerInfoEntity = customerInfoService.addOrGetCustom(customer);
+        if (Objects.nonNull(customerInfoEntity)) {
+            CustomerInfoEntity customerB2b = customerInfoService.getById(customerInfoEntity.getId());
             if (Objects.nonNull(customerB2b)) {
                 shop.setCustomerId(customerB2b.getId());
                 shop.setCustomerCode(customerB2b.getCode());
                 this.updateById(shop);
             }
         }
-        return id;
+        return customerInfoEntity;
 
 
     }
@@ -259,7 +267,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         AppClientEnum appClient = AppClientEnum.SHOP_AUTHORIZE;
         CfgAppClientDTO.FindDTO findDTO = CfgAppClientDTO.FindDTO.init(appClient);
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        if (null == cfgAppClient){
+        if (null == cfgAppClient) {
             throw new ServiceException("Shopify系统配置缺失");
         }
         Map<String, String> paramsMap = BeanUtil.beanToMap(dto)
@@ -268,7 +276,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
         // 校验
         boolean verifyResult = HmacVerificationUtils.verifyQueryString(cfgAppClient.getClientSecret(), new TreeMap<>(paramsMap));
-        if (!verifyResult){
+        if (!verifyResult) {
             throw new ServiceException("Verify Params Error");
         }
         // 生成跳转地址
@@ -312,6 +320,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<ShopInfoEntity> shopInfoList = this.lambdaQuery().ne(StringUtils.isNotBlank(id), ShopInfoEntity::getId, id).
                 eq(ShopInfoEntity::getDictPlatform, dictPlatform).
                 eq(ShopInfoEntity::getAccount, account).
+                eq(ShopInfoEntity::getType, ShopTypeEnum.OVERSEAS.getCode()).
                 eq(StringUtils.isNotBlank(dictAreaCode), ShopInfoEntity::getDictAreaCode, dictAreaCode).
                 in(CollectionUtils.isNotEmpty(dictCountryCodeList), ShopInfoEntity::getDictCountryCode, dictCountryCodeList).
                 list();
@@ -489,23 +498,104 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopInfo.setWarehouseName(updateDTO.getName());
             shopInfo.setWarehouseId(dto.getWarehouseId());
         }
-
-        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(dto.getCustomerId());
-        if (ObjectUtil.isEmpty(customerInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+        shopInfo.setIsHaveWarehouse(dto.getIsHaveWarehouse());
+        if (!dto.getIsHaveWarehouse()){
+            shopInfo.setWarehouseName("");
+            shopInfo.setWarehouseId("");
         }
-        shopInfo.setCustomerId(customerInfoEntity.getId());
-        shopInfo.setCustomerCode(customerInfoEntity.getCode());
+        //设置用户信息
+        setCustom(dto.getCustomerId(), shopInfo);
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
         }
 
         //负责人变更则更新物流单店铺负责人
-        if (!StrUtil.equals(oldChargeId,dto.getChargeId())) {
-            logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(),dto.getChargeId()));
+        if (!StrUtil.equals(oldChargeId, dto.getChargeId())) {
+            logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(), dto.getChargeId()));
         }
         return shopInfo;
+    }
+    /**
+     * 修改店铺
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-07-03 9:05
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public ShopInfoEntity updateInternalShop(ShopDTO.UpdateInternalDTO dto) {
+        ShopInfoEntity shopInfo = this.getById(dto.getId());
+        if (Objects.isNull(shopInfo)) {
+            throw new ServiceException(ApiError.ERROR_92058);
+        }
+        //检查店铺是否存在
+        checkInternalShopName(dto.getName(), dto.getId());
+        //旧负责人
+        String oldChargeId = shopInfo.getChargeId();
+        shopInfo.setName(dto.getName());
+        String salesOrgId = dto.getSalesOrgId();
+        //负责人
+        String chargeId = dto.getChargeId();
+        String chargeName = "";
+        if (StringUtils.isNotBlank(chargeId)) {
+            FindUserDTO user = sysUserFeign.getUserByUserId(chargeId);
+            if (Objects.nonNull(user)) {
+                chargeName = user.getUserName();
+            }
+        }
+        shopInfo.setChargeName(chargeName);
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+        String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
+        shopInfo.setSalesOrgId(dto.getSalesOrgId());
+        shopInfo.setSalesOrgName(orgName);
+        shopInfo.setChargeId(dto.getChargeId());
+        String customerId = dto.getCustomerId();
+        //设置用户信息
+        setCustom(customerId, shopInfo);
+        Boolean result = this.updateById(shopInfo);
+        if (!result) {
+            throw new ServiceException("更新失败");
+        }
+
+        //负责人变更则更新物流单店铺负责人
+        if (!StrUtil.equals(oldChargeId, dto.getChargeId())) {
+            logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(), dto.getChargeId()));
+        }
+        return shopInfo;
+    }
+
+    /**
+     * 设置用户信息
+     * @param customerId
+     * @param shopInfo
+     */
+    private void setCustom(String customerId, ShopInfoEntity shopInfo) {
+        if (StringUtils.isNotBlank(customerId)) {
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
+            if (ObjectUtil.isEmpty(customerInfoEntity)) {
+                throw new ServiceException(ApiError.ERROR_92011);
+            }
+            shopInfo.setCustomerId(customerInfoEntity.getId());
+            shopInfo.setCustomerCode(customerInfoEntity.getCode());
+        }else{
+            shopInfo.setCustomerId("");
+            shopInfo.setCustomerCode("");
+        }
+    }
+
+    private void checkInternalShopName(String dto, String id) {
+        List<ShopInfoEntity> shopInfoList = this.lambdaQuery().ne(StringUtils.isNotBlank(id), ShopInfoEntity::getId, id).
+                eq(ShopInfoEntity::getName, dto).
+                eq(ShopInfoEntity::getIsDeleted, false).
+                eq(ShopInfoEntity::getType, ShopTypeEnum.INTERNAL.getCode()).
+                list();
+        if (CollectionUtils.isNotEmpty(shopInfoList)) {
+            throw new ServiceException(ApiError.ERROR_97007);
+        }
     }
 
 
@@ -558,6 +648,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 }
                 item.setPlatformShopType(jsonObject.getString("sellerType"));
             }
+            //客户名称
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(item.getCustomerId());
+            if (Objects.nonNull(customerInfoEntity)) {
+                item.setCustomerName(customerInfoEntity.getName());
+            }
         }
 
     }
@@ -589,13 +684,15 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             shop.setDisabled(disabled);
             this.updateById(shop);
-            // 禁用启用任务
-            dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shop.getId(),
-                    shop.getName(),
-                    shop.getDictPlatform(),
-                    disabled,
-                    shop.getDictCountryCode(),
-                    shop.getPlatformShopCode()));
+            if (!Objects.equals(ShopTypeEnum.INTERNAL.getCode(), shop.getType())) {
+                // 禁用启用任务
+                dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shop.getId(),
+                        shop.getName(),
+                        shop.getDictPlatform(),
+                        disabled,
+                        shop.getDictCountryCode(),
+                        shop.getPlatformShopCode()));
+            }
             return BatchResultDTO.success(shop.getId(), shop.getName(), OperationTypeEnum.DISABLED);
         }
         return BatchResultDTO.fail(shop.getId(), shop.getName(), "店铺不存在");
@@ -644,7 +741,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 .eq(ShopInfoEntity::getId, shopInfoEntity.getId())
                 .set(ShopInfoEntity::getIsGenTask, shopInfoEntity.getIsGenTask())
                 .set(ShopInfoEntity::getPlatformStatus, shopInfoEntity.getPlatformStatus())
-                .set(ShopInfoEntity::getDisabled , shopInfoEntity.getDisabled())
+                .set(ShopInfoEntity::getDisabled, shopInfoEntity.getDisabled())
                 .update();
     }
 
@@ -1302,6 +1399,103 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 .eq(ShopInfoEntity::getDisabled, false)
                 .list();
     }
+    /**
+     * 远程搜索
+     */
+    @Override
+    public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
+        ShopDTO.SelectDTO params = dto.getParams();
+        if (params.getShowByAuth()){
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
+            List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
+            if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
+                return new PagingVO<>();
+            }
+
+            ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
+            List<String> shopIdList;
+            if (StringUtils.isNotBlank(params.getDictPlatform())) {
+                shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(params.getDictPlatform()))
+                        .map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+            } else {
+                shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+            }
+            if (CollectionUtils.isEmpty(shopIdList)) {
+                return new PagingVO<>();
+            }
+            params.setShopIdList(shopIdList);
+        }
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ShopDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<ShopDTO.ListDTO> records = pagResult.getRecords();
+        //排序
+        pagResult.setRecords(records);
+        return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<ShopInfoEntity> shopInfoEntities = listByIds(ids);
+        for (String id : ids) {
+            BatchResultDTO deleteResult = new BatchResultDTO();
+            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(item -> Objects.equals(item.getId(), id)).findFirst().orElse(null);
+            if (Objects.isNull(shopInfoEntity)) {
+                deleteResult = BatchResultDTO.fail(id, id, "店铺不存在, 删除失败");
+                resultDTOS.add(deleteResult);
+                continue;
+            }
+            //只有禁用的店铺允许删除
+            if (Objects.equals(shopInfoEntity.getDisabled(), false)) {
+                deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), ApiError.ERROR_SHOP_UNDISABLED.msg);
+                resultDTOS.add(deleteResult);
+                continue;
+            }
+            try {
+                boolean flag = removeById(id);
+                if (flag) {
+                    deleteResult = BatchResultDTO.success(shopInfoEntity.getId(), shopInfoEntity.getAccount(), OperationTypeEnum.DELETE);
+                } else {
+                    deleteResult = BatchResultDTO.fail(shopInfoEntity.getId(), shopInfoEntity.getAccount(), "店铺删除失败");
+                }
+            } catch (Exception e) {
+                log.error("店铺删除失败", e);
+                deleteResult = BatchResultDTO.fail(shopInfoEntity.getId(), shopInfoEntity.getAccount(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 导出
+     *
+     * @param dto
+     * @param response
+     * @author hyj
+     * @date 2024/5/23 10:54
+     */
+    @Override
+    public void listExport(ShopDTO.ExportDTO dto, HttpServletResponse response) {
+        List<ShopDTO.PagingViewDTO> list = baseMapper.listExport(dto);
+        if (CollectionUtils.isNotEmpty(list)) {
+            //填充数据
+            fillDb(list);
+        }
+        StringBuffer stringBuffer = new StringBuffer();
+        String excelPath = "excel/ShopInfo.xlsx";
+        String name = "店铺导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        stringBuffer.append(date);
+        stringBuffer.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, stringBuffer.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
 
     private boolean verifyHmac(String data, String hmacHeader) {
         try {
@@ -1334,6 +1528,45 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         // 安全比较计算得到的HMAC和请求头中的HMAC
         return calculatedHmac.equals(hmacHeader);
     }
+
+    /**
+     * 添加国内店铺
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author hyj
+     * @date 2024-05-23 16:39
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<ShopInfoEntity> addIntenal(ShopDTO.AddInternalDTO dto) {
+        ShopInfoEntity shop = new ShopInfoEntity();
+        //检查店铺是否存在
+        checkInternalShopName(dto.getName(), "");
+        BeanMapper.copy(dto, shop);
+        String salesOrgId = dto.getSalesOrgId();
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+        String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
+        shop.setSalesOrgName(orgName);
+        //负责人
+        String chargeId = dto.getChargeId();
+        String chargeName = "";
+        if (StringUtils.isNotBlank(chargeId)) {
+            FindUserDTO user = sysUserFeign.getUserByUserId(chargeId);
+            if (Objects.nonNull(user)) {
+                chargeName = user.getUserName();
+            }
+        }
+        shop.setChargeName(chargeName);
+        //设置用户信息
+        setCustom(dto.getCustomerId(), shop);
+        shop.setType(ShopTypeEnum.INTERNAL.getCode());
+        shop.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        shop.setAuthTime(LocalDateTime.now());
+        Boolean result = this.save(shop);
+        return Collections.singletonList(shop);
+    }
+
 
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listShopSelect() {

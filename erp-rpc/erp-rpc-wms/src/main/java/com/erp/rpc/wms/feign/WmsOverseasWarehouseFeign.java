@@ -1,8 +1,13 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,4 +35,14 @@ public interface WmsOverseasWarehouseFeign {
      */
     @PostMapping("/feign/overseasWarehouse/listByWarehouseId")
     List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseIdList(@RequestBody List<String> warehouseIdList);
+
+    /**
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/feign/overseasWarehouse/pagingSelect")
+    PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(@RequestBody @Validated PagingDTO<OverseasProviderWarehouseDTO.SelectDTO> dto);
+
 }

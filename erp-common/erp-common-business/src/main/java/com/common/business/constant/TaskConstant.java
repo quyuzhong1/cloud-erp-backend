@@ -38,4 +38,6 @@ public interface TaskConstant {
      * 领星任务名称
      */
     String LX_PULL_DATA_TASK = "LX_PULL_DATA_TASK";
+
+    String WDT_PULL_DATA_TASK = "WDT_PULL_DATA_TASK";
 }

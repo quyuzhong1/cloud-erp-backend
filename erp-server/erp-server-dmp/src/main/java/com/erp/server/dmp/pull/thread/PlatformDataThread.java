@@ -105,6 +105,7 @@ public class PlatformDataThread {
     public void executeTask(String taskName, boolean isAsync) {
         // 获取请求任务
         String o = template.opsForList().rightPop(taskName);
+        log.info("从redis获取到任务：{}", JSONUtil.toJsonStr(o));
         if(ObjectUtils.isEmpty(o) || "null".equals(o)) {
             return;
         }

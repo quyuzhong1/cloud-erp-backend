@@ -752,4 +752,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuVO> listSkuCategoryByIds(List<String> skuIds);
 
     List<SkuVO> listSkuPurchaseByIds(List<String> skuIds);
+    void initProductToWangDian(List<String> ids);
+    PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
+
 }

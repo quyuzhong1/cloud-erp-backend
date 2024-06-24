@@ -29,6 +29,11 @@ public interface SyncKingdeeSoOutstockService {
      * @create 2023-12-27 16:50
      */
     DmpPushTaskEntity syncB2cDataToKingdee(SoOutstockEntity entity, String operate);
+
+    /**
+     *  同步旺店通数据到金蝶
+     */
+    DmpPushTaskEntity syncWdtDataToKingdee(SoOutstockEntity entity, String operate);
     /**
      * 推送订单到mq
      *

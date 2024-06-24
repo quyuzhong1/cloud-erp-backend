@@ -1,12 +1,18 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.ThirdShopDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -60,4 +66,17 @@ public class OverseasWarehouseController extends BaseController {
     public List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseId(@RequestBody List<String> warehouseIdList){
         return overseasProviderWarehouseService.listByWarehouseIdList(warehouseIdList);
     }
+
+
+    /**
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/pagingSelect")
+    public PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(@RequestBody @Validated PagingDTO<OverseasProviderWarehouseDTO.SelectDTO> dto) {
+        return overseasProviderWarehouseService.pagingSelect(dto);
+    }
+
 }
