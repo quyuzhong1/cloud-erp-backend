@@ -9,6 +9,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.MongoSuperDTO;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -180,7 +181,10 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         AmzReportTaskEntity taskEntity = this.findLastTask(reportSchedule);
         // 是否是检查上一次执行任务
         if (reportTypeConfig.getHasPreTask() && null != taskEntity) {
-            if (!AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus()) && !AmzReportTaskStatusEnum.STOP.getCode().equalsIgnoreCase(taskEntity.getStatus())) {
+            if (!AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus())
+                    && !AmzReportTaskStatusEnum.STOP.getCode().equalsIgnoreCase(taskEntity.getStatus())
+                    && !AmzReportTaskStatusEnum.CANCELLED.getCode().equalsIgnoreCase(taskEntity.getStatus())
+            ) {
                 // 上次任务未完成
                 log.info("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}", groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
                 XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}",
@@ -188,17 +192,20 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 return;
             }
         }
+        // 数据开始时间
+        OffsetDateTime dataOffsetDateTime = reportSchedule.getDataStartTime().atOffset(BusinessCommonConstants.systemZoneOffset);
+        // 数据间隔时间枚举
+        CreateReportScheduleSpecification.PeriodEnum dataPeriodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getDataPeriod());
+        // 下次数据开始时间=数据结束时间
+        OffsetDateTime nextDataOffsetDateTime = dataPeriodEnum.plusPeriod(dataOffsetDateTime);
+
         // 是否是增量报告(取上一次执行任务的时间)
         if (!reportTypeConfig.getIsFullUpdate()) {
-            // 间隔时间枚举
-            CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
-            OffsetDateTime utcStartTime = reportSchedule.getFirstNextReportCreationTime().atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC);
-            // utc 数据开始时间
-            OffsetDateTime formatUtcStartTime = periodEnum.formatTime(utcStartTime);
-            reqDataStartTime = formatUtcStartTime.toString();
+            OffsetDateTime utcStartTime = dataOffsetDateTime.withOffsetSameInstant(ZoneOffset.UTC);
+            reqDataStartTime = utcStartTime.toString();
             // utc 数据结束时间
-            OffsetDateTime formatUtcEndTime = periodEnum.plusPeriod(formatUtcStartTime);
-            reqDataEndTime = formatUtcEndTime.toString();
+            OffsetDateTime utcEndTime = nextDataOffsetDateTime.withOffsetSameInstant(ZoneOffset.UTC);
+            reqDataEndTime = utcEndTime.toString();
         }
 
         // 创建报告待请求记录

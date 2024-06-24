@@ -186,23 +186,32 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
     @Transactional(rollbackFor = Exception.class)
     public void updateNextTime(String mainId, CfgAmzReportTypeEntity config) {
         AmzReportScheduleEntity reportSchedule = this.getByIdOpt(mainId).orElseThrow(() -> new ServiceException("未找到计划任务ID=" + mainId));
-        // 支持切换时间间隔
+        // 数据开始时间
+        OffsetDateTime dataOffsetDateTime = reportSchedule.getDataStartTime().atOffset(BusinessCommonConstants.systemZoneOffset);
+        CreateReportScheduleSpecification.PeriodEnum dataPeriodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getDataPeriod());
+        // 下次数据开始时间=数据结束时间
+        OffsetDateTime nextDataOffsetDateTime = dataPeriodEnum.formatTime(dataOffsetDateTime);
+
+        // 任务时间
+        OffsetDateTime taskOffsetDateTime = reportSchedule.getDataStartTime().atOffset(BusinessCommonConstants.systemZoneOffset);
+        // 任务间隔时间枚举
         CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
-        OffsetDateTime roundedOffsetDateTime;
+        // 下次任务开始时间
+        OffsetDateTime nextTaskOffsetDateTime = periodEnum.plusPeriod(taskOffsetDateTime);
+
         // 是否是全量报告
         if (config.getIsFullUpdate()) {
-            roundedOffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC);
-        } else {
-            // 之前的时间
-            LocalDateTime historyTime = reportSchedule.getFirstNextReportCreationTime();
-            roundedOffsetDateTime = periodEnum.formatTime(historyTime.atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC));
+            // 按当前时间
+            nextTaskOffsetDateTime = OffsetDateTime.now(BusinessCommonConstants.systemZoneOffset);
         }
 
         // 修改下次创建时间
-        LocalDateTime nextTime = periodEnum.plusPeriod(roundedOffsetDateTime)
-                .withOffsetSameInstant(BusinessCommonConstants.systemZoneOffset)
-                .toLocalDateTime();
+        LocalDateTime nextTime = periodEnum.plusPeriod(nextTaskOffsetDateTime).toLocalDateTime();
         reportSchedule.setFirstNextReportCreationTime(nextTime);
+
+        // 修改下次任务数据开始时间
+        reportSchedule.setDataStartTime(nextDataOffsetDateTime.toLocalDateTime());
+
         if (!this.updateById(reportSchedule)) {
             throw new ServiceException("[reportSchedule] 更新失败");
         }
