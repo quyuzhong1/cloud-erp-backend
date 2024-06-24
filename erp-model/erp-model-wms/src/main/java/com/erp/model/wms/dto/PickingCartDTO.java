@@ -1,11 +1,17 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -19,7 +25,61 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class PickingCartDTO implements Serializable {
 
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         *
+         */
+         private String  id;
+         /**
+          * 拣货车编号
+          */
+        private String code;
+        /**
+         * 拣货车类型Id
+         */
+        private String  typeId;
+        /**
+         * 拣货车类型名称
+         */
+        private String typeName;
+        /**
+         * 状态
+         */
+        private Boolean disabled;
+        /**
+         * 修改时间
+         */
+        private LocalDateTime updateTime;
+        /**
+         * 修改名称
+         */
+        private String updateUserName;
 
+    }
+
+
+    /**
+     * 列表参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO  extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
 
 
     /**
@@ -90,5 +150,20 @@ public class PickingCartDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
 
+        /**
+         * 是否禁用，true是,false否
+         */
+        @NotNull(message = "是否禁用不能为空")
+        private Boolean disabled;
+
+    }
 }

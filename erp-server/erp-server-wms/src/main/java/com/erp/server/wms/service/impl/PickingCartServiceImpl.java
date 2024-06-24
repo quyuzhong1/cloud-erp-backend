@@ -1,17 +1,25 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.PickingCartDTO;
 import com.erp.model.wms.entity.PickingCartEntity;
 import com.erp.server.wms.mapper.PickingCartMapper;
-import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.PickingCartService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 /**
  * <p>
@@ -31,8 +40,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, PickingCartEntity> implements PickingCartService {
-    @Autowired
-    private OperateLogService operateLogService;
+
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
@@ -77,11 +85,66 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
         return Boolean.TRUE;
     }
 
+    @Override
+    public PagingVO<PickingCartDTO.ListDTO> paging(PagingDTO<PickingCartDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<PickingCartDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        PickingCartEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到拣货车数据"));
+        // 删除主单数据
+        log.info("删除 开始删除委外发料单主单数据，id：【{}】", id);
+        super.removeById(id);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public PickingCartDTO.ViewDTO view(String id) {
+        PickingCartEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到拣货车数据"));
+        PickingCartDTO.ViewDTO data = BeanMapperUtils.map(PickingCartDTO.ViewDTO.class, entity);
+        return data;
+    }
+
+    @Override
+    public List<PickingCartEntity> listByTypeId(String typeId) {
+        return lambdaQuery().eq(PickingCartEntity::getTypeId,typeId).list();
+    }
+
+    @Override
+    public Boolean updateStatus(PickingCartDTO.UpdateStatusDTO dto) {
+        PickingCartEntity entity = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到拣货车数据"));
+        if (dto.getDisabled().equals(entity.getDisabled())) {
+            String disabledName = dto.getDisabled() ? "禁用" : "启用";
+            throw new ServiceException(StrUtil.format("拣货车已【{}】，不支持再次【{}】",disabledName,disabledName));
+        }
+        return lambdaUpdate().eq(PickingCartEntity::getId,dto.getId())
+                .set(PickingCartEntity::getDisabled,dto.getDisabled())
+                .update(new PickingCartEntity());
+    }
+
 
     /**
     * 新增修改处理数据
     */
     private void handleData(PickingCartEntity pickingCartEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     *  分页数据处理
+     */
+    private void fillList (List<PickingCartDTO.ListDTO> list) {
+        if (CollectionUtil.isEmpty(list)) {
+            return;
+        }
     }
 }

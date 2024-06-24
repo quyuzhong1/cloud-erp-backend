@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.PickingCartTypeDTO;
 import com.erp.model.wms.entity.PickingCartTypeEntity;
@@ -32,4 +33,12 @@ public interface PickingCartTypeService extends SuperService<PickingCartTypeEnti
      * @return List<ListDTO>
      */
     List<PickingCartTypeDTO.ListDTO> select(PickingCartTypeDTO.SelectDTO selectDTO);
+    /**
+     * 删除拣货类型
+     * @author will
+     * @date 2024/6/24 10:43
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO delete(String id);
 }
