@@ -1,0 +1,105 @@
+package com.erp.model.dmp.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
+
+/**
+ * <p>
+ * 外部系统接口明细补偿
+ * </p>
+ *
+ * @author shukai
+ * @since 2024-06-11
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+@TableName("dmp_cfg_input_history")
+public class DmpCfgInputHistoryEntity extends BaseEntity<DmpCfgInputHistoryEntity> {
+
+    /**
+    * 输入信息id
+    */
+    @TableField("main_id")
+    private String mainId;
+    /**
+    * 拉取历史类型：day=一天之前,week=一周之前,month=一月之前  枚举：DmpCfgInputHistoryTypeEnum
+    */
+    @TableField("type")
+    private String type;
+    /**
+    * 最后成功时间
+    */
+    @TableField("last_time")
+    private LocalDateTime lastTime;
+    /**
+    * 下次执行结束时间
+    */
+    @TableField("next_time")
+    private LocalDateTime nextTime;
+    /**
+    * 间隔时间长度单位秒
+    */
+    @TableField("interval_time")
+    private Integer intervalTime;
+    /**
+    * 覆盖时间单位秒
+    */
+    @TableField("override_time")
+    private Integer overrideTime;
+    /**
+    * 最大重试次数
+    */
+    @TableField("max_retry_count")
+    private Integer maxRetryCount;
+    /**
+    * 执行超时时间，单位秒
+    */
+    @TableField("exec_timeout")
+    private Integer execTimeout;
+    /**
+    * 是否禁用
+    */
+    @TableField("disabled")
+    private Boolean disabled;
+    /**
+    * 扩展json
+    */
+    @TableField("extend_json")
+    private String extendJson;
+
+
+    public static final String MAIN_ID = "main_id";
+
+    public static final String TYPE = "type";
+
+    public static final String LAST_TIME = "last_time";
+
+    public static final String NEXT_TIME = "next_time";
+
+    public static final String INTERVAL_TIME = "interval_time";
+
+    public static final String OVERRIDE_TIME = "override_time";
+
+    public static final String MAX_RETRY_COUNT = "max_retry_count";
+
+    public static final String EXEC_TIMEOUT = "exec_timeout";
+
+    public static final String DISABLED = "disabled";
+
+    public static final String EXTEND_JSON = "extend_json";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}

@@ -1,0 +1,133 @@
+package com.erp.model.dmp.enums;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+import cn.hutool.core.collection.CollUtil;
+
+/**
+ * <p>
+ * 拉取任务 状态 枚举
+ * </p>
+ *
+ * @author shukai
+ * @since 2024-06-11 09:37:12
+ */
+public enum DmpInputTaskStatusEnum implements EnumMessage {
+	INIT("init", "待拉取"),
+	FDS("fds", "上传fds"),
+	MONGO("mongo", "保存mongo"),
+	DMP("dmp", "保存dmp"),
+	FINISH("finish", "完成"),
+	ERROR("error", "异常"),
+    ;
+    /**
+     * 类型
+     */
+    @EnumValue
+    @JsonValue
+    private String code;
+    /**
+     * 名称
+     */
+    private String name;
+    
+    public static Map<DmpInputTaskStatusEnum, List<DmpInputTaskStatusEnum>> preStatusMap;
+    public static Map<DmpInputTaskStatusEnum, List<DmpInputTaskStatusEnum>> nextStatusMap;
+    static {
+    	preStatusMap = new HashMap<>();
+    	nextStatusMap = new HashMap<>();
+    	DmpInputTaskStatusEnum[] values = DmpInputTaskStatusEnum.values();
+    	for(DmpInputTaskStatusEnum value : values) {
+    		List<DmpInputTaskStatusEnum> preStatusList = new ArrayList<>();
+    		List<DmpInputTaskStatusEnum> nextStatusList = new ArrayList<>();
+    		if(value == DmpInputTaskStatusEnum.INIT) {
+    			preStatusList.add(value);
+    			
+    			nextStatusList.add(value);
+    			nextStatusList.add(DmpInputTaskStatusEnum.FDS);
+    			nextStatusList.add(DmpInputTaskStatusEnum.MONGO);
+    			nextStatusList.add(DmpInputTaskStatusEnum.DMP);
+    			nextStatusList.add(DmpInputTaskStatusEnum.FINISH);
+    		}else if(value == DmpInputTaskStatusEnum.FDS) {
+    			preStatusList.add(DmpInputTaskStatusEnum.INIT);
+    			preStatusList.add(value);
+    			
+    			nextStatusList.add(value);
+    			nextStatusList.add(DmpInputTaskStatusEnum.MONGO);
+    			nextStatusList.add(DmpInputTaskStatusEnum.DMP);
+    			nextStatusList.add(DmpInputTaskStatusEnum.FINISH);
+    		}else if(value == DmpInputTaskStatusEnum.MONGO) {
+    			preStatusList.add(DmpInputTaskStatusEnum.INIT);
+    			preStatusList.add(DmpInputTaskStatusEnum.FDS);
+    			preStatusList.add(value);
+    			
+    			nextStatusList.add(value);
+    			nextStatusList.add(DmpInputTaskStatusEnum.DMP);
+    			nextStatusList.add(DmpInputTaskStatusEnum.FINISH);
+    		}else if(value == DmpInputTaskStatusEnum.DMP) {
+    			preStatusList.add(DmpInputTaskStatusEnum.INIT);
+    			preStatusList.add(DmpInputTaskStatusEnum.FDS);
+    			preStatusList.add(DmpInputTaskStatusEnum.MONGO);
+    			preStatusList.add(value);
+    			
+    			nextStatusList.add(value);
+    			nextStatusList.add(DmpInputTaskStatusEnum.FINISH);
+    		}else if(value == DmpInputTaskStatusEnum.FINISH) {
+    			preStatusList.add(DmpInputTaskStatusEnum.INIT);
+    			preStatusList.add(DmpInputTaskStatusEnum.FDS);
+    			preStatusList.add(DmpInputTaskStatusEnum.MONGO);
+    			preStatusList.add(DmpInputTaskStatusEnum.DMP);
+    			preStatusList.add(value);
+    			
+    			nextStatusList.add(value);
+    		}
+    		preStatusMap.put(value, preStatusList);
+    		nextStatusMap.put(value, nextStatusList);
+    	}
+    }
+
+    DmpInputTaskStatusEnum(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (DmpInputTaskStatusEnum statusEnum : DmpInputTaskStatusEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
+            }
+        }
+        return "";
+    }
+    
+    public static boolean isNextStatus(String status ,DmpInputTaskStatusEnum updateTaskStatus) {
+    	List<DmpInputTaskStatusEnum> list = nextStatusMap.get(updateTaskStatus);
+    	if(CollUtil.isNotEmpty(list)) {
+    		return list.contains(EnumMessage.getCodeByName(DmpInputTaskStatusEnum.class, status));
+    	}
+    	return false;
+    }
+}
