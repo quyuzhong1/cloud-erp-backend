@@ -525,6 +525,13 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 continue;
             }
             baseMapper.deleteById(entity.getId());
+            List<WarehouseLocationEntity> brotherList = baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", entity.getWarehouseId()).eq("is_deleted", false).eq("parent_id", entity.getParentId()));
+            if(brotherList.isEmpty()){
+                WarehouseLocationEntity updateArea = new WarehouseLocationEntity();
+                updateArea.setId(entity.getParentId());
+                updateArea.setOccupyStatus(Boolean.FALSE);
+                baseMapper.updateById(updateArea);
+            }
             operateLogService.addModuleOperateLog(String.format("删除仓位【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), entity.getId(), "删除", user.getUid(), user.getUserName());
         }
         return errorList;
