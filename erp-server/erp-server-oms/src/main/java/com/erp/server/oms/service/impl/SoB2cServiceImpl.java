@@ -5371,6 +5371,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return dto;
     }
 
+    @Override
+    public SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoById(String id) {
+        return getSoOutstockByIdAndWarehouseId(id,"");
+    }
 
     @Override
     public SoB2cEntity getByCode(String soCode) {
