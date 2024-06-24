@@ -230,9 +230,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             addressDTO.setPickup(sender);
             addressDTO.getPickup().setMemberType("pickup");
         }
-        OrderRequest orderRequest = OrderRequest.builder()
+        return OrderRequest.builder()
                 .oaid(logisticsOrderVO.getOaid())
-                .pickup_type(logisticsOrderVO.getPickupType())
+//                .pickup_type(logisticsOrderVO.getPickupType())
+                .pickup_type("SELF_SEND")
                 .declareProducts(declareProducts)
 //                .domestic_logistics_company(logisticsOrderVO.getLogisticsSaleChannel().getSupplierName())
                 .domestic_logistics_company("自送")
@@ -248,7 +249,6 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .is_agree_upgrade_reverse_parcel_insure(false)
                 .top_user_key(logisticsOrderVO.getTopUserKey())
                 .build();
-        return orderRequest;
     }
 
     /**

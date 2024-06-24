@@ -76,6 +76,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     public Boolean saveOrUpdate(ProductPackDTO productPackDTO) {
         ProductPackEntity packEntity = new ProductPackEntity();
         BeanMapper.copy(productPackDTO, packEntity);
+        packEntity.handleData();
         return this.saveOrUpdate(packEntity);
     }
 
@@ -89,6 +90,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     @Override
     public Boolean saveOrUpdateBatch(List<ProductPackDTO> productPackList) {
         List<ProductPackEntity> list = BeanMapper.copyList(productPackList, ProductPackEntity.class);
+        list.forEach(ProductPackEntity::handleData);
         return this.saveOrUpdateBatch(list);
     }
 
