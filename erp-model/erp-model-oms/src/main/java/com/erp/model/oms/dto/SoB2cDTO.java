@@ -2694,6 +2694,11 @@ public class SoB2cDTO implements Serializable {
          */
         private SoB2cEntity oldEntity;
 
+        /**
+         * 需要走规则的ids
+         */
+        private List<SoB2cEntity> needRuleIds;
+
     }
 
     @Data
