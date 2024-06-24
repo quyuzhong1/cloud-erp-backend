@@ -212,9 +212,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //冻结虚拟库存
         freezeVirtualInventory(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
 
-        //冻结库存
-        freezeInventory(soB2cDeliveryEntity, soB2cDeliveryDetailEntities);
-
         return save;
     }
 
@@ -1618,38 +1615,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return printWayBillPdf;
     }
 
-    /**
-     * 冻结库存
-     *
-     * @param entity
-     * @param detailEntityList
-     * @return void
-     * @Author Luo_WG
-     * @Date 2023/12/25 17:47
-     **/
-    private void freezeInventory(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> detailEntityList) {
-        List<InOutStockDTO> inOutStockList = new ArrayList<>();
-        for (SoB2cDeliveryDetailEntity detailEntity : detailEntityList) {
-            InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
-            inOutStockDTO.setSourceId(entity.getId());
-            inOutStockDTO.setSourceCode(entity.getCode());
-            inOutStockDTO.setSourceDetailId(detailEntity.getId());
-            inOutStockDTO.setBillDate(LocalDate.now());
-            inOutStockDTO.setSkuId(detailEntity.getSkuId());
-            inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
-            inOutStockDTO.setQty(detailEntity.getDeliveryQty());
-            inOutStockDTO.setWarehouseId(detailEntity.getWarehouseId());
-            inOutStockDTO.setWarehouseLocation("");
-            inOutStockList.add(inOutStockDTO);
-        }
-        //添加冻结库存
-        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setParamList(inOutStockList);
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
-        //更新库存
-        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-    }
 
     /**
      * 同步发货单到DMP(暂不推送B2C发货单，用销售出库单代替)
