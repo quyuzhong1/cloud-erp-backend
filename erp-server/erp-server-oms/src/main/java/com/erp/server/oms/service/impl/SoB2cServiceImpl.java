@@ -112,8 +112,6 @@ import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
-import com.xxl.job.core.biz.model.ReturnT;
-import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -3942,8 +3940,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * @param id  订单id
-     * @param map 校验的map
+     * @param id                         订单id
+     * @param map                        校验的map
+     * @param isCheckProductRegistration
      * @return
      * @description 物流规则
      * @author Lambda
@@ -3951,7 +3950,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map) {
+    public SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         if (map.isEmpty()) {
@@ -3983,7 +3982,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             if(StringUtils.isNotBlank(matchResult.getName())){
                 String msg = StrUtil.format("自动匹配物流规则成功，规则名称：{}", matchResult.getName());
+                log.info("{}{}", entity.getCode(), msg);
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
+            }
+            if(isCheckProductRegistration){
+                soB2cService.checkProductRegistrationAndUpdate(entity.getId(), "");
             }
             //状态更新为配货中
             updateBillStatusAndMatchLogistics(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION,Boolean.TRUE);
@@ -5711,7 +5714,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, detailList, map);
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
                 if(logisticsRuleResult.getIsRuleMatch()){
                     soB2cService.checkProductRegistrationAndUpdate(id, "");
                     //申报信息规则

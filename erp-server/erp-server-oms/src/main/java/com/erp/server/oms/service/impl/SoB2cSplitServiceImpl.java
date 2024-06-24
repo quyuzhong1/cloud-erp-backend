@@ -2,7 +2,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -35,7 +34,6 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConverter;
@@ -56,7 +54,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -728,25 +725,32 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 ApproveOneDTO approveOneDTO = new ApproveOneDTO();
                 approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
                 soB2cService.approveEnd(approveOneDTO,add,true);
+                List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(add.getId());
                 //走仓库规则和物流规则的
-                if (add.hasPlatformWarehouseOrder()) {
-                    soB2cService.platformWarehouseOrderHandle(add.getId(), new HashMap<>());
-                } else {
+                SoB2cDTO.RuleResultDTO warehouseRuleResult = new SoB2cDTO.RuleResultDTO();
+                try {
                     //拉取订单正常处理
-                    List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(add.getId());
-                    SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(add.getId(), soB2cDetailEntityList, new HashMap<>());
-                    Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
-                    if (warehouseRuleMatch) {
-                        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(add.getId(), new HashMap<>());
-                        if(logisticsRuleResult.getIsRuleMatch()){
-                            soB2cService.checkProductRegistrationAndUpdate(add.getId(), "");
-                        }
-                        Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                        if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
-                            soB2cService.getLogisticsCode(add.getId(), true);
-                        }
+                    warehouseRuleResult = soB2cService.warehouseRule(add.getId(), soB2cDetailEntityList, new HashMap<>());
+                }catch (Exception e){
+                    log.error("{}仓库规则异常",add.getCode(),e);
+                    warehouseRuleResult.setIsRuleMatch(false);
+                }
+                Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+                if (warehouseRuleMatch) {
+                    SoB2cDTO.RuleResultDTO logisticsRuleResult = new SoB2cDTO.RuleResultDTO();
+                    try {
+                        logisticsRuleResult = soB2cService.logisticsRule(add.getId(), new HashMap<>(), true);
+                    }catch (Exception e){
+                        logisticsRuleResult.setAutoGetTrackNo(false);
+                        log.error("{}物流规则异常",add.getCode(),e);
+                    }
+                    Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                    if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                        soB2cService.getLogisticsCode(add.getId(), true);
                     }
                 }
+
+
             }else{
                 add.setApproveStatus(entity.getApproveStatus());
                 this.updateById(add);

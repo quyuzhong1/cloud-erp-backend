@@ -489,13 +489,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 物流规则
-     * @description
+     *
      * @param
-     * @author Lambda
+     * @param isCheckProductRegistration
      * @return
+     * @description
+     * @author Lambda
      * @create 2023-12-29 8:41
      */
-    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map);
+    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
 
     /**
      * 获取客户信息
