@@ -3,6 +3,8 @@ package com.erp.server.oms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
+import com.erp.model.tms.vo.request.LogisticsOrderRuleVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.server.oms.service.CfgRuleOrderHandleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +35,14 @@ public class CfgRuleFeignController extends BaseController {
     @PostMapping("/getRuleOrderHandleMatchResult")
     public CfgRuleOrderHandleDTO.RuleMatchDTO getRuleOrderHandleMatchResult(@RequestBody Map<String, Object> map) {
         return cfgRuleOrderHandleService.getRuleOrderHandleMatchResult(map);
+    }
+
+    /**
+     * 根据规则处理物流单请求参数
+     */
+    @PostMapping("/handleRuleOrderLogistic")
+    public LogisticsOrderVO handleRuleOrderLogistic(@RequestBody LogisticsOrderRuleVO logisticsOrderRuleVO) {
+        return cfgRuleOrderHandleService.handleRuleOrderLogistic(logisticsOrderRuleVO);
     }
 
 }

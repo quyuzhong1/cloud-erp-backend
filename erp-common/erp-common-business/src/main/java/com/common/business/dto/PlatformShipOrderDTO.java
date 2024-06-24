@@ -24,4 +24,9 @@ public class PlatformShipOrderDTO {
     @NotBlank(message = "销售平台不能为空")
     @StateEnumValue(clazz = PlatformDictEnum.class, message = "销售平台有误")
     private String dictPlatform;
+
+    /**
+     * 是否手动标发
+     */
+    private boolean falseDeliveryFlag;
 }

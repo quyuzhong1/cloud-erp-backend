@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -22,6 +23,8 @@ public class WeiShiResponse<T> implements Serializable {
 
     private Error error;
 
+    private List<Result> result;
+
     private T data;
 
     public static WeiShiResponse error(String code, String error) {
@@ -37,5 +40,13 @@ public class WeiShiResponse<T> implements Serializable {
         private String errMessage;
 
         private String errCode;
+    }
+
+    @Data
+    public static class Result {
+
+        private String ask;
+
+        private String message;
     }
 }

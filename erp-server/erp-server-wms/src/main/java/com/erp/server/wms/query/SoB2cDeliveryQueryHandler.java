@@ -66,7 +66,7 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                     super.buildSplicingSQLDTO("sbd.source_id", QueryConditionEnum.NOT_IN_LIST ,ids,QueryDataTypeEnum.STRING);
                 }
             }
-            //虚假发货
+            //手动标发
             if (SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
                 List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode());

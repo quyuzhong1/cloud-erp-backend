@@ -43,8 +43,8 @@
     <!--分页列表查询-->
     <select id="paging" resultType="com.erp.model.tms.dto.TransferDeclareDTO$ListDTO">
         SELECT
-            td.id,
-            tdd.id AS detailId,
+            distinct td.id,
+--             tdd.id AS detailId,
             td.code AS code,
             td.plan_transfer_date AS planTransferDate,
             td.instock_forecast_date AS instockForecastDate,
@@ -57,19 +57,25 @@
             td.instock_forecast_status AS instockForecastStatus,
             td.instock_forecast_remark AS instockForecastRemark,
             td.total_qty AS totalQty,
-            tdd.so_id AS soId,
-            tdd.so_code AS soCode,
-            tdd.order_upload_status AS uploadOrderStatus,
-            tdd.logistics_channel_name AS logisticsChannelName,
-            tdd.track_no AS trackNo,
-            tdd.outstock_status AS outstockStatus,
-            tdd.transfer_status AS transferStatus,
-            tdd.failure_reason AS failureReason,
+--             tdd.so_id AS soId,
+--             tdd.so_code AS soCode,
+--             tdd.order_upload_status AS uploadOrderStatus,
+--             tdd.logistics_channel_name AS logisticsChannelName,
+--             tdd.track_no AS trackNo,
+--             tdd.outstock_status AS outstockStatus,
+--             tdd.transfer_status AS transferStatus,
+--             tdd.failure_reason AS failureReason,
             td.create_user_name AS createUserName,
             td.create_time AS createTime
-        FROM transfer_declare_detail tdd
-        INNER JOIN transfer_declare td ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
+        FROM transfer_declare td
+        LEFT JOIN transfer_declare_detail tdd ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
         WHERE td.is_deleted = FALSE
+            <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+                and ${params.sqlMap.default}
+            </if>
+            <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+                and ${params.sqlMap.detail}
+            </if>
         <!--单据编号-->
         <if test="params.code!=null and params.code!='' ">
             AND td.code ILIKE concat('%',#{params.code}::text,'%')
@@ -295,6 +301,7 @@
             </foreach>
         </if>
         td.create_time desc
+        limit 50000
     </select>
     <!--根据销售订单查询-->
     <select id="getBySoId" resultType="com.erp.model.tms.entity.TransferDeclareEntity">

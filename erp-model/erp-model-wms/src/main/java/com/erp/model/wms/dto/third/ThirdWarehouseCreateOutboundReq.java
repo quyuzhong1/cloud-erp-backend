@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.third;
 
+import com.common.business.dto.ReceiverDTO;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -43,7 +44,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class ReceiverInfo {
+    public static class ReceiverInfo implements ReceiverDTO {
+        /**
+         * 买家姓名
+         */
+        private String buyerName;
         /**
          * 收件人姓名
          */
@@ -89,6 +94,45 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          */
         private String address3;
 
+        @Override
+        public String getAddressFirst() {
+            return address1;
+        }
+
+        @Override
+        public void setAddressFirst(String addressFirst) {
+            this.address1 = addressFirst;
+        }
+
+        @Override
+        public String getTelNumber() {
+            return phone;
+        }
+
+        @Override
+        public void setTelNumber(String telNumber) {
+            this.phone = telNumber;
+        }
+
+        @Override
+        public String getZipCode() {
+            return zipcode;
+        }
+
+        @Override
+        public void setZipCode(String zipCode) {
+            this.zipcode = zipCode;
+        }
+
+        @Override
+        public String getContact() {
+            return name;
+        }
+
+        @Override
+        public void setContact(String contact) {
+            this.name = contact;
+        }
     }
 
     /**

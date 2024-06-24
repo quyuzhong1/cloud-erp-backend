@@ -196,14 +196,14 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             List<TrackBase> trackNumber = ubiShipperService.getTrackNumber(logisticsQueryBaseVO.getAuthMap(), logisticsQueryVOList.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList()));
 
-            logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
                     logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(trackNumber));
             //转换
             List<LogisticsOrderResponseVO> responseVOS = LogisticsOrderConverter.INSTANCE.ordersQueryByUBI(trackNumber);
             return success(responseVOS);
         } catch (Exception e) {
-            logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
                     logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(e));
             return failure(getPlatForm().getName() + ":" + e.getMessage());
@@ -237,7 +237,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             List<LabelResponse> labelSpecs = ubiShipperService.getLabels(logisticsGetLabelVO.getAuthMap(), labelRequest);
 
-            logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                     logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelSpecs));
             List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
@@ -250,7 +250,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             });
             return success(responses);
         } catch (Exception e) {
-            logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                     logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e));
             return failure(getPlatForm().getName() + ":" + e.getMessage());
@@ -308,12 +308,12 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             });
 
 //            List<LogisticsSaleChannelEntity> list = LogisticsChannelConverter.INSTANCE.channelConvertByUBI(serviceCataLogList);
-            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(serviceCataLogList));
             return success(list);
         } catch (Exception e) {
-            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(e));
             return failure(getPlatForm().getName() + ":" + e.getMessage());

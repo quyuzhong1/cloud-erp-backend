@@ -609,8 +609,8 @@ public class OrdersV0ApiTest {
 //        String orderId = "171-1050921-3579503";
 //        String shopId = "1730162240754708482";
 //        String orderId = "701-3274667-0305064";
-        String orderId = "702-3086347-0713815";
-        String shopId = "1736965724917731330";
+        String orderId = "S02-0294526-3335112";
+        String shopId = "1735512797405515779";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {

@@ -18,8 +18,4 @@ public class DeliveryOrderServiceImplTest {
     @Resource
     private DeliveryOrderService deliveryOrderService;
 
-    @Test
-    public void confirmReceiveStatus() {
-        deliveryOrderService.confirmReceiveStatus(Arrays.asList("1750363303529418754","1750722479596138498"));
-    }
 }

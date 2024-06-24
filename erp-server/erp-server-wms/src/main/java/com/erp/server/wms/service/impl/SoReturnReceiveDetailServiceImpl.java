@@ -106,7 +106,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
      **/
     private Boolean notReturnOrderAdd(SoReturnReceiveDTO.Add dto, String id) {
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
         List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
         for (SoReturnReceiveDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
@@ -207,7 +207,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
 
         List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Update::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
 
         //原明细数据
         List<SoReturnReceiveDetailEntity> oldList = this.listDetailByMainId(dto.getId());

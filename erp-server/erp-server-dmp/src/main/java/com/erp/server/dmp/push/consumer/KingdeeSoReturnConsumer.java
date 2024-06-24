@@ -56,7 +56,7 @@ public class KingdeeSoReturnConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
 //        queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
-        queryFilters.add(String.format("FBillNo = '%s'", "XSTH23122100102"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSTHD13659667"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID," +
                 "FBillTypeID," +
@@ -83,13 +83,14 @@ public class KingdeeSoReturnConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
                 "FSettleCurrId.FCode," +
                 "FDelTime," +
                 "FHeadNote," +
-                "FReturnReason," +
+                "FReturnReason.FDataValue," +
                 "FSaledeptid.FNumber," +
                 "FSaledeptid.FName," +
                 "FOrderNo," +
                 "FAmount," +
                 "FMustqty," +
                 "FUnitID.FName," +
+                "FEntity_FEntryId," +
                 "FMaterialId," +
                 "FMaterialId.FNumber," +
                 "FMaterialName," +
@@ -114,7 +115,8 @@ public class KingdeeSoReturnConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
                 "FAllAmount," +
                 "FReturnType," +
                 "FSOEntryId," +
-                "F_ULZ_data_sources,FISGENFORIOS";
+                "F_ULZ_data_sources,FISGENFORIOS," +
+                "FETHIRDBILLNO";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 2);
         System.out.println(queryList);
     }

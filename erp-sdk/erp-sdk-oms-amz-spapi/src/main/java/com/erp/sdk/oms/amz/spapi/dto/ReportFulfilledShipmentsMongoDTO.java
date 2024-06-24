@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import lombok.Data;
@@ -9,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Transient;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 
@@ -121,6 +123,26 @@ public class ReportFulfilledShipmentsMongoDTO extends ReportSuperMongoDTO {
     private String pointsGranted;
 
     /**
+     * 仓库id
+     */
+    private String warehouseId;
+
+    /**
+     * 仓库名称
+     */
+    private String warehouseName;
+
+    /**
+     * 库存组织
+     */
+    private String warehouseOrgId;
+
+    /**
+     * 库存组织名称
+     */
+    private String warehouseOrgName;
+
+    /**
      * 中转参数:不保存mongo
      */
     @Transient
@@ -142,21 +164,33 @@ public class ReportFulfilledShipmentsMongoDTO extends ReportSuperMongoDTO {
         return OffsetDateTime.parse(this.shipmentDate).toLocalDate().toString();
     }
 
-    public void checkAndSetAllDateLocale(Integer utfDiffHour) {
-        if (null == utfDiffHour){
+    public void checkAndSetAllDateLocale(String timeZone) {
+        if (StringUtils.isBlank(timeZone)){
             return;
         }
         if (StringUtils.isNotBlank(this.shipmentDate)){
             OffsetDateTime parseDate = OffsetDateTime.parse(this.shipmentDate);
-            this.setShipmentDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+            this.setShipmentDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
         }
         if (StringUtils.isNotBlank(this.paymentsDate)){
             OffsetDateTime parseDate = OffsetDateTime.parse(this.paymentsDate);
-            this.setPaymentsDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+            this.setPaymentsDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
         }
         if (StringUtils.isNotBlank(this.purchaseDate)){
             OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
-            this.setPurchaseDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+            this.setPurchaseDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
         }
+    }
+
+    /**
+     * 是否是多渠道订单
+     */
+    public boolean hasMultiChannel() {
+        return this.salesChannel.contains("Non") || this.getAmazonOrderId().contains("S");
+    }
+
+    @Override
+    public String convertBusinessUniqueKey() {
+        return StrUtil.format("{}_{}", this.shipmentItemId, this.quantityShipped);
     }
 }

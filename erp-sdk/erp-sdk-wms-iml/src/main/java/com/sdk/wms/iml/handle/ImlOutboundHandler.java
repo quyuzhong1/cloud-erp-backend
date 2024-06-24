@@ -78,7 +78,7 @@ public class ImlOutboundHandler extends AbstractPullThirdWarehouseHandler<ImlOut
         //过滤掉代发货状态
         respList = respList.stream().filter(v->!(v.getOrderStatus().equals(ImlEnums.OrderStatusEnum.NEW.getCode()) || v.getOrderStatus().equals(ImlEnums.OrderStatusEnum.FIRST_JOURNEY_ON_THE_WAY.getCode()))).collect(Collectors.toList());
         respList.forEach(v->{
-            v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.OUTBOUND.getCode()+v.getOrderCode()));
+            v.setUniqueId(v.getOrderCode());
             v.setAuthId(data.getShopId());
         });
 

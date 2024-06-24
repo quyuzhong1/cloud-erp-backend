@@ -2,6 +2,7 @@ package com.erp.model.oms.entity;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
@@ -51,6 +52,22 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("approve_status")
     private ApproveStatusEnum approveStatus;
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+    /**
+     * 审核人id
+     */
+    @TableField(value = "approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名称
+     */
+    @TableField(value = "approve_user_name")
+    private String approveUserName;
     /**
      * 平台订单号
      */
@@ -271,6 +288,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("seller_order_code")
     private String sellerOrderCode;
+
+    /**
+     * 冻结类型（manual手动冻结，automatic自动冻结）
+     */
+    @TableField("frozen_type")
+    private String frozenType;
 
     public static final String CODE = "code";
 

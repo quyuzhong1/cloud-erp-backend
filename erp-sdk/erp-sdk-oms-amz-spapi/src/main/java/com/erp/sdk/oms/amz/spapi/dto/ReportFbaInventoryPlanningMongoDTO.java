@@ -238,4 +238,9 @@ public class ReportFbaInventoryPlanningMongoDTO extends ReportSuperMongoDTO {
         mongoDTO.setReportId(inventoryPlanningReportId);
         return mongoDTO;
     }
+
+    @Override
+    public String convertBusinessUniqueKey() {
+        return super.getUniqueId();
+    }
 }

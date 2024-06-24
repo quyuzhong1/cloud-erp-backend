@@ -41,7 +41,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class DeliverDTO{
         /**
          * manual 手动
-         * falsehood 虚假发货
+         * falsehood 手动标发
          */
       private String type;
 
@@ -276,7 +276,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class TabListDTO {
         /**
          * 标识：wms/common/enumDropDown?type=SoB2cDeliveryStatus
-         * 描述：waitHandle:待处理, picking:拣货中, falseShipment:虚假发货, shipped:已发货, cancelDelivery:取消发货,intercepting ：拦截中
+         * 描述：waitHandle:待处理, picking:拣货中, falseShipment:手动标发, shipped:已发货, cancelDelivery:取消发货,intercepting ：拦截中
          */
         @NotBlank(message = "tab不能为空")
         private String tabFlag;
@@ -536,12 +536,12 @@ public class SoB2cDeliveryDTO implements Serializable {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             PrintPickingViewDTO that = (PrintPickingViewDTO) o;
-            return Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) && Objects.equals(remark, that.remark);
+            return Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) ;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation, remark);
+            return Objects.hash(skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation);
         }
     }
 

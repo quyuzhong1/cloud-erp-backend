@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -37,6 +38,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -121,7 +123,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             return;
         }
         List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         Class<SoOutstockDetailEntity> credentialClass = SoOutstockDetailEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
@@ -166,7 +168,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
 
 
-        this.saveBatch(addList);
+        super.saveBatch(addList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
     }
 
@@ -195,7 +197,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(idList);
         //可用库存
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (SoOutstockDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
             String id = item.getId();
@@ -287,7 +289,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 throw new ServiceException(ApiError.ERROR_92031);
             }
             List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-            List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
+            List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String sourceDetailId = item.getSourceDetailId();
                 String soDetailId = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
@@ -389,7 +391,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
 
         List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         Class<SoOutstockDetailEntity> credentialClass = SoOutstockDetailEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
@@ -642,11 +644,12 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Override
     public List<SoOutstockDetailDTO.AddDTO> checkAndGenerateDetail(SoOutstockDTO.GenerateB2cDTO dto) {
-        boolean notExistMapping = dto.getDetailList()
+        List<String> notExistMapping = dto.getDetailList()
                 .stream()
-                .anyMatch(e -> CollectionUtils.isEmpty(e.getHistorySkuMappingList()));
-        if (notExistMapping){
-            throw new ServiceException("找不到历史映射关系");
+                .filter(v->CollectionUtils.isEmpty(v.getHistorySkuMappingList()))
+                .map(SoOutstockDetailDTO.AddDTO::getSkuNo).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notExistMapping)){
+            throw new ServiceException(StrUtil.format("{}找不到历史映射关系",notExistMapping));
         }
         // 生成库存检查参数
         List<String> skuIdList = new LinkedList<>();
@@ -937,7 +940,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //查询已装箱数
         List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(mainId, null);
@@ -953,5 +956,42 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             groupSkuDTO.setProductName(skuVO.getSkuName());
         }
         return list;
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateSoOutPrice(List<SoDetailEntity> soDetailEntityList) {
+        soDetailEntityList = soDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getId())).collect(Collectors.toList());
+        List<String> soDetailIds = soDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(soDetailIds)){
+            return true;
+        }
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = this.lambdaQuery().in(SoOutstockDetailEntity::getSoDetailId,soDetailIds).list();
+        List<SoOutstockDetailEntity> updateList = new ArrayList<>();
+        for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
+            //销售订单明细
+            SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soDetailEntity)) {
+                continue;
+            }
+            BigDecimal price=soDetailEntity.getPrice();
+            //单价信息
+            detailEntity.setPrice(price);
+            BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
+            BigDecimal amount=MathUtil.multiply(price, detailEntity.getActualQty());
+            detailEntity.setAmount(amount);
+            BigDecimal amountLocalCurrency=amount;
+            if(Objects.nonNull(exchangeRate) && BigDecimal.ZERO.compareTo(exchangeRate)!=0){
+                amountLocalCurrency=MathUtil.multiply(amount,exchangeRate,4);
+            }
+            detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
+            updateList.add(detailEntity);
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        
+        return true;
     }
 }

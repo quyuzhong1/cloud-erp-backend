@@ -106,6 +106,7 @@ public class PurchaseOrderExcelListener extends AnalysisEventListener<PurchaseOr
             return;
         }
         excelDTO.setIsUrgent("是".equals(importExcelDTO.getIsUrgentStr()) ? Boolean.TRUE : Boolean.FALSE);
+        excelDTO.setIsGift("是".equals(importExcelDTO.getIsGiftStr()) ? Boolean.TRUE : Boolean.FALSE);
         excelDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getPurchaseQtyStr()));
         excelDTO.setPlanDeliveryDate(StringUtils.isBlank(importExcelDTO.getPlanDeliveryDateStr()) ? null : LocalDate.parse(importExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
         excelDTO.setRemark(importExcelDTO.getRemark());

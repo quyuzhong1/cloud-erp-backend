@@ -145,8 +145,36 @@ public class PullAmzReportJob {
             return ReturnT.SUCCESS;
         }
 
+        List<String> reportType = reportTypeConfigList.stream().map(CfgAmzReportTypeEntity::getReportType).distinct().collect(Collectors.toList());
+        // 查询正在处理中的报告
+        List<AmzReportTaskEntity> taskList = amzReportTaskService.lambdaQuery()
+                .in(AmzReportTaskEntity::getStatus, AmzReportTaskStatusEnum.getProcessStatus())
+                .in(AmzReportTaskEntity::getReportType, reportType)
+                .list();
+
         // 当前时间
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
+
+        // 过滤处理中的报告
+        Map<Boolean, List<AmzReportScheduleEntity>> scheduleEntityMap = scheduleEntityList
+                .stream()
+                .collect(Collectors.groupingBy(entity ->
+                        taskList.stream().anyMatch(t -> t.getReportType().equalsIgnoreCase(entity.getReportType())
+                                && t.getShopId().equalsIgnoreCase(entity.getShopId()))
+                ));
+        // 跳过的计划
+        List<AmzReportScheduleEntity> skipList = scheduleEntityMap.get(true);
+        // 需要处理的计划
+        List<AmzReportScheduleEntity> handleList = scheduleEntityMap.get(false);
+
+        if (!CollectionUtils.isEmpty(skipList)){
+            XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 存在创建中的任务本次跳过,skipList={}", JSONUtil.toJsonStr(skipList));
+        }
+
+        if (CollectionUtils.isEmpty(handleList)){
+            XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务结束,跳过处理中的计划后无需要更新的店铺报告计划");
+            return ReturnT.SUCCESS;
+        }
 
         taskGroupMap.forEach((key, value) -> threadPoolTaskExecutor.execute(() -> {
             // 处理
@@ -154,7 +182,7 @@ public class PullAmzReportJob {
                     value,
                     jobParamDTO.getSize(),
                     currentDateTime,
-                    tuple.get(2),
+                    handleList,
                     tuple.get(1),
                     tuple.get(0)
             );
@@ -234,9 +262,13 @@ public class PullAmzReportJob {
         // 查询所有待请求的计划任务
         List<AmzReportScheduleEntity> reportScheduleEntityList = amzReportScheduleService.findActionList(shopInfoEntityList, reportTypeConfigList, jobParamDTO, subscribedTypeList);
 
+        List<String> shopIds = reportScheduleEntityList.stream().map(AmzReportScheduleEntity::getShopId).distinct().collect(Collectors.toList());
+
         String platform = PlatformDictEnum.AMAZON.getCode();
         // 根据groupId分组店铺
         Map<String, List<ShopInfoEntity>> taskGroupMap = shopInfoEntityList.stream()
+                // 过滤非任务的店铺
+                .filter(e -> shopIds.contains(e.getId()))
                 // 平台类型:sellerId:请求的端点区域
                 .collect(Collectors.groupingBy(e ->
                         StrUtil.format("{}:{}:{}",

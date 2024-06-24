@@ -39,7 +39,7 @@ public class PackingInspectionController extends BaseController {
      * @date: 2023-12-13
      */
     @PostMapping("/scan")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "包装验货扫描")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "包装验货扫描：businessCode={businessCode}")
     public ApiResult<PackingInspectionDTO.ViewDTO> scan(@RequestBody @Validated PackingInspectionDTO.ScanDTO dto) {
         PackingInspectionDTO.ViewDTO list = packingInspectionService.scan(dto);
         return success(list);

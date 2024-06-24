@@ -40,6 +40,8 @@
             po.code as code,
             po.receive_org_name as receiveOrgName,
             po.purchase_user_name as purchaseUserName,
+            po.delivery_warehouse_id as deliveryWarehouseId,
+            po.delivery_warehouse_name as deliveryWarehouseName,
             pod.is_gift as isGift,
             pod.is_urgent as isUrgent,
             pod.remark as remark,

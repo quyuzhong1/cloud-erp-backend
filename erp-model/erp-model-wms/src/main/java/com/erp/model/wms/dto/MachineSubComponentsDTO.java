@@ -48,6 +48,10 @@ public class MachineSubComponentsDTO implements Serializable {
          */
         private String warehouseLocation;
         /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+        /**
          * 备注
          */
         @Size(max = 255,message = "备注不能大于255字符")

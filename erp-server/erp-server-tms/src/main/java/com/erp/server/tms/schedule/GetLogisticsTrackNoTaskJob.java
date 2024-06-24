@@ -136,6 +136,7 @@ public class GetLogisticsTrackNoTaskJob {
                     equals(item.getLogisticsChannelId())).findFirst().map(LogisticsChannelDTO.LogisticsPlatformDTO::getAuthId).orElse("");
             if (StringUtils.isNotBlank(authId)) {
                 LogisticsQueryBaseVO queryBase = new LogisticsQueryBaseVO();
+                queryBase.setOrderId(item.getSoB2cId());
                 queryBase.setTransportNo(item.getTransportNo());
                 String deliveryNo = item.getSoCode();
                 if (isAliExpress) {

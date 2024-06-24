@@ -2,7 +2,6 @@ package com.erp.sdk.oms.amz.spapi.convert;
 
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
 import org.mapstruct.Mapper;
@@ -51,7 +50,7 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "uniqueId", source = "uniqueId"),
             @Mapping(target = "detailList", expression = "java(sourceDetails.stream().map(INSTANCE::amazonConvertDetailDTO).collect(java.util.stream.Collectors.toList()))"),
     })
-    PlatformSoOutStockDTO amazonConvertDTO(String platformCode, String shopId, String uniqueId, List<PlatformAmazonFulfilledShipmentsDTO> sourceDetails);
+    PlatformSoOutStockDTO amazonConvertDTO(String platformCode, String shopId, String uniqueId, List<PlatformAmazonFulfilledShipmentsDTO> sourceDetails, String warehouseId, String warehouseName, String fulfillmentCenter);
 
 
     @Mappings({

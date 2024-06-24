@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import com.common.business.dto.MongoAbstractDTO;
 import com.common.business.dto.MongoSuperDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
@@ -17,10 +18,8 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReportSuperMongoDTO extends MongoSuperDTO {
+public abstract class ReportSuperMongoDTO extends MongoAbstractDTO {
 
-    @Panno(findType = PannoEnum.GT,field = "_id")
-    private String id;
 
     @Panno(findType = PannoEnum.IN,field = "reportMarketplaceIds")
     private List<String> reportMarketplaceIds;
@@ -51,10 +50,4 @@ public class ReportSuperMongoDTO extends MongoSuperDTO {
 
     @Panno(findType = PannoEnum.EQ, field = "requestShopId")
     private String requestShopId;
-
-    public static ReportSuperMongoDTO initLastId(String lastId) {
-        ReportSuperMongoDTO mongoDTO = new ReportSuperMongoDTO();
-        mongoDTO.setId(lastId);
-        return mongoDTO;
-    }
 }

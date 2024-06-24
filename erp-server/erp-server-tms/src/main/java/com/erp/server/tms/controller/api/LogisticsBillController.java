@@ -59,7 +59,7 @@ public class LogisticsBillController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:logisticsBill:paging",
-            tableAlias = "logistics_bill_detail"
+            tableAlias = "lb"
     )
     public ApiResult<List<LogisticsBillDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<LogisticsBillDTO.TabListDTO> tabList = logisticsBillService.tabList(dto);

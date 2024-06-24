@@ -150,7 +150,7 @@ public interface DmpOrderConverter {
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
-            @Mapping(target = "platformOrderId", source = "viewDTO.code"),
+            @Mapping(target = "platformOrderId", source = "viewDTO.platformCode"),
             @Mapping(target = "buyerUserId", source = "viewDTO.receiverDTO.loginId"),
             @Mapping(target = "buyerName", source = "viewDTO.receiverDTO.name"),
             @Mapping(target = "shopNo", source = "shopId"),
@@ -162,7 +162,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "salesRecordNumber", source = "viewDTO.code"),
             @Mapping(target = "platformOrderStatus", source = "approveStatus"),
             @Mapping(target = "orderFee", source = "amount"),
-            @Mapping(target = "sourcePlatform", constant = "soB2c"),
+            @Mapping(target = "sourcePlatform", source = "viewDTO.dictPlatform"),
             @Mapping(target = "isUnion", constant = "2"),
             @Mapping(target = "isSplit", constant = "2"),
             @Mapping(target = "isResend", constant = "2"),
@@ -183,7 +183,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "subsidyAmount", constant = "0"),
             @Mapping(target = "countryNameEn", source = "viewDTO.receiverDTO.country"),
             @Mapping(target = "countryNameCn", source = "viewDTO.receiverDTO.countryName"),
-            @Mapping(target = "platformSign", constant = "erp-oms"),
+            @Mapping(target = "platformSign", constant = "erp-oms-b2c"),
             @Mapping(target = "createTime", ignore = true),
             @Mapping(target = "companyId", source = "orgId"),
             @Mapping(target = "companyName", source = "orgName"),

@@ -1,15 +1,12 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.PlatformDeliveryInterceptDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.UnitEnum;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.constant.EnumMessage;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -18,18 +15,23 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WeightingOutboundService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -64,6 +67,8 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     @Lazy
     @Resource
     private AsyncService asyncService;
+    @Resource
+    private LogisticsBillFeign logisticsBillFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -119,8 +124,12 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
         //查询订单物流信息获取跟踪号
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+        if(CollectionUtils.isEmpty(soB2cLogisticsEntities)){
+            throw new ServiceException("订单物流信息为空");
+        }
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.get(0);
         //设置物流跟踪单号
-        String trackNo = soB2cLogisticsEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).map(req -> req.getTrackNo()).findFirst().orElse("");
+        String trackNo = soB2cLogisticsEntity.getTrackNo();
 
         if (Objects.nonNull(dto.getWeight())) {
             if (Objects.isNull(dto.getWeightUnit())) {
@@ -145,13 +154,23 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             if(UnitEnum.WeightUnitEnum.KG.getCode().equals(dto.getWeightUnit())){
                 weightByG = dto.getWeight().multiply(BigDecimal.valueOf(1000));
             }
-
-            //更新B2c物流订单重量
-            List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
-            for (SoB2cLogisticsEntity v : soB2cLogisticsEntityList) {
+            for (SoB2cLogisticsEntity v : soB2cLogisticsEntities) {
                 v.setWeight(weightByG);
             }
-            soB2cFeign.batchUpdateLogistics(soB2cLogisticsEntityList);
+            //更新物流商重量
+            if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode()) && StringUtils.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
+                LogisticsBillDTO.UpdateWeight updateWeight = LogisticsBillDTO.UpdateWeight.builder()
+                        .soB2cEntity(soB2cEntity)
+                        .soB2cLogisticsEntity(soB2cLogisticsEntity)
+                        .build();
+                ApiResult<String> updateLogisticResult = logisticsBillFeign.updateLogisticWeight(updateWeight);
+                if(!updateLogisticResult.isSuccess() && updateLogisticResult.getCode() != -1){
+                    throw new ServiceException(StrUtil.format("向物流商更新重量异常:{}",updateLogisticResult.getMsg()));
+                }
+            }
+
+            //更新B2c物流订单重量
+            soB2cFeign.batchUpdateLogistics(soB2cLogisticsEntities);
         }
         //自动发货
         if (isAutoDelivery && entity.getIsWeigh()) {
@@ -174,6 +193,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             //修改订单状态待发货
             SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
             updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+            updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
             updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
             soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
@@ -190,7 +210,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                         soB2cEntity.getCode(),
                         soB2cEntity.getDictPlatform(),
                         JSONUtil.toJsonStr(dto),
-                        businessDesc);
+                        businessDesc, false);
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }

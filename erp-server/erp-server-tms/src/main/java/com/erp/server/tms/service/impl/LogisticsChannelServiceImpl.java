@@ -162,11 +162,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, String name) {
+    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, LogisticsSupplierDTO.PagingParamDTO params) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, name);
+        List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, params);
 //        List<LogisticsChannelEntity> list = this.lambdaQuery().
 //                in(LogisticsChannelEntity::getMainId, mainIdList).
 //                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
@@ -475,6 +475,12 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         LogisticsChannelDTO.LogisticsChannelConstraintDTO result = new LogisticsChannelDTO.LogisticsChannelConstraintDTO();
         if(StringUtils.isBlank(channelId)){
             return result;
+        }
+        if (StringUtils.isNotBlank(channelId)){
+            LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
+            if (Objects.nonNull(authEntity)){
+                result.setLogisticsPlatform(authEntity.getLogisticsPlatform());
+            }
         }
         //先通过国家+渠道获取
         LogisticsChannelConstraintEntity logisticsChannelConstraintEntity = logisticsChannelConstraintService.getByChannelAndCountry(channelId,country);

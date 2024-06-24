@@ -26,6 +26,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.excel.ExportInitStockExcelDTO;
 import com.erp.model.wms.dto.excel.ImportInitStockExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
@@ -126,7 +127,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         // 查询期初库存明细信息
         List<InitStockDetailEntity> entityMembers = initStockDetailService.findList(id);
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(entityMembers),()->new ServiceException("未找到期初库存明细信息"));
-
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = entityMembers.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(entity.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         // 其他字段赋值
         InitStockDTO.ViewDTO viewDTO = BeanMapperUtils.map(InitStockDTO.ViewDTO.class, entity);
         // 仓库
@@ -152,7 +154,12 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         List<String> skuIds = members.stream().map(InitStockDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIds);
         Map<String, ProductDetailEntity> productMap = productDetailEntityList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
-        members.stream().forEach(member->member.setProductName(productMap.getOrDefault(member.getSkuId(),new ProductDetailEntity()).getName()));
+        members.stream().forEach(member->{
+            member.setProductName(productMap.getOrDefault(member.getSkuId(),new ProductDetailEntity()).getName());
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getCode().equals(member.getWarehouseLocation()) && e.getWarehouseId().equals(entity.getWarehouseId()))
+                    .findFirst().orElse(new WarehouseLocationEntity());
+            member.setWarehouseLocationName(warehouseLocationEntity.getName());
+        });
         viewDTO.setDetails(members);
 
         return viewDTO;
@@ -635,9 +642,10 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         // 获取SKU产品名称
         List<String> skuIds = list.stream().map(InitStockDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOs =  plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuVOs =  plmTaskFeign.listSkuSaleByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuVOs.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
-
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         list.stream().forEach(data->{
             // 单据状态
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -667,6 +675,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 data.setSaleState(skuVO.getSaleState());
                 data.setSaleStateName(SaleStateEnum.getNameByCode(skuVO.getSaleState()));
             }
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(data.getWarehouseId()) && e.getCode().equals(data.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            data.setWarehouseLocationName(warehouseLocationEntity.getName());
         });
     }
 }

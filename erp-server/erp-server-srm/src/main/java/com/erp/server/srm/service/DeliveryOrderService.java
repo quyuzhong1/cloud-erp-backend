@@ -86,19 +86,12 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
      * @return
      */
     List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO);
-    /**
-     * 确认收货
-     */
-    Boolean confirmReceiveStatus(List<String> ids);
-
-    /**
-     * 反确认收货
-     */
-    Boolean unConfirmReceiveStatus(List<String> ids);
-
-    Boolean cancelReceive(List<String> ids);
 
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
     void saveImport(List<Pair<DeliveryOrderEntity, List<DeliveryOrderDetailEntity>>> addList);
+
+    Boolean updateReceiveStatus(List<String> ids);
+
+    void removePoReconciliationDetail (List<String> idList);
 }

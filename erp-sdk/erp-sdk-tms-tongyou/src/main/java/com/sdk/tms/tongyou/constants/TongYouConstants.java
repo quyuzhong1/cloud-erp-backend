@@ -8,5 +8,6 @@ public class TongYouConstants {
     public static final String METHOD_ORDER_CALL_BACK = "/order/orderCallback";
     public static final String METHOD_PRINT_LABEL = "/order/printOrder";
     public static final String METHOD_ORDER_GET = "/order/queryOrder";
+    public static final String METHOD_UPDATE_WEIGHT = "/order/updateWeight";
 
 }

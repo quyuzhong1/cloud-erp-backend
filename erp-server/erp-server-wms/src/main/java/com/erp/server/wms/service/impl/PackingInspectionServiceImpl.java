@@ -1,25 +1,18 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.common.business.dto.PlatformDeliveryInterceptDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -147,7 +140,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //根据SKU查询BOM判断是否是组合SKU
             List<String> skuIdList = detailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
             //查询sku基础信息
-            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
             Map<String,SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity()));
             PackingInspectionDTO.ViewDTO addViewDTO;
             addViewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity,detailEntityList);
@@ -285,6 +278,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //修改订单状态待发货
             SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
             updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+            updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
             updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
             soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
@@ -302,7 +296,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                         soB2cEntity.getCode(),
                         soB2cEntity.getDictPlatform(),
                         JSONUtil.toJsonStr(dto),
-                        businessDesc);
+                        businessDesc, false);
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }

@@ -3,10 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.oms.dto.PackageDTO;
-import com.erp.model.oms.dto.ReportDTO;
-import com.erp.model.oms.dto.SoB2cAbnormalDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
@@ -163,7 +160,19 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2024/4/16 15:10
      */
-    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.ExportParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO,@Param("isOutStock") Boolean isOutStock);
+    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
+
+    /**
+     * @param params
+     * @param shopAuthResultDTO
+     * @param isOutStock
+     * @return Integer
+     * @description: 导出excel数量查询
+     * @author Will
+     * @date: 2024/4/29 17:55
+     */
+    Integer countExportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
+    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
     /**
      * @description: 异常订单分页查询
      * @author Will
@@ -184,13 +193,10 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     List<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel( @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
-     * @param params
-     * @param shopAuthResultDTO
-     * @param isOutStock
-     * @return Integer
-     * @description: 导出excel数量查询
-     * @author Will
-     * @date: 2024/4/29 17:55
+     * 批量更新审核信息
+     * @param updateList
      */
-    Integer countExportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
+    void updateBatchApproveById(@Param("updateList") List<SoB2cEntity> updateList);
+
+    IPage<SoB2cForeignDTO.OrderDeliveryResp> getForeignOrderDeliveryInfo(Page query, @Param("params") SoB2cForeignDTO.OrderDeliveryReq orderDeliveryReq);
 }

@@ -72,4 +72,10 @@ public interface AliexpressConstants {
      */
     String ALIEXPRESS_OFFER_PRODUCT_QUERY="aliexpress.offer.product.query";
 
+
+    /**
+     * 查询卖家资料
+     */
+    String ALIEXPRESS_MERCHANT_PROFILE_GET ="aliexpress.merchant.profile.get";
+
 }

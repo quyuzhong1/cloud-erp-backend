@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
@@ -19,11 +20,14 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -34,6 +38,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Array;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +55,8 @@ import java.util.stream.Collectors;
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
         selectorExpression = "third_system_so_out_stock_tag",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_so_out_stock_consumer",
-        consumeMode = ConsumeMode.CONCURRENTLY)
+        consumeMode = ConsumeMode.CONCURRENTLY
+)
 public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
@@ -63,6 +69,8 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
     private SoB2cFeign soB2cFeign;
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private WarehouseService warehouseService;
 
 
     @Override
@@ -101,16 +109,6 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         // 亚马逊物流销售消费服务
         log.info("[销售出库单] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformSoOutStockDTO dto = JSONUtil.toBean(ext.toString(), PlatformSoOutStockDTO.class);
-        // 已有出库详情/不保存订单
-        // 2024-03-25允许所有来源订单处理
-//        Boolean hasDeliveryDetail = Boolean.FALSE;
-//        if (StringUtils.isNotEmpty(dto.getPlatformCode()) && StringUtils.isNotEmpty(dto.getDictPlatform())){
-//            hasDeliveryDetail = dmpMongoDbFeign.checkHasDeliveryDetail(dto.getPlatformCode(), dto.getDictPlatform());
-//        }
-//        if (hasDeliveryDetail){
-//            log.warn("[亚马逊物流销售消费服务]:已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
-//            return ApiResult.success();
-//        }
         // 查询销售订单是否存在?
         // 忽略店铺
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
@@ -160,18 +158,20 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         // 记录订单数据（独立事务）
         soB2cFeign.checkAndFillBySoOutStock(dto);
 
-        // （独立事务）
-//         表示有仓库为空且是已发货并且是平台仓订单
-//         那么就要去找店铺的仓库 然后匹配上仓库
-//         [排除速卖通订单]
-        if (Objects.nonNull(soB2cEntity) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())) {
-            soB2cFeign.updateWarehouseByShopId(soB2cEntity.getId(), soB2cEntity.getShopId());
-        }
-
         // B2C销售订单添加整个销售出库单的基础信息
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO;
         try {
+            PlatformSoOutStockDetailDTO detailDTO = dto.getDetailList().get(0);
+            if (StringUtils.isNotBlank(detailDTO.getWarehouseId())){
+                String msg = StrUtil.format("未找到对应仓库, 仓库【{}】, 仓库中心【{}】", detailDTO.getWarehouseName(), detailDTO.getFulfillmentCenter());
+                throw new ServiceException(msg);
+            }
             generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
+            // 按仓库中心对应仓库
+            generateB2cDTO.setWarehouseId(detailDTO.getWarehouseId());
+            generateB2cDTO.setWarehouseName(detailDTO.getWarehouseName());
+            generateB2cDTO.setWarehouseOrgId(detailDTO.getWarehouseOrgId());
+            generateB2cDTO.setWarehouseOrgName(detailDTO.getWarehouseOrgName());
         } catch (Exception e) {
             // 生成明细异常记录
             List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
@@ -193,6 +193,13 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
             return ApiResult.success();
         }
 
+        // 检查允许生成销售出库单的日期
+        LocalDate stopDate = soOutstockService.getStopSoOutStockDate();
+        if (null != stopDate && !generateB2cDTO.getBillDate().isAfter(stopDate)){
+            log.warn("[销售出库销售消费服务]:当前销售出库单日期【{}】停止生成：单号={}", generateB2cDTO.getBillDate(), dto.getPlatformCode());
+            return ApiResult.success();
+        }
+
         // 校验sku映射关系
         if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -205,6 +212,7 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
             soB2cFeign.addSoB2cError(addError);
             return ApiResult.success();
         }
+
         // 检查和生成销售出库单
         soOutstockService.checkAndGenerate(generateB2cDTO, dto, soB2cEntity);
         return ApiResult.success();
