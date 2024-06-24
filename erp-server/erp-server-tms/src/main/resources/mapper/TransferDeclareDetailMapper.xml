@@ -82,7 +82,7 @@
             <include refid="Base_Column_List"/>
         FROM  transfer_declare_detail tdd
         where tdd.is_deleted = FALSE
-        <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+        <if test="params.sqlMap != null and params.sqlMap.detail != null and params.sqlMap.detail != ''">
             and ${params.sqlMap.detail}
         </if>
         <if test="mainIds != null and mainIds.size > 0">

@@ -244,6 +244,7 @@ public class TransferDeclareController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = TmsTransferDeclareQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:transferDeclare:paging",
