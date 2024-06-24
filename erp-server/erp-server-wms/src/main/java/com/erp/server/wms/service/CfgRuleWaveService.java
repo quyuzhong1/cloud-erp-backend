@@ -1,9 +1,11 @@
 package com.erp.server.wms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.CfgRuleWaveEntity;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
+import com.erp.model.wms.entity.CfgRuleWaveEntity;
 
 /**
  * <p>
@@ -41,4 +43,13 @@ public interface CfgRuleWaveService extends SuperService<CfgRuleWaveEntity> {
      * @return PagingVO<ListDTO>
      */
     PagingVO<CfgRuleWaveDTO.ListDTO> paging(PagingDTO<CfgRuleWaveDTO.PagingParamDTO> dto);
+    /**
+     * 更新状态
+     * @author will
+     * @date 2024/6/24 16:54
+     * @param id
+     * @param disabled
+     * @return Boolean
+     */
+    BatchResultDTO updateStatus(String id, Boolean disabled);
 }

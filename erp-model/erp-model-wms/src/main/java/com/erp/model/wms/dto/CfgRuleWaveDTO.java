@@ -1,12 +1,20 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.annotation.Dict;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -25,7 +33,17 @@ public class CfgRuleWaveDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
 
     }
 
@@ -62,35 +80,35 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
          * 拣货车类型名称
          */
-        private String    pickingCartTypeName;
+        private String pickingCartTypeName;
         /**
          * 最小单数
          */
-        private String    minOrderQty;
+        private String minOrderQty;
         /**
          * 最大单数
          */
-        private String     maxOrderQty;
+        private String maxOrderQty;
         /**
          * 最少商品数量
          */
-        private String    minQty;
+        private String minQty;
         /**
          * 最大商品数量
          */
-        private String     maxQty;
+        private String maxQty;
         /**
          * 状态
          */
-        private String    disabled;
+        private String disabled;
         /**
          * 更新时间
          */
-        private String   updateTime;
+        private String updateTime;
         /**
          * 更新人
          */
-        private String    updateUserName;
+        private String updateUserName;
 
     }
 
@@ -182,6 +200,9 @@ public class CfgRuleWaveDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        @Valid
+        @Size(min = 1, message = "至少存在一条规则条件")
+        private List<CfgRuleConditionDTO.Add> conditionList;
 
     }
 
@@ -291,5 +312,21 @@ public class CfgRuleWaveDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDTO {
+        /**
+         * 主键id
+         */
+        @NotEmpty(message = "主键id不能为空")
+        private List<String> idList;
+
+        /**
+         * 是否禁用，true是,false否
+         */
+        @NotNull(message = "是否禁用不能为空")
+        private Boolean disabled;
+
+    }
 
 }

@@ -26,6 +26,8 @@ public enum DictBasicEnum {
     STOP_GEN_RECEIVE_TIME("stopGenReceiveTime", "", "系统停止生成FBA货件签收记录配置(空=按关账时间)"),
 
     SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE("defaultManageDeliveryType", "", "默认SKU映射仓库发货配置"),
+    WAVE_TYPE("waveType", "", "波次类型"),
+
     ;
 
 

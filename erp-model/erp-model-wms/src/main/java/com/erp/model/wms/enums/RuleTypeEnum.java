@@ -7,7 +7,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum RuleTypeEnum implements EnumMessage {
-    PICKING_STRATEGY("PICKING_STRATEGY", "拣货规则");
+    PICKING_STRATEGY("PICKING_STRATEGY", "拣货规则"),
+    CFG_RULE_WAVE("CFG_RULE_WAVE", "波次规则"),
+    ;
 
     private final String code;
     private final String name;

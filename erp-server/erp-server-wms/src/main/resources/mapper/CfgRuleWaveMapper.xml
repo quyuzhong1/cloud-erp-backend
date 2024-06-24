@@ -29,17 +29,40 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_time,
-        update_time,
-        create_user_name,
-        create_user_id,
-        update_user_name,
-        update_user_id,
-        version,
-        is_deleted,
-        name, wave_type, priority, picking_cart_type_id, min_order_qty, max_order_qty, min_qty, max_qty, disabled, execution_time_json, execution_type, sorting_method, remark
+        crw.id,
+        crw.create_time,
+        crw.update_time,
+        crw.create_user_name,
+        crw.create_user_id,
+        crw.update_user_name,
+        crw.update_user_id,
+        crw.version,
+        crw.is_deleted,
+        crw.name, crw.wave_type, crw.priority, crw.picking_cart_type_id, crw.min_order_qty, crw.max_order_qty, crw.min_qty, crw.max_qty, crw.disabled, crw.execution_time_json, crw.execution_type, crw.sorting_method, crw.remark,
+        pct.name as pickingCartTypeName
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.CfgRuleWaveDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from cfg_rule_wave crw
+        left join picking_cart_type pct on pc.picking_cart_type_id = pct.id and pct.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and crw.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            crw.id desc
+        </where>
+    </select>
 
 </mapper>
