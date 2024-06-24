@@ -403,19 +403,4 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode()
         ).contains(this.billStatus) && !this.hasPlatformWarehouseOrder() ;
     }
-
-    /**
-     * 是否是FBA订单
-     */
-    public boolean isFbaOrder() {
-        //亚马逊
-        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(this.dictPlatform)) {
-            if (StrUtil.isNotBlank(this.labelJson)) {
-                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
-                //FBA
-                return "AFN".equalsIgnoreCase(labelJsonDTO.getFulfillmentChannel());
-            }
-        }
-        return Boolean.FALSE;
-    }
 }
