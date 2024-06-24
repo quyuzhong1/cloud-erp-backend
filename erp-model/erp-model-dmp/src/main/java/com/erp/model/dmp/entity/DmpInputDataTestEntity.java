@@ -34,7 +34,7 @@ public class DmpInputDataTestEntity extends BaseEntity<DmpInputDataTestEntity> {
 	@TableField("convert_id")
     private String convertId;
     /**
-     * 下一层级
+     * 下一层级id
      */
     @TableField("next_level_id")
     private String nextLevelId;

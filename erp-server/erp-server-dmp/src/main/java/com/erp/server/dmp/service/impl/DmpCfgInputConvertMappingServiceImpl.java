@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpCfgInputConvertMappingDTO;
 import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
 import com.erp.server.dmp.mapper.DmpCfgInputConvertMappingMapper;
@@ -100,7 +102,7 @@ public class DmpCfgInputConvertMappingServiceImpl extends SuperServiceImpl<DmpCf
     }
 
 	@Override
-	public Map<String, String> getMapping(String mainId) {
+	public Map<String, List<String>> getMapping(String mainId) {
 		String redisKey = "dmp:cfg:input:mapping:" + mainId;
 		Object object = redisUtil.get(redisKey);
 		if(object != null) {
@@ -108,7 +110,11 @@ public class DmpCfgInputConvertMappingServiceImpl extends SuperServiceImpl<DmpCf
 			return JSON.parseObject(objStr , Map.class);
 		}else {
 			List<DmpCfgInputConvertMappingEntity> list = lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getMainId, mainId).list();
-			Map<String, String> map = list.stream().collect(Collectors.toMap(DmpCfgInputConvertMappingEntity::getOriginalKey, DmpCfgInputConvertMappingEntity::getConvertKey , (d1 , d2) -> d1));
+			Map<String, List<DmpCfgInputConvertMappingEntity>> mapping = list.stream().collect(Collectors.groupingBy(d -> d.getOriginalKey().replace(".", "")));
+			Map<String, List<String>> map = new HashMap<>();
+			for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> m : mapping.entrySet()) {
+				map.put(m.getKey(), m.getValue().stream().map(d -> StrUtils.underlineToCamel(d.getConvertKey(), true)).collect(Collectors.toList()));
+			}
 			redisUtil.set(redisKey, JSON.toJSONString(map) , 1800);
 			return map;
 		}

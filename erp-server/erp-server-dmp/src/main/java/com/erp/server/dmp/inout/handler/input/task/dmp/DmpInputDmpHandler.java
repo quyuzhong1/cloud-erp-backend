@@ -258,13 +258,20 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	
 	protected Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> convertData(List<Map<String, Object>> dmpInputMongoEntityList) {
 		Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps = new HashMap<>();
-		for(Map dmpInputMongoBaseEntity : dmpInputMongoEntityList) {
-			TreeMap dmpInputDmpBaseEntity = new TreeMap<>();
-			Set<Entry> entrySet = dmpInputMongoBaseEntity.entrySet();
-			for (Map.Entry entry : entrySet) {
-				dmpInputDmpBaseEntity.put(this.convertKey(entry.getKey().toString()), entry.getValue());
+		for(Map<String, Object> dmpInputMongoBaseEntity : dmpInputMongoEntityList) {
+			TreeMap<String , Object> dmpInputDmpBaseEntity = new TreeMap<>();
+			Set<Entry<String, Object>> entrySet = dmpInputMongoBaseEntity.entrySet();
+			for (Map.Entry<String, Object> entry : entrySet) {
+				List<String> convertKey = this.convertKey(entry.getKey().toString());
+				for(String c : convertKey) {
+					dmpInputDmpBaseEntity.put(c, entry.getValue());
+				}
 			}
-			dmpInputDataDmpRelationMaps.put(Collections.singletonList(dmpInputMongoBaseEntity), Collections.singletonList(dmpInputDmpBaseEntity));
+			ArrayList<Map<String, Object>> keyList = new ArrayList<>();
+			keyList.add(dmpInputMongoBaseEntity);
+			ArrayList<TreeMap<String, Object>> valueList = new ArrayList<>();
+			valueList.add(dmpInputDmpBaseEntity);
+			dmpInputDataDmpRelationMaps.put(keyList, valueList);
 		}
 		return dmpInputDataDmpRelationMaps;
 	}

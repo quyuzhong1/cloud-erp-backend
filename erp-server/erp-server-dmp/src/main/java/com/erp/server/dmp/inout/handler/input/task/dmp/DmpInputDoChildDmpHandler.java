@@ -55,14 +55,19 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 						.eq(DmpInputMongoDmpRelationEntity::getConvertId, this.getMainConvertId())
 						.list()
 						.stream().collect(Collectors.toMap(DmpInputMongoDmpRelationEntity::getMongoId, DmpInputMongoDmpRelationEntity::getDmpId));
-				for(Map dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-					TreeMap dmpInputDmpBaseEntity = new TreeMap<>();
+				for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
+					TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
 					String mainDmpId = mongIdDmpIdMap.get(dmpInputMongoChildEntity.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
 					if(StringUtils.isNotBlank(mainDmpId)) {
 						dmpInputDmpBaseEntity.put(StrUtils.underlineToCamel(MAIN_ID, true), mainDmpId);
-						Set<Entry> entrySet = dmpInputMongoChildEntity.entrySet();
-						for (Map.Entry entry : entrySet) {
-							dmpInputDmpBaseEntity.put(this.convertKey(entry.getKey().toString()), entry.getValue());
+						Set<Entry<String, Object>> entrySet = dmpInputMongoChildEntity.entrySet();
+						for (Map.Entry<String, Object> d : entrySet) {
+							String key = d.getKey();
+							Object value = d.getValue();
+							List<String> convertKey = this.convertKey(key);
+							for(String c : convertKey) {
+								dmpInputDmpBaseEntity.put(c.replace(".", ""), value);
+							}
 						}
 						dmpInputDataDmpRelationMaps.put(Collections.singletonList(dmpInputMongoChildEntity), Collections.singletonList(dmpInputDmpBaseEntity));
 					}

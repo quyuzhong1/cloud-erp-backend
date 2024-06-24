@@ -205,7 +205,10 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 		for(Map.Entry<String, Object> d : data.entrySet()) {
 			String key = d.getKey();
 			Object value = d.getValue();
-			dmpInputMongoEntity.put(this.convertKey(key).replace(".", ""), value);
+			List<String> convertKey = this.convertKey(key);
+			for(String c : convertKey) {
+				dmpInputMongoEntity.put(c.replace(".", ""), value);
+			}
 		}
 		resultDataList.add(dmpInputMongoEntity);
 		return resultDataList;

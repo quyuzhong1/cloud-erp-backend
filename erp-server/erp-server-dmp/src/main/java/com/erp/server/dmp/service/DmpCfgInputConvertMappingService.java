@@ -1,4 +1,5 @@
 package com.erp.server.dmp.service;
+import java.util.List;
 import java.util.Map;
 
 import com.common.business.dto.base.BaseResultDTO;
@@ -34,5 +35,5 @@ public interface DmpCfgInputConvertMappingService extends SuperService<DmpCfgInp
     */
     Boolean update(DmpCfgInputConvertMappingDTO.UpdateDTO dto);
 
-    Map<String , String> getMapping(String mainId);
+    Map<String , List<String>> getMapping(String mainId);
 }

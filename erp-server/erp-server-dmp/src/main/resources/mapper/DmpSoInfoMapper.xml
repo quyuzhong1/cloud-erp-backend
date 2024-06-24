@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpSoInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpSoInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="platform_create_time" property="platformCreateTime" />
+       <result column="platform_update_time" property="platformUpdateTime" />
+       <result column="source_platform" property="sourcePlatform" />
+       <result column="source_system" property="sourceSystem" />
+       <result column="third_code" property="thirdCode" />
+       <result column="platform_code" property="platformCode" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="order_status" property="orderStatus" />
+       <result column="delivery_status" property="deliveryStatus" />
+       <result column="return_status" property="returnStatus" />
+       <result column="platform_original_status" property="platformOriginalStatus" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="sell_remark" property="sellRemark" />
+       <result column="buyer_remark" property="buyerRemark" />
+       <result column="pay_time" property="payTime" />
+       <result column="pay_status" property="payStatus" />
+       <result column="pay_method" property="payMethod" />
+       <result column="currency_code" property="currencyCode" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="tax_rate" property="taxRate" />
+       <result column="pay_amount" property="payAmount" />
+       <result column="all_amount" property="allAmount" />
+       <result column="shipping_amount" property="shippingAmount" />
+       <result column="platform_cost" property="platformCost" />
+       <result column="subsidy_amount" property="subsidyAmount" />
+       <result column="delivery_time" property="deliveryTime" />
+       <result column="logistics_code" property="logisticsCode" />
+       <result column="logistics_name" property="logisticsName" />
+       <result column="extend_data" property="extendData" />
+       <result column="unique_encrypt" property="uniqueEncrypt" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="input_task_id" property="inputTaskId" />
+       <result column="convert_id" property="convertId" />
+       <result column="next_level_id" property="nextLevelId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        platform_create_time, platform_update_time, source_platform, source_system, third_code, platform_code, invalid_status, order_status, delivery_status, return_status, platform_original_status, shop_id, shop_name, sell_remark, buyer_remark, pay_time, pay_status, pay_method, currency_code, exchange_rate, tax_rate, pay_amount, all_amount, shipping_amount, platform_cost, subsidy_amount, delivery_time, logistics_code, logistics_name, extend_data, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
+    </sql>
+
+
+</mapper>

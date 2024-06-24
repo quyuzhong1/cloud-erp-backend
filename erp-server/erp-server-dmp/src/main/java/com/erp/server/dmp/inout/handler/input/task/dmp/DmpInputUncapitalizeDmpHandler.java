@@ -1,5 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -9,7 +12,7 @@ import org.springframework.stereotype.Service;
 public class DmpInputUncapitalizeDmpHandler extends DmpInputBaseDmpHandler{
 	
 	@Override
-	protected String convertKey(String originalKey) {
-		return StringUtils.uncapitalize(originalKey);
+	protected List<String> convertKey(String originalKey) {
+		return Collections.singletonList(StringUtils.uncapitalize(originalKey));
 	}
 }

@@ -36,6 +36,7 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 			for(TreeMap<String, Object> dmpInputMongoNextEntity : dmpInputMongoNextEntityList) {
 				String mainDmpId = mongIdDmpIdMap.get(dmpInputMongoNextEntity.get(DmpInputMongoHandler.MONGO_BASE_ID));
 				dmpInputMongoNextEntity.put(StrUtils.underlineToCamel(MAIN_ID, true), mainDmpId);
+				System.out.println(dmpInputMongoNextEntity);
 			}
 		}
 		return convertData;

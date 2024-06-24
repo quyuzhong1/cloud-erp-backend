@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.input.task;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -236,8 +237,8 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param originalKey
 	 * @return
 	 */
-	protected String convertKey(String originalKey) {
-		return originalKey;
+	protected List<String> convertKey(String originalKey) {
+		return Collections.singletonList(originalKey);
 	}
 	
 	protected List<String> getNextLevelIdList(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse){

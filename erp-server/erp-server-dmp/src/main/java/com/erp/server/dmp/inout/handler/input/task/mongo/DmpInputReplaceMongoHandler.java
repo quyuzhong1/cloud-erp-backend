@@ -1,5 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.task.mongo;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -8,7 +11,7 @@ import org.springframework.stereotype.Service;
 public class DmpInputReplaceMongoHandler extends DmpInputBaseMongoHandler{
 	
 	@Override
-	protected String convertKey(String originalKey) {
-		return originalKey.replace("-", "").replace("_", "");
+	protected List<String> convertKey(String originalKey) {
+		return Collections.singletonList(originalKey.replace("-", "").replace("_", ""));
 	}
 }
