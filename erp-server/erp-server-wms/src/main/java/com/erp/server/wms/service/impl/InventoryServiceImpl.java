@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.stream.CollectorUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -459,8 +460,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
             if(StringUtils.isNotBlank(pagingParamDTO.getParams().getWarehouseLocationName())){
                 List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(pagingParamDTO.getParams().getWarehouseLocationName());
-                List<String> codeList = list.stream().map(WarehouseLocationEntity::getCode).distinct().collect(Collectors.toList());
-                pageData = this.baseMapper.pageByLocation(query, pagingParamDTO.getParams(), codeList);
+                if(!list.isEmpty()){
+                    List<String> codeList = list.stream().map(WarehouseLocationEntity::getCode).distinct().collect(Collectors.toList());
+                    pageData = this.baseMapper.pageByLocation(query, pagingParamDTO.getParams(), codeList);
+                }
             }else {
                 pageData = this.baseMapper.pageByLocation(query, pagingParamDTO.getParams(), null);
             }
