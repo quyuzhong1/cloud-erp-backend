@@ -95,11 +95,15 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
     public boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e) {
+    	String errorBeforeStatus = "";
+    	if(errorFlag) {
+    		errorBeforeStatus = "错误前状态【" + getById(id).getStatus() + "】";
+    	}
     	return lambdaUpdate().eq(DmpInputTaskEntity::getId, id)
 				.set(DmpInputTaskEntity::getErrorCount, errorCount)
 				.set(errorFlag , DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
 				.set(DmpInputTaskEntity::getUpdateTime, LocalDateTime.now())
-				.set(DmpInputTaskEntity::getErrorMessage, ExceptionUtil.stacktraceToString(e))
+				.set(DmpInputTaskEntity::getErrorMessage, errorBeforeStatus + ExceptionUtil.stacktraceToString(e))
 				.update();
 	}
 }

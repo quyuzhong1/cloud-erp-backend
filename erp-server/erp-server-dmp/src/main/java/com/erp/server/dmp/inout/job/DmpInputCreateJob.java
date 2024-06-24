@@ -16,8 +16,8 @@ public class DmpInputCreateJob {
 	@Autowired
 	private DmpInputCreateFactory dmpInputCreateFactory;
 	
-	@XxlJob("dmpInputNormalCreateTask")
-    public ReturnT dmpInputNormalCreateTask(){
+	@XxlJob("createNormalInputTask")
+    public ReturnT createNormalInputTask(){
 		String cfgInputId = XxlJobHelper.getJobParam();
 		DmpInputCreateRequest dmpRequest = new DmpInputCreateRequest();
 		dmpRequest.setCfgInputId(cfgInputId);

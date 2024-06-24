@@ -125,7 +125,7 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 	}
 	
 	protected List<Map<String, Object>> parseToMongo(List<Map<String, Object>> dmpInputMongoEntityList){
-		Map<String, Map<String, Object>> md5DmpInputMongoEntityMaps = dmpInputMongoEntityList.stream().collect(Collectors.toMap(d -> d.get(MONGO_BASE_UNIQUEENCRYPT).toString(), d -> d));
+		Map<String, Map<String, Object>> md5DmpInputMongoEntityMaps = dmpInputMongoEntityList.stream().collect(Collectors.toMap(d -> d.get(MONGO_BASE_UNIQUEENCRYPT).toString(), d -> d , (d1 , d2) -> d1));
 		
 		List<Map<String, Object>> saveDmpInputMongoEntityList = new ArrayList<>();
 		if(md5DmpInputMongoEntityMaps.size() > 0) {
