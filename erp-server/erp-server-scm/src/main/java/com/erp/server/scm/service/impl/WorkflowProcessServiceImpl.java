@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
@@ -87,7 +88,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      * @param dto
      * @return java.lang.Boolean
      **/
-    private Boolean purchasePriceChangeApproveEnd(EndProcessDTO dto) {
+    private BatchResultDTO purchasePriceChangeApproveEnd(EndProcessDTO dto) {
         //销售变更单
         PurchasePriceChangeEntity entity = purchasePriceChangeService.getById(dto.getBusinessId());
         return purchasePriceChangeService.approveEnd(entity,dto.getApproveStatus().getStatus(), "", null);
