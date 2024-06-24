@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -102,7 +103,7 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @param baseApproveParamDTO
      * @return java.lang.Boolean
      **/
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,SoReturnEntity entity);
 
     /**
      * 批量反审核
@@ -111,7 +112,7 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @param ids
      * @return java.lang.Boolean
      **/
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(SoReturnEntity entity);
 
     /**
      * 取消流程

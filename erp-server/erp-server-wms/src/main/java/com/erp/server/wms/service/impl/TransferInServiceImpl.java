@@ -303,9 +303,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
-        List<TransferInEntity> list = this.listByIds(ids);
+    public BatchResultDTO approve(BaseApproveParamDTO dto, TransferInEntity transferInEntity) {
+        List<String> ids = Arrays.asList(transferInEntity.getId());
+        List<TransferInEntity> list = Arrays.asList(transferInEntity);
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -333,7 +333,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
         }
-        return result;
+        return BatchResultDTO.success();
     }
 
     /**
@@ -434,9 +434,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<TransferInEntity> list = this.listByIds(ids);
+    public BatchResultDTO disApprove(TransferInEntity entity) {
+        List<String> ids = Arrays.asList(entity.getId());
+        List<TransferInEntity> list = Arrays.asList(entity);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99066);
         }
@@ -470,7 +470,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), rejectPairList, "状态变更");
         }
-        return result;
+        return BatchResultDTO.success();
     }
 
     /**
