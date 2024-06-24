@@ -72,7 +72,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             }
 
             String type = handleDetail.getType();
-            request.setPre_time(LocalDateTime.now().minusMinutes(3).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+            request.setPre_time(LocalDateTime.now().plusMinutes(3).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
             request.setVirtual_warehouse_no(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseNo()) ? handleDetail.getThirdFromVirtualWarehouseNo() : handleDetail.getThirdToVirtualWarehouseNo());
             request.setTo_virtual_warehouse_no(handleDetail.getThirdToVirtualWarehouseNo());
             request.setBizType(sourceType);
