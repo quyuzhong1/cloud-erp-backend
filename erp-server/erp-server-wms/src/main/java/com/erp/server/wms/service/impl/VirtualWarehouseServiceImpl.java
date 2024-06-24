@@ -352,7 +352,6 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                 //获取当前虚拟仓绑定的渠道
                 List<VirtualWarehouseChannelEntity> vwChannelEntitieList = virtualWarehouseChannelService.getByVirtualWarehouseId(vwEntity.getId());
                 if (CollectionUtils.isNotEmpty(vwChannelEntitieList)) {
-//                vwChannelEntitieList.stream().map();
                     Map<String, List<VirtualWarehouseChannelEntity>> existChannelMap = vwChannelEntitieList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
                     existChannelMap.forEach((dictPlatform, list) -> {
                         List<VirtualWarehouseDTO.BindChannelDto> bindedChannelDtos = allBindedMap.get(dictPlatform);

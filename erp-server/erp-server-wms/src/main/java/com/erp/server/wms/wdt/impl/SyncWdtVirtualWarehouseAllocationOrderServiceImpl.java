@@ -71,7 +71,6 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                 request.setOrder_type(1);
             }
 
-            String type = handleDetail.getType();
             request.setPre_time(LocalDateTime.now().plusMinutes(3).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
             request.setVirtual_warehouse_no(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseNo()) ? handleDetail.getThirdFromVirtualWarehouseNo() : handleDetail.getThirdToVirtualWarehouseNo());
             request.setTo_virtual_warehouse_no(handleDetail.getThirdToVirtualWarehouseNo());
@@ -97,6 +96,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                     break;
                 case REQUISITION_APPLICATION:
                     Map<String, List<RequisitionApplicationDetailEntity>> requireSkuMap = requisitionApplicationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getSkuNo));
+                    log.info("获取要货申请明细：{}",requireSkuMap);
                     requireSkuMap.forEach((skuNo, list) -> {
                         VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
                         detail.setNum(BigDecimal.valueOf(list.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum)));
@@ -110,10 +110,6 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             }
             request.setDetailList(detailList);
             request.setRemark("原始单据号：" + vwAllocationCode);
-//            String detailStr = JSONUtil.toJsonStr(detailList);
-//            String requestStr = JSONUtil.toJsonStr(request);
-//            StringBuilder stringBuilder = new StringBuilder();
-//            stringBuilder.append("["+requestStr+","+detailStr+"]");
 
             //添加推送任务
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
