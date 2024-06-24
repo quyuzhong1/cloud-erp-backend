@@ -1065,6 +1065,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     public List<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(String id) {
+        //判断是否存在下游单据，已有下游单据就不能再生成拣货单
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySourceId(Collections.singletonList(id));
+        if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
+            throw new ServiceException(ApiError.ERROR_99110, "销售出库单");
+        }
         List<SoDeliveryNoticeDetailEntity> details = soDeliveryNoticeDetailService.listDetailByMainId(id);
         List<SoDeliveryNoticeDTO.PickingViewDTO> result = new ArrayList<>();
         for (SoDeliveryNoticeDetailEntity detail : details) {

@@ -314,6 +314,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String id;
         /**
+         * 明细id
+         */
+        private String detailId;
+        /**
          * 发货单号【可排序】
          */
         private String code;
