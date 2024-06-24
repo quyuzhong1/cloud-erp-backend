@@ -221,6 +221,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private SoB2cDeliveryService soB2cDeliveryService;
 
     @Resource
+    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+
+    @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     @Lazy
@@ -595,6 +598,31 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_98006);
         }
 
+        if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){
+            if (ObjectUtil.isNotEmpty(entity.getSoId())) {
+                List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listByMainIds(Collections.singletonList(dto.getId()));
+                List<SoDetailEntity> details = soInfoFeign.listSoDetailByMainId(entity.getSoId());
+                Map<String, Integer> detailMap = details.stream().collect(Collectors.toMap(SoDetailEntity::getId, SoDetailEntity::getQty, Integer::sum));
+                List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(new ArrayList<>(detailMap.keySet()));
+                for (SoOutstockDetailEntity detail : detailEntities) {
+                    SoDeliveryNoticeDetailEntity detailEntity = noticeDetailEntities.stream()
+                            .filter(e -> e.getId().equals(detail.getSourceDetailId()))
+                            .findFirst()
+                            .orElse(new SoDeliveryNoticeDetailEntity());
+                    Integer skuQty = detailMap.get(detailEntity.getSourceDetailId());
+                    List<String> ids = noticeDetailEntities.stream()
+                            .filter(e -> e.getSourceDetailId().equals(detailEntity.getSourceDetailId()))
+                            .map(SoDeliveryNoticeDetailEntity::getId)
+                            .collect(Collectors.toList());
+                    List<SoOutstockDetailEntity> soOutstockDetailEntityList = baseMapper.listApproveBySourceDetailIds(ids);
+                    Map<String, Integer> outDetailMap = soOutstockDetailEntityList.stream().collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getActualQty, Integer::sum));
+                    if (skuQty < detail.getActualQty() + Optional.ofNullable(outDetailMap.get(detail.getSkuNo())).orElse(0)) {
+                        throw new ServiceException(ApiError.ERROR_99103, detail.getSkuNo());
+                    }
+                }
+            }
+
+        }
 
         //已装箱才能审核(B2B订单)
 /*        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())
@@ -1586,6 +1614,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     detail.setSourceDetailId(item.getSourceDetailId());
                     detail.setSkuId(item.getSkuId());
                     detail.setRemark(item.getRemark());
+                    detail.setWarehouseId(item.getWarehouseId());
                     detail.setWarehouseLocation(item.getWarehouseLocation());
                     detail.setActualQty(item.getQty());
                     detail.setPlanQty(item.getQty());
@@ -2152,6 +2181,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         SoOutstockEntity outstock = this.getBySoId(soB2cId);
         if (Objects.isNull(outstock)) {
             SoOutstockDTO.GenerateB2cDTO dto = soB2cFeign.getSoOutstockInfoById(soB2cId);
+            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(dto.getSourceType())) {
+                SoB2cDeliveryEntity notCancelBySoId = soB2cDeliveryService.getNotCancelBySoId(soB2cId);
+                dto.setSourceId(notCancelBySoId.getId());
+                dto.setSourceCode(notCancelBySoId.getCode());
+                List<SoB2cDeliveryDetailEntity> entities = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(notCancelBySoId.getId()));
+                for (SoOutstockDetailDTO.AddDTO addDTO : dto.getDetailList()) {
+                    SoB2cDeliveryDetailEntity entity = entities.stream()
+                            .filter(e ->e.getSkuId().equals(addDTO.getSkuId()))
+                            .filter(e ->e.getSourceDetailId().equals(addDTO.getSoDetailId())).findFirst().orElse(new SoB2cDeliveryDetailEntity());
+                    addDTO.setSourceDetailId(entity.getId());
+                }
+            }
             Boolean result = createB2cSoOutstock(dto);
             return result;
         } else {

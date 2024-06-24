@@ -356,11 +356,14 @@ public class SoOutstockDetailDTO implements Serializable {
          */
         private String platformDetailId;
 
+        private String warehouseId;
+
         public AddDTO(ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO, AddDTO addDTO, Integer currentQty) {
             this.skuId = currentSkuMappingDTO.getProductSkuId();
             this.skuNo = currentSkuMappingDTO.getPlatformSkuNo();
             this.planQty = currentQty;
             this.actualQty = currentQty;
+            this.warehouseId = addDTO.getWarehouseId();
             this.warehouseLocation = addDTO.getWarehouseLocation();
             this.attachNameList = addDTO.getAttachNameList();
             this.attachUrlList = addDTO.getAttachUrlList();

@@ -62,4 +62,8 @@ public interface WmsConstant {
      * 按筛选组织划分的仓库
      */
     String WAREHOUSE_BY_FILTER_ORG = "warehouseByFilterOrg";
+    /**
+     * 供应商仓库类型
+     */
+    String SUPPLIER = "supplier";
 }

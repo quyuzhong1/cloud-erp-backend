@@ -568,7 +568,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count != deliveryNoticeEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
-
+        pickingListsService.exist(ids);
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.TRUE)
                 .set(SoDeliveryNoticeEntity::getInvalidRemark, remark)
@@ -592,6 +592,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        pickingListsService.exist(ids);
         //待提交支持删除
         long count = deliveryNoticeEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -688,7 +689,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoInfoEntity> soInfoEntities = soInfoFeign.listSoInfoByIds(soIds);
         long soCount = soInfoEntities.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approve)).count();
         if (soCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98063);
+            throw new ServiceException(ApiError.ERROR_99105);
         }
         //获取到销售退货单 下推列表
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();

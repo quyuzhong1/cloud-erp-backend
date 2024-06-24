@@ -458,7 +458,18 @@
 			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id
 		<include refid="SoDataCompareByCondition"/>
     </select>
-
+    <select id="listApproveBySourceDetailIds" resultType="com.erp.model.wms.entity.SoOutstockDetailEntity">
+        select sod.sku_id,sod.sku_no,sod.actual_qty from so_outstock_detail as sod inner join public.so_outstock so on
+        so.id = sod.main_id
+        where
+            so.approve_status = 'approve'
+        <if test="ids != null and ids.size > 0">
+            AND sod.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 
 
     <sql id="SoDataCompareByCondition">
