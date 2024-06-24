@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -17,10 +18,7 @@ import com.erp.model.wms.entity.CfgRuleWaveEntity;
 import com.erp.server.wms.service.CfgRuleWaveService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -77,6 +75,19 @@ public class CfgRuleWaveController extends BaseController {
     }
 
     /**
+     * 查看详情
+     * @author will
+     * @date 2024/6/24 18:28
+     * @param id
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/view")
+    public ApiResult<CfgRuleWaveDTO.ViewDTO> view(@RequestParam("id") String id) {
+        CfgRuleWaveDTO.ViewDTO dto = cfgRuleWaveService.view(id);
+        return success(dto);
+    }
+
+    /**
      * 更新波次规则状态
      * @author will
      * @date 2024/6/24 16:52
@@ -106,4 +117,33 @@ public class CfgRuleWaveController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 删除
+     * @author will
+     * @date 2024/6/24 18:20
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "波次规则删除")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = cfgRuleWaveService.delete(id);
+            }catch (Exception e){
+                log.error("波次规则删除失败",e);
+                CfgRuleWaveEntity entity = cfgRuleWaveService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "波次规则不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

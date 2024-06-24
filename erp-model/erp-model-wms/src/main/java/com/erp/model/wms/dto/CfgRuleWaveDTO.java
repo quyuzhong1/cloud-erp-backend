@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
@@ -200,6 +199,9 @@ public class CfgRuleWaveDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+         * 规则条件
+         */
         @Valid
         @Size(min = 1, message = "至少存在一条规则条件")
         private List<CfgRuleConditionDTO.Add> conditionList;
@@ -218,6 +220,13 @@ public class CfgRuleWaveDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 规则条件
+         */
+        @Valid
+        @Size(min = 1, message = "至少存在一条规则条件")
+        private List<CfgRuleConditionDTO.Update> conditionList;
 
     }
 

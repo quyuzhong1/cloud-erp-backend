@@ -52,4 +52,20 @@ public interface CfgRuleWaveService extends SuperService<CfgRuleWaveEntity> {
      * @return Boolean
      */
     BatchResultDTO updateStatus(String id, Boolean disabled);
+    /**
+     * 删除
+     * @author will
+     * @date 2024/6/24 18:20
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO delete(String id);
+    /**
+     * 查看详情
+     * @author will
+     * @date 2024/6/24 18:27
+     * @param id
+     * @return ViewDTO
+     */
+    CfgRuleWaveDTO.ViewDTO view(String id);
 }

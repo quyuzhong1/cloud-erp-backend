@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,8 +71,8 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if(!save) {
             throw new ServiceException("波次规则保存失败");
         }
-
-        cfgRuleConditionService.saveRuleCondition(cfgRuleWaveEntity.getId(), addDTO.getConditionList(), RuleTypeEnum.PICKING_STRATEGY.getCode());
+        //保存规则条件
+        cfgRuleConditionService.saveRuleCondition(cfgRuleWaveEntity.getId(), addDTO.getConditionList(), RuleTypeEnum.CFG_RULE_WAVE.getCode());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "波次规则" , cfgRuleWaveEntity.getId());
@@ -97,7 +98,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if(!save) {
             throw new ServiceException("波次规则保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        cfgRuleConditionService.updateRuleCondition(updateDTO.getId(), updateDTO.getConditionList(), ModuleTypeEnum.CFG_RULE_WAVE.getCode(), RuleTypeEnum.PICKING_STRATEGY.getCode());
 
         // 记录主单操作日志
         log.info("编辑 开始记录波次规则日志数据，id：【{}】", cfgRuleWaveEntity.getId());
@@ -117,12 +118,13 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
-        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到波次数据"));
+        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到波次规则数据"));
 
         String disabledName = disabled ? "禁用" : "启用";
         if (disabled.equals(entity.getDisabled())) {
-            throw new ServiceException(StrUtil.format("拣货车已【{}】，不支持再次【{}】",disabledName,disabledName));
+            throw new ServiceException(StrUtil.format("波次规则已【{}】，不支持再次【{}】",disabledName,disabledName));
         }
          lambdaUpdate().eq(CfgRuleWaveEntity::getId,id)
                 .set(CfgRuleWaveEntity::getDisabled,disabled)
@@ -130,6 +132,28 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         String msg = StrUtil.format("【{}】波次规则【{}】", disabledName,entity.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_RULE_WAVE.getCode(), id,StrUtil.format("{}操作",disabledName));
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到波次规则数据"));
+
+        // 删除主单数据
+        log.info("删除 开始删除波次规则主单数据，id：【{}】", id);
+        super.removeById(id);
+
+        //删除规则
+        cfgRuleConditionService.removeByRuleIds(Arrays.asList(id));
+        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public CfgRuleWaveDTO.ViewDTO view(String id) {
+        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到波次规则数据"));
+        CfgRuleWaveDTO.ViewDTO data = BeanMapperUtils.map(CfgRuleWaveDTO.ViewDTO.class, entity);
+
+        return data;
     }
 
 
