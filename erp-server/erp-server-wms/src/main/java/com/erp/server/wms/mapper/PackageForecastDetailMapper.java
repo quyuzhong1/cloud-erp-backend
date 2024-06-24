@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +19,10 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface PackageForecastDetailMapper extends BaseMapper<PackageForecastDetailEntity> {
-
+    /**
+     * 根据销售订单id获取组包详情
+     * @param soIdList
+     * @return
+     */
+    List<PackageForecastDTO.ExportViewDTO> listPackageForecastBySoIdList(@Param("soIdList") List<String> soIdList);
 }
