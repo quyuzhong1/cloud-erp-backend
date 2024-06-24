@@ -228,6 +228,10 @@ public class AliExpressOrder implements Serializable {
             }
 
         }
+        // 部分发货
+        if ("SELLER_PART_SEND_GOODS".equalsIgnoreCase(orderStatus)){
+            return SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode();
+        }
 
         //平台仓订单
         if(isPlatformWarehouseOrder){
@@ -305,6 +309,10 @@ public class AliExpressOrder implements Serializable {
         // 完结已发货(自动已审核)
         if (finishShipped()){
             return ApproveStatusEnum.APPROVE.getCode();
+        }
+        // 订单取消=待提交
+        if(convertCancel()){
+            return ApproveStatusEnum.WAIT_SUBMIT.getCode();
         }
 
         if (isPlatformWarehouseOrder) {
