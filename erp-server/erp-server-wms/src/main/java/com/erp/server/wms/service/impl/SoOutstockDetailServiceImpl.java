@@ -281,9 +281,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
             //应发数量
             Integer planQty = detailList.stream().mapToInt(SoOutstockDetailDTO.UpdateDTO::getPlanQty).sum();
-            if (!planQty.equals(deliveryQty)) {
-                throw new ServiceException(ApiError.ERROR_92031);
-            }
             List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
             List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {

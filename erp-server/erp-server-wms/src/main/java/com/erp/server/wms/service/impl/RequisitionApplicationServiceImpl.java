@@ -587,6 +587,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list) {
+        long countQty = list.stream().map(RequisitionApplicationDTO.FinishListDTO::getPickingQty).count();
+        if (countQty <= 0) {
+            throw new ServiceException(ApiError.ERROR_99106);
+        }
         //根据调出调入仓id查询仓库信息
         List<String> toWarehouseIds = list.stream().map(req -> req.getToWarehouseId()).collect(Collectors.toList());
         List<String> requisitionWarehouseIds = list.stream().map(req -> req.getRequisitionWarehouseId()).collect(Collectors.toList());
@@ -1197,18 +1201,18 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailEntity> updateDetails = new ArrayList<>();
         for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : detailByWarehouseMap.entrySet()) {
             String warehouseId = entry.getKey();
-            PickingListsDTO.Add add = new PickingListsDTO.Add();
-            add.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
+            PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
+            addDTO.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
                     PickingBillTypeEnum.FBA.getCode() : PickingBillTypeEnum.THIRD.getCode());
-            add.setDeliveryWarehouseId(application.getRequisitionWarehouseId());
-            add.setWarehouseId(warehouseId);
-            add.setWarehouseName(entry.getValue().get(0).getFromWarehouseName());
-            add.setSourceId(application.getId());
-            add.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
-            add.setSourceCode(application.getCode());
-            List<PickingDetailDTO.Add> detailList = entry.getValue().stream()
+            addDTO.setDeliveryWarehouseId(application.getRequisitionWarehouseId());
+            addDTO.setWarehouseId(warehouseId);
+            addDTO.setWarehouseName(entry.getValue().get(0).getFromWarehouseName());
+            addDTO.setSourceId(application.getId());
+            addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+            addDTO.setSourceCode(application.getCode());
+            List<PickingDetailDTO.AddDTO> detailList = entry.getValue().stream()
                     .map(detailEntity -> {
-                        PickingDetailDTO.Add detail = new PickingDetailDTO.Add();
+                        PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
                         detail.setSkuId(detailEntity.getSkuId());
                         detail.setSkuNo(detailEntity.getSkuNo());
                         detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
@@ -1217,8 +1221,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         updateDetails.add(detailEntity);
                         return detail;
                     }).collect(Collectors.toList());
-            add.setDetails(detailList);
-            pickingListsService.add(add);
+            addDTO.setDetails(detailList);
+            pickingListsService.add(addDTO);
         }
         requisitionApplicationDetailService.updateBatchById(updateDetails);
     }
