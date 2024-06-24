@@ -39,9 +39,11 @@ import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.PackageForecastFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
@@ -107,7 +109,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Autowired
     private LogisticsChannelService logisticsChannelService;
     @Autowired
-    private ShopInfoFeign shopInfoFeign;
+    private PackageForecastFeign packageForecastFeign;
     @Autowired
     private TransferDeclareProductService transferDeclareProductService;
     @Autowired
@@ -522,11 +524,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //查询报关单包含的订单信息
         List<String> soIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
-
+        List<PackageForecastDTO.ExportViewDTO> exportViewDTOS = packageForecastFeign.listPackageForecastBySoIdList(soIdList);
 
         //下单
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(null);
+            PackageForecastDTO.ExportViewDTO packageForecastDTO = exportViewDTOS.stream().filter(e -> e.getSoId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(new PackageForecastDTO.ExportViewDTO());
             if (Objects.nonNull(soB2cEntity) && StringUtils.isNotEmpty(soB2cEntity.getShippingOrderNo())){
                 BigDecimal maxWeight = BigDecimal.ONE;
                 if (transferDeclareDetailEntity.getWeightUnit().equals("g") && transferDeclareDetailEntity.getPackageWeight().compareTo(BigDecimal.ZERO) != 0) {
@@ -535,7 +538,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
                 TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
                         .orderCode(soB2cEntity.getShippingOrderNo())
-                        .packNum(transferDeclareEntity.getCode())
+                        .packNum(packageForecastDTO.getCode())
                         .grossWeight(maxWeight)
                         .build();
                 receiveItemList.add(receiveItem);
@@ -651,7 +654,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     private String getReferenceCode() {
-        StringBuffer stringBuffer = new StringBuffer();
+        StringBuilder stringBuffer = new StringBuilder();
         LocalDateTime localDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String format = localDateTime.format(formatter);
