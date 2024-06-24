@@ -10,10 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -660,21 +657,23 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<String> recycle(WarehouseLocationDTO.IdsDto idsDto) {
+    public List<BatchResultDTO> recycle(WarehouseLocationDTO.IdsDto idsDto) {
         LoginUser user = UserContext.getNonLoginUser();
-        List<String> errorMsgList = new ArrayList<>();
+        List<BatchResultDTO> errorList = new ArrayList<>();
         List<WarehouseLocationEntity> locationList = baseMapper.selectBatchIds(idsDto.getIds());
         for (WarehouseLocationEntity item : locationList) {
             LambdaQueryWrapper<InventoryEntity> queryWrapper = Wrappers.lambdaQuery();
             List<InventoryEntity> inventoryList = inventoryMapper.selectList(queryWrapper.eq(InventoryEntity::getWarehouseLocation, item.getCode()).eq(InventoryEntity::getIsDeleted, false));
             if(CollectionUtils.isEmpty(inventoryList)){
-                errorMsgList.add(String.format("仓位【%s】没有分配商品，不需要回收", item.getCode()));
+//                errorList.add(String.format("仓位【%s】没有分配商品，不需要回收", item.getCode()));
+                errorList.add(BatchResultDTO.fail(item.getId(), item.getCode(), String.format("仓位【%s】没有分配商品，不需要回收", item.getCode())));
                 continue;
             }
             //核对商品库存
             int sum = inventoryList.stream().mapToInt(InventoryEntity::getQty).sum();
             if(sum > 0){
-                errorMsgList.add(String.format("仓位【%s】已分配商品，且库存不为0，不允许回收", item.getCode()));
+//                errorList.add(String.format("仓位【%s】已分配商品，且库存不为0，不允许回收", item.getCode()));
+                errorList.add(BatchResultDTO.fail(item.getId(), item.getCode(), String.format("仓位【%s】已分配商品，且库存不为0，不允许回收", item.getCode())));
                 continue;
             }
 
@@ -684,7 +683,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             baseMapper.updateById(recycleEntity);
             operateLogService.addModuleOperateLog(String.format("回收仓位【%s】", recycleEntity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), recycleEntity.getId(), "编辑操作", user.getUid(), user.getUserName());
         }
-        return errorMsgList;
+        return errorList;
     }
 
     @Transactional(rollbackFor = Exception.class)

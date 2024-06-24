@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -1029,9 +1030,9 @@ public class WarehouseLocationController extends BaseController {
      * 回收仓位
      */
     @PostMapping("/recycle")
-    public ApiResult<List<String>> recycle(@RequestBody @Validated WarehouseLocationDTO.IdsDto idsDto){
-        List<String> errorMsgList = warehouseLocationService.recycle(idsDto);
-        return errorMsgList.isEmpty() ? ApiResult.success() : new ApiResult<>(500, "部分仓位回收失败", errorMsgList);
+    public ApiResult<List<BatchResultDTO>> recycle(@RequestBody @Validated WarehouseLocationDTO.IdsDto idsDto){
+        List<BatchResultDTO> errorList = warehouseLocationService.recycle(idsDto);
+        return errorList.isEmpty() ? success() : failure(errorList);
     }
 
     /**

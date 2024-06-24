@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
@@ -10,9 +11,6 @@ import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -207,7 +205,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @date: 2024-05-31
      * @author: tanmujin
      */
-    List<String> recycle(WarehouseLocationDTO.IdsDto idsDto);
+    List<BatchResultDTO> recycle(WarehouseLocationDTO.IdsDto idsDto);
 
     /**
      * 更新仓位状态：启用/禁用
