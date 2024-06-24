@@ -111,7 +111,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        vma.id desc,vmad.id desc
+        vma.id desc,vmad.id asc
     </sql>
 
 </mapper>
