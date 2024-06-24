@@ -346,14 +346,14 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         } else {
             //原始禁用状态变成启用时，校验当前虚拟仓绑定的渠道是否已被选择
             //获取当前已经绑定的所有渠道
-            List<VirtualWarehouseDTO.BindChannelDto> curBindedList = virtualWarehouseChannelService.getBindedDictPlatformNoGroup();
-            if (CollectionUtils.isNotEmpty(curBindedList)) {
-                Map<String, List<VirtualWarehouseDTO.BindChannelDto>> allBindedMap = curBindedList.stream().collect(Collectors.groupingBy(VirtualWarehouseDTO.BindChannelDto::getDictPlatform));
+            List<VirtualWarehouseDTO.BindChannelDto> allBindedList = virtualWarehouseChannelService.getBindedDictPlatformNoGroup();
+            if (CollectionUtils.isNotEmpty(allBindedList)) {
+                Map<String, List<VirtualWarehouseDTO.BindChannelDto>> allBindedMap = allBindedList.stream().collect(Collectors.groupingBy(VirtualWarehouseDTO.BindChannelDto::getDictPlatform));
                 //获取当前虚拟仓绑定的渠道
-                List<VirtualWarehouseChannelEntity> vwChannelEntitieList = virtualWarehouseChannelService.getByVirtualWarehouseId(vwEntity.getId());
-                if (CollectionUtils.isNotEmpty(vwChannelEntitieList)) {
-                    Map<String, List<VirtualWarehouseChannelEntity>> existChannelMap = vwChannelEntitieList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
-                    existChannelMap.forEach((dictPlatform, list) -> {
+                List<VirtualWarehouseChannelEntity> curChannelEntitieList = virtualWarehouseChannelService.getByVirtualWarehouseId(vwEntity.getId());
+                if (CollectionUtils.isNotEmpty(curChannelEntitieList)) {
+                    Map<String, List<VirtualWarehouseChannelEntity>> curExistChannelMap = curChannelEntitieList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
+                    curExistChannelMap.forEach((dictPlatform, list) -> {
                         List<VirtualWarehouseDTO.BindChannelDto> bindedChannelDtos = allBindedMap.get(dictPlatform);
                         if (CollectionUtils.isNotEmpty(bindedChannelDtos)) {
                             //如果当前渠道绑定类型是平台，则当前虚拟仓不能绑定此渠道
@@ -370,11 +370,11 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                                 } else {
                                     //如果当前渠道绑定类型是店铺，判断是否重复绑定店铺
                                     List<String> relationIds = bindedChannelDtos.stream().map(VirtualWarehouseDTO.BindChannelDto::getRelationId).collect(Collectors.toList());
-                                    List<String> curBindedRelationList = curBindedList.stream().map(VirtualWarehouseDTO.BindChannelDto::getRelationId).collect(Collectors.toList());
+                                    List<String> allBindedRelationList = allBindedList.stream().map(VirtualWarehouseDTO.BindChannelDto::getRelationId).collect(Collectors.toList());
                                     List<String> existRelationIds = new ArrayList<>();
-                                    curBindedRelationList.forEach(curBindedRelationId -> {
-                                        if (relationIds.contains(curBindedRelationId)) {
-                                            existRelationIds.add(curBindedRelationId);
+                                    allBindedRelationList.forEach(allBindedRelationId -> {
+                                        if (relationIds.contains(allBindedRelationId)) {
+                                            existRelationIds.add(allBindedRelationId);
                                         }
                                     });
                                     if (CollectionUtils.isNotEmpty(existRelationIds)) {
