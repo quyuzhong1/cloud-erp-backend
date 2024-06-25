@@ -5,10 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -16,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
@@ -48,6 +45,7 @@ import com.erp.model.wms.dto.excel.PurchaseStockNotFieldExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -61,8 +59,6 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.mapper.PoInstockMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
-import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -83,6 +79,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.rtfparserkit.rtf.Command.list;
 
 /**
  * 采购入库单 服务实现类
@@ -150,14 +148,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Resource
     private DmpMqFeign dmpMqFeign;
-    @Resource
-    private SyncWdtOtherInStockService syncWdtOtherInStockService;
-
-    @Resource
-    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
-    @Resource
-    private DmpThirdMappingFeign dmpThirdMappingFeign;
-
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> pagingDTO) {
@@ -643,106 +633,35 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        //根据ids查询
-        List<PoInstockEntity> list = getList(ids);
-        //审核中允许审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+    public BatchResultDTO approve(PoInstockEntity entity, String type, String comment, Boolean isNeedProcess) {
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
-
-        String type = baseApproveParamDTO.getType();
-
-        log.info("采购入库单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
-
+        log.info("采购入库单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
-            //审核通过 TODO(判断是否存在流程)
-
             //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
-
+            updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE.getStatus());
             //自动生成委外发料单
-            autoGenerateSubcontractIssue(list);
-
+            autoGenerateSubcontractIssue(Collections.singletonList(entity));
             // 更新库存（需区分有无收货单）
-            updateInventoryTransCore(list);
-
+            updateInventoryTransCore(Collections.singletonList(entity));
             //填入产品首批量产入库时间
-            setFirstMassInstock(ids);
-            
+            setFirstMassInstock(Collections.singletonList(entity.getId()));
             //更新采购入库单明细对应采购订单明细的执行状态
-            updatePodArrivalState(ids);
-            //修改采购收货单入库状态
-            warehouseReceiveService.updateReceiveInStockStatus(list);
-
+            updatePodArrivalState(Collections.singletonList(entity.getId()));
             //审核通过发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
-
-            //同步旺店通
-            list.forEach(obj -> syncApproveInStockToWdt(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //修改采购收货单入库状态
+            warehouseReceiveService.updateReceiveInStockStatus(Collections.singletonList(entity));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //中止当前审核流程
-
             //更新单据状态
-            updateApproveStatusForApprove(ids, ApproveStatusEnum.REJECT.getStatus());
+            updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购入库单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "审核操作");
-
-    }
-
-    /**
-     * 将审核通过的采购入库单转换为其他入库单推送到旺店通
-     *
-     * @param entity 采购入库单 PoInstockEntity
-     * @param operateCode 操作代码 审核/反审核
-     * @return void
-     * @date: 2024-05-20
-     * @author: tanmujin
-     */
-    private void syncApproveInStockToWdt(PoInstockEntity entity, String operateCode) {
-        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getDeliveryWarehouseId()), "wdt");
-        if(mappingList.isEmpty()){
-            return;
-        }
-        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
-
-        List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
-        if(detailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
-        }
-
-        HashMap<String, BigDecimal> skuMap = new HashMap<>();
-        detailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(PoInstockDetailEntity::getStockInQty).sum();
-                    skuMap.put(key, BigDecimal.valueOf(collect));
-                });
-
-        List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        skuMap.forEach((key, value) -> {
-            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
-            goodsList.add(goods);
-        });
-
-        //发送任务
-        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), inCode, thirdWarehouseCode, false);
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-            }
-        });
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购入库单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     private void setFirstMassInstock(List<String> ids) {
@@ -768,105 +687,35 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        //根据ids查询
-        List<PoInstockEntity> list = getList(ids);
+    public BatchResultDTO disApprove(PoInstockEntity entity,List<PoReturnEntity> returnEntityList,List<SubcontractIssueEntity> issueEntityList) {
         //已审核允许反审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
         //判断是否已经下推退货单
-        List<PoReturnEntity> purchaseReturnOrderList = poReturnService.listBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(purchaseReturnOrderList)) {
-            throw new ServiceException(ApiError.ERROR_99014);
+        if (CollectionUtils.isNotEmpty(returnEntityList)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99014.msg);
         }
         //判断是否已经生成委外发料单
-        List<SubcontractIssueEntity> subcontractIssueList = subcontractIssueService.listBySourceIdList(ids);
-        if (CollectionUtils.isNotEmpty(subcontractIssueList)) {
-            String subcontractOrderCodes = subcontractIssueList.stream().map(SubcontractIssueEntity::getSubcontractOrderCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE,subcontractOrderCodes);
+        if (CollectionUtils.isNotEmpty(issueEntityList)) {
+            String subcontractOrderCodes = issueEntityList.stream().map(SubcontractIssueEntity::getSubcontractOrderCode).collect(Collectors.joining(","));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE.msg, subcontractOrderCodes));
         }
-
-        log.info("采购入库单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
-
-        //取回流程 TODO
-
+        log.info("采购入库单反审核，id=【{}】", entity.getId());
         //更新单据为待提交
-        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
+        updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //更新采购入库单明细对应采购订单明细的执行状态
-        updatePodArrivalState(ids);
-
+        updatePodArrivalState(Collections.singletonList(entity.getId()));
         // 回滚库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.PURCHASE_STOCK_IN, ids);
-        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-
+        InventoryUnApproveDTO dto = new InventoryUnApproveDTO(InventorySourceTypeEnum.PURCHASE_STOCK_IN, entity.getId());
+        inventoryTransCoreService.unApprove(dto);
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个采购入库单【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "反审核操作");
-
+        operateLogService.addModuleOperateLog("反审核了一个采购入库单【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), entity.getId(), "反审核操作");
         //反审核通过发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         //修改采购收货单入库状态
-        warehouseReceiveService.updateReceiveInStockStatus(list);
-
-        //反审核通过发送旺店通
-        list.forEach(obj -> syncDisApproveInStockToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
-        return Boolean.TRUE;
-    }
-
-    /**
-     * 将反审核通过的采购入库单转换为其他出库推送给旺店通
-     *
-     * @param entity 采购入库单
-     * @param operateCode
-     * @return void
-     * @date: 2024-05-20
-     * @author: tanmujin
-     */
-    private void syncDisApproveInStockToWdt(PoInstockEntity entity, String operateCode) {
-        List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
-        if(detailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_95107);
-        }
-
-        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getDeliveryWarehouseId()), "wdt");
-        if(mappingList.isEmpty()){
-            return;
-        }
-        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
-
-        HashMap<String, BigDecimal> skuMap = new HashMap<>();
-        detailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(PoInstockDetailEntity::getStockInQty).sum();
-                    skuMap.put(key, BigDecimal.valueOf(collect));
-                });
-
-        //组装SKU
-        List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        skuMap.forEach((key, value) -> {
-            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
-            goodsList.add(goods);
-        });
-
-        //发送异步任务
-        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
-        if(dmpPushTaskEntity != null){
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-                }
-            });
-        }
+        warehouseReceiveService.updateReceiveInStockStatus(Collections.singletonList(entity));
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
@@ -933,8 +782,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getDeliveryWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
-        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+
         List<String> resultIds = new ArrayList<>();
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
@@ -963,10 +811,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 continue;
             }
             resultIds.add(dto.getPurchaseOrderId());
-            //仓位信息
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> Objects.nonNull(e) && e.getWarehouseId().equals(dto.getDeliveryWarehouseId())
-                    && e.getCode().equals(dto.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            dto.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
         return list;
     }
@@ -1995,7 +1839,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             return;
         }
         List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listByMainIds(ids);
-        List<String> podIds = poInstockDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        List<String> podIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(podIds)) {
             //修改到货状态
             poReturnService.updateArrivalState(podIds);

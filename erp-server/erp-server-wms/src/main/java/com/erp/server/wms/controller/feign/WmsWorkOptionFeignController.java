@@ -4,6 +4,7 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -102,14 +103,29 @@ public class WmsWorkOptionFeignController {
     /**
      * 采购入库审核
      *
-     * @param baseApproveParamDTO
+     * @param dto
      * @return ApiResult
      * @author Will
      * @date: 2023/4/11 20:11
      */
     @PostMapping("/poInstockApprove")
-    public void poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        poInstockService.approve(baseApproveParamDTO);
+    public List<BatchResultDTO> poInstockApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PoInstockEntity> entityList = poInstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoInstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poInstockService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("采购收货单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 
     /**
