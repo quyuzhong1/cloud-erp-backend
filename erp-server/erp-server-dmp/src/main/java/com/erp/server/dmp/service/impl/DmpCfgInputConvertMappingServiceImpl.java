@@ -1,17 +1,12 @@
 package com.erp.server.dmp.service.impl;
 
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -19,7 +14,6 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpCfgInputConvertMappingDTO;
 import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
 import com.erp.server.dmp.mapper.DmpCfgInputConvertMappingMapper;
@@ -101,22 +95,4 @@ public class DmpCfgInputConvertMappingServiceImpl extends SuperServiceImpl<DmpCf
     // TODO 验证数据 & 数据赋值
     }
 
-	@Override
-	public Map<String, List<String>> getMapping(String mainId) {
-		String redisKey = "dmp:cfg:input:mapping:" + mainId;
-		Object object = redisUtil.get(redisKey);
-		if(object != null) {
-			String objStr = object.toString();
-			return JSON.parseObject(objStr , Map.class);
-		}else {
-			List<DmpCfgInputConvertMappingEntity> list = lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getMainId, mainId).list();
-			Map<String, List<DmpCfgInputConvertMappingEntity>> mapping = list.stream().collect(Collectors.groupingBy(d -> d.getOriginalKey().replace(".", "")));
-			Map<String, List<String>> map = new HashMap<>();
-			for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> m : mapping.entrySet()) {
-				map.put(m.getKey(), m.getValue().stream().map(d -> StrUtils.underlineToCamel(d.getConvertKey(), true)).collect(Collectors.toList()));
-			}
-			redisUtil.set(redisKey, JSON.toJSONString(map) , 1800);
-			return map;
-		}
-	}
 }
