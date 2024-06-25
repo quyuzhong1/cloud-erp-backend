@@ -2,6 +2,7 @@ package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.WdtSoOutStockDTO;
@@ -25,7 +26,6 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockRuleDTO;
 import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
@@ -132,12 +132,16 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 soOutstockService.handleKingdeeToErp(soOutstock, detailList, flagId);
                 InventoryInOutStockRuleDTO inventoryInOutStockDTO = info.getInventoryInOutStockRuleDTO();
                 if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
-                    //扣减虚拟库存
-                    VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
-                    List<VirtualInventoryStockDTO.OutInStockDTO> stockParamDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, inventoryInOutStockDTO.getParamList());
-                    dto.setParamList(stockParamDTOS);
-                    dto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
-                    virtualInventoryTransCoreService.approve(dto);
+                    //无虚拟仓则不扣减虚拟库存
+                    List<InOutStockDTO> virtualInOutList = inventoryInOutStockDTO.getParamList().stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(virtualInOutList)) {
+                        //扣减虚拟库存
+                        VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+                        List<VirtualInventoryStockDTO.OutInStockDTO> stockParamDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutList);
+                        dto.setParamList(stockParamDTOS);
+                        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
+                        virtualInventoryTransCoreService.approve(dto);
+                    }
 
                     inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
                 }
@@ -270,12 +274,16 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //扣减库存
         InventoryInOutStockRuleDTO inventoryInOutStockDTO = getInventoryInOutStockRuleDTO(inOutStockList);
         if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
-            //扣减虚拟仓库存
-            VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
-            List<VirtualInventoryStockDTO.OutInStockDTO> stockParamDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, inOutStockList);
-            dto.setParamList(stockParamDTOS);
-            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
-            virtualInventoryTransCoreService.approve(dto);
+            //无虚拟仓则不扣减虚拟库存
+            List<InOutStockDTO> virtualInOutList = inOutStockList.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(virtualInOutList)) {
+                //扣减虚拟仓库存
+                VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+                List<VirtualInventoryStockDTO.OutInStockDTO> stockParamDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutList);
+                dto.setParamList(stockParamDTOS);
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
+                virtualInventoryTransCoreService.approve(dto);
+            }
 
             inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
         }
@@ -482,15 +490,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         platformDTO.setWarehouseIdList(warehouseIdList);
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = VirtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
-            //平台名称
-            PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(platformDTO.getDictPlatform());
-            //实体仓名称
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
-            if (CollectionUtils.isEmpty(warehouseList)) {
-                log.error("未找到仓库信息，id= {}",warehouseIdList);
-                throw new ServiceException(ApiError.ERROR_99002);
-            }
-            throw new ServiceException(ApiError.ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST,ObjectUtil.isEmpty(platformDictEnum) ? "" : platformDictEnum.getName(),warehouseList.get(0).getName());
+           return StrUtil.EMPTY;
         }
         return virtualWarehouseList.get(0).getVirtualWarehouseId();
     }
