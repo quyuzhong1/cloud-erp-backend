@@ -8060,6 +8060,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //新增订单明细
         soB2cDetailService.save(detail);
+        //重算尺寸
+
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "新增赠品成功");
     }
     /**
@@ -8101,18 +8103,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //step1 获取销售订单信息
         SoB2cEntity entity = this.getById(dto.getMainId());
         if (Objects.isNull(entity)){
-            throw new ServiceException(ApiError.ERROR_92016);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_92016.msg);
+        }
+        //待提交和审核不通过的订单允许修改买家信息
+        if (ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"非待提交和审核不通过的订单不允许修改买家信息");
         }
         //step2 获取买家信息
         SoB2cReceiverEntity old = soB2cReceiverService.getById(dto.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单买家信息表"));
+        if (Objects.isNull(old)){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.NOT_EXIST_BILL.msg, "B2C销售订单买家信息表"));
+        }
         //step3 更新买家物流信息
         SoB2cReceiverEntity receiver = B2cOrderConsumerConverter.INSTANCE.convertUpdateReceiverByDto(dto,old);
         soB2cReceiverService.updateFieldById(receiver);
         // 记录主单操作日志
         log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", entity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表");
-        operateLogService.addModuleOperateLogByObj(old, receiver, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, receiver, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), null,msg, "修改买家信息");
         //step4 销售订单打标
         this.updateChangeReceiverAddressById(entity.getId(),Boolean.TRUE);
         return BatchResultDTO.success(dto.getMainId(), entity.getCode(), "修改买家信息成功");
