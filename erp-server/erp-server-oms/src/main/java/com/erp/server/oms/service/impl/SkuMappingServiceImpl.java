@@ -1294,6 +1294,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isBlank(id)){
             return Collections.emptyList();
         }
-        return lambdaQuery().eq(SkuMappingEntity::getListingId, id).orderByAsc(SkuMappingEntity::getEffectiveTime).list();
+        List<SkuMappingEntity> list = lambdaQuery().eq(SkuMappingEntity::getListingId, id).orderByAsc(SkuMappingEntity::getEffectiveTime).list();
+        //修改最后一条数据
+        if (!list.isEmpty()){
+            SkuMappingEntity skuMappingEntity = list.get(list.size() - 1);
+            skuMappingEntity.setExpireTime(null);
+            list.set(list.size() - 1, skuMappingEntity);
+        }
+        return list;
     }
 }
