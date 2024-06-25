@@ -187,6 +187,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCustomerId(shopInfo.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             soOutstock.setCustomerName(customerInfo.getName());
+            soOutstock.setSellerId(customerInfo.getSellerId());
+            soOutstock.setSellerName(customerInfo.getSellerName());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
