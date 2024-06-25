@@ -371,6 +371,7 @@
         from po_return pr
         inner join po_return_detail prd on pr.id = prd.main_id
         where pr.is_deleted = false and prd.is_deleted = false
+          and pr.source_type = 'qcInfo'
         and pr.approve_status in
         <foreach collection="approveStatusList" item="item" open="(" close=")" separator=",">
             #{item}
