@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="status" property="status" />
-       <result column="allocation_id" property="allocationId" />
+       <result column="source_id" property="sourceId" />
        <result column="warehouse_id" property="warehouseId" />
        <result column="from_virtual_warehouse_id" property="fromVirtualWarehouseId" />
        <result column="to_virtual_warehouse_id" property="toVirtualWarehouseId" />

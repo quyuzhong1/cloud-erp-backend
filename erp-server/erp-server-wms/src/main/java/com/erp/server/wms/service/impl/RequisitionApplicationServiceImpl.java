@@ -399,13 +399,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
                             requisitionApplication.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode());
                     if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
-                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                            @Override
-                            public void afterCommit() {
-                                //发送mq
-                                dmpMqFeign.sendTask(dmpPushTaskEntityList);
-                            }
-                        });
+//                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                            @Override
+//                            public void afterCommit() {
+                        //发送mq
+                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+//                            }
+//                        });
                     }
                 }
             }
@@ -803,13 +803,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
                             entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode());
                     if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
-                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                            @Override
-                            public void afterCommit() {
-                                //发送mq
-                                dmpMqFeign.sendTask(dmpPushTaskEntityList);
-                            }
-                        });
+//                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                            @Override
+//                            public void afterCommit() {
+                        //发送mq
+                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+//                            }
+//                        });
                     }
                 }
             }

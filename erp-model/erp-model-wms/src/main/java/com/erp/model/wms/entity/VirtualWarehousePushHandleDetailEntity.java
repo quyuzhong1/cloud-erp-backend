@@ -103,17 +103,6 @@ public class VirtualWarehousePushHandleDetailEntity extends BaseEntity<VirtualWa
     */
     @TableField("main_id")
     private String mainId;
-    /**
-    * skuId
-    */
-    @TableField("sku_id")
-    private String skuId;
-
-    /**
-    * skuNo
-    */
-    @TableField("sku_no")
-    private String skuNo;
 
 
     public static final String STATUS = "status";

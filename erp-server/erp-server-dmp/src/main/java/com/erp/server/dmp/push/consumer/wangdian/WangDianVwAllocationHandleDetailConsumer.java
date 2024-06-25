@@ -49,6 +49,7 @@ public class WangDianVwAllocationHandleDetailConsumer<T extends DmpSyncTaskIdDTO
 
     @Override
     public ApiResult<?> handle(Object ext) {
+        log.info("虚拟仓订单创建->获取消费数据：{}",ext);
         VwPushHandelDetailPushDTO pushDTOS = JSON.parseObject(ext.toString(), VwPushHandelDetailPushDTO.class);
         //获取当前任务状态-不是成功状态再进行处理
         DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(pushDTOS.getDmpSyncTaskId());
