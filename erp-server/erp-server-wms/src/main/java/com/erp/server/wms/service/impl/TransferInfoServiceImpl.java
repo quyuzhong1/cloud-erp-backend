@@ -146,10 +146,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private DmpMqFeign dmpMqFeign;
 
     @Resource
-    private SyncWdtOtherInStockService wdtOtherInStockService;
+    private SyncWdtOtherInStockService syncWdtOtherInStockService;
 
     @Resource
-    private SyncWdtOtherOutStockService wdtOtherOutStockService;
+    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
 
     @Resource
     private TransferInfoDetailMapper transferInfoDetailMapper;
@@ -591,18 +591,23 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         String outWarehouseId = transferDetailList.get(0).getOutWarehouseId();
         OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
-        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
+        DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
 
         //推送其他入库单给旺店通
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
         OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
+        DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(outDmpPushTask, inDmpPushTask));
+                if(outDmpPushTask != null){
+                    dmpMqFeign.sendTask(Collections.singletonList(outDmpPushTask));
+                }
+                if(inDmpPushTask != null){
+                    dmpMqFeign.sendTask(Collections.singletonList(inDmpPushTask));
+                }
             }
         });
     }
@@ -660,18 +665,23 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         String inWarehouseId = transferDetailList.get(0).getOutWarehouseId();
         OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-        DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
+        DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
 
         //推送其他出库单给旺店通
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         String outWarehouseId = transferDetailList.get(0).getInWarehouseId();
         OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
-        DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
+        DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(outDmpPushTask, inDmpPushTask));
+                if(outDmpPushTask != null){
+                    dmpMqFeign.sendTask(Collections.singletonList(outDmpPushTask));
+                }
+                if(inDmpPushTask != null){
+                    dmpMqFeign.sendTask(Collections.singletonList(inDmpPushTask));
+                }
             }
         });
     }
