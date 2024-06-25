@@ -11,21 +11,17 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.rpc.wms.feign.VirtualWarehouseAllocationDetailFeign;
-import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.push.service.wdt.WangDianVwAllocationHandleDetailService;
+import com.erp.server.dmp.push.service.wdt.WangDianVwPushHandleDetailService;
 import com.sdk.wangdian.sdk.WdtErpException;
-import com.sdk.wangdian.sdk.api.Result;
-import com.sdk.wangdian.sdk.api.virtualWarehouse.VwAllocationHandleDetailAPI;
-import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwAllocationHandelDetailPushDTO;
-import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwAllocationHandelDetailResponse;
+import com.sdk.wangdian.sdk.api.virtualWarehouse.VwPushHandleDetailAPI;
+import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwPushHandelDetailPushDTO;
+import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwPushHandelDetailResponse;
 import com.sdk.wangdian.server.WangDianClientService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
@@ -33,14 +29,13 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
- * 分货单处理明细
+ * 旺店通虚拟仓订单创建处理明细
  */
 @Service
 @Slf4j
-public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAllocationHandleDetailService {
+public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHandleDetailService {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
     @Resource
@@ -57,7 +52,7 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
 
 
     @Override
-    public void executeConsumer(VwAllocationHandelDetailPushDTO pushDTOS) {
+    public void executeConsumer(VwPushHandelDetailPushDTO pushDTOS) {
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
@@ -66,7 +61,7 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
         try {
             boolean locked = lock.tryLock(10, 30, TimeUnit.SECONDS);
             if (locked) {
-                VwAllocationHandleDetailAPI api = wangDianClientService.get(VwAllocationHandleDetailAPI.class);
+                VwPushHandleDetailAPI api = wangDianClientService.get(VwPushHandleDetailAPI.class);
                 log.info("旺店通虚拟仓订单创建：消费者接收数据：{}",pushDTOS);
                 Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {});
                 Object bizType = map.get("bizType");
@@ -75,7 +70,7 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
                 String msg = null;
                 VirtualWarehouseAllocationDTO.SyncUpdateDto dto = new VirtualWarehouseAllocationDTO.SyncUpdateDto();
                 try {
-                    VwAllocationHandelDetailResponse pushResult = api.push(request, request.get("detailList"));
+                    VwPushHandelDetailResponse pushResult = api.push(request, request.get("detailList"));
                     log.info("旺店通虚拟仓订单创建：响应结果：{}", pushResult);
                     if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
                         dto.setSysType(ThirdSysTypeEnum.WDT.getCode());

@@ -1,5 +1,5 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleRelationEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2024-06-07
  */
 @Mapper
-public interface VirtualWarehouseAllocationHandleRelationMapper extends BaseMapper<VirtualWarehouseAllocationHandleRelationEntity> {
+public interface VirtualWarehouseAllocationHandleRelationMapper extends BaseMapper<VirtualWarehousePushHandleRelationEntity> {
 
 }

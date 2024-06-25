@@ -1,5 +1,5 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -15,7 +15,7 @@ import org.apache.ibatis.annotations.Param;
  * @since 2024-06-07
  */
 @Mapper
-public interface VirtualWarehouseAllocationHandleMapper extends BaseMapper<VirtualWarehouseAllocationHandleEntity> {
+public interface VirtualWarehouseAllocationHandleMapper extends BaseMapper<VirtualWarehousePushHandleEntity> {
 
     void forceDeleteById(@Param("id") String id);
 }

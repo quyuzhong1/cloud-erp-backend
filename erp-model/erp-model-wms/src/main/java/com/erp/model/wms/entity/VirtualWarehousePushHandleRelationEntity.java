@@ -7,7 +7,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -21,19 +20,19 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("virtual_warehouse_allocation_handle_relation")
-public class VirtualWarehouseAllocationHandleRelationEntity extends BaseEntity<VirtualWarehouseAllocationHandleRelationEntity> {
+@TableName("virtual_warehouse_push_handle_relation")
+public class VirtualWarehousePushHandleRelationEntity extends BaseEntity<VirtualWarehousePushHandleRelationEntity> {
 
     /**
     * 分货单id
     */
-    @TableField("allocation_id")
-    private String allocationId;
+    @TableField("source_id")
+    private String sourceId;
     /**
     * 分货单明细id
     */
-    @TableField("allocation_detail_id")
-    private String allocationDetailId;
+    @TableField("source_detail_id")
+    private String sourceDetailId;
     /**
     * 分货单拆单表id
     */
@@ -46,9 +45,9 @@ public class VirtualWarehouseAllocationHandleRelationEntity extends BaseEntity<V
     private String handleDetailId;
 
 
-    public static final String ALLOCATION_ID = "allocation_id";
+    public static final String SOURCE_ID = "source_id";
 
-    public static final String ALLOCATION_DETAIL_ID = "allocation_detail_id";
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
 
     public static final String HANDLE_ID = "handle_id";
 

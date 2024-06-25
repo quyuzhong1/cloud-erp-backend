@@ -20,8 +20,8 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("virtual_warehouse_allocation_handle_detail")
-public class VirtualWarehouseAllocationHandleDetailEntity extends BaseEntity<VirtualWarehouseAllocationHandleDetailEntity> {
+@TableName("virtual_warehouse_push_handle_detail")
+public class VirtualWarehousePushHandleDetailEntity extends BaseEntity<VirtualWarehousePushHandleDetailEntity> {
 
     /**
     * 同步状态-0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败
@@ -31,8 +31,8 @@ public class VirtualWarehouseAllocationHandleDetailEntity extends BaseEntity<Vir
     /**
     * 分货单id
     */
-    @TableField("allocation_id")
-    private String allocationId;
+    @TableField("source_id")
+    private String sourceId;
     /**
     * 仓库id
     */

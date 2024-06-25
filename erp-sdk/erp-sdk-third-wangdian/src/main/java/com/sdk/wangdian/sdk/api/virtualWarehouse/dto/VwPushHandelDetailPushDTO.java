@@ -12,7 +12,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class VwAllocationHandelDetailPushDTO {
+public class VwPushHandelDetailPushDTO {
     /**
      * 虚拟仓编号
      */
@@ -75,6 +75,11 @@ public class VwAllocationHandelDetailPushDTO {
      */
     @SerializedName("sourceId")
     private String sourceId;
+
+    /**
+     * 同步id
+     */
+    private String dmpSyncTaskId;
 
     @Getter
     @Setter
