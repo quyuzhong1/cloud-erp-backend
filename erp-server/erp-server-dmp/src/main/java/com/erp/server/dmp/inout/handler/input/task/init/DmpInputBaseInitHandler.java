@@ -119,10 +119,8 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				.list();
 		if(CollUtil.isNotEmpty(dmpCfgInputChildEntityList)) {
 			String parentId = dmpCfgInputChildEntityList.get(0).getParentId();
-			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
-				.eq(DmpCfgInputConvertEntity::getMainId, parentId)
-				.eq(DmpCfgInputConvertEntity::getInputStatus, taskStatusEnum.getCode())
-				.list();
+			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(parentId) 
+					&& d.getInputStatus().equals(taskStatusEnum.getCode()));
 			if(DmpInputTaskStatusEnum.MONGO == taskStatusEnum) {
 				parentStorageName = DmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService.getById(parentId), dmpCfgInputConvertEntityList.get(0));
 			}else if(DmpInputTaskStatusEnum.DMP == taskStatusEnum) {
