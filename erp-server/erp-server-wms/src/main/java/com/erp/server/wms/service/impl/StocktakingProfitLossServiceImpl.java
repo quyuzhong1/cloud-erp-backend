@@ -508,25 +508,25 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                     pushTaskEntity = syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
                     //审核通过的盘盈单转换为其他入库单推送到旺店通
-                    pushWdtTaskList = syncStocktakingProfitInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+//                    pushWdtTaskList = syncStocktakingProfitInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 }
                 if (isLoss) {
                     //盘亏单同步金蝶
                     pushTaskEntity = syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
                     //审核通过的盘亏单转换为其他出库单推送到旺店通
-                    pushWdtTaskList = syncStocktakingLossInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+//                    pushWdtTaskList = syncStocktakingLossInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 }
                 //推送金蝶
                 DmpPushTaskEntity finalPushTaskEntity = pushTaskEntity;
-                List<DmpPushTaskEntity> finalPushWdtTaskList = pushWdtTaskList;
+//                List<DmpPushTaskEntity> finalPushWdtTaskList = pushWdtTaskList;
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                     @Override
                     public void afterCommit() {
                         dmpMqFeign.sendTask(Collections.singletonList(finalPushTaskEntity));
-                        if(! finalPushWdtTaskList.isEmpty()){
+                        /*if(! finalPushWdtTaskList.isEmpty()){
                             dmpMqFeign.sendTask(finalPushWdtTaskList);
-                        }
+                        }*/
                     }
                 });
             } else {
