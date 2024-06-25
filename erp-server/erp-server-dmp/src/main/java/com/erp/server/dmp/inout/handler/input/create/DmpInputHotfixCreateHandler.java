@@ -23,6 +23,11 @@ import com.erp.server.dmp.service.DmpInputTaskService;
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * dmp输入创建快速任务处理器
+ * @author Administrator
+ *
+ */
 @Slf4j
 @Service
 public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{

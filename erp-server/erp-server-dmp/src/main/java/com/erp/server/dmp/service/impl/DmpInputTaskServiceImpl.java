@@ -4,6 +4,7 @@ package com.erp.server.dmp.service.impl;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,13 +98,13 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     public boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e) {
     	String errorBeforeStatus = "";
     	if(errorFlag) {
-    		errorBeforeStatus = "错误前状态【" + getById(id).getStatus() + "】";
+    		errorBeforeStatus = getById(id).getStatus() + "@@";
     	}
     	return lambdaUpdate().eq(DmpInputTaskEntity::getId, id)
 				.set(DmpInputTaskEntity::getErrorCount, errorCount)
 				.set(errorFlag , DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
 				.set(DmpInputTaskEntity::getUpdateTime, LocalDateTime.now())
-				.set(DmpInputTaskEntity::getErrorMessage, errorBeforeStatus + ExceptionUtil.stacktraceToString(e))
+				.set(DmpInputTaskEntity::getErrorMessage,  errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e))
 				.update();
 	}
 }

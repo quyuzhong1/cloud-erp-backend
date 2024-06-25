@@ -4,6 +4,11 @@ import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 
 import lombok.Data;
 
+/**
+ * 输入任务状态请求参数
+ * @author Administrator
+ *
+ */
 @Data
 public class DmpInputTaskRequest extends DmpInputRequest{
 	/**

@@ -2,6 +2,11 @@ package com.erp.server.dmp.inout.dto.request;
 
 import lombok.Data;
 
+/**
+ * 输出任务状态请求参数
+ * @author Administrator
+ *
+ */
 @Data
 public class DmpOutputTaskRequest extends DmpOutputRequest{
 	/**

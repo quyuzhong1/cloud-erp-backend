@@ -6,6 +6,11 @@ import com.erp.model.dmp.entity.DmpInputTaskEntity;
 
 import lombok.Data;
 
+/**
+ * 输入响应参数
+ * @author Administrator
+ *
+ */
 @Data
 public class DmpInputResponse extends DmpResponse{
 	

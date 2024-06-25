@@ -34,6 +34,11 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * dmp输入任务mongo基础处理器，被mongo任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 @Scope("prototype")
 @Slf4j

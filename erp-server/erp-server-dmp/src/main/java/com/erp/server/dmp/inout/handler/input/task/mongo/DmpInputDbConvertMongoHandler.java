@@ -12,6 +12,11 @@ import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 
 import cn.hutool.core.collection.CollUtil;
 
+/**
+ * dmp输入任务mongo数据库字段转换处理器，配置在dmp_cfg_input_convert_mapping表，被dmp任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 @Scope("prototype")
 public class DmpInputDbConvertMongoHandler extends DmpInputBaseMongoHandler{

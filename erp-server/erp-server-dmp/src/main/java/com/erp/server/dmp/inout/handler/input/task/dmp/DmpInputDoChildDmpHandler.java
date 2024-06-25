@@ -29,6 +29,11 @@ import com.erp.server.dmp.service.DmpInputMongoDmpRelationService;
 
 import cn.hutool.core.collection.CollUtil;
 
+/**
+ * dmp处理子类任务handler，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 @Scope("prototype")
 public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{

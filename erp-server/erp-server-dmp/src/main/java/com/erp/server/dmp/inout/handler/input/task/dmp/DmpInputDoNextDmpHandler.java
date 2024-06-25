@@ -14,6 +14,11 @@ import com.erp.model.dmp.entity.DmpInputMongoDmpRelationEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpInputMongoDmpRelationService;
 
+/**
+ * dmp处理下一个扩展handler，如何订单收货人信息单独一张表，使用此handler即可，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 @Scope("prototype")
 public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
@@ -36,7 +41,6 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 			for(TreeMap<String, Object> dmpInputMongoNextEntity : dmpInputMongoNextEntityList) {
 				String mainDmpId = mongIdDmpIdMap.get(dmpInputMongoNextEntity.get(DmpInputMongoHandler.MONGO_BASE_ID));
 				dmpInputMongoNextEntity.put(StrUtils.underlineToCamel(MAIN_ID, true), mainDmpId);
-				System.out.println(dmpInputMongoNextEntity);
 			}
 		}
 		return convertData;

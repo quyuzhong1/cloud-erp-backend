@@ -14,10 +14,21 @@ import com.erp.server.dmp.inout.handler.DmpHandler;
 
 import cn.hutool.core.collection.CollUtil;
 
+/**
+ * 执行handler链路实现，有成员变量，由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Component
 @Scope("prototype")
 public class DmpHandlerChainImpl implements DmpHandlerChain{
+	/**
+	 * 待执行handler集合
+	 */
 	private List<DmpHandler> dmpHandlers;
+    /**
+     * 当前执行handler索引
+     */
     private int index;
 	
     public DmpHandlerChainImpl() {
@@ -25,6 +36,11 @@ public class DmpHandlerChainImpl implements DmpHandlerChain{
         index = 0;
     }
 	
+    /**
+	 * 执行handler
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 */
 	@Override
 	public void doDmpHandler(DmpRequest dmpRequest, DmpResponse dmpResponse) {
 		if (index < dmpHandlers.size()) {
@@ -33,12 +49,21 @@ public class DmpHandlerChainImpl implements DmpHandlerChain{
         }
 	}
 
+	
+	/**
+	 * 增加handler
+	 * @param dmpHandler
+	 */
 	public void addDmpHandler(DmpHandler dmpHandler) {
 		if(dmpHandler != null) {
 			this.dmpHandlers.add(dmpHandler);
 		}
 	}
 
+	/**
+	 * 插入handler并放入第一个执行
+	 * @param dmpHandlerList
+	 */
 	@Override
 	public void addFirstDmpHandlerList(List<DmpHandler> dmpHandlerList) {
 		if(CollUtil.isNotEmpty(dmpHandlerList)) {

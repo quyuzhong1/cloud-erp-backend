@@ -5,6 +5,11 @@ import java.util.List;
 
 import lombok.Data;
 
+/**
+ *  输入创建子类任务请求参数
+ * @author Administrator
+ *
+ */
 @Data
 public class DmpInputChildCreateRequest extends DmpInputCreateRequest{
 	/**

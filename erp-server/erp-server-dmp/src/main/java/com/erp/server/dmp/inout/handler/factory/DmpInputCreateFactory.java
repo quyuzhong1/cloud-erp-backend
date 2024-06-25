@@ -22,6 +22,11 @@ import com.erp.server.dmp.inout.handler.input.create.DmpInputChildCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputHistoryCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputHotfixCreateHandler;
 
+/**
+ * 输入任务创建工厂，添加handler给handler链路执行
+ * @author Administrator
+ *
+ */
 @Component
 public class DmpInputCreateFactory{
 	

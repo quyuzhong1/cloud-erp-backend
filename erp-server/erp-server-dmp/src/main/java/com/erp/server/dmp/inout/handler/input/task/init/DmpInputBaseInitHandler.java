@@ -34,6 +34,11 @@ import com.erp.server.dmp.service.DmpCfgInputChildService;
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * dmp输入init任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Slf4j
 @Service
 @Scope("prototype")
@@ -110,7 +115,12 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 		return null;
 	}
 	
-	private String getParentStorageName(DmpInputTaskStatusEnum taskStatusEnum) {
+	/**
+	 * 获取父类存储名称
+	 * @param taskStatusEnum
+	 * @return
+	 */
+	protected String getParentStorageName(DmpInputTaskStatusEnum taskStatusEnum) {
 		String cfgInputId = dmpCfgInputEntity.getId();
 		String parentStorageName = "";
 		List<DmpCfgInputChildEntity> dmpCfgInputChildEntityList = dmpCfgInputChildService.lambdaQuery()

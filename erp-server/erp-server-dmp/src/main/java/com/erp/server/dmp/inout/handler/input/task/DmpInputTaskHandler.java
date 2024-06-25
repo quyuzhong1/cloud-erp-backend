@@ -68,13 +68,13 @@ import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * dmp输入任务处理器
+ * dmp输入任务处理器，被各种任务状态执行器继承，protected方法全部都可重写，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
  * @author Administrator
  *
  */
 @Slf4j
 @Service
-public class DmpInputTaskHandler extends DmpInputHandler{
+public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	@Autowired
 	protected DmpHandlerCache dmpHandlerCache;
 	@Autowired
@@ -124,6 +124,9 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 	protected DmpInputTaskStatusEnum updateTaskStatus;
 	/**-----------------------------公共对象初始化属性,初始化在DmpInputTaskHandler.doDmpHandler(DmpRequest, DmpResponse, DmpHandlerChain)------------------------------------**/
 
+	/**
+	 *执行链执行方法，初始化公共参数
+	 */
 	@Override
 	public void doDmpHandler(DmpRequest dmpRequest, DmpResponse dmpResponse, DmpHandlerChain chain) {
 		if (!(dmpRequest instanceof DmpInputTaskRequest)) {
@@ -149,10 +152,23 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		doDmpHandler(dmpInputTaskRequest, dmpInputTaskResponse, chain);
 	}
 	
+	/**
+	 * 被子类重写
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @param chain
+	 */
 	protected void doDmpHandler(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse, DmpHandlerChain chain) {
 		chain.doDmpHandler(dmpRequest, dmpResponse);
 	}
 	
+	/**
+	 * 获取DmpHandler的springbean
+	 * @param <T>
+	 * @param beanClass
+	 * @param clazz
+	 * @return
+	 */
 	protected <T extends DmpHandler> T getDmpHandlerBean(String beanClass , Class<T> clazz) {
 		if(StringUtils.isBlank(beanClass)) {
 			return null;
@@ -160,6 +176,13 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		return ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(beanClass) , clazz);
 	}
 	
+	
+	/**
+	 * 根据输入任务配置获取各状态执行handler
+	 * @param cfgInputId
+	 * @param dmpInputTaskStatusEnum
+	 * @return
+	 */
 	protected List<DmpCfgInputConvertEntity> getDmpCfgInputConvertEntityListByStatus(String cfgInputId , DmpInputTaskStatusEnum dmpInputTaskStatusEnum){
 		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(cfgInputId) 
 				&& d.getInputStatus().equals(dmpInputTaskStatusEnum.getCode()) && Boolean.FALSE.equals(d.getDisabled()));
@@ -167,6 +190,12 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		return dmpCfgInputConvertEntityList;
 	}
 	
+	/**
+	 *  当前输入状态下的输出handler类名集合
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @return
+	 */
 	protected List<String> getOutputClassList(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		List<String> apiClassList = new ArrayList<>();
 
@@ -202,6 +231,12 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		return apiClassList;
 	}
 	
+	/**
+	 * 更新输入任务状态并执行更新前后方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @return
+	 */
 	protected boolean updateTaskStatus(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		if(currStatusLastHandlerFlag) {
 			this.beforeToDoUpdateTaskStatus(dmpRequest, dmpResponse);
@@ -216,6 +251,13 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		return true;
 	}
 	
+	/**
+	 * 执行基础链路方法，目前有执行输出handler，执行子类任务生成及处理，更新任务状态，执行下一个handler
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @param chain
+	 * @param dmpOutputRequest
+	 */
 	protected void doBaseChain(DmpInputTaskRequest dmpRequest, DmpInputInitResponse dmpResponse , DmpHandlerChain chain , DmpOutputRequest dmpOutputRequest) {
 		if(dmpResponse.isDoOutputChain()) {
 			this.doOutputChain(dmpRequest, dmpResponse, chain, dmpOutputRequest);
@@ -232,7 +274,7 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 	}
 	
 	/**
-	 * 转换key
+	 * 转换key方法，mongo和dmp状态handler重新方法
 	 * @param originalKey
 	 * @return
 	 */
@@ -240,10 +282,20 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		return Collections.singletonList(originalKey);
 	}
 	
+	/**
+	 * 获取子任务的下一层级id集合
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @return
+	 */
 	protected List<String> getNextLevelIdList(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse){
 		return null;
 	}
 	
+	/**
+	 * 处理转换文件数据，即fds层输出数据
+	 * @param dmpResponse
+	 */
 	protected void dealConvertInputTaskFileEntityListMaps(DmpInputFdsResponse dmpResponse) {
 		Map<DmpCfgInputConvertEntity, List<DmpInputTaskFileEntity>> convertInputTaskFileEntityListMaps = dmpResponse.getConvertInputTaskFileEntityListMaps();
 		if(convertInputTaskFileEntityListMaps == null || convertInputTaskFileEntityListMaps.size() == 0) {
@@ -259,6 +311,10 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		}
 	}
 	
+	/**
+	 * 处理转换mongo数据，即mongo层输出数据
+	 * @param dmpResponse
+	 */
 	protected void dealDmpInputMongoBaseEntityList(DmpInputMongoResponse dmpResponse) {
 		Map<DmpCfgInputConvertEntity, List<Map<String, Object>>> convertInputMongoEntityListMaps = dmpResponse.getConvertInputMongoEntityListMaps();
 		if(convertInputMongoEntityListMaps == null || convertInputMongoEntityListMaps.size() == 0) {
@@ -274,6 +330,10 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		}
 	}
 	
+	/**
+	 * 处理转换dmp数据，即dmp层输出数据
+	 * @param dmpResponse
+	 */
 	protected void dealConvertInputDmpBaseEntityListMaps(DmpInputDmpResponse dmpResponse) {
 		Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpResponse.getConvertInputDmpBaseEntityListMaps();
 		if(convertInputDmpBaseEntityListMaps == null || convertInputDmpBaseEntityListMaps.size() == 0) {
@@ -288,6 +348,11 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		}
 	}
 	
+	/**
+	 * 获取当前dmp层操作数据的ServiceImpl
+	 * @param storageName
+	 * @return
+	 */
 	protected ServiceImpl getServiceImpl(String storageName) {
 		return ApplicationContextUtils.getBean(StrUtils.underlineToCamel(storageName, true) + "ServiceImpl" , ServiceImpl.class);
 	}
@@ -319,6 +384,13 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		return dmpInputHotfixCreateRequestList;
 	}
 	
+	/**
+	 * 执行输出链路
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @param chain
+	 * @param dmpOutputRequest
+	 */
 	protected void doOutputChain(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse , DmpHandlerChain chain , DmpOutputRequest dmpOutputRequest) {
 		List<String> outputClassList = this.getOutputClassList(dmpRequest, dmpResponse);
 		this.beforeToDoOutputChain(dmpRequest, dmpResponse , outputClassList);
@@ -335,6 +407,12 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		this.afterToDoOutputChain(dmpRequest, dmpResponse , outputResultMap);
 	}
 	
+	/**
+	 * 执行下一个链路handler
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @param chain
+	 */
 	protected void doNextChain(DmpInputTaskRequest dmpRequest, DmpInputInitResponse dmpResponse , DmpHandlerChain chain) {
 		dmpResponse.setDoOutputChain(true);
 		dmpResponse.setDoChildCfgInput(true);
@@ -344,6 +422,11 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 		this.afterToDoNextChain(dmpRequest, dmpResponse);
 	}
 	
+	/**
+	 * 判断是否已经到下一个状态
+	 * @param dmpResponse
+	 * @return
+	 */
 	protected boolean isNextStatus(DmpInputInitResponse dmpResponse) {
 		String status = dmpResponse.getBeforeDmpInputTaskEntityList().get(0).getStatus();
 		boolean nextStatus = DmpInputTaskStatusEnum.isNextStatus(status, updateTaskStatus);
@@ -368,52 +451,109 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 				.list();
 	}
 	
+	/**-----------------------------------------------------------下方都为各状态执行前后预置方法，全部用来继承-----------------------------------------------------------*/
+	/**
+	 * 处理当前状态前方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 */
 	protected void beforeToDoStatus(DmpInputTaskRequest dmpRequest,
 			DmpInputTaskResponse dmpResponse) {
 		 
 	}
 	
+	/**
+	 * 处理当前状态后方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 */
 	protected void afterToDoStatus(DmpInputTaskRequest dmpRequest,
 			DmpInputTaskResponse dmpResponse) {
 		 
 	}
 	
+	/**
+	 * 执行输出链接前方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @param outputClassList
+	 */
 	protected void beforeToDoOutputChain(DmpInputTaskRequest dmpRequest,
 			DmpInputTaskResponse dmpResponse , List<String> outputClassList) {
 		
 	}
 	
+	/**
+	 * 执行输出链接后方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @param outputClassList
+	 */
 	protected void afterToDoOutputChain(DmpInputTaskRequest dmpRequest,
 			DmpInputTaskResponse dmpResponse , Map<String, DmpOutputInitResponse> outputResultMap) {
 		
 	}
 	
+	/**
+	 * 执行子类任务前方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @param nextLevelIdList
+	 */
 	protected void beforeToDoChildCfgInput(DmpInputTaskRequest dmpRequest,
 			DmpInputTaskResponse dmpResponse , List<String> nextLevelIdList) {
 		
 	}
 	
+	/**
+	 * 执行子类任务后方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @param nextLevelIdList
+	 */
 	protected void afterToDoChildCfgInput(DmpInputTaskRequest dmpRequest,
 			DmpInputTaskResponse dmpResponse , List<DmpInputHotfixCreateRequest> dmpInputHotfixCreateRequestList) {
 		
 	}
 	
-	protected void beforeToDoNextChain(DmpInputTaskRequest dmpRequest,
-			DmpInputTaskResponse dmpResponse) {
-		 
-	}
-	
-	protected void afterToDoNextChain(DmpInputTaskRequest dmpRequest,
-			DmpInputTaskResponse dmpResponse) {
-		 
-	}
+	/**
+	 * 更新任务状态前方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 */
 	protected void beforeToDoUpdateTaskStatus(DmpInputTaskRequest dmpRequest,
 			DmpInputTaskResponse dmpResponse) {
 		 
 	}
 	
+	/**
+	 * 更新任务状态后方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 */
 	protected void afterToDoUpdateTaskStatus(DmpInputTaskRequest dmpRequest,
 			DmpInputTaskResponse dmpResponse , boolean updateSuccess) {
 		 
 	}
+	
+	/**
+	 * 执行下一链路前方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 */
+	protected void beforeToDoNextChain(DmpInputTaskRequest dmpRequest,
+			DmpInputTaskResponse dmpResponse) {
+		 
+	}
+	
+	/**
+	 * 执行下一链路后方法
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 */
+	protected void afterToDoNextChain(DmpInputTaskRequest dmpRequest,
+			DmpInputTaskResponse dmpResponse) {
+		 
+	}
+	
 }

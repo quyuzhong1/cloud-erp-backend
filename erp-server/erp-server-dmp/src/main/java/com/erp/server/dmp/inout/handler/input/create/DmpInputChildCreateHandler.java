@@ -24,6 +24,11 @@ import com.google.common.collect.Lists;
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * dmp输入创建子类任务处理器
+ * @author Administrator
+ *
+ */
 @Slf4j
 @Service
 public class DmpInputChildCreateHandler extends DmpInputBaseCreateHandler{

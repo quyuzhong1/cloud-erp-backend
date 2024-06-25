@@ -13,6 +13,11 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
 
+/**
+ * dmp输入任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 public abstract class DmpInputInitHandler extends DmpInputTaskHandler{
 	
@@ -43,5 +48,11 @@ public abstract class DmpInputInitHandler extends DmpInputTaskHandler{
 		this.doBaseChain(dmpRequest, dmpResponse, chain, dmpOutputInitRequest);
 	}
 	
+	/**
+	 * 获取外部初始数据
+	 * @param dmpRequest
+	 * @param dmpResponse
+	 * @return
+	 */
 	public abstract List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse);
 }
