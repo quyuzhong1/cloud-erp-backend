@@ -310,6 +310,8 @@
         sm.warehouse_name,
         sm.update_user_name,
         sm.update_time,
+        sm.effective_time,
+        sm.expire_time,
         sm.dict_platform,
         sm.platform_name,
         sm.has_mapping_all
