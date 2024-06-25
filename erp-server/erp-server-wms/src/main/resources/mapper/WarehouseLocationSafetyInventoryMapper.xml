@@ -5,4 +5,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto$ViewDto">
 
     </select>
+    <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity">
+
+    </select>
 </mapper>

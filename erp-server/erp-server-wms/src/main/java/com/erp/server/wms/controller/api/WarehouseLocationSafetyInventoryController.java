@@ -41,14 +41,14 @@ public class WarehouseLocationSafetyInventoryController {
 
     @PostMapping("/updateBatch")
     public ApiResult<List<BaseResultDTO.UpdateDTO>> updateBatch(@RequestBody List<WarehouseLocationSafetyInventoryDto.UpdateParamDto> list){
-//        List<BaseResultDTO.UpdateDTO> result = new ArrayList<>(list.size());
+        List<BaseResultDTO.UpdateDTO> resultList = new ArrayList<>(list.size());
         for (WarehouseLocationSafetyInventoryDto.UpdateParamDto dto : list) {
-            safetyInventoryService.updateInventory(dto);
-            /*if(updateCount == 0){
-                result.add(new BaseResultDTO.UpdateDTO(dto.getId(), null));
-            }*/
+            BaseResultDTO.UpdateDTO result = safetyInventoryService.updateInventory(dto);
+            if(result != null){
+                resultList.add(result);
+            }
         }
-        return ApiResult.success();
+        return ApiResult.success(resultList);
     }
 
     @PostMapping("/importExcel")
