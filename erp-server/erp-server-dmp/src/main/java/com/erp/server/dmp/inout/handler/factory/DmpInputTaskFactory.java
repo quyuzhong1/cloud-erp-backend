@@ -1,5 +1,7 @@
 package com.erp.server.dmp.inout.handler.factory;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +15,8 @@ import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
 import com.erp.server.dmp.inout.handler.input.all.DmpInputTaskStatusHandler;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputBaseTaskHandler;
 import com.erp.server.dmp.service.DmpInputTaskService;
+
+import cn.hutool.core.collection.CollUtil;
 
 @Component
 public class DmpInputTaskFactory{
@@ -41,10 +45,13 @@ public class DmpInputTaskFactory{
 					if(dmpCfgInputDetailEntity != null) {
 						maxRetryCount = dmpCfgInputDetailEntity.getMaxRetryCount();
 					}
-					DmpInputTaskEntity dmpInputTaskEntity = dmpResponse.getBeforeDmpInputTaskEntityList().get(0);
-					Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
-					boolean errorFlag = errorCount == maxRetryCount;
-					dmpInputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
+					List<DmpInputTaskEntity> beforeDmpInputTaskEntityList = dmpResponse.getBeforeDmpInputTaskEntityList();
+					if(CollUtil.isNotEmpty(beforeDmpInputTaskEntityList)) {
+						DmpInputTaskEntity dmpInputTaskEntity = beforeDmpInputTaskEntityList.get(0);
+						Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
+						boolean errorFlag = errorCount == maxRetryCount;
+						dmpInputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
+					}
 					throw e;
 				}
 			}

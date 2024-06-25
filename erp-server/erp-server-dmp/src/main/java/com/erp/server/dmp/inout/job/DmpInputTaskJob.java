@@ -2,8 +2,11 @@ package com.erp.server.dmp.inout.job;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
@@ -12,6 +15,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
 import com.erp.server.dmp.service.DmpInputTaskService;
 import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 
 @Component
@@ -20,21 +24,30 @@ public class DmpInputTaskJob {
 	private DmpInputTaskFactory dmpInputTaskFactory;
 	@Autowired
 	private DmpInputTaskService dmpInputTaskService;
+	@Autowired
+	@Qualifier("dmpInputExecutorPool")
+	private ExecutorService dmpInputExecutorPool;
 	
 	@XxlJob("doInputTask")
     public ReturnT doInputTask(){
+		String size = XxlJobHelper.getJobParam();
+		if(StringUtils.isBlank(size)) {
+			size = "1000";
+		}
 		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery()
 				.in(DmpInputTaskEntity::getStatus, Arrays.asList(DmpInputTaskStatusEnum.INIT.getCode() 
 						, DmpInputTaskStatusEnum.FDS.getCode() , DmpInputTaskStatusEnum.MONGO.getCode()
 						, DmpInputTaskStatusEnum.DMP.getCode()))
 				.select(DmpInputTaskEntity::getId)
 				.orderByDesc(DmpInputTaskEntity::getUpdateTime)
-				.last(" limit 1000 ")
+				.last(" limit " + size)
 				.list();
 		for(DmpInputTaskEntity l : list) {
-			DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
-			dmpInputFinishRequest.setInputTaskId(l.getId());
-			dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+			dmpInputExecutorPool.execute(() -> {
+				DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+				dmpInputFinishRequest.setInputTaskId(l.getId());
+				dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+			});
 		}
         return ReturnT.SUCCESS;
     }

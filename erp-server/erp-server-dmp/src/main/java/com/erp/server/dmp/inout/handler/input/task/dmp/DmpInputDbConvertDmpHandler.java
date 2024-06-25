@@ -4,11 +4,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
-
-import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -16,12 +13,9 @@ import cn.hutool.core.collection.CollUtil;
 @Scope("prototype")
 public class DmpInputDbConvertDmpHandler extends DmpInputBaseDmpHandler{
 	
-	@Autowired
-	private DmpCfgInputConvertMappingService dmpCfgInputConvertMappingService;
-	
 	@Override
 	protected List<String> convertKey(String originalKey) {
-		Map<String, List<String>> keyMapping = dmpCfgInputConvertMappingService.getMapping(convertId);
+		Map<String, List<String>> keyMapping = dmpHandlerCache.getDmpCfgInputConvertMapping(convertId);
 		List<String> convertKey = keyMapping.get(originalKey);
 		if(CollUtil.isEmpty(convertKey)) {
 			convertKey = Collections.singletonList(originalKey);

@@ -89,10 +89,8 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 		}
 		DmpCfgInputChildEntity dmpCfgInputChildEntity = dmpCfgInputChildList.get(0);
 		String childId = dmpCfgInputChildEntity.getChildId();
-		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
-			.eq(DmpCfgInputConvertEntity::getMainId, childId)
-			.eq(DmpCfgInputConvertEntity::getInputStatus, DmpInputTaskStatusEnum.MONGO.getCode())
-			.list();
+		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(childId) 
+				&& d.getInputStatus().equals(DmpInputTaskStatusEnum.MONGO.getCode()));
 		if(CollUtil.isEmpty(dmpCfgInputConvertEntityList)) {
 			return null;
 		}

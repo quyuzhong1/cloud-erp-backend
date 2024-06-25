@@ -51,10 +51,10 @@ import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.inout.handler.output.task.init.DmpOutputInitHandler;
+import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpCfgApiService;
-import com.erp.server.dmp.service.DmpCfgInputConvertService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.DmpCfgOutputDetailService;
 import com.erp.server.dmp.service.DmpCfgOutputService;
@@ -75,6 +75,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class DmpInputTaskHandler extends DmpInputHandler{
 	@Autowired
+	protected DmpHandlerCache dmpHandlerCache;
+	@Autowired
 	protected DmpInputTaskService dmpInputTaskService;
 	@Autowired
 	protected DmpCfgOutputService dmpCfgOutputService;
@@ -86,8 +88,6 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 	protected DmpCfgInputChildServiceImpl dmpCfgInputChildServiceImpl;
 	@Autowired
 	protected DmpInputCreateFactory dmpInputCreateFactory;
-	@Autowired
-	protected DmpCfgInputConvertService dmpCfgInputConvertService;
 	@Autowired
 	protected DmpInputTaskFileService dmpInputTaskFileService;
 	@Autowired
@@ -160,12 +160,10 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 	}
 	
 	protected List<DmpCfgInputConvertEntity> getDmpCfgInputConvertEntityListByStatus(String cfgInputId , DmpInputTaskStatusEnum dmpInputTaskStatusEnum){
-		return dmpCfgInputConvertService.lambdaQuery()
-				.eq(DmpCfgInputConvertEntity::getMainId, cfgInputId)
-				.eq(DmpCfgInputConvertEntity::getDisabled, Boolean.FALSE)
-				.eq(DmpCfgInputConvertEntity::getInputStatus, dmpInputTaskStatusEnum.getCode())
-				.orderByAsc(DmpCfgInputConvertEntity::getOrder)
-				.list();
+		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(cfgInputId) 
+				&& d.getInputStatus().equals(dmpInputTaskStatusEnum.getCode()) && Boolean.FALSE.equals(d.getDisabled()));
+		dmpCfgInputConvertEntityList.sort((d1 , d2) -> d1.getOrder().compareTo(d2.getOrder()));
+		return dmpCfgInputConvertEntityList;
 	}
 	
 	protected List<String> getOutputClassList(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse) {

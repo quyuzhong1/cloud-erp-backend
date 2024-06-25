@@ -3,8 +3,6 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -292,10 +290,9 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	}
 	
 	protected String getMainConvertId() {
-		List<DmpCfgInputConvertEntity> list = dmpCfgInputConvertService.lambdaQuery()
-				.eq(DmpCfgInputConvertEntity::getMainId, dmpCfgInputConvertEntity.getMainId())
-				.eq(DmpCfgInputConvertEntity::getInputStatus, dmpCfgInputConvertEntity.getInputStatus())
-				.orderByAsc(DmpCfgInputConvertEntity::getOrder).list();
+		List<DmpCfgInputConvertEntity> list = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(dmpCfgInputConvertEntity.getMainId())
+				&& d.getInputStatus().equals(dmpCfgInputConvertEntity.getInputStatus()));
+		list.sort((d1 , d2) -> d1.getOrder().compareTo(d2.getOrder()));
 		return list.get(0).getId();
 	}
 	
