@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
@@ -12,6 +13,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -132,6 +134,7 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
         * 波次类型((waveType类型)
         */
+        @Dict(queryTypeField = "waveType")
         private String waveType;
 
         /**
@@ -142,6 +145,7 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
         * 拣货车类型id
         */
+        @Dict(queryFieldName = "id", tableName = "picking_cart_type")
         private String pickingCartTypeId;
 
         /**
@@ -276,13 +280,11 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
         * 最少商品数量
         */
-        @NotNull(message = "最少商品数量不能为空")
         private Integer minQty;
 
         /**
         * 最多商品数量
         */
-        @NotNull(message = "最多商品数量不能为空")
         private Integer maxQty;
 
         /**
@@ -292,17 +294,16 @@ public class CfgRuleWaveDTO implements Serializable {
         private Boolean disabled;
 
         /**
-        * 执行时间JSON
-        */
-        @NotBlank(message = "执行时间JSON不能为空")
-        private String executionTimeJson;
-
-        /**
         * 执行类型（自动执行，手动执行）
         */
         @NotBlank(message = "执行类型（自动执行，手动执行）不能为空")
         @Size(max = 32,message = "执行类型（自动执行，手动执行）最大长度不能超过32位")
         private String executionType;
+
+        /**
+         * 自动执行时间
+         */
+        private List<LocalTime> executionTimeList;
 
         /**
         * 分拣方式（边拣边分，先拣后分）
@@ -314,7 +315,6 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
         * 规则描述
         */
-        @NotBlank(message = "规则描述不能为空")
         @Size(max = 32,message = "规则描述最大长度不能超过32位")
         private String remark;
 

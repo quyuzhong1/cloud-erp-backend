@@ -2,7 +2,9 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,11 +17,13 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.CfgRuleWaveEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
 import com.erp.server.wms.mapper.CfgRuleWaveMapper;
 import com.erp.server.wms.service.CfgRuleConditionService;
@@ -32,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -64,7 +69,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         BeanMapperUtils.copy(addDTO, cfgRuleWaveEntity);
 
         // 数据处理
-        handleData(cfgRuleWaveEntity);
+        handleData(addDTO.getExecutionTimeList(),cfgRuleWaveEntity);
 
         log.info("开始新增波次规则");
         boolean save = super.save(cfgRuleWaveEntity);
@@ -92,7 +97,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         CfgRuleWaveEntity cfgRuleWaveEntity =  BeanMapperUtils.map(CfgRuleWaveEntity.class, updateDTO);
 
         // 数据处理
-        handleData(cfgRuleWaveEntity);
+        handleData(updateDTO.getExecutionTimeList(),cfgRuleWaveEntity);
         log.info("编辑 开始修改波次规则数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfgRuleWaveEntity);
         if(!save) {
@@ -152,16 +157,44 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     public CfgRuleWaveDTO.ViewDTO view(String id) {
         CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到波次规则数据"));
         CfgRuleWaveDTO.ViewDTO data = BeanMapperUtils.map(CfgRuleWaveDTO.ViewDTO.class, entity);
-
         return data;
     }
 
+    /**
+     * 根据名称查询波次规则
+     * @author will
+     * @date 2024/6/25 10:19
+     * @param name
+     * @return CfgRuleWaveEntity
+     */
+    private CfgRuleWaveEntity getByWaveName (String name) {
+       return lambdaQuery().eq(CfgRuleWaveEntity::getName,name).last("limit 1").one();
+    }
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgRuleWaveEntity cfgRuleWaveEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(List<LocalTime> executionTimeList, CfgRuleWaveEntity cfgRuleWaveEntity) {
+        //数量验证
+        if (MathUtil.compareTo(cfgRuleWaveEntity.getMinOrderQty(),cfgRuleWaveEntity.getMaxOrderQty()) > MathUtil.ZERO) {
+            throw new ServiceException(ApiError.CFG_RULE_WAVE_ORDER_QTY_COMPARE);
+        }
+        if (MathUtil.compareTo(cfgRuleWaveEntity.getMinQty(),cfgRuleWaveEntity.getMaxQty()) > MathUtil.ZERO) {
+            throw new ServiceException(ApiError.CFG_RULE_WAVE_QTY_COMPARE);
+        }
+        //波次名称重复验证
+        CfgRuleWaveEntity ruleWaveEntity = getByWaveName(cfgRuleWaveEntity.getName());
+        if (ObjectUtil.isNotEmpty(ruleWaveEntity) && !StrUtil.equals(cfgRuleWaveEntity.getId(),ruleWaveEntity.getId())) {
+            throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+        }
+
+        //自动执行
+        if (StrUtil.equals(cfgRuleWaveEntity.getExecutionType(), ExecutionTypeEnum.AUTO.getCode())) {
+            if (ObjectUtil.isEmpty(executionTimeList)) {
+                throw new ServiceException("自动执行时执行时间不能为空");
+            }
+            cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.parseObj(executionTimeList));
+        }
     }
 
     /**
