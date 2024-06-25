@@ -13,10 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgInputHistoryEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
@@ -124,10 +122,15 @@ public class DmpInputBaseTaskHandler extends DmpInputTaskHandler{
 		DmpInputTaskEntity dmpInputTaskEntity = dmpResponse.getBeforeDmpInputTaskEntityList().get(0);
 		String inputStatus = dmpInputTaskEntity.getStatus();
 		
+		DmpInputTaskStatusEnum dealTaskStatus = dmpRequest.getDealTaskStatus();
 		if(DmpInputTaskStatusEnum.INIT.getCode().equals(inputStatus)) {
 			this.addDmpHandler(dmpRequest, dmpResponse, dmpHandlerList, DmpInputTaskStatusEnum.INIT);
+		}else {
+			if(dealTaskStatus == DmpInputTaskStatusEnum.INIT) {
+				return dmpHandlerList;
+			}
 		}
-		this.addDmpHandler(dmpRequest, dmpResponse, dmpHandlerList, dmpRequest.getDealTaskStatus());
+		this.addDmpHandler(dmpRequest, dmpResponse, dmpHandlerList, dealTaskStatus);
 		
 		return dmpHandlerList;
 	}

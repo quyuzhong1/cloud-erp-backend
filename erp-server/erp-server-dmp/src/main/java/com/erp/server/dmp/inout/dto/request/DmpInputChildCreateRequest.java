@@ -6,11 +6,11 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class DmpInputHotfixCreateRequest extends DmpInputCreateRequest{
+public class DmpInputChildCreateRequest extends DmpInputCreateRequest{
 	/**
-	 * 输入明细信息id列表
+	 * 输入明细信息下一层级id列表
 	 */
-	private List<String> cfgInputDetailIdList;
+	private List<String> nextLevelIdList;
 	
 	/**
     * 拉取接口条件的开始时间
@@ -21,4 +21,8 @@ public class DmpInputHotfixCreateRequest extends DmpInputCreateRequest{
     */
     private LocalDateTime endTime;
     
+    /**
+     * 父任务id
+     */
+    private String parentInputTaskId;
 }

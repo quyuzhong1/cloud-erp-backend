@@ -39,23 +39,20 @@ public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{
 		DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = (DmpInputHotfixCreateRequest)dmpRequest;
 		DmpCfgInputEntity dmpCfgInputEntity = dmpResponse.getDmpCfgInputEntity();
 		String cfgInputId = dmpCfgInputEntity.getId();
-		List<String> nextLevelIdList = dmpInputHotfixCreateRequest.getNextLevelIdList();
-		
 		List<String> cfgInputDetailIdList = dmpInputHotfixCreateRequest.getCfgInputDetailIdList();
-		if(CollUtil.isEmpty(nextLevelIdList)) {
-			List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityList = dmpCfgInputDetailService.lambdaQuery()
-					.eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
-					.eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
-					.in(CollUtil.isNotEmpty(cfgInputDetailIdList) , DmpCfgInputDetailEntity::getId, cfgInputDetailIdList)
-					.list();
-			String msg = "";
-			if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
-				msg = "输入信息数据代码【"+ dmpCfgInputEntity.getCode() +"】没有符合条件的明细任务";
-				log.warn(msg);
-				throw new ServiceException(msg);
-			}
-			nextLevelIdList = dmpCfgInputDetailEntityList.stream().map(DmpCfgInputDetailEntity::getNextLevelId).collect(Collectors.toList());
+		List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityList = dmpCfgInputDetailService.lambdaQuery()
+				.eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
+				.eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
+				.in(CollUtil.isNotEmpty(cfgInputDetailIdList) , DmpCfgInputDetailEntity::getId, cfgInputDetailIdList)
+				.list();
+		String msg = "";
+		if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
+			msg = "输入信息数据代码【"+ dmpCfgInputEntity.getCode() +"】没有符合条件的明细任务";
+			log.warn(msg);
+			throw new ServiceException(msg);
 		}
+	
+		List<String> nextLevelIdList = dmpCfgInputDetailEntityList.stream().map(DmpCfgInputDetailEntity::getNextLevelId).collect(Collectors.toList());
 		
 		List<DmpInputTaskEntity> dmpInputTaskEntityList = new ArrayList<>(nextLevelIdList.size());
 		if(CollUtil.isNotEmpty(nextLevelIdList)) {

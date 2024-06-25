@@ -16,8 +16,9 @@ import com.erp.server.dmp.inout.dto.response.DmpInputCreateResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
-import com.erp.server.dmp.service.DmpCfgInputService;
+import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -30,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class DmpInputBaseCreateHandler extends DmpInputHandler{
 	
 	@Autowired
-	private DmpCfgInputService dmpCfgInputService;
+	private DmpHandlerCache dmpHandlerCache;
 	
 	@Transactional(rollbackFor = Exception.class)
 	@Override
@@ -57,8 +58,8 @@ public abstract class DmpInputBaseCreateHandler extends DmpInputHandler{
 			}
 			return;
 		}
-		DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputService.getById(cfgInputId);
-		if(dmpCfgInputEntity == null) {
+		List<DmpCfgInputEntity> dmpCfgInputEntityList = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(cfgInputId));
+		if(CollUtil.isEmpty(dmpCfgInputEntityList)) {
 			msg = "输入信息不存在id=" + cfgInputId;
 			log.warn(msg);
 			if(throwException) {
@@ -66,6 +67,8 @@ public abstract class DmpInputBaseCreateHandler extends DmpInputHandler{
 			}
 			return;
 		}
+		DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputEntityList.get(0);
+		
 		Boolean disabled = dmpCfgInputEntity.getDisabled();
 		if(Boolean.TRUE.equals(disabled)) {
 			msg = "输入信息数据代码【"+ dmpCfgInputEntity.getCode() +"】被禁用";

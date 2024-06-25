@@ -65,7 +65,13 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
      * 错误次数
      */
      @TableField("error_count")
-     private Integer errorCount;
+    private Integer errorCount;
+    
+     /**
+      * 父类任务id
+      */
+    @TableField("parent_task_id")
+    private String parentTaskId;
 
     public static final String INPUT_DETAIL_ID = "input_detail_id";
 
