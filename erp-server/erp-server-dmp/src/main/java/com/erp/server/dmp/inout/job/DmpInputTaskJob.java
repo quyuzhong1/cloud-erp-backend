@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
 import com.erp.server.dmp.service.DmpInputTaskService;
@@ -28,16 +29,32 @@ public class DmpInputTaskJob {
 	@Qualifier("dmpInputExecutorPool")
 	private ExecutorService dmpInputExecutorPool;
 	
-	@XxlJob("doInputTask")
-    public ReturnT doInputTask(){
+	@XxlJob("doInputNormalTask")
+    public ReturnT doInputNormalTask(){
 		String size = XxlJobHelper.getJobParam();
 		if(StringUtils.isBlank(size)) {
 			size = "1000";
 		}
+		this.doInputTask(size, DmpInputTaskTaskTypeEnum.NORMAL);
+        return ReturnT.SUCCESS;
+    }
+	
+	@XxlJob("doInputHistoryTask")
+    public ReturnT doInputHistoryTask(){
+		String size = XxlJobHelper.getJobParam();
+		if(StringUtils.isBlank(size)) {
+			size = "1000";
+		}
+		this.doInputTask(size, DmpInputTaskTaskTypeEnum.HISTORY);
+        return ReturnT.SUCCESS;
+    }
+	
+	private void doInputTask(String size , DmpInputTaskTaskTypeEnum dmpInputTaskTaskTypeEnum) {
 		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery()
 				.in(DmpInputTaskEntity::getStatus, Arrays.asList(DmpInputTaskStatusEnum.INIT.getCode() 
 						, DmpInputTaskStatusEnum.FDS.getCode() , DmpInputTaskStatusEnum.MONGO.getCode()
 						, DmpInputTaskStatusEnum.DMP.getCode()))
+				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
 				.select(DmpInputTaskEntity::getId)
 				.orderByDesc(DmpInputTaskEntity::getUpdateTime)
 				.last(" limit " + size)
@@ -49,7 +66,5 @@ public class DmpInputTaskJob {
 				dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
 			});
 		}
-        return ReturnT.SUCCESS;
-    }
-	
+	}
 }

@@ -32,6 +32,7 @@ import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
 import com.erp.model.dmp.enums.DmpCfgInputTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.server.dmp.inout.dto.request.DmpInputChildCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputRequest;
@@ -306,11 +307,11 @@ public class DmpInputTaskHandler extends DmpInputHandler{
 			if(CollUtil.isNotEmpty(cfgInputChildList)) {
 				List<String> childCfgInputIdList = cfgInputChildList.stream().map(DmpCfgInputChildEntity::getChildId).collect(Collectors.toList());
 				for(String childCfgInputId : childCfgInputIdList) {
-					DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+					DmpInputChildCreateRequest dmpInputHotfixCreateRequest = new DmpInputChildCreateRequest();
 			    	dmpInputHotfixCreateRequest.setCfgInputId(childCfgInputId);
 			    	dmpInputHotfixCreateRequest.setNextLevelIdList(nextLevelIdList);
 			    	dmpInputHotfixCreateRequest.setParentInputTaskId(inputTaskId);
-			    	dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+			    	dmpInputCreateFactory.doChildInputTask(dmpInputHotfixCreateRequest);
 				}
 			}
 		}
