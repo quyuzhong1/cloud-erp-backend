@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -285,6 +286,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
          */
         private String typeName;
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * skuId
@@ -368,17 +373,9 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String sysTypeName;
         /**
-         * 同步平台名称
-         */
-        private List<String> sysTypeNameList;
-        /**
          * 同步平台单号（字符串）
          */
         private String thirdCode;
-        /**
-         * 同步平台单号
-         */
-        private List<String> thirdCodeList;
         /**
          * 附件名集合
          */
@@ -541,6 +538,20 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private Integer warehouseUsableQty;
         private Integer toVirtualWarehouseUsableQty;
         private Integer fromVirtualWarehouseUsableQty;
+
+        /**
+         * 同步平台名称（字符串）
+         */
+        private String sysType;
+        /**
+         * 同步平台名称（字符串）
+         */
+        private String sysTypeName;
+        /**
+         * 同步平台单号（字符串）
+         */
+        private String thirdCode;
+
         /**
          * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
          */
@@ -633,5 +644,36 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ManualFinishViewDTO {
+
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+        /**
+         * 完结说明
+         */
+        private String finishDescription;
+        /**
+         * 作废说明
+         */
+        private String invalidDescription;
     }
 }

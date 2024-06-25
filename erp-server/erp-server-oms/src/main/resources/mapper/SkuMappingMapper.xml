@@ -59,21 +59,20 @@
         li.platform_sku_name AS platformProductName,
         li.match_result,
         li.product_image_url,
-        li.product_spec,
+        case when li.platform = 'AliExpress' then li.platform_sku_id else li.product_spec end as product_spec,
         li.product_packing,
         li.platform_update_time,
         li.platform_spu_no,
         li.platform_spu_name,
         li.platform_fn_sku,
         sm.update_user_name,
+        sm.effective_time,
+        sm.expire_time,
         sm.update_time
         FROM sku_mapping sm
-        LEFT JOIN shop_info si
-        ON sm.shop_id=si.id AND si.is_deleted=FALSE
-        LEFT JOIN listing_info li
-        ON sm.listing_id=li.id AND li.is_deleted=FALSE
-        WHERE sm.is_deleted=FALSE
-        AND sm.is_expire = FALSE
+        LEFT JOIN shop_info si ON sm.shop_id=si.id AND si.is_deleted=FALSE
+        LEFT JOIN listing_info li ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
         </if>
@@ -771,5 +770,6 @@
         and listing_id = #{listingId}
         and shop_id = #{shopId}
         and product_sku_id = #{productSkuId}
+        order by expire_time asc
     </select>
 </mapper>

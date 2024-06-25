@@ -846,6 +846,13 @@ public enum ApiError implements Serializable {
     ERROR_99100(99100,"暂无可用仓位"),
 
     ERROR_99101(99101,"{}未生成拣货单，不允许下推销售出库单"),
+    ERROR_99102(99102,"存在拣货单，不允许作废、删除和撤销"),
+    ERROR_99103(99103,"sku【{}】的出库数量不能大于销售订单的销售数量"),
+    ERROR_99104(99104,"只有已处理的要货申请可以下推发货单，且只能下推一次"),
+    ERROR_99105(99105,"销售订单未审核不能下推出库"),
+    ERROR_99110(99110,"已有{},不能再生成拣货单"),
+
+    ERROR_99106(99106,"拣货数量总数不能为0"),
 
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
@@ -1024,7 +1031,7 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_BINDED(92202,"当前实体仓已被虚拟仓【{}】绑定"),
     ERROR_SAME_DISABLED(92203,"存在相同状态"),
     ERROR_WAREHOUSE_NOTFOUND(92204,"实体仓不存在"),
-    ERROR_WAREHOUSE_NOTACTIVE(92204,"实体仓是启用状态"),
+    ERROR_WAREHOUSE_NOTACTIVE(92204,"实体仓必须是启用状态"),
     ERROR_ONLYONE(92205,"一个渠道只能关联一种类型"),
     ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST(92140,"虚拟仓不存在"),
     ERROR_VMALLOCATION_DETAIL_ADD(92206 , "分货单明细保存失败"),
@@ -1064,8 +1071,15 @@ public enum ApiError implements Serializable {
     SKU_INVENTORY_SHORTAGE(92150, "【{}】仓位库存不足，无法生成拣货单"),
 
     UNPICKED_QUANTITY_SHORTAGE(92151, "未拣货数量不足，无法生成拣货单，请重新操作"),
+    CFG_RULE_WAVE_ORDER_QTY_COMPARE(92152, "最小单数不能大于最大单数"),
+    CFG_RULE_WAVE_QTY_COMPARE(92153, "最少商品数量不能大于最大商品数量"),
 
 
+    ERROR_VW_CHANNEL_ERROR(92234,"虚拟仓【{}】已绑定当前渠道"),
+    ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
+    ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
+    ERROR_VW_INVENTORY_ERROR(92235,"虚拟仓【{}】库存不足"),
+    ERROR_VW_SHOP_BINDED_ERROR(92236,"当前店铺【{}】已经被虚拟仓【{}】绑定"),
 
 
     /**
@@ -1281,6 +1295,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE(92149,"订单下的明细仓库一致，无法按仓库拆分"),
     ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL(92150,"B2C销售订单【{}】物流下单平台不能为空"),
     ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】不能设置多个渠道"),
+    ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
     /**
      * TMS 错误
      * 从94000 开始

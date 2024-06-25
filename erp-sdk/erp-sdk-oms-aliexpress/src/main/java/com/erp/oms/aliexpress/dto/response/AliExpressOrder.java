@@ -224,9 +224,14 @@ public class AliExpressOrder implements Serializable {
                     || "RISK_CONTROL".equals(orderStatus)
                     ||"IN_FROZEN".equals(orderStatus)){
 
-                return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
+//                return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
+                return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
             }
 
+        }
+        // 部分发货
+        if ("SELLER_PART_SEND_GOODS".equalsIgnoreCase(orderStatus)){
+            return SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode();
         }
 
         //平台仓订单
@@ -257,13 +262,24 @@ public class AliExpressOrder implements Serializable {
         if ("WAIT_BUYER_ACCEPT_GOODS".equals(orderStatus)
                 || "FUND_PROCESSING".equals(orderStatus)
                 || "IN_ISSUE".equals(orderStatus)
-                || "WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)) {
+                || "WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)
+                // 完结已发货
+                || finishShipped()
+        ) {
             return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         }
 
 
         // 待配货
         return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+    }
+
+    /**
+     * 完结已发货
+     */
+    public boolean finishShipped() {
+        return "FINISH".equalsIgnoreCase(orderStatus)
+                && ("buyer_confirm_goods".equalsIgnoreCase(this.endReason) || "buyer_confirm_goods_timeout".equalsIgnoreCase(this.endReason));
     }
 
     /**
@@ -291,6 +307,15 @@ public class AliExpressOrder implements Serializable {
         if (StringUtils.isBlank(orderStatus)) {
             return ApproveStatusEnum.WAIT_SUBMIT.getCode();
         }
+        // 完结已发货(自动已审核)
+        if (finishShipped()){
+            return ApproveStatusEnum.APPROVE.getCode();
+        }
+        // 订单取消=待提交
+        if(convertCancel()){
+            return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+        }
+
         if (isPlatformWarehouseOrder) {
             if ("PLACE_ORDER_SUCCESS".equals(orderStatus)) {
                 return ApproveStatusEnum.WAIT_SUBMIT.getCode();
@@ -338,13 +363,20 @@ public class AliExpressOrder implements Serializable {
      * security_close安全关闭
      */
     public boolean convertCancel() {
+        // 冻结中视为取消走拦截逻辑或初始化作废
+        if("IN_CANCEL".equals(orderStatus)
+                || "RISK_CONTROL".equals(orderStatus)
+                ||"IN_FROZEN".equals(orderStatus)){
+            return true;
+        }
+
         if (!"FINISH".equalsIgnoreCase(this.orderStatus)){
             // 非完结
             return false;
         }
         if (StringUtils.isBlank(this.endReason)){
-            // 无完结原因
-            return false;
+            // 无完结原因（平台自动取消）
+            return true;
         }
         // 非买家确认货物 和 买家确认货物超时 都视为取消
         return !"buyer_confirm_goods".equalsIgnoreCase(this.endReason)

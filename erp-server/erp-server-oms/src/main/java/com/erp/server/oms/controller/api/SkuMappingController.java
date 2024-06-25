@@ -267,4 +267,14 @@ public class SkuMappingController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 根据平台sku记录获取变更历史记录
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listHistoryByListingId")
+    public ApiResult<List<SkuMappingEntity>> listHistoryByListingId(@RequestBody @Validated BaseIdDTO dto){
+        List<SkuMappingEntity> list = skuMappingService.listHistoryByListingId(dto.getId());
+        return success(list);
+    }
 }

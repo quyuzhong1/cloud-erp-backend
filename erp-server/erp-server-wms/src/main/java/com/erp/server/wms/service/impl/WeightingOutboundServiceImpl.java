@@ -193,6 +193,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             //修改订单状态待发货
             SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
             updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+            updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
             updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
             soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);

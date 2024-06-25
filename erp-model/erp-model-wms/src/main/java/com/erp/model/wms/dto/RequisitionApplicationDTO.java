@@ -781,7 +781,6 @@ public class RequisitionApplicationDTO implements Serializable {
          * 拣货数量
          */
         @NotNull(message = "拣货数量不能为空")
-        @Min(value = 1,message = "拣货数量最小值为1")
         @Max(value = 999999999,message = "拣货数量最大值为999999999")
         private Integer pickingQty;
 
@@ -1030,6 +1029,8 @@ public class RequisitionApplicationDTO implements Serializable {
         private String country;
 
         private String type;
+
+        private String status;
     }
 
     /**

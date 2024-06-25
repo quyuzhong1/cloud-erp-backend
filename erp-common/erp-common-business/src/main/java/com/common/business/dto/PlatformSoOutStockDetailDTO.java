@@ -57,4 +57,29 @@ public class PlatformSoOutStockDetailDTO {
      * 跟踪号
      */
     private String trackNo;
+
+    /**
+     * 仓库id
+     */
+    private String warehouseId;
+
+    /**
+     * 仓库名称
+     */
+    private String warehouseName;
+
+    /**
+     * 库存组织
+     */
+    private String warehouseOrgId;
+
+    /**
+     * 库存组织名称
+     */
+    private String warehouseOrgName;
+
+    /**
+     * 仓储中心(亚马逊专用)
+     */
+    private String fulfillmentCenter;
 }

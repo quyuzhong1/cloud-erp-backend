@@ -38,7 +38,7 @@ public class VwAllocationAllocationExcelDTO extends VwAllocationExcelDTO impleme
     @ColumnWidth(20)
     @ExcelProperty(value = "分配数量", index = 2)
     @FieldValid(fieldName = "分配数量", isNotBlank = true)
-    private Integer qty;
+    private String qty;
 
     /**
      * 调入虚拟仓

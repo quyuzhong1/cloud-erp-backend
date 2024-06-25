@@ -55,8 +55,14 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
      * @param virtualWarehouseId
      */
     List<VirtualWarehouseChannelEntity> getByVirtualWarehouseId(String virtualWarehouseId);
-
+    /**
+     * 获取所有绑定的平台（聚合）
+     */
     List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatform();
+    /**
+     * 获取所有绑定的平台（不聚合）
+     */
+    List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatformNoGroup();
 
     List<String> getBindedShopByDictPlatform(String dictPlatform);
     /**

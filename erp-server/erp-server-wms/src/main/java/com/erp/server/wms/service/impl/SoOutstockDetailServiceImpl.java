@@ -113,6 +113,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-19 10:18
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -280,9 +281,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
             //应发数量
             Integer planQty = detailList.stream().mapToInt(SoOutstockDetailDTO.UpdateDTO::getPlanQty).sum();
-            if (!planQty.equals(deliveryQty)) {
-                throw new ServiceException(ApiError.ERROR_92031);
-            }
             List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
             List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
@@ -639,11 +637,12 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Override
     public List<SoOutstockDetailDTO.AddDTO> checkAndGenerateDetail(SoOutstockDTO.GenerateB2cDTO dto) {
-        boolean notExistMapping = dto.getDetailList()
+        List<String> notExistMapping = dto.getDetailList()
                 .stream()
-                .anyMatch(e -> CollectionUtils.isEmpty(e.getHistorySkuMappingList()));
-        if (notExistMapping){
-            throw new ServiceException("找不到历史映射关系");
+                .filter(v->CollectionUtils.isEmpty(v.getHistorySkuMappingList()))
+                .map(SoOutstockDetailDTO.AddDTO::getSkuNo).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notExistMapping)){
+            throw new ServiceException(StrUtil.format("{}找不到历史映射关系",notExistMapping));
         }
         // 生成库存检查参数
         List<String> skuIdList = new LinkedList<>();

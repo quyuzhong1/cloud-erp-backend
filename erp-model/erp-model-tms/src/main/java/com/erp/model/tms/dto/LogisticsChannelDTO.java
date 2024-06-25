@@ -776,6 +776,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+        /**
+         * 是否展示物流商
+         */
+        private Boolean showSupplier=false;
     }
 
 }

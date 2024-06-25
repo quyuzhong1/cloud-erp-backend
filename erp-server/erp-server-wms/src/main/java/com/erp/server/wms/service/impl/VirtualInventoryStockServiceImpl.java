@@ -90,6 +90,7 @@ public class VirtualInventoryStockServiceImpl extends AbstractVirtualInventorySe
                 inventoryDTO.setSkuId(param.getSkuId());
                 inventoryDTO.setSkuNo(param.getSkuNo());
                 inventoryDTO.setQty(param.getQty());
+                inventoryDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT);
                 // 出库库存数量检查
                 this.checkStockByRule(inventoryDTO, businessType, ruleList);
             }

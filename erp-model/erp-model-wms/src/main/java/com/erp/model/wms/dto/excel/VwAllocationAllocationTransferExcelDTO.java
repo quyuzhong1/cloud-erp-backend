@@ -45,7 +45,7 @@ public class VwAllocationAllocationTransferExcelDTO extends VwAllocationExcelDTO
     @ColumnWidth(20)
     @ExcelProperty(value = "调拨数量", index = 3)
     @FieldValid(fieldName = "调拨数量", isNotBlank = true)
-    private Integer qty;
+    private String qty;
 
     /**
      * 调入虚拟仓

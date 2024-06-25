@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
+import com.erp.model.wms.enums.VwAllocationDirectionEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationHandleDetailMapper;
@@ -33,8 +34,6 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 
@@ -182,7 +181,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                         String[] split = fromToGroupId.split(splitStr);
                         List<ThirdMappingEntity> fromMappingList = fromToThirdMappingMap.get(split[0]);
                         List<ThirdMappingEntity> toMappingList = fromToThirdMappingMap.get(split[1]);
-                        fromToGroupMap.forEach((toVmId, allocationDetailList) -> {
+//                        fromToGroupMap.forEach((toVmId, allocationDetailList) -> {
                             //获取调出仓绑定的旺店通虚拟仓
                             if (CollectionUtils.isNotEmpty(toMappingList)) {
 //                                toMappingList.forEach(thirdMapping -> {
@@ -196,19 +195,19 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                                 handleDetailEntity.setThirdToVirtualWarehouseNo(toMappingList.get(0).getThirdCode());
                                 handleDetailEntity.setSysType(fromMappingList.get(0).getThirdSysType());
                                 handleDetailEntity.setMainId(allocationHandleEntity.getId());
-                                handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
+                                handleDetailEntity.setWarehouseId(groupList.get(0).getWarehouseId());
                                 handleDetailEntity.setThirdWarehouseId(toMappingList.get(0).getRemark());
-                                Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
+                                Integer sumQty = groupList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
                                 handleDetailEntity.setQty(sumQty);
                                 this.save(handleDetailEntity);
                                 handleDetailList.add(handleDetailEntity);
-                                allocationDetailList.forEach(allocationDetail -> {
+                                groupList.forEach(allocationDetail -> {
                                     VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, allocationHandleEntity, allocationDetail, handleDetailEntity);
                                     virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
                                 });
 //                                });
                             }
-                        });
+//                        });
                     });
                 }
                 if (CollectionUtils.isNotEmpty(fromVwResultList)) {
@@ -270,15 +269,34 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap = fromVmList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId));
         List<String> fromVwId = fromVmList.stream().map(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
         List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
+        saveList(allocationEntity, allocationHandleEntity, handleDetailList, noSyncDetailList, cancelMap, fromThirdMappingList, VwAllocationDirectionEnum.REVERSE);
+    }
+
+    public void saveList(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity,
+                          List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList,
+                          Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap,
+                          List<ThirdMappingEntity> fromThirdMappingList, VwAllocationDirectionEnum code) {
         cancelMap.forEach((fromVmId, allocationDetailList) -> {
             //获取调出仓绑定的旺店通虚拟仓
             if (CollectionUtils.isNotEmpty(fromThirdMappingList)) {
-                fromThirdMappingList.forEach(thirdMapping -> {
+                ThirdMappingEntity thirdMapping = fromThirdMappingList.stream().filter(item -> Objects.equals(item.getSysId(), fromVmId)).findFirst().orElse(null);
+                if (Objects.nonNull(thirdMapping)) {
+//                fromThirdMappingList.forEach(thirdMapping -> {
                     //保存合单明细
                     VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
-                    handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
-                    handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-                    handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
+                    switch (code){
+                        case FORWARD:
+                            handleDetailEntity.setToVirtualWarehouseId(fromVmId);
+                            handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
+                            handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
+                            break;
+                        default:
+                            handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
+                            handleDetailEntity.setThirdFromVirtualWarehouseId(thirdMapping.getThirdId());
+                            handleDetailEntity.setThirdFromVirtualWarehouseNo(thirdMapping.getThirdCode());
+                            break;
+                    }
+
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(allocationHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
@@ -291,7 +309,10 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                         VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, allocationHandleEntity, allocationDetail, handleDetailEntity);
                         virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
                     });
-                });
+                }else{
+                    noSyncDetailList.addAll(allocationDetailList);
+                }
+//                });
             } else {
                 noSyncDetailList.addAll(allocationDetailList);
             }
@@ -311,15 +332,27 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> toVmMap = toVwResultList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId));
         List<String> toVwIds = toVwResultList.stream().map(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId).collect(Collectors.toList());
         List<ThirdMappingEntity> toMappingList = dmpThirdMappingFeign.getVwListBySysIds(toVwIds);
+        saveList(allocationEntity, allocationHandleEntity, handleDetailList, noSyncDetailList, toVmMap, toMappingList, VwAllocationDirectionEnum.FORWARD);
+    }
+
+    private void saveToList(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity,
+                            List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList,
+                            Map<String, List<VirtualWarehouseAllocationDetailEntity>> toVmMap,
+                            List<ThirdMappingEntity> toMappingList) {
         toVmMap.forEach((toVmId, allocationDetailList) -> {
             //获取调出仓绑定的旺店通虚拟仓
             if (CollectionUtils.isNotEmpty(toMappingList)) {
-                toMappingList.forEach(thirdMapping -> {
+//                toMappingList.forEach(thirdMapping -> {
+                ThirdMappingEntity thirdMapping = toMappingList.stream().filter(item -> Objects.equals(item.getSysId(), toVmId)).findFirst().orElse(null);
+                if (Objects.nonNull(thirdMapping)) {
                     //保存合单明细
                     VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
+
                     handleDetailEntity.setToVirtualWarehouseId(toVmId);
                     handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
                     handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
+                    handleDetailEntity.setThirdFromVirtualWarehouseId("");
+                    handleDetailEntity.setThirdFromVirtualWarehouseNo("");
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(allocationHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
@@ -332,7 +365,10 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                         VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, allocationHandleEntity, allocationDetail, handleDetailEntity);
                         virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
                     });
-                });
+                }else{
+                    noSyncDetailList.addAll(allocationDetailList);
+                }
+//                });
             } else {
                 noSyncDetailList.addAll(allocationDetailList);
             }

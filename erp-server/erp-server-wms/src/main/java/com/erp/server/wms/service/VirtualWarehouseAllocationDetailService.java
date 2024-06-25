@@ -2,16 +2,11 @@ package com.erp.server.wms.service;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.List;
 
 /**
  * <p>
@@ -54,14 +49,34 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
     void submit(VirtualWarehouseAllocationEntity allocationEntity);
 
     void updateByMainId(String mainId, String syncStatus);
-
+    /**
+     * 同步
+     *
+     * @param vmAllocationDetailEntity
+     * @return
+     */
     BatchResultDTO sync(VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity, VirtualWarehouseAllocationEntity vmAllocationEntity);
 
+    /**
+     * 展示分货单同步信息
+     *
+     * @param id
+     * @return
+     */
     DmpPushTaskEntity viewSyncInfo(String id);
 
-    VirtualWarehouseAllocationDTO.ThirdCodeDto viewByThirdCode(String id);
+    VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id);
+
     /**
      * 修改同步状态
      */
     void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto);
+
+    /**
+     * 获取同步信息
+     *
+     * @param id
+     * @author hyj
+     */
+    VirtualWarehouseAllocationDTO.ManualFinishViewDTO viewManualFinish(String id);
 }

@@ -316,6 +316,8 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                 receiverDTO.setReceiverTelNumber(receiptInfo.getMobileNo());
                 receiverDTO.setPostCode(receiptInfo.getZip());
                 receiverDTO.setReceiverTaxNo(receiptInfo.getCpfNo());
+                // 买家电话
+                receiverDTO.setTelNumber(receiptInfo.getMobileNo());
             }
             BuyerInfo buyerInfo = detail.getBuyerInfo();
             receiverDTO.setLoginId(buyerInfo.getLoginId());
@@ -371,6 +373,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             deliveryDetailDTO.setPlatformWarehouseName(v.getWarehouseName());
             deliveryDetailDTO.setPlatformSpuNo(v.getItemId());
             deliveryDetailDTO.setPlatformSkuId(v.getPlatformSkuId());
+            deliveryDetailDTO.setScItemId(v.getScItemId());
             result.add(deliveryDetailDTO);
         });
         return result;

@@ -24,6 +24,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -262,6 +263,23 @@ public class MQProducerService<T> {
         } catch (Exception e) {
             log.error("异步发送MQ消息异常", e);
         }
+    }
+
+    // RocketMQ默认延时等级和对应的延时时间（秒）
+    private static final List<Integer> DELAY_LEVELS = Arrays.asList(1, 5, 10, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 1200, 1800, 3600, 7200);
+
+    /**
+     * 将秒数转换为RocketMQ延时队列等级
+     *
+     * @param seconds 延时的秒数
+     * @return 对应的延时等级，超过最大等级则返回最大等级
+     */
+    public int convertSecondsToDelayLevel(Long seconds) {
+        return DELAY_LEVELS.stream()
+                .filter(delay -> seconds <= delay)
+                .findFirst()
+                .map(delay -> DELAY_LEVELS.indexOf(delay) + 1)
+                .orElse(DELAY_LEVELS.size());
     }
 
 }

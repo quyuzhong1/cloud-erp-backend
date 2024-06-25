@@ -45,7 +45,7 @@ public class VwAllocationAllocationCancelExcelDTO extends VwAllocationExcelDTO i
     @ColumnWidth(20)
     @ExcelProperty(value = "取消分配数量", index = 3)
     @FieldValid(fieldName = "取消分配数量", isNotBlank = true)
-    private Integer qty;
+    private String qty;
 
 
 

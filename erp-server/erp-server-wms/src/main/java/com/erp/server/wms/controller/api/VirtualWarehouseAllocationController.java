@@ -176,10 +176,6 @@ public class VirtualWarehouseAllocationController extends BaseController {
             resultDTOS.add(submit);
         }
 
-//        //进行拆单并创建中台任务数据进行同步
-//        if (CollectionUtils.isNotEmpty(resultDTOS)) {
-//            virtualWarehouseAllocationDetailService.handleDetail(resultDTOS.stream().filter(BatchResultDTO::getSuccess).collect(Collectors.toList()));
-//        }
         return resultDTOS.stream().anyMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -295,5 +291,23 @@ public class VirtualWarehouseAllocationController extends BaseController {
     )
     public ApiResult<List<VirtualWarehouseAllocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(virtualWarehouseAllocationService.tabList(dto));
+    }
+
+    /**
+     * 展示作废信息
+     *
+     * @param detailId
+     * @return
+     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "展示作废信息")
+    @GetMapping("/viewInvalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:viewInvalid",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<VirtualWarehouseAllocationDTO.ManualFinishViewDTO> viewInvalid(@RequestParam(value = "id") String id) {
+        return success(virtualWarehouseAllocationService.viewInvalid(id));
     }
 }

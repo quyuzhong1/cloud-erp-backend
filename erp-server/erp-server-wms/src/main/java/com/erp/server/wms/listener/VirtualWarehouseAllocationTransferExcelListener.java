@@ -112,32 +112,34 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
         }
         if (!StrUtils.isDigit(String.valueOf(vwAllocationAllocationExcelDTO.getQty())) || ObjectUtil.isEmpty(vwAllocationAllocationExcelDTO.getQty())) {
             errorMsgList.add("移动数量只能是数字");
+        } else {
+            detailDto.setQty(Integer.valueOf(vwAllocationAllocationExcelDTO.getQty()));
         }
         if (StringUtils.isBlank(vwAllocationAllocationExcelDTO.getWarehouseName())) {
             errorMsgList.add("实体仓不能为空");
         }
         List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getWarehouseName()));
-        List<VirtualWarehouseDTO.VwDTO> vwDtoList = virtualWarehouseService.getByNames(Arrays.asList(vwAllocationAllocationExcelDTO.getFromVirtualWarehouseName(),vwAllocationAllocationExcelDTO.getToVirtualWarehouseName()));
+        List<VirtualWarehouseDTO.VwDTO> vwDtoList = virtualWarehouseService.getByNames(Arrays.asList(vwAllocationAllocationExcelDTO.getFromVirtualWarehouseName(), vwAllocationAllocationExcelDTO.getToVirtualWarehouseName()));
         if (CollectionUtils.isEmpty(vwDtoList) || Objects.isNull(vwDtoList.get(0))) {
             errorMsgList.add("虚拟仓不存在");
         } else {
             VirtualWarehouseDTO.VwDTO fromVwDTO = vwDtoList.stream().filter(item -> Objects.equals(item.getName(), vwAllocationAllocationExcelDTO.getFromVirtualWarehouseName())).findFirst().orElse(null);
-            if (Objects.isNull(fromVwDTO)){
+            if (Objects.isNull(fromVwDTO)) {
                 errorMsgList.add("调出虚拟仓不存在");
-            }else {
+            } else {
                 if (Boolean.TRUE.equals(fromVwDTO.getDisabled())) {
                     errorMsgList.add("调出虚拟仓非启用状态");
-                }else {
+                } else {
                     detailDto.setFromVirtualWarehouseId(fromVwDTO.getId());
                 }
             }
             VirtualWarehouseDTO.VwDTO toVwDTO = vwDtoList.stream().filter(item -> Objects.equals(item.getName(), vwAllocationAllocationExcelDTO.getToVirtualWarehouseName())).findFirst().orElse(null);
-            if (Objects.isNull(toVwDTO)){
+            if (Objects.isNull(toVwDTO)) {
                 errorMsgList.add("调入虚拟仓不存在");
-            }else {
+            } else {
                 if (Boolean.TRUE.equals(toVwDTO.getDisabled())) {
                     errorMsgList.add("调入虚拟仓非启用状态");
-                }else{
+                } else {
                     detailDto.setToVirtualWarehouseId(toVwDTO.getId());
                 }
             }
@@ -158,13 +160,13 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
                             Objects.equals(item.getVirtualWarehouseId(), detailDto.getToVirtualWarehouseId())).findFirst().orElse(null);
                     VirtualWarehouseRelationEntity fromVmRelation = vwRelationList.stream().filter(item ->
                             Objects.equals(item.getVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(null);
-                    if (Objects.isNull(toVmRelation)&&Objects.isNull(fromVmRelation)){
-                        errorMsgList.add("当前实体仓没有关联此调入和调入虚拟仓");
-                    }else if (Objects.isNull(fromVmRelation)){
-                        errorMsgList.add("当前实体仓没有关联此调出虚拟仓");
-                    }else if (Objects.isNull(toVmRelation)){
-                        errorMsgList.add("当前实体仓没有关联此调入虚拟仓");
-                    }else{
+                    if (Objects.isNull(toVmRelation) && Objects.isNull(fromVmRelation)) {
+                        errorMsgList.add("实体仓没有关联此调入和调入虚拟仓");
+                    } else if (Objects.isNull(fromVmRelation)) {
+                        errorMsgList.add("实体仓没有关联此调出虚拟仓");
+                    } else if (Objects.isNull(toVmRelation)) {
+                        errorMsgList.add("实体仓没有关联此调入虚拟仓");
+                    } else {
                         BeanUtils.copyProperties(vwAllocationAllocationExcelDTO, detailDto);
                         detailDto.setWarehouseId(warehouseList.get(0).getId());
 //                        detailDto.setToVirtualWarehouseId(vwDtoList.get(0).getId());
@@ -173,7 +175,7 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
                         VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
                         qtyTypeDTO.setType(VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode());
                         VirtualInventoryDTO.QtySearchDTO qtySearchDTO = new VirtualInventoryDTO.QtySearchDTO();
-                        BeanUtils.copyProperties(detailDto,qtySearchDTO);
+                        BeanUtils.copyProperties(detailDto, qtySearchDTO);
                         List<VirtualInventoryDTO.QtySearchDTO> qtySearchList = new ArrayList<>();
                         qtySearchList.add(qtySearchDTO);
                         qtyTypeDTO.setQtySearchList(qtySearchList);

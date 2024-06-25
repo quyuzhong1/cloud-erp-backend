@@ -30,7 +30,7 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      *
      * @param dto 编辑参数
      **/
-    void add(PickingListsDTO.Add dto);
+    void add(PickingListsDTO.AddDTO dto);
 
     /**
      * 批量删除
@@ -61,7 +61,7 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      *
      * @param dto 编辑参数
      **/
-    void update(PickingListsDTO.Update dto);
+    void update(PickingListsDTO.UpdateDTO dto);
 
     /**
      * 删除拣货单
@@ -73,4 +73,7 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * 根据来源id查询拣货单及明细
      */
     List<PickingListsDTO.SourceView> listBySourceIds(List<String> sourceIds);
+
+    void exist(String id);
+    void exist(List<String> id);
 }

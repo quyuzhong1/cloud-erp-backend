@@ -74,6 +74,7 @@
         vma.code,
         vma.status,
         vma.type,
+        vma.remark,
         vmad.sku_id as skuId,
         vmad.sku_no as skuNo,
         vmad.product_name as productName,
@@ -110,7 +111,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        vma.id desc,vmad.id desc
+        vma.id desc,vmad.id asc
     </sql>
 
 </mapper>

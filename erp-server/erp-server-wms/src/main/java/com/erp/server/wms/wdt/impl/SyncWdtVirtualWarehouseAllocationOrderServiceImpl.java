@@ -12,6 +12,7 @@ import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleRelationEntity;
+import com.erp.model.wms.enums.VwAllocationDirectionEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.service.RequisitionApplicationDetailService;
 import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
@@ -55,6 +56,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                                                 String vwAllocationCode, String operateCode, String sourceType) {
 
         List<DmpPushTaskFeignDTO> dmpPushTaskEntityList = new ArrayList<>();
+        //单据类型:1:锁定分配,2:释放出库,3:虚拟仓间调拨,4:采购入库
         handleDetailList.forEach(handleDetail -> {
             VwAllocationHandelDetailPushDTO request = new VwAllocationHandelDetailPushDTO();
             //获取调出仓 调入仓关联的第三方仓（旺店通）
@@ -69,11 +71,10 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                 request.setOrder_type(1);
             }
 
-            String type = handleDetail.getType();
-            request.setPre_time(LocalDateTime.now().minusMinutes(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            request.setPre_time(LocalDateTime.now().plusMinutes(3).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
             request.setVirtual_warehouse_no(StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseNo()) ? handleDetail.getThirdFromVirtualWarehouseNo() : handleDetail.getThirdToVirtualWarehouseNo());
             request.setTo_virtual_warehouse_no(handleDetail.getThirdToVirtualWarehouseNo());
-            request.setBizType(type);
+            request.setBizType(sourceType);
             request.setSourceId(handleDetail.getId());
             List<VwAllocationHandelDetailPushDTO.DetailList> detailList = new ArrayList<>();
             //获取明细
@@ -82,11 +83,8 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                             .eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetail.getId()));
             //根据sku和调入虚拟仓进行聚合
             List<String> allocationDetailIds = allocationHandleRelationEntities.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList());
-
             switch (SourceTypeEnum.getByCode(sourceType)) {
                 case VIRTUAL_WAREHOUSE_ALLOCATION:
-//                    switch (VirtualWarehouseAllocationTypeEnum.getByCode(type)) {
-//                        case ALLOCATION:
                     Map<String, List<VirtualWarehouseAllocationDetailEntity>> skuMap = virtualWarehouseAllocationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getSkuNo));
                     skuMap.forEach((skuNo, list) -> {
                         VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
@@ -98,6 +96,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                     break;
                 case REQUISITION_APPLICATION:
                     Map<String, List<RequisitionApplicationDetailEntity>> requireSkuMap = requisitionApplicationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getSkuNo));
+                    log.info("获取要货申请明细：{}",requireSkuMap);
                     requireSkuMap.forEach((skuNo, list) -> {
                         VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
                         detail.setNum(BigDecimal.valueOf(list.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum)));
@@ -111,10 +110,6 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             }
             request.setDetailList(detailList);
             request.setRemark("原始单据号：" + vwAllocationCode);
-//            String detailStr = JSONUtil.toJsonStr(detailList);
-//            String requestStr = JSONUtil.toJsonStr(request);
-//            StringBuilder stringBuilder = new StringBuilder();
-//            stringBuilder.append("["+requestStr+","+detailStr+"]");
 
             //添加推送任务
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();

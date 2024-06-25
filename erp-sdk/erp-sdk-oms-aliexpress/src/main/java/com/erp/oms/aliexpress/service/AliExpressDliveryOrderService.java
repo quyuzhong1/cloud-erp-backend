@@ -2,6 +2,7 @@ package com.erp.oms.aliexpress.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.core.exception.ServiceException;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
@@ -17,6 +18,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -123,4 +125,18 @@ public class AliExpressDliveryOrderService {
 //        System.out.println(response.getBody());
 //
 //    }
+
+    public List<PlatformDeliveryDetailDTO> handleData(List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList) {
+        List<PlatformDeliveryDetailDTO> resultList = new ArrayList<>();
+        //相同平台skuId汇总后将数量除以scItemId 的种类数
+        Map<String,List<PlatformDeliveryDetailDTO>> groupMap = platformDeliveryDetailDTOList.stream().collect(Collectors.groupingBy(PlatformDeliveryDetailDTO::getPlatformSkuId));
+        groupMap.forEach((key,val)->{
+            PlatformDeliveryDetailDTO platformDeliveryDetailDTO = val.get(0);
+            Integer allQty = val.stream().mapToInt(PlatformDeliveryDetailDTO::getQty).sum();
+            Integer scItemIdCount = Math.toIntExact(val.stream().map(PlatformDeliveryDetailDTO::getScItemId).distinct().count());
+            platformDeliveryDetailDTO.setQty(allQty/scItemIdCount);
+            resultList.add(platformDeliveryDetailDTO);
+        });
+        return resultList;
+    }
 }

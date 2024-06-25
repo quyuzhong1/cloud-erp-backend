@@ -108,4 +108,12 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @return Integer
      */
     Integer getInventoryQtyByWarehouseId(String warehouseId,String skuId);
+
+    /**
+     * 根据sku和虚拟仓id获取是否存在关联关系
+     * @param skuId
+     * @param id
+     * @return
+     */
+    List<VirtualInventoryDTO.CommonDTO> getBySkuIdAndVwId(String skuId, String id);
 }

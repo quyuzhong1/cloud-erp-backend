@@ -4,8 +4,11 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 
@@ -21,6 +24,8 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("virtual_warehouse_allocation_handle")
+@AllArgsConstructor
+@NoArgsConstructor
 public class VirtualWarehouseAllocationHandleEntity extends BaseEntity<VirtualWarehouseAllocationHandleEntity> {
 
     /**

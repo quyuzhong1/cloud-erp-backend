@@ -44,9 +44,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -428,7 +426,8 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
 
-    public List<PlatformAmazonOrderDTO> downloadByOrderIds(List<String> orderIds, String shopId, String groupId, List<CfgTimezoneEntity> timeZoneList) {
+    public List<PlatformAmazonOrderDTO> downloadByOrderIds(Map<String, String> dtoOrderIdShopIdMap, String shopId, String groupId, List<CfgTimezoneEntity> timeZoneList) {
+        List<String> orderIds = new ArrayList<>(dtoOrderIdShopIdMap.keySet());
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
         if (null == shopInfoDTO) {
