@@ -73,7 +73,7 @@ public class PlatformTaskDTO {
         /**
          * 国家id
          */
-        @NotBlank(message = "国家id不能为空")
+//        @NotBlank(message = "国家id不能为空")
         private String dictCountryCode;
         /**
          * 平台店铺代号/平台卖家ID

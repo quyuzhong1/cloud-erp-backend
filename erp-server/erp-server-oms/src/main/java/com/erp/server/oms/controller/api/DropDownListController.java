@@ -57,6 +57,18 @@ public class DropDownListController extends BaseController {
         return success(result);
     }
 
+    @GetMapping("/dict/listByType")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("type") String type,
+                                                           @RequestParam(value = "subType", required = false) String subType) {
+        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByType(type, subType);
+        //list 根据sort排序
+        list = list.stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
     /**
      * 单据状态下拉
      *

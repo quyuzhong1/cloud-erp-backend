@@ -67,8 +67,8 @@ public class PackageForecastFeignController extends BaseController {
      * @param soIdList
      * @return List<PackageForecastDetailEntity>
      */
-    @PostMapping("/listBySoIdList")
-    public List<PackageForecastDetailEntity> listBySoIdList(@RequestBody List<String> soIdList){
-        return packageForecastDetailService.listBySoIdList(soIdList);
+    @PostMapping("/listPackageForecastBySoIdList")
+    public List<PackageForecastDTO.ExportViewDTO> listPackageForecastBySoIdList(@RequestBody List<String> soIdList){
+        return packageForecastDetailService.listPackageForecastBySoIdList(soIdList);
     }
 }

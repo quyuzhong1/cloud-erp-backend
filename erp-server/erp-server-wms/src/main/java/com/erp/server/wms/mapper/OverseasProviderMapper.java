@@ -38,4 +38,6 @@ public interface OverseasProviderMapper extends BaseMapper<OverseasProviderEntit
      * @Date 2023/11/29
      */
     List<OverseasProviderDTO.ListWithWarehouseDTO> selectListWithWarehouse(Boolean notEmptyWarehouseId);
+
+    OverseasProviderDTO.FeignDTO getOverseasWarehouse(@Param("params") OverseasProviderDTO.FeignDTO params);
 }

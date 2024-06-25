@@ -366,7 +366,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 DmpPushTaskEntity pushTaskEntity = syncKingdeeSoOutstockService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
                 resultList.add(pushTaskEntity);
             } else {
-                DmpPushTaskEntity pushTaskEntity = syncKingdeeSoOutstockService.syncB2cDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+                DmpPushTaskEntity pushTaskEntity;
+                if (SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(entity.getSourceType())){
+                    pushTaskEntity = syncKingdeeSoOutstockService.syncWdtDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+                }else {
+                    pushTaskEntity = syncKingdeeSoOutstockService.syncB2cDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+                }
                 resultList.add(pushTaskEntity);
             }
             syncKingdeeSoOutstockService.syncOrderToDmp(entity,syncParamDetailDTO.getSyncOperate());

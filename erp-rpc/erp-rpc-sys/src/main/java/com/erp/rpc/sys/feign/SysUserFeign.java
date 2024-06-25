@@ -16,6 +16,7 @@ import com.erp.model.sys.entity.*;
 import com.erp.model.sys.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.cloud.openfeign.SpringQueryMap;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -69,8 +70,17 @@ public interface SysUserFeign {
     ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto);
 
     /**
-     * 获取用户权限
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
      */
+    @PostMapping("feign/user/pagingSelect")
+    ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto);
+
+        /**
+         * 获取用户权限
+         */
     @PostMapping("feign/user/getRequestPermissionsList")
     List<UserRequestPermissionsDTO> getRequestPermissionsList(@RequestBody String userId);
     /**

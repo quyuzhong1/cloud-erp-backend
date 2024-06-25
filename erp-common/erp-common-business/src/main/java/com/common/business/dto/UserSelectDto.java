@@ -3,6 +3,8 @@ package com.common.business.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+
 /**
  * 远程搜索
  *
