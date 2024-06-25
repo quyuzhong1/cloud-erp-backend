@@ -190,10 +190,10 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
         OffsetDateTime dataOffsetDateTime = reportSchedule.getDataStartTime().atOffset(BusinessCommonConstants.systemZoneOffset);
         CreateReportScheduleSpecification.PeriodEnum dataPeriodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getDataPeriod());
         // 下次数据开始时间=数据结束时间
-        OffsetDateTime nextDataOffsetDateTime = dataPeriodEnum.formatTime(dataOffsetDateTime);
+        OffsetDateTime nextDataOffsetDateTime = dataPeriodEnum.plusPeriod(dataPeriodEnum.formatTime(dataOffsetDateTime));
 
         // 任务时间
-        OffsetDateTime taskOffsetDateTime = reportSchedule.getDataStartTime().atOffset(BusinessCommonConstants.systemZoneOffset);
+        OffsetDateTime taskOffsetDateTime = reportSchedule.getFirstNextReportCreationTime().atOffset(BusinessCommonConstants.systemZoneOffset);
         // 任务间隔时间枚举
         CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
         // 下次任务开始时间
@@ -206,8 +206,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
         }
 
         // 修改下次创建时间
-        LocalDateTime nextTime = periodEnum.plusPeriod(nextTaskOffsetDateTime).toLocalDateTime();
-        reportSchedule.setFirstNextReportCreationTime(nextTime);
+        reportSchedule.setFirstNextReportCreationTime(nextTaskOffsetDateTime.toLocalDateTime());
 
         // 修改下次任务数据开始时间
         reportSchedule.setDataStartTime(nextDataOffsetDateTime.toLocalDateTime());
