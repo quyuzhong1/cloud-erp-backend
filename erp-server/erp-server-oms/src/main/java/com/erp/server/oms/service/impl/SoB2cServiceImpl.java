@@ -6138,31 +6138,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     if (CollectionUtils.isEmpty(detailList)) {
                         throw new ServiceException(StrUtil.format("速卖通【{}】发货明细为空", fulfillmentOrderNoList));
                     }
-                    //根据
-
                     //校验sku
-                    List<String> platformSkuIdList = detailList.stream().map(AliExpressDeliveryDetail::getPlatformSkuId).distinct().collect(Collectors.toList());
-                    List<String> platformSpuList = detailList.stream().map(AliExpressDeliveryDetail::getItemId).distinct().collect(Collectors.toList());
-                    Map<String, List<ListingInfoWithSkuMappingDTO>> skuMappingMap = soB2cDetailService.mapListingByPlatformSkuId(platformSkuIdList, platformSpuList, entity.getDictPlatform(), entity.getShopId(), null, null);
-
+                    List<String> platformSkuIdList = detailList.stream().map(AliExpressDeliveryDetail::getScItemId).distinct().collect(Collectors.toList());
+                    List<SkuMappingDTO.WarehouseSkuDTO> warehouseSkuDTOList = skuMappingService.listByWarehouseAndPlatformSku(mappingViewDTO.getWarehouseId(),platformSkuIdList);
                     List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList = new ArrayList<>();
+                    List<String> notMatchSkuNoList = new ArrayList<>();
                     for (AliExpressDeliveryDetail deliveryDetailDTO : detailList) {
-                        // 映射关系
-                        List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingMap.get(deliveryDetailDTO.getPlatformSkuId());
-                        // 检查和获取映射关系
-                        ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, deliveryDetailDTO.getItemId(), entity.getDictPlatform());
-                        if (Objects.isNull(mappingDTO) || StringUtils.isBlank(mappingDTO.getProductSkuId())) {
-                            throw new ServiceException(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系,平台产品ID:【{}】", deliveryDetailDTO.getItemId()));
+                        SkuMappingDTO.WarehouseSkuDTO warehouseSkuDTO = warehouseSkuDTOList.stream().filter(v->v.getPlatformSkuNo().equals(deliveryDetailDTO.getScItemId())).findFirst().orElse(new SkuMappingDTO.WarehouseSkuDTO());
+                        if(StringUtils.isBlank(warehouseSkuDTO.getProductSkuId())){
+                            notMatchSkuNoList.add(deliveryDetailDTO.getScItemId());
+                            continue;
                         }
                         PlatformDeliveryDetailDTO platformDeliveryDetailDTO = new PlatformDeliveryDetailDTO();
-                        platformDeliveryDetailDTO.setSkuId(mappingDTO.getProductSkuId());
-                        platformDeliveryDetailDTO.setSkuNo(mappingDTO.getProductSkuNo());
+                        platformDeliveryDetailDTO.setSkuId(warehouseSkuDTO.getProductSkuId());
+                        platformDeliveryDetailDTO.setSkuNo(warehouseSkuDTO.getProductSkuNo());
                         platformDeliveryDetailDTO.setWarehouseId(mappingViewDTO.getWarehouseId());
                         platformDeliveryDetailDTO.setWarehouseName(mappingViewDTO.getWarehouseName());
                         platformDeliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
                         platformDeliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
                         platformDeliveryDetailDTO.setPlatformWarehouseName(key);
-                        platformDeliveryDetailDTO.setPlatformSkuNo(deliveryDetailDTO.getPlatformSku());
+                        platformDeliveryDetailDTO.setPlatformSkuNo(deliveryDetailDTO.getScItemId());
                         platformDeliveryDetailDTO.setPlatformSpuNo(deliveryDetailDTO.getItemId());
                         platformDeliveryDetailDTO.setQty(Integer.valueOf(deliveryDetailDTO.getDeliveryQty()));
                         platformDeliveryDetailDTO.setMainId(entity.getId());
@@ -6170,12 +6165,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         platformDeliveryDetailDTO.setPlatformSkuId(deliveryDetailDTO.getPlatformSkuId());
                         platformDeliveryDetailDTOList.add(platformDeliveryDetailDTO);
                     }
-                    platformDeliveryDetailDTOList = aliExpressDliveryOrderService.handleData(platformDeliveryDetailDTOList);
                     List<String> skuIds = platformDeliveryDetailDTOList.stream().map(PlatformDeliveryDetailDTO::getSkuId).collect(Collectors.toList());
                     PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
                             .platformDeliveryDetailDTOList(platformDeliveryDetailDTOList)
                             .generateB2cDTO(this.getSoOutstockByIdAndWarehouseId(entity.getId(),mappingViewDTO.getWarehouseId()))
                             .build();
+                    if(CollectionUtils.isNotEmpty(notMatchSkuNoList)){
+                        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                        addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                        addError.setParamJson("");
+                        addError.setReturnJson("");
+                        addError.setMainId(entity.getId());
+                        addError.setMessage(StrUtil.format("自动生成销售出库单失败：存在速卖通货品id未映射sku，货品id:【{}】", notMatchSkuNoList));
+                        soB2cErrorService.add(addError);
+                    }
                     //生成销售出库单
                     Boolean generateSoOutstockResult = soOutstockFeign.generateB2cSoOutstockByPlatformData(platformGenerateSoOutstockDTO);
                     if(generateSoOutstockResult){
@@ -6183,6 +6186,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         soB2cDetailService.updateWarehouseByMapping(mappingViewDTO, entity.getId(),skuIds);
                         //生成速卖通发货单
                         addAliExpressDelivery(logisticsEntity, val.get(0), entity, platformDeliveryDetailDTOList);
+                        if(CollectionUtils.isNotEmpty(notMatchSkuNoList)){
+                            return false;
+                        }
                     }else{
                         return false;
                     }

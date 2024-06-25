@@ -1275,4 +1275,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .findFirst()
                 .orElse(null);
     }
+
+    @Override
+    public List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(String warehouseId, List<String> platformSkuNoList) {
+        if(StringUtils.isBlank(warehouseId) || CollectionUtils.isEmpty(platformSkuNoList)){
+            return new ArrayList<>();
+        }
+        return baseMapper.listByWarehouseAndPlatformSku(warehouseId,platformSkuNoList);
+    }
 }
