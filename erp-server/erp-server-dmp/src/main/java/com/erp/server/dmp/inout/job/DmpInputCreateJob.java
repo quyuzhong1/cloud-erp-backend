@@ -16,6 +16,10 @@ public class DmpInputCreateJob {
 	@Autowired
 	private DmpInputCreateFactory dmpInputCreateFactory;
 	
+	/**
+	 * 创建正常任务
+	 * @return
+	 */
 	@XxlJob("createNormalInputTask")
     public ReturnT createNormalInputTask(){
 		String cfgInputId = XxlJobHelper.getJobParam();
@@ -25,6 +29,10 @@ public class DmpInputCreateJob {
         return ReturnT.SUCCESS;
     }
 	
+	/**
+	 * 创建历史任务
+	 * @return
+	 */
 	@XxlJob("createHistoryInputTask")
     public ReturnT createHistoryInputTask(){
 		String cfgInputId = XxlJobHelper.getJobParam();
@@ -34,12 +42,10 @@ public class DmpInputCreateJob {
         return ReturnT.SUCCESS;
     }
 	
-	@XxlJob("createHotfixInputTask")
-    public ReturnT createHotfixInputTask(){
-		dmpInputCreateFactory.createHotfixInputTask(JSON.parseObject(XxlJobHelper.getJobParam() , DmpInputHotfixCreateRequest.class));
-        return ReturnT.SUCCESS;
-    }
-	
+	/**
+	 * 创建快速任务并执行
+	 * @return
+	 */
 	@XxlJob("doHotfixInputTask")
 	public ReturnT doHotfixInputTask(){
 		dmpInputCreateFactory.doHotfixInputTask(JSON.parseObject(XxlJobHelper.getJobParam() , DmpInputHotfixCreateRequest.class));

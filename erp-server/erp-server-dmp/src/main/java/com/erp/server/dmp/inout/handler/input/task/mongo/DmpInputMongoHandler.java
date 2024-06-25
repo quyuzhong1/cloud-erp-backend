@@ -40,6 +40,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.crypto.digest.MD5;
 
+/**
+ * dmp输入任务mongo状态处理器，被mongo任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 	

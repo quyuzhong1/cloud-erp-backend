@@ -11,6 +11,11 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 
+/**
+ * dmp输入init任务测试处理器，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 @Scope("prototype")
 public class DmpInputTestInitHandler extends DmpInputInitHandler{

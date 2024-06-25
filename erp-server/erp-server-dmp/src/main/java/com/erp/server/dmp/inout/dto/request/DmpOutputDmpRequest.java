@@ -9,6 +9,11 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 
 import lombok.Data;
 
+/**
+ * 输出任务dmp状态请求参数
+ * @author Administrator
+ *
+ */
 @Data
 public class DmpOutputDmpRequest extends DmpOutputMongoRequest{
 	/**

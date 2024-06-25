@@ -23,6 +23,11 @@ import com.google.common.collect.Lists;
 
 import cn.hutool.core.collection.CollUtil;
 
+/**
+ * 记录任务状态handler，主要操作com.erp.model.dmp.entity.DmpInputTaskStatusRecordEntity，通用型handler
+ * @author Administrator
+ *
+ */
 @Service
 public class DmpInputTaskStatusHandler extends DmpInputHandler{
 	

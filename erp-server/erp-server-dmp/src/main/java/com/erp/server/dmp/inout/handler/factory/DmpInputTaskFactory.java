@@ -18,6 +18,11 @@ import com.erp.server.dmp.service.DmpInputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
 
+/**
+ * 输入任务工厂，添加handler给handler链路执行
+ * @author Administrator
+ *
+ */
 @Component
 public class DmpInputTaskFactory{
 	
@@ -28,6 +33,11 @@ public class DmpInputTaskFactory{
 	@Autowired
 	private DmpInputTaskStatusHandler dmpInputTaskStatusHandler;
 	
+	/**
+	 * 执行输入任务
+	 * @param dmpInputFinishRequest
+	 * @return
+	 */
 	public DmpInputFinishResponse dealInputTask(DmpInputFinishRequest dmpInputFinishRequest) {
 		DmpInputTaskStatusEnum[] values = DmpInputTaskStatusEnum.values();
 		DmpInputFinishResponse dmpResponse = new DmpInputFinishResponse();

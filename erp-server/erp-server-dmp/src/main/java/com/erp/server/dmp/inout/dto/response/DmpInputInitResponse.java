@@ -9,6 +9,11 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 
 import lombok.Data;
 
+/**
+ *  输入任务init状态响应参数
+ * @author Administrator
+ *
+ */
 @Data
 public class DmpInputInitResponse extends DmpInputTaskResponse{
 	private Map<DmpCfgInputConvertEntity, List<DmpInputTaskInitDTO>> convertInputTaskInitDTOListMaps = new HashMap<>();

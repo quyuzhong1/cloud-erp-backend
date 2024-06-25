@@ -7,6 +7,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+/**
+ * dmp输入任务数据库mongo字段转换处理器，使用替换第一个字母小写替换key方式，被dmp任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 @Scope("prototype")
 public class DmpInputUncapitalizeMongoHandler extends DmpInputBaseMongoHandler{

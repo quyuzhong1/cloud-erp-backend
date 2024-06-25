@@ -49,6 +49,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.crypto.digest.MD5;
 
+/**
+ * dmp输入任务dmp状态处理器，被dmp任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	

@@ -16,6 +16,11 @@ import com.erp.server.dmp.inout.dto.request.DmpInputKingdeeApiInitRequest;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * dmp输入init任务基础处理器下的金蝶api获取数据方式
+ * @author Administrator
+ *
+ */
 @Service
 @Slf4j
 public class DmpInputKingdeeApiInitHandler implements DmpInputApiInitHandler{

@@ -1,17 +1,11 @@
 package com.erp.server.dmp.inout.handler.input.task.finish;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
-import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
@@ -27,12 +21,12 @@ import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
-import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDmpHandler;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 
-import cn.hutool.core.collection.CollUtil;
-
+/**
+ * dmp输入任务处理器，被各种finish任务状态执行器继承，protected方法全部都可重写，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 public abstract class DmpInputFinishHandler extends DmpInputTaskHandler{
 	@Override

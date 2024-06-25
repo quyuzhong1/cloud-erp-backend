@@ -23,6 +23,11 @@ import com.erp.server.dmp.service.DmpInputTaskFileService;
 
 import cn.hutool.core.collection.CollUtil;
 
+/**
+ * dmp输入任务处理器，被各种fds任务状态执行器继承，protected方法全部都可重写，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * @author Administrator
+ *
+ */
 @Service
 public abstract class DmpInputFdsHandler extends DmpInputTaskHandler{
 	

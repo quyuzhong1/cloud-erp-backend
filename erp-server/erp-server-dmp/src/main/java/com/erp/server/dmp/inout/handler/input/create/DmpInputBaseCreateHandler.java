@@ -22,7 +22,7 @@ import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * dmp输入创建任务处理器
+ * dmp输入任务创建处理器
  * @author Administrator
  *
  */

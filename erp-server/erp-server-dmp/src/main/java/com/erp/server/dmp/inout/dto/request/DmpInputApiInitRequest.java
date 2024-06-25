@@ -4,6 +4,11 @@ import java.time.LocalDateTime;
 
 import lombok.Data;
 
+/**
+ * 输入任务init状态api类型请求参数
+ * @author Administrator
+ *
+ */
 @Data
 public class DmpInputApiInitRequest extends DmpInputInitRequest{
 	/**

@@ -9,6 +9,11 @@ import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
 
 import lombok.Data;
 
+/**
+ * 输出任务fds状态请求参数
+ * @author Administrator
+ *
+ */
 @Data
 public class DmpOutputFdsRequest extends DmpOutputInitRequest{
 	/**
