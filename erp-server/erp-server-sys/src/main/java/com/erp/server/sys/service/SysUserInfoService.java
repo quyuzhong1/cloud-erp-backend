@@ -284,7 +284,6 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     void updateStateSrm(UpdateUserStateDTO stateDTO);
 
     List<SysUserInfoEntity> listErpUser();
-
     /**
      * 远程搜索
      *

@@ -11,6 +11,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -488,13 +489,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 物流规则
-     * @description
+     *
      * @param
-     * @author Lambda
+     * @param isCheckProductRegistration
      * @return
+     * @description
+     * @author Lambda
      * @create 2023-12-29 8:41
      */
-    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map);
+    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
 
     /**
      * 获取客户信息
@@ -911,10 +914,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 添加赠品
-     * @param dto
+     * @param entity
+     * @param detailEntityList
+     * @param dtoList
+     * @param LogisticsEntity
      * @return
      */
-    BatchResultDTO addGift(SoB2cDTO.GiftDTO dto);
+    BatchResultDTO addGift(SoB2cEntity entity,List<SoB2cDTO.GiftDTO> dtoList,SoB2cLogisticsEntity LogisticsEntity,List<SoB2cDetailEntity> detailEntityList);
 
     /**
      * 根据销售订单id获取买家信息

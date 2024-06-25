@@ -111,6 +111,7 @@ public class SysUserFeignController extends BaseController {
         List<FindUserDTO> list = sysUserInfoService.getUserList(dto);
         return success(list);
     }
+
     /**
      * 远程搜索
      *
@@ -121,6 +122,7 @@ public class SysUserFeignController extends BaseController {
     public ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto) {
         return success(sysUserInfoService.pagingSelect(dto));
     }
+
     @PostMapping("/findAuthorityList")
 
     public ApiResult<List<FindUserDTO>> findAuthorityList(@RequestBody @Validated BaseSearchDTO dto) {

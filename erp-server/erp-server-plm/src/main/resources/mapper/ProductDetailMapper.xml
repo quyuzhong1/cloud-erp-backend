@@ -91,7 +91,6 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pd.warehouse_location,
-        pd.warehouse_location_large,
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no
         FROM product_info pi

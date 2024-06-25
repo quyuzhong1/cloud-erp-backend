@@ -173,6 +173,11 @@ public interface KingdeeCommonService {
     PlatformEntity getPlatformEntity(Map<String, Object> map, String typeName);
 
     /**
+     * @param platformName 平台名称
+     */
+    PlatformEntity getPlatformEntity(String platformName);
+
+    /**
      * @param apiUtils
      * @param map
      * @param number

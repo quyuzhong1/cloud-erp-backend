@@ -24,7 +24,6 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
-import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * B2C销售订单表
@@ -140,7 +140,7 @@ public class SoB2cController extends BaseController {
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
@@ -265,7 +265,7 @@ public class SoB2cController extends BaseController {
                         SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
                         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
                         if (warehouseRuleMatch) {
-                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
+                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
                             //表示成功
                             if(logisticsRuleResult.getIsRuleMatch()){
                                 //检查是否备案并修改状态
@@ -1216,22 +1216,27 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/addGift")
     public ApiResult<List<BatchResultDTO>> addGift(@RequestBody @Validated List<SoB2cDTO.GiftDTO> dtoList) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
-        for (SoB2cDTO.GiftDTO dto : dtoList) {
-            BatchResultDTO giftResult;
-            try {
-                giftResult = soB2cService.addGift(dto);
-            } catch (Exception e) {
-                log.error("B2C销售订单作废失败", e);
-                SoB2cEntity entity = soB2cService.getById(dto.getId());
-                if (ObjectUtil.isEmpty(entity)) {
-                    giftResult = BatchResultDTO.fail(dto.getId(), dto.getCode(), "B2C销售订单不存在, 添加赠品失败");
-                    resultDTOS.add(giftResult);
-                    continue;
-                }
-                giftResult = BatchResultDTO.fail(dto.getId(), entity.getCode(), e.getMessage());
+        Map<String, List<SoB2cDTO.GiftDTO>> collect = dtoList.stream().collect(Collectors.groupingBy(SoB2cDTO.GiftDTO::getId));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(collect.size());
+        List<String> ids = dtoList.stream().map(SoB2cDTO.GiftDTO::getId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> entityList = soB2cService.listByIds(ids);
+        List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listByMainIds(ids);
+        List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        for (List<SoB2cDTO.GiftDTO> dtoList1 : collect.values()) {
+            SoB2cDTO.GiftDTO dto = dtoList1.stream().filter(e -> StringUtils.isNotBlank(e.getId()) && StringUtils.isNotBlank(e.getCode())).findFirst().orElse(new SoB2cDTO.GiftDTO());
+            SoB2cEntity entity = entityList.stream().filter(v->v.getId().equals(dto.getId())).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getId(),"销售订单记录不存在"));
+                continue;
             }
-            resultDTOS.add(giftResult);
+            List<SoB2cDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> e.getMainId().equals(dto.getId())).collect(Collectors.toList());
+            SoB2cLogisticsEntity LogisticsEntity = logisticsEntityList.stream().filter(e -> e.getMainId().equals(dto.getId())).findFirst().orElse(null);
+            try {
+                resultDTOS.add(soB2cService.addGift(entity,dtoList1, LogisticsEntity, detailEntityList1));
+            } catch (Exception e) {
+                log.error("B2C销售订单添加赠品失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

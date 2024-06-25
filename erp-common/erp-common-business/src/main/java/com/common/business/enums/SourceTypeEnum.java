@@ -171,6 +171,18 @@ public enum SourceTypeEnum {
 
     // 亚马逊相关
     AMZ_REPORT_CONSUMER("amzReportConsumer", "亚马逊报告消费处理","amz_report_task"),
+
+
+    // 旺店通相关
+    WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单","dmp_pull_task"),
+    WDT_RETURN_ORDER("wdt_return_order", "旺店通退货入库单","dmp_pull_task"),
+
+    //旺店通
+    WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),
+    WDT_SHOP("wdt_shop", "旺店通店铺基础数据", "dmp_pull_task"),
+
+    QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
+    QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
     ;
 
     /**

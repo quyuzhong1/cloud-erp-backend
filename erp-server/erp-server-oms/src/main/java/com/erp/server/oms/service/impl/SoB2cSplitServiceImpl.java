@@ -2,7 +2,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -35,7 +34,6 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConverter;
@@ -56,7 +54,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -555,14 +552,40 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
         //订单拆分字段处理
-        SoB2cDTO.SplitSaveResultDTO resultDTO = splitSaveHandle(dto);
-
+        SoB2cDTO.SplitSaveResultDTO resultDTO = service.splitSaveHandle(dto);
+        List<SoB2cEntity> entityList = resultDTO.getNeedRuleIds();
+        if(CollectionUtils.isNotEmpty(entityList)){
+            for (SoB2cEntity entity : entityList) {
+                //走仓库规则和物流规则的
+                SoB2cDTO.RuleResultDTO warehouseRuleResult = new SoB2cDTO.RuleResultDTO();
+                try {
+                    //拉取订单正常处理
+                    warehouseRuleResult = soB2cService.warehouseRule(entity.getId(), new ArrayList<>(), new HashMap<>());
+                }catch (Exception e){
+                    log.error("{}仓库规则异常",entity.getCode(),e);
+                    warehouseRuleResult.setIsRuleMatch(false);
+                }
+                Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+                if (warehouseRuleMatch) {
+                    SoB2cDTO.RuleResultDTO logisticsRuleResult = new SoB2cDTO.RuleResultDTO();
+                    try {
+                        logisticsRuleResult = soB2cService.logisticsRule(entity.getId(), new HashMap<>(), true);
+                    }catch (Exception e){
+                        logisticsRuleResult.setAutoGetTrackNo(false);
+                        log.error("{}物流规则异常",entity.getCode(),e);
+                    }
+                    Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                    if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                        soB2cService.getLogisticsCode(entity.getId(), true);
+                    }
+                }
+            }
+        }
         //如果是TikTok平台拆分订单，需要同步到平台
         if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform())) {
-            tikTokSplit(resultDTO);
+            service.tikTokSplit(resultDTO);
         }
         return resultDTO;
     }
@@ -634,6 +657,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         //拆分同步tiktok入参
         OrderSplitPramDTO tikTokPramDTO = new OrderSplitPramDTO();
         List<SplittableGroupsBean> splittableGroups = new ArrayList<>();
+        List<SoB2cEntity> needRuleList = new ArrayList<>();
 
         for (int i = 0; i < splitList.size(); i++) {
             SplittableGroupsBean groupsBean = new SplittableGroupsBean();
@@ -728,25 +752,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 ApproveOneDTO approveOneDTO = new ApproveOneDTO();
                 approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
                 soB2cService.approveEnd(approveOneDTO,add,true);
-                //走仓库规则和物流规则的
-                if (add.hasPlatformWarehouseOrder()) {
-                    soB2cService.platformWarehouseOrderHandle(add.getId(), new HashMap<>());
-                } else {
-                    //拉取订单正常处理
-                    List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(add.getId());
-                    SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(add.getId(), soB2cDetailEntityList, new HashMap<>());
-                    Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
-                    if (warehouseRuleMatch) {
-                        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(add.getId(), new HashMap<>());
-                        if(logisticsRuleResult.getIsRuleMatch()){
-                            soB2cService.checkProductRegistrationAndUpdate(add.getId(), "");
-                        }
-                        Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                        if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
-                            soB2cService.getLogisticsCode(add.getId(), true);
-                        }
-                    }
-                }
+                needRuleList.add(add);
             }else{
                 add.setApproveStatus(entity.getApproveStatus());
                 this.updateById(add);
@@ -775,6 +781,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         splitSaveResultDTO.setSoB2cIds(soIdList);
         splitSaveResultDTO.setTikTokPramDTO(tikTokPramDTO);
         splitSaveResultDTO.setOldEntity(entity);
+        splitSaveResultDTO.setNeedRuleIds(needRuleList);
         return splitSaveResultDTO;
     }
 

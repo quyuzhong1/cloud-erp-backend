@@ -204,6 +204,12 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
     @TableField("third_code")
     private String thirdCode;
 
+    /**
+     * 第三方单据创建时间
+     */
+    @TableField("created")
+    private LocalDateTime created;
+
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";
