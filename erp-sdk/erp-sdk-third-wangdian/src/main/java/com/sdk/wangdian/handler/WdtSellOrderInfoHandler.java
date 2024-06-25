@@ -100,7 +100,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             //审核时间
             soOutStock.setApproveTime(outStockTime);
             soOutStock.setCreated(LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(order.getCreated())), ZoneId.systemDefault()));
-            soOutStock.setCreateUserName("wangdaintong");
+            soOutStock.setCreateUserName("wangdiantong");
             soOutStock.setCountry(CHINA.getSite());
             //第三方单据编号
             soOutStock.setThirdCode(order.getSrcOrderNo());
