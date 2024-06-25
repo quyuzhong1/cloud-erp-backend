@@ -49,14 +49,4 @@ public enum OutstockTypeEnum implements EnumMessage {
         return name;
     }
 
-    public static String getByCode(String code) {
-
-        OutstockTypeEnum[] enumList = OutstockTypeEnum.values();
-        for (OutstockTypeEnum item : enumList) {
-            if (item.getCode().equals(code)) {
-                return item.getName();
-            }
-        }
-        return "";
-    }
 }

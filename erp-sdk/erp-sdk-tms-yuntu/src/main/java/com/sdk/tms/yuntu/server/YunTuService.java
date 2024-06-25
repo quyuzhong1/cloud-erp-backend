@@ -105,4 +105,18 @@ public class YunTuService {
         String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_CANCEL_ORDER,paramsMap,appKey,appSecret);
         return JSONObject.parseObject(response,new TypeReference<YunTuResponse<YunTuCancelOrder>>() {}.getType());
     }
+
+
+    /**
+     *  更新重量
+     */
+    public YunTuResponse<String> updateWeight(@Valid YunTuUpdateWeightRequest request,Map<String, String> authMap){
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String url = authMap.get("url");
+        validate(appKey,appSecret,url);
+        Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
+        String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_UPDATE_WEIGHT,paramsMap,appKey,appSecret);
+        return JSONObject.parseObject(response,new TypeReference<YunTuResponse<String>>() {}.getType());
+    }
 }

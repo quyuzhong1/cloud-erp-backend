@@ -622,7 +622,7 @@ public class PdaWarehouseLocationMoveController extends BaseController {
      * @date 2024/4/16 11:33
      * @param dto
      */
-    @LogViewService
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓位移动")
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

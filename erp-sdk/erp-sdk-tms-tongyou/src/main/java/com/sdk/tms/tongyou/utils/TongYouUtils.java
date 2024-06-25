@@ -5,6 +5,7 @@ import com.common.core.utils.Md5Util;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.tongyou.constants.TongYouConstants;
 import com.sdk.tms.tongyou.dto.TongYouSignDTO;
+import com.sdk.tms.tongyou.dto.request.TongYouUpdateWeightRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,4 +42,7 @@ public class TongYouUtils {
         return Md5Util.md5UpperCase(userToken+logisticsId+orderNo + trackNo);
     }
 
+    public static String getUpdateWeightSign(TongYouUpdateWeightRequest tongYouUpdateWeightRequest, String userToken){
+        return Md5Util.md5UpperCase(userToken+tongYouUpdateWeightRequest.getOrderNo()+tongYouUpdateWeightRequest.getTrackNo());
+    }
 }

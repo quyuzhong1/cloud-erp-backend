@@ -182,4 +182,17 @@ public class BaseDropDownDTO implements Serializable {
         }
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+    }
 }

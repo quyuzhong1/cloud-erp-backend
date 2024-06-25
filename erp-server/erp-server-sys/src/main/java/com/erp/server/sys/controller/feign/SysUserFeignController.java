@@ -5,6 +5,7 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.RedisService;
@@ -109,6 +110,17 @@ public class SysUserFeignController extends BaseController {
     public ApiResult<List<FindUserDTO>> findList(@RequestBody @Validated BaseSearchDTO dto) {
         List<FindUserDTO> list = sysUserInfoService.getUserList(dto);
         return success(list);
+    }
+
+    /**
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto) {
+        return success(sysUserInfoService.pagingSelect(dto));
     }
 
     @PostMapping("/findAuthorityList")

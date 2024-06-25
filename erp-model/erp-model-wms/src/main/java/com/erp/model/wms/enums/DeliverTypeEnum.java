@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 @Getter
 public enum DeliverTypeEnum implements EnumMessage {
     MANUAL("manual","手动发货"),
-    FALSEHOOD("falsehood","虚假发货"),
+    FALSEHOOD("falsehood","手动标发"),
     THIRD_WAREHOUSE("thirdWarehouse","第三仓出库发货"),
     ;
 

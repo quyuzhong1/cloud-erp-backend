@@ -458,7 +458,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
 
         //产品信息
         ProductInfoDTO productInfoDTO = new ProductInfoDTO();
-        productInfoDTO.setName("");
+        productInfoDTO.setName(dto.getName());
         productInfoDTO.setBrandId("");
         productInfoDTO.setBrandName("");
         productInfoDTO.setChargeId("");

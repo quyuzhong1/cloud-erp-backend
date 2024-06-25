@@ -956,4 +956,19 @@ public class CustomerB2CDTO implements Serializable {
          */
         private String telNumber;
     }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        private String approveStatus;
+
+        /**
+         * 是否禁用
+         * false 没有
+         */
+        private Boolean disabled;
+    }
 }

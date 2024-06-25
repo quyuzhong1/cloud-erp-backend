@@ -519,6 +519,11 @@ public class SoOutstockDetailDTO implements Serializable {
          * 来源明细id
          */
         private String sourceDetailId;
+
+        /**
+         * 销售明细id
+         */
+        private String soDetailId;
     }
 
 

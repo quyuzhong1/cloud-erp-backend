@@ -25,6 +25,7 @@ public class YunTuServiceTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public YunTuServiceTest(){
+        //测试
         authMap.put("clientId","ITC0893791");
         authMap.put("clientSecret","axzc2utvPbfc9UbJDOh+7w==");
         authMap.put("url","http://omsapi.uat.yunexpress.com");
@@ -142,6 +143,15 @@ public class YunTuServiceTest {
                 .orderNumber("1736938321835200514")
                 .build();
         YunTuResponse<YunTuCancelOrder> response = yunTuService.cancelOrder(request,authMap);
+        System.out.println(response);
+    }
+    @Test
+    public void updateWeight() {
+        YunTuUpdateWeightRequest request = YunTuUpdateWeightRequest.builder()
+                .weight(new BigDecimal("10.1"))
+                .orderNumber("17369383218351200541")
+                .build();
+        YunTuResponse<String> response = yunTuService.updateWeight(request,authMap);
         System.out.println(response);
     }
 }

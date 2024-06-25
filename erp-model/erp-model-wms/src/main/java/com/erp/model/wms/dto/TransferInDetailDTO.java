@@ -147,12 +147,20 @@ public class TransferInDetailDTO implements Serializable {
          * 调入仓位
          */
         private String inWarehouseLocation;
+        /**
+         * 调入仓位名称
+         */
+        private String inWarehouseLocationName;
 
 
         /**
          * 调出仓位 不能更改
          */
         private String outWarehouseLocation;
+        /**
+         * 调出仓位名称
+         */
+        private String outWarehouseLocationName;
 
         /**
          * 途损数

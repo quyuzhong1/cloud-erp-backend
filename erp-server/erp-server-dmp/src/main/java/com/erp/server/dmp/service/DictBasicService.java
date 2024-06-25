@@ -1,8 +1,8 @@
 package com.erp.server.dmp.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.dmp.dto.DictBasicDTO;
+import com.erp.model.dmp.entity.DictBasicEntity;
 
 import java.util.List;
 

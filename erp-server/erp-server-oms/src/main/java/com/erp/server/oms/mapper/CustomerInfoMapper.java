@@ -61,4 +61,5 @@ public interface CustomerInfoMapper extends BaseMapper<CustomerInfoEntity> {
     List<CustomerInfoVO> listCustomerByProperty();
 
 
+    IPage<CustomerDTO.PageSelectDTO> pageSelect(Page query, @Param("params") CustomerDTO.SelectDTO params);
 }

@@ -31,57 +31,6 @@ public interface OtherOutStockConverter {
 
     OtherOutStockConverter INSTANCE = Mappers.getMapper(OtherOutStockConverter.class);
 
-    @Mappings({
-            @Mapping(target = "skuId", source = "skuVO.skuId"),
-            @Mapping(target = "skuNo", source = "skuVO.skuNo"),
-            @Mapping(target = "actualQty", source = "actualQty"),
-            @Mapping(target = "warehouseLocation", expression = "java(null == locationEntity ? \"\" : locationEntity.getCode())"),
-            @Mapping(target = "remark", source = "importExcelDTO.remark"),
-    })
-    OtherOutstockDetailDTO.AddDTO combineDetailDTO(OtherOutStockImportExcelDTO importExcelDTO,
-                                                   SkuVO skuVO,
-                                                   WarehouseLocationEntity locationEntity,
-                                                   Integer actualQty
-    );
-
-
-    @Mappings({
-            @Mapping(target = "billDate", source = "billDate"),
-            @Mapping(target = "inventoryDirection", source = "inventoryDirectionEnum.code"),
-            @Mapping(target = "warehouseKeeperId", constant = ""),
-            @Mapping(target = "receiverId", expression = "java(null == userDTO ? \"\" : userDTO.getUserId())"),
-            @Mapping(target = "warehouseId", source = "warehouseDTO.id"),
-            @Mapping(target = "receiveOrgId", source = "orgDTO.id"),
-            @Mapping(target = "type", source = "outstockTypeEnum.code"),
-            @Mapping(target = "typeName", source = "outstockTypeEnum.name"),
-            @Mapping(target = "deptId", source = "departmentDTO.id"),
-            @Mapping(target = "processApplyCode", source = "importExcelDTO.processApplyCode"),
-            @Mapping(target = "otherOutstockCustomer", source = "addCustomerDTO"),
-            @Mapping(target = "detailList", source = "detailList"),
-    })
-    OtherOutstockDTO.AddDTO combineAddDTO(OtherOutStockImportExcelDTO importExcelDTO,
-                                          OutstockTypeEnum outstockTypeEnum,
-                                          LocalDate billDate,
-                                          InventoryDirectionEnum inventoryDirectionEnum,
-                                          WarehouseDTO.ListDTO warehouseDTO,
-                                          WarehouseLocationEntity locationEntity,
-                                          FindUserDTO userDTO,
-                                          SysDepartmentDTO departmentDTO,
-                                          BaseIdDTO orgDTO,
-                                          OtherOutstockCustomerDTO.AddDTO addCustomerDTO,
-                                          List<OtherOutstockDetailDTO.AddDTO> detailList);
-
-
-    @Mappings({
-            @Mapping(target = "customerId", source = "id"),
-            @Mapping(target = "customerCode", source = "code"),
-            @Mapping(target = "name", source = "name"),
-            @Mapping(target = "receiveAddress", source = "receiveAddress"),
-            @Mapping(target = "receiverName", source = "receiverName"),
-            @Mapping(target = "telNumber", source = "telNumber"),
-    })
-    OtherOutstockCustomerDTO.AddDTO convertAddDTO(CustomerDTO.ReceiveInfoDTO customerDTO);
-
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -124,14 +73,16 @@ public interface OtherOutStockConverter {
             @Mapping(target = "inventoryOrgName", source = "warehouseDTO.orgName"),
             @Mapping(target = "receiveOrgId", source = "orgDTO.id"),
             @Mapping(target = "receiveOrgName", source = "orgDTO.name"),
-            @Mapping(target = "type", source = "outstockTypeEnum.code"),
+            @Mapping(target = "type", source = "type"),
+            @Mapping(target = "outType", source = "outType"),
             @Mapping(target = "deptId", source = "departmentDTO.id"),
             @Mapping(target = "deptName", source = "departmentDTO.name"),
             @Mapping(target = "code", source = "code"),
             @Mapping(target = "approveStatus", constant = "waitSubmit"),
     })
     OtherOutstockEntity combineAddEntity(OtherOutStockImportExcelDTO importExcelDTO,
-                                         OutstockTypeEnum outstockTypeEnum,
+                                         String type,
+                                         String outType,
                                          LocalDate billDate,
                                          InventoryDirectionEnum inventoryDirectionEnum,
                                          WarehouseDTO.ListDTO warehouseDTO,

@@ -123,5 +123,16 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private LocalTime sendTime;
     }
+    /**
+     * 飞书质检通知DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class B2cDeliveryInterceptDTO{
+        /**
+         * B2C发货拦截 （组包后不允许拦截）
+         */
+        private Boolean b2cDeliveryIntercept;
+    }
 
 }
