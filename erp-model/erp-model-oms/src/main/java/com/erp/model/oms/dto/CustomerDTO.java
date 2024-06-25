@@ -165,6 +165,43 @@ public class CustomerDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PageSelectDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 名称
+         */
+        private String code;
+    }
+    /**
+     * 远程搜索
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 是否禁用
+         * false 没有
+         */
+        private Boolean disabled;
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 主键id
+         */
+        private String id;
+    }
     /**
      * 新增加
      */

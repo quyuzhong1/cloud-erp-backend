@@ -8,6 +8,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.server.oms.mapper.DictBasicMapper;
 import com.erp.server.oms.service.DictBasicService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -57,6 +58,21 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
         return resultList;
     }
+    /**
+     * 根据key 获取字典数据
+     *
+     * @param type
+     * @param subType
+     * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     * @author hyj
+     * @date 2024-05-23 14:16
+     */
+    @Override
+    public List<DictBasicDTO.ViewDTO> getByType(String type,String subType) {
+        List<DictBasicEntity> list = listByType(type,subType);
+        List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
+        return resultList;
+    }
 
 
     /**
@@ -100,6 +116,15 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     private List<DictBasicEntity> listByKey(String key) {
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, key);
+        queryWrapper.eq(DictBasicEntity::getStatus,Boolean.TRUE);
+        return this.list(queryWrapper);
+    }
+    private List<DictBasicEntity> listByType(String type,String subType) {
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DictBasicEntity::getType, type);
+        if (StringUtils.isNotBlank(subType)){
+            queryWrapper.eq(DictBasicEntity::getSubType, subType);
+        }
         queryWrapper.eq(DictBasicEntity::getStatus,Boolean.TRUE);
         return this.list(queryWrapper);
     }

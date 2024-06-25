@@ -224,9 +224,14 @@ public class AliExpressOrder implements Serializable {
                     || "RISK_CONTROL".equals(orderStatus)
                     ||"IN_FROZEN".equals(orderStatus)){
 
-                return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
+//                return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
+                return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
             }
 
+        }
+        // 部分发货
+        if ("SELLER_PART_SEND_GOODS".equalsIgnoreCase(orderStatus)){
+            return SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode();
         }
 
         //平台仓订单
@@ -306,6 +311,10 @@ public class AliExpressOrder implements Serializable {
         if (finishShipped()){
             return ApproveStatusEnum.APPROVE.getCode();
         }
+        // 订单取消=待提交
+        if(convertCancel()){
+            return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+        }
 
         if (isPlatformWarehouseOrder) {
             if ("PLACE_ORDER_SUCCESS".equals(orderStatus)) {
@@ -354,6 +363,13 @@ public class AliExpressOrder implements Serializable {
      * security_close安全关闭
      */
     public boolean convertCancel() {
+        // 冻结中视为取消走拦截逻辑或初始化作废
+        if("IN_CANCEL".equals(orderStatus)
+                || "RISK_CONTROL".equals(orderStatus)
+                ||"IN_FROZEN".equals(orderStatus)){
+            return true;
+        }
+
         if (!"FINISH".equalsIgnoreCase(this.orderStatus)){
             // 非完结
             return false;

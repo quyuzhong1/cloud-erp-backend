@@ -33,6 +33,8 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -83,7 +85,7 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         }
         if (!apiParam.isEmpty() && apiParam.containsKey("history_query")) {
             Object historyQueryObj = apiParam.get("history_query");
-            if (null == historyQueryObj){
+            if (null != historyQueryObj){
                 historyQuery = (Boolean) historyQueryObj;
             }
         }
@@ -97,10 +99,22 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
 //        https://open.aliexpress.com/doc/doc.htm#/?docId=641
 
         String formatStr = DateUtil.fmt;
-        // 上次执行时间
-        LocalDateTime lastTime = data.getLastTime();
+        // 上次执行时间(数据提前10分钟)
+        // 格式: yyyy-mm-dd hh:mm:ss。此时间为美国太平洋时间
+        LocalDateTime lastTime = data.getLastTime()
+                .minusMinutes(10)
+                .atZone(ZoneId.systemDefault())
+                .toOffsetDateTime()
+                .atZoneSameInstant(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
+                .toLocalDateTime()
+                ;
         // 下次执行时间
-        LocalDateTime nextTime = data.getNextTime();
+        // 格式: yyyy-mm-dd hh:mm:ss。此时间为美国太平洋时间
+        LocalDateTime nextTime = data.getNextTime()
+                .atZone(ZoneId.systemDefault())
+                .toOffsetDateTime()
+                .atZoneSameInstant(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
+                .toLocalDateTime();
         // 创建开始时间
         String createDateStart;
         // 创建结束时间
@@ -352,5 +366,11 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
     @Override
     public Boolean getIsSendMq() {
         return false;
+    }
+
+    public static void main(String[] args) {
+        OffsetDateTime offsetDateTime = LocalDateTime.of(2024, 5, 1, 0, 0, 0).atZone(ZoneId.systemDefault()).toOffsetDateTime();
+        LocalDateTime localDateTime = offsetDateTime.atZoneSameInstant(ZoneId.of("America/Tijuana")).toLocalDateTime();
+        System.out.println(localDateTime.toString());
     }
 }

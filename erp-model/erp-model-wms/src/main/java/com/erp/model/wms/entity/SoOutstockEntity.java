@@ -274,6 +274,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("declare_status")
     private String declareStatus;
 
+    /**
+     * 旺店通原单创建时间
+     */
+    @TableField("created")
+    private LocalDateTime created;
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 

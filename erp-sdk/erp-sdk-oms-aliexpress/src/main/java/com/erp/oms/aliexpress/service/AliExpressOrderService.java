@@ -1,19 +1,15 @@
 package com.erp.oms.aliexpress.service;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -32,18 +28,14 @@ import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.tms.aliexpress.model.query.request.QueryShipmentOrder;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.regexp.RE;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
 
 /**
  * 速卖通订单服务
@@ -56,6 +48,8 @@ import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
 public class AliExpressOrderService {
 
     public static final Integer aliExpressPageSize = 50;
+
+    public static final String ALIEXPRESS_TIME_ZONE = "America/Tijuana";
 
     private static RedisUtil redisUtil;
 
@@ -462,7 +456,62 @@ public class AliExpressOrderService {
         return detailList;
     }
 
-    public static void main(String[] args) throws Exception {
+    /**
+     * 子订单声明发货
+     */
+    public void subDeclareDeliver(DeclareDeliverRequest declareDeliverRequest) throws ApiException {
+        String shopId = declareDeliverRequest.getShopId();
+        AliExpressShopInfoDTO shopInfoDTO = this.getShopInfoByShopId(shopId);
+        if (Objects.isNull(shopInfoDTO)) {
+            log.error("[速卖通子订单声明发货  获取 token 失败: shopId={}", shopId);
+            throw new ServiceException(ApiError.ERROR_SHOP_TOKEN_IS_NULL, shopId);
+        }
+        // 组合请求参数
+        QueryShipmentOrder.Shipment shipment = QueryShipmentOrder.Shipment.builder()
+                .logistics_no(declareDeliverRequest.getLogisticsNo())
+                .service_name(declareDeliverRequest.getServiceName())
+                .build();
+        QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
+                .send_type(declareDeliverRequest.getSendType())
+                .sub_trade_order_index("1")
+                .shipment_list(Collections.singletonList(shipment))
+                .build();
+        QueryShipmentOrder requestParams = QueryShipmentOrder.builder()
+                .trade_order_id(declareDeliverRequest.getOutRef())
+                .sub_trade_order_list(Collections.singletonList(tradeOrder))
+                .build();
+
+        String appKey = shopInfoDTO.getClientId();
+        String appSecret = shopInfoDTO.getClientSecret();
+        String baseUrl = shopInfoDTO.getBaseUrl();
+        String apiName = AliexpressConstants.SUB_DECLARE_DELIVER;
+        String token = shopInfoDTO.getToken();
+        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+
+        IopRequest request = new IopRequest();
+        request.setApiName(apiName);
+        request.addApiParameter("param_aeop_seller_shipment_sub_trade_order_request", JSONUtil.toJsonStr(requestParams));
+        log.warn("【{}】速卖通子声明标记发货:请求参数={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(request));
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        log.warn("【{}】速卖通子声明标记发货:响应结果={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(response));
+        String body = response.getBody();
+        JSONObject jsonObject = JSONUtil.parseObj(body);
+        JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_logistics_order_shipment_response");
+        JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
+        boolean success = resultJson.getBool("success", Boolean.FALSE);
+        if (!success){
+            String errorMsg = resultJson.getStr("error_msg", "");
+            if (StringUtils.isNotBlank(errorMsg)){
+                throw new ServiceException(ApiError.Default, errorMsg);
+            } else {
+                throw new ServiceException(ApiError.Default, JSONUtil.toJsonStr(body));
+            }
+        }
+    }
+
+
+
+        public static void main1(String[] args) throws Exception {
 //        String appKey = "502978";
 //        String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
 //        String baseUrl = "https://api-sg.aliexpress.com";
@@ -490,8 +539,8 @@ public class AliExpressOrderService {
                 .token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG")
 //                .startTime("2024-05-10 00:00:00")
 //                .endTime("2024-05-16 00:00:00")
-                .createDateStart("2024-06-01 00:00:00")
-                .createDateEnd("2024-6-21 00:00:00")
+                .createDateStart("2024-05-17 00:00:00")
+                .createDateEnd("2024-05-18 00:00:00")
                 .build();
 //        OrderRequest(clientId=502978, clientSecret=DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY,
 //                baseUrl=https://api-sg.aliexpress.com, apiName=aliexpress.trade.seller.orderlist.get,
@@ -510,4 +559,25 @@ public class AliExpressOrderService {
         System.out.println(aliExpressOrders);
         System.out.println("数量" + aliExpressOrders.size());
     }
+
+//    public static void main(String[] args) throws Exception{
+//        String orderId = "8188116597867872";
+//        String oaid = "bmDgBQHJPDmDInmawpwirA";
+//
+//        AddressRequest request=AddressRequest.builder()
+//                .clientId("502978")
+//                .clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY")
+//                .baseUrl("https://api-sg.aliexpress.com")
+//                .token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG")
+//                .oaid(oaid).
+//                orderId(orderId).build();
+//
+//        AliExpressOrderService aliExpressOrderService = new AliExpressOrderService();
+//        try {
+//            BuyerTradeAddress address=aliExpressOrderService.getBuyerTradeAddress(request);
+//            System.out.println(JSONUtil.toJsonStr(address));
+//        }catch (Exception e){
+//            throw new ServiceException("查询速卖通订单地址失败"+ JSONUtil.toJsonStr(e));
+//        }
+//    }
 }

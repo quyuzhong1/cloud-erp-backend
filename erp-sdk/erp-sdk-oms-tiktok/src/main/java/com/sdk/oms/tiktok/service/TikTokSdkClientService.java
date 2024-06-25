@@ -114,8 +114,8 @@ public class TikTokSdkClientService {
         task.setLastTime(LocalDateTime.now().minusDays(3));
         task.setNextTime(LocalDateTime.now().minusHours(3));
 
-        List<OrdersBean> ordersBeans = sdkClientService.sendTikTokGetOrder(shopInfoDTO, task);
-        for (OrdersBean ordersBean : ordersBeans) {
+        List<ListingViewDTO> listingViewDTOS = sdkClientService.sendMercadoGetListing(shopInfoDTO);
+        for (ListingViewDTO ordersBean : listingViewDTOS) {
             System.out.println(ordersBean);
         }
     }

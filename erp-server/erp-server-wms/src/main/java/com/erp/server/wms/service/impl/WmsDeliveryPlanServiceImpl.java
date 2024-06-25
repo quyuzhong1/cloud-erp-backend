@@ -128,7 +128,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货计划" , wmsDeliveryPlanEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",  UserContext.getDefaultLoginUser().getUserName(), "发货计划" , wmsDeliveryPlanEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_PLAN.getCode(), wmsDeliveryPlanEntity.getId(), "新增操作");
         // 新增明细
         wmsDeliveryPlanDetailService.add(addDTO, wmsDeliveryPlanEntity.getId());

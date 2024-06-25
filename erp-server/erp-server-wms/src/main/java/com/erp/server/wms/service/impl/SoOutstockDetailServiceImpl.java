@@ -644,6 +644,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Override
     public List<SoOutstockDetailDTO.AddDTO> checkAndGenerateDetail(SoOutstockDTO.GenerateB2cDTO dto) {
+        if(!dto.isCheckSkuHistory()){
+            return dto.getDetailList();
+        }
         List<String> notExistMapping = dto.getDetailList()
                 .stream()
                 .filter(v->CollectionUtils.isEmpty(v.getHistorySkuMappingList()))
@@ -898,7 +901,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //销售订单明细
             SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92015);
+                continue;
             }
             BigDecimal price=soDetailEntity.getPrice();
             //单价信息
