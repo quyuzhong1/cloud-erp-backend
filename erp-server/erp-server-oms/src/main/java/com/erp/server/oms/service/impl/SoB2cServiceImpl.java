@@ -1246,6 +1246,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             } else {
                 soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
             }
+        if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
+        }
             LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
             if (Objects.isNull(logisticsChannel)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
