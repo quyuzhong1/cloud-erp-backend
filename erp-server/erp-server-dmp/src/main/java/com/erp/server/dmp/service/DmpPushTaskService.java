@@ -156,4 +156,5 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      */
     void deleteByIds(List<String> ids);
 
+    List<DmpPushTaskEntity> listByCodeParam(DmpSyncTaskDTO.ListCodeDTO listCodeDTO);
 }

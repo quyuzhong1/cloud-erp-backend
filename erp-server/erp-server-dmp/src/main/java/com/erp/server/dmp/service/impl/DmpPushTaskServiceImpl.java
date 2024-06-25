@@ -513,5 +513,17 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         baseMapper.deleteByIds(ids);
     }
 
+    @Override
+    public List<DmpPushTaskEntity> listByCodeParam(DmpSyncTaskDTO.ListCodeDTO listCodeDTO) {
+        return lambdaQuery()
+                .in(DmpPushTaskEntity::getSourceCode, listCodeDTO.getSourceCodeList())
+                .eq(StringUtils.isNotBlank(listCodeDTO.getSourceType()), DmpPushTaskEntity::getSourceType, listCodeDTO.getSourceType())
+                .eq(DmpPushTaskEntity::getSourcePlatformName, listCodeDTO.getSourcePlatformName())
+                .eq(DmpPushTaskEntity::getTargetPlatformName, listCodeDTO.getTargetPlatformName())
+                .eq(StringUtils.isNotBlank(listCodeDTO.getMqTopic()), DmpPushTaskEntity::getMqTopic, listCodeDTO.getMqTopic())
+                .eq(StringUtils.isNotBlank(listCodeDTO.getMqTag()), DmpPushTaskEntity::getMqTag, listCodeDTO.getMqTag())
+                .list();
+    }
+
 
 }
