@@ -523,7 +523,10 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                     @Override
                     public void afterCommit() {
-                        dmpMqFeign.sendTask(Arrays.asList(finalPushTaskEntity, finalPushWdtTask));
+                        dmpMqFeign.sendTask(Collections.singletonList(finalPushTaskEntity));
+                        if(finalPushWdtTask != null){
+                            dmpMqFeign.sendTask(Collections.singletonList(finalPushWdtTask));
+                        }
                     }
                 });
             } else {
