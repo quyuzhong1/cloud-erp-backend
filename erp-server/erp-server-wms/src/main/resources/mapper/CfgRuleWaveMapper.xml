@@ -21,7 +21,7 @@
        <result column="min_qty" property="minQty" />
        <result column="max_qty" property="maxQty" />
        <result column="disabled" property="disabled" />
-       <result column="execution_time_json" property="executionTimeJson" />
+       <result column="execution_time_json" property="executionTimeJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
        <result column="execution_type" property="executionType" />
        <result column="sorting_method" property="sortingMethod" />
        <result column="remark" property="remark" />
