@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -235,4 +236,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO);
 
+    BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto);
+
+    BatchResultDTO clearException(String id);
+
+    BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto);
+
+    SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids);
 }
