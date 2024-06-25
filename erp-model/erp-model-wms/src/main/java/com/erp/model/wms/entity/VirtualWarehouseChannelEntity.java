@@ -29,16 +29,6 @@ public class VirtualWarehouseChannelEntity extends BaseEntity<VirtualWarehouseCh
     @TableField("virtual_warehouse_id")
     private String virtualWarehouseId;
     /**
-    * 虚拟仓编码
-    */
-    @TableField("virtual_warehouse_code")
-    private String virtualWarehouseCode;
-    /**
-    * 虚拟仓名称
-    */
-    @TableField("virtual_warehouse_name")
-    private String virtualWarehouseName;
-    /**
     * 平台的dict值
     */
     @TableField("dict_platform")
@@ -53,35 +43,14 @@ public class VirtualWarehouseChannelEntity extends BaseEntity<VirtualWarehouseCh
     */
     @TableField("relation_id")
     private String relationId;
-    /**
-    * 关联名称
-    */
-    @TableField("relation_name")
-    private String relationName;
-    /**
-    * 平台类型
-    */
-    @TableField("dict_platform_type")
-    private String dictPlatformType;
-
-
-    public static final String DISABLED = "disabled";
 
     public static final String VIRTUAL_WAREHOUSE_ID = "virtual_warehouse_id";
-
-    public static final String VIRTUAL_WAREHOUSE_CODE = "virtual_warehouse_code";
-
-    public static final String VIRTUAL_WAREHOUSE_NAME = "virtual_warehouse_name";
 
     public static final String DICT_PLATFORM = "dict_platform";
 
     public static final String TYPE = "type";
 
     public static final String RELATION_ID = "relation_id";
-
-    public static final String RELATION_NAME = "relation_name";
-
-    public static final String DICT_PLATFORM_TYPE = "dict_platform_type";
 
     @Override
     public Serializable pkVal() {
