@@ -606,6 +606,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(podIds);
         poInstockDetailList = poInstockDetailList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
         List<String> errorCodes = new ArrayList<>();
+        //已提交的采购退货
+        List<PoReturnDetailEntity> samePurchaseDetailIds = baseMapper.listPoReturnByPoDetailIds(podIds,Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus(),ApproveStatusEnum.APPROVE.getStatus()));
+        samePurchaseDetailIds = samePurchaseDetailIds.stream().filter(v->!ids.contains(v.getMainId())).collect(Collectors.toList());
         for (PoReturnEntity purchaseReturnOrderEntity : purchaseReturnOrderEntities) {
             if(!SourceTypeEnum.QC_INFO.getCode().equals(purchaseReturnOrderEntity.getSourceType())){
                 continue;
@@ -614,8 +617,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailEntityList) {
                 Integer receiveQty = receiveDetails.stream().filter(v->v.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 Integer instockQty = poInstockDetailList.stream().filter(v->v.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                if(poReturnDetailEntity.getReturnQty() > receiveQty-instockQty){
-                    errorCodes.add(StrUtil.format("采购退货单【{}】sku【{}】退货数量不能大于已收货数量-已入库数量【{}】",purchaseReturnOrderEntity.getCode(),poReturnDetailEntity.getSkuNo(),receiveQty-instockQty));
+                Integer otherDetailQty = samePurchaseDetailIds.stream().filter(v->v.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                if(poReturnDetailEntity.getReturnQty() > receiveQty-instockQty - otherDetailQty){
+                    errorCodes.add(StrUtil.format("采购退货单【{}】sku【{}】退货数量不能大于已收货数量-已入库数量-已提交的退货数量【{}】",purchaseReturnOrderEntity.getCode(),poReturnDetailEntity.getSkuNo(),receiveQty-instockQty-otherDetailQty));
+                }else{
+                    samePurchaseDetailIds.add(poReturnDetailEntity);
                 }
             }
         }
