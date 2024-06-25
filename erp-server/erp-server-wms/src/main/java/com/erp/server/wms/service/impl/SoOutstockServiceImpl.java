@@ -615,38 +615,21 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){
             if (ObjectUtil.isNotEmpty(entity.getSoId())) {
-                List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listByMainIds(Collections.singletonList(dto.getId()));
-                List<SoDetailEntity> details = soInfoFeign.listSoDetailByMainId(entity.getSoId());
-                Map<String, Integer> detailMap = details.stream().collect(Collectors.toMap(SoDetailEntity::getId, SoDetailEntity::getQty, Integer::sum));
-                List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(new ArrayList<>(detailMap.keySet()));
-                for (SoOutstockDetailEntity detail : detailEntities) {
-                    SoDeliveryNoticeDetailEntity detailEntity = noticeDetailEntities.stream()
-                            .filter(e -> e.getId().equals(detail.getSourceDetailId()))
-                            .findFirst()
-                            .orElse(new SoDeliveryNoticeDetailEntity());
-                    Integer skuQty = detailMap.get(detailEntity.getSourceDetailId());
-                    List<String> ids = noticeDetailEntities.stream()
-                            .filter(e -> e.getSourceDetailId().equals(detailEntity.getSourceDetailId()))
-                            .map(SoDeliveryNoticeDetailEntity::getId)
-                            .collect(Collectors.toList());
-                    List<SoOutstockDetailEntity> soOutstockDetailEntityList = baseMapper.listApproveBySourceDetailIds(ids);
-                    Map<String, Integer> outDetailMap = soOutstockDetailEntityList.stream().collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getActualQty, Integer::sum));
-                    if (skuQty < detail.getActualQty() + Optional.ofNullable(outDetailMap.get(detail.getSkuNo())).orElse(0)) {
-                        throw new ServiceException(ApiError.ERROR_99103, detail.getSkuNo());
+                List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listDetailBySoIds(Collections.singletonList(entity.getSoId()));
+                List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(entity.getSoId()));
+                Map<String, Integer> detailMap = detailEntities.stream().filter(e -> Boolean.FALSE.equals(e.getInvalidStatus())).collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getPlanQty, Integer::sum));
+                Map<String, Integer> soDetailMap = soDetails.stream().collect(Collectors.toMap(SoDetailEntity::getSkuNo, SoDetailEntity::getQty, Integer::sum));
+                for (Map.Entry<String, Integer> entry : detailMap.entrySet()) {
+                    int sellQty = Optional.ofNullable(soDetailMap.get(entry.getKey())).orElse(0);
+                    if (sellQty == 0) {
+                        throw new ServiceException(ApiError.ERROR_99107, entry.getKey());
+                    }
+                    if (sellQty < entry.getValue()) {
+                        throw new ServiceException(ApiError.ERROR_99103, entry.getKey());
                     }
                 }
             }
-
         }
-
-        //已装箱才能审核(B2B订单)
-/*        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())
-                && OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())
-                && !"CN".equalsIgnoreCase(entity.getCountry())
-        ) {
-            throw new ServiceException(ApiError.NOT_PACKAGE_NO_APPROVE, entity.getCode());
-        }*/
-
         // 调用流程审核
         approveProcess(entity, dto);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
