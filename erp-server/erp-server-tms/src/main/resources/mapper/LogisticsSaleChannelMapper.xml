@@ -16,6 +16,7 @@
        <result column="cn_name" property="cnName" />
        <result column="en_name" property="enName" />
        <result column="code" property="code" />
+       <result column="service_platform" property="servicePlatform" />
        <result column="channel_status" property="channelStatus" />
        <result column="supplier_name" property="supplierName" />
        <result column="supplier_code" property="supplierCode" />
@@ -41,14 +42,14 @@
         update_time,
         version,
         is_deleted,
-        platform_channel_id, cn_name, en_name, code, channel_status, supplier_name, supplier_code, shipment_method, logistics_platform, source_data, is_track, aging, origin_country, destination_country, overseas_warehouse_id, platform_warehouse_code
+        platform_channel_id, cn_name, en_name, code,service_platform, channel_status, supplier_name, supplier_code, shipment_method, logistics_platform, source_data, is_track, aging, origin_country, destination_country, overseas_warehouse_id, platform_warehouse_code
     </sql>
 
     <select id="listByType" resultType="com.erp.model.tms.dto.SaleChannelDTO">
         SELECT
-            id,
-            cn_name,
-            platform_channel_id,
+            MAX(id) as id,
+            MAX(cn_name) as cnName,
+            MAX(platform_channel_id) as platformChannelId,
             code
         FROM
             logistics_sale_channel t
@@ -56,12 +57,13 @@
             t.is_deleted = false
             AND t.channel_status = 0
             AND t.logistics_platform = #{platformType}
+            AND t.service_platform ILIKE concat('%',#{servicePlatform}::text,'%')
+        group by code
     </select>
     <select id="listByLogisticsPlatform" resultType="com.erp.model.tms.entity.LogisticsSaleChannelEntity">
         SELECT
-          <include refid="Base_Column_List">
-
-          </include>
+          <include refid="Base_Column_List"/>
         FROM  logistics_sale_channel WHERE logistics_platform=#{logisticsPlatform}
+        and service_platform ILIKE concat('%',#{servicePlatform}::text,'%')
     </select>
 </mapper>

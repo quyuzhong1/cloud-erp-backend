@@ -50,7 +50,7 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      * @param platformType
      * @return
      */
-    List<SaleChannelDTO> listByType(String platformType);
+    List<SaleChannelDTO> listByType(String platformType,String servicePlatform);
 
     /**
      * 根据数据来源获取源数据
@@ -62,9 +62,10 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
     /**
      * 根据物流平台获取 到原始渠道信息
      * @param logisticsPlatform
+     * @param servicePlatform
      * @return
      */
-    List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String logisticsPlatform);
+    List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String logisticsPlatform,String servicePlatform);
 
     /**
      *

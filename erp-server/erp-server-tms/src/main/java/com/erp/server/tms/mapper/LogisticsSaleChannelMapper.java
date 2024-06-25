@@ -28,7 +28,7 @@ public interface LogisticsSaleChannelMapper extends BaseMapper<LogisticsSaleChan
      * @param platformType
      * @return
      */
-    List<SaleChannelDTO> listByType(@Param("platformType") String platformType);
+    List<SaleChannelDTO> listByType(@Param("platformType") String platformType,@Param("servicePlatform")String servicePlatform);
 
     /**
      *
@@ -37,5 +37,5 @@ public interface LogisticsSaleChannelMapper extends BaseMapper<LogisticsSaleChan
      *@author yl
      *@date 2023-11-27
      */
-    List<LogisticsSaleChannelEntity> listByLogisticsPlatform(@Param("logisticsPlatform") String logisticsPlatform);
+    List<LogisticsSaleChannelEntity> listByLogisticsPlatform(@Param("logisticsPlatform") String logisticsPlatform,@Param("servicePlatform")String servicePlatform);
 }

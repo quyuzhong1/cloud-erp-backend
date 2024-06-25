@@ -74,11 +74,8 @@ public class LogisticsSaleChannelController extends BaseController {
      * @return
      */
     @PostMapping("/listByType")
-    public ApiResult<List<SaleChannelDTO>> listByType(@RequestParam("platformType") String platformType) {
-        if (StringUtils.isBlank(platformType)){
-            throw new ServiceException(ApiError.ERROR_600);
-        }
-        return success(logisticsSaleChannelService.listByType(platformType));
+    public ApiResult<List<SaleChannelDTO>> listByType(@RequestBody LogisticsSaleChannelDTO.QueryDTO dto) {
+        return success(logisticsSaleChannelService.listByType(dto.getPlatformType(), dto.getServicePlatform()));
     }
 
 }

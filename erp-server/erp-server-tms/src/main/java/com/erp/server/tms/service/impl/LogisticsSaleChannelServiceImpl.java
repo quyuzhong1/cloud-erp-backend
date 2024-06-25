@@ -142,8 +142,8 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     }
 
     @Override
-    public List<SaleChannelDTO> listByType(String platformType) {
-        return baseMapper.listByType(platformType);
+    public List<SaleChannelDTO> listByType(String platformType,String servicePlatform) {
+        return baseMapper.listByType(platformType,servicePlatform);
     }
 
     @Override
@@ -171,9 +171,9 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
      * @return
      */
     @Override
-    public List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String logisticsPlatform) {
+    public List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String logisticsPlatform,String servicePlatform) {
 
-        return baseMapper.listByLogisticsPlatform(logisticsPlatform);
+        return baseMapper.listByLogisticsPlatform(logisticsPlatform,servicePlatform);
     }
 
     @Override

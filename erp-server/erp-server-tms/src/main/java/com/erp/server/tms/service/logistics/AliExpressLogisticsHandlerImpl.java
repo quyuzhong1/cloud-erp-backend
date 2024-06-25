@@ -243,7 +243,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .trade_order_from(logisticsOrderVO.getOrderSource())
                 .trade_order_id(logisticsOrderVO.getDeliveryNo())
                 .undeliverable_decision("1")
-                .warehouse_carrier_service(logisticsOrderVO.getLogisticsSaleChannel().getCode())
+                .warehouse_carrier_service(logisticsOrderVO.getLogisticsChannelEntity().getCode())
                 //托寄物信息
                 .address_d_t_os(addressDTO)
                 .is_agree_upgrade_reverse_parcel_insure(false)
