@@ -96,7 +96,7 @@ public class PickingCartTypeController extends BaseController {
     }
 
     /**
-     * 验证是否被用
+     * 验证是否被用,true被用，false未被用
      * @author will
      * @date 2024/6/25 16:39
      * @param baseIdDTO
