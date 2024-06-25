@@ -1063,13 +1063,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public void writeBackData(List<String> sourceDetailIds) {
-        List<SoDeliveryNoticeDetailEntity> detailEntities = soDeliveryNoticeDetailService.listByIds(sourceDetailIds);
-        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getSourceDetailId, sourceDetailIds));
+    public void writeBackData(String sourceId) {
+        List<SoDeliveryNoticeDetailEntity> detailEntities = soDeliveryNoticeDetailService.listDetailByMainId(sourceId);
+        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getSourceDetailId, sourceId));
         Map<String, Integer> detailQtyMap = pickingDetailEntities.stream()
-                .collect(Collectors.toMap(PickingDetailEntity::getSourceDetailId, PickingDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(PickingDetailEntity::getSkuId, PickingDetailEntity::getQty, Integer::sum));
         for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
-            detailEntity.setPickingQty(Optional.ofNullable(detailQtyMap.get(detailEntity.getId())).orElse(0));
+            int qty = Optional.ofNullable(detailQtyMap.get(detailEntity.getSkuId())).orElse(0);
+            if (qty > detailEntity.getDeliveryQty()) {
+                detailEntity.setPickingQty(detailEntity.getDeliveryQty());
+                detailQtyMap.put(detailEntity.getSkuId(), qty - detailEntity.getDeliveryQty());
+            } else {
+                detailEntity.setPickingQty(qty);
+                detailQtyMap.put(detailEntity.getSkuId(), 0);
+            }
         }
         soDeliveryNoticeDetailService.updateBatchById(detailEntities);
     }
