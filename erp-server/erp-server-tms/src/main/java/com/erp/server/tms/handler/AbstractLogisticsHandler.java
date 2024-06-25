@@ -179,7 +179,6 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     /**
      * 判断是否授权成功
      *
-     * @param authId
      * @return
      */
     public ApiResult authorization(Map<String, String> authMap) {
@@ -213,5 +212,14 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      */
     public LogisticsPlatformEnum getPlatForm() {
         return null;
+    }
+
+    /**
+     * 更新重量
+     *
+     * @return
+     */
+    public ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO) {
+        return ApiResult.error(-1, "功能未开放");
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
@@ -9,7 +10,7 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 
 
 /**
@@ -141,22 +142,42 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     @Panno(findType = PannoEnum.EQ, field = "platformShopCode")
     private String platformShopCode;
 
+    /**
+     * 仓库id
+     */
+    private String warehouseId;
 
-    public void checkAndSetAllDateLocale(Integer utfDiffHour) {
-        if (null == utfDiffHour){
+    /**
+     * 仓库名称
+     */
+    private String warehouseName;
+
+    /**
+     * 仓储中心(亚马逊专用)
+     */
+    private String fulfillmentCenter;
+
+
+    public void checkAndSetAllDateLocale(String timeZone) {
+        if (StringUtils.isBlank(timeZone)){
             return;
         }
         if (StringUtils.isNotBlank(this.shipmentDate)){
             OffsetDateTime parseDate = OffsetDateTime.parse(this.shipmentDate);
-            this.setShipmentDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+            this.setShipmentDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
         }
         if (StringUtils.isNotBlank(this.paymentsDate)){
             OffsetDateTime parseDate = OffsetDateTime.parse(this.paymentsDate);
-            this.setPaymentsDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+            this.setPaymentsDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
         }
         if (StringUtils.isNotBlank(this.purchaseDate)){
             OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
-            this.setPurchaseDateLocale(parseDate.withOffsetSameInstant(ZoneOffset.ofHours(utfDiffHour)).toString());
+            this.setPurchaseDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
         }
+    }
+
+
+    public String convertOrderIdWithPlatformShopCode(){
+        return StrUtil.format("{}_{}", this.amazonOrderId, this.platformShopCode);
     }
 }

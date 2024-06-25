@@ -271,7 +271,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         //产品信息
         List<String> skuIdList = list.stream().map(PoReconciliationDetailDTO.ListDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //结算方式
         List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
@@ -436,8 +436,12 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         long count = poReconciliationDetailList.stream().filter(obj -> !StrUtil.equals(obj.getSupplierId(),poReconciliationEntity.getSupplierId())
                         || !StrUtil.equals(obj.getSettleOrgId(),poReconciliationEntity.getSettleOrgId()))
                 .map(PoReconciliationDetailEntity::getSupplierId).distinct().count();
-        if (count > MathUtil.ONE) {
-            throw new ServiceException("单据单号【{}】与选择对账单供应商或结算组织不一致");
+
+        if (count > MathUtil.ZERO) {
+            String codes = poReconciliationDetailList.stream().filter(obj -> !StrUtil.equals(obj.getSupplierId(), poReconciliationEntity.getSupplierId())
+                            || !StrUtil.equals(obj.getSettleOrgId(), poReconciliationEntity.getSettleOrgId()))
+                    .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
+            throw new ServiceException(StrUtil.format("单据单号【{}】与选择对账单供应商或结算组织不一致",codes));
         }
         //更新对账明细
         poReconciliationDetailList.stream().forEach(obj ->{

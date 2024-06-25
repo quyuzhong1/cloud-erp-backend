@@ -79,7 +79,8 @@ public interface B2cOrderConverter {
 
 
     @Mappings({
-            @Mapping(target = "name", source = "name"),
+            @Mapping(target = "name", source = "receiverName"),
+            @Mapping(target = "buyerName", source = "name"),
             @Mapping(target = "phone", source = "receiverTelNumber"),
             @Mapping(target = "countryCode", source = "country"),
             @Mapping(target = "province", source = "provinceName"),
@@ -247,6 +248,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "englishUsage", source = "productDTO.englishUsage"),
             @Mapping(target = "exemption", source = "productDTO.exemption"),
             @Mapping(target = "isElectric", source = "productDTO.isElectric"),
+            @Mapping(target = "isLiquid", source = "productDTO.isLiquid"),
             @Mapping(target = "productProperty", source = "productDTO.productProperty"),
             @Mapping(target = "productPropertyId", source = "productDTO.productPropertyId"),
             @Mapping(target = "remark", ignore = true),
@@ -301,4 +303,11 @@ public interface B2cOrderConverter {
     @Mapping(target = "qty", source = "qty")
     SoB2cDetailEntity convertUpdateToDetail(SoB2cDetailDTO.UpdateDTO detail);
     List<SoB2cDetailEntity> convertUpdateToDetail(List<SoB2cDetailDTO.UpdateDTO> detailList);
+
+    /**
+     * 根据订单进行预览数据转换
+     * @param soB2cEntity
+     * @return
+     */
+    SoB2cDTO.ViewDTO convertEntityToViewDTO(SoB2cEntity soB2cEntity);
 }

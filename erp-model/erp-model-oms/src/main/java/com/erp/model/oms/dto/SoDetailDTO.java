@@ -146,6 +146,11 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
+
+        /**
          * sku id
          */
         private String skuId;

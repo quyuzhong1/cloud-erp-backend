@@ -182,6 +182,10 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
          * ASIN
          */
         private String asin;
+        /**
+         * 单箱数量
+         */
+        private Integer boxQty;
 
     }
 

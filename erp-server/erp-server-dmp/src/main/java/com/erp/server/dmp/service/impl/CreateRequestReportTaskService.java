@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.JobTaskDTO;
 import com.common.core.exception.ServiceException;
@@ -34,7 +35,11 @@ public class CreateRequestReportTaskService {
 //            redisTemplate.boundListOps(tbTask.getDictPlatform()).leftPush(JSONObject.toJSONString(jobTask));
             String groupId = tbTask.getGroupId();
             if (StringUtils.isBlank(groupId)){
-                throw new ServiceException("groupId为空");
+                groupId = tbTask.getDictPlatform();
+            }
+            if (StringUtils.isBlank(groupId)){
+                log.error("任务无groupId和tDictPlatform, 无法触发:task={}", JSONUtil.toJsonStr(tbTask));
+                continue;
             }
             // 移除原有相同的参数(空数组正常执行)
             redisTemplate.boundListOps(groupId).remove(0, JSONObject.toJSONString(jobTask));

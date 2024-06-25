@@ -507,7 +507,7 @@ public class WmsDeliveryPlanController extends BaseController {
      **/
     @PostMapping("/importDetailFile")
     public ApiResult<ListingInfoDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
-        ListingInfoDTO.ImportDTO list = wmsDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getThirdSkuNoList(),excelImportDTO.getWarehouseId(),response);
+        ListingInfoDTO.ImportDTO list = wmsDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getThirdSkuNoList(),excelImportDTO.getWarehouseId(),excelImportDTO.getShopId() , response);
         return success(list);
     }
 

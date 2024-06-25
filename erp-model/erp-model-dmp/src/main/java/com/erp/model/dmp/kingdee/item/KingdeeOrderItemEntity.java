@@ -106,8 +106,14 @@ public class KingdeeOrderItemEntity {
      */
     @Alias("F_ulz_CGCB")
     private BigDecimal f_ulz_CGCB;
-    @Alias("FSOStockId.FName")
+
+
+    @Alias("FSOStockId.FNumber")
     private String fSOStockId;
+
+
+    @Alias("FSOStockId.FName")
+    private String fSOStockName;
     /**
      * 价税合计
      */

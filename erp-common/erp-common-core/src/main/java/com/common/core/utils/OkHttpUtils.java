@@ -1,7 +1,6 @@
 package com.common.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.handler.HttpLogInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 

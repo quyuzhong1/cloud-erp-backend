@@ -213,6 +213,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
         soOutstock.setSalesOrgName(shopInfo.getSalesOrgName());
         soOutstock.setPackingStatus(PackingStatusEnum.NOT_PACKING.getCode());
+        soOutstock.setInvalidStatus(false);
+        soOutstock.setApproveStatus(ApproveStatusEnum.APPROVE);
+        soOutstock.setApproveTime(soOutstock.getActualDeliveryDate());
 
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         for (SoOutstockDetailEntity detail : detailList) {

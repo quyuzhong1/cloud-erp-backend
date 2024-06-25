@@ -230,6 +230,10 @@ public class WdtSoOutStockDTO extends UniqueDto {
     private String shopNo;
 
     private LocalDateTime created;
+    /**
+     * 创建人名称
+     */
+    private String createUserName;
 
     private List<WdtSoOutStockDetailDTO> detailList;
 }

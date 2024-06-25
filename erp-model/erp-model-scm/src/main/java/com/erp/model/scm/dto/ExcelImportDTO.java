@@ -43,6 +43,11 @@ public class ExcelImportDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
     }
 
     @Data

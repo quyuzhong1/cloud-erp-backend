@@ -16,9 +16,9 @@ public interface IPlatformService {
     /**
      * 订单发货标识
      * @param dto
-     * @return
+     * @return 销售订单明细id
      */
-    void shipOrder(PlatformShipOrderDTO dto);
+    List<String> shipOrder(PlatformShipOrderDTO dto);
 
 
     /**

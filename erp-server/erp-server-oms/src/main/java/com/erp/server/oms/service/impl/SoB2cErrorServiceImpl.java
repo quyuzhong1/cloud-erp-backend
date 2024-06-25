@@ -22,6 +22,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,7 @@ import java.util.Objects;
 @Service
 public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cErrorEntity> implements SoB2cErrorService {
 
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
     @Resource
@@ -246,18 +248,20 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         String errorType = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
         SoB2cErrorEntity soB2cError = this.getByMainIdAndType(soB2cId, errorType);
         if (null == soB2cError){
-            return BatchResultDTO.fail(soB2cId, soB2cId, "无异常信息");
+            if (errorType.equalsIgnoreCase(mainEntity.getSignOrderError())){
+                soB2cService.removeSignError(soB2cId, errorType);
+                return BatchResultDTO.success(soB2cId, mainEntity.getCode(), "移除头部异常信息成功");
+            }
+            return BatchResultDTO.fail(soB2cId, mainEntity.getCode(), "无异常信息");
         }
         // 移除已有异常
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setType(errorType);
-        deleteDTO.setMainId(soB2cId);
-        baseMapper.deleteB2cError(deleteDTO);
+        removeErrorOrder(soB2cId, errorType);
 
         String soCode = mainEntity.getCode();
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soB2cId);
         platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
+        platformShipOrderDTO.setFalseDeliveryFlag(true);
         try {
             soB2cDeliveryFeign.shipOrder(platformShipOrderDTO);
             return BatchResultDTO.success(soB2cId, soCode, "重新标记发货成功");

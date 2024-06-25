@@ -41,7 +41,6 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -69,10 +68,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1070,17 +1065,24 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     public List<DmpPullTaskEntity> batchCheckSaveAndUpdate(List<DmpPullTaskEntity> allList, String platform, String sourceType, String targetPlatform, String topic, String tag) {
         List<DmpPullTaskEntity> resultList = new ArrayList<>();
         List<String> sourceIds = allList.stream().map(DmpPullTaskEntity::getSourceId).collect(Collectors.toList());
-        // 查询所有
-        List<DmpPullTaskEntity> existTaskList = this.findList(platform, sourceType, targetPlatform, topic, tag, sourceIds);
+        // 查询所有(去重)
+        List<DmpPullTaskEntity> existTaskList = new ArrayList<>(this.findList(platform, sourceType, targetPlatform, topic, tag, sourceIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        DmpPullTaskEntity::uniqueKey,
+                        obj -> obj,
+                        (existing, replacement) -> existing
+                ))
+                .values());
 
-        Map<String, DmpPullTaskEntity> taskMap = existTaskList.stream().collect(Collectors.toMap(DmpPullTaskEntity::redissonKey, Function.identity()));
+        Map<String, DmpPullTaskEntity> taskMap = existTaskList.stream().collect(Collectors.toMap(DmpPullTaskEntity::uniqueKey, Function.identity()));
         // 需要保存的List
         List<DmpPullTaskEntity> saveList = new LinkedList<>();
         // 需要更新的List
         List<DmpPullTaskEntity> updateList = new LinkedList<>();
         LocalDateTime now = LocalDateTime.now();
         allList.forEach(e->{
-            DmpPullTaskEntity entity = taskMap.get(e.redissonKey());
+            DmpPullTaskEntity entity = taskMap.get(e.uniqueKey());
             if (null == entity){
                 // 不存在添加到新增列表
                 saveList.add(e);

@@ -6,6 +6,7 @@ import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import org.apache.commons.math3.util.Pair;
 
@@ -81,4 +82,5 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
     Boolean warehouseSkuMapping(ListingInfoDTO.WarehouseSkuMappingParamDTO dto);
 
     void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList,List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList);
+    void handleAliExpress(SkuMappingEntity lastestSkuMapping, SkuVO skuVO, ListingInfoEntity listingInfoEntity);
 }

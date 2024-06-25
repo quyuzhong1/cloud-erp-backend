@@ -267,6 +267,28 @@ public class SoB2cDetailDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+        /**
+         * 产品尺寸（长）
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品尺寸（宽）
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品尺寸（高）
+         */
+        private BigDecimal productHeight;
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
 
         /**
         * 库存sku编号 http://172.16.100.11:3002/project/110/interface/api/19609
@@ -317,6 +339,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 是否组合品
          */
         private Boolean isCombination = false;
+
+        /**
+         * 还原id
+         */
+        private String revertId;
     }
 
     /**
@@ -368,6 +395,16 @@ public class SoB2cDetailDTO implements Serializable {
          * 建议售价（本位币）
          */
         private BigDecimal advicePrice;
+
+        /**
+         * 还原id
+         */
+        private String revertId;
+
+        /**
+         * 主表Id
+         */
+        private String mainId;
     }
 
     @Data
@@ -408,6 +445,14 @@ public class SoB2cDetailDTO implements Serializable {
         private String sourcePlatform;
 
         private String warehouseSkuNo;
+        /**
+         * 平台sku编号
+         */
+        private String platformSkuNo;
+        /**
+         * 平台 产品id
+         */
+        private String platformSpuNo;
     }
 
 

@@ -2,12 +2,14 @@ package com.erp.model.oms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.Map;
 
 
 /**
@@ -21,7 +23,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("cfg_rule_order_handle")
+@TableName(value = "cfg_rule_order_handle", autoResultMap = true)
 public class CfgRuleOrderHandleEntity extends BaseEntity<CfgRuleOrderHandleEntity> {
 
     /**
@@ -44,17 +46,12 @@ public class CfgRuleOrderHandleEntity extends BaseEntity<CfgRuleOrderHandleEntit
     */
     @TableField("priority")
     private Integer priority;
-    /**
-    * 城市（推送物流商下单为空）
-    */
-    @TableField("is_push_city")
-    private Boolean isPushCity;
-    /**
-    * 州（推送物流商下单为空）
-    */
-    @TableField("is_push_province")
-    private Boolean isPushProvince;
 
+    /**
+     * 规则内容
+     */
+    @TableField(value = "rule_content", typeHandler = JacksonTypeHandler.class)
+    private Map<String, Object> ruleContent;
 
     public static final String NAME = "name";
 

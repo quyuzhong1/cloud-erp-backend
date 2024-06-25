@@ -399,7 +399,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         thirdList.stream().collect(groupingBy(ThirdMappingDTO.ThirdAddDTO::getSysType,
                 collectingAndThen(Collectors.toList(), list -> {
                             if (list.size() > 1) {
-                                throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, EnumMessage.getNameByCode(PlatformDictEnum.class, type));
+                                throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
                             }
                             return list;
                         }
@@ -700,9 +700,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     }
 
     @Override
-    public ThirdWarehouseEntity getBySysId(String sysWarehouseId) {
+    public ThirdWarehouseEntity getBySysId(String sysWarehouseId, String sysType) {
         LambdaQueryWrapper<ThirdMappingEntity> queryWrapper = new LambdaQueryWrapper<ThirdMappingEntity>()
                 .eq(ThirdMappingEntity::getSysId, sysWarehouseId)
+                .eq(ThirdMappingEntity::getType, sysType)
                 .eq(ThirdMappingEntity::getIsDeleted, false)
                 .eq(ThirdMappingEntity::getDisabled, false);
         ThirdMappingEntity mappingEntity = baseMapper.selectOne(queryWrapper);

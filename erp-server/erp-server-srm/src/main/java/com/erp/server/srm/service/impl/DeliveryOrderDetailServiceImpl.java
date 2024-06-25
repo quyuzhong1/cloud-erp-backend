@@ -12,11 +12,15 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.model.srm.entity.DeliveryOrderEntity;
+import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.mapper.DeliveryOrderDetailMapper;
 import com.erp.server.srm.service.DeliveryOrderDetailService;
+import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,6 +50,9 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private DeliveryOrderService deliveryOrderService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -139,7 +147,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         List<DeliveryOrderDetailEntity> detailEntityList = this.lambdaQuery().in(DeliveryOrderDetailEntity::getMainId, mainIds).list();
         List<DeliveryOrderDetailDTO.PrintDTO> printDTOList = BeanMapperUtils.copyList(DeliveryOrderDetailDTO.PrintDTO.class, detailEntityList);
         List<String> skuIdList = detailEntityList.stream().map(DeliveryOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        Map<String,SkuVO> skuMap = plmTaskFeign.getSkuInfoByIds(skuIdList).stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity(),(v1, v2)->v1));
+        Map<String,SkuVO> skuMap = plmTaskFeign.listSkuProductByIds(skuIdList).stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity(),(v1, v2)->v1));
         printDTOList.forEach(v->{
             SkuVO skuVO = skuMap.get(v.getSkuId());
             if(Objects.nonNull(skuVO)){
@@ -165,6 +173,73 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
     @Override
     public List<DeliveryOrderDetailDTO.ListDTO> listDetailDTOByDetailSourceIds(List<String> purchaseDetailIds) {
         return baseMapper.listDetailDTOByDetailSourceIds(purchaseDetailIds);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateDeliveryDetail(List<DeliveryOrderDetailEntity> detailEntityGroupList) {
+        this.updateBatchById(detailEntityGroupList);
+        List<String> mainIds = detailEntityGroupList.stream().map(DeliveryOrderDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        return deliveryOrderService.updateReceiveStatus(mainIds);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean confirmReceiveStatus(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return true;
+        }
+        List<DeliveryOrderDetailEntity> detailList = this.listByIds(detailIds);
+        detailList.forEach(v-> {
+            v.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode());
+            v.setConfirmReceiveDate(LocalDate.now());
+        });
+        this.updateBatchById(detailList);
+        List<String> mainIds = detailList.stream().map(DeliveryOrderDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        deliveryOrderService.updateReceiveStatus(mainIds);
+
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean unConfirmReceiveStatus(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return true;
+        }
+        List<DeliveryOrderDetailEntity> detailList = this.listByIds(detailIds);
+        detailList.forEach(v-> {
+            v.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());
+            v.setConfirmReceiveDate(null);
+        });
+        this.updateBatchById(detailList);
+        List<String> mainIds = detailList.stream().map(DeliveryOrderDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        deliveryOrderService.updateReceiveStatus(mainIds);
+        //收货单反确认删除对账明细
+        deliveryOrderService.removePoReconciliationDetail(mainIds);
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean cancelReceive(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return true;
+        }
+        List<DeliveryOrderDetailEntity> detailList = this.listByIds(detailIds);
+        detailList.forEach(v-> {
+            v.setReceiptStatus("");
+            v.setReceiveCode("");
+            v.setConfirmReceiveDate(null);
+            v.setReceiveUserId("");
+            v.setReceiveUserName("");
+            v.setReceiveQty(0);
+            v.setGiftReceiveQty(0);
+        });
+        this.updateBatchById(detailList);
+        List<String> mainIds = detailList.stream().map(DeliveryOrderDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        deliveryOrderService.updateReceiveStatus(mainIds);
+        return true;
     }
 
 

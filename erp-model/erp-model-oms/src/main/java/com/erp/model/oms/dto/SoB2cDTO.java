@@ -39,6 +39,24 @@ public class SoB2cDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    public static class DeliveryWithNotOutboundDTO {
+
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 平台是否标发
+         */
+        @NotNull(message = "平台是否标发标识不能为空")
+        private Boolean platformShipFlag;
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class MergeTransferDTO {
 
         /**
@@ -314,7 +332,17 @@ public class SoB2cDTO implements Serializable {
         private String buyerName;
 
         /**
-         * 物流单号
+         * 买家邮箱
+         */
+        private String email;
+
+        /**
+         * 买家电话
+         */
+        private String telNumber;
+
+        /**
+         * 运单号
          */
         private String logisticsCode;
 
@@ -1943,6 +1971,11 @@ public class SoB2cDTO implements Serializable {
          */
         private String soId;
 
+        /**
+         * 是否来自第三方仓
+         */
+        private boolean fromThirdWarehouseFlag = false ;
+
 
     }
 
@@ -2139,6 +2172,21 @@ public class SoB2cDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SoDeliveryDTO {
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+    }
+
 
     /**
      * 修改订单发货时间
@@ -2150,6 +2198,8 @@ public class SoB2cDTO implements Serializable {
          * id
          */
         private List<String> soB2cIds;
+
+        private List<SoDeliveryDTO> soDeliveryDTOList;
         /**
          * 状态
          */
@@ -2620,5 +2670,15 @@ public class SoB2cDTO implements Serializable {
         private LocalDate startTime;
 
         private List<String> ids;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CombinationDTO{
+        private List<SoB2cEntity> soB2cEntityList;
+        private List<SoB2cDetailEntity> soB2cDetailEntityList;
     }
 }

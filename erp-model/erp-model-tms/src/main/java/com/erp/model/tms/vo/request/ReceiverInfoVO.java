@@ -1,9 +1,10 @@
 package com.erp.model.tms.vo.request;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.ReceiverDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author zdy
@@ -15,7 +16,8 @@ import lombok.Data;
 @Data
 @Builder
 @AllArgsConstructor
-public class ReceiverInfoVO {
+@NoArgsConstructor
+public class ReceiverInfoVO implements ReceiverDTO {
     /**
      * 买家名称
      */
@@ -88,4 +90,14 @@ public class ReceiverInfoVO {
      * 收货人税号
      */
     private String receiverTaxNo;
+
+    @Override
+    public String getBuyerName() {
+        return name;
+    }
+
+    @Override
+    public void setBuyerName(String buyerName) {
+        this.name = buyerName;
+    }
 }

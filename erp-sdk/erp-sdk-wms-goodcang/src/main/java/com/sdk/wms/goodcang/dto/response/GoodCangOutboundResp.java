@@ -33,4 +33,8 @@ public class GoodCangOutboundResp extends CleanBaseDTO implements Serializable {
     //跟踪号
     @JSONField(name = "tracking_no")
     private String trackNo;
+
+    //异常原因
+    @JSONField(name = "abnormal_problem_reason")
+    private String abnormalProblemReason;
 }

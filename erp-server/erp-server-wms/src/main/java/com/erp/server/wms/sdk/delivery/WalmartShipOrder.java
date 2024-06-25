@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -36,7 +37,7 @@ public class WalmartShipOrder extends AbstractShipOrder {
     private LogisticsMappingFeign logisticsMappingFeign;
 
     @Override
-    public void shipOrder(PlatformShipOrderDTO dto) {
+    public List<String> shipOrder(PlatformShipOrderDTO dto) {
         //映射发货需要的字段，如果合并的订单拆分返回
         List<WalmartShipDTO> walmartShipOrderParam = soB2cFeign.getWalmartShipOrderParam(dto.getSoB2cId());
 
@@ -55,6 +56,7 @@ public class WalmartShipOrder extends AbstractShipOrder {
 
             walmartSdkClientService.shipOrder(walmartShipDTO);
         }
+        return new ArrayList<>();
     }
 
     @Override

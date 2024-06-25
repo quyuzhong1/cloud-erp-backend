@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.sdk.third.qimen.QiMenClientService,\
+  com.sdk.third.qimen.handler.QiMenSoOutStockHandler,\
+  com.sdk.third.qimen.handler.QiMenReturnOrderHandler

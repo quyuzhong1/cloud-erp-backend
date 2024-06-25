@@ -13,6 +13,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -700,6 +701,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
 
+    void initProductSizeAndBoxSize();
+
     /**
      * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
      * @param skuIds
@@ -712,6 +715,43 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 费用信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuCostByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku产品信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuProductByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku产品信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuAllAttributeByIds(List<String> skuIds);
+
+    List<SkuVO> listSkuPackByIds(List<String> skuIds);
+
+    List<SkuVO> listSkuSaleByIds(List<String> skuIds);
+
+    List<SkuVO> listSkuLogisticsByIds(List<String> skuIds);
+
+    List<SkuVO> listSkuCategoryByIds(List<String> skuIds);
+
+    List<SkuVO> listSkuPurchaseByIds(List<String> skuIds);
     void initProductToWangDian(List<String> ids);
     PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
 
