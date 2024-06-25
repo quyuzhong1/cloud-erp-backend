@@ -1,10 +1,10 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleDetailDTO;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
 
 /**
  * <p>
@@ -14,7 +14,7 @@ import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleEntity;
  * @author hyj
  * @since 2024-06-07
  */
-public interface VirtualWarehouseAllocationHandleDetailService extends SuperService<VirtualWarehouseAllocationHandleDetailEntity> {
+public interface VirtualWarehouseAllocationHandleDetailService extends SuperService<VirtualWarehousePushHandleDetailEntity> {
 
     /**
     * 新增
@@ -35,5 +35,5 @@ public interface VirtualWarehouseAllocationHandleDetailService extends SuperServ
     Boolean update(VirtualWarehouseAllocationHandleDetailDTO.UpdateDTO dto);
 
 
-    void handleDetail(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehouseAllocationHandleEntity allocationHandleEntity);
+    void handleDetail(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity);
 }

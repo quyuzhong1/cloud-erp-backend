@@ -15,12 +15,11 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleRelationEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -180,16 +179,16 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         dto.setSysTypeName(PlatformDictEnum.getByCode(dto.getSysType()).getName());
         //根据分货单主单和明细获取分货单合单数据
         //获取合单表明细id
-        VirtualWarehouseAllocationHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
-                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationId, vwAllocationEntity.getId())
-                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId, vwAllocationDetailEntity.getId()));
+        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+                .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vwAllocationEntity.getId())
+                .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vwAllocationDetailEntity.getId()));
         if (Objects.nonNull(handleRelation)) {
             //根据合单明细id获取拆单信息
             String handleDetailId = handleRelation.getHandleDetailId();
-            List<VirtualWarehouseAllocationHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
-                    .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>().eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetailId));
+            List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
+                    .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handleDetailId));
             if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
-                baseMapper.batchManualFinish(dto, Integer.valueOf(code), handleRelationEntityList.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList()));
+                baseMapper.batchManualFinish(dto, Integer.valueOf(code), handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList()));
             }
             //手动完结中台任务
             dmpMqFeign.batchNoNeedSyncBySourceId(Collections.singletonList(handleRelation.getHandleDetailId()));
@@ -313,19 +312,19 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Override
     public BatchResultDTO sync(VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity, VirtualWarehouseAllocationEntity vwAllocationEntity) {
         //获取合单表明细id
-        VirtualWarehouseAllocationHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
-                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationId, vwAllocationEntity.getId())
-                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId, vwAllocationDetailEntity.getId()));
+        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+                .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vwAllocationEntity.getId())
+                .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vwAllocationDetailEntity.getId()));
         if (Objects.nonNull(handleRelation)) {
             //根据合单明细id获取拆单信息
             String handleDetailId = handleRelation.getHandleDetailId();
-            List<VirtualWarehouseAllocationHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
-                    .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>().eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetailId));
+            List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
+                    .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handleDetailId));
             if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
                 baseMapper.batchSync(VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode(),
-                        handleRelationEntityList.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList()));
+                        handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList()));
                 //修改中台任务状态并触发mq
-                List<String> sourceIds = handleRelationEntityList.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId).collect(Collectors.toList());
+                List<String> sourceIds = handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getHandleDetailId).collect(Collectors.toList());
                 dmpMqFeign.batchSyncBySourceId(sourceIds);
             }
         }
@@ -351,9 +350,9 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             }
         }
         //获取合单表明细id
-        VirtualWarehouseAllocationHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
-                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationId, vmAllocationEntity.getId())
-                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId, vmAllocationDetailEntity.getId()));
+        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+                .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vmAllocationEntity.getId())
+                .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vmAllocationDetailEntity.getId()));
         DmpPushTaskEntity productBomHistoryTask = new DmpPushTaskEntity();
         if (Objects.nonNull(handleRelation)) {
             productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
@@ -402,19 +401,19 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             }
         }
         //获取合单表明细id
-        VirtualWarehouseAllocationHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>()
-                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationId, vwAllocationEntity.getId())
-                .eq(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId, vwAllocationDetailEntity.getId()));
+        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+                .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vwAllocationEntity.getId())
+                .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vwAllocationDetailEntity.getId()));
         VirtualWarehouseAllocationDTO.ThirdCodeDto thirdCodeDto = new VirtualWarehouseAllocationDTO.ThirdCodeDto();
         if (Objects.nonNull(handleRelation)) {
             //根据合单明细id获取拆单信息
             String handleDetailId = handleRelation.getHandleDetailId();
-            List<VirtualWarehouseAllocationHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
-                    .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>().eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, handleDetailId));
+            List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
+                    .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handleDetailId));
             if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
                 //获取明细
                 List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
-                        .in(VirtualWarehouseAllocationDetailEntity::getId, handleRelationEntityList.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList())));
+                        .in(VirtualWarehouseAllocationDetailEntity::getId, handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList())));
                 thirdCodeDto.setType(vwAllocationEntity.getType());
                 thirdCodeDto.setSysType(detailList.get(0).getSysType());
                 thirdCodeDto.setSysTypeName(detailList.get(0).getSysTypeName());
@@ -440,10 +439,10 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     public void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto) {
         log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态：{}",dto);
         //根据合单明细id获取拆单信息
-        List<VirtualWarehouseAllocationHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
-                .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleRelationEntity>().eq(VirtualWarehouseAllocationHandleRelationEntity::getHandleDetailId, dto.getHandelDetailId()));
+        List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
+                .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, dto.getHandelDetailId()));
         if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
-            baseMapper.updateSyncStatus(dto, handleRelationEntityList.stream().map(VirtualWarehouseAllocationHandleRelationEntity::getAllocationDetailId).collect(Collectors.toList()));
+            baseMapper.updateSyncStatus(dto, handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList()));
             log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态成功：{}",dto);
         }
     }

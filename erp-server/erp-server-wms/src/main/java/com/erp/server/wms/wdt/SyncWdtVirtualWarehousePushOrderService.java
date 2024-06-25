@@ -1,7 +1,7 @@
 package com.erp.server.wms.wdt;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
 
 import java.util.List;
 
@@ -22,6 +22,6 @@ public interface SyncWdtVirtualWarehousePushOrderService {
      * @param operateCode      操作代码: 审核/反审核
      * @return DmpPushTaskEntity DMP返回的任务
      */
-    List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList,
+    List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
                                          String sourceCode, String operateCode, String sourceType);
 }

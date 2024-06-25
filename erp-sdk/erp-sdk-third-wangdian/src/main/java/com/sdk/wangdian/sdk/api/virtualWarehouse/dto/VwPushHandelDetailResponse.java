@@ -4,15 +4,12 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 /**
  * 虚拟仓分货单推送返回数据
  */
 @Getter
 @Setter
-public class VwAllocationHandelDetailResponse {
+public class VwPushHandelDetailResponse {
     /**
      * 状态：0成功 100失败
      */

@@ -23,21 +23,21 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("virtual_warehouse_allocation_handle")
+@TableName("virtual_warehouse_push_handle")
 @AllArgsConstructor
 @NoArgsConstructor
-public class VirtualWarehouseAllocationHandleEntity extends BaseEntity<VirtualWarehouseAllocationHandleEntity> {
+public class VirtualWarehousePushHandleEntity extends BaseEntity<VirtualWarehousePushHandleEntity> {
 
     /**
     * 分货单id
     */
-    @TableField("allocation_id")
-    private String allocationId;
+    @TableField("source_id")
+    private String sourceId;
     /**
     * 编号
     */
-    @TableField("allocation_code")
-    private String allocationCode;
+    @TableField("source_code")
+    private String sourceCode;
     /**
     * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
     */
@@ -55,9 +55,9 @@ public class VirtualWarehouseAllocationHandleEntity extends BaseEntity<VirtualWa
     private Integer direction;
 
 
-    public static final String ALLOCATION_ID = "allocation_id";
+    public static final String SOURCE_ID = "source_id";
 
-    public static final String ALLOCATION_CODE = "allocation_code";
+    public static final String SOURCE_CODE = "source_code";
 
     public static final String TYPE = "ype";
 

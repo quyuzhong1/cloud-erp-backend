@@ -1,6 +1,6 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleDTO;
@@ -13,7 +13,7 @@ import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleDTO;
  * @author hyj
  * @since 2024-06-07
  */
-public interface VirtualWarehouseAllocationHandleService extends SuperService<VirtualWarehouseAllocationHandleEntity> {
+public interface VirtualWarehouseAllocationHandleService extends SuperService<VirtualWarehousePushHandleEntity> {
 
     /**
     * 新增
