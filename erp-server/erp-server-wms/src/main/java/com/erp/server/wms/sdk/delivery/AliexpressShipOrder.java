@@ -118,7 +118,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                     logisticsNo(logisticsNo).
                     shopId(mainEntity.getShopId()).
                     shopName(mainEntity.getShopName()).
-                    serviceName(tmsSignShipDTO.getSaleChannelSupplierName()).
+                    serviceName(tmsSignShipDTO.getCode()).
                     sendType(sendType).
                     build();
 
@@ -140,7 +140,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             }
 
             try {
-                aliExpressOrderService.declareDeliver(request);
+                aliExpressOrderService.subDeclareDeliver(request);
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (ApiException e) {
                 log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货失败 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(),ExceptionUtil.stacktraceToString(e));
@@ -176,6 +176,10 @@ public class AliexpressShipOrder extends AbstractShipOrder {
      * 检查和转换发货类型
      */
     private String convertSendType(List<SoB2cDetailEntity> detailEntityList, List<SoB2cDetailEntity> allSourceDetailEntityList) {
+        // 多个明细一定是部分发货
+        if (allSourceDetailEntityList.size() > 1){
+            return "part";
+        }
         Map<String, Integer> shipMap = detailEntityList.stream()
                 .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
                 .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, SoB2cDetailEntity::getQty));
