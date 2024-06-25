@@ -233,7 +233,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         //虚拟仓库
         VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseService.getById(soDeliveryNoticeEntity.getVirtualWarehouseId());
         if (ObjectUtil.isEmpty(virtualWarehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST);
+           return;
         }
 
         Map<String, List<SoDeliveryNoticeDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(SoDeliveryNoticeDetailEntity::getSkuId));
