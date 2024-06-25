@@ -17,12 +17,14 @@ import com.erp.server.dmp.inout.handler.input.task.DmpInputBaseTaskHandler;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 输入任务工厂，添加handler给handler链路执行
  * @author Administrator
  *
  */
+@Slf4j
 @Component
 public class DmpInputTaskFactory{
 	
@@ -50,6 +52,7 @@ public class DmpInputTaskFactory{
 					bean.addDmpHandler(dmpInputTaskStatusHandler);
 					bean.doDmpHandler(dmpInputFinishRequest, dmpResponse);
 				} catch (Exception e) {
+					log.error("{}任务执行报错" , dmpInputFinishRequest.getInputTaskId(), e);
 					Integer maxRetryCount = 3;
 					DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpResponse.getDmpCfgInputDetailEntity();
 					if(dmpCfgInputDetailEntity != null) {
