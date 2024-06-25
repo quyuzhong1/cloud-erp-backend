@@ -4,6 +4,7 @@ import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -14,12 +15,10 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto;
-import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity;
 import com.erp.server.wms.listener.WarehouseLocationSafetyInventoryExcelListener;
-import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
 import com.erp.server.wms.mapper.WarehouseLocationSafetyInventoryMapper;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
 import com.erp.server.wms.service.WarehouseLocationService;
@@ -30,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +43,6 @@ import java.util.stream.Collectors;
 public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImpl<WarehouseLocationSafetyInventoryMapper, WarehouseLocationSafetyInventoryEntity> implements WarehouseLocationSafetyInventoryService {
 
     @Resource
-    private WarehouseLocationSafetyInventoryMapper safetyInventoryMapper;
-
-    @Resource
     private WarehouseLocationService warehouseLocationService;
 
     @Resource
@@ -56,16 +51,23 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
     @Override
     public PagingVO<WarehouseLocationSafetyInventoryDto.ViewDto> paging(PagingDTO<WarehouseLocationSafetyInventoryDto.SearchParamDto> paramDto) {
         Page<Object> page = new Page<>(paramDto.getCurrPage(), paramDto.getPageSize());
-        IPage<WarehouseLocationSafetyInventoryDto.ViewDto> result =  safetyInventoryMapper.paging(page, paramDto.getParams());
+        IPage<WarehouseLocationSafetyInventoryDto.ViewDto> result = this.baseMapper.paging(page, paramDto.getParams());
         fillViewList(result.getRecords());
         return new PagingVO<>(result);
     }
 
     @Override
-    public int updateInventory(WarehouseLocationSafetyInventoryDto.UpdateParamDto updateParamDto) {
+    public BaseResultDTO.UpdateDTO updateInventory(WarehouseLocationSafetyInventoryDto.UpdateParamDto updateParamDto) {
         WarehouseLocationSafetyInventoryEntity entity = new WarehouseLocationSafetyInventoryEntity();
         BeanMapper.copy(updateParamDto, entity);
-        return safetyInventoryMapper.updateById(entity);
+        int count = this.baseMapper.updateById(entity);
+        if(count > 0){
+            return null;
+        }else {
+            WarehouseLocationSafetyInventoryEntity inventoryEntity = this.baseMapper.selectById(updateParamDto.getId());
+            String code = "sku：" + inventoryEntity.getSkuNo() + " 仓位：" + inventoryEntity.getWarehouseLocation();
+            return new BaseResultDTO.UpdateDTO(updateParamDto.getId(), code);
+        }
     }
 
     @Override
@@ -108,7 +110,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
                     .orElse(new WarehouseLocationEntity());
             entity.setWarehouseArea(areaEntity.getCode() == null ? "" : areaEntity.getCode());
 
-            int insertResult = safetyInventoryMapper.insert(entity);
+            int insertResult = this.baseMapper.insert(entity);
             if(insertResult == 0) {
                 importExcelDto.setErrorInfo(importExcelDto.getErrorInfo() + ", 保存失败");
                 errorList.add(importExcelDto);
@@ -130,11 +132,11 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
         List<WarehouseLocationSafetyInventoryEntity> entityList;
         List<String> ids = dto.getIds();
         if(! ids.isEmpty()){
-            entityList = safetyInventoryMapper.selectBatchIds(ids);
+            entityList = this.baseMapper.selectBatchIds(ids);
         }else {
             WarehouseLocationSafetyInventoryDto.SearchParamDto searchParamDto = new WarehouseLocationSafetyInventoryDto.SearchParamDto();
             BeanMapper.copy(dto, searchParamDto);
-            entityList = safetyInventoryMapper.paging(searchParamDto);
+            entityList = this.baseMapper.listByParam(searchParamDto);
         }
         List<WarehouseLocationSafetyInventoryDto.ViewDto> viewList = BeanMapper.copyList(entityList, WarehouseLocationSafetyInventoryDto.ViewDto.class);
         fillViewList(viewList);
