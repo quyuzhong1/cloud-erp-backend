@@ -132,11 +132,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
                 detail.setInvalidStatus(false);
 
                 List<SalesStockoutResponse.PositionDetailsList> list = detailItem.getPositionDetailsList();
-                List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = list.stream().map(v -> {
-                    WdtSoOutStockDetailDTO.PositionDetailsList position = BeanMapperUtils.map(WdtSoOutStockDetailDTO.PositionDetailsList.class, v);
-                    position.setPositionGoodsCount(v.getPositionGoodsCount().intValue());
-                    return position;
-                }).collect(Collectors.toList());
+                List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = BeanMapperUtils.copyList(WdtSoOutStockDetailDTO.PositionDetailsList.class, list);
                 detail.setPositionDetailsList(detailsLists);
                 detailList.add(detail);
             }
