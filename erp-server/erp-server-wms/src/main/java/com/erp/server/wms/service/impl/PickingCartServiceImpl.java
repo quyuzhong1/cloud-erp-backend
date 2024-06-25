@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
@@ -18,8 +19,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.PickingCartDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
+import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.model.wms.entity.PickingCartEntity;
 import com.erp.server.wms.mapper.PickingCartMapper;
+import com.erp.server.wms.service.CfgRuleConditionService;
 import com.erp.server.wms.service.PickingCartService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +47,10 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
 
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
+    @Autowired
+    private CfgRuleConditionService cfgRuleConditionService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -102,7 +110,7 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
     public BatchResultDTO delete(String id) {
         PickingCartEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到拣货车数据"));
         // 删除主单数据
-        log.info("删除 开始删除委外发料单主单数据，id：【{}】", id);
+        log.info("删除 开始删除拣货车主单数据，id：【{}】", id);
         super.removeById(id);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -110,8 +118,14 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
     @Override
     public PickingCartDTO.ViewDTO view(String id) {
         PickingCartEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到拣货车数据"));
-        PickingCartDTO.ViewDTO data = BeanMapperUtils.map(PickingCartDTO.ViewDTO.class, entity);
-        return data;
+        PickingCartDTO.ViewDTO view = BeanMapperUtils.map(PickingCartDTO.ViewDTO.class, entity);
+        //查询规则条件
+        List<CfgRuleConditionEntity> ruleConditionEntities = cfgRuleConditionService.list(Wrappers.<CfgRuleConditionEntity>lambdaQuery()
+                .eq(CfgRuleConditionEntity::getRuleId, id)
+                .orderByAsc(CfgRuleConditionEntity::getIndex));
+        List<CfgRuleConditionDTO.View> ruleConditions = BeanMapperUtils.copyList(CfgRuleConditionDTO.View.class, ruleConditionEntities);
+        view.setConditionList(ruleConditions);
+        return view;
     }
 
     @Override

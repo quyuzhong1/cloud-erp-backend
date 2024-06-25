@@ -96,8 +96,8 @@ public enum ModuleTypeEnum {
 
     VIRTUAL_WAREHOUSE("80", "虚拟仓设置"),
     VIRTUAL_WAREHOUSE_ALLOCATION("81", "分货单"),
-    PICKING_LISTS("91", "拣货单")
-
+    PICKING_LISTS("91", "拣货单"),
+    CFG_RULE_WAVE("92", "波次规则")
     ;
 
 

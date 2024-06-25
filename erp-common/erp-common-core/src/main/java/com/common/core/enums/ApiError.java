@@ -1071,6 +1071,8 @@ public enum ApiError implements Serializable {
     SKU_INVENTORY_SHORTAGE(92150, "【{}】仓位库存不足，无法生成拣货单"),
 
     UNPICKED_QUANTITY_SHORTAGE(92151, "未拣货数量不足，无法生成拣货单，请重新操作"),
+    CFG_RULE_WAVE_ORDER_QTY_COMPARE(92152, "最小单数不能大于最大单数"),
+    CFG_RULE_WAVE_QTY_COMPARE(92153, "最少商品数量不能大于最大商品数量"),
 
 
     ERROR_VW_CHANNEL_ERROR(92234,"虚拟仓【{}】已绑定当前渠道"),

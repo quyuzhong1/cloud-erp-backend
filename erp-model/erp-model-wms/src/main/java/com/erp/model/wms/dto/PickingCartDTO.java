@@ -1,7 +1,9 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -108,8 +110,11 @@ public class PickingCartDTO implements Serializable {
         * 状态,true是，false否
         */
         private Boolean disabled;
-
-
+        /**
+         * 规则条件
+         */
+        @Dict
+        private List<CfgRuleConditionDTO.View> conditionList;
     }
 
     /**
