@@ -9,13 +9,11 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import lombok.extern.slf4j.Slf4j;
@@ -44,13 +42,13 @@ public class SyncWdtOtherOutStockServiceImpl implements SyncWdtOtherOutStockServ
     private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Override
-    public DmpPushTaskEntity saveTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, OtherOutstockEntity entity, String operateCode, String sourceCode) {
+    public DmpPushTaskEntity saveTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, OtherOutstockEntity entity, String operateCode, String sourceCode, String detailId, String code, String warehouseId) {
         CreateOtherStockoutRequest request = new CreateOtherStockoutRequest();
-        request.setOuterNo(entity.getCode());
+        request.setOuterNo(code);
 
         //查询推送任务表，如果有了相同的来源单据号，则序号累加
-        DmpSyncTaskDTO.ListDTO param = new DmpSyncTaskDTO.ListDTO(Collections.singletonList(entity.getId()), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc());
-        List<DmpPushTaskEntity> taskList = dmpMqFeign.listByParam(param);
+        DmpSyncTaskDTO.ListCodeDTO param = new DmpSyncTaskDTO.ListCodeDTO(Collections.singletonList(code), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc());
+        List<DmpPushTaskEntity> taskList = dmpMqFeign.listByCodeParam(param);
         Optional<CreateOtherStockoutRequest> optional = taskList.stream()
                 .filter(task -> task.getSyncOperate().equalsIgnoreCase(operateCode))
                 .map(task -> JSON.parseObject(task.getMqData(), CreateOtherStockoutRequest.class))
@@ -62,20 +60,20 @@ public class SyncWdtOtherOutStockServiceImpl implements SyncWdtOtherOutStockServ
                 Integer seq = Integer.parseInt(split[1]) + 1;
                 request.setOuterNo(split[0] + "_" + String.format("%03d", seq));
             }else {
-                request.setOuterNo(entity.getCode() + "_001");
+                request.setOuterNo(code + "_001");
             }
         }
 
         //根据发货仓库ID查询旺店通仓库编号
-        ThirdWarehouseEntity thirdWarehouse = dmpThirdMappingFeign.getBySysId(entity.getWarehouseId(), "wdt");
+        ThirdWarehouseEntity thirdWarehouse = dmpThirdMappingFeign.getBySysId(warehouseId, "wdt");
         if(thirdWarehouse == null){
-            log.info("其他出库单{}没有找到旺店通仓库映射关系，放弃推送：{}", entity.getCode(), entity.getWarehouseId());
+            log.info("其他出库单{}没有找到旺店通仓库映射关系，放弃推送：{}", code, warehouseId);
             return null;
         }
         request.setWarehouseNo(thirdWarehouse.getCode());
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
-        request.setSourceId(entity.getId());
+        request.setSourceId(code);
         request.setOperateCode(operateCode);
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
@@ -84,7 +82,7 @@ public class SyncWdtOtherOutStockServiceImpl implements SyncWdtOtherOutStockServ
 
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceId(detailId);
         dmpSyncTaskDTO.setSourceCode(sourceCode);
         dmpSyncTaskDTO.setSourceType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
         dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);

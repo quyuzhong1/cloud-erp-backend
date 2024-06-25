@@ -65,9 +65,9 @@ public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
         CreateOtherStockoutRequest request = JSON.parseObject(JSONUtil.toJsonStr(ext), CreateOtherStockoutRequest.class);
 
         //查询同一个来源单据下的推送任务
-        List<String> sourceIdList = Collections.singletonList(request.getSourceId());
-        DmpSyncTaskDTO.ListDTO listDTO = new DmpSyncTaskDTO.ListDTO(sourceIdList, request.getTargetPlatformName(), request.getSourcePlatformName());
-        List<DmpPushTaskEntity> taskList = dmpPushTaskService.listByParam(listDTO);
+        List<String> sourceCodeList = Collections.singletonList(request.getSourceId());
+        DmpSyncTaskDTO.ListCodeDTO listDTO = new DmpSyncTaskDTO.ListCodeDTO(sourceCodeList, request.getTargetPlatformName(), request.getSourcePlatformName());
+        List<DmpPushTaskEntity> taskList = dmpPushTaskService.listByCodeParam(listDTO);
 
         //保证数据推送的先后顺序:
         //1.同一个单据的审核操作必须早于反审核操作推送数据
