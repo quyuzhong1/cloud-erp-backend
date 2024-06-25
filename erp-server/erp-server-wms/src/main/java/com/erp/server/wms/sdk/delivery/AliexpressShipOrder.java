@@ -2,7 +2,6 @@ package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
@@ -12,7 +11,6 @@ import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.service.IPlatformService;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -21,15 +19,12 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsMappingDTO;
-import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.erp.server.wms.service.DictBasicService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -37,10 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -62,11 +54,17 @@ public class AliexpressShipOrder extends AbstractShipOrder {
 
     @Override
     public List<String> shipOrder(PlatformShipOrderDTO dto) {
+        // 查询拆分前的原平台订单
+        dto.setHasFindSourcePlatformOrder(true);
+        // 查询所有信息
         Tuple tuple = super.allSourceOrderInfo(dto);
         List<SoB2cEntity> sourceOrderList = tuple.get(0);
         Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = tuple.get(1);
         // 当前单据物流信息
         SoB2cLogisticsEntity logisticsEntity = tuple.get(2);
+        // 源平台仓单信息
+        Map<String, List<SoB2cDetailEntity>> sourceDetailEntityMap = tuple.get(3);
+
         //渠道
         String channelId = logisticsEntity.getLogisticsChannelId();
 
@@ -82,19 +80,19 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
             //检查销售订单详情是否存在
-            List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
-            if (CollectionUtils.isEmpty(detailEntityList)) {
+            List<SoB2cDetailEntity> currentDetailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
+            if (CollectionUtils.isEmpty(currentDetailEntityList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
             // 校验捆绑商品拆分
             // 来源明细ID为空代表是手工添加的明细忽略
-            detailEntityList = detailEntityList.stream()
+            currentDetailEntityList = currentDetailEntityList.stream()
                     .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
 //            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
 //                throw new ServiceException("平台来源详情ID为空");
 //            }
-            detailEntityList = super.handleSplit(detailEntityList, dto.isFalseDeliveryFlag());
+            List<SoB2cDetailEntity> detailEntityList = super.handleSplit(currentDetailEntityList, dto.isFalseDeliveryFlag());
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("【速卖通标记发货】订单【{}】所有明细来源ID为空,不请求速卖通接口", mainEntity.getCode());
                 continue;
@@ -107,6 +105,13 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             if (StrUtil.isBlank(logisticsNo)) {
                 throw new ServiceException("【速卖通标记发货】操作失败，渠道标发单号为空");
             }
+            // 源单信息明细
+            List<SoB2cDetailEntity> allSourceDetailEntityList = sourceDetailEntityMap.get(mainEntity.getPlatformCode());
+            if (CollectionUtils.isEmpty(allSourceDetailEntityList)){
+                throw new ServiceException("【速卖通标记发货】操作失败，原平台明细为空,平台单号=" + mainEntity.getCode());
+            }
+            // 声明发货类型，all表示全部发货，part表示部分声明发货。
+            String sendType = convertSendType(detailEntityList, allSourceDetailEntityList);
 
             DeclareDeliverRequest request = DeclareDeliverRequest.builder().
                     outRef(mainEntity.getPlatformCode()).
@@ -114,6 +119,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                     shopId(mainEntity.getShopId()).
                     shopName(mainEntity.getShopName()).
                     serviceName(tmsSignShipDTO.getSaleChannelSupplierName()).
+                    sendType(sendType).
                     build();
 
             // 非线上环境需要指定订单ID
@@ -163,5 +169,21 @@ public class AliexpressShipOrder extends AbstractShipOrder {
     @Override
     public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList) {
         return false;
+    }
+
+
+    /**
+     * 检查和转换发货类型
+     */
+    private String convertSendType(List<SoB2cDetailEntity> detailEntityList, List<SoB2cDetailEntity> allSourceDetailEntityList) {
+        Map<String, Integer> shipMap = detailEntityList.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, SoB2cDetailEntity::getQty));
+
+        // 声明发货类型，all表示全部发货，part表示部分声明发货
+        boolean allShip = allSourceDetailEntityList.stream().allMatch(
+                e -> Objects.equals(e.getQty(), shipMap.getOrDefault(e.getSourceDetailId(), 0)));
+
+        return allShip ? "all" : "part";
     }
 }

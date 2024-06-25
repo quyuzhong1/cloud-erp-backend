@@ -886,6 +886,26 @@ public class SkuMappingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class WarehouseSkuDTO {
+        private String tableId;
+        private String dictPlatform;
+        private String productSkuId;
+        private String productSkuNo;
+        private String productName;
+        private String type;
+        private String warehouseId;
+        private String warehouseName;
+        private String isExpire;
+        private String listingId;
+        private String platformSkuNo;
+        private String platformSkuName;
+        private String platformSpuNo;
+        private String platformSpuName;
+        private String platformFnSku;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class ListSkuDTO {
        /**
         * 产品skuId

@@ -290,6 +290,7 @@ public class PullAmzReportJob {
         List<String> recordTypeList = new ArrayList<>();
         List<String> shopIdsList = new ArrayList<>();
         String jobParamStr = XxlJobHelper.getJobParam();
+        // {"taskIdList":[],"recordTypeList":[],"shopIdList":[]}
         if (StringUtils.isNotBlank(jobParamStr)) {
             JSONObject jsonObject = new JSONObject(jobParamStr);
             size = jsonObject.getInt("size");

@@ -29,4 +29,9 @@ public class PlatformShipOrderDTO {
      * 是否手动标发
      */
     private boolean falseDeliveryFlag;
+
+    /**
+     * 是否查询拆分前的原订单
+     */
+    private boolean hasFindSourcePlatformOrder = false;
 }
