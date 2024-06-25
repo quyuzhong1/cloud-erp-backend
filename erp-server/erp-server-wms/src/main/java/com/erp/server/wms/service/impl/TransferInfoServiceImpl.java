@@ -568,15 +568,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }
 
             //调入仓转换为其他入库单
-            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            goods.setSpecNo(dto.getSkuNo());
-            goods.setNum(BigDecimal.valueOf(dto.getQty()));
-            goods.setPositionNo(StringUtils.isNotBlank(dto.getInWarehouseLocation()) ? dto.getInWarehouseLocation() : "");
+            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+            inGoods.setSpecNo(dto.getSkuNo());
+            inGoods.setNum(BigDecimal.valueOf(dto.getQty()));
+            inGoods.setPositionNo(StringUtils.isNotBlank(dto.getInWarehouseLocation()) ? dto.getInWarehouseLocation() : "");
 
             String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-            String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
+            String inWarehouseId = dto.getInWarehouseId();
             OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-            DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(Collections.singletonList(goods), inEntity, operateCode, entity.getCode());
+            DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(Collections.singletonList(inGoods), inEntity, operateCode, entity.getCode());
             if(inDmpPushTask != null){
                 dmpPushTaskList.add(inDmpPushTask);
             }
