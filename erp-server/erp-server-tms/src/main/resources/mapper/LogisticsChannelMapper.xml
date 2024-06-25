@@ -175,12 +175,13 @@
         lc.name,
         lc.code,
         lc.disabled,
-        ls.supplier_id as logisticsSupplierId,
-        ls.supplier_name as logisticsSupplierName
+        ls.id as logisticsSupplierId,
+        ls.short_name as logisticsSupplierName
         from logistics_channel lc
         left join logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = false
         where
         lc.is_deleted = false
+          and ls.id is not null
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((lc.code = #{params.searchKeyword}) or (lc.id = #{params.searchKeyword})  or lc.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
