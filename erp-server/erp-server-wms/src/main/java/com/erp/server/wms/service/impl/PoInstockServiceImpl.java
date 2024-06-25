@@ -728,12 +728,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, entity.getDeliveryWarehouseId());
         DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, inEntity, operateCode, entity.getCode());
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-            }
-        });
+        if(dmpPushTaskEntity != null){
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                }
+            });
+        }
     }
 
     private void setFirstMassInstock(List<String> ids) {
@@ -844,12 +846,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), code, entity.getDeliveryWarehouseId());
         DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode, entity.getCode());
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-            }
-        });
+        if(dmpPushTaskEntity != null){
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                }
+            });
+        }
     }
 
     @Override

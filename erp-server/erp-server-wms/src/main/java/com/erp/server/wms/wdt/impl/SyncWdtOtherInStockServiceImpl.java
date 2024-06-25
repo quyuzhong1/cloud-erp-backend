@@ -66,7 +66,11 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
 
         //根据收货仓库ID查询旺店通仓库编号
         ThirdWarehouseEntity thirdWarehouse = dmpThirdMappingFeign.getBySysId(entity.getWarehouseId(), "wdt");
-        request.setWarehouseNo(Optional.ofNullable(thirdWarehouse).orElse(new ThirdWarehouseEntity()).getCode());
+        if(thirdWarehouse == null){
+            log.info("其他入库单{}没有找到旺店通仓库映射关系，放弃推送：{}", entity.getCode(), entity.getWarehouseId());
+            return null;
+        }
+        request.setWarehouseNo(thirdWarehouse.getCode());
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
         request.setSourceId(entity.getId());

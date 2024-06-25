@@ -1281,12 +1281,14 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         });
 
         DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, entity, operateCode, entity.getCode());
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-            }
-        });
+        if(dmpPushTaskEntity != null){
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                }
+            });
+        }
     }
 
     /**
@@ -1319,12 +1321,14 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, entity.getWarehouseId());
         DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, inEntity, operateCode, entity.getCode());
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-            }
-        });
+        if(dmpPushTaskEntity != null){
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                }
+            });
+        }
     }
     @Override
     @Transactional(rollbackFor = Exception.class)

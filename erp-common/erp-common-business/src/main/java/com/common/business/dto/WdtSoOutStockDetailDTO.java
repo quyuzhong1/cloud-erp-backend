@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -117,4 +118,18 @@ public class WdtSoOutStockDetailDTO {
     private Boolean invalidStatus;
 
     private String soId;
+
+    private List<PositionDetailsList> positionDetailsList;
+
+    @Getter
+    @Setter
+    public static class PositionDetailsList {
+        private String recId;
+        private String stockoutDetailId;
+        private String positionId;
+        private String positionNo;
+        private String batchNo;
+        private String expireDate;
+        private Integer positionGoodsCount;
+    }
 }
