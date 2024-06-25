@@ -138,7 +138,7 @@ public interface WmsTaskFeign {
      * @return ApiResult
      */
     @PostMapping("feign/wmsWorkOption/poInstockApprove")
-    void poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+    List<BatchResultDTO> poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * 采购退货审核
