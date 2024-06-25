@@ -668,7 +668,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
         query.addCriteria(Criteria.where("platformShopCode").is(platformShopCode)
                 .and("handleStatus").is(handleStatus)
                 .and("shopId").exists(true)
-                .and("isClean").is(-10)
+                .and("downloadStatus").is(0)
         );
 
         if (currentPage > 0 && pageSize > 0) {

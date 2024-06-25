@@ -162,8 +162,8 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO;
         try {
             PlatformSoOutStockDetailDTO detailDTO = dto.getDetailList().get(0);
-            if (StringUtils.isNotBlank(detailDTO.getWarehouseId())){
-                String msg = StrUtil.format("未找到对应仓库, 仓库【{}】, 仓库中心【{}】", detailDTO.getWarehouseName(), detailDTO.getFulfillmentCenter());
+            if (StringUtils.isBlank(detailDTO.getWarehouseId())){
+                String msg = StrUtil.format("未找到对应仓库, 仓库【{}】, 仓库中心【{}】", detailDTO.getWarehouseName(), detailDTO.getFulfillmentCenterId());
                 throw new ServiceException(msg);
             }
             generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
