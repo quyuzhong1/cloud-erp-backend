@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogAction;
@@ -94,4 +95,16 @@ public class PickingCartTypeController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 验证是否被用
+     * @author will
+     * @date 2024/6/25 16:39
+     * @param baseIdDTO
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/checkIsUsed")
+    public ApiResult<Boolean> checkIsUsed(@RequestBody @Validated BaseIdDTO baseIdDTO) {
+        Boolean isUsed = pickingCartTypeService.checkIsUsed(baseIdDTO.getId());
+        return success(isUsed);
+    }
 }

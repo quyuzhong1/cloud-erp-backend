@@ -40,6 +40,13 @@ public class CfgRuleWaveController extends BaseController {
     private CfgRuleWaveService cfgRuleWaveService;
 
 
+    /**
+     * 分页查询
+     * @author will
+     * @date 2024/6/25 15:48
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
     @PostMapping("/paging")
     @WebAdvanceQuery
     public ApiResult<PagingVO<CfgRuleWaveDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgRuleWaveDTO.PagingParamDTO> dto) {
@@ -134,6 +141,36 @@ public class CfgRuleWaveController extends BaseController {
                 deleteResult = cfgRuleWaveService.delete(id);
             }catch (Exception e){
                 log.error("波次规则删除失败",e);
+                CfgRuleWaveEntity entity = cfgRuleWaveService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "波次规则不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 执行规则
+     * @author will
+     * @date 2024/6/25 15:42
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/executeRule")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "执行规则")
+    public ApiResult<?> executeRule(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = cfgRuleWaveService.executeRule(id);
+            }catch (Exception e){
+                log.error("波次规则执行失败",e);
                 CfgRuleWaveEntity entity = cfgRuleWaveService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "波次规则不存在, 删除失败");

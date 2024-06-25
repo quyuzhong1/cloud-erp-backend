@@ -47,7 +47,7 @@
         select
             <include refid="Base_Column_List" />
         from cfg_rule_wave crw
-        left join picking_cart_type pct on pc.picking_cart_type_id = pct.id and pct.is_deleted = false
+        left join picking_cart_type pct on crw.picking_cart_type_id = pct.id and pct.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and crw.is_deleted = false

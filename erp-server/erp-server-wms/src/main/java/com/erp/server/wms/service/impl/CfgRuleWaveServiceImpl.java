@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -20,15 +21,14 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
-import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
+import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.model.wms.entity.CfgRuleWaveEntity;
-import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
 import com.erp.server.wms.mapper.CfgRuleWaveMapper;
 import com.erp.server.wms.service.CfgRuleConditionService;
 import com.erp.server.wms.service.CfgRuleWaveService;
-import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +37,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -54,9 +56,6 @@ import java.util.Optional;
 public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, CfgRuleWaveEntity> implements CfgRuleWaveService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @Autowired
-    private DictBasicService dictBasicService;
 
     @Autowired
     private CfgRuleConditionService cfgRuleConditionService;
@@ -156,8 +155,29 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Override
     public CfgRuleWaveDTO.ViewDTO view(String id) {
         CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到波次规则数据"));
-        CfgRuleWaveDTO.ViewDTO data = BeanMapperUtils.map(CfgRuleWaveDTO.ViewDTO.class, entity);
-        return data;
+        CfgRuleWaveDTO.ViewDTO view = BeanMapperUtils.map(CfgRuleWaveDTO.ViewDTO.class, entity);
+
+        //执行时间
+        if (ObjectUtil.isNotEmpty(entity.getExecutionTimeJson())) {
+            List<LocalTime> executionTimeList = JSONUtil.parseArray(entity.getExecutionTimeJson()).stream().filter(obj -> ObjectUtil.isNotEmpty(obj))
+                    .map(obj -> LocalTime.parse(obj.toString(),  DateTimeFormatter.ofPattern("HH:mm"))).collect(Collectors.toList());
+            view.setExecutionTimeList(executionTimeList);
+        }
+
+        //查询规则条件
+        List<CfgRuleConditionEntity> ruleConditionEntities = cfgRuleConditionService.list(Wrappers.<CfgRuleConditionEntity>lambdaQuery()
+                .eq(CfgRuleConditionEntity::getRuleId, id)
+                .orderByAsc(CfgRuleConditionEntity::getIndex));
+        List<CfgRuleConditionDTO.View> ruleConditions = BeanMapperUtils.copyList(CfgRuleConditionDTO.View.class, ruleConditionEntities);
+        view.setConditionList(ruleConditions);
+        return view;
+    }
+
+    @Override
+    public BatchResultDTO executeRule(String id) {
+        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到波次规则数据"));
+
+        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.EXECUTE);
     }
 
     /**
@@ -203,13 +223,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     private void fillList (List<CfgRuleWaveDTO.ListDTO> list) {
         if (CollectionUtil.isEmpty(list)) {
             return;
-        }
-        //波次类型
-        List<DictBasicDTO.ListDTO> waveTypeList = dictBasicService.getByKey(DictBasicEnum.WAVE_TYPE.getKey());
-        for (CfgRuleWaveDTO.ListDTO listDTO : list) {
-            //波次类型名称
-            String waveTypeName = waveTypeList.stream().filter(obj -> StrUtil.equals(obj.getValue(), listDTO.getWaveType())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
-            listDTO.setWaveTypeName(waveTypeName);
         }
     }
 }

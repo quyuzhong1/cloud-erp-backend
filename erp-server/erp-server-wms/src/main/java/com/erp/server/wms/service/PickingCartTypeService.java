@@ -41,4 +41,12 @@ public interface PickingCartTypeService extends SuperService<PickingCartTypeEnti
      * @return BatchResultDTO
      */
     BatchResultDTO delete(String id);
+    /**
+     * 验证是否被用
+     * @author will
+     * @date 2024/6/25 16:39
+     * @param id
+     * @return Boolean
+     */
+    Boolean checkIsUsed(String id);
 }
