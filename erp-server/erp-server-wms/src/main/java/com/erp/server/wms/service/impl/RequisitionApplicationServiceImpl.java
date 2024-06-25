@@ -48,7 +48,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.wdt.SyncWdtVirtualWarehouseAllocationOrderService;
+import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -105,7 +105,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
     @Resource
-    private SyncWdtVirtualWarehouseAllocationOrderService syncWdtVirtualWarehouseAllocationOrderService;
+    private SyncWdtVirtualWarehousePushOrderService syncWdtVirtualWarehousePushOrderService;
     @Resource
     private DmpMqFeign dmpMqFeign;
 
@@ -396,9 +396,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 saveList(requisitionApplication, haveFromVwMap, fromThirdMappingList, allocationHandleEntity, handleDetailList, VwAllocationDirectionEnum.REVERSE);
                 if (CollectionUtils.isNotEmpty(handleDetailList)) {
                     //推送中台任务:保存任务+发送mq
-                    List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
-                            requisitionApplication.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(),
-                            SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+                    List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
+                            requisitionApplication.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode());
                     if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
                         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                             @Override
@@ -803,7 +802,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 saveList(entity, haveFromVwMap, fromThirdMappingList, allocationHandleEntity, handleDetailList, VwAllocationDirectionEnum.FORWARD);
                 if (CollectionUtils.isNotEmpty(handleDetailList)) {
                     //推送中台任务:保存任务+发送mq
-                    List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
+                    List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
                             entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode());
                     if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
                         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {

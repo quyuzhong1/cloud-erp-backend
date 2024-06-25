@@ -349,67 +349,71 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             //原始禁用状态变成启用时，校验当前虚拟仓绑定的渠道是否已被选择
             //获取当前已经绑定的所有渠道
             List<VirtualWarehouseDTO.BindChannelDto> allBindedList = virtualWarehouseChannelService.getBindedDictPlatformNoGroup();
-            if (CollectionUtils.isNotEmpty(allBindedList)) {
-                Map<String, List<VirtualWarehouseDTO.BindChannelDto>> allBindedMap = allBindedList.stream().collect(Collectors.groupingBy(VirtualWarehouseDTO.BindChannelDto::getDictPlatform));
-                //获取当前虚拟仓绑定的渠道
-                List<VirtualWarehouseChannelEntity> curChannelEntitieList = virtualWarehouseChannelService.getByVirtualWarehouseId(vwEntity.getId());
-                if (CollectionUtils.isNotEmpty(curChannelEntitieList)) {
-                    StringBuilder stringBuilder=new StringBuilder();
-                    Map<String, List<VirtualWarehouseChannelEntity>> curExistChannelMap = curChannelEntitieList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
-                    curExistChannelMap.forEach((dictPlatform, list) -> {
-                        List<VirtualWarehouseDTO.BindChannelDto> bindedChannelDtos = allBindedMap.get(dictPlatform);
-                        if (CollectionUtils.isNotEmpty(bindedChannelDtos)) {
-                            //如果当前渠道绑定类型是平台，则当前虚拟仓不能绑定此渠道
-                            if (Objects.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(), list.get(0).getType())) {
-                                //获取已绑定渠道的虚拟仓
-                                VirtualWarehouseEntity virtualWarehouse = this.getById(bindedChannelDtos.get(0).getVirtualWarehouseId());
-                                stringBuilder.append(StrUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, "渠道", omsDropDownFeign.getByTypeAndValue("salesPlatform",dictPlatform).getName(), virtualWarehouse.getName()));
-                            } else {
-                                //判断是否有其他虚拟仓关联此渠道的平台类型
-                                if (Objects.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(), bindedChannelDtos.get(0).getType())) {
-                                    //获取已绑定渠道的虚拟仓
-                                    VirtualWarehouseEntity virtualWarehouse = this.getById(bindedChannelDtos.get(0).getVirtualWarehouseId());
-                                    stringBuilder.append(StrUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, "渠道", omsDropDownFeign.getByTypeAndValue("salesPlatform",dictPlatform).getName(), virtualWarehouse.getName()));
-                                } else {
-                                    //如果当前渠道绑定类型是店铺，判断是否重复绑定店铺
-                                    List<String> relationIds = list.stream().map(VirtualWarehouseChannelEntity::getRelationId).collect(Collectors.toList());
-                                    List<String> allBindedRelationList = allBindedList.stream().filter(item->Objects.equals(item.getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())).map(VirtualWarehouseDTO.BindChannelDto::getRelationId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-                                    List<String> existRelationIds = new ArrayList<>();
-//                                    allBindedRelationList.forEach(allBindedRelationId -> {
-//                                        if (relationIds.contains(allBindedRelationId)) {
-//                                            existRelationIds.add(allBindedRelationId);
-//                                        }
-//                                    });
-                                    relationIds.forEach(relationId -> {
-                                        if (allBindedRelationList.contains(relationId)) {
-                                            existRelationIds.add(relationId);
-                                        }
-                                    });
-                                    if (CollectionUtils.isNotEmpty(existRelationIds)) {
-                                        //获取绑定过的店铺
-                                        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(existRelationIds);
-                                        if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
-                                            VirtualWarehouseDTO.BindChannelDto bindChannelDto = bindedChannelDtos.stream().filter(item -> existRelationIds.contains(item.getRelationId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99002));
-                                            VirtualWarehouseEntity virtualWarehouse = this.getById(bindChannelDto.getVirtualWarehouseId());
-                                            stringBuilder.append(StrUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, VitualWarehouseChannelTypeEnum.SHOP.getName(),shopInfoEntities.stream().map(ShopInfoEntity::getName).collect(Collectors.joining("、")), virtualWarehouse.getName()));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    if (StringUtils.isNotBlank(stringBuilder.toString())){
-                        throw new ServiceException(stringBuilder.toString());
-                    }
-                }
-            }
-
+            checkBindedChannel(allBindedList, vwEntity);
         }
         VirtualWarehouseEntity virtualWarehouseEntity = new VirtualWarehouseEntity();
         virtualWarehouseEntity.setId(updateStateDTO.getId());
         virtualWarehouseEntity.setDisabled(updateStateDTO.getDisabled());
         baseMapper.updateById(virtualWarehouseEntity);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 校验已绑定的渠道不能重复绑定
+     *
+     * @param allBindedList
+     * @param vwEntity
+     */
+    private void checkBindedChannel(List<VirtualWarehouseDTO.BindChannelDto> allBindedList, VirtualWarehouseEntity vwEntity) {
+        if (CollectionUtils.isNotEmpty(allBindedList)) {
+            Map<String, List<VirtualWarehouseDTO.BindChannelDto>> allBindedMap = allBindedList.stream().collect(Collectors.groupingBy(VirtualWarehouseDTO.BindChannelDto::getDictPlatform));
+            //获取当前虚拟仓绑定的渠道
+            List<VirtualWarehouseChannelEntity> curChannelEntitieList = virtualWarehouseChannelService.getByVirtualWarehouseId(vwEntity.getId());
+            if (CollectionUtils.isNotEmpty(curChannelEntitieList)) {
+                StringBuilder stringBuilder = new StringBuilder();
+                Map<String, List<VirtualWarehouseChannelEntity>> curExistChannelMap = curChannelEntitieList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
+                curExistChannelMap.forEach((dictPlatform, list) -> {
+                    List<VirtualWarehouseDTO.BindChannelDto> bindedChannelDtos = allBindedMap.get(dictPlatform);
+                    if (CollectionUtils.isNotEmpty(bindedChannelDtos)) {
+                        //如果当前渠道绑定类型是平台，则当前虚拟仓不能绑定此渠道
+                        if (Objects.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(), list.get(0).getType())) {
+                            //获取已绑定渠道的虚拟仓
+                            VirtualWarehouseEntity virtualWarehouse = this.getById(bindedChannelDtos.get(0).getVirtualWarehouseId());
+                            stringBuilder.append(StrUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, "渠道", omsDropDownFeign.getByTypeAndValue("salesPlatform", dictPlatform).getName(), virtualWarehouse.getName()));
+                        } else {
+                            //判断是否有其他虚拟仓关联此渠道的平台类型
+                            if (Objects.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(), bindedChannelDtos.get(0).getType())) {
+                                //获取已绑定渠道的虚拟仓
+                                VirtualWarehouseEntity virtualWarehouse = this.getById(bindedChannelDtos.get(0).getVirtualWarehouseId());
+                                stringBuilder.append(StrUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, "渠道", omsDropDownFeign.getByTypeAndValue("salesPlatform", dictPlatform).getName(), virtualWarehouse.getName()));
+                            } else {
+                                //如果当前渠道绑定类型是店铺，判断是否重复绑定店铺
+                                List<String> relationIds = list.stream().map(VirtualWarehouseChannelEntity::getRelationId).collect(Collectors.toList());
+                                List<String> allBindedRelationList = allBindedList.stream().filter(item -> Objects.equals(item.getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())).map(VirtualWarehouseDTO.BindChannelDto::getRelationId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                                List<String> existRelationIds = new ArrayList<>();
+                                relationIds.forEach(relationId -> {
+                                    if (allBindedRelationList.contains(relationId)) {
+                                        existRelationIds.add(relationId);
+                                    }
+                                });
+                                if (CollectionUtils.isNotEmpty(existRelationIds)) {
+                                    //获取绑定过的店铺
+                                    List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(existRelationIds);
+                                    if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
+                                        VirtualWarehouseDTO.BindChannelDto bindChannelDto = bindedChannelDtos.stream().filter(item -> existRelationIds.contains(item.getRelationId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99002));
+                                        VirtualWarehouseEntity virtualWarehouse = this.getById(bindChannelDto.getVirtualWarehouseId());
+                                        stringBuilder.append(StrUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, VitualWarehouseChannelTypeEnum.SHOP.getName(), shopInfoEntities.stream().map(ShopInfoEntity::getName).collect(Collectors.joining("、")), virtualWarehouse.getName()));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                if (StringUtils.isNotBlank(stringBuilder.toString())) {
+                    throw new ServiceException(stringBuilder.toString());
+                }
+            }
+        }
     }
 
     /**
@@ -548,7 +552,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         }
         //获取当前虚拟仓绑定的店铺
         List<VirtualWarehouseChannelEntity> warehouseChannelEntities = virtualWarehouseChannelService.getByVirtualWarehouseId(dto.getParams().getId()).stream()
-                .filter(item->Objects.equals(item.getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())).collect(Collectors.toList());
+                .filter(item -> Objects.equals(item.getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())).collect(Collectors.toList());
         List<String> shopIds = warehouseChannelEntities.stream().map(VirtualWarehouseChannelEntity::getRelationId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         pagingSelect.getList().forEach(shop -> {
             if (bindedShopList.contains(((ShopDTO.ListDTO) shop).getId())) {

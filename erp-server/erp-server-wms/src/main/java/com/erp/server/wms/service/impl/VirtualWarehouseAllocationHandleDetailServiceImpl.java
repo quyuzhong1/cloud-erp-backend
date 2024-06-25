@@ -21,7 +21,7 @@ import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.erp.server.wms.wdt.SyncWdtVirtualWarehouseAllocationOrderService;
+import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +61,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
     @Resource
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
     @Resource
-    private SyncWdtVirtualWarehouseAllocationOrderService syncWdtVirtualWarehouseAllocationOrderService;
+    private SyncWdtVirtualWarehousePushOrderService syncWdtVirtualWarehousePushOrderService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
@@ -220,7 +220,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
         }
         if (CollectionUtils.isNotEmpty(handleDetailList)) {
             //推送中台任务:保存任务+发送mq
-            List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehouseAllocationOrderService.saveTaskList(handleDetailList,
+            List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
                     allocationEntity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
             if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
 //                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
