@@ -11,6 +11,7 @@ import com.common.business.dto.WdtSoOutStockDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractSoOutStockHandler;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.wangdian.dto.WangDianOrderEntity;
@@ -129,6 +130,14 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
                 detail.setRemark(detailItem.getRemark());
                 detail.setSourceDetailId(detailItem.getSrcOrderDetailId());
                 detail.setInvalidStatus(false);
+
+                List<SalesStockoutResponse.PositionDetailsList> list = detailItem.getPositionDetailsList();
+                List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = list.stream().map(v -> {
+                    WdtSoOutStockDetailDTO.PositionDetailsList position = BeanMapperUtils.map(WdtSoOutStockDetailDTO.PositionDetailsList.class, v);
+                    position.setPositionGoodsCount(v.getPositionGoodsCount().intValue());
+                    return position;
+                }).collect(Collectors.toList());
+                detail.setPositionDetailsList(detailsLists);
                 detailList.add(detail);
             }
             soOutStock.setDetailList(detailList);
