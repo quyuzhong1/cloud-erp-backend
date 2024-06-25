@@ -243,4 +243,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto);
 
     SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids);
+    /**
+     * 查询待处理发货单
+     * @author will
+     * @date 2024/6/25 18:07
+     * @return List<SoB2cDeliveryEntity>
+     */
+    List<SoB2cDeliveryEntity> listWaitHandle();
 }

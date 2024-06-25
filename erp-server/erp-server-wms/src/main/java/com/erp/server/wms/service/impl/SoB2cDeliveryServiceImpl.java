@@ -1449,6 +1449,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return view;
     }
 
+    @Override
+    public List<SoB2cDeliveryEntity> listWaitHandle() {
+        return lambdaQuery().eq(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
+                .list();
+    }
+
     /**
      * @description: 根据id集合更新修改状态
      * @author Will

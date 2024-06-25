@@ -24,12 +24,14 @@ import com.erp.model.wms.dto.CfgRuleWaveDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.model.wms.entity.CfgRuleWaveEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
 import com.erp.server.wms.mapper.CfgRuleWaveMapper;
 import com.erp.server.wms.service.CfgRuleConditionService;
 import com.erp.server.wms.service.CfgRuleWaveService;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +61,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Autowired
     private CfgRuleConditionService cfgRuleConditionService;
+
+    @Autowired
+    private SoB2cDeliveryService soB2cDeliveryService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -176,6 +182,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Override
     public BatchResultDTO executeRule(String id) {
         CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到波次规则数据"));
+
+        //查询所有待处理的发货单进行生成波次
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listWaitHandle();
+
 
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.EXECUTE);
     }
