@@ -8,16 +8,10 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleDetailEntity;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationHandleRelationEntity;
-import com.erp.model.wms.enums.VwAllocationDirectionEnum;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.server.wms.service.RequisitionApplicationDetailService;
-import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
-import com.erp.server.wms.service.VirtualWarehouseAllocationHandleRelationService;
-import com.erp.server.wms.wdt.SyncWdtVirtualWarehouseAllocationOrderService;
+import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwAllocationHandelDetailPushDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +24,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -40,7 +35,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWdtVirtualWarehouseAllocationOrderService {
+public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtualWarehousePushOrderService {
 
     @Resource
     private DmpMqFeign dmpMqFeign;
@@ -50,10 +45,15 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
     @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
+    @Resource
+    private VirtualWarehouseAllocationHandleDetailService virtualWarehouseAllocationHandleDetailService;
+    @Resource
+    private VirtualWarehouseAllocationHandleService virtualWarehouseAllocationHandleService;
 
     @Override
     public List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList,
                                                 String vwAllocationCode, String operateCode, String sourceType) {
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
 
         List<DmpPushTaskFeignDTO> dmpPushTaskEntityList = new ArrayList<>();
         //单据类型:1:锁定分配,2:释放出库,3:虚拟仓间调拨,4:采购入库
@@ -96,7 +96,7 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                     break;
                 case REQUISITION_APPLICATION:
                     Map<String, List<RequisitionApplicationDetailEntity>> requireSkuMap = requisitionApplicationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getSkuNo));
-                    log.info("获取要货申请明细：{}",requireSkuMap);
+                    log.info("获取要货申请明细：{}", requireSkuMap);
                     requireSkuMap.forEach((skuNo, list) -> {
                         VwAllocationHandelDetailPushDTO.DetailList detail = new VwAllocationHandelDetailPushDTO.DetailList();
                         detail.setNum(BigDecimal.valueOf(list.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum)));
@@ -104,6 +104,20 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
                         detail.setSpec_no(skuNo);
                         detailList.add(detail);
                     });
+                    //获取要货申请上次推送的id
+                    //获取最后一次合单的主单
+                    VirtualWarehouseAllocationHandleEntity allocationHandleEntity = virtualWarehouseAllocationHandleService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleEntity>()
+                            .eq(VirtualWarehouseAllocationHandleEntity::getAllocationId, handleDetail.getAllocationId())
+                            .ne(VirtualWarehouseAllocationHandleEntity::getId, handleDetail.getMainId()).orderByDesc(VirtualWarehouseAllocationHandleEntity::getCreateTime)
+                            .last("limit 1")).stream().findFirst().orElse(null);
+//                    List<String> newHandleDetailIds = handleDetailList.stream().map(VirtualWarehouseAllocationHandleDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                    if (Objects.nonNull(allocationHandleEntity)) {
+                        List<String> oldHandleDetailIds = virtualWarehouseAllocationHandleDetailService
+                                .list(new LambdaQueryWrapper<VirtualWarehouseAllocationHandleDetailEntity>().eq(VirtualWarehouseAllocationHandleDetailEntity::getMainId, allocationHandleEntity.getId()))
+                                .stream().map(VirtualWarehouseAllocationHandleDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+//                    oldHandleDetailIds.removeAll(newHandleDetailIds);
+                        dmpSyncTaskDTO.setParentId(oldHandleDetailIds.stream().collect(Collectors.joining(",")));
+                    }
                     break;
                 default:
                     break;
@@ -112,7 +126,6 @@ public class SyncWdtVirtualWarehouseAllocationOrderServiceImpl implements SyncWd
             request.setRemark("原始单据号：" + vwAllocationCode);
 
             //添加推送任务
-            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
             dmpSyncTaskDTO.setSourceId(handleDetail.getId());
             dmpSyncTaskDTO.setSourceCode(vwAllocationCode);
             dmpSyncTaskDTO.setSourceType(sourceType);

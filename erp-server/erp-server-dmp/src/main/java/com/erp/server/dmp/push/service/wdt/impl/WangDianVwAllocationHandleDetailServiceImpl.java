@@ -93,7 +93,7 @@ public class WangDianVwAllocationHandleDetailServiceImpl implements WangDianVwAl
                         log.info("旺店通虚拟仓订单创建：失败同步分货单：{}",dto);
                         allocationDetailFeign.updateSyncStatus(dto);
                     }
-                    throw new ServiceException((e.getMessage()));
+                    throw new ServiceException(e.getMessage());
                 }
             }
         } catch (InterruptedException e) {
