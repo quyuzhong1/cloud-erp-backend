@@ -596,7 +596,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list) {
-        long countQty = list.stream().map(RequisitionApplicationDTO.FinishListDTO::getPickingQty).count();
+        long countQty = list.stream().mapToInt(RequisitionApplicationDTO.FinishListDTO::getPickingQty).sum();
         if (countQty <= 0) {
             throw new ServiceException(ApiError.ERROR_99106);
         }
@@ -1048,7 +1048,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException(ApiError.ERROR_99104);
         }
         List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(entities)) {
+        boolean invalidStatus = entities.stream().anyMatch(FirstMileDeliveryEntity::getInvalidStatus);
+        if (CollectionUtils.isNotEmpty(entities) && Boolean.TRUE.equals(invalidStatus)) {
             throw new ServiceException(ApiError.ERROR_99104);
         }
 
