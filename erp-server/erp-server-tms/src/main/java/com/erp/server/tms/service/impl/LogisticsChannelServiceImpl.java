@@ -664,21 +664,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         LogisticsChannelDTO.SelectDTO params = dto.getParams();
         IPage<LogisticsChannelDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<LogisticsChannelDTO.PagingSelectDTO> records = pagResult.getRecords();
-        if (Boolean.TRUE.equals(dto.getParams().getShowSupplier())) {
-            List<String> supplierIds = records.stream().map(LogisticsChannelDTO.PagingSelectDTO::getLogisticsSupplierId).collect(Collectors.toList());
-            List<LogisticsSupplierDTO.LogisticsSupplierListDTO> supplierListDTOS = logisticsSupplierService.listLogisticsChannel(supplierIds);
-            if (CollectionUtils.isNotEmpty(supplierListDTOS)){
-                records.forEach(record->{
-                    LogisticsSupplierDTO.LogisticsSupplierListDTO logisticsSupplierListDTO = supplierListDTOS.stream().filter(item -> Objects.equals(item.getLogisticsSupplierId(), record.getLogisticsSupplierId())).findFirst().orElse(null);
-                    if (Objects.nonNull(logisticsSupplierListDTO)) {
-                        record.setLogisticsSupplierId(logisticsSupplierListDTO.getLogisticsSupplierId());
-                        record.setLogisticsSupplierName(logisticsSupplierListDTO.getLogisticsSupplierName());
-                    }else{
-                        record.setLogisticsSupplierId("");
-                    }
-                });
-            }
-        }
         //排序
         List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
         pagResult.setRecords(list);
