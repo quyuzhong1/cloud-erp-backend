@@ -11,6 +11,7 @@ import com.common.business.dto.WdtSoOutStockDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractSoOutStockHandler;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.wangdian.dto.WangDianOrderEntity;
@@ -100,7 +101,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             //审核时间
             soOutStock.setApproveTime(outStockTime);
             soOutStock.setCreated(LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(order.getCreated())), ZoneId.systemDefault()));
-            soOutStock.setCreateUserName("wangdaintong");
+            soOutStock.setCreateUserName("wangdiantong");
             soOutStock.setCountry(CHINA.getSite());
             //第三方单据编号
             soOutStock.setThirdCode(order.getSrcOrderNo());
@@ -129,6 +130,10 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
                 detail.setRemark(detailItem.getRemark());
                 detail.setSourceDetailId(detailItem.getSrcOrderDetailId());
                 detail.setInvalidStatus(false);
+
+                List<SalesStockoutResponse.PositionDetailsList> list = detailItem.getPositionDetailsList();
+                List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = BeanMapperUtils.copyList(WdtSoOutStockDetailDTO.PositionDetailsList.class, list);
+                detail.setPositionDetailsList(detailsLists);
                 detailList.add(detail);
             }
             soOutStock.setDetailList(detailList);

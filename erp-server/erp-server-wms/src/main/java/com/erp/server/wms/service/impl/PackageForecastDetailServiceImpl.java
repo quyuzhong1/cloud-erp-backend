@@ -293,11 +293,11 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     }
 
     @Override
-    public List<PackageForecastDetailEntity> listBySoIdList(List<String> soIdList) {
+    public List<PackageForecastDTO.ExportViewDTO> listPackageForecastBySoIdList(List<String> soIdList) {
         if (CollectionUtils.isEmpty(soIdList)) {
-            return  Collections.EMPTY_LIST;
+            return  Collections.emptyList();
         }
-        return  lambdaQuery().in(PackageForecastDetailEntity::getSoId,soIdList).list();
+        return baseMapper.listPackageForecastBySoIdList(soIdList);
     }
 
     @Override
