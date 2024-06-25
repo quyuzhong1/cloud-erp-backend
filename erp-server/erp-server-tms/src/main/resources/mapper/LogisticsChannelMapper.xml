@@ -176,7 +176,7 @@
         lc.code,
         lc.disabled,
         ls.id as logisticsSupplierId,
-        ls.supplier_name as logisticsSupplierName
+        ls.short_name as logisticsSupplierName
         from logistics_channel lc
         left join logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = false
         where
