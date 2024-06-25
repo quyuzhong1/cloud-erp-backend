@@ -69,15 +69,6 @@ public interface SysUserFeign {
     @PostMapping("feign/user/pagingSelect")
     ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto);
 
-    /**
-     * 远程搜索
-     *
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("feign/user/pagingSelect")
-    ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto);
-
         /**
          * 获取用户权限
          */

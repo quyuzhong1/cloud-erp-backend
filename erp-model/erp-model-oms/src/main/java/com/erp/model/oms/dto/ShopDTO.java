@@ -331,57 +331,6 @@ public class ShopDTO implements Serializable {
 
 
     }
-    @Data
-    @NoArgsConstructor
-    public static class AddInternalDTO {
-
-
-        /**
-         * 平台
-         */
-        @NotBlank(message = "平台不能为空")
-        private String dictPlatform;
-
-
-        /**
-         * 店铺名称
-         */
-        @NotBlank(message = "店铺名称不能为空")
-        @Size(max = 100, message = "店铺名称最大100字符")
-        private String name;
-
-
-        /**
-         * 店铺账号
-         */
-        @NotBlank(message = "店铺账号不能为空")
-        @Size(max = 100, message = "店铺账号最大100字符")
-        private String account;
-
-
-        /**
-         * 店铺负责人
-         */
-        @NotBlank(message = "负责人不能为空")
-        private String chargeId;
-        /**
-         * 金蝶客户编码
-         */
-        private String customerId;
-
-        /**
-         * 销售组织
-         */
-        @NotBlank(message = "销售组织不能为空")
-        private String salesOrgId;
-
-        /**
-         * 是否包含平台仓 true 包含
-         */
-        private Boolean  isHaveWarehouse;
-
-
-    }
 
 
     @Data
@@ -968,57 +917,4 @@ public class ShopDTO implements Serializable {
          */
         private Boolean  isHaveWarehouse;
     }
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-
-        private List<String> ids;
-    }
-    @Data
-    @NoArgsConstructor
-    public static class SelectDTO {
-
-        /**
-         * 关键词
-         */
-        private String searchKeyword;
-        /**
-         * 平台
-         */
-        private String dictPlatform;
-        /**
-         * 是否已授权
-         */
-        private Boolean showByAuth = false;
-        /**
-         * 平台
-         */
-        private List<String> shopIdList;
-    }
-    @Data
-    @NoArgsConstructor
-    public static class ListDTO {
-        /**
-         * 主键
-         */
-        private String id;
-        /**
-         * 关键词
-         */
-        private String name;
-        /**
-         * 账号
-         */
-        private String account;
-        /**
-         * 禁用状态
-         */
-        private Boolean disabled;
-        /**
-         * 授权状态
-         */
-        private String authStatus;
-
-    }
-
 }
