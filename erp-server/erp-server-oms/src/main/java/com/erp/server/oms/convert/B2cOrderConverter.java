@@ -325,4 +325,5 @@ public interface B2cOrderConverter {
     @Mapping(target = "warehouseName", source = "warehouseName")
     @Mapping(target = "id", ignore = true)
     SoB2cDetailEntity convertB2cDetailByGiftDto(SoB2cDTO.GiftDTO dto);
+    List<SoB2cDetailEntity> convertB2cDetailByGiftDto(List<SoB2cDTO.GiftDTO> dtoList);
 }
