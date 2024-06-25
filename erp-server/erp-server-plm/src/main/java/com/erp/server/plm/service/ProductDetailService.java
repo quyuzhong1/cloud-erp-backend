@@ -13,6 +13,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -699,6 +700,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param details
      */
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
+
+    void initProductSizeAndBoxSize();
 
     /**
      * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中

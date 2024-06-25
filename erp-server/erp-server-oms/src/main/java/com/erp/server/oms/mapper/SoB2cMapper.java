@@ -160,7 +160,19 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2024/4/16 15:10
      */
-    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.ExportParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO,@Param("isOutStock") Boolean isOutStock);
+    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
+
+    /**
+     * @param params
+     * @param shopAuthResultDTO
+     * @param isOutStock
+     * @return Integer
+     * @description: 导出excel数量查询
+     * @author Will
+     * @date: 2024/4/29 17:55
+     */
+    Integer countExportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
+    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
     /**
      * @description: 异常订单分页查询
      * @author Will
@@ -187,15 +199,4 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     void updateBatchApproveById(@Param("updateList") List<SoB2cEntity> updateList);
 
     IPage<SoB2cForeignDTO.OrderDeliveryResp> getForeignOrderDeliveryInfo(Page query, @Param("params") SoB2cForeignDTO.OrderDeliveryReq orderDeliveryReq);
-
-    /**
-     * @param params
-     * @param shopAuthResultDTO
-     * @param isOutStock
-     * @return Integer
-     * @description: 导出excel数量查询
-     * @author Will
-     * @date: 2024/4/29 17:55
-     */
-    Integer countExportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
 }

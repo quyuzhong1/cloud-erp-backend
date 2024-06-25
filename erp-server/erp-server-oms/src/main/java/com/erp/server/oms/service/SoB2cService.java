@@ -914,10 +914,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 添加赠品
-     * @param dto
+     * @param entity
+     * @param detailEntityList
+     * @param dtoList
+     * @param LogisticsEntity
      * @return
      */
-    BatchResultDTO addGift(SoB2cDTO.GiftDTO dto);
+    BatchResultDTO addGift(SoB2cEntity entity,List<SoB2cDTO.GiftDTO> dtoList,SoB2cLogisticsEntity LogisticsEntity,List<SoB2cDetailEntity> detailEntityList);
 
     /**
      * 根据销售订单id获取买家信息
