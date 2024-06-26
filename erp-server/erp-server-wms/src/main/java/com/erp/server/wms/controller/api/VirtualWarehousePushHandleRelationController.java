@@ -2,23 +2,22 @@ package com.erp.server.wms.controller.api;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.VirtualWarehouseAllocationHandleRelationService;
+import com.erp.server.wms.service.VirtualWarehousePushHandleRelationService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleRelationDTO;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleRelationDTO;
 
 /**
  * 分货单拆单关联关系表
@@ -30,10 +29,10 @@ import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleRelationDTO;
 @RestController
 @LogSystemModule("分货单拆单关联关系表")
 @RequestMapping("/virtualWarehouseAllocationHandleRelation")
-public class VirtualWarehouseAllocationHandleRelationController extends BaseController {
+public class VirtualWarehousePushHandleRelationController extends BaseController {
 
     @Resource
-    private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
+    private VirtualWarehousePushHandleRelationService virtualWarehousePushHandleRelationService;
 
     /**
     * 新增
@@ -44,8 +43,8 @@ public class VirtualWarehouseAllocationHandleRelationController extends BaseCont
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "分货单拆单关联关系表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseAllocationHandleRelationDTO.AddDTO dto) {
-        return success(virtualWarehouseAllocationHandleRelationService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehousePushHandleRelationDTO.AddDTO dto) {
+        return success(virtualWarehousePushHandleRelationService.add(dto));
     }
 
     /**
@@ -60,10 +59,10 @@ public class VirtualWarehouseAllocationHandleRelationController extends BaseCont
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "wms:virtualWarehouseAllocationHandleRelation:update",
-        serviceClass = VirtualWarehouseAllocationHandleRelationService.class,
+        serviceClass = VirtualWarehousePushHandleRelationService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated VirtualWarehouseAllocationHandleRelationDTO.UpdateDTO dto) {
-        virtualWarehouseAllocationHandleRelationService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated VirtualWarehousePushHandleRelationDTO.UpdateDTO dto) {
+        virtualWarehousePushHandleRelationService.update(dto);
         return success();
     }
 

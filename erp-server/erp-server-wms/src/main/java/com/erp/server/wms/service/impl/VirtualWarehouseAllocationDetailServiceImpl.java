@@ -69,7 +69,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Resource
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
     @Resource
-    private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
+    private VirtualWarehousePushHandleRelationService virtualWarehousePushHandleRelationService;
     @Resource
     private DmpMqFeign dmpMqFeign;
     @Resource
@@ -179,13 +179,13 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         dto.setSysTypeName(PlatformDictEnum.getByCode(dto.getSysType()).getName());
         //根据分货单主单和明细获取分货单合单数据
         //获取合单表明细id
-        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehousePushHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vwAllocationEntity.getId())
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vwAllocationDetailEntity.getId()));
         if (Objects.nonNull(handleRelation)) {
             //根据合单明细id获取拆单信息
             String handleDetailId = handleRelation.getHandleDetailId();
-            List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
+            List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehousePushHandleRelationService
                     .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handleDetailId));
             if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
                 baseMapper.batchManualFinish(dto, Integer.valueOf(code), handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList()));
@@ -312,13 +312,13 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Override
     public BatchResultDTO sync(VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity, VirtualWarehouseAllocationEntity vwAllocationEntity) {
         //获取合单表明细id
-        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehousePushHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vwAllocationEntity.getId())
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vwAllocationDetailEntity.getId()));
         if (Objects.nonNull(handleRelation)) {
             //根据合单明细id获取拆单信息
             String handleDetailId = handleRelation.getHandleDetailId();
-            List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
+            List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehousePushHandleRelationService
                     .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handleDetailId));
             if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
                 baseMapper.batchSync(VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode(),
@@ -350,7 +350,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             }
         }
         //获取合单表明细id
-        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehousePushHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vmAllocationEntity.getId())
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vmAllocationDetailEntity.getId()));
         DmpPushTaskEntity productBomHistoryTask = new DmpPushTaskEntity();
@@ -401,14 +401,14 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             }
         }
         //获取合单表明细id
-        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehouseAllocationHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+        VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehousePushHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vwAllocationEntity.getId())
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vwAllocationDetailEntity.getId()));
         VirtualWarehouseAllocationDTO.ThirdCodeDto thirdCodeDto = new VirtualWarehouseAllocationDTO.ThirdCodeDto();
         if (Objects.nonNull(handleRelation)) {
             //根据合单明细id获取拆单信息
             String handleDetailId = handleRelation.getHandleDetailId();
-            List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
+            List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehousePushHandleRelationService
                     .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handleDetailId));
             if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
                 //获取明细
@@ -439,7 +439,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     public void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto) {
         log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态：{}",dto);
         //根据合单明细id获取拆单信息
-        List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehouseAllocationHandleRelationService
+        List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehousePushHandleRelationService
                 .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, dto.getHandelDetailId()));
         if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
             baseMapper.updateSyncStatus(dto, handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList()));

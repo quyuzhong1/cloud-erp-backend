@@ -99,11 +99,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
-    private VirtualWarehouseAllocationHandleService virtualWarehouseAllocationHandleService;
+    private VirtualWarehousePushHandleService virtualWarehousePushHandleService;
     @Resource
-    private VirtualWarehouseAllocationHandleDetailService virtualWarehouseAllocationHandledetailService;
+    private VirtualWarehousePushHandleDetailService virtualWarehousePushHandledetailService;
     @Resource
-    private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
+    private VirtualWarehousePushHandleRelationService virtualWarehousePushHandleRelationService;
     @Resource
     private SyncWdtVirtualWarehousePushOrderService syncWdtVirtualWarehousePushOrderService;
     @Resource
@@ -391,7 +391,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(requisitionApplication.getId(),
                         requisitionApplication.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplication.getStatus()
                         , VwAllocationDirectionEnum.REVERSE.getCode());
-                virtualWarehouseAllocationHandleService.save(pushHandleEntity);
+                virtualWarehousePushHandleService.save(pushHandleEntity);
                 List<VirtualWarehousePushHandleDetailEntity> handleDetailList = new ArrayList<>();
                 saveList(requisitionApplication, haveFromVwMap, fromThirdMappingList, pushHandleEntity, handleDetailList, VwAllocationDirectionEnum.REVERSE);
                 if (CollectionUtils.isNotEmpty(handleDetailList)) {
@@ -445,7 +445,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
                     Integer sumQty = fromHandleList.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum);
                     handleDetailEntity.setQty(sumQty);
-                    virtualWarehouseAllocationHandledetailService.save(handleDetailEntity);
+                    virtualWarehousePushHandledetailService.save(handleDetailEntity);
                     handleDetailList.add(handleDetailEntity);
                     fromHandleList.forEach(allocationDetail -> {
                         VirtualWarehousePushHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehousePushHandleRelationEntity();
@@ -460,7 +460,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         }
                         vmAllocationHandleRelationEntity.setHandleId(pushHandleEntity.getId());
                         vmAllocationHandleRelationEntity.setHandleDetailId(handleDetailEntity.getId());
-                        virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
+                        virtualWarehousePushHandleRelationService.save(vmAllocationHandleRelationEntity);
                     });
                 }
             }
@@ -795,7 +795,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 //保存要货申请主单
                 VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(entity.getId(),
                         entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getStatus(), VwAllocationDirectionEnum.FORWARD.getCode());
-                virtualWarehouseAllocationHandleService.save(pushHandleEntity);
+                virtualWarehousePushHandleService.save(pushHandleEntity);
                 List<VirtualWarehousePushHandleDetailEntity> handleDetailList = new ArrayList<>();
                 saveList(entity, haveFromVwMap, fromThirdMappingList, pushHandleEntity, handleDetailList, VwAllocationDirectionEnum.FORWARD);
                 if (CollectionUtils.isNotEmpty(handleDetailList)) {

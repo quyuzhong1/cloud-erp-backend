@@ -7,9 +7,9 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
-import com.erp.server.wms.mapper.VirtualWarehouseAllocationHandleMapper;
-import com.erp.server.wms.service.VirtualWarehouseAllocationHandleDetailService;
-import com.erp.server.wms.service.VirtualWarehouseAllocationHandleService;
+import com.erp.server.wms.mapper.VirtualWarehousePushHandleMapper;
+import com.erp.server.wms.service.VirtualWarehousePushHandleDetailService;
+import com.erp.server.wms.service.VirtualWarehousePushHandleService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleDTO;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -34,16 +34,16 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @Service
-public class VirtualWarehouseAllocationHandleServiceImpl extends SuperServiceImpl<VirtualWarehouseAllocationHandleMapper, VirtualWarehousePushHandleEntity> implements VirtualWarehouseAllocationHandleService {
+public class VirtualWarehousePushHandleServiceImpl extends SuperServiceImpl<VirtualWarehousePushHandleMapper, VirtualWarehousePushHandleEntity> implements VirtualWarehousePushHandleService {
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private VirtualWarehouseAllocationHandleDetailService vmAllocationHandleDetailService;
+    private VirtualWarehousePushHandleDetailService vmAllocationHandleDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(VirtualWarehouseAllocationHandleDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(VirtualWarehousePushHandleDTO.AddDTO addDTO) {
         VirtualWarehousePushHandleEntity virtualWarehousePushHandleEntity = new VirtualWarehousePushHandleEntity();
         BeanMapperUtils.copy(addDTO, virtualWarehousePushHandleEntity);
 
@@ -70,7 +70,7 @@ public class VirtualWarehouseAllocationHandleServiceImpl extends SuperServiceImp
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(VirtualWarehouseAllocationHandleDTO.UpdateDTO updateDTO) {
+    public Boolean update(VirtualWarehousePushHandleDTO.UpdateDTO updateDTO) {
         VirtualWarehousePushHandleEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单主单"));
         VirtualWarehousePushHandleEntity virtualWarehousePushHandleEntity =  BeanMapperUtils.map(VirtualWarehousePushHandleEntity.class, updateDTO);

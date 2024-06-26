@@ -15,7 +15,7 @@ import org.apache.ibatis.annotations.Param;
  * @since 2024-06-07
  */
 @Mapper
-public interface VirtualWarehouseAllocationHandleMapper extends BaseMapper<VirtualWarehousePushHandleEntity> {
+public interface VirtualWarehousePushHandleMapper extends BaseMapper<VirtualWarehousePushHandleEntity> {
 
     void forceDeleteById(@Param("id") String id);
 }

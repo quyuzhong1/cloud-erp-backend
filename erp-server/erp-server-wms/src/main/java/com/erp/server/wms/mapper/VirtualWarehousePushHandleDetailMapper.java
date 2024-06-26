@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2024-06-07
  */
 @Mapper
-public interface VirtualWarehouseAllocationHandleDetailMapper extends BaseMapper<VirtualWarehousePushHandleDetailEntity> {
+public interface VirtualWarehousePushHandleDetailMapper extends BaseMapper<VirtualWarehousePushHandleDetailEntity> {
 
 }

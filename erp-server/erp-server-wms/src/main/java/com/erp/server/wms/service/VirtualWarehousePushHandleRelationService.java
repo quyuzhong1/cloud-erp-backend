@@ -2,7 +2,7 @@ package com.erp.server.wms.service;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleRelationDTO;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleRelationDTO;
 
 /**
  * <p>
@@ -12,7 +12,7 @@ import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleRelationDTO;
  * @author hyj
  * @since 2024-06-07
  */
-public interface VirtualWarehouseAllocationHandleRelationService extends SuperService<VirtualWarehousePushHandleRelationEntity> {
+public interface VirtualWarehousePushHandleRelationService extends SuperService<VirtualWarehousePushHandleRelationEntity> {
 
     /**
     * 新增
@@ -21,7 +21,7 @@ public interface VirtualWarehouseAllocationHandleRelationService extends SuperSe
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(VirtualWarehouseAllocationHandleRelationDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(VirtualWarehousePushHandleRelationDTO.AddDTO dto);
 
     /**
     * 修改
@@ -30,7 +30,7 @@ public interface VirtualWarehouseAllocationHandleRelationService extends SuperSe
     * @param dto
     * @return
     */
-    Boolean update(VirtualWarehouseAllocationHandleRelationDTO.UpdateDTO dto);
+    Boolean update(VirtualWarehousePushHandleRelationDTO.UpdateDTO dto);
 
 
 }
