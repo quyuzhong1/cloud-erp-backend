@@ -241,9 +241,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private PickingListsService pickingListsService;
 
     @Resource
-    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
-
-    @Resource
     private DictBasicService dictBasicService;
 
     @Override
