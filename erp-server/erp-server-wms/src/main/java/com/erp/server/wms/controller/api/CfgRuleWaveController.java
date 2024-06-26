@@ -3,10 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -40,6 +37,13 @@ public class CfgRuleWaveController extends BaseController {
     private CfgRuleWaveService cfgRuleWaveService;
 
 
+    /**
+     * 分页查询
+     * @author will
+     * @date 2024/6/25 15:48
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
     @PostMapping("/paging")
     @WebAdvanceQuery
     public ApiResult<PagingVO<CfgRuleWaveDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgRuleWaveDTO.PagingParamDTO> dto) {
@@ -145,5 +149,19 @@ public class CfgRuleWaveController extends BaseController {
             resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 执行规则
+     * @author will
+     * @date 2024/6/25 15:42
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/executeRule")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "执行规则")
+    public ApiResult<?> executeRule(@RequestBody @Validated BaseIdDTO dto) {
+        cfgRuleWaveService.executeRule(dto.getId());
+        return success();
     }
 }

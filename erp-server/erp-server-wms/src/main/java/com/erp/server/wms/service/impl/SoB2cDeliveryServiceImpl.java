@@ -19,6 +19,7 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.PrintWayBillPdfDetailDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -90,7 +91,6 @@ import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -156,8 +156,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private DmpMqFeign dmpMqFeign;
     @Resource
-    private TransferDeclareFeign transferDeclareFeign;
-    @Resource
     private SoOutstockService soOutstockService;
     @Lazy
     @Resource
@@ -174,6 +172,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private WarehouseService warehouseService;
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+
+    @Resource
+    private PickingWaveService pickingWaveService;
+
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -339,6 +343,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cDeliveryInterceptDTO.TabListDTO interceptDTO = interceptTabList.stream().filter(v->SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode().equals(v.getTabFlag())).findFirst().orElse(null);
         Integer interceptCount = interceptDTO == null?0:interceptDTO.getCount();
         list.add(new SoB2cDeliveryDTO.TabListDTO("intercepting", interceptCount));
+        //生成波次
+        int generationWavesCount = pickingWaveService.countDelivery(param);
+        list.add(new SoB2cDeliveryDTO.TabListDTO("generation_waves", generationWavesCount));
         list.add(new SoB2cDeliveryDTO.TabListDTO("all", list.stream().mapToInt(SoB2cDeliveryDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
@@ -1369,6 +1376,117 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 platformShipOrderDTO.getSoB2cId(),
                 businessDesc, platformShipOrderDTO.isFalseDeliveryFlag());
         return true;
+    }
+
+    @Override
+    public BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
+
+
+        return new BaseResultDTO.AddDTO("", "");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO clearException(String id) {
+        SoB2cDeliveryEntity entity = getById(id);
+        if (!SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99103);
+        }
+        if (AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause())){
+            throw new ServiceException(ApiError.ERROR_99104);
+        }
+        entity.setStatus(SoB2cDeliveryStatusEnum.PICKING.getStatus());
+        updateById(entity);
+        // 操作日志
+        operateLogService.addModuleOperateLog("仓库清除异常", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "清除异常");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "清除异常成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto) {
+        SoB2cDeliveryEntity entity = getById(dto.getId());
+        if (!SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99103);
+        }
+        if (AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause())){
+            throw new ServiceException(ApiError.ERROR_99102);
+        }
+        //修改订单状态
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
+        soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+        soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        soB2cFeign.updateById(soB2cEntity);
+        entity.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+        updateById(entity);
+        //仓位库存由锁定退回
+        changeInventory(dto, dto.getWarehouseLocation(), InventoryBusinessTypeEnum.SO_B2C_DELIVERY_CANCEL.getCode());
+        changeInventory(dto, dto.getReturnWarehouseLocation(), InventoryBusinessTypeEnum.SO_B2C_DELIVERY_SHELVES.getCode());
+        //删除拣货单
+        pickingListsService.deleteBySourceId(Collections.singletonList(dto.getId()));
+        // 操作日志
+        operateLogService.addModuleOperateLog("仓库取消发货", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "取消发货");
+        OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
+        operateLogDTO.setContent("仓库取消发货");
+        operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
+        operateLogDTO.setBusinessId(soB2cEntity.getId());
+        operateLogDTO.setOperation("取消发货");
+        soB2cFeign.addModuleOperateLog(operateLogDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消成功");
+    }
+
+    /**
+     * 变更库存
+     * @param dto 参数
+     * @param warehouseLocation 仓位
+     * @param businessType 业务类型
+     */
+    private void changeInventory(SoB2cDeliveryDTO.CancelShipmentDTO dto, String warehouseLocation, String businessType) {
+        InOutStockDTO inOutStockDTO = new InOutStockDTO();
+        inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+        inOutStockDTO.setSourceCode(dto.getCode());
+        inOutStockDTO.setSourceId(dto.getId());
+        inOutStockDTO.setSourceDetailId(dto.getDetailId());
+        inOutStockDTO.setBillDate(LocalDate.now());
+        inOutStockDTO.setSkuNo(dto.getSkuNo());
+        inOutStockDTO.setSkuId(dto.getSkuId());
+        inOutStockDTO.setQty(dto.getPickingQty());
+        inOutStockDTO.setWarehouseId(dto.getWarehouseId());
+        inOutStockDTO.setWarehouseLocation(warehouseLocation);
+        //添加冻结库存
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setParamList(Collections.singletonList(inOutStockDTO));
+        inventoryInOutStockDTO.setBusinessType(businessType);
+        //更新库存
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+    }
+
+    @Override
+    public SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids) {
+        List<SoB2cDeliveryDTO.CancelShipmentDTO> cancelShipments = baseMapper.cancelShipmentView(ids);
+        List<String> warehouseIds = cancelShipments.stream().map(SoB2cDeliveryDTO.CancelShipmentDTO::getWarehouseId)
+                .distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> locations = warehouseLocationService.listByWarehouseIds(warehouseIds);
+        for (SoB2cDeliveryDTO.CancelShipmentDTO cancelShipment : cancelShipments) {
+            WarehouseLocationEntity location = locations.stream()
+                    .filter(e -> e.getWarehouseId().equals(cancelShipment.getWarehouseId()))
+                    .filter(e -> e.getCode().equals(cancelShipment.getWarehouseLocation()))
+                    .findFirst().orElse(new WarehouseLocationEntity());
+            cancelShipment.setReturnWarehouseLocationName(location.getName());
+            cancelShipment.setReturnWarehouseLocation(cancelShipment.getWarehouseLocation());
+            cancelShipment.setReturnWarehouseLocationName(cancelShipment.getWarehouseLocationName());
+            cancelShipment.setReturnQty(cancelShipment.getPickingQty());
+        }
+        SoB2cDeliveryDTO.CancelShipmentView view = new SoB2cDeliveryDTO.CancelShipmentView();
+        view.setCancelShipments(cancelShipments);
+        return view;
+    }
+
+    @Override
+    public List<SoB2cDeliveryEntity> listWaitHandle() {
+        return lambdaQuery().eq(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
+                .list();
     }
 
     /**

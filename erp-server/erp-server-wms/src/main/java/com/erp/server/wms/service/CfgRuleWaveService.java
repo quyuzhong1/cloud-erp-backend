@@ -68,4 +68,13 @@ public interface CfgRuleWaveService extends SuperService<CfgRuleWaveEntity> {
      * @return ViewDTO
      */
     CfgRuleWaveDTO.ViewDTO view(String id);
+
+    /**
+     * 执行规则
+     * @author will
+     * @date 2024/6/25 15:43
+     * @param id
+     * @return BatchResultDTO
+     */
+    Boolean executeRule(String id);
 }

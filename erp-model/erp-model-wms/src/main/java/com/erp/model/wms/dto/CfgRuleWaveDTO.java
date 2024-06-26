@@ -69,19 +69,13 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
          * 波次类型
          */
+        @Dict(queryTypeField = "waveType")
         private String waveType;
-        /**
-         * 波次类型名称
-         */
-        private String waveTypeName;
         /**
          * 拣货车类型
          */
+        @Dict(queryFieldName = "id", tableName = "picking_cart_type")
         private String pickingCartTypeId;
-        /**
-         * 拣货车类型名称
-         */
-        private String pickingCartTypeName;
         /**
          * 最小单数
          */
@@ -174,9 +168,9 @@ public class CfgRuleWaveDTO implements Serializable {
         private Boolean disabled;
 
         /**
-        * 执行时间JSON
+        * 执行时间
         */
-        private String executionTimeJson;
+        private List<LocalTime> executionTimeList;
 
         /**
         * 执行类型（自动执行，手动执行）
@@ -193,7 +187,11 @@ public class CfgRuleWaveDTO implements Serializable {
         */
         private String remark;
 
-
+        /**
+         * 规则条件
+         */
+        @Dict
+        private List<CfgRuleConditionDTO.View> conditionList;
     }
 
     /**
