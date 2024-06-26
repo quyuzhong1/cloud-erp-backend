@@ -13,13 +13,9 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="virtual_warehouse_id" property="virtualWarehouseId" />
-       <result column="virtual_warehouse_code" property="virtualWarehouseCode" />
-       <result column="virtual_warehouse_name" property="virtualWarehouseName" />
        <result column="dict_platform" property="dictPlatform" />
        <result column="type" property="type" />
        <result column="relation_id" property="relationId" />
-       <result column="relation_name" property="relationName" />
-       <result column="dict_platform_type" property="dictPlatformType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -33,7 +29,7 @@
         vwc.update_time,
         vwc.version,
         vwc.is_deleted,
-        vwc.virtual_warehouse_id, vwc.virtual_warehouse_code, vwc.virtual_warehouse_name, vwc.dict_platform, vwc.type, vwc.relation_id, vwc.relation_name, vwc.dict_platform_type
+        vwc.virtual_warehouse_id, vwc.dict_platform, vwc.type, vwc.relation_id
     </sql>
     <select id="getBindedDictPlatform" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
         SELECT vwc.dict_platform, vwc.type
