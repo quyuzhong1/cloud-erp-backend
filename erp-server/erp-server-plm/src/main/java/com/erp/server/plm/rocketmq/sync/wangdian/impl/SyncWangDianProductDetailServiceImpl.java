@@ -22,6 +22,7 @@ import com.erp.server.plm.service.ProductPackService;
 import com.erp.server.plm.service.ProductPurchaseService;
 import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
@@ -31,6 +32,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,6 +53,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     private DmpMqFeign dmpMqFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void syncDataToWangDian(ProductDetailEntity entity) {
         DmpPushTaskEntity dmpPushTask = getGoodsBatchPushDTO(entity);
         sendMTask(Collections.singletonList(dmpPushTask));
@@ -58,7 +61,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
 
     private DmpPushTaskEntity getGoodsBatchPushDTO(ProductDetailEntity entity) {
         ProductInfoEntity info = productInfoService.getById(entity.getProductId());
-        ProductPurchaseEntity productPurchase = productPurchaseService.getBySkuId(entity.getId());
+        ProductPurchaseEntity productPurchase = Optional.ofNullable(productPurchaseService.getBySkuId(entity.getId())).orElse(new ProductPurchaseEntity());
         ProductPackEntity productPack = productPackService.getBySkuId(entity.getId());
         GoodsBatchPushDTO dto = new GoodsBatchPushDTO();
         dto.setGoodsNo(info.getSpuNo());

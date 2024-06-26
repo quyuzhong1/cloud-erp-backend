@@ -259,5 +259,6 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      **/
     ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform);
 
+    List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(String warehouseId,List<String> platformSkuNoList);
 
 }

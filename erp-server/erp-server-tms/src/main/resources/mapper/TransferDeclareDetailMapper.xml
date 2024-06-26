@@ -79,11 +79,25 @@
     </select>
     <select id="listByCondition" resultType="com.erp.model.tms.entity.TransferDeclareDetailEntity">
         SELECT
-            <include refid="Base_Column_List"/>
+        distinct tdd.id,
+        tdd.create_user_id,
+        tdd.create_user_name,
+        tdd.create_time,
+        tdd.update_user_id,
+        tdd.update_user_name,
+        tdd.update_time,
+        tdd.version,
+        tdd.is_deleted,
+        tdd.main_id, tdd.so_id, tdd.so_code, tdd.logistics_channel_id, tdd.logistics_channel_name, tdd.track_no, tdd.package_weight, tdd.weight_unit, tdd.outstock_status, tdd.transfer_status,
+        tdd.order_upload_status,tdd.failure_reason,tdd.shipping_order_no
         FROM  transfer_declare_detail tdd
-        where tdd.is_deleted = FALSE
-        <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+        INNER JOIN transfer_declare td ON tdd.main_id = td.id AND td.is_deleted = FALSE
+        WHERE tdd.is_deleted = FALSE
+        <if test="params.sqlMap != null and params.sqlMap.detail != null and params.sqlMap.detail != ''">
             and ${params.sqlMap.detail}
+        </if>
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
         </if>
         <if test="mainIds != null and mainIds.size > 0">
             and tdd.main_id in

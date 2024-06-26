@@ -93,6 +93,17 @@ public class DmpMqFeignController {
     }
 
     /**
+     * 根据多个来源ID查询推送任务
+     * @param listDTO
+     * @return
+     */
+    @PostMapping("/listByCodeParam")
+    public List<DmpPushTaskEntity> listByCodeParam(@RequestBody @Valid DmpSyncTaskDTO.ListCodeDTO listDTO){
+        List<DmpPushTaskEntity> list = dmpPushTaskService.listByCodeParam(listDTO);
+        return CollectionUtils.isEmpty(list) ? new ArrayList<>() : list;
+    }
+
+    /**
      * 批量修改无需同步
      *
      * @param dto

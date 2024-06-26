@@ -111,8 +111,6 @@ import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
-import com.xxl.job.core.biz.model.ReturnT;
-import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -123,6 +121,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -3928,16 +3927,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * @param id  订单id
-     * @param map 校验的map
+     * @param id                         订单id
+     * @param map                        校验的map
+     * @param isCheckProductRegistration
      * @return
      * @description 物流规则
      * @author Lambda
      * @create 2023-12-14 15:11
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map) {
+    @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRES_NEW)
+    public SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         if (map.isEmpty()) {
@@ -3969,7 +3969,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             if (StringUtils.isNotBlank(matchResult.getName())) {
                 String msg = StrUtil.format("自动匹配物流规则成功，规则名称：{}", matchResult.getName());
+                log.info("{}{}", entity.getCode(), msg);
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "配货操作");
+            }
+            if(isCheckProductRegistration){
+                soB2cService.checkProductRegistrationAndUpdate(entity.getId(), "");
             }
             //状态更新为配货中
             updateBillStatusAndMatchLogistics(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION, Boolean.TRUE);
@@ -5373,7 +5377,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setPlatformCode(entity.getPlatformCode());
                 addDTO.setSkuId(skuId);
                 addDTO.setSkuNo(detailItem.getSkuNo());
-                addDTO.setSourceDetailId(detailId);
+                addDTO.setSourceDetailId(detailItem.getSourceDetailId());
                 addDTO.setSoDetailId(detailId);
                 addDTO.setPlanQty(qty);
                 addDTO.setActualQty(qty);
@@ -5670,7 +5674,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRES_NEW)
 //    @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cDTO.RuleResultDTO warehouseRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         SoB2cEntity entity = super.getById(id);
@@ -5704,7 +5708,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, detailList, map);
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
                 if(logisticsRuleResult.getIsRuleMatch()){
                     soB2cService.checkProductRegistrationAndUpdate(id, "");
                     //申报信息规则
@@ -6163,31 +6167,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     if (CollectionUtils.isEmpty(detailList)) {
                         throw new ServiceException(StrUtil.format("速卖通【{}】发货明细为空", fulfillmentOrderNoList));
                     }
-                    //根据
-
                     //校验sku
-                    List<String> platformSkuIdList = detailList.stream().map(AliExpressDeliveryDetail::getPlatformSkuId).distinct().collect(Collectors.toList());
-                    List<String> platformSpuList = detailList.stream().map(AliExpressDeliveryDetail::getItemId).distinct().collect(Collectors.toList());
-                    Map<String, List<ListingInfoWithSkuMappingDTO>> skuMappingMap = soB2cDetailService.mapListingByPlatformSkuId(platformSkuIdList, platformSpuList, entity.getDictPlatform(), entity.getShopId(), null, null);
-
+                    List<String> platformSkuIdList = detailList.stream().map(AliExpressDeliveryDetail::getScItemId).distinct().collect(Collectors.toList());
+                    List<SkuMappingDTO.WarehouseSkuDTO> warehouseSkuDTOList = skuMappingService.listByWarehouseAndPlatformSku(mappingViewDTO.getWarehouseId(),platformSkuIdList);
                     List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList = new ArrayList<>();
+                    List<String> notMatchSkuNoList = new ArrayList<>();
                     for (AliExpressDeliveryDetail deliveryDetailDTO : detailList) {
-                        // 映射关系
-                        List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingMap.get(deliveryDetailDTO.getPlatformSkuId());
-                        // 检查和获取映射关系
-                        ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, deliveryDetailDTO.getItemId(), entity.getDictPlatform());
-                        if (Objects.isNull(mappingDTO) || StringUtils.isBlank(mappingDTO.getProductSkuId())) {
-                            throw new ServiceException(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系,平台产品ID:【{}】", deliveryDetailDTO.getItemId()));
+                        SkuMappingDTO.WarehouseSkuDTO warehouseSkuDTO = warehouseSkuDTOList.stream().filter(v->v.getPlatformSkuNo().equals(deliveryDetailDTO.getScItemId())).findFirst().orElse(new SkuMappingDTO.WarehouseSkuDTO());
+                        if(StringUtils.isBlank(warehouseSkuDTO.getProductSkuId())){
+                            notMatchSkuNoList.add(deliveryDetailDTO.getScItemId());
+                            continue;
                         }
                         PlatformDeliveryDetailDTO platformDeliveryDetailDTO = new PlatformDeliveryDetailDTO();
-                        platformDeliveryDetailDTO.setSkuId(mappingDTO.getProductSkuId());
-                        platformDeliveryDetailDTO.setSkuNo(mappingDTO.getProductSkuNo());
+                        platformDeliveryDetailDTO.setSkuId(warehouseSkuDTO.getProductSkuId());
+                        platformDeliveryDetailDTO.setSkuNo(warehouseSkuDTO.getProductSkuNo());
                         platformDeliveryDetailDTO.setWarehouseId(mappingViewDTO.getWarehouseId());
                         platformDeliveryDetailDTO.setWarehouseName(mappingViewDTO.getWarehouseName());
                         platformDeliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
                         platformDeliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
                         platformDeliveryDetailDTO.setPlatformWarehouseName(key);
-                        platformDeliveryDetailDTO.setPlatformSkuNo(deliveryDetailDTO.getPlatformSku());
+                        platformDeliveryDetailDTO.setPlatformSkuNo(deliveryDetailDTO.getScItemId());
                         platformDeliveryDetailDTO.setPlatformSpuNo(deliveryDetailDTO.getItemId());
                         platformDeliveryDetailDTO.setQty(Integer.valueOf(deliveryDetailDTO.getDeliveryQty()));
                         platformDeliveryDetailDTO.setMainId(entity.getId());
@@ -6195,12 +6194,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         platformDeliveryDetailDTO.setPlatformSkuId(deliveryDetailDTO.getPlatformSkuId());
                         platformDeliveryDetailDTOList.add(platformDeliveryDetailDTO);
                     }
-                    platformDeliveryDetailDTOList = aliExpressDliveryOrderService.handleData(platformDeliveryDetailDTOList);
                     List<String> skuIds = platformDeliveryDetailDTOList.stream().map(PlatformDeliveryDetailDTO::getSkuId).collect(Collectors.toList());
                     PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
                             .platformDeliveryDetailDTOList(platformDeliveryDetailDTOList)
                             .generateB2cDTO(this.getSoOutstockByIdAndWarehouseId(entity.getId(),mappingViewDTO.getWarehouseId()))
                             .build();
+                    if(CollectionUtils.isNotEmpty(notMatchSkuNoList)){
+                        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                        addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                        addError.setParamJson("");
+                        addError.setReturnJson("");
+                        addError.setMainId(entity.getId());
+                        addError.setMessage(StrUtil.format("自动生成销售出库单失败：存在速卖通货品id未映射sku，货品id:【{}】", notMatchSkuNoList));
+                        soB2cErrorService.add(addError);
+                    }
                     //生成销售出库单
                     Boolean generateSoOutstockResult = soOutstockFeign.generateB2cSoOutstockByPlatformData(platformGenerateSoOutstockDTO);
                     if(generateSoOutstockResult){
@@ -6208,6 +6215,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         soB2cDetailService.updateWarehouseByMapping(mappingViewDTO, entity.getId(),skuIds);
                         //生成速卖通发货单
                         addAliExpressDelivery(logisticsEntity, val.get(0), entity, platformDeliveryDetailDTOList);
+                        if(CollectionUtils.isNotEmpty(notMatchSkuNoList)){
+                            return false;
+                        }
                     }else{
                         return false;
                     }

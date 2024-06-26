@@ -24,6 +24,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
@@ -34,7 +35,9 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
+import com.erp.server.dmp.service.AmzReportScheduleService;
 import com.erp.server.dmp.service.CfgAmzReportFieldService;
+import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
@@ -74,6 +77,10 @@ public class ReportsApiTest {
     private RocketMQTemplate rocketMQTemplate;
     @Resource
     private RedisTemplate redisTemplate;
+    @Resource
+    private AmzReportScheduleService amzReportScheduleService;
+    @Resource
+    private CfgAmzReportTypeService cfgAmzReportTypeService;
 
 
     /**
@@ -482,5 +489,11 @@ public class ReportsApiTest {
         List<ReportLedgerDetailViewEntity> collect = list.stream().filter(e -> StringUtils.isNotBlank(e.getReferenceID())).collect(Collectors.toList());
         System.out.println(JSONUtil.toJsonStr(collect));
         System.out.println("下载解析后的结尾------------------------------------------------------------");
+    }
+
+    @Test
+    public void updateNextTime(){
+        CfgAmzReportTypeEntity config = cfgAmzReportTypeService.getByRecordType("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL");
+        amzReportScheduleService.updateNextTime("3417480653875844821", config);
     }
 }

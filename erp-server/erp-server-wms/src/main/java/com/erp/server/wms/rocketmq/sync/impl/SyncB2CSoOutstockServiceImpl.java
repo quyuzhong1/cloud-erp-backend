@@ -22,6 +22,7 @@ import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
@@ -169,7 +170,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<String> noInventorySkuNoList = noInventorySkuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
         //获取到销售出库单的信息
         SoOutstockEntity soOutstock = BeanMapperUtils.map(SoOutstockEntity.class, entity);
-        List<SoOutstockDetailEntity> detailList = BeanMapperUtils.copyList(SoOutstockDetailEntity.class, entity.getDetailList());
         String id = IdWorker.getIdStr();
         soOutstock.setId(id);
         //查询旺店通对应系统店铺
@@ -212,6 +212,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCustomerId(shopInfo.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             soOutstock.setCustomerName(customerInfo.getName());
+            soOutstock.setSellerId(customerInfo.getSellerId());
+            soOutstock.setSellerName(customerInfo.getSellerName());
+            SysDepartmentUserNumberDTO dept = sysUserFeign.getDeptByUserId(customerInfo.getSellerId());
+            soOutstock.setSalesDeptId(Optional.ofNullable(dept).orElse(new SysDepartmentUserNumberDTO()).getDepartmentId());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
@@ -222,37 +226,44 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setApproveTime(soOutstock.getActualDeliveryDate());
 
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
-        for (SoOutstockDetailEntity detail : detailList) {
-            detail.setId(IdWorker.getIdStr());
-            String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detail.getSkuNo())).
-                    findFirst().map(SkuVO::getSkuId).orElse("");
-            if (StringUtils.isBlank(skuId)) {
-                throw new ServiceException(ApiError.ERROR_92055, detail.getSkuNo());
-            }
-            String detailId = IdWorker.getIdStr();
-            detail.setId(detailId);
-            detail.setMainId(id);
-            detail.setSkuId(skuId);
-            //仓库
-            detail.setWarehouseId(warehouse.getId());
-            detail.setWarehouseName(warehouse.getName());
-            //是否扣减库存 true 就要
-            boolean isDeduction = !noInventorySkuNoList.contains(detail.getSkuNo());
-            if (Boolean.TRUE.equals(isDeduction)) {
-                //并且扣库存 才执行
-                //设置主表仓库和组织
-                InOutStockDTO inOutStock = new InOutStockDTO();
-                inOutStock.setSourceId(id);
-                inOutStock.setSourceDetailId(detail.getId());
-                inOutStock.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
-                inOutStock.setBillDate(soOutstock.getBillDate());
-                inOutStock.setQty(detail.getActualQty());
-                inOutStock.setSkuId(detail.getSkuId());
-                inOutStock.setSkuNo(detail.getSkuNo());
-                inOutStock.setSourceCode(soOutstock.getCode());
-                inOutStock.setWarehouseId(soOutstock.getWarehouseId());
-                inOutStock.setVirtualWarehouseId(virtualWarehouseId);
-                inOutStockList.add(inOutStock);
+        ArrayList<SoOutstockDetailEntity> detailList = new ArrayList<>();
+        for (WdtSoOutStockDetailDTO detailDTO : entity.getDetailList()) {
+            for (WdtSoOutStockDetailDTO.PositionDetailsList detail : detailDTO.getPositionDetailsList()) {
+                SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
+                detailEntity.setId(IdWorker.getIdStr());
+                String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
+                        findFirst().map(SkuVO::getSkuId).orElse("");
+                if (StringUtils.isBlank(skuId)) {
+                    throw new ServiceException(ApiError.ERROR_92055, detailEntity.getSkuNo());
+                }
+                String detailId = IdWorker.getIdStr();
+                detailEntity.setId(detailId);
+                detailEntity.setMainId(id);
+                detailEntity.setSkuId(skuId);
+                //仓库
+                detailEntity.setWarehouseId(warehouse.getId());
+                detailEntity.setWarehouseName(warehouse.getName());
+                detailEntity.setWarehouseLocation(detail.getPositionNo());
+                detailEntity.setPlanQty(detail.getPositionGoodsCount());
+                detailEntity.setPlanQty(detail.getPositionGoodsCount());
+                detailList.add(detailEntity);
+                //是否扣减库存 true 就要
+                boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
+                if (Boolean.TRUE.equals(isDeduction)) {
+                    //并且扣库存 才执行
+                    InOutStockDTO inOutStock = new InOutStockDTO();
+                    inOutStock.setSourceId(id);
+                    inOutStock.setSourceDetailId(detailEntity.getId());
+                    inOutStock.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
+                    inOutStock.setBillDate(soOutstock.getBillDate());
+                    inOutStock.setQty(detailEntity.getActualQty());
+                    inOutStock.setSkuId(detailEntity.getSkuId());
+                    inOutStock.setSkuNo(detailEntity.getSkuNo());
+                    inOutStock.setSourceCode(soOutstock.getCode());
+                    inOutStock.setWarehouseId(soOutstock.getWarehouseId());
+                    inOutStock.setWarehouseLocation(detail.getPositionNo());
+                    inOutStockList.add(inOutStock);
+                }
             }
         }
         //保存销售出库单
