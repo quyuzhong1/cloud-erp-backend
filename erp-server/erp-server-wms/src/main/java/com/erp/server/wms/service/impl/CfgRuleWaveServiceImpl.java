@@ -15,34 +15,42 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.enums.SoB2cDataTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.model.wms.entity.CfgRuleWaveEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.CfgRuleWaveMapper;
-import com.erp.server.wms.service.CfgRuleConditionService;
-import com.erp.server.wms.service.CfgRuleWaveService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -65,6 +73,14 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Autowired
     private SoB2cDeliveryService soB2cDeliveryService;
 
+    @Autowired
+    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+
+    @Autowired
+    private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private SpElServer spElServer;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -180,14 +196,169 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     }
 
     @Override
-    public BatchResultDTO executeRule(String id) {
+    public Boolean executeRule(String id) {
         CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到波次规则数据"));
+
+        // 查询所有规则对应的规则条件
+        List<CfgRuleConditionEntity> conditionList = cfgRuleConditionService.listByRuleIds(Arrays.asList(entity.getId()));
 
         //查询所有待处理的发货单进行生成波次
         List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listWaitHandle();
+        if (CollectionUtil.isEmpty(soB2cDeliveryList)) {
+            return Boolean.TRUE;
+        }
+        //发货明细数据
+        List<String> deliveryIdList = soB2cDeliveryList.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(deliveryIdList);
 
+        //渠道数据
+        List<String> logisticsChannelIdList = soB2cDeliveryList.stream().map(SoB2cDeliveryEntity::getLogisticsChannelId).collect(Collectors.toList());
+        List<LogisticsChannelEntity> list = FeignQuery.create(LogisticsChannelEntity.class).in(LogisticsChannelEntity::getId, logisticsChannelIdList).list();
 
-        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.EXECUTE);
+        //销售订单
+        List<String> b2cSoIdList = soB2cDeliveryList.stream().map(SoB2cDeliveryEntity::getSourceId).collect(Collectors.toList());
+        SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO(b2cSoIdList,Arrays.asList(SoB2cDataTypeEnum.MAIN.getCode(),SoB2cDataTypeEnum.LOGISTIC.getCode(),SoB2cDataTypeEnum.RECEIVER.getCode()));
+        SoB2cDTO.SoB2cDataDTO soB2cDataDTO = soB2cFeign.listSoB2cData(paramDTO);
+        //符合规则的发货单数据
+        List<SoB2cDeliveryEntity> compliantList = new ArrayList<>();
+        for (SoB2cDeliveryEntity soB2cDeliveryEntity : soB2cDeliveryList) {
+            //发货单明细数据
+            List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getId())).collect(Collectors.toList());
+            if (CollectionUtil.isEmpty(deliveryDetailList)) {
+                log.error("发货单【{}】未找到发货明细数据",soB2cDeliveryEntity.getCode());
+                continue;
+            }
+            //渠道数据
+            LogisticsChannelEntity channelEntity = list.stream().filter(obj -> StrUtil.equals(soB2cDeliveryEntity.getLogisticsChannelId(), obj.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(channelEntity)) {
+                log.error("发货单【{}】未找到渠道数据",soB2cDeliveryEntity.getCode());
+                continue;
+            }
+            Map<String, Object> map = handleRuleData(soB2cDataDTO, channelEntity, soB2cDeliveryEntity, deliveryDetailList);
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
+            //获取到表达式,判断表达式是否匹配
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            if (matchResult) {
+                compliantList.add(soB2cDeliveryEntity);
+            }
+        }
+        if (CollectionUtil.isEmpty(compliantList)) {
+            return  Boolean.TRUE;
+        }
+        //生成拣货波次列表数据
+        generatePickingWave(compliantList,soB2cDeliveryDetailList,entity);
+
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 生成拣货波次列表数据
+     * @author will
+     * @date 2024/6/26 11:39
+     * @param compliantList
+     * @param entity
+     */
+    private void generatePickingWave(List<SoB2cDeliveryEntity> compliantList,List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList,CfgRuleWaveEntity entity) {
+        if (CollectionUtil.isEmpty(compliantList)) {
+            return;
+        }
+
+        //符合发货单数量小于最低单数
+        if (MathUtil.compareTo(entity.getMinOrderQty(),compliantList.size()) > MathUtil.ZERO) {
+            return;
+        }
+        //符合发货单的商品数量小于最低商品数量
+        Integer orderTotalQty = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+        if (MathUtil.compareTo(entity.getMinQty(),orderTotalQty) > MathUtil.ZERO) {
+            return;
+        }
+
+        //按创建时间录入波次
+        List<SoB2cDeliveryEntity> sortedList = compliantList.stream().sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime)).collect(Collectors.toList());
+        Integer totalQty = MathUtil.ZERO;
+        Integer orderQty = MathUtil.ZERO;
+        for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
+            //总数超出最大数量则不加入波次
+            if (ObjectUtil.isNotEmpty(entity.getMaxQty()) && MathUtil.compareTo(totalQty,entity.getMaxQty()) > MathUtil.ZERO) {
+                continue;
+            }
+            //订单总数超出最大订单数量则不加入波次
+            if (MathUtil.compareTo(orderQty,entity.getMaxOrderQty()) > MathUtil.ZERO) {
+                continue;
+            }
+            //发货明细数量合计
+            Integer detailTotalQty = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            totalQty = detailTotalQty + totalQty;
+
+            //发货单的数量
+            orderQty++;
+
+        }
+    }
+
+    /**
+     * 根据发货单数据格式话波次规则数据
+     * @author will
+     * @date 2024/6/25 18:43
+     * @param soB2cDeliveryEntity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> handleRuleData (SoB2cDTO.SoB2cDataDTO soB2cDataDTO,LogisticsChannelEntity channelEntity
+            ,SoB2cDeliveryEntity soB2cDeliveryEntity,List<SoB2cDeliveryDetailEntity> deliveryDetailList) {
+        Map<String, Object> map = new HashMap<>();
+
+        //销售订单
+        List<SoB2cEntity> list = soB2cDataDTO.getList();
+        SoB2cEntity soB2cEntity = CollectionUtil.isEmpty(list) ? null : list.stream().filter(obj -> StrUtil.equals(obj.getId(),soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(StrUtil.format("发货单【{}】未找到上游销售订单",soB2cDeliveryEntity.getCode()));
+        }
+        //销售订单物流信息
+        List<SoB2cLogisticsEntity> logisticsList = soB2cDataDTO.getLogisticsList();
+        SoB2cLogisticsEntity soB2cLogisticsEntity = CollectionUtil.isEmpty(logisticsList) ? null : logisticsList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
+            throw new ServiceException(StrUtil.format("发货单【{}】未找到上游销售订单物流信息",soB2cDeliveryEntity.getCode()));
+        }
+        //销售订单买家信息
+        List<SoB2cReceiverEntity> receiverList = soB2cDataDTO.getReceiverList();
+        SoB2cReceiverEntity soB2cReceiverEntity = CollectionUtil.isEmpty(receiverList) ? null : receiverList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(soB2cReceiverEntity)) {
+            throw new ServiceException(StrUtil.format("发货单【{}】未找到上游销售订单买家信息",soB2cDeliveryEntity.getCode()));
+        }
+
+        for (SoB2cDeliveryDetailEntity detailEntity : deliveryDetailList) {
+            Map<String, Object> detailMap = new HashMap<>();
+            //仓库
+            detailMap.put("warehouseId",detailEntity.getWarehouseId());
+            //平台
+            detailMap.put("dictPlatform",soB2cDeliveryEntity.getDictPlatform());
+            //店铺
+            detailMap.put("shopId",soB2cDeliveryEntity.getShopId());
+            //物流商
+            detailMap.put("logisticsSupplierId",channelEntity.getMainId());
+            //物流渠道
+            detailMap.put("logisticsChannelId",channelEntity.getId());
+            //国家
+            detailMap.put("country",soB2cReceiverEntity.getCountry());
+            //SKU
+            detailMap.put("skuId",detailEntity.getSkuId());
+            //包装尺寸长（cm）
+            detailMap.put("length",soB2cLogisticsEntity.getLength());
+            //包装尺寸宽（cm）
+            detailMap.put("width",soB2cLogisticsEntity.getWidth());
+            //包装尺寸高（cm）
+            detailMap.put("height",soB2cLogisticsEntity.getHeight());
+            //包装重量（g）
+            detailMap.put("weight",soB2cLogisticsEntity.getWeight());
+            //订单创建时间
+            detailMap.put("createTime",soB2cLogisticsEntity.getCreateTime());
+            //发货单-拣货类型
+            detailMap.put("pickingType",soB2cDeliveryEntity.getPickingType());
+            //发货单-创建时间
+            detailMap.put("deliveryCreateTime",soB2cDeliveryEntity.getCreateTime());
+            map.put("detailList",detailMap);
+        }
+        return map;
     }
 
     /**

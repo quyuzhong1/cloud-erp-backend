@@ -727,4 +727,17 @@ public class SoB2cFeignController extends BaseController {
     public SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode) {
         return soB2cService.getByCode(soB2cCode);
     }
+
+
+    /**
+     * 查询b2c销售订单数据
+     * @author will
+     * @date 2024/6/25 20:14
+     * @param paramDTO
+     * @return SoB2cEntity
+     */
+    @PostMapping("/listSoB2cData")
+    public SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO) {
+        return soB2cService.listSoB2cData(paramDTO);
+    }
 }

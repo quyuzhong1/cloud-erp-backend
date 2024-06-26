@@ -76,5 +76,5 @@ public interface CfgRuleWaveService extends SuperService<CfgRuleWaveEntity> {
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO executeRule(String id);
+    Boolean executeRule(String id);
 }

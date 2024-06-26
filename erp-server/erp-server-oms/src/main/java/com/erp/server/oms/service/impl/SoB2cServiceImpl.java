@@ -6431,6 +6431,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+    @Override
+    public SoB2cDTO.SoB2cDataDTO listSoB2cData(SoB2cDTO.SoB2cDataParamDTO paramDTO) {
+        SoB2cDTO.SoB2cDataDTO resultDTO = new SoB2cDTO.SoB2cDataDTO();
+        //数据类型
+        List<String> dataTypeList = paramDTO.getDataTypeList();
+        //数据id集合
+        List<String> b2cSoIdList = paramDTO.getB2cSoIdList();
+        //主表信息
+        if (dataTypeList.contains(SoB2cDataTypeEnum.MAIN.getCode())) {
+            List<SoB2cEntity> list = this.listByIds(b2cSoIdList);
+            resultDTO.setList(list);
+        }
+        //物流信息
+        if (dataTypeList.contains(SoB2cDataTypeEnum.LOGISTIC.getCode())) {
+            List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(b2cSoIdList);
+            resultDTO.setLogisticsList(soB2cLogisticsList);
+        }
+        //买家信息
+        if (dataTypeList.contains(SoB2cDataTypeEnum.RECEIVER.getCode())) {
+            List<SoB2cReceiverEntity> soB2cReceiverlist = soB2cReceiverService.listByMainIds(b2cSoIdList);
+            resultDTO.setReceiverList(soB2cReceiverlist);
+        }
+        return resultDTO;
+    }
+
     /**
      * 具体同步动作处理
      *

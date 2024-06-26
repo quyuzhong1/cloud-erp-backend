@@ -3,10 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -163,24 +160,8 @@ public class CfgRuleWaveController extends BaseController {
      */
     @PostMapping("/executeRule")
     @LogAction(value = LogActionEnum.EXECUTE, desc = "执行规则")
-    public ApiResult<?> executeRule(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = cfgRuleWaveService.executeRule(id);
-            }catch (Exception e){
-                log.error("波次规则执行失败",e);
-                CfgRuleWaveEntity entity = cfgRuleWaveService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "波次规则不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    public ApiResult<?> executeRule(@RequestBody @Validated BaseIdDTO dto) {
+        cfgRuleWaveService.executeRule(dto.getId());
+        return success();
     }
 }
