@@ -683,7 +683,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         packageForecastDetailService.updateBatchById(forecastDetailList);
         SellerParcelOrder parcelOrder = new SellerParcelOrder();
         parcelOrder.setSellerId(topUserKey);
-        List<String> orderCodeList =forecastDetailList.stream().map(PackageForecastDetailEntity::getSourceCode).collect(Collectors.toList());
+        List<String> orderCodeList =forecastDetailList.stream().map(PackageForecastDetailEntity::getSourceCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         if (orderCodeList.size() != forecastDetailList.size()) {
             throw new ServiceException("未获取到小包第三方交易号");
         }
