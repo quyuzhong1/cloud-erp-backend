@@ -29,7 +29,7 @@ public class PickingWaveDTO {
         /**
          * 拣货车类型
          */
-        private String pickCartType;
+        private String pickCartTypeId;
 
         /**
          * 波次类型

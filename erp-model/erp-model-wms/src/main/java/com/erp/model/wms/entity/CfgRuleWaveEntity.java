@@ -1,16 +1,15 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.config.JsonTypeHandler;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.util.Map;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.util.Map;
 
 
 /**
@@ -85,8 +84,8 @@ public class CfgRuleWaveEntity extends BaseEntity<CfgRuleWaveEntity> {
     /**
     * 分拣方式（边拣边分，先拣后分）
     */
-    @TableField("sorting_method")
-    private String sortingMethod;
+    @TableField("picking_type")
+    private String pickingType;
     /**
     * 规则描述
     */
@@ -116,7 +115,7 @@ public class CfgRuleWaveEntity extends BaseEntity<CfgRuleWaveEntity> {
 
     public static final String EXECUTION_TYPE = "execution_type";
 
-    public static final String SORTING_METHOD = "sorting_method";
+    public static final String PICKING_TYPE = "picking_type";
 
     public static final String REMARK = "remark";
 
