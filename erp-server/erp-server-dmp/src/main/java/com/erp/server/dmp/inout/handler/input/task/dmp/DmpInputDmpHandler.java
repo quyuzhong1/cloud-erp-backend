@@ -181,6 +181,10 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 					String digestHex = md5.digestHex(uniqueFieldMd5Sb.toString());
 					beanDmpInputDmpEntity.put(UNIQUE_ENCRYPT, digestHex);
 					beanDmpInputDmpEntity.put(DATA_ENCRYPT, md5.digestHex(dataMd5Sb.toString()));
+					Map<String, Object> map = beanDmpInputDmpEntityMaps.get(digestHex);
+					if(map != null) {
+						dmpInputDataDmpRelationEntityList.removeIf(d -> map.get(BaseEntity.ID).equals(d.getDmpId()));
+					}
 					beanDmpInputDmpEntityMaps.put(digestHex, beanDmpInputDmpEntity);
 					
 					List<Map<String, Object>> newDmpInputMongoEntityList = dmpInputDataDmpRelationMap.getKey();
@@ -212,7 +216,8 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 				}
 				
 				for(Map.Entry<String , Map<String, Object>> beanDmpInputDmpEntityMap : beanDmpInputDmpEntityMaps.entrySet()) {
-					Map<String, Object> findEntity = uniqueMaps.get(beanDmpInputDmpEntityMap.getKey());
+					String key = beanDmpInputDmpEntityMap.getKey();
+					Map<String, Object> findEntity = uniqueMaps.get(key);
 					Map<String, Object> waitEntity = beanDmpInputDmpEntityMap.getValue();
 					if(findEntity != null) {
 						String dmpId = findEntity.get(BaseEntity.ID).toString();
