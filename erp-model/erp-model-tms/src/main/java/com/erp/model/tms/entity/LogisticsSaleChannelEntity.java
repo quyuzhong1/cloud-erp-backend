@@ -45,6 +45,11 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     @TableField("code")
     private String code;
     /**
+    * erp服务平台（oms,tms）
+    */
+    @TableField("service_platform")
+    private String servicePlatform;
+    /**
     * 渠道状态0正常1.暂停2.已关闭（默认0）
     */
     @TableField("channel_status")
