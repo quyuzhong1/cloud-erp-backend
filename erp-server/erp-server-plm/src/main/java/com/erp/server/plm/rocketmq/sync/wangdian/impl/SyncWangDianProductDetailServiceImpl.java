@@ -69,6 +69,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         dto.setGoodsType(getGoodsType(info.getSaleMethod(), info.getProperty()));
         GoodsBatchPushDTO.SpecList specList = new GoodsBatchPushDTO.SpecList();
         specList.setSpecNo(entity.getSkuNo());
+        specList.setSpecName(entity.getName());
         specList.setBarcode(productPurchase.getEan());
         specList.setWeight(MathUtil.divide(productPack.getNetWeight(), new BigDecimal(1000), 4, BigDecimal.ROUND_HALF_UP));
         specList.setLength(LengthConverterUtil.mmToCm(productPack.getProductLength()));
