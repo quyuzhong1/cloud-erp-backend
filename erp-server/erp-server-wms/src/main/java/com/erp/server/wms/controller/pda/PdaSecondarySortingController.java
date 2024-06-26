@@ -34,6 +34,17 @@ public class PdaSecondarySortingController extends BaseController {
     }
 
     /**
+     * 重置
+     * @param waveId 波次id
+     * @see SecondarySortingDTO.ScanCodeView
+     */
+    @GetMapping("/reset")
+    public ApiResult<SecondarySortingDTO.ScanCodeView> reset(@RequestParam("waveId") String waveId) {
+        SecondarySortingDTO.ScanCodeView view = secondarySortingService.reset(waveId);
+        return success(view);
+    }
+
+    /**
      * 扫描sku信息
      * @param waveId 波次id
      * @param skuCode 产品编码/EAN码
