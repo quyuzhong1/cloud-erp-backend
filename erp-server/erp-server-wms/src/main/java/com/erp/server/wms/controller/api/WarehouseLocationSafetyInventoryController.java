@@ -10,10 +10,7 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto;
 import com.erp.server.wms.query.WarehouseLocationSafetyInventoryHandler;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -74,7 +71,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/importExcel")
-    public ApiResult<?> importExcel(MultipartFile file, HttpServletResponse response){
+    public ApiResult<?> importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response){
         boolean flag = safetyInventoryService.importExcel(file, response);
         return flag ? success() : failure();
     }
@@ -99,7 +96,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @date: 2024-06-26
      * @author: tanmujin
      */
-    @PostMapping("/downloadTemplate")
+    @GetMapping("/downloadTemplate")
     public ApiResult<?> downloadTemplate(HttpServletResponse response){
         safetyInventoryService.downloadTemplate(response);
         return success();

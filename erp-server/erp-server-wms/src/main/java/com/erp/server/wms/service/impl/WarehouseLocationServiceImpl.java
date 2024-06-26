@@ -21,10 +21,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FilterUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -887,5 +884,13 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq("type", "location")
                 .eq("name", warehouseLocationName)
                 .eq("is_deleted", false));
+    }
+
+    @Override
+    public List<WarehouseLocationDTO.ViewDto> listAllArea() {
+        List<WarehouseLocationEntity> entityList = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>()
+                .eq("type", "area")
+                .eq("is_deleted", false));
+        return BeanMapper.copyList(entityList, WarehouseLocationDTO.ViewDto.class);
     }
 }

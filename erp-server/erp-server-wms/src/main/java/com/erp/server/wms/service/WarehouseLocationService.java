@@ -293,4 +293,11 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @author: tanmujin
      */
     List<WarehouseLocationEntity> listByLocationName(String warehouseLocationName);
+
+    /**
+     * 查询所有库区
+     * @date: 2024-06-26
+     * @author: tanmujin
+     */
+    List<WarehouseLocationDTO.ViewDto> listAllArea();
 }
