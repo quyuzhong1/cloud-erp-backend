@@ -37,7 +37,7 @@
         from warehouse_location_safety_inventory
         where is_deleted = false
         <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
-            ${param.sqlMap.default}
+            and ${param.sqlMap.default}
         </if>
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity">
