@@ -1175,6 +1175,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 明细数据
          */
+        @Valid
         @NotEmpty(message = "明细数据不能为空")
         private List<SaveSoB2cDistributionDetailDTO> detailList;
     }

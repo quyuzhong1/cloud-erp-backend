@@ -1194,6 +1194,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String logisticsChannelId = "";
         if (CollectionUtils.isNotEmpty(channelIds)){
             logisticsChannelId = channelIds.get(0);
+        }else {
+            //渠道为空时，使用原来的渠道id
+            logisticsChannelId = existChannelId;
         }
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
         String packageStatus = resultDTO.getPackageStatus();
