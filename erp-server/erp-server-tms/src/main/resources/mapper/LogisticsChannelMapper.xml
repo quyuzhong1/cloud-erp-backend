@@ -167,7 +167,7 @@
         order by  lc.disabled asc,lc.create_time desc
     </select>
     <select id="pagingSelect" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PagingSelectDTO">
-        select id,name as value,code,disabled,logisticsSupplierId
+        select id,name as value,code,disabled,logisticsSupplierId,logisticsSupplierName
         from
         (
         select
