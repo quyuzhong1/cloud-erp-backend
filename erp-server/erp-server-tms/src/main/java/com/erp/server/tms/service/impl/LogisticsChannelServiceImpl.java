@@ -539,24 +539,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return this.lambdaQuery().in(LogisticsChannelEntity::getName, channelNameList).list();
     }
 
-    @Override
-    public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
-        LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
-        LogisticsChannelEntity channelEntity = this.getById(channelId);
-        String code = "";
-        if (Objects.nonNull(channelEntity)) {
-            signShipDTO.setLogisticsChannelId(channelEntity.getId());
-            code = channelEntity.getCode();
-            signShipDTO.setCode(code);
-        }
-        LogisticsSaleChannelEntity saleChannelEntity = logisticsSaleChannelService.getByCode(code);
-        if (Objects.nonNull(saleChannelEntity)) {
-            signShipDTO.setSaleChannelSupplierName(saleChannelEntity.getSupplierName());
-        }
-        return signShipDTO;
-
-    }
-
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();

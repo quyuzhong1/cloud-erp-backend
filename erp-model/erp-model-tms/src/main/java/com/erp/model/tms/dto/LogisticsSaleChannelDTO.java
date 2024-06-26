@@ -232,4 +232,16 @@ public class LogisticsSaleChannelDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO {
+
+        @NotBlank(message = "平台类型不能为空")
+        private String platformType;
+        /**
+         * oms tms
+         */
+        @NotBlank(message = "服务系统不能为空")
+        private String servicePlatform;
+    }
 }
