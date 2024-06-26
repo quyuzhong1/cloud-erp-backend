@@ -358,6 +358,7 @@ public class PullAmzJob {
             if (CleanDataTableEnum.AMAZON_ORDER.equals(cleanDataTableEnum)
                     || CleanDataTableEnum.AMAZON_FBA_SHIPMENT.equals(cleanDataTableEnum)
                     || CleanDataTableEnum.AMAZON_PRODUCT.equals(cleanDataTableEnum)
+                    || CleanDataTableEnum.AMAZON_SO_OUT_STOCK.equals(cleanDataTableEnum)
             ) {
                 // 清洗时检查明细下载状态:DownloadStatus=1
                 jobTaskDTO.setClearCheckDownloadStatus(true);

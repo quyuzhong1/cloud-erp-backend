@@ -25,6 +25,7 @@ import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
+import com.erp.server.dmp.enums.DownloadStatusEnum;
 import com.erp.server.dmp.handler.DmpMongoHandler;
 import com.erp.server.dmp.service.AmazonDownloadService;
 import com.erp.server.dmp.service.CfgTimezoneService;
@@ -102,7 +103,7 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         if (CollectionUtils.isEmpty(existOrderList)) {
             // 都不存在直接保存mongo等待重新触发
             // 不存在保存mongo等待重新触发
-            directSaveMongo(canHandleList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, -10);
+            directSaveMongo(canHandleList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, DownloadStatusEnum.WAIT);
             return allList.size();
         }
         Map<String, PlatformAmazonOrderDTO> existMap = existOrderList.stream()
@@ -128,11 +129,11 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
 
         if (!CollectionUtils.isEmpty(notExistList)) {
             // 不存在保存mongo等待重新触发
-            directSaveMongo(notExistList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, -10);
+            directSaveMongo(notExistList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, DownloadStatusEnum.WAIT);
         }
         if (!CollectionUtils.isEmpty(existMainList)) {
             // 不存在保存mongo等待重新触发
-            directSaveMongo(existMainList, AmazonHandleStatusEnum.WAIT_HANDLE, CleanStatusEnum.NONE.getCode());
+            directSaveMongo(existMainList, AmazonHandleStatusEnum.WAIT_HANDLE, DownloadStatusEnum.FINISH);
         }
 
         // 存在的订单直接触发销售出库单
@@ -214,14 +215,14 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         return mongoTemplate.find(query, PlatformAmazonOrderDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER);
     }
 
-    private void directSaveMongo(List<ReportFulfilledShipmentsMongoDTO> handleList, AmazonHandleStatusEnum handleStatusEnum, Integer isClean) {
+    private void directSaveMongo(List<ReportFulfilledShipmentsMongoDTO> handleList, AmazonHandleStatusEnum handleStatusEnum, DownloadStatusEnum downloadStatusEnum) {
         List<PlatformAmazonFulfilledShipmentsDTO> sourceList = handleList.stream()
                 .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e,
                         e.getReportId(),
                         e.getShopId(),
                         StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), e.getShopId()),
                         handleStatusEnum.getCode(),
-                        isClean
+                        downloadStatusEnum.getCode()
                 ))
                 .collect(Collectors.toList());
         businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
@@ -247,7 +248,7 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         if (null != centerEntity && !curMap.isEmpty()){
             ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
             e.setWarehouseId(shopInfo.getWarehouseId());
-            if (!CollectionUtils.isEmpty(warehouseMap)){
+            if (!CollectionUtils.isEmpty(warehouseMap) && warehouseMap.containsKey(shopInfo.getId())){
                 WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(shopInfo.getId());
                 e.setWarehouseName(warehouseDTO.getName());
                 e.setWarehouseOrgId(warehouseDTO.getOrgId());
@@ -277,7 +278,7 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         if (null != timeZoneEntity) {
             // 设置所有本地时区
             e.checkAndSetAllDateLocale(timeZoneEntity.getTimeZone());
-            if (!curMap.isEmpty()) {
+            if (!curMap.isEmpty() && curMap.containsKey(timeZoneEntity.getCountry())) {
                 ShopInfoEntity shopInfo = curMap.get(timeZoneEntity.getCountry());
                 e.setShopId(shopInfo.getId());
             }
