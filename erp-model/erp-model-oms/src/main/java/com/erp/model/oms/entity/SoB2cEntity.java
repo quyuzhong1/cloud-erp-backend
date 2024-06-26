@@ -2,7 +2,6 @@ package com.erp.model.oms.entity;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
@@ -425,5 +424,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 SoB2cBillStatusEnum.ENUM_SHIPPED.getCode(),
                 SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode()
         ).contains(this.billStatus) && !this.hasPlatformWarehouseOrder() ;
+    }
+
+    /**
+     * 提交平台的唯一key:{平台代号}_{平台单号}_{店铺ID}
+     */
+    public String convertSubmitPlatformUniqueKey() {
+        return StrUtil.format("{}_{}_{}", this.dictPlatform, this.shopId, this.platformCode);
     }
 }
