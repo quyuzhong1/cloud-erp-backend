@@ -157,6 +157,9 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
      * @author: tanmujin
      */
     private void fillViewList(List<WarehouseLocationSafetyInventoryDto.ViewDto> records) {
+        if(records.isEmpty()){
+            return;
+        }
         List<String> warehouseIds = records.stream().map(item -> item.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.getBaseMapper().selectBatchIds(warehouseIds);
         Map<String, String> idNameMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
