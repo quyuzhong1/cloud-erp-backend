@@ -873,7 +873,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
     }
 
-    private void customDistribute(List<String> base64List, PrintWayBillPdfDTO printWayBillPdfDTO) {
+    @Override
+    public void customDistribute(List<String> base64List, PrintWayBillPdfDTO printWayBillPdfDTO) {
         FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
         getOneDTO.setName(FileTemplateConstant.DISTRIBUTE_WAYBILL);
         getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());

@@ -32,6 +32,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
+import com.erp.model.wms.dto.renovation.PickingWaveDTO;
 import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.model.wms.entity.CfgRuleWaveEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -277,22 +278,35 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         List<SoB2cDeliveryEntity> sortedList = compliantList.stream().sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime)).collect(Collectors.toList());
         Integer totalQty = MathUtil.ZERO;
         Integer orderQty = MathUtil.ZERO;
+
+        PickingWaveDTO.AddDTO addDTO = new PickingWaveDTO.AddDTO();
+        addDTO.setWaveType(entity.getWaveType());
+        addDTO.setPickingType(entity.getPickingType());
+        addDTO.setPickCartTypeId(entity.getPickingCartTypeId());
+
+        List<String> deliveryIdList = new ArrayList<>();
+        List<PickingWaveDTO.AddDTO> resultList = new ArrayList<>();
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
-            //总数超出最大数量则不加入波次
-            if (ObjectUtil.isNotEmpty(entity.getMaxQty()) && MathUtil.compareTo(totalQty,entity.getMaxQty()) > MathUtil.ZERO) {
+
+            //商品总数超出最大数量则不加入波次,发货单数量超过最大单数也无需加入波次
+            if ((ObjectUtil.isNotEmpty(entity.getMaxQty()) && MathUtil.compareTo(totalQty,entity.getMaxQty()) > MathUtil.ZERO)
+                    || (MathUtil.compareTo(orderQty,entity.getMaxOrderQty()) > MathUtil.ZERO)) {
+                addDTO.setDeliveryIdList(deliveryIdList);
+                resultList.add(addDTO);
                 continue;
             }
-            //订单总数超出最大订单数量则不加入波次
-            if (MathUtil.compareTo(orderQty,entity.getMaxOrderQty()) > MathUtil.ZERO) {
-                continue;
-            }
-            //发货明细数量合计
+
+
+
+            //发货明细商品数量合计
             Integer detailTotalQty = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             totalQty = detailTotalQty + totalQty;
 
             //发货单的数量
             orderQty++;
 
+
+            deliveryIdList.add(deliveryEntity.getId());
         }
     }
 

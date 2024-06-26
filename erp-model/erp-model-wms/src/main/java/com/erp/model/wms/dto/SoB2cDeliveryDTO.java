@@ -790,7 +790,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 拣货方式
          */
         @NotBlank(message = "拣货方式不能为空")
-        private String sortingMethod;
+        private String pickingType;
         /**
          * 拣货车类型
          */
@@ -808,6 +808,9 @@ public class SoB2cDeliveryDTO implements Serializable {
     @Setter
     public static class CancelShipmentView {
 
+        /**
+         * 发货单
+         */
         @Size(min = 1, message = "发货单不能为空")
         @Valid
         private List<CancelShipmentDTO> cancelShipments;

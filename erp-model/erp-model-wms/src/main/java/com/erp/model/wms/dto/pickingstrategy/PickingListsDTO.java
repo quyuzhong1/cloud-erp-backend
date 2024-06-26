@@ -293,6 +293,18 @@ public class PickingListsDTO {
          * 暂存仓位
          */
         private String stagingLocation;
+        /**
+         * 已拣货数量
+         */
+        private Integer pickedQty;
+        /**
+         * 已分货数量
+         */
+        private Integer allocatedQty;
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
     }
 
 }

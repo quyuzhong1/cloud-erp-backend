@@ -7,4 +7,10 @@
                  left join picking_wave_detail as pwd on pw.id = pwd.main_id and is_delete = false
         where pw.status = #{status}
     </select>
+    <select id="listDetailByMainId"
+            resultType="com.erp.model.wms.dto.renovation.PickingWaveDTO$PickingWaveDetailDTO">
+
+
+
+    </select>
 </mapper>

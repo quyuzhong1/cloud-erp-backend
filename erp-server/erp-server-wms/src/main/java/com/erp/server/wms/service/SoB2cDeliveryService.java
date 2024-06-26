@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -250,4 +251,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return List<SoB2cDeliveryEntity>
      */
     List<SoB2cDeliveryEntity> listWaitHandle();
+
+    /**
+     *
+     * @param base64List base64
+     * @param printWayBillPdfDTO pdf
+     */
+    void customDistribute(List<String> base64List, PrintWayBillPdfDTO printWayBillPdfDTO);
 }

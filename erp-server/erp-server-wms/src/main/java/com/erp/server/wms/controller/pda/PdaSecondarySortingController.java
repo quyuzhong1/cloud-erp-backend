@@ -1,4 +1,4 @@
-package com.erp.server.wms.controller.api;
+package com.erp.server.wms.controller.pda;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -10,15 +10,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 二次分货
+ * 二次分货 pda
  */
 @RestController
-@RequestMapping("/secondarySorting")
-public class SecondarySortingController extends BaseController {
+@RequestMapping("/pdaSecondarySorting")
+public class PdaSecondarySortingController extends BaseController {
 
     @Resource
     private SecondarySortingService secondarySortingService;
@@ -59,24 +58,13 @@ public class SecondarySortingController extends BaseController {
 
     /**
      * 篮子明细
-     * @param waveId 波次id
+     * @param code 波次编号
      * @param basketNo 篮号
      * @see SecondarySortingDTO.BasketDetail
      */
     @GetMapping("/basketDetail")
-    public ApiResult<List<SecondarySortingDTO.BasketDetail>> basketDetail(@RequestParam("waveId") String waveId, @RequestParam("basketNo") String basketNo) {
-        List<SecondarySortingDTO.BasketDetail> details = secondarySortingService.basketDetail(waveId, basketNo);
+    public ApiResult<List<SecondarySortingDTO.BasketDetail>> basketDetail(@RequestParam("code") String code, @RequestParam("basketNo") String basketNo) {
+        List<SecondarySortingDTO.BasketDetail> details = secondarySortingService.basketDetail(code, basketNo);
         return success(details);
     }
-
-    /**
-     * 打印配货单
-     * @param code 波次编号
-     * @see SecondarySortingDTO.BasketDetail
-     */
-    @GetMapping("/printDistribution")
-    public void printDistribution(@RequestParam("code") String code, HttpServletResponse response) {
-        secondarySortingService.printDistribution(code, response);
-    }
-
 }

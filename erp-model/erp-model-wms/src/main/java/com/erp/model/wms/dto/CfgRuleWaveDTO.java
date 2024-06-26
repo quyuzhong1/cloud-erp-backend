@@ -95,7 +95,7 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
          * 状态
          */
-        private String disabled;
+        private Boolean disabled;
         /**
          * 更新时间
          */
@@ -180,7 +180,7 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
         * 分拣方式（边拣边分，先拣后分）
         */
-        private String sortingMethod;
+        private String pickingType;
 
         /**
         * 规则描述
@@ -308,7 +308,7 @@ public class CfgRuleWaveDTO implements Serializable {
         */
         @NotBlank(message = "分拣方式（边拣边分，先拣后分）不能为空")
         @Size(max = 32,message = "分拣方式（边拣边分，先拣后分）最大长度不能超过32位")
-        private String sortingMethod;
+        private String pickingType;
 
         /**
         * 规则描述
