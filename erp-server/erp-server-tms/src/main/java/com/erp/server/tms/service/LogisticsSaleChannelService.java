@@ -53,13 +53,6 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
     List<SaleChannelDTO> listByType(String platformType,String servicePlatform);
 
     /**
-     * 根据数据来源获取源数据
-     * @param platformType
-     * @return
-     */
-    List<LogisticsSaleChannelEntity> listByDataSource(String platformType,String overseasWarehouseId,Integer status);
-
-    /**
      * 根据物流平台获取 到原始渠道信息
      * @param logisticsPlatform
      * @param servicePlatform
@@ -76,11 +69,4 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      *@date 2023-12-07
      */
     LogisticsSaleChannelEntity getByPlatform(String platform, String code);
-
-    /**
-     * 根据code 查找
-     * @param code
-     * @return
-     */
-    LogisticsSaleChannelEntity getByCode(String code);
 }

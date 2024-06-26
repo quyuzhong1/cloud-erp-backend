@@ -146,24 +146,6 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         return baseMapper.listByType(platformType,servicePlatform);
     }
 
-    @Override
-    public List<LogisticsSaleChannelEntity> listByDataSource(String platformType, String overseasWarehouseId, Integer status) {
-        if (StringUtils.isNotEmpty(platformType) && StringUtils.isNotEmpty(overseasWarehouseId) && Objects.isNull(status)) return Collections.EMPTY_LIST;
-        LambdaQueryWrapper<LogisticsSaleChannelEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotEmpty(platformType)){
-            queryWrapper.eq(LogisticsSaleChannelEntity::getLogisticsPlatform, platformType);
-        }
-        if (StringUtils.isNotEmpty(overseasWarehouseId)){
-            queryWrapper.eq(LogisticsSaleChannelEntity::getOverseasWarehouseId, overseasWarehouseId);
-        }
-        if (Objects.nonNull(status)){
-            queryWrapper.eq(LogisticsSaleChannelEntity::getChannelStatus, status);
-        }
-        queryWrapper.eq(LogisticsSaleChannelEntity::getIsDeleted, false);
-        List<LogisticsSaleChannelEntity> logisticsSaleChannelEntities = baseMapper.selectList(queryWrapper);
-        return logisticsSaleChannelEntities;
-    }
-
     /**
      *
      * @param logisticsPlatform
@@ -179,13 +161,6 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     @Override
     public LogisticsSaleChannelEntity getByPlatform(String platform, String code) {
         return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,code).eq(LogisticsSaleChannelEntity::getLogisticsPlatform,platform).last("LIMIT 1").one();
-    }
-
-
-
-    @Override
-    public LogisticsSaleChannelEntity getByCode(String code) {
-        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,code).last("LIMIT 1").one();
     }
 
 
