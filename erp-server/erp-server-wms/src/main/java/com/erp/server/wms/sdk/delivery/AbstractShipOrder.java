@@ -14,6 +14,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -100,6 +101,8 @@ public abstract class AbstractShipOrder implements IPlatformService {
     public Tuple allSourceOrderInfo(PlatformShipOrderDTO dto) {
         List<SoB2cEntity> sourceOrderList;
         Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = new HashMap<>();
+        // 原平台订单信息
+        Map<String, List<SoB2cDetailEntity>> sourcePlatformOrderMap = new HashMap<>();
 
         // 查询合并来源关系
         List<SoB2cRefEntity> refEntityList = soB2cFeign.findMergeByTargetId(dto.getSoB2cId());
@@ -117,6 +120,11 @@ public abstract class AbstractShipOrder implements IPlatformService {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
             soB2cDetailEntityListMap.put(dto.getSoB2cId(),soB2cDetailEntityList);
+            //  查询拆分前的原单信息
+            if (dto.isHasFindSourcePlatformOrder()){
+                // 按最早创建日期的平台仓订单作为原单
+                sourcePlatformOrderMap = this.findSourcePlatformOrder(mainEntity);
+            }
         } else {
             // 有合并
             List<String> mainIds = refEntityList.stream().map(SoB2cRefEntity::getSourceId).distinct().collect(Collectors.toList());
@@ -136,7 +144,26 @@ public abstract class AbstractShipOrder implements IPlatformService {
         if (null == logisticsEntity) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
-        return new Tuple(sourceOrderList, soB2cDetailEntityListMap, logisticsEntity);
+        return new Tuple(sourceOrderList, soB2cDetailEntityListMap, logisticsEntity, sourcePlatformOrderMap);
+    }
+
+    /**
+     * 查询最早创建日期的平台仓订单作为原单
+     */
+    private Map<String, List<SoB2cDetailEntity>> findSourcePlatformOrder(SoB2cEntity mainEntity) {
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
+                Collections.singletonList(mainEntity.getPlatformCode()),
+                mainEntity.getDictPlatform(),
+                mainEntity.getShopId(),
+                SourceTypeEnum.SO_B2C.getCode());
+        SoB2cEntity soB2cEntity = soB2cEntityList.stream().min(Comparator.comparing(SoB2cEntity::getCreateTime)).orElse(null);
+        Map<String, List<SoB2cDetailEntity>> resultMap = new HashMap<>();
+        if (null == soB2cEntity){
+            return resultMap;
+        }
+        List<SoB2cDetailEntity> detailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(mainEntity.getId()));
+        resultMap.put(soB2cEntity.getPlatformCode(), detailEntityList);
+        return resultMap;
     }
 
 }

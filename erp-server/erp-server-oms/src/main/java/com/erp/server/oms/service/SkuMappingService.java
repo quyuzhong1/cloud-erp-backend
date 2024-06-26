@@ -265,4 +265,6 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return
      */
     List<SkuMappingEntity> listHistoryByListingId(String id);
+    List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(String warehouseId,List<String> platformSkuNoList);
+
 }

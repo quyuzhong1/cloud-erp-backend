@@ -54,4 +54,12 @@ public interface DmpMqFeign {
     @PostMapping("/listByParam")
     List<DmpPushTaskEntity> listByParam(@RequestBody @Valid DmpSyncTaskDTO.ListDTO listDTO);
 
+    /**
+     * 根据多个Code查询推送任务
+     * @param listDTO
+     * @return
+     */
+    @PostMapping("/listByCodeParam")
+    List<DmpPushTaskEntity> listByCodeParam(@RequestBody @Valid DmpSyncTaskDTO.ListCodeDTO listDTO);
+
 }

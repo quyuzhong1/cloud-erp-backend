@@ -1532,6 +1532,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private LinkedList<SoOutstockDetailDTO.AddDTO> detailList;
 
+
+        /**
+         * 是否检查sku历史映射
+         */
+        private boolean checkSkuHistory = true;
+
     }
 
 

@@ -789,4 +789,33 @@
         where listing_id = #{listingId}
         order by update_time asc
     </select>
+    <select id="listByWarehouseAndPlatformSku"
+            resultType="com.erp.model.oms.dto.SkuMappingDTO$WarehouseSkuDTO">
+        select
+            sm.id as tableId,
+            sm.dict_platform as dictPlatform,
+            sm.product_sku_id as productSkuId,
+            sm.product_sku_no as productSkuNo,
+            sm.product_name as productName,
+            sm.type as type,
+            sm.warehouse_id as warehouseId,
+            sm.warehouse_name as warehouseName,
+            sm.is_expire as isExpire,
+            li.id as listingId,
+            li.platform_sku_no as platformSkuNo,
+            li.platform_sku_name as platformSkuName,
+            li.platform_spu_no as platformSpuNo,
+            li.platform_spu_name as platformSpuName,
+            li.platform_fn_sku as platformFnSku
+        from sku_mapping sm
+                 inner join listing_info li on sm.listing_id = li.id
+        where sm.is_deleted = false
+          and li.is_deleted = false
+          and sm.is_expire = false
+          and sm.warehouse_id = #{warehouseId}
+          AND li.platform_sku_no IN
+        <foreach collection="platformSkuNoList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

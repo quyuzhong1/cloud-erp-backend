@@ -3,6 +3,7 @@ package com.common.business.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
@@ -154,7 +155,30 @@ public class DmpSyncTaskDTO {
         private String syncOperate;
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class ListCodeDTO extends ParamDTO{
 
+        /**
+         * 来源单据code
+         */
+        @NotEmpty(message = "来源单据Code不能为空")
+        private List<String> sourceCodeList;
+
+        public ListCodeDTO(List<String> sourceCodeList,String targetPlatformName,String sourcePlatformName) {
+            this.setTargetPlatformName(targetPlatformName);
+            this.setSourcePlatformName(sourcePlatformName);
+            this.sourceCodeList = sourceCodeList;
+        }
+
+        public ListCodeDTO(String sourceType,List<String> sourceCodeList,String targetPlatformName,String sourcePlatformName) {
+            this.setSourceType(sourceType);
+            this.setTargetPlatformName(targetPlatformName);
+            this.setSourcePlatformName(sourcePlatformName);
+            this.sourceCodeList = sourceCodeList;
+        }
+    }
 
 
 }

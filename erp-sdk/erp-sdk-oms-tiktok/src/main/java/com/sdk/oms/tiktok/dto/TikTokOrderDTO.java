@@ -238,7 +238,7 @@ public class TikTokOrderDTO extends CleanBaseDTO {
         // 库存是否扣除
         detailDTO.setWarehouseId("");
         // 数量
-        detailDTO.setQty(itemsBeans.size());
+        detailDTO.setQty(1);
 
         // 金额
         BigDecimal salePrice = itemsBeans.stream().map(req -> req.getSalePrice()).reduce(BigDecimal.ZERO, BigDecimal::add);

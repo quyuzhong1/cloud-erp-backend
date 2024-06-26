@@ -16,13 +16,17 @@ public interface SyncWdtOtherInStockService {
 
     /**
      * 保存推送旺店通其他入库单任务
+     *
      * @param goodsList   SKU明细列表
      * @param entity      其他入库单原始单据
      * @param operateCode 操作方向: 审核/反审核
      * @param sourceCode  来源单据编号
+     * @param detailId
+     * @param code
+     * @param warehouseId
      * @return DmpPushTaskEntity 由DMP返回的任务实体
      * @date: 2024-05-25
      * @author: tanmujin
      */
-    DmpPushTaskEntity saveTask(List<CreateOtherStockinRequest.GoodsList> goodsList, OtherInstockEntity entity, String operateCode, String sourceCode);
+    DmpPushTaskEntity saveTask(List<CreateOtherStockinRequest.GoodsList> goodsList, OtherInstockEntity entity, String operateCode, String sourceCode, String detailId, String code, String warehouseId);
 }
