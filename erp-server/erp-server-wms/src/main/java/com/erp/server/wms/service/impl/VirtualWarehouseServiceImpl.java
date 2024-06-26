@@ -488,10 +488,27 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                     String bindedType = bindChannelDtos.get(0).getType();
                     if (Objects.nonNull(virtualWarehouseChannelEntity)) {
                         if (Objects.equals(virtualWarehouseChannelEntity.getDictPlatform(), childTree.getCode())) {
-                            //如果是本虚拟仓绑定需要设置为可选
-                            childTree.setDisabled(false);
-                            childTree.setShopDisabled(false);
-                            childTree.setPlatformDisabled(false);
+                            if (Objects.equals(bindedType, VitualWarehouseChannelTypeEnum.PLATFORM.getCode())) {
+                                //如果是本虚拟仓绑定平台，则当前行都可选
+                                childTree.setDisabled(false);
+                                childTree.setShopDisabled(false);
+                                childTree.setPlatformDisabled(false);
+                            } else {
+                                //如果是本虚拟仓绑定店铺，判断是否有其他虚拟仓绑定当前渠道的店铺类型
+                                List<VirtualWarehouseDTO.BindChannelDto> bindChannelDtoList = bindChannelDtos.stream()
+                                        .filter(item -> !Objects.equals(item.getVirtualWarehouseId(), id)
+                                                && Objects.equals(item.getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode()))
+                                        .collect(Collectors.toList());
+                                if (CollectionUtils.isNotEmpty(bindChannelDtoList)) {
+                                    childTree.setDisabled(false);
+                                    childTree.setShopDisabled(false);
+                                    childTree.setPlatformDisabled(true);
+                                }else{
+                                    childTree.setDisabled(false);
+                                    childTree.setShopDisabled(false);
+                                    childTree.setPlatformDisabled(false);
+                                }
+                            }
                         } else {
                             if (Objects.equals(bindedType, VitualWarehouseChannelTypeEnum.PLATFORM.getCode())) {
                                 //如果是非本虚拟仓绑定需要设置为不可选
