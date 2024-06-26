@@ -72,6 +72,12 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
       */
     @TableField("parent_task_id")
     private String parentTaskId;
+    
+    /**
+     * 执行超时时间，单位秒
+     */
+     @TableField("exec_timeout")
+     private Integer execTimeout;
 
     public static final String INPUT_DETAIL_ID = "input_detail_id";
 

@@ -26,4 +26,9 @@ public class DmpInputHotfixCreateRequest extends DmpInputCreateRequest{
     */
     private LocalDateTime endTime;
     
+    /**
+     * 执行超时时间，单位秒
+     */
+    private Integer execTimeout;
+    
 }

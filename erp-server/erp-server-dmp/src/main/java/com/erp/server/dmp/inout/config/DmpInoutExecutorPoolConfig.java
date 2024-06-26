@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 @Configuration
 public class DmpInoutExecutorPoolConfig {
     @Bean(name = "dmpInputExecutorPool")
-    public ExecutorService wmsDataCompareExecutorPool() {
+    public ExecutorService dmpInputExecutorPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(10, 30,
                 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(10000));
@@ -18,4 +18,14 @@ public class DmpInoutExecutorPoolConfig {
         return service;
     }
     
+    @Bean(name = "dmpInputChildExecutorPool")
+    public ExecutorService dmpInputChildExecutorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(30, 30,
+                0L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(10000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
+    }
 }

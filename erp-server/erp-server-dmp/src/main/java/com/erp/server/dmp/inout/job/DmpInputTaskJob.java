@@ -55,7 +55,7 @@ public class DmpInputTaskJob {
 						, DmpInputTaskStatusEnum.FDS.getCode() , DmpInputTaskStatusEnum.MONGO.getCode()
 						, DmpInputTaskStatusEnum.DMP.getCode()))
 				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
-				.select(DmpInputTaskEntity::getId)
+				.select(DmpInputTaskEntity::getId , DmpInputTaskEntity::getExecTimeout)
 				.orderByDesc(DmpInputTaskEntity::getUpdateTime)
 				.last(" limit " + size)
 				.list();
@@ -63,6 +63,7 @@ public class DmpInputTaskJob {
 			dmpInputExecutorPool.execute(() -> {
 				DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
 				dmpInputFinishRequest.setInputTaskId(l.getId());
+				dmpInputFinishRequest.setExecTimeout(l.getExecTimeout());
 				dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
 			});
 		}

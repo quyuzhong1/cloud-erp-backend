@@ -116,6 +116,7 @@ public class DmpInputNormalCreateHandler extends DmpInputBaseCreateHandler{
 			dmpInputTaskEntity.setEndTime(endTime);
 			dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
 			dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+			dmpInputTaskEntity.setExecTimeout(dmpCfgInputDetailEntity.getExecTimeout());
 			
 			dmpInputTaskEntityList.add(dmpInputTaskEntity);
 			
