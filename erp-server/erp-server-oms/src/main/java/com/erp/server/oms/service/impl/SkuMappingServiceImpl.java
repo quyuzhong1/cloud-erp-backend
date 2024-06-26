@@ -630,7 +630,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
 
-        SkuMappingEntity existEntity = this.getWarehouseMapping(listingId,dto.getWarehouseId(),dto.getProductSkuId(),RuleTypeEnum.WAREHOUSE);
+        SkuMappingEntity existEntity = this.getWarehouseMapping(listingId,dto.getWarehouseId(),dto.getProductSkuId(),RuleTypeEnum.WAREHOUSE,dto.getEffectiveTime());
         if(Objects.nonNull(existEntity)){
             throw new ServiceException("该仓库下已存在该sku");
         }
@@ -672,11 +672,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     }
 
-    private SkuMappingEntity getWarehouseMapping(String listingId,String warehouseId ,String skuId,RuleTypeEnum ruleTypeEnum){
+    private SkuMappingEntity getWarehouseMapping(String listingId,String warehouseId ,String skuId,RuleTypeEnum ruleTypeEnum,LocalDateTime effectiveTime){
         return lambdaQuery()
                 .eq(SkuMappingEntity::getListingId, listingId)
                 .eq(SkuMappingEntity::getWarehouseId, warehouseId)
                 .eq(SkuMappingEntity::getType, ruleTypeEnum)
+                .eq(SkuMappingEntity::getEffectiveTime, effectiveTime)
                 .eq(SkuMappingEntity::getProductSkuId, skuId)
                 .eq(SkuMappingEntity::getIsExpire, false)
                 .last(" LIMIT 1")
@@ -1294,7 +1295,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isBlank(id)){
             return Collections.emptyList();
         }
-        List<SkuMappingEntity> list = lambdaQuery().eq(SkuMappingEntity::getListingId, id).orderByAsc(SkuMappingEntity::getEffectiveTime).list();
+        List<SkuMappingEntity> list = baseMapper.listHistoryByListingId(id);
         //修改最后一条数据
         if (!list.isEmpty()){
             SkuMappingEntity skuMappingEntity = list.get(list.size() - 1);

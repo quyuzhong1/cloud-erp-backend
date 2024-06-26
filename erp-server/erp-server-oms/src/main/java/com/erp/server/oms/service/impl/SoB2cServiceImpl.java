@@ -1201,6 +1201,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String logisticsChannelId = "";
         if (CollectionUtils.isNotEmpty(channelIds)){
             logisticsChannelId = channelIds.get(0);
+        }else {
+            //渠道为空时，使用原来的渠道id
+            logisticsChannelId = existChannelId;
         }
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
         String packageStatus = resultDTO.getPackageStatus();
@@ -7922,17 +7925,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .productPropertyId(Objects.nonNull(productDTO) ? productDTO.getProductPropertyId() : "")
                         .build();
                 //根据信息匹配目的国申报价 和海关编码 排除速卖通订单
-                if (!isAliExpress){
-                    ProductCustomsEntity customs = this.getCustomsByCountry(country,soB2cDetailEntity.getSkuId(),productCustomsList);
-                    if (Objects.nonNull(customs)){
-                        if (Objects.nonNull(customs.getToDeclarePrice()) && customs.getToDeclarePrice().compareTo(BigDecimal.ZERO) > 0){
-                            declareProductDTO.setToDeclarePrice(customs.getToDeclarePrice());
-                            declareProductDTO.setToCurrency(customs.getToCurrency());
-                            declareProductDTO.setToCurrencySymbol(customs.getToCurrencySymbol());
-                        }
-                        if (StringUtils.isNotBlank(customs.getCustomsCode())){
-                            declareProductDTO.setToCustomsCode(customs.getCustomsCode());
-                        }
+                ProductCustomsEntity customs = this.getCustomsByCountry(country,soB2cDetailEntity.getSkuId(),productCustomsList);
+                if (Objects.nonNull(customs)){
+                    if (Objects.nonNull(customs.getToDeclarePrice()) && customs.getToDeclarePrice().compareTo(BigDecimal.ZERO) > 0){
+                        declareProductDTO.setToDeclarePrice(customs.getToDeclarePrice());
+                        declareProductDTO.setToCurrency(customs.getToCurrency());
+                        declareProductDTO.setToCurrencySymbol(customs.getToCurrencySymbol());
+                    }
+                    if (StringUtils.isNotBlank(customs.getCustomsCode())){
+                        declareProductDTO.setToCustomsCode(customs.getCustomsCode());
                     }
                 }
                 //是速卖通销售平台，sku是组合品时 需要重算申报重量
@@ -8164,10 +8165,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //step1 获取销售订单信息
         SoB2cEntity entity = this.getById(dto.getMainId());
         if (Objects.isNull(entity)){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_92016.msg);
+            return BatchResultDTO.fail(dto.getMainId(),dto.getMainId(),ApiError.ERROR_92016.msg);
         }
         //待提交和审核不通过的订单允许修改买家信息
-        if (ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())){
+        if (!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"非待提交和审核不通过的订单不允许修改买家信息");
         }
         //step2 获取买家信息
