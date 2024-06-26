@@ -22,6 +22,7 @@ import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutResponse;
 import com.sdk.wangdian.server.WangDianClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -132,7 +133,13 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
                 detail.setInvalidStatus(false);
 
                 List<SalesStockoutResponse.PositionDetailsList> list = detailItem.getPositionDetailsList();
-                List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = BeanMapperUtils.copyList(WdtSoOutStockDetailDTO.PositionDetailsList.class, list);
+                List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = list.stream()
+                        .map(v -> {
+                            WdtSoOutStockDetailDTO.PositionDetailsList detailDTO = new WdtSoOutStockDetailDTO.PositionDetailsList();
+                            BeanUtils.copyProperties(v, detailDTO);
+                            detailDTO.setPositionGoodsCount(v.getPositionGoodsCount().intValue());
+                            return detailDTO;
+                        }).collect(Collectors.toList());
                 detail.setPositionDetailsList(detailsLists);
                 detailList.add(detail);
             }
