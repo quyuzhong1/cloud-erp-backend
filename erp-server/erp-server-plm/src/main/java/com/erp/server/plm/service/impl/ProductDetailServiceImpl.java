@@ -2376,7 +2376,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             for (ProductDetailEntity entity : detailEntities) {
                 RateLimiter limiter = RateLimiter.create(60, 1, TimeUnit.MINUTES);
                 if (limiter.tryAcquire()) {
-                    syncWangDianProductDetailService.syncDataToWangDian(entity);
+                    try {
+                        syncWangDianProductDetailService.syncDataToWangDian(entity);
+                    } catch (Exception e) {
+                        log.error("推送旺店通失败:{}", e.getMessage(), e);
+                    }
                 }
             }
         }
