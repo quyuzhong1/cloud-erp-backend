@@ -10,6 +10,7 @@ import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.*;
@@ -145,10 +146,15 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
+        // 平台取消
         boolean isCancel = sourceOrder.convertCancel();
+        // 平台冻结
+        boolean isFrozen = sourceOrder.convertFrozen();
 
         // 作废状态（false未作废，true已作废）
-        orderDTO.setInvalidStatus(isCancel);
+        // 平台取消 并且 非冻结 作废
+        orderDTO.setInvalidStatus(isCancel && !isFrozen);
+        // 平台取消状态
         orderDTO.setIsCancel(isCancel);
 
         // 作废类型（manual手动作废，automatic自动作废）
@@ -280,7 +286,12 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                     for (LogisitcsDTO item : logisticInfoList) {
                         warehouseName = item.getWarehouseName();
                         PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
-                        logisticsDTO.setCode(item.getLogisticsNo());
+                        // 部分发货拉取过来是已审核、部分发货、有跟踪单号不能操作反审核也不能操作拆单
+                        if (SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode().equalsIgnoreCase(orderDTO.getBillStatus())){
+                            logisticsDTO.setCode("");
+                        } else {
+                            logisticsDTO.setCode(item.getLogisticsNo());
+                        }
                         logisticsDTO.setName(logisticsServiceName);
                         String sendTime = item.getGmtSend();
 
@@ -328,8 +339,9 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             receiverDTO.setCountryName("");
             receiverDTO.setDistrictName("");
 
-            receiverDTO.setTelNumber("");
-
+            if (null == receiverDTO.getTelNumber()){
+                receiverDTO.setTelNumber("");
+            }
 
         } else {
             receiverDTO.setCountry("");

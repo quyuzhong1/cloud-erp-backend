@@ -152,20 +152,18 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 }
                 return entity;
             }else {
-                SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
-                BeanMapperUtils.copy(entity, entity2);
-                if (null != dictCountryEntity && StringUtils.isBlank(entity2.getCountryName())){
+                SoB2cReceiverEntity newReceiverEntity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(receiverDTO, mainEntity.getId());
+                if (null != dictCountryEntity && StringUtils.isBlank(entity.getCountryName())){
                     entity.setCountryName(dictCountryEntity.getNameCn());
                 }
                 // 指定有值不更新
-                ReflectUtils.updateSpecifiedFieldsIfNotValue(entity2, entity, SoB2cReceiverEntity.fieldsExistNotUpdate());
+                ReflectUtils.updateSpecifiedFieldsIfNotValue(entity, newReceiverEntity, SoB2cReceiverEntity.fieldsExistNotUpdate());
 
-                entity2.setId(entity.getId());
-                this.updateById(entity2);
+                this.updateById(entity);
 //                if (!this.updateById(entity2)){
 //                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
 //                }
-                return entity2;
+                return entity;
             }
 
     }
