@@ -90,7 +90,17 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 	 */
 	protected List<Map<String, Object>> getDataList(DmpInputTaskFileContentTypeEnum contentType , List<String> resultList) {
 		List<Map<String, Object>> dataList = new ArrayList<>();
-		if(DmpInputTaskFileContentTypeEnum.JSON == contentType) {
+		if(DmpInputTaskFileContentTypeEnum.TXT == contentType) {
+			String[] keyArr = resultList.get(0).split("\t");
+			for(int i = 1; i < resultList.size(); i++) {
+				String[] valueArr = resultList.get(i).split("\t");
+				Map<String, Object> data = new HashMap<>();
+				for(int j = 0 ; j < keyArr.length; j++) {
+					data.put(keyArr[j], valueArr[j]);
+				}
+				dataList.add(data);
+			}
+		}else {
 			StringBuilder sb = new StringBuilder();
 			for(String s : resultList) {
 				sb.append(s);
@@ -106,16 +116,6 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 			}else {
 				parseObject = JSON.parseObject(jsonString);
 				dataList.add(parseObject);
-			}
-		}else if(DmpInputTaskFileContentTypeEnum.TXT == contentType) {
-			String[] keyArr = resultList.get(0).split("\t");
-			for(int i = 1; i < resultList.size(); i++) {
-				String[] valueArr = resultList.get(i).split("\t");
-				Map<String, Object> data = new HashMap<>();
-				for(int j = 0 ; j < keyArr.length; j++) {
-					data.put(keyArr[j], valueArr[j]);
-				}
-				dataList.add(data);
 			}
 		}
 		return dataList;

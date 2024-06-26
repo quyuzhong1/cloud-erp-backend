@@ -52,34 +52,39 @@ public class DmpInputTaskStatusHandler extends DmpInputHandler{
 				List<DmpInputTaskStatusRecordEntity> dmpInputTaskStatusrecordEntityList = new ArrayList<>();
 				DmpInputTaskStatusRecordEntity dmpInputTaskStatusrecordEntity = null;
 				if(this.validateDmpInputTaskEntityList(beforeDmpInputTaskEntityList)) {
-					Map<String, String> statusbeforeEntityMaps = beforeDmpInputTaskEntityList.stream().collect(Collectors.toMap(DmpInputTaskEntity::getId , DmpInputTaskEntity::getStatus));
-					Map<String, DmpInputTaskEntity> idAfterEntityMaps = afterDmpInputTaskEntityList.stream().collect(Collectors.toMap(DmpInputTaskEntity::getId , e -> e));
-					for(Map.Entry<String, String> statusbeforeEntityMap : statusbeforeEntityMaps.entrySet()) {
-						String id = statusbeforeEntityMap.getKey();
-						String beforeStatus = statusbeforeEntityMap.getValue();
-						DmpInputTaskEntity dmpInputTaskEntity = idAfterEntityMaps.get(id);
-						String afterStatus = dmpInputTaskEntity.getStatus();
-						List<DmpInputTaskStatusRecordEntity> list = dmpInputTaskStatusRecordService.lambdaQuery()
-								.eq(DmpInputTaskStatusRecordEntity::getMainId, id)
+					Map<String, List<DmpInputTaskEntity>> statusGroupMap = beforeDmpInputTaskEntityList.stream().collect(Collectors.groupingBy(DmpInputTaskEntity::getStatus));
+					for(Map.Entry<String, List<DmpInputTaskEntity>> statusGroup : statusGroupMap.entrySet()) {
+						List<String> idList = statusGroup.getValue().stream().map(DmpInputTaskEntity::getId).collect(Collectors.toList());
+						String beforeStatus = statusGroup.getKey();
+						Map<String, DmpInputTaskEntity> idAfterEntityMaps = afterDmpInputTaskEntityList.stream().collect(Collectors.toMap(DmpInputTaskEntity::getId , e -> e));
+						List<String> list = dmpInputTaskStatusRecordService.lambdaQuery()
+								.in(DmpInputTaskStatusRecordEntity::getMainId, idList)
 								.eq(DmpInputTaskStatusRecordEntity::getStatus, beforeStatus)
-								.list();
-						if(CollUtil.isEmpty(list)) {
-							dmpInputTaskStatusrecordEntity = new DmpInputTaskStatusRecordEntity();
-							dmpInputTaskStatusrecordEntity.setMainId(id);
-							dmpInputTaskStatusrecordEntity.setStatus(beforeStatus);
-							dmpInputTaskStatusrecordEntity.setCreateTime(now);
-							dmpInputTaskStatusrecordEntity.setUpdateTime(now);
-							dmpInputTaskStatusrecordEntityList.add(dmpInputTaskStatusrecordEntity);
-						}else {
-							dmpInputTaskStatusRecordService.lambdaUpdate()
-									.eq(DmpInputTaskStatusRecordEntity::getMainId, id)
-									.eq(DmpInputTaskStatusRecordEntity::getStatus, beforeStatus)
-									.set(DmpInputTaskStatusRecordEntity::getUpdateTime, now)
-									.update();
+								.list().stream().map(DmpInputTaskStatusRecordEntity::getMainId).collect(Collectors.toList());
+						List<String> updateIdList = new ArrayList<>();
+						for(String id : idList) {
+							DmpInputTaskEntity dmpInputTaskEntity = idAfterEntityMaps.get(id);
+							String afterStatus = dmpInputTaskEntity.getStatus();
+							if(!list.contains(id)) {
+								dmpInputTaskStatusrecordEntity = new DmpInputTaskStatusRecordEntity();
+								dmpInputTaskStatusrecordEntity.setMainId(id);
+								dmpInputTaskStatusrecordEntity.setStatus(beforeStatus);
+								dmpInputTaskStatusrecordEntity.setCreateTime(now);
+								dmpInputTaskStatusrecordEntity.setUpdateTime(now);
+								dmpInputTaskStatusrecordEntityList.add(dmpInputTaskStatusrecordEntity);
+							}else {
+								updateIdList.add(id);
+							}
+							if(!beforeStatus.equals(afterStatus)) {
+								filterAfterDmpInputTaskEntityList.add(dmpInputTaskEntity);
+							}
 						}
-						
-						if(!beforeStatus.equals(afterStatus)) {
-							filterAfterDmpInputTaskEntityList.add(dmpInputTaskEntity);
+						if(CollUtil.isNotEmpty(updateIdList)) {
+							dmpInputTaskStatusRecordService.lambdaUpdate()
+								.in(DmpInputTaskStatusRecordEntity::getMainId, updateIdList)
+								.eq(DmpInputTaskStatusRecordEntity::getStatus, beforeStatus)
+								.set(DmpInputTaskStatusRecordEntity::getUpdateTime, now)
+								.update();
 						}
 					}
 				}

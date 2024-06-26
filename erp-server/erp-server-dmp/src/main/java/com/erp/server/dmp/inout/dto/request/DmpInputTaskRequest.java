@@ -20,4 +20,9 @@ public class DmpInputTaskRequest extends DmpInputRequest{
 	 * 处理的任务状态
 	 */
 	private DmpInputTaskStatusEnum dealTaskStatus;
+	
+	/**
+	    * 执行超时时间，单位秒
+	*/
+	private Integer execTimeout;
 }

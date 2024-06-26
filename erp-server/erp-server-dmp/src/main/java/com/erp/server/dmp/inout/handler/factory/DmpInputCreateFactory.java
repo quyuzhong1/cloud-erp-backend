@@ -1,13 +1,19 @@
 package com.erp.server.dmp.inout.handler.factory;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.dto.request.DmpInputChildCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputCreateRequest;
@@ -17,10 +23,12 @@ import com.erp.server.dmp.inout.dto.response.DmpInputCreateResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
 import com.erp.server.dmp.inout.handler.input.all.DmpInputTaskStatusHandler;
-import com.erp.server.dmp.inout.handler.input.create.DmpInputNormalCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputChildCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputHistoryCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputHotfixCreateHandler;
+import com.erp.server.dmp.inout.handler.input.create.DmpInputNormalCreateHandler;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 输入任务创建工厂，添加handler给handler链路执行
@@ -28,6 +36,7 @@ import com.erp.server.dmp.inout.handler.input.create.DmpInputHotfixCreateHandler
  *
  */
 @Component
+@Slf4j
 public class DmpInputCreateFactory{
 	
 	@Autowired
@@ -42,6 +51,9 @@ public class DmpInputCreateFactory{
 	private DmpInputTaskStatusHandler dmpInputTaskStatusHandler;
 	@Autowired
 	private DmpInputTaskFactory dmpInputTaskFactory;
+	@Autowired
+	@Qualifier("dmpInputChildExecutorPool")
+	private ExecutorService dmpInputChildExecutorPool;
 	
 	/**
 	 * 创建正常任务
@@ -108,6 +120,7 @@ public class DmpInputCreateFactory{
 		for(DmpInputTaskEntity dmpInputTaskEntity : afterDmpInputTaskEntityList) {
 			DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
 			dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
+			dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
 			dmpInputFinishResponseList.add(dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest));
 		}
 		return dmpInputFinishResponseList;
@@ -120,14 +133,26 @@ public class DmpInputCreateFactory{
 	 */
 	@Transactional(rollbackFor = Exception.class)
 	public List<DmpInputFinishResponse> doChildInputTask(DmpInputChildCreateRequest dmpInputChildCreateRequest) {
-		List<DmpInputFinishResponse> dmpInputFinishResponseList = new ArrayList<>();
+		List<DmpInputFinishResponse> dmpInputFinishResponseList = new LinkedList<>();
+        //线程安全
+        List<DmpInputFinishResponse> sycList = Collections.synchronizedList(dmpInputFinishResponseList);
+        
 		DmpInputCreateResponse dmpInputCreateResponse = this.createChildInputTask(dmpInputChildCreateRequest);
 		List<DmpInputTaskEntity> afterDmpInputTaskEntityList = dmpInputCreateResponse.getAfterDmpInputTaskEntityList();
+//		CountDownLatch countDownLatch = new CountDownLatch(afterDmpInputTaskEntityList.size());
 		for(DmpInputTaskEntity dmpInputTaskEntity : afterDmpInputTaskEntityList) {
 			DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
 			dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
-			dmpInputFinishResponseList.add(dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest));
+			dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
+			sycList.add(dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest));
+//			countDownLatch.countDown();
 		}
-		return dmpInputFinishResponseList;
+//		try {
+//            countDownLatch.await();
+//        } catch (InterruptedException e) {
+//        	log.error("多线程执行父任务{}下的子任务失败" , dmpInputChildCreateRequest.getParentInputTaskId(), e);
+//        	throw new ServiceException("多线程执行父任务下的子任务失败");
+//        }
+		return sycList;
 	}
 }

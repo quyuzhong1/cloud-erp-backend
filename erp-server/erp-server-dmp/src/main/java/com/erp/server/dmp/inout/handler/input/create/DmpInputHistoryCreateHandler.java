@@ -125,6 +125,7 @@ public class DmpInputHistoryCreateHandler extends DmpInputBaseCreateHandler{
 			dmpInputTaskEntity.setEndTime(endTime);
 			dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
 			dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.HISTORY.getCode());
+			dmpInputTaskEntity.setExecTimeout(dmpCfgInputHistoryEntity.getExecTimeout());
 			
 			dmpInputTaskEntityList.add(dmpInputTaskEntity);
 			
