@@ -15,7 +15,9 @@ import com.sdk.wangdian.sdk.api.Result;
 import com.sdk.wangdian.sdk.api.goods.GoodsAPI;
 import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import com.sdk.wangdian.server.WangDianClientService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.python.google.common.util.concurrent.RateLimiter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class WangDianProductDetailServiceImpl implements WangDianProductDetailService {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -49,27 +52,35 @@ public class WangDianProductDetailServiceImpl implements WangDianProductDetailSe
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
-        RLock lock = redissonClient.getLock(LOCK + pushDTOS.getGoodsNo());
-        try {
-            boolean locked = lock.tryLock(10, 30, TimeUnit.SECONDS);
-            if (locked) {
-                GoodsAPI api = wangDianClientService.get(GoodsAPI.class);
-                Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {
-                });
-                Map<String, Object> request = commonService.makeApiFieldMap(map, platformEntity.getId(), ApiModuleTypeEnum.WDT_PRODUCT.getCode());
-                Result result = api.batchPush(Collections.singletonList(request));
-                String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
-                        .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))
-                        .collect(Collectors.joining(","));
-                if (StringUtils.isNotBlank(msg)){
-                    throw new ServiceException(msg);
+        RateLimiter limiter = RateLimiter.create(1, 1, TimeUnit.SECONDS);
+        if (limiter.tryAcquire()) {
+            try {
+                RLock lock = redissonClient.getLock(LOCK + pushDTOS.getGoodsNo());
+                try {
+                    boolean locked = lock.tryLock(10, 30, TimeUnit.SECONDS);
+                    if (locked) {
+                        GoodsAPI api = wangDianClientService.get(GoodsAPI.class);
+                        Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {
+                        });
+                        Map<String, Object> request = commonService.makeApiFieldMap(map, platformEntity.getId(), ApiModuleTypeEnum.WDT_PRODUCT.getCode());
+                        Result result = api.batchPush(Collections.singletonList(request));
+                        String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
+                                .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))
+                                .collect(Collectors.joining(","));
+                        if (StringUtils.isNotBlank(msg)) {
+                            throw new ServiceException(msg);
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new ServiceException(ApiError.ERROR_1026);
+                } finally {
+                    lock.unlock();
                 }
+            } catch (Exception e) {
+                log.error("推送旺店通失败:{}", e.getMessage(), e);
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ServiceException(ApiError.ERROR_1026);
-        } finally {
-            lock.unlock();
         }
+
     }
 }
