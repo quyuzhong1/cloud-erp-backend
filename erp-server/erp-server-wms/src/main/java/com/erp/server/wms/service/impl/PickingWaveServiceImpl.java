@@ -1,17 +1,24 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.wms.dto.PickingWaveDTO;
 import com.erp.model.wms.entity.PickingWaveEntity;
 import com.erp.server.wms.mapper.PickingWaveMapper;
 import com.erp.server.wms.service.PickingWaveService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.List;
 
 @Service
 public class PickingWaveServiceImpl extends SuperServiceImpl<PickingWaveMapper, PickingWaveEntity> implements PickingWaveService {
+
+    @Override
+    public BaseResultDTO.AddDTO add(PickingWaveDTO.AddDTO dto) {
+        return null;
+    }
+
     @Override
     public int countDelivery(PermissionsDTO param) {
         // todo 需要状态字段值

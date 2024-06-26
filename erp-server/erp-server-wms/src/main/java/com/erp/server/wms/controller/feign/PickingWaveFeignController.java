@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.erp.model.wms.dto.PickingWaveDto;
+import com.erp.model.wms.dto.PickingWaveDTO;
 
 /**
  * 拣货波次Feign
@@ -18,7 +18,7 @@ import com.erp.model.wms.dto.PickingWaveDto;
 public class PickingWaveFeignController {
 
     @PostMapping("/add")
-    public ApiResult<BatchResultDTO> add(@RequestBody PickingWaveDto.AddDto addDto){
+    public ApiResult<BatchResultDTO> add(@RequestBody PickingWaveDTO.AddDTO addDto){
         return null;
     }
 }

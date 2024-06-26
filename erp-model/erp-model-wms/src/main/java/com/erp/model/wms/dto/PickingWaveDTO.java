@@ -11,9 +11,9 @@ import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class PickingWaveDto implements Serializable {
+public class PickingWaveDTO implements Serializable {
     @Data
-    public static class AddDto{
+    public static class AddDTO {
         /**
          * 波次编码
          */
