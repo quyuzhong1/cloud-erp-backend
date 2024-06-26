@@ -512,7 +512,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 //审核发送金蝶
                 sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
                 //同时发送旺店通
-//                list.forEach(item -> syncApproveInfoToWdt(item, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+                list.forEach(item -> syncApproveInfoToWdt(item, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
@@ -562,7 +562,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
             String outWarehouseId = dto.getOutWarehouseId();
             OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
-            DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(Collections.singletonList(outGoods), outEntity, operateCode, entity.getCode());
+            DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(Collections.singletonList(outGoods), outEntity, operateCode, entity.getCode(), dto.getId(), outCode, outWarehouseId);
             if(outDmpPushTask != null){
                 dmpPushTaskList.add(outDmpPushTask);
             }
@@ -576,7 +576,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
             String inWarehouseId = dto.getInWarehouseId();
             OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-            DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(Collections.singletonList(inGoods), inEntity, operateCode, entity.getCode());
+            DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(Collections.singletonList(inGoods), inEntity, operateCode, entity.getCode(), dto.getId(), inCode, inWarehouseId);
             if(inDmpPushTask != null){
                 dmpPushTaskList.add(inDmpPushTask);
             }
@@ -616,7 +616,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
             String outWarehouseId = dto.getInWarehouseId();
             OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
-            DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(Collections.singletonList(outGoods), outEntity, operateCode, entity.getCode());
+            DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(Collections.singletonList(outGoods), outEntity, operateCode, entity.getCode(), dto.getId(), outCode, outWarehouseId);
             if(outDmpPushTask != null){
                 dmpPushTaskList.add(outDmpPushTask);
             }
@@ -630,7 +630,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
             String inWarehouseId = dto.getOutWarehouseId();
             OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-            DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(Collections.singletonList(inGoods), inEntity, operateCode, entity.getCode());
+            DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(Collections.singletonList(inGoods), inEntity, operateCode, entity.getCode(), dto.getId(), inCode, inWarehouseId);
             if(inDmpPushTask != null){
                 dmpPushTaskList.add(inDmpPushTask);
             }
@@ -671,7 +671,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //反审核发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
             //发送旺店通
-//            list.forEach(obj -> syncDisApproveInfoToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncDisApproveInfoToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
 
         //发送马帮（非马帮平台的才需要推送）

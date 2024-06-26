@@ -4,6 +4,7 @@ import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
+import jnr.ffi.annotations.In;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -31,14 +32,14 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "handleStatus", source = "handleStatus"),
             @Mapping(target = "shopId", source = "shopId"),
             @Mapping(target = "groupId", source = "groupId"),
-            @Mapping(target = "isClean", source = "isClean"),
+            @Mapping(target = "downloadStatus", source = "downloadStatus"),
     })
     PlatformAmazonFulfilledShipmentsDTO sourceDtoToOutStockDto(ReportFulfilledShipmentsMongoDTO sourceDTO,
                                                                String reportId,
                                                                String shopId,
                                                                String groupId,
                                                                String handleStatus,
-                                                               Integer isClean
+                                                               Integer downloadStatus
     );
 
 
@@ -58,9 +59,9 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "platformCode", source = "amazonOrderId"),
             @Mapping(target = "platformOrderDetailId", source = "amazonOrderItemId"),
             @Mapping(target = "trackNo", source = "trackingNumber"),
-            @Mapping(target = "platformOrderCreateTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPurchaseDateLocale()))"),
-            @Mapping(target = "platformPayTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPaymentsDateLocale()))"),
-            @Mapping(target = "platformDeliveryTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getShipmentDateLocale()))"),
+            @Mapping(target = "platformOrderCreateTime", expression = "java(PlatformAmazonFulfilledShipmentsDTO.parseOffsetDateTime(sourceDetail.getPurchaseDateLocale()))"),
+            @Mapping(target = "platformPayTime", expression = "java(PlatformAmazonFulfilledShipmentsDTO.parseOffsetDateTime(sourceDetail.getPaymentsDateLocale()))"),
+            @Mapping(target = "platformDeliveryTime", expression = "java(PlatformAmazonFulfilledShipmentsDTO.parseOffsetDateTime(sourceDetail.getShipmentDateLocale()))"),
             @Mapping(target = "qtyShipped", source = "quantityShipped"),
     })
     PlatformSoOutStockDetailDTO amazonConvertDetailDTO(PlatformAmazonFulfilledShipmentsDTO sourceDetail);

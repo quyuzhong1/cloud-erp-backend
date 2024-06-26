@@ -208,7 +208,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
-        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform);
+        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform,"tms");
         List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         //这个是删除的同步来源ids
         List<String> deleteSyncSourceIdList = saleChannelList.stream().filter(l -> l.getIsDeleted()).map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());

@@ -3054,8 +3054,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO) {
         List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO = platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList();
-        if(CollectionUtils.isEmpty(platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList())){
-            return true;
+        if(CollectionUtils.isEmpty(platformDeliveryDetailDTO)){
+            return false;
         }
         String warehouseId = platformDeliveryDetailDTO.get(0).getWarehouseId();
         String soB2cId = platformDeliveryDetailDTO.get(0).getMainId();
