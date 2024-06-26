@@ -383,4 +383,14 @@ public class AliExpressOrder implements Serializable {
                 && !"buyer_confirm_goods_timeout".equalsIgnoreCase(this.endReason)
                 ;
     }
+
+    /**
+     * 冻结中
+     */
+    public boolean convertFrozen(){
+        // 冻结中视为取消走拦截逻辑或初始化作废
+        return "IN_CANCEL".equals(orderStatus)
+                || "RISK_CONTROL".equals(orderStatus)
+                || "IN_FROZEN".equals(orderStatus);
+    }
 }

@@ -25,7 +25,9 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonFulfilledShipmentsHandler;
+import com.erp.server.dmp.enums.DownloadStatusEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.AmzBusinessHandleService;
 import com.erp.server.dmp.service.DmpPullTaskService;
@@ -107,6 +109,8 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
         BusinessTypeEnum businessType = BusinessTypeEnum.getByCodeAndThrow(business);
 
         for (PlatformAmazonFulfilledShipmentsDTO currentDTO : list) {
+            currentDTO.setDownloadStatus(DownloadStatusEnum.FINISH.getCode());
+            currentDTO.setHandleStatus(AmazonHandleStatusEnum.HANDLE.getCode());
             amzBusinessHandleService.singleHandlerConsumer(currentDTO, tableName, platform, businessType, topic, tag);
         }
         return true;
@@ -172,6 +176,9 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
 
         // 其他出库单生产者
         for (PlatformAmazonFulfilledShipmentsDTO currentDTO : list) {
+            currentDTO.setDownloadStatus(DownloadStatusEnum.FINISH.getCode());
+            currentDTO.setHandleStatus(AmazonHandleStatusEnum.HANDLE.getCode());
+
             MapUtil mapUtil = getMapParam();
             UniqueDto updateDto = UniqueDto.getUniqId(currentDTO.getUniqueId());
             finishClean(mapUtil, updateDto,tableName, PlatformAmazonFulfilledShipmentsDTO.class);

@@ -5389,7 +5389,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setPlatformCode(entity.getPlatformCode());
                 addDTO.setSkuId(skuId);
                 addDTO.setSkuNo(detailItem.getSkuNo());
-                addDTO.setSourceDetailId(detailId);
+                addDTO.setSourceDetailId(detailItem.getSourceDetailId());
                 addDTO.setSoDetailId(detailId);
                 addDTO.setPlanQty(qty);
                 addDTO.setActualQty(qty);

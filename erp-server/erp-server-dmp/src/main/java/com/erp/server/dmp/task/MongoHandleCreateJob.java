@@ -10,6 +10,7 @@ import com.erp.server.dmp.enums.DmpMongoHandleTypeEnum;
 import com.erp.server.dmp.factory.DmpMongoHandlerFactory;
 import com.erp.server.dmp.service.DmpMongoHandleTaskService;
 import com.google.common.collect.Lists;
+import com.xxl.job.core.context.XxlJobContext;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +81,10 @@ public class MongoHandleCreateJob {
                             taskEntity.getHandleType(),
                             ExceptionUtil.stacktraceToString(e)
                     );
+                    log.error("mongoHandleJob 当前任务执行成功异常：handleType={}, error={}",
+                            taskEntity.getHandleType(),
+                            ExceptionUtil.stacktraceToString(e)
+                    );
                 }
             });
 //            }
@@ -125,6 +130,9 @@ public class MongoHandleCreateJob {
                         param.getHandleType(),
                         ExceptionUtil.stacktraceToString(e)
                 );
+                log.error("mongoHistoryClearJob 当前任务执行成功异常：handleType={}, error={}",
+                        param.getHandleType(),
+                        ExceptionUtil.stacktraceToString(e));
             }
         });
         XxlJobHelper.log("mongoHistoryClearJob 【清理mongo业务历史数据任务】执行任务列表结束");
