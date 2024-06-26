@@ -1280,7 +1280,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             goodsList.add(goods);
         });
 
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, entity, operateCode, entity.getCode());
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, entity, operateCode, entity.getCode(), entity.getId(), entity.getCode(), entity.getWarehouseId());
         if(dmpPushTaskEntity != null){
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override
@@ -1320,7 +1320,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, entity.getWarehouseId());
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, inEntity, operateCode, entity.getCode());
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, inEntity, operateCode, entity.getCode(), entity.getId(), inCode, entity.getWarehouseId());
         if(dmpPushTaskEntity != null){
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override
