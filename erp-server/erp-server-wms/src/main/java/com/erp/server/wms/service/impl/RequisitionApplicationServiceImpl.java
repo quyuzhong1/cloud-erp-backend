@@ -161,7 +161,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YHSQ);
         requisitionApplicationEntity.setCode(code);
         boolean save = super.save(requisitionApplicationEntity);
-        if (!save) {
+        if(!save) {
             throw new ServiceException("要货申请单保存失败");
         }
         // 新增明细
@@ -170,20 +170,20 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     /**
-     * 修改
-     */
+    * 修改
+    */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(RequisitionApplicationDTO.UpdateDTO updateDTO) {
         RequisitionApplicationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请单"));
-        RequisitionApplicationEntity requisitionApplicationEntity = BeanMapperUtils.map(RequisitionApplicationEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请单"));
+        RequisitionApplicationEntity requisitionApplicationEntity =  BeanMapperUtils.map(RequisitionApplicationEntity.class, updateDTO);
 
         // 数据处理
         handleData(requisitionApplicationEntity);
         log.info("编辑 开始修改要货申请单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(requisitionApplicationEntity);
-        if (!save) {
+        if(!save) {
             throw new ServiceException("要货申请单保存失败");
         }
         // 修改明细数据（包含增删改）
@@ -201,7 +201,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(RequisitionApplicationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
-            if (!existStatusList.contains(status)) {
+            if(!existStatusList.contains(status)) {
                 list.add(new RequisitionApplicationDTO.TabListDTO(status, 0));
             }
         });
@@ -215,7 +215,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<RequisitionApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if (CollUtil.isEmpty(pageData.getRecords())) {
+        if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
         // 数据处理
@@ -226,7 +226,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public RequisitionApplicationDTO.ViewDTO view(String id) {
         //发货单主信息
-        RequisitionApplicationEntity applicationEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
+        RequisitionApplicationEntity applicationEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到要货申请单数据"));
         RequisitionApplicationDTO.ViewDTO data = BeanMapperUtils.map(RequisitionApplicationDTO.ViewDTO.class, applicationEntity);
         //发货单详情
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(Arrays.asList(id));
@@ -665,10 +665,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
 
         //只拆分销售套装BOM
-        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v -> v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v->v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
 
         //只拆分销售套装BOM
-        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v -> v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v->v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
 
         List<String> childSkuIds = bomChildrenSkuList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         skuIds.addAll(childSkuIds);
@@ -1373,7 +1373,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      */
     private void validateSubmit(RequisitionApplicationEntity entity) {
         // 待提交允许提交
-        if(!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus()) ) {
+        if (!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus())) {
             throw new ServiceException(ApiError.IS_SUBMIT_IN_SUBMIT);
         }
         return;
@@ -1415,8 +1415,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      * @param warehouseList 要货申请表id
      * @return java.lang.Boolean
      **/
-    private void updateHandleDetailDate
-    (List<RequisitionApplicationDTO.HandleListDTO> list, List<WarehouseDTO.UpdateDTO> warehouseList) {
+    private void updateHandleDetailDate(List<RequisitionApplicationDTO.HandleListDTO> list, List<WarehouseDTO.UpdateDTO> warehouseList) {
         for (RequisitionApplicationDTO.HandleListDTO handleListDTO : list) {
             //调入仓
             WarehouseDTO.UpdateDTO toWarehouse = warehouseList.stream()

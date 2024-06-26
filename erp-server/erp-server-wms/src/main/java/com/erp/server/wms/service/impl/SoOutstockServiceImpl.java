@@ -229,6 +229,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+
+
     @Lazy
     @Resource
     private SoOutstockService soOutstockService;
@@ -2363,6 +2367,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         String id = soOutstockService.addB2cSoOutstock(dto);
         //表示添加成功
@@ -3129,8 +3134,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     /**
-     * 平台拉取数据生成销售出库单
-     * 注意 List<PlatformDeliveryDetailDTO> 里的仓库ID和mainId相同
+     * 平台拉取数据生成销售出库单 (根据平台发货的sku生成对应销售出库单)
+     * 注意 List<PlatformDeliveryDetailDTO> 是同个销售订单下相同仓库的明细
+     *
      * @param platformGenerateSoOutstockDTO
      * @return
      */
