@@ -6,6 +6,7 @@ import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -21,5 +22,11 @@ public interface ThirdWarehouseMapper extends BaseMapper<ThirdWarehouseEntity> {
 
     IPage<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(Page query, ThirdWarehouseDTO.SelectDTO params);
 
-    ThirdWarehouseEntity getByWarehouseId(String thirdId);
+    /**
+     * 根据分类和第三方id获取
+     * @param thirdId
+     * @param category
+     * @return
+     */
+    ThirdWarehouseEntity getByWarehouseId(@Param("thirdId") String thirdId, @Param("category")String category);
 }

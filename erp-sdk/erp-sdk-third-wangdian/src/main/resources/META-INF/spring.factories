@@ -3,4 +3,5 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   com.sdk.wangdian.handler.WdtWarehouseHandler,\
   com.sdk.wangdian.handler.WdtShopHandler,\
   com.sdk.wangdian.handler.WdtReturnOrderHandler,\
-  com.sdk.wangdian.handler.WdtSellOrderInfoHandler
+  com.sdk.wangdian.handler.WdtSellOrderInfoHandler,\
+  com.sdk.wangdian.handler.WdtVirtualWarehouseHandler

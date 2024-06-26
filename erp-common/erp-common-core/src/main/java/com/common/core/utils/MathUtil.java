@@ -43,6 +43,7 @@ public class MathUtil {
     public final Integer CONSTANT_BYTE_SIZE = 1024;
     public final Integer EX_HK_NO_COUNT = 13;
     public final Integer CUSTOMS_CODE_COUNT = 18;
+    public final Integer EXPORT_MAX_COUNT = 50000;
 
 
     /**

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.VirtualWarehouseAllocationHandleDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="status" property="status" />
+       <result column="source_id" property="sourceId" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="from_virtual_warehouse_id" property="fromVirtualWarehouseId" />
+       <result column="to_virtual_warehouse_id" property="toVirtualWarehouseId" />
+       <result column="third_from_virtual_warehouse_id" property="thirdFromVirtualWarehouseId" />
+       <result column="third_to_virtual_warehouse_id" property="thirdToVirtualWarehouseId" />
+       <result column="qty" property="qty" />
+       <result column="type" property="type" />
+       <result column="direction" property="direction" />
+       <result column="code" property="code" />
+       <result column="sys_type" property="sysType" />
+       <result column="handle_id" property="handleId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        create_user_id,
+        create_user_name,
+        update_time,
+        update_user_id,
+        update_user_name,
+        version,
+        is_deleted,
+        status, allocation_id, warehouse_id, from_virtual_warehouse_id, to_virtual_warehouse_id, third_from_virtual_warehouse_id, third_to_virtual_warehouse_id, qty, type, direction, code, sys_type, handle_id
+    </sql>
+
+
+</mapper>

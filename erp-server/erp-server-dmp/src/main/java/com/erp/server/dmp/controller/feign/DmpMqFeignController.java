@@ -4,9 +4,14 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,6 +45,16 @@ public class DmpMqFeignController {
     public DmpPushTaskEntity saveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto){
         DmpPushTaskEntity entity = dmpPushTaskService.saveTask(dto);
         return entity;
+    }
+
+    /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+    @PostMapping("/save/pushTaskList")
+    public List<DmpPushTaskEntity> saveTaskList(@RequestBody List<DmpPushTaskFeignDTO> dtos){
+       return dmpPushTaskService.saveTaskList(dtos);
     }
 
     /**
@@ -86,5 +101,40 @@ public class DmpMqFeignController {
     public List<DmpPushTaskEntity> listByCodeParam(@RequestBody @Valid DmpSyncTaskDTO.ListCodeDTO listDTO){
         List<DmpPushTaskEntity> list = dmpPushTaskService.listByCodeParam(listDTO);
         return CollectionUtils.isEmpty(list) ? new ArrayList<>() : list;
+    }
+
+    /**
+     * 批量修改无需同步
+     *
+     * @param dto
+     * @return ApiResult
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    @PostMapping(value = "/batchNoNeedSync")
+    public Boolean batchNoNeedSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        return dmpPushTaskService.batchNoNeedSync(dto.getIds());
+    }
+    /**
+     * 根据sourceId批量修改无需同步
+     *
+     * @param sourceIds
+     * @return ApiResult
+     * @author hyj
+     */
+    @PostMapping(value = "/batchNoNeedSyncBySourceId")
+    public Boolean batchNoNeedSyncBySourceId(@RequestBody List<String> sourceIds) {
+        return dmpPushTaskService.batchNoNeedSyncBySourceId(sourceIds);
+    }
+
+    /**
+     * 根据sourceId重新同步
+     *
+     * @param sourceIds
+     * @return
+     */
+    @PostMapping(value = "/batchSyncBySourceId")
+    public Boolean batchSyncBySourceId(@RequestBody List<String> sourceIds) {
+        return dmpPushTaskService.batchSyncBySourceId(sourceIds);
     }
 }

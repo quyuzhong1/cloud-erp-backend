@@ -60,6 +60,11 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 虚拟仓库Id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
 
     /**
      * 仓库id

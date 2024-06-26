@@ -54,7 +54,7 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
      * @param id
      * @return java.lang.Boolean
      */
-    Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id);
+    Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String fromVirtualWarehouseId, String fromVirtualWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id);
 
 
     /**

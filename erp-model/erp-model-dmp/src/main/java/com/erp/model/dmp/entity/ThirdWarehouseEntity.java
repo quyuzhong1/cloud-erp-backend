@@ -130,6 +130,11 @@ public class ThirdWarehouseEntity extends BaseEntity<ThirdWarehouseEntity> {
      */
     @TableField("category")
     private String category;
+    /**
+     * 当分类是虚拟仓时，会存储第三方虚拟仓关联实体仓信息
+     */
+    @TableField("warehouse_list")
+    private String warehouseList;
 
     public static final String DISABLED = "disabled";
 

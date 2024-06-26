@@ -1060,6 +1060,21 @@ public class SoB2cDTO implements Serializable {
         private String detailId;
 
         /**
+         * 销售平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 店铺
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
          * 明细skuId
          */
         private String skuId;

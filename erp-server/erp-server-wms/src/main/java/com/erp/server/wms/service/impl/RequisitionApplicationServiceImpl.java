@@ -12,9 +12,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -26,6 +24,8 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -33,14 +33,14 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.FbaShipmentEntity;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
-import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
-import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
-import com.erp.model.wms.enums.TransferDirectionEnum;
-import com.erp.model.wms.enums.TransferTypeEnum;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -48,13 +48,17 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -84,12 +88,26 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private InventoryService inventoryService;
+    @Resource
+    private VirtualInventoryService virtualInventoryService;
     @Autowired
     private TransferInfoService transferInfoService;
     @Autowired
     private WarehouseService warehouseService;
     @Autowired
     private SysUserFeign sysUserFeign;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private VirtualWarehouseAllocationHandleService virtualWarehouseAllocationHandleService;
+    @Resource
+    private VirtualWarehouseAllocationHandleDetailService virtualWarehouseAllocationHandledetailService;
+    @Resource
+    private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
+    @Resource
+    private SyncWdtVirtualWarehousePushOrderService syncWdtVirtualWarehousePushOrderService;
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
@@ -102,6 +120,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private FbaShipmentService fbaShipmentService;
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+    @Resource
+    private VirtualWarehouseRelationService virtualWarehouseRelationService;
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     @Resource
     @Lazy
@@ -257,19 +283,55 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean handleSave(List<RequisitionApplicationDTO.HandleListDTO> list) {
+        RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(list.get(0).getSourceId());
         //根据调出调入仓id查询仓库信息
         List<String> warehouseIds = list.stream().map(req -> req.getFromWarehouseId()).collect(Collectors.toList());
         List<String> toWarehouseIds = list.stream().map(req -> req.getToWarehouseId()).collect(Collectors.toList());
         warehouseIds.addAll(toWarehouseIds);
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
 
+        //获取虚拟仓
+        List<VirtualWarehouseEntity> vmList = new ArrayList<>();
+        List<String> fromVmIds = list.stream().map(RequisitionApplicationDTO.HandleListDTO::getFromVirtualWarehouseId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(fromVmIds)) {
+            vmList = virtualWarehouseService.listByIds(fromVmIds);
+        }
         //查询产品信息
         List<String> skuIdList = list.stream().map(RequisitionApplicationDTO.HandleListDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
+        //获取实体仓库存数量
+        List<String> skuIds = list.stream().map(RequisitionApplicationDTO.HandleListDTO::getSkuId).collect(Collectors.toList());
+        //获取实体仓可用库存
+        InventoryDTO.ParamDTO paramDTO = new InventoryDTO.ParamDTO();
+        paramDTO.setSkuIdList(skuIds);
+        paramDTO.setWarehouseIdList(warehouseIds);
+        List<InventoryDTO.InventoryViewQtyDTO> inventoryUsableQtyList = inventoryService.getUsableQtyBySkuIdsAndWarehouseIds(paramDTO);
+
+        //获取虚拟仓可用库存
+        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList = getVmUsableQtyList(fromVmIds, skuIds, warehouseIds);
+
+        List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
         for (RequisitionApplicationDTO.HandleListDTO handleListDTO : list) {
+            Integer approveQty = handleListDTO.getApproveQty();
+            //校验数量
+            //实体仓数量
+            InventoryDTO.InventoryViewQtyDTO inventoryQtyDTO = inventoryUsableQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), handleListDTO.getSkuId())
+                            && Objects.equals(item.getWarehouseId(), handleListDTO.getFromWarehouseId())).findFirst()
+                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_FROM_WAREHOUSE_INVENTORY_ERROR));
+            //校验实体仓库存
+            Integer warehouseUsableQty = inventoryQtyDTO.getUsableQty();
+            if (warehouseUsableQty < approveQty) {
+                throw new ServiceException(ApiError.ERROR_APPROVEQTY_GT_MUSABLEQTY_ERROR);
+            }
+            //虚拟仓数量
+            if (StringUtils.isNotBlank(handleListDTO.getFromVirtualWarehouseId())) {
+                checkVmQty(handleListDTO, vmUsableQtyList, approveQty, vmList);
+                //获取虚拟仓出库参数
+                getStockParam(handleListDTO, approveQty, allocationParamList);
+            }
             //调出仓
             WarehouseDTO.UpdateDTO fromWarehouse = warehouseList.stream().filter(req -> req.getId().equals(handleListDTO.getFromWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             handleListDTO.setOutOrgId(fromWarehouse.getOrgId());
@@ -277,7 +339,21 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             WarehouseDTO.UpdateDTO toWarehouse = warehouseList.stream().filter(req -> req.getId().equals(handleListDTO.getToWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             handleListDTO.setInOrgId(toWarehouse.getOrgId());
         }
+        //执行虚拟仓出库
+        if (CollectionUtils.isNotEmpty(allocationParamList)) {
+            VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+            allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
+            allocationDto.setParamList(allocationParamList);
+            virtualInventoryTransCoreService.approve(allocationDto);
 
+            List<RequisitionApplicationDTO.HandleListDTO> haveFromVwList = list.stream().filter(item -> StringUtils.isNotBlank(item.getFromVirtualWarehouseId())).collect(Collectors.toList());
+            List<RequisitionApplicationDetailEntity> detailEntityList = BeanMapperUtils.copyList(RequisitionApplicationDetailEntity.class, haveFromVwList);
+            Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap = detailEntityList.stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId));
+
+            //创建旺店通虚拟仓订单
+            service.saveWdtOrder(fromVmIds, requisitionApplication, haveFromVwMap);
+
+        }
         //调出仓库和调入仓库不一致的单据
         Map<String, List<RequisitionApplicationDTO.HandleListDTO>> map = list.stream().filter(req -> !req.getFromWarehouseId().equals(req.getToWarehouseId())).collect(Collectors.groupingBy(req -> req.getSourceCode().concat(req.getOutOrgId().concat(req.getInOrgId()))));
         for (Map.Entry<String, List<RequisitionApplicationDTO.HandleListDTO>> dto : map.entrySet()) {
@@ -301,6 +377,163 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "处理保存");
         }
         return flag;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void saveWdtOrder(List<String> fromVmIds, RequisitionApplicationEntity requisitionApplication,
+                             Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
+                //保存要货申请主单
+                VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(requisitionApplication.getId(),
+                        requisitionApplication.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplication.getStatus()
+                        , VwAllocationDirectionEnum.REVERSE.getCode());
+                virtualWarehouseAllocationHandleService.save(pushHandleEntity);
+                List<VirtualWarehousePushHandleDetailEntity> handleDetailList = new ArrayList<>();
+                saveList(requisitionApplication, haveFromVwMap, fromThirdMappingList, pushHandleEntity, handleDetailList, VwAllocationDirectionEnum.REVERSE);
+                if (CollectionUtils.isNotEmpty(handleDetailList)) {
+                    //推送中台任务:保存任务+发送mq
+                    List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
+                            requisitionApplication.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+                    if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
+//                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                            @Override
+//                            public void afterCommit() {
+                        //发送mq
+                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+//                            }
+//                        });
+                    }
+                }
+            }
+        });
+    }
+
+    private void saveList(RequisitionApplicationEntity requisitionApplication, Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap,
+                          List<ThirdMappingEntity> fromThirdMappingList, VirtualWarehousePushHandleEntity pushHandleEntity,
+                          List<VirtualWarehousePushHandleDetailEntity> handleDetailList, VwAllocationDirectionEnum code) {
+        haveFromVwMap.forEach((fromVmId, fromHandleList) -> {
+            //获取调出仓绑定的旺店通虚拟仓
+            if (CollectionUtils.isNotEmpty(fromThirdMappingList)) {
+                ThirdMappingEntity thirdMapping = fromThirdMappingList.stream().filter(item -> Objects.equals(item.getSysId(), fromVmId)).findFirst().orElse(null);
+                if (Objects.nonNull(thirdMapping)) {
+//                fromThirdMappingList.forEach(thirdMapping -> {
+                    //保存合单明细
+                    VirtualWarehousePushHandleDetailEntity handleDetailEntity = new VirtualWarehousePushHandleDetailEntity();
+                    handleDetailEntity.setSourceId(requisitionApplication.getId());
+                    handleDetailEntity.setDirection(pushHandleEntity.getDirection());
+                    handleDetailEntity.setType(requisitionApplication.getType());
+                    handleDetailEntity.setStatus(pushHandleEntity.getStatus());
+                    switch (code) {
+                        case FORWARD:
+                            handleDetailEntity.setToVirtualWarehouseId(fromVmId);
+                            handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
+                            handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
+                            break;
+                        default:
+                            handleDetailEntity.setFromVirtualWarehouseId(fromVmId);
+                            handleDetailEntity.setThirdFromVirtualWarehouseId(thirdMapping.getThirdId());
+                            handleDetailEntity.setThirdFromVirtualWarehouseNo(thirdMapping.getThirdCode());
+                            break;
+                    }
+                    handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
+                    handleDetailEntity.setMainId(pushHandleEntity.getId());
+                    handleDetailEntity.setWarehouseId(fromHandleList.get(0).getFromWarehouseId());
+                    handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
+                    Integer sumQty = fromHandleList.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum);
+                    handleDetailEntity.setQty(sumQty);
+                    virtualWarehouseAllocationHandledetailService.save(handleDetailEntity);
+                    handleDetailList.add(handleDetailEntity);
+                    fromHandleList.forEach(allocationDetail -> {
+                        VirtualWarehousePushHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehousePushHandleRelationEntity();
+                        vmAllocationHandleRelationEntity.setSourceId(requisitionApplication.getId());
+                        switch (code) {
+                            case FORWARD:
+                                vmAllocationHandleRelationEntity.setSourceDetailId(allocationDetail.getId());
+                                break;
+                            default:
+                                vmAllocationHandleRelationEntity.setSourceDetailId(allocationDetail.getSourceDetailId());
+                                break;
+                        }
+                        vmAllocationHandleRelationEntity.setHandleId(pushHandleEntity.getId());
+                        vmAllocationHandleRelationEntity.setHandleDetailId(handleDetailEntity.getId());
+                        virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * 获取虚拟仓出库参数
+     *
+     * @param handleListDTO
+     * @param approveQty
+     * @param allocationParamList
+     */
+    private static void getStockParam(RequisitionApplicationDTO.HandleListDTO handleListDTO, Integer
+            approveQty, List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList) {
+        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setSourceId(handleListDTO.getSourceId());
+        outInStockDTO.setSourceCode(handleListDTO.getSourceCode());
+        outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
+        outInStockDTO.setSourceDetailId(handleListDTO.getSourceDetailId());
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setSkuId(handleListDTO.getSkuId());
+        outInStockDTO.setSkuNo(handleListDTO.getSkuNo());
+        outInStockDTO.setWarehouseId(handleListDTO.getFromWarehouseId());
+        outInStockDTO.setVirtualWarehouseId(handleListDTO.getFromVirtualWarehouseId());
+        outInStockDTO.setQty(approveQty);
+        allocationParamList.add(outInStockDTO);
+    }
+
+    /**
+     * 获取可用数量
+     *
+     * @param fromVmIds
+     * @param skuIds
+     * @param warehouseIds
+     * @return
+     */
+    private List<VirtualInventoryDTO.ViewQtyDTO> getVmUsableQtyList
+    (List<String> fromVmIds, List<String> skuIds, List<String> warehouseIds) {
+        List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(fromVmIds)) {
+            VirtualInventoryDTO.ParamDTO vmParamDto = new VirtualInventoryDTO.ParamDTO();
+            vmParamDto.setSkuIdList(skuIds);
+            vmParamDto.setWarehouseIdList(warehouseIds);
+            vmParamDto.setVirtualWarehouseIdList(fromVmIds);
+            vmUsableQtyList = virtualInventoryService.getVmUsableQtyBySkuIdsAndWIdsAndVmIds(vmParamDto);
+        }
+        return vmUsableQtyList;
+    }
+
+    /**
+     * 校验虚拟仓库存
+     *
+     * @param handleListDTO
+     * @param vmUsableQtyList
+     * @param approveQty
+     * @param vmList
+     */
+    private static void checkVmQty(RequisitionApplicationDTO.HandleListDTO
+                                           handleListDTO, List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQtyList, Integer
+                                           approveQty, List<VirtualWarehouseEntity> vmList) {
+        VirtualInventoryDTO.ViewQtyDTO virtualInventoryQtyDto = vmUsableQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), handleListDTO.getSkuId())
+                        && Objects.equals(item.getWarehouseId(), handleListDTO.getFromWarehouseId())
+                        && Objects.equals(item.getToVirtualWarehouseId(), handleListDTO.getFromVirtualWarehouseId()))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_FROM_VM_INVENTORY_ERROR));
+        Integer fromVirtualWarehouseUsableQty = virtualInventoryQtyDto.getToVirtualWarehouseUsableQty();
+        if (fromVirtualWarehouseUsableQty < approveQty) {
+            throw new ServiceException(ApiError.ERROR_APPROVEQTY_GT_VMUSABLEQTY_ERROR);
+        }
+        VirtualWarehouseEntity virtualWarehouseEntity = vmList.stream().filter(item -> Objects.equals(item.getId(), handleListDTO.getFromVirtualWarehouseId())).findFirst().orElse(new VirtualWarehouseEntity());
+        handleListDTO.setFromVirtualWarehouseName(virtualWarehouseEntity.getName());
     }
 
 
@@ -512,6 +745,23 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE_ING.getStatus())) {
             //处理中撤销
             transferInfoService.requisitionApplicationCancelProcess(entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
+            //获取明细
+            List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+
+            List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = getOutInStockDTOS(entity, detailEntityList);
+            //执行虚拟仓入库
+            if (CollectionUtils.isNotEmpty(allocationParamList)) {
+                VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+                allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
+                allocationDto.setParamList(allocationParamList);
+                virtualInventoryTransCoreService.approve(allocationDto);
+                List<RequisitionApplicationDetailEntity> haveFromVwList = detailEntityList.stream().filter(item -> StringUtils.isNotBlank(item.getFromVirtualWarehouseId())).collect(Collectors.toList());
+                Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap = haveFromVwList.stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId));
+                List<String> fromVmIds = haveFromVwList.stream().map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
+
+                //创建旺店通虚拟仓订单
+                service.cancelWdtOrder(fromVmIds, entity, haveFromVwMap);
+            }
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE.getStatus())) {
             //已处理
@@ -533,6 +783,61 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);*/
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelWdtOrder(List<String> fromVmIds, RequisitionApplicationEntity entity, Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
+                //保存要货申请主单
+                VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(entity.getId(),
+                        entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getStatus(), VwAllocationDirectionEnum.FORWARD.getCode());
+                virtualWarehouseAllocationHandleService.save(pushHandleEntity);
+                List<VirtualWarehousePushHandleDetailEntity> handleDetailList = new ArrayList<>();
+                saveList(entity, haveFromVwMap, fromThirdMappingList, pushHandleEntity, handleDetailList, VwAllocationDirectionEnum.FORWARD);
+                if (CollectionUtils.isNotEmpty(handleDetailList)) {
+                    //推送中台任务:保存任务+发送mq
+                    List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
+                            entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+                    if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
+//                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                            @Override
+//                            public void afterCommit() {
+                        //发送mq
+                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+//                            }
+//                        });
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * 获取出入库参数
+     *
+     * @param entity
+     * @return
+     */
+    private List<VirtualInventoryStockDTO.OutInStockDTO> getOutInStockDTOS(RequisitionApplicationEntity
+                                                                                   entity, List<RequisitionApplicationDetailEntity> detailEntityList) {
+        List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(detailEntityList)) {
+            detailEntityList.forEach(detailEntity -> {
+                if (StringUtils.isNotBlank(detailEntity.getFromVirtualWarehouseId())) {
+                    RequisitionApplicationDTO.HandleListDTO handleListDTO = new RequisitionApplicationDTO.HandleListDTO();
+                    BeanUtils.copyProperties(detailEntity, handleListDTO);
+                    handleListDTO.setSourceDetailId(detailEntity.getId());
+                    handleListDTO.setSourceId(entity.getId());
+                    handleListDTO.setSourceCode(entity.getCode());
+                    getStockParam(handleListDTO, detailEntity.getApproveQty(), allocationParamList);
+                }
+            });
+        }
+        return allocationParamList;
     }
 
     @Override
@@ -693,7 +998,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     /**
      * 详情字段处理
      */
-    private void fillOne(RequisitionApplicationDTO.ViewDTO data, List<RequisitionApplicationDetailEntity> detailList) {
+    private void fillOne(RequisitionApplicationDTO.ViewDTO
+                                 data, List<RequisitionApplicationDetailEntity> detailList) {
         //查询产品信息
         List<String> skuIdList = detailList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
@@ -768,6 +1074,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     /**
      * 分页查询数据处理
+     *
      * @param list
      */
     private void fillList(List<RequisitionApplicationDTO.ListDTO> list) {
@@ -883,6 +1190,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     .findFirst()
                     .orElse(new WarehouseDTO.UpdateDTO());
             requisitionApplicationDetailService.updateTransferWarehouse(handleListDTO.getFromWarehouseId(), fromWarehouse.getName(),
+                    handleListDTO.getFromVirtualWarehouseId(), handleListDTO.getRequisitionWarehouseName(),
                     handleListDTO.getToWarehouseId(), toWarehouse.getName(), handleListDTO.getApproveQty(), handleListDTO.getSourceDetailId());
         }
     }
@@ -1043,6 +1351,59 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         addDTO.setDetailList(detailAddDtoList);
         return transferInfoService.add(addDTO);
+    }
+
+    /**
+     * 仓库关联虚拟仓远程搜索
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public PagingVO<RequisitionApplicationDTO.WarehouseListDTO> pagingSelect
+    (PagingDTO<RequisitionApplicationDTO.WarehouseSelectDTO> dto) {
+        String virtualWarehouseId = dto.getParams().getVirtualWarehouseId();
+        //判断当前虚拟仓是否为空，不为空获取所有关联的实体仓
+        if (StringUtils.isNotBlank(virtualWarehouseId)) {
+            List<VirtualWarehouseRelationEntity> vwRelationList = virtualWarehouseRelationService.getByVirtualWarehouseId(virtualWarehouseId);
+            if (CollectionUtils.isEmpty(vwRelationList)) {
+                return new PagingVO<>();
+            } else {
+                List<String> ids = vwRelationList.stream().map(VirtualWarehouseRelationEntity::getWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                dto.getParams().setIds(ids);
+            }
+        }
+
+        PagingDTO<WarehouseDTO.SelectDTO> warehouseDto = new PagingDTO<>();
+        warehouseDto.setPageSize(dto.getPageSize());
+        warehouseDto.setCurrPage(dto.getCurrPage());
+        WarehouseDTO.SelectDTO warehouseSelectDTO = new WarehouseDTO.SelectDTO();
+        BeanUtils.copyProperties(dto.getParams(), warehouseSelectDTO);
+        warehouseDto.setParams(warehouseSelectDTO);
+        PagingVO<WarehouseDTO.ListDTO> warehouseList = warehouseService.selectPaging(warehouseDto);
+        List<?> list = warehouseList.getList();
+        List<RequisitionApplicationDTO.WarehouseListDTO> warehouseListDTOS = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(warehouse -> {
+                RequisitionApplicationDTO.WarehouseListDTO warehouseListDTO = new RequisitionApplicationDTO.WarehouseListDTO();
+                WarehouseDTO.ListDTO listDTO = (WarehouseDTO.ListDTO) warehouse;
+                List<VirtualWarehouseRelationEntity> warehouseRelationEntities = virtualWarehouseRelationService.getByWarehouseId(Collections.singletonList(((WarehouseDTO.ListDTO) warehouse).getId()));
+                BeanUtils.copyProperties(listDTO, warehouseListDTO);
+                if (!Objects.equals(ApproveStatusEnum.APPROVE, listDTO.getApproveStatus())) {
+                    warehouseListDTO.setDisabled(true);
+                    warehouseListDTO.setCanCheck(false);
+                }
+                if (CollectionUtils.isNotEmpty(warehouseRelationEntities)) {
+                    warehouseListDTO.setHasVw(true);
+                }
+                warehouseListDTOS.add(warehouseListDTO);
+            });
+        }
+        PagingVO<RequisitionApplicationDTO.WarehouseListDTO> resultPage = new PagingVO<>();
+        resultPage.setPageSize(dto.getPageSize());
+        resultPage.setCurrPage(dto.getCurrPage());
+        resultPage.setList(warehouseListDTOS);
+        return resultPage;
     }
 
 }
