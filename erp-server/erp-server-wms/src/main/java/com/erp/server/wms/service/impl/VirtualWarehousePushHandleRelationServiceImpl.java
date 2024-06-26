@@ -5,8 +5,8 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.threadlocal.UserContext;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
-import com.erp.server.wms.mapper.VirtualWarehouseAllocationHandleRelationMapper;
-import com.erp.server.wms.service.VirtualWarehouseAllocationHandleRelationService;
+import com.erp.server.wms.mapper.VirtualWarehousePushHandleRelationMapper;
+import com.erp.server.wms.service.VirtualWarehousePushHandleRelationService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleRelationDTO;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleRelationDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -29,14 +29,14 @@ import com.common.core.enums.ApiError;
  */
 @Slf4j
 @Service
-public class VirtualWarehouseAllocationHandleRelationServiceImpl extends SuperServiceImpl<VirtualWarehouseAllocationHandleRelationMapper, VirtualWarehousePushHandleRelationEntity> implements VirtualWarehouseAllocationHandleRelationService {
+public class VirtualWarehousePushHandleRelationServiceImpl extends SuperServiceImpl<VirtualWarehousePushHandleRelationMapper, VirtualWarehousePushHandleRelationEntity> implements VirtualWarehousePushHandleRelationService {
     @Autowired
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(VirtualWarehouseAllocationHandleRelationDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(VirtualWarehousePushHandleRelationDTO.AddDTO addDTO) {
         VirtualWarehousePushHandleRelationEntity virtualWarehousePushHandleRelationEntity = new VirtualWarehousePushHandleRelationEntity();
         BeanMapperUtils.copy(addDTO, virtualWarehousePushHandleRelationEntity);
 
@@ -63,7 +63,7 @@ public class VirtualWarehouseAllocationHandleRelationServiceImpl extends SuperSe
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(VirtualWarehouseAllocationHandleRelationDTO.UpdateDTO updateDTO) {
+    public Boolean update(VirtualWarehousePushHandleRelationDTO.UpdateDTO updateDTO) {
         VirtualWarehousePushHandleRelationEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单关联关系单"));
         VirtualWarehousePushHandleRelationEntity virtualWarehousePushHandleRelationEntity =  BeanMapperUtils.map(VirtualWarehousePushHandleRelationEntity.class, updateDTO);

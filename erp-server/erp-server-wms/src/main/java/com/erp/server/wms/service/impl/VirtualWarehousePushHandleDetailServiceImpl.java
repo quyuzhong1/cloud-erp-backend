@@ -16,7 +16,7 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.VwAllocationDirectionEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.erp.server.wms.mapper.VirtualWarehouseAllocationHandleDetailMapper;
+import com.erp.server.wms.mapper.VirtualWarehousePushHandleDetailMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleDetailDTO;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,7 +47,7 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @Service
-public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServiceImpl<VirtualWarehouseAllocationHandleDetailMapper, VirtualWarehousePushHandleDetailEntity> implements VirtualWarehouseAllocationHandleDetailService {
+public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImpl<VirtualWarehousePushHandleDetailMapper, VirtualWarehousePushHandleDetailEntity> implements VirtualWarehousePushHandleDetailService {
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -55,9 +55,9 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
     @Resource
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
     @Resource
-    private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
+    private VirtualWarehousePushHandleRelationService virtualWarehousePushHandleRelationService;
     @Resource
-    private VirtualWarehouseAllocationHandleService virtualWarehouseAllocationHandleService;
+    private VirtualWarehousePushHandleService virtualWarehousePushHandleService;
     @Resource
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
     @Resource
@@ -71,7 +71,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(VirtualWarehouseAllocationHandleDetailDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(VirtualWarehousePushHandleDetailDTO.AddDTO addDTO) {
         VirtualWarehousePushHandleDetailEntity virtualWarehousePushHandleDetailEntity = new VirtualWarehousePushHandleDetailEntity();
         BeanMapperUtils.copy(addDTO, virtualWarehousePushHandleDetailEntity);
 
@@ -102,7 +102,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(VirtualWarehouseAllocationHandleDetailDTO.UpdateDTO updateDTO) {
+    public Boolean update(VirtualWarehousePushHandleDetailDTO.UpdateDTO updateDTO) {
         VirtualWarehousePushHandleDetailEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "分货单合单明细单"));
         VirtualWarehousePushHandleDetailEntity virtualWarehousePushHandleDetailEntity = BeanMapperUtils.map(VirtualWarehousePushHandleDetailEntity.class, updateDTO);
@@ -201,7 +201,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                             handleDetailList.add(handleDetailEntity);
                             groupList.forEach(allocationDetail -> {
                                 VirtualWarehousePushHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, pushHandleEntity, allocationDetail, handleDetailEntity);
-                                virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
+                                virtualWarehousePushHandleRelationService.save(vmAllocationHandleRelationEntity);
                             });
                         }
                     });
@@ -224,7 +224,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
 //                    public void afterCommit() {
                 //获取合单表和分货单明细关联关系，修改为同步中状态
                 List<String> handleDetailIds = dmpPushTaskEntityList.stream().map(DmpPushTaskEntity::getSourceId).collect(Collectors.toList());
-                List<String> allocationDetailList = virtualWarehouseAllocationHandleRelationService.list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+                List<String> allocationDetailList = virtualWarehousePushHandleRelationService.list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
                                 .in(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handleDetailIds))
                         .stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).distinct().collect(Collectors.toList());
                 virtualWarehouseAllocationDetailService.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>()
@@ -243,7 +243,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
             }
         } else {
             //删除合单表主单
-            virtualWarehouseAllocationHandleService.forceDeleteById(pushHandleEntity.getId());
+            virtualWarehousePushHandleService.forceDeleteById(pushHandleEntity.getId());
             //设置分货单子单无需同步
             virtualWarehouseAllocationDetailService.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>()
                     .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus, VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode())
@@ -301,7 +301,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     handleDetailList.add(handleDetailEntity);
                     allocationDetailList.forEach(allocationDetail -> {
                         VirtualWarehousePushHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, pushHandleEntity, allocationDetail, handleDetailEntity);
-                        virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
+                        virtualWarehousePushHandleRelationService.save(vmAllocationHandleRelationEntity);
                     });
                 } else {
                     noSyncDetailList.addAll(allocationDetailList);
@@ -356,7 +356,7 @@ public class VirtualWarehouseAllocationHandleDetailServiceImpl extends SuperServ
                     handleDetailList.add(handleDetailEntity);
                     allocationDetailList.forEach(allocationDetail -> {
                         VirtualWarehousePushHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, pushHandleEntity, allocationDetail, handleDetailEntity);
-                        virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
+                        virtualWarehousePushHandleRelationService.save(vmAllocationHandleRelationEntity);
                     });
                 } else {
                     noSyncDetailList.addAll(allocationDetailList);
