@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
@@ -5091,5 +5092,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         List<SkuVO> skuList = baseMapper.listSkuPurchaseByIds(skuIds);
         return skuList;
+    }
+
+    @Override
+    public ProductDetailEntity getBySkuNoOrEan(String skuCode) {
+
+        ProductDetailEntity entity = getOne(Wrappers.<ProductDetailEntity>lambdaQuery().eq(ProductDetailEntity::getSkuNo, skuCode));
+        if (ObjectUtil.isEmpty(entity)) {
+            ProductPurchaseEntity purchaseEntity = productPurchaseService.getOne(Wrappers.<ProductPurchaseEntity>lambdaQuery()
+                    .eq(ProductPurchaseEntity::getEan, skuCode)
+                    .last("LIMIT 1")
+            );
+            if (ObjectUtil.isEmpty(purchaseEntity)) {
+                entity = getById(purchaseEntity.getSkuId());
+            }
+        }
+        return entity;
     }
 }

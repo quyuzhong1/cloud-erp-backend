@@ -752,4 +752,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuVO> listSkuCategoryByIds(List<String> skuIds);
 
     List<SkuVO> listSkuPurchaseByIds(List<String> skuIds);
+
+    ProductDetailEntity getBySkuNoOrEan(String skuCode);
 }

@@ -573,4 +573,12 @@ public class ProductSkuFeignController {
         List<SkuVO> skuList = productDetailService.listSkuPurchaseByIds(skuIds);
         return skuList;
     }
+
+    /**
+     * 根据sku查询sku信息
+     */
+    @GetMapping("/listSkuPurchaseByIds")
+    ProductDetailEntity getBySkuNoOrEan(String skuCode){
+        return productDetailService.getBySkuNoOrEan(skuCode);
+    }
 }

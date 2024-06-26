@@ -125,6 +125,11 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
      */
     @TableField("allocated_qty")
     private Integer allocatedQty;
+    /**
+     * 是否缺货
+     */
+    @TableField("is_out_stock")
+    private Boolean isOutStock;
 
     public static final String SKU_ID = "sku_id";
 

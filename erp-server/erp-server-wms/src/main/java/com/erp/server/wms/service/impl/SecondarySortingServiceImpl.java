@@ -61,6 +61,8 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
                     dto.setPickingQty(qty);
                     if (!ObjectUtils.isEmpty(intercept) && SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode().equals(intercept.getHandleStatus())) {
                         dto.setIsIntercept(true);
+                    }else {
+                        dto.setIsIntercept(false);
                     }
                     dto.setIsOutStock(isOutStock);
                     return dto;
