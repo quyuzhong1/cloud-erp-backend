@@ -57,6 +57,7 @@ public class WarehouseLocationSafetyInventoryController {
     }
 
     @PostMapping("/exportExcel")
+    @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
     public void exportExcel(WarehouseLocationSafetyInventoryDto.exportParamDto dto, HttpServletResponse response){
         safetyInventoryService.exportExcel(dto, response);
     }
