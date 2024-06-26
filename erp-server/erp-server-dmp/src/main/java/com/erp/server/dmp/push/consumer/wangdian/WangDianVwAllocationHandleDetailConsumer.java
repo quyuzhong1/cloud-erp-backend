@@ -18,6 +18,7 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -49,11 +50,11 @@ public class WangDianVwAllocationHandleDetailConsumer<T extends DmpSyncTaskIdDTO
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        log.info("虚拟仓订单创建->获取消费数据：{}",ext);
+        log.info("虚拟仓订单创建->获取消费数据：{}", ext);
         VwPushHandelDetailPushDTO pushDTOS = JSON.parseObject(ext.toString(), VwPushHandelDetailPushDTO.class);
         //获取当前任务状态-不是成功状态再进行处理
         DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(pushDTOS.getDmpSyncTaskId());
-        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(dmpPushTaskEntity.getStatus())) {
+        if (Objects.isNull(dmpPushTaskEntity) || !SyncStatusEnum.SUCCESS_SYNC.getCode().equals(dmpPushTaskEntity.getStatus())) {
             wangDianVwPushHandleDetailService.executeConsumer(pushDTOS);
         }
         return ApiResult.success();

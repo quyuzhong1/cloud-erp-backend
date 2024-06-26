@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 
@@ -229,8 +231,13 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                         .stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).distinct().collect(Collectors.toList());
                 virtualWarehouseAllocationDetailService.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>()
                         .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus, VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode()).in(VirtualWarehouseAllocationDetailEntity::getId, allocationDetailList));
-                //发送mq
-                dmpMqFeign.sendTask(dmpPushTaskEntityList);
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        //发送mq
+                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+                    }
+                });
             }
 //                });
 //            }

@@ -160,7 +160,8 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      */
     @Override
     public List<VirtualWarehouseChannelEntity> getByVirtualWarehouseId(String virtualWarehouseId) {
-        return baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>().eq(VirtualWarehouseChannelEntity::getVirtualWarehouseId, virtualWarehouseId));
+        return baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>()
+                .eq(VirtualWarehouseChannelEntity::getVirtualWarehouseId, virtualWarehouseId).orderByAsc(VirtualWarehouseChannelEntity::getId));
     }
     /**
      * 获取所有绑定的平台（聚合）
