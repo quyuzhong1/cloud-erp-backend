@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -58,13 +59,13 @@ public class SecondarySortingController extends BaseController {
 
     /**
      * 篮子明细
-     * @param code 波次编号
+     * @param waveId 波次id
      * @param basketNo 篮号
      * @see SecondarySortingDTO.BasketDetail
      */
     @GetMapping("/basketDetail")
-    public ApiResult<List<SecondarySortingDTO.BasketDetail>> basketDetail(@RequestParam("code") String code, @RequestParam("basketNo") String basketNo) {
-        List<SecondarySortingDTO.BasketDetail> details = secondarySortingService.basketDetail(code, basketNo);
+    public ApiResult<List<SecondarySortingDTO.BasketDetail>> basketDetail(@RequestParam("waveId") String waveId, @RequestParam("basketNo") String basketNo) {
+        List<SecondarySortingDTO.BasketDetail> details = secondarySortingService.basketDetail(waveId, basketNo);
         return success(details);
     }
 
@@ -74,8 +75,8 @@ public class SecondarySortingController extends BaseController {
      * @see SecondarySortingDTO.BasketDetail
      */
     @GetMapping("/printDistribution")
-    public void printDistribution(@RequestParam("code") String code) {
-        secondarySortingService.printDistribution(code);
+    public void printDistribution(@RequestParam("code") String code, HttpServletResponse response) {
+        secondarySortingService.printDistribution(code, response);
     }
 
 }

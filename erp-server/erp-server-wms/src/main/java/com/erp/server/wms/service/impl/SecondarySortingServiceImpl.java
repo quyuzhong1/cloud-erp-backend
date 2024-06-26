@@ -1,12 +1,9 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.dto.renovation.PickingWaveDTO;
@@ -20,8 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,6 +44,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     public SecondarySortingDTO.ScanCodeView scanCode(String code) {
         PickingWaveEntity pickingWave = pickingWaveService.getByCodeOrCarCode(code);
         SecondarySortingDTO.ScanCodeView view = new SecondarySortingDTO.ScanCodeView();
+        view.setWaveId(pickingWave.getId());
         view.setCode(pickingWave.getCode());
         List<PickingWaveDetailEntity> details = pickingWaveDetailService.listByMainId(pickingWave.getId());
         List<String> deliveryIds = details.stream().map(PickingWaveDetailEntity::getDeliveryId).collect(Collectors.toList());
@@ -98,8 +96,8 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     }
 
     @Override
-    public List<SecondarySortingDTO.BasketDetail> basketDetail(String code, String basketNo) {
-        List<PickingWaveDTO.PickingWaveDetailDTO> waveDetailDTOS = pickingWaveService.listDetailByMainId(code,basketNo);
+    public List<SecondarySortingDTO.BasketDetail> basketDetail(String waveId, String basketNo) {
+        List<PickingWaveDTO.PickingWaveDetailDTO> waveDetailDTOS = pickingWaveService.listDetailByMainId(waveId,basketNo);
         Map<String, List<PickingWaveDTO.PickingWaveDetailDTO>> skuMap = waveDetailDTOS.stream().collect(Collectors.groupingBy(PickingWaveDTO.PickingWaveDetailDTO::getSkuId));
         List<SkuVO> vos = plmTaskFeign.listSkuPurchaseByIds(new ArrayList<>(skuMap.keySet()));
         return skuMap.values()
@@ -119,7 +117,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     }
 
     @Override
-    public void printDistribution(String code) {
+    public void printDistribution(String code, HttpServletResponse response) {
 
     }
 
