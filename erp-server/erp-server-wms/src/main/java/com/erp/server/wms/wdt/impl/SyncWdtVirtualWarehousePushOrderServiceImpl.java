@@ -40,15 +40,15 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
     @Resource
     private DmpMqFeign dmpMqFeign;
     @Resource
-    private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
+    private VirtualWarehousePushHandleRelationService virtualWarehousePushHandleRelationService;
     @Resource
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
     @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
-    private VirtualWarehouseAllocationHandleDetailService virtualWarehouseAllocationHandleDetailService;
+    private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
     @Resource
-    private VirtualWarehouseAllocationHandleService virtualWarehouseAllocationHandleService;
+    private VirtualWarehousePushHandleService virtualWarehousePushHandleService;
 
     @Override
     public List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
@@ -78,7 +78,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             request.setSourceId(handleDetail.getId());
             List<VwPushHandelDetailPushDTO.DetailList> detailList = new ArrayList<>();
             //获取明细
-            List<VirtualWarehousePushHandleRelationEntity> allocationHandleRelationEntities = virtualWarehouseAllocationHandleRelationService
+            List<VirtualWarehousePushHandleRelationEntity> allocationHandleRelationEntities = virtualWarehousePushHandleRelationService
                     .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
                             .eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handleDetail.getId()));
             //根据sku和调入虚拟仓进行聚合
@@ -106,13 +106,13 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                     });
                     //获取要货申请上次推送的id
                     //获取最后一次合单的主单
-                    VirtualWarehousePushHandleEntity pushHandleEntity = virtualWarehouseAllocationHandleService.list(new LambdaQueryWrapper<VirtualWarehousePushHandleEntity>()
+                    VirtualWarehousePushHandleEntity pushHandleEntity = virtualWarehousePushHandleService.list(new LambdaQueryWrapper<VirtualWarehousePushHandleEntity>()
                             .eq(VirtualWarehousePushHandleEntity::getSourceId, handleDetail.getSourceId())
                             .ne(VirtualWarehousePushHandleEntity::getId, handleDetail.getMainId()).orderByDesc(VirtualWarehousePushHandleEntity::getCreateTime)
                             .last("limit 1")).stream().findFirst().orElse(null);
 //                    List<String> newHandleDetailIds = handleDetailList.stream().map(VirtualWarehouseAllocationHandleDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
                     if (Objects.nonNull(pushHandleEntity)) {
-                        List<String> oldHandleDetailIds = virtualWarehouseAllocationHandleDetailService
+                        List<String> oldHandleDetailIds = virtualWarehousePushHandleDetailService
                                 .list(new LambdaQueryWrapper<VirtualWarehousePushHandleDetailEntity>().eq(VirtualWarehousePushHandleDetailEntity::getMainId, pushHandleEntity.getId()))
                                 .stream().map(VirtualWarehousePushHandleDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
 //                    oldHandleDetailIds.removeAll(newHandleDetailIds);

@@ -420,6 +420,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 asyncService.asyncShipOrder(soB2cEntity.getId(),
                         soB2cEntity.getCode(),
                         soB2cEntity.getDictPlatform(),
+                        soB2cEntity.convertSubmitPlatformUniqueKey(),
                         id,
                         businessDesc, false);
             } else {
@@ -486,6 +487,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             asyncService.asyncShipOrder(soB2cEntity.getId(),
                     soB2cEntity.getCode(),
                     soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
                     id,
                     businessDesc, true);
         } else {
@@ -1367,6 +1369,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 platformShipOrderDTO.getSoB2cId(),
                 platformShipOrderDTO.getDictPlatform(),
                 platformShipOrderDTO.getSoB2cId(),
+                platformShipOrderDTO.getSubmitPlatformUniqueKey(),
                 businessDesc, platformShipOrderDTO.isFalseDeliveryFlag());
         return true;
     }

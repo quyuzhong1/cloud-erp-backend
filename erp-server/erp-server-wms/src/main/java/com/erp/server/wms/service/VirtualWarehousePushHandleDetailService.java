@@ -3,7 +3,7 @@ import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleDetailDTO;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
 
 /**
@@ -14,7 +14,7 @@ import com.erp.model.wms.entity.VirtualWarehousePushHandleEntity;
  * @author hyj
  * @since 2024-06-07
  */
-public interface VirtualWarehouseAllocationHandleDetailService extends SuperService<VirtualWarehousePushHandleDetailEntity> {
+public interface VirtualWarehousePushHandleDetailService extends SuperService<VirtualWarehousePushHandleDetailEntity> {
 
     /**
     * 新增
@@ -23,7 +23,7 @@ public interface VirtualWarehouseAllocationHandleDetailService extends SuperServ
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(VirtualWarehouseAllocationHandleDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(VirtualWarehousePushHandleDetailDTO.AddDTO dto);
 
     /**
     * 修改
@@ -32,7 +32,7 @@ public interface VirtualWarehouseAllocationHandleDetailService extends SuperServ
     * @param dto
     * @return
     */
-    Boolean update(VirtualWarehouseAllocationHandleDetailDTO.UpdateDTO dto);
+    Boolean update(VirtualWarehousePushHandleDetailDTO.UpdateDTO dto);
 
 
     void handleDetail(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity);

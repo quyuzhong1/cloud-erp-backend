@@ -2,38 +2,37 @@ package com.erp.server.wms.controller.api;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.VirtualWarehouseAllocationHandleService;
+import com.erp.server.wms.service.VirtualWarehousePushHandleDetailService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationHandleDTO;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
 
 /**
- * 分货单拆单主表
+ * 分货单拆单明细表
  *
  * @author hyj
  * @since 2024-06-07
  */
 @Slf4j
 @RestController
-@LogSystemModule("分货单拆单主表")
-@RequestMapping("/virtualWarehouseAllocationHandle")
-public class VirtualWarehouseAllocationHandleController extends BaseController {
+@LogSystemModule("分货单拆单明细表")
+@RequestMapping("/virtualWarehouseAllocationHandleDetail")
+public class VirtualWarehousePushHandleDetailController extends BaseController {
 
     @Resource
-    private VirtualWarehouseAllocationHandleService virtualWarehouseAllocationHandleService;
+    private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
 
     /**
     * 新增
@@ -43,9 +42,9 @@ public class VirtualWarehouseAllocationHandleController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "分货单拆单主表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseAllocationHandleDTO.AddDTO dto) {
-        return success(virtualWarehouseAllocationHandleService.add(dto));
+    @LogAction(value = LogActionEnum.INSERT, desc = "分货单拆单明细表新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehousePushHandleDetailDTO.AddDTO dto) {
+        return success(virtualWarehousePushHandleDetailService.add(dto));
     }
 
     /**
@@ -56,14 +55,14 @@ public class VirtualWarehouseAllocationHandleController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "分货单拆单主表修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "分货单拆单明细表修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "wms:virtualWarehouseAllocationHandle:update",
-        serviceClass = VirtualWarehouseAllocationHandleService.class,
+        menuCode = "wms:virtualWarehouseAllocationHandleDetail:update",
+        serviceClass = VirtualWarehousePushHandleDetailService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated VirtualWarehouseAllocationHandleDTO.UpdateDTO dto) {
-        virtualWarehouseAllocationHandleService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated VirtualWarehousePushHandleDetailDTO.UpdateDTO dto) {
+        virtualWarehousePushHandleDetailService.update(dto);
         return success();
     }
 
