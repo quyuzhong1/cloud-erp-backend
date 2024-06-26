@@ -15,6 +15,10 @@ public class SecondarySortingDTO {
     public static class ScanCodeView {
 
         /**
+         * 波次id
+         */
+        private String waveId;
+        /**
          * 波次号
          */
         private String code;

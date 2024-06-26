@@ -67,15 +67,4 @@ public class PdaSecondarySortingController extends BaseController {
         List<SecondarySortingDTO.BasketDetail> details = secondarySortingService.basketDetail(code, basketNo);
         return success(details);
     }
-
-    /**
-     * 打印配货单
-     * @param code 波次编号
-     * @see SecondarySortingDTO.BasketDetail
-     */
-    @GetMapping("/printDistribution")
-    public void printDistribution(@RequestParam("code") String code) {
-        secondarySortingService.printDistribution(code);
-    }
-
 }
