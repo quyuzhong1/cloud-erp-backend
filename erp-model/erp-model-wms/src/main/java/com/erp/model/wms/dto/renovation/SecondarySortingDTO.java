@@ -21,7 +21,7 @@ public class SecondarySortingDTO {
         /**
          * 篮子数
          */
-        private String basketQty;
+        private Integer basketQty;
         /**
          * 篮子明细
          */
@@ -39,7 +39,7 @@ public class SecondarySortingDTO {
         /**
          * 拣货总数
          */
-        private String pickingTotalQty;
+        private Integer pickingQty;
         /**
          * 是否拦截
          */
@@ -69,11 +69,11 @@ public class SecondarySortingDTO {
         /**
          * 拣货数量
          */
-        private String pickingQty;
+        private Integer pickingQty;
         /**
          * 已分货数量
          */
-        private String allocatedQty;
+        private Integer allocatedQty;
     }
 
     @Getter
@@ -95,10 +95,10 @@ public class SecondarySortingDTO {
         /**
          * 拣货数量
          */
-        private String pickingQty;
+        private Integer pickingQty;
         /**
          * 已分货数量
          */
-        private String allocatedQty;
+        private Integer allocatedQty;
     }
 }

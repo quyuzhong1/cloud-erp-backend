@@ -794,6 +794,9 @@ public class SoB2cDeliveryDTO implements Serializable {
     @Setter
     public static class CancelShipmentView {
 
+        /**
+         * 发货单
+         */
         @Size(min = 1, message = "发货单不能为空")
         @Valid
         private List<CancelShipmentDTO> cancelShipments;

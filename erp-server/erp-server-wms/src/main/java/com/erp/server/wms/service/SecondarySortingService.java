@@ -13,10 +13,10 @@ public interface SecondarySortingService {
     SecondarySortingDTO.ScanCodeView scanCode(String code);
     /**
      * 扫描sku
-     * @param code 波次编号
+     * @param waveId 波次id
      * @see SecondarySortingDTO.ScanSkuView
      */
-    SecondarySortingDTO.ScanSkuView scanSku(String code, String skuCode);
+    SecondarySortingDTO.ScanSkuView scanSku(String waveId, String skuCode);
     /**
      * 篮子明细
      * @param code 波次编号
@@ -30,4 +30,10 @@ public interface SecondarySortingService {
      * @see SecondarySortingDTO.BasketDetail
      */
     void printDistribution(String code);
+    /**
+     * 重置
+     * @param waveId 波次id
+     * @see SecondarySortingDTO.BasketDetail
+     */
+    SecondarySortingDTO.ScanCodeView reset(String waveId);
 }

@@ -115,6 +115,16 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
      */
     @TableField("staging_location")
     private String stagingLocation;
+    /**
+     * 已拣货数量
+     */
+    @TableField("picked_qty")
+    private Integer pickedQty;
+    /**
+     * 已分货数量
+     */
+    @TableField("allocated_qty")
+    private Integer allocatedQty;
 
     public static final String SKU_ID = "sku_id";
 

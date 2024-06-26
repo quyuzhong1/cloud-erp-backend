@@ -1,4 +1,4 @@
-package com.erp.server.wms.controller.api;
+package com.erp.server.wms.controller.pda;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -13,11 +13,11 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 二次分货
+ * 二次分货 pda
  */
 @RestController
-@RequestMapping("/secondarySorting")
-public class SecondarySortingController extends BaseController {
+@RequestMapping("/pdaSecondarySorting")
+public class PdaSecondarySortingController extends BaseController {
 
     @Resource
     private SecondarySortingService secondarySortingService;
@@ -30,17 +30,6 @@ public class SecondarySortingController extends BaseController {
     @GetMapping("/scanCode")
     public ApiResult<SecondarySortingDTO.ScanCodeView> scanCode(@RequestParam("code") String code) {
         SecondarySortingDTO.ScanCodeView view = secondarySortingService.scanCode(code);
-        return success(view);
-    }
-
-    /**
-     * 重置
-     * @param waveId 波次id
-     * @see SecondarySortingDTO.ScanCodeView
-     */
-    @GetMapping("/reset")
-    public ApiResult<SecondarySortingDTO.ScanCodeView> reset(@RequestParam("waveId") String waveId) {
-        SecondarySortingDTO.ScanCodeView view = secondarySortingService.reset(waveId);
         return success(view);
     }
 

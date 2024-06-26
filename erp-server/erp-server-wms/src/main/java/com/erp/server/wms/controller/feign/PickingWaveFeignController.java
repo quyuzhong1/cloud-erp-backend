@@ -2,11 +2,11 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.renovation.PickingWaveDTO;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.erp.model.wms.dto.PickingWaveDTO;
 
 /**
  * 拣货波次Feign
