@@ -142,6 +142,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         WarehouseReceiveDTO.SourceParamDTO sourceParamDTO = new WarehouseReceiveDTO.SourceParamDTO();
         sourceParamDTO.setSourceIds(dataList.stream().map(DeliveryOrderDTO.ListDTO::getId).distinct().collect(Collectors.toList()));
         sourceParamDTO.setSourceType(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode());
+        List<WarehouseReceiveEntity> warehouseReceiveEntityList = wmsTaskFeign.listReceiveBySourceTypeAndIds(sourceParamDTO);
         dataList.forEach(v->{
             Integer receiveQty = 0;
             Integer giftReceiveQty = 0;
@@ -162,6 +163,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             if(Objects.nonNull(qcReceiveResultDTO)){
                 v.setQcGoodQty(qcReceiveResultDTO.getQcGoodQty());
             }
+            WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveEntityList.stream().filter(t->t.getSourceId().equals(v.getId())).findFirst().orElse(new WarehouseReceiveEntity());
+            v.setReceiveUserName(warehouseReceiveEntity.getReceiveUserName());
         });
     }
 
