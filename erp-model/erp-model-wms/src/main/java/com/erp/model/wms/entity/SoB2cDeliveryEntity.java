@@ -162,6 +162,12 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     @TableField("logistic_type")
     private String logisticType;
 
+    /**
+     * 异常原因
+     */
+    @TableField("abnormal_cause")
+    private String abnormalCause;
+
     public static final String CODE = "code";
 
     public static final String STATUS = "status";

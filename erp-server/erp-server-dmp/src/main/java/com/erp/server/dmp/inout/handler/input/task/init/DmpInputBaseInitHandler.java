@@ -78,7 +78,7 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				if(StringUtils.isNotBlank(extendJson)) {
 					DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
 					JSONObject parseObject = JSON.parseObject(extendJson);
-					if("order".equals(dmpCfgInputEntity.getCode())) {
+					if("order".equals(dmpCfgInputEntity.getCode()) || "outStock".equals(dmpCfgInputEntity.getCode())) {
 						dmpInputApiInitRequest.setFilterStr(parseObject.getString("filterStr")
 								.replace("{startTime}", sdf.format(startTime))
 								.replace("{endTime}", sdf.format(endTime)));
