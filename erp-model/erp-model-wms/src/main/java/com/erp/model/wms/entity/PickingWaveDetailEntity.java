@@ -57,23 +57,6 @@ public class PickingWaveDetailEntity extends BaseEntity<PickingWaveDetailEntity>
     private String logisticsChannelName;
 
     /**
-     * sku id
-     */
-    @TableField("sku_id")
-    private String skuId;
-
-    /**
-     * sku no
-     */
-    @TableField("sku_no")
-    private String skuNo;
-
-    /**
-     * 销售数量
-     */
-    @TableField("sales_qty")
-    private String salesQty;
-    /**
      * 异常原因
      */
     @TableField("abnormal_cause")
