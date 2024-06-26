@@ -40,6 +40,12 @@ public class DmpCfgInputConvertMappingEntity extends BaseEntity<DmpCfgInputConve
     */
     @TableField("convert_key")
     private String convertKey;
+    
+    /**
+     * 是否禁用
+     */
+     @TableField("disabled")
+     private Boolean disabled;
 
     public static final String ORIGINAL_KEY = "original_key";
 
