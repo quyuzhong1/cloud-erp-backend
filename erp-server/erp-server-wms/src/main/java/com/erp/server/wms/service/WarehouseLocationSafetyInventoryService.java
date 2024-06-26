@@ -37,17 +37,30 @@ public interface WarehouseLocationSafetyInventoryService extends SuperService<Wa
 
     /**
      * 导入Excel
+     *
      * @param file 文件
+     * @return
      * @date: 2024-06-21
      * @author: tanmujin
      */
-    void importExcel(MultipartFile file, HttpServletResponse response);
+    boolean importExcel(MultipartFile file, HttpServletResponse response);
 
     /**
      * 导出Excel
+     *
      * @param dto 导出参数
+     * @return
      * @date: 2024-06-21
      * @author: tanmujin
      */
-    void exportExcel(WarehouseLocationSafetyInventoryDto.exportParamDto dto, HttpServletResponse response);
+    boolean exportExcel(WarehouseLocationSafetyInventoryDto.exportParamDto dto, HttpServletResponse response);
+
+    /**
+     * 下载导入模板
+     * @param response
+     * @return
+     * @date: 2024-06-26
+     * @author: tanmujin
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

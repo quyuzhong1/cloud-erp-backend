@@ -22,6 +22,40 @@
         <result column="rule_id" property="ruleId" />
         <result column="index" property="index" />
         <result column="name" property="name" />
+        <result column="value_type" property="valueType" />
     </resultMap>
+
+    <!-- 根据规则ids查询 -->
+    <select id="listByRuleIds" resultMap="BaseResultMap">
+        select
+            crc.id,
+            crc.create_user_id,
+            crc.create_user_name,
+            crc.create_time,
+            crc.update_user_id,
+            crc.update_user_name,
+            crc.update_time,
+            crc.version,
+            crc.is_deleted,
+            crc.left_bracket,
+            crc.field,
+            crc.compare,
+            crc.value,
+            crc.right_bracket,
+            crc.logic,
+            crc.rule_id,
+            crc.index,
+            crc.name,
+            cc.value_type
+        from cfg_rule_condition crc
+        left join cfg_condition cc on crc.field = cc.condition_field and cc.is_deleted = false
+        <where>
+            crc.is_deleted = false and crc.rule_id in
+            <foreach collection="cfgRuleIds" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
+        </where>
+        order by index
+    </select>
 
 </mapper>

@@ -1,13 +1,12 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -322,6 +321,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String code;
         /**
+         * 波次号
+         */
+        private String wavesCode;
+        /**
          * 来源id
          */
         private String sourceId;
@@ -498,7 +501,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 中转状态 not 不需要  wait 待中转   already 已经中转
          */
         private String transferStatus;
-
+        /**
+         * 异常原因
+         */
+        private String abnormalCause;
 
     }
     /**
@@ -774,5 +780,90 @@ public class SoB2cDeliveryDTO implements Serializable {
         private String logisticsChannelId;
 
 
+    }
+
+    @Getter
+    @Setter
+    public static class GenerationWavesDTO {
+
+        /**
+         * 拣货方式
+         */
+        @NotBlank(message = "拣货方式不能为空")
+        private String sortingMethod;
+        /**
+         * 拣货车类型
+         */
+        @NotBlank(message = "拣货车类型不能为空")
+        private String pickingCartTypeId;
+        /**
+         * 发货单号
+         */
+        @Size(min = 1, message = "发货单不能为空")
+        private List<String> ids;
+
+    }
+
+    @Getter
+    @Setter
+    public static class CancelShipmentView {
+
+        @Size(min = 1, message = "发货单不能为空")
+        @Valid
+        private List<CancelShipmentDTO> cancelShipments;
+    }
+
+    @Getter
+    @Setter
+    public static class CancelShipmentDTO {
+        /**
+         * 发货单id
+         */
+        private String id;
+        /**
+         * 发货单明细id
+         */
+        private String detailId;
+        /**
+         * 发货单号
+         */
+        private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 仓库id
+         */
+        @Dict(queryFieldName = "id", tableName = "warehouse")
+        private String warehouseId;
+        /**
+         * 拣货仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 拣货仓位名称
+         */
+        private String warehouseLocationName;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty;
+        /**
+         * 返还仓位
+         */
+        private String returnWarehouseLocation;
+        /**
+         * 返还仓位名称
+         */
+        private String returnWarehouseLocationName;
+        /**
+         * 返还数量
+         */
+        private Integer returnQty;
     }
 }

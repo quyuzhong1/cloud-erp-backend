@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -170,12 +171,12 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @param ids
      */
     void deleteByIds(List<String> ids);
-
-    List<DmpPushTaskEntity> listByCodeParam(DmpSyncTaskDTO.ListCodeDTO listCodeDTO);
     /**
      * 根据sourceId重新同步
      * @param sourceIds
      * @return
      */
     Boolean batchSyncBySourceId(List<String> sourceIds);
+
+    List<DmpPushTaskEntity> listByCodeParam(DmpSyncTaskDTO.ListCodeDTO listCodeDTO);
 }

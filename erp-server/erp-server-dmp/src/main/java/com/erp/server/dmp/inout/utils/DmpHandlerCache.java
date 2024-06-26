@@ -27,7 +27,6 @@ import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 
 @Component
@@ -85,13 +84,12 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	@Override
 	public void run(String... args) throws Exception {
-		DateTime updateTime = DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1));
 		
 		dmpBasicSystemCache = dmpBasicSystemService.lambdaQuery()
-				.eq(DmpBasicSystemEntity::getIsDeleted, false).list();
+				.eq(DmpBasicSystemEntity::getDisabled, false).list();
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			List<DmpBasicSystemEntity> dmpBasicSystemEntityFreshList = dmpBasicSystemService.lambdaQuery()
-					.gt(DmpBasicSystemEntity::getUpdateTime, updateTime)
+					.gt(DmpBasicSystemEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
 					.list();
 			if(CollUtil.isNotEmpty(dmpBasicSystemEntityFreshList)) {
 				List<String> newIds = dmpBasicSystemEntityFreshList.stream().map(DmpBasicSystemEntity::getId).collect(Collectors.toList());
@@ -103,10 +101,10 @@ public class DmpHandlerCache implements CommandLineRunner{
 		}, 0, freshCacheTime, TimeUnit.SECONDS);
 		
 		dmpCfgInputCache = dmpCfgInputService.lambdaQuery()
-				.eq(DmpCfgInputEntity::getIsDeleted, false).list();
+				.eq(DmpCfgInputEntity::getDisabled, false).list();
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			List<DmpCfgInputEntity> dmpCfgInputEntityFreshList = dmpCfgInputService.lambdaQuery()
-					.gt(DmpCfgInputEntity::getUpdateTime, updateTime)
+					.gt(DmpCfgInputEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
 					.list();
 			if(CollUtil.isNotEmpty(dmpCfgInputEntityFreshList)) {
 				List<String> newIds = dmpCfgInputEntityFreshList.stream().map(DmpCfgInputEntity::getId).collect(Collectors.toList());
@@ -118,10 +116,10 @@ public class DmpHandlerCache implements CommandLineRunner{
 		}, 1, freshCacheTime, TimeUnit.SECONDS);
 		
 		dmpCfgInputConvertCache = dmpCfgInputConvertService.lambdaQuery()
-				.eq(DmpCfgInputConvertEntity::getIsDeleted, false).list();
+				.eq(DmpCfgInputConvertEntity::getDisabled, false).list();
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityFreshList = dmpCfgInputConvertService.lambdaQuery()
-					.gt(DmpCfgInputConvertEntity::getUpdateTime, updateTime)
+					.gt(DmpCfgInputConvertEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
 					.list();
 			if(CollUtil.isNotEmpty(dmpCfgInputConvertEntityFreshList)) {
 				List<String> newIds = dmpCfgInputConvertEntityFreshList.stream().map(DmpCfgInputConvertEntity::getId).collect(Collectors.toList());
@@ -134,10 +132,10 @@ public class DmpHandlerCache implements CommandLineRunner{
 		
 		
 		dmpCfgInputDetailCache = dmpCfgInputDetailService.lambdaQuery()
-				.eq(DmpCfgInputDetailEntity::getIsDeleted, false).list();
+				.eq(DmpCfgInputDetailEntity::getDisabled, false).list();
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityFreshList = dmpCfgInputDetailService.lambdaQuery()
-					.gt(DmpCfgInputDetailEntity::getUpdateTime, updateTime)
+					.gt(DmpCfgInputDetailEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
 					.list();
 			if(CollUtil.isNotEmpty(dmpCfgInputDetailEntityFreshList)) {
 				List<String> newIds = dmpCfgInputDetailEntityFreshList.stream().map(DmpCfgInputDetailEntity::getId).collect(Collectors.toList());
@@ -149,17 +147,17 @@ public class DmpHandlerCache implements CommandLineRunner{
 		}, 3, freshCacheTime, TimeUnit.SECONDS);
 		
 		dmpCfgInputConvertMappingCache = dmpCfgInputConvertMappingService.lambdaQuery()
-				.eq(DmpCfgInputConvertMappingEntity::getIsDeleted, false)
+				.eq(DmpCfgInputConvertMappingEntity::getDisabled, false)
 				.list();
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityFreshList = dmpCfgInputConvertMappingService.lambdaQuery()
-					.gt(DmpCfgInputConvertMappingEntity::getUpdateTime, updateTime)
+					.gt(DmpCfgInputConvertMappingEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
 					.list();
 			if(CollUtil.isNotEmpty(dmpCfgInputConvertMappingEntityFreshList)) {
 				List<String> newIds = dmpCfgInputConvertMappingEntityFreshList.stream().map(DmpCfgInputConvertMappingEntity::getId).collect(Collectors.toList());
 				dmpCfgInputConvertMappingCache.removeIf(d -> newIds.contains(d.getId()));
 				dmpCfgInputConvertMappingCache.addAll(dmpCfgInputConvertMappingEntityFreshList.stream()
-						.filter(d -> Boolean.FALSE.equals(d.getIsDeleted())).collect(Collectors.toList()));
+						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
 			}
 			
 		}, 4, freshCacheTime, TimeUnit.SECONDS);

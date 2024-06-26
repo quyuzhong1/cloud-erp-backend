@@ -36,6 +36,11 @@ public class PickingWaveDetailEntity extends BaseEntity<PickingWaveDetailEntity>
     /**
      * 发货单号
      */
+    @TableField("delivery_id")
+    private String deliveryId;
+    /**
+     * 发货单号
+     */
     @TableField("delivery_code")
     private String deliveryCode;
 
@@ -52,20 +57,8 @@ public class PickingWaveDetailEntity extends BaseEntity<PickingWaveDetailEntity>
     private String logisticsChannelName;
 
     /**
-     * sku id
+     * 异常原因
      */
-    @TableField("sku_id")
-    private String skuId;
-
-    /**
-     * sku no
-     */
-    @TableField("sku_no")
-    private String skuNo;
-
-    /**
-     * 销售数量
-     */
-    @TableField("sales_qty")
-    private String salesQty;
+    @TableField("abnormal_cause")
+    private String abnormalCause;
 }
