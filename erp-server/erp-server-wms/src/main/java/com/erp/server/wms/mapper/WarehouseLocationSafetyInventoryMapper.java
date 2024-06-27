@@ -3,7 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto;
+import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO;
 import com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Mapper
 public interface WarehouseLocationSafetyInventoryMapper extends BaseMapper<WarehouseLocationSafetyInventoryEntity> {
-    IPage<WarehouseLocationSafetyInventoryDto.ViewDto> paging(Page<Object> page, @Param("param") WarehouseLocationSafetyInventoryDto.SearchParamDto searchParamDto);
+    IPage<WarehouseLocationSafetyInventoryDTO.ViewDTO> paging(Page<Object> page, @Param("param") WarehouseLocationSafetyInventoryDTO.SearchParamDTO searchParamDto);
 
-    List<WarehouseLocationSafetyInventoryEntity> listByParam(@Param("param") WarehouseLocationSafetyInventoryDto.SearchParamDto searchParam);
+    List<WarehouseLocationSafetyInventoryEntity> listByParam(@Param("param") WarehouseLocationSafetyInventoryDTO.SearchParamDTO searchParam);
 }
