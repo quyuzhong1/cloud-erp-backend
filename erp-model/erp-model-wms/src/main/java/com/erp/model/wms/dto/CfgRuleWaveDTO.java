@@ -4,6 +4,7 @@ import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -55,53 +56,53 @@ public class CfgRuleWaveDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
-         * 主键id
+         * 主键id【可排序】
          */
         private String id;
         /**
-         * 优先级
+         * 优先级【可排序】
          */
         private String priority;
         /**
-         * 名称
+         * 名称【可排序】
          */
         private String name;
         /**
-         * 波次类型
+         * 波次类型【可排序】
          */
         @Dict(queryTypeField = "waveType")
         private String waveType;
         /**
-         * 拣货车类型
+         * 拣货车类型【可排序】
          */
         @Dict(queryFieldName = "id", tableName = "picking_cart_type")
         private String pickingCartTypeId;
         /**
-         * 最小单数
+         * 最小单数【可排序】
          */
         private String minOrderQty;
         /**
-         * 最大单数
+         * 最大单数【可排序】
          */
         private String maxOrderQty;
         /**
-         * 最少商品数量
+         * 最少商品数量【可排序】
          */
         private String minQty;
         /**
-         * 最大商品数量
+         * 最大商品数量【可排序】
          */
         private String maxQty;
         /**
-         * 状态
+         * 状态【可排序】
          */
         private Boolean disabled;
         /**
-         * 更新时间
+         * 更新时间【可排序】
          */
         private String updateTime;
         /**
-         * 更新人
+         * 更新人【可排序】
          */
         private String updateUserName;
 
@@ -173,7 +174,7 @@ public class CfgRuleWaveDTO implements Serializable {
         private List<LocalTime> executionTimeList;
 
         /**
-        * 执行类型（自动执行，手动执行）
+        * 执行类型（auto自动执行，manual手动执行）
         */
         private String executionType;
 
@@ -301,6 +302,7 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
          * 自动执行时间
          */
+        @JsonFormat(pattern = "HH:mm")
         private List<LocalTime> executionTimeList;
 
         /**

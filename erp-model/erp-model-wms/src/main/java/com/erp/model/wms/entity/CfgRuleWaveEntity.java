@@ -1,15 +1,15 @@
 package com.erp.model.wms.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.business.config.JsonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
-import java.util.Map;
 
 
 /**
@@ -74,8 +74,8 @@ public class CfgRuleWaveEntity extends BaseEntity<CfgRuleWaveEntity> {
     /**
     * 执行时间JSON
     */
-    @TableField(value = "execution_time_json", typeHandler = JsonTypeHandler.class)
-    private Map<String, Object> executionTimeJson;
+    @TableField(value = "execution_time_json",jdbcType = JdbcType.OTHER)
+    private String executionTimeJson;
     /**
     * 执行类型（自动执行，手动执行）
     */
