@@ -3,12 +3,15 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 波次拣货数据库实体
@@ -49,5 +52,5 @@ public class PickingWaveEntity extends BaseEntity<PickingWaveEntity> implements 
     private String pickingUser;
 
     @TableField("picking_time")
-    private String pickingTime;
+    private LocalDateTime pickingTime;
 }
