@@ -4,13 +4,33 @@
     <select id="listDeliveryIdByStatus" resultType="java.lang.String">
         select delivery_id
         from picking_wave as pw
-                 left join picking_wave_detail as pwd on pw.id = pwd.main_id and is_delete = false
-        where pw.status = #{status}
+                 left join picking_wave_detail as pwd on pw.id = pwd.main_id and pwd.is_delete = false
+        where pw.status = #{status} and pw.is_delete = false
     </select>
     <select id="listDetailByMainId"
             resultType="com.erp.model.wms.dto.renovation.PickingWaveDTO$PickingWaveDetailDTO">
+        SELECT
+            pwd.main_id,
+            pwd.basket_no,
+            pwd.delivery_id,
+            pd.id as pickDetailId,
+            pd.sku_id,
+            pd.sku_no,
+            pd.picked_qty,
+            pd.allocated_qty
+        FROM
+            picking_wave_detail AS pwd
+                LEFT JOIN so_b2c_delivery_detail AS sbdd ON sbdd.is_deleted = FALSE
+                AND sbdd.main_id = pwd.delivery_id
+                LEFT JOIN picking_detail AS pd ON pd.is_deleted = FALSE
+                AND pd.source_detail_id = sbdd.ID
 
-
-
+    </select>
+    <select id="countDelivery" resultType="java.lang.Integer">
+        select count(pwd.delivery_id)
+        FROM picking_wave as pw
+                 LEFT JOIN picking_wave_detail as pwd on pwd.main_id = pw.id and pwd.is_deleted = false
+        WHERE pw.is_deleted = false
+          and pw.status = 'await_pick'
     </select>
 </mapper>

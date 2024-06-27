@@ -520,4 +520,57 @@ public class WarehouseLocationDTO implements Serializable {
          */
         private Integer count;
     }
+
+    @Data
+    public static class CoreDTO {
+        /**
+         * 类型，location-仓位;area-分区
+         */
+        private String type;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 父id
+         */
+        private String parentId;
+
+        /**
+         * 禁用状态，true表示禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 库区类型 warehouseAreaType
+         */
+        private String areaType;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 占用状态
+         */
+        private Boolean occupyStatus;
+    }
 }

@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -82,6 +83,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Resource
     private SpElServer spElServer;
+
+    @Resource
+    private PickingWaveService pickingWaveService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -209,11 +214,11 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             return Boolean.TRUE;
         }
         //发货明细数据
-        List<String> deliveryIdList = soB2cDeliveryList.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
+        List<String> deliveryIdList = soB2cDeliveryList.stream().map(SoB2cDeliveryEntity::getId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(deliveryIdList);
 
         //渠道数据
-        List<String> logisticsChannelIdList = soB2cDeliveryList.stream().map(SoB2cDeliveryEntity::getLogisticsChannelId).collect(Collectors.toList());
+        List<String> logisticsChannelIdList = soB2cDeliveryList.stream().map(SoB2cDeliveryEntity::getLogisticsChannelId).distinct().collect(Collectors.toList());
         List<LogisticsChannelEntity> list = FeignQuery.create(LogisticsChannelEntity.class).in(LogisticsChannelEntity::getId, logisticsChannelIdList).list();
 
         //销售订单
@@ -252,6 +257,23 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         return Boolean.TRUE;
     }
 
+    @Override
+    public void autoExecuteRule(String time) {
+        if (StrUtil.isBlank(time)) {
+            //当前时间
+            // time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+             time = "02:00";
+        }
+        List<CfgRuleWaveEntity> cfgRuleWaveList = baseMapper.listRuleWaveByTime(time);
+        if (CollectionUtil.isEmpty(cfgRuleWaveList)) {
+            log.info("时间【{}】未找到符合条件的波次规则");
+            return;
+        }
+        for (CfgRuleWaveEntity waveEntity : cfgRuleWaveList) {
+            executeRule(waveEntity.getId());
+        }
+    }
+
     /**
      * 生成拣货波次列表数据
      * @author will
@@ -285,18 +307,21 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         addDTO.setPickCartTypeId(entity.getPickingCartTypeId());
 
         List<String> deliveryIdList = new ArrayList<>();
+        //需要新增的波次数据
         List<PickingWaveDTO.AddDTO> resultList = new ArrayList<>();
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
 
-            //商品总数超出最大数量则不加入波次,发货单数量超过最大单数也无需加入波次
+            //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
             if ((ObjectUtil.isNotEmpty(entity.getMaxQty()) && MathUtil.compareTo(totalQty,entity.getMaxQty()) > MathUtil.ZERO)
                     || (MathUtil.compareTo(orderQty,entity.getMaxOrderQty()) > MathUtil.ZERO)) {
                 addDTO.setDeliveryIdList(deliveryIdList);
                 resultList.add(addDTO);
-                continue;
+
+                //清空合计数据
+                totalQty = MathUtil.ZERO;
+                orderQty = MathUtil.ZERO;
+                deliveryIdList = new ArrayList<>();
             }
-
-
 
             //发货明细商品数量合计
             Integer detailTotalQty = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -305,8 +330,13 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //发货单的数量
             orderQty++;
 
-
             deliveryIdList.add(deliveryEntity.getId());
+        }
+        if (CollectionUtil.isEmpty(resultList)) {
+            return;
+        }
+        for (PickingWaveDTO.AddDTO waveAddDTO : resultList) {
+            pickingWaveService.add(waveAddDTO);
         }
     }
 
@@ -339,7 +369,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if (ObjectUtil.isEmpty(soB2cReceiverEntity)) {
             throw new ServiceException(StrUtil.format("发货单【{}】未找到上游销售订单买家信息",soB2cDeliveryEntity.getCode()));
         }
-
+        List<Map<String, Object>> detailList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : deliveryDetailList) {
             Map<String, Object> detailMap = new HashMap<>();
             //仓库
@@ -370,8 +400,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             detailMap.put("pickingType",soB2cDeliveryEntity.getPickingType());
             //发货单-创建时间
             detailMap.put("deliveryCreateTime",soB2cDeliveryEntity.getCreateTime());
-            map.put("detailList",detailMap);
+            detailList.add(detailMap);
         }
+        map.put("detailList",detailList);
         return map;
     }
 
@@ -405,10 +436,14 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         //自动执行
         if (StrUtil.equals(cfgRuleWaveEntity.getExecutionType(), ExecutionTypeEnum.AUTO.getCode())) {
-            if (ObjectUtil.isEmpty(executionTimeList)) {
+            if (CollectionUtil.isEmpty(executionTimeList)) {
                 throw new ServiceException("自动执行时执行时间不能为空");
             }
-            cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.parseObj(executionTimeList));
+            List<String> timeList = executionTimeList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj))
+                    .map(obj -> obj.format(DateTimeFormatter.ofPattern("HH:mm"))).collect(Collectors.toList());
+            cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.toJsonStr(timeList));
+        } else {
+            cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.toJsonStr(new JSONArray()));
         }
     }
 

@@ -74,6 +74,7 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.dto.renovation.PickingWaveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -743,6 +744,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = dto.getDetailList();
         List<String> logisticsChannelIdList = detailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
 
+
         List<String> base64List = new ArrayList<>();
 
         //查询打印类型
@@ -1384,9 +1386,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
-
-
-        return new BaseResultDTO.AddDTO("", "");
+        PickingWaveDTO.AddDTO addDTO = new PickingWaveDTO.AddDTO();
+        addDTO.setPickCartTypeId(dto.getPickingCartTypeId());
+        addDTO.setDeliveryIdList(dto.getIds());
+        addDTO.setPickingType(dto.getPickingType());
+        addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
+        return pickingWaveService.add(addDTO);
     }
 
     @Override
@@ -1477,7 +1482,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     .filter(e -> e.getWarehouseId().equals(cancelShipment.getWarehouseId()))
                     .filter(e -> e.getCode().equals(cancelShipment.getWarehouseLocation()))
                     .findFirst().orElse(new WarehouseLocationEntity());
-            cancelShipment.setReturnWarehouseLocationName(location.getName());
+            cancelShipment.setWarehouseLocationName(location.getName());
             cancelShipment.setReturnWarehouseLocation(cancelShipment.getWarehouseLocation());
             cancelShipment.setReturnWarehouseLocationName(cancelShipment.getWarehouseLocationName());
             cancelShipment.setReturnQty(cancelShipment.getPickingQty());

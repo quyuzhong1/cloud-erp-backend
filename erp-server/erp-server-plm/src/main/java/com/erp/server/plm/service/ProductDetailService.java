@@ -791,4 +791,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     void initProductToWangDian(List<String> ids);
 
+
+    ProductDetailEntity getBySkuNoOrEan(String skuCode);
 }

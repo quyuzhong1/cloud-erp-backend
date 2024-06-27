@@ -5181,4 +5181,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<SkuVO> skuList = baseMapper.listSkuPurchaseByIds(skuIds);
         return skuList;
     }
+
+    @Override
+    public ProductDetailEntity getBySkuNoOrEan(String skuCode) {
+
+        ProductDetailEntity entity = getOne(Wrappers.<ProductDetailEntity>lambdaQuery().eq(ProductDetailEntity::getSkuNo, skuCode));
+        if (ObjectUtil.isEmpty(entity)) {
+            ProductPurchaseEntity purchaseEntity = productPurchaseService.getOne(Wrappers.<ProductPurchaseEntity>lambdaQuery()
+                    .eq(ProductPurchaseEntity::getEan, skuCode)
+                    .last("LIMIT 1")
+            );
+            if (ObjectUtil.isNotEmpty(purchaseEntity)) {
+                entity = getById(purchaseEntity.getSkuId());
+            }
+        }
+        return entity;
+    }
 }

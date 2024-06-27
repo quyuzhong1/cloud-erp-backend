@@ -301,6 +301,16 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationEntity> findByWarehouseIdsAndCode(List<String> warehouseIds, String warehouseLocation);
 
     /**
+     * 查询库区
+     * @param warehouseId 仓库ID
+     * @param areaTypeCode 库区类型
+     * @return 库区列表
+     * @date: 2024-06-25
+     * @author: tanmujin
+     */
+    List<WarehouseLocationDTO.CoreDTO> listArea(String warehouseId, String areaTypeCode);
+
+    /**
      * 查询所有库区
      * @date: 2024-06-26
      * @author: tanmujin

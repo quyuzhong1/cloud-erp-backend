@@ -10,6 +10,7 @@ import com.erp.server.wms.mapper.PickingWaveMapper;
 import com.erp.server.wms.service.PickingWaveService;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -22,8 +23,7 @@ public class PickingWaveServiceImpl extends SuperServiceImpl<PickingWaveMapper, 
 
     @Override
     public int countDelivery(PermissionsDTO param) {
-        // todo 需要状态字段值
-        return 0;
+        return baseMapper.countDelivery(param);
     }
 
     @Override
@@ -49,5 +49,15 @@ public class PickingWaveServiceImpl extends SuperServiceImpl<PickingWaveMapper, 
     @Override
     public List<PickingWaveDTO.PickingWaveDetailDTO> listDetailByMainId(String waveId, String basketNo, String skuId) {
         return baseMapper.listDetailByMainId(waveId, basketNo, skuId);
+    }
+
+    @Override
+    public PickingWaveEntity getByCode(String code) {
+        return getOne(Wrappers.<PickingWaveEntity>lambdaQuery().eq(PickingWaveEntity::getCode, code).last("limit 1"));
+    }
+
+    @Override
+    public List<PickingWaveEntity> listByCarCode(String carCode) {
+        return list(Wrappers.<PickingWaveEntity>lambdaQuery().eq(PickingWaveEntity::getPickingCartCode, carCode));
     }
 }

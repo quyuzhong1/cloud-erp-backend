@@ -1,0 +1,73 @@
+package com.erp.server.wms.service;
+
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
+import com.erp.model.wms.entity.WarehouseLocationReplenishEntity;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
+/**
+ * 仓位库存预警服务接口
+ * @date 2024-06-24
+ * @author tanmujin
+ */
+public interface WarehouseLocationReplenishService extends SuperService<WarehouseLocationReplenishEntity> {
+    /**
+     * 仓位库存预警分页查询
+     * @date 2024-06-24
+     * @author tanmujin
+     */
+    PagingVO<WarehouseLocationReplenishDTO.ViewDTO> paging(PagingDTO<WarehouseLocationReplenishDTO.SearchParamDTO> pagingDTO);
+
+    /**
+     * 标记仓位库存预警无需处理
+     * @param id
+     * @return 更新成功返回null，否则返回BaseResultDTO.UpdateDTO
+     * @date: 2024-06-24
+     * @author: tanmujin
+     */
+    BatchResultDTO cancelHandle(String id);
+
+    /**
+     * 导出仓位库存预警Excel
+     *
+     * @param dto 导出参数
+     * @return void
+     * @date: 2024-06-24
+     * @author: tanmujin
+     */
+    Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 查询库区下SKU的数量
+     * @param warehouseId 仓库ID
+     * @param warehouseAreaCode 库区编码
+     * @param skuNo sku编码
+     * @return
+     * @date: 2024-06-25
+     * @author: tanmujin
+     */
+    List<WarehouseLocationReplenishDTO.LocationQtyDTO> listLocationQty(String warehouseId, String warehouseAreaCode, String skuNo);
+
+    /**
+     * 保存补货信息
+     * @param handleDto
+     * @return
+     * @date: 2024-06-25
+     * @author: tanmujin
+     */
+    BatchResultDTO handle(WarehouseLocationReplenishDTO.HandleDTO handleDto);
+
+    /**
+     * 新增补货单
+     * @param addDTO
+     * @return
+     * @date: 2024-06-26
+     * @author: tanmujin
+     */
+    BatchResultDTO add(WarehouseLocationReplenishDTO.AddDTO addDTO);
+}

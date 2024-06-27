@@ -855,6 +855,8 @@ public enum ApiError implements Serializable {
     ERROR_99106(99106,"拣货数量总数不能为0"),
     ERROR_99107(99107,"未找到销售订单【{}】对应明细"),
 
+    ERROR_99111(99111,"sku【{}】已分完货"),
+
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),

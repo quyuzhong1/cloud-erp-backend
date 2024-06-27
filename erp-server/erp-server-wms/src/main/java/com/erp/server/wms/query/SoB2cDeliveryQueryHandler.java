@@ -6,6 +6,7 @@ import com.common.business.query.AbstractQueryHandler;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.enums.PickingWaveStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -88,8 +89,8 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
             }
 
             if ("generation_waves".equals(searchType)) {
-                // todo 状态
-                List<String> ids = pickingWaveService.listDeliveryIdByStatus("");
+
+                List<String> ids = pickingWaveService.listDeliveryIdByStatus(PickingWaveStatusEnum.AWAIT_PICK.getCode());
                 if (CollectionUtils.isEmpty(ids)) {
                     return getQueryEmptySql();
                 }

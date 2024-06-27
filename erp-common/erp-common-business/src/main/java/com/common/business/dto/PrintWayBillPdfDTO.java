@@ -12,6 +12,20 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class PrintWayBillPdfDTO {
+
+    /**
+     * 篮号
+     */
+    private String basketNo;
+
+    /**
+     * 是否缺货
+     */
+    private Boolean isOutStock = false;
+    /**
+     * 订单提示
+     */
+    private String orderTip;
     /**
      * 销售单id
      */
