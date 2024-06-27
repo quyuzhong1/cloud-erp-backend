@@ -81,6 +81,12 @@ public class DmpCfgInputDetailEntity extends BaseEntity<DmpCfgInputDetailEntity>
      */
      @TableField("dealy_time")
      private Integer dealyTime;
+     
+     /**
+      * 任务类型：normal=正常任务，history=历史任务，hotfix=及时任务  枚举：DmpInputTaskTaskTypeEnum
+      */
+     @TableField("task_type")
+     private String taskType;
 
 
     public static final String MAIN_ID = "main_id";

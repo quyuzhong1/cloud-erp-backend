@@ -10,9 +10,9 @@ import org.apache.commons.lang3.StringUtils;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11 09:37:12
+ * @since 2024-06-27 11:05:38
  */
-public enum DmpCfgInputHistoryTypeEnum implements EnumMessage {
+public enum DmpCfgInputCompensateTypeEnum implements EnumMessage {
 	DAY("day", "一天之前"),
 	WEEK("week", "一周之前"),
 	MONTH("month", "一月之前"),
@@ -28,7 +28,7 @@ public enum DmpCfgInputHistoryTypeEnum implements EnumMessage {
      */
     private String name;
 
-    DmpCfgInputHistoryTypeEnum(String code, String name) {
+    DmpCfgInputCompensateTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -47,7 +47,7 @@ public enum DmpCfgInputHistoryTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpCfgInputHistoryTypeEnum statusEnum : DmpCfgInputHistoryTypeEnum.values()) {
+        for (DmpCfgInputCompensateTypeEnum statusEnum : DmpCfgInputCompensateTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

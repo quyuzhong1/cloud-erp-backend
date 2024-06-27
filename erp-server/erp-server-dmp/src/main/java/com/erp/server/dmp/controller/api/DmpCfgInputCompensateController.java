@@ -14,44 +14,44 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.DmpCfgInputHistoryService;
+import com.erp.server.dmp.service.DmpCfgInputCompensateService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.dmp.dto.DmpCfgInputHistoryDTO;
+import com.erp.model.dmp.dto.DmpCfgInputCompensateDTO;
 
 /**
  * 外部系统接口明细补偿
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2024-06-27
  */
 @Slf4j
 @RestController
 @LogSystemModule("外部系统接口明细补偿")
-@RequestMapping("/dmpCfgInputHistory")
-public class DmpCfgInputHistoryController extends BaseController {
+@RequestMapping("/dmpCfgInputCompensate")
+public class DmpCfgInputCompensateController extends BaseController {
 
     @Resource
-    private DmpCfgInputHistoryService dmpCfgInputHistoryService;
+    private DmpCfgInputCompensateService dmpCfgInputCompensateService;
 
     /**
     * 新增
     * @author shukai
-    * @date:  2024-06-11
+    * @date:  2024-06-27
     * @param dto
     * @return ApiResult<String>
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "外部系统接口明细补偿新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DmpCfgInputHistoryDTO.AddDTO dto) {
-        return success(dmpCfgInputHistoryService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DmpCfgInputCompensateDTO.AddDTO dto) {
+        return success(dmpCfgInputCompensateService.add(dto));
     }
 
     /**
     * 修改
     * @author shukai
-    * @date:  2024-06-11
+    * @date:  2024-06-27
     * @param dto
     * @return ApiResult
     */
@@ -59,11 +59,11 @@ public class DmpCfgInputHistoryController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "外部系统接口明细补偿修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "dmp:dmpCfgInputHistory:update",
-        serviceClass = DmpCfgInputHistoryService.class,
+        menuCode = "dmp:dmpCfgInputCompensate:update",
+        serviceClass = DmpCfgInputCompensateService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated DmpCfgInputHistoryDTO.UpdateDTO dto) {
-        dmpCfgInputHistoryService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated DmpCfgInputCompensateDTO.UpdateDTO dto) {
+        dmpCfgInputCompensateService.update(dto);
         return success();
     }
 

@@ -15,11 +15,11 @@ import javax.validation.constraints.Size;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2024-06-27
 */
 @Data
 @NoArgsConstructor
-public class DmpCfgInputHistoryDTO implements Serializable {
+public class DmpCfgInputCompensateDTO implements Serializable {
 
 
 
@@ -85,6 +85,11 @@ public class DmpCfgInputHistoryDTO implements Serializable {
         * 扩展json
         */
         private String extendJson;
+
+        /**
+        * 延迟时间，单位秒
+        */
+        private Integer dealyTime;
 
 
     }
@@ -176,6 +181,12 @@ public class DmpCfgInputHistoryDTO implements Serializable {
         * 扩展json
         */
         private String extendJson;
+
+        /**
+        * 延迟时间，单位秒
+        */
+        @NotNull(message = "延迟时间，单位秒不能为空")
+        private Integer dealyTime;
 
 
     }
