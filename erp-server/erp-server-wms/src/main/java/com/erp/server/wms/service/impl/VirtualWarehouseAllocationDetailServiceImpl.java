@@ -325,10 +325,15 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                         handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList()));
                 //修改中台任务状态并触发mq
                 List<String> sourceIds = handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getHandleDetailId).collect(Collectors.toList());
-                dmpMqFeign.batchSyncBySourceId(sourceIds);
+                try {
+                    dmpMqFeign.batchSyncBySourceId(sourceIds);
+                } catch (Exception e) {
+                    log.info("手动同步失败：{}", e.getMessage());
+                    return BatchResultDTO.fail(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), "操作失败");
+                }
             }
         }
-        return new BatchResultDTO();
+        return BatchResultDTO.success(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), "操作成功");
     }
 
     /**
@@ -437,15 +442,16 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
 
     @Override
     public void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto) {
-        log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态：{}",dto);
+        log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态：{}", dto);
         //根据合单明细id获取拆单信息
         List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehousePushHandleRelationService
                 .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, dto.getHandelDetailId()));
         if (CollectionUtils.isNotEmpty(handleRelationEntityList)) {
             baseMapper.updateSyncStatus(dto, handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList()));
-            log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态成功：{}",dto);
+            log.info("旺店通虚拟仓订单创建：批量修改分货单明细同步状态成功：{}", dto);
         }
     }
+
     /**
      * 获取同步信息
      *
@@ -464,8 +470,8 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                 throw new ServiceException("分货单不存在");
             }
         }
-        VirtualWarehouseAllocationDTO.ManualFinishViewDTO manualFinishViewDTO=new VirtualWarehouseAllocationDTO.ManualFinishViewDTO();
-        BeanUtils.copyProperties(vwAllocationDetailEntity,manualFinishViewDTO);
+        VirtualWarehouseAllocationDTO.ManualFinishViewDTO manualFinishViewDTO = new VirtualWarehouseAllocationDTO.ManualFinishViewDTO();
+        BeanUtils.copyProperties(vwAllocationDetailEntity, manualFinishViewDTO);
         return manualFinishViewDTO;
     }
 
