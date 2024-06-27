@@ -44,6 +44,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private volatile List<DmpCfgInputConvertEntity> dmpCfgInputConvertCache;
 	
 	private volatile List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingCache;
+	private volatile Map<String, Map<String, List<String>>> convertMappingCache;
 	
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
@@ -73,13 +74,20 @@ public class DmpHandlerCache implements CommandLineRunner{
 	}
 	
 	public Map<String, List<String>> getDmpCfgInputConvertMapping(String mainId){
-		Map<String, List<String>> map = new HashMap<>();
-		Map<String, List<DmpCfgInputConvertMappingEntity>> mapping = dmpCfgInputConvertMappingCache.stream()
-				.filter(d -> d.getMainId().equals(mainId)).collect(Collectors.groupingBy(d -> d.getOriginalKey().replace(".", "")));
-		for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> m : mapping.entrySet()) {
-			map.put(m.getKey(), m.getValue().stream().map(d -> StrUtils.underlineToCamel(d.getConvertKey(), true)).collect(Collectors.toList()));
+		return convertMappingCache.get(mainId);
+	}
+	
+	private void dealConvertMappingCache() {
+		convertMappingCache = new HashMap<>();
+		Map<String, List<DmpCfgInputConvertMappingEntity>> mainEntityMap = dmpCfgInputConvertMappingCache.stream().collect(Collectors.groupingBy(DmpCfgInputConvertMappingEntity::getMainId));
+		for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> mainEntity : mainEntityMap.entrySet()) {
+			Map<String, List<String>> map = new HashMap<>();
+			Map<String, List<DmpCfgInputConvertMappingEntity>> mapping = mainEntity.getValue().stream().collect(Collectors.groupingBy(d -> d.getOriginalKey().replace(".", "")));
+			for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> m : mapping.entrySet()) {
+				map.put(m.getKey(), m.getValue().stream().map(d -> StrUtils.underlineToCamel(d.getConvertKey(), true)).collect(Collectors.toList()));
+			}
+			convertMappingCache.put(mainEntity.getKey(), map);
 		}
-		return map;
 	}
 	
 	@Override
@@ -102,6 +110,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 		
 		dmpCfgInputCache = dmpCfgInputService.lambdaQuery()
 				.eq(DmpCfgInputEntity::getDisabled, false).list();
+		this.dealConvertMappingCache();
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			List<DmpCfgInputEntity> dmpCfgInputEntityFreshList = dmpCfgInputService.lambdaQuery()
 					.gt(DmpCfgInputEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
@@ -111,6 +120,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 				dmpCfgInputCache.removeIf(d -> newIds.contains(d.getId()));
 				dmpCfgInputCache.addAll(dmpCfgInputEntityFreshList.stream()
 						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				this.dealConvertMappingCache();
 			}
 			
 		}, 1, freshCacheTime, TimeUnit.SECONDS);
