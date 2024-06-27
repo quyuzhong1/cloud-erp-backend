@@ -65,7 +65,6 @@
         sb2c.approve_time as approveTime,
         sb2c.approve_user_id as approveUserId,
         sb2c.approve_user_name as approveUserName,
-        sb2c.is_match_warehouse_rule as isMatchWarehouseRule,
         sb2c.frozen_type as frozenType,
         sb2c.is_change_receiver_address as isChangeReceiverAddress,
         sb2cl.logistics_channel_name as logisticsChannelName,
