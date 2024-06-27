@@ -785,7 +785,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
 
             //发送旺店通
-            syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
+            syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
         }
         return Boolean.TRUE;
     }
