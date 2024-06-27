@@ -26,4 +26,11 @@
                 AND pd.source_detail_id = sbdd.ID
 
     </select>
+    <select id="countDelivery" resultType="java.lang.Integer">
+        select count(pwd.delivery_id)
+        FROM picking_wave as pw
+                 LEFT JOIN picking_wave_detail as pwd on pwd.main_id = pw.id and pwd.is_deleted = false
+        WHERE pw.is_deleted = false
+          and pw.status = 'await_pick'
+    </select>
 </mapper>

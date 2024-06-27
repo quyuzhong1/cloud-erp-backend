@@ -23,7 +23,7 @@ public class PickingWaveServiceImpl extends SuperServiceImpl<PickingWaveMapper, 
     @Override
     public int countDelivery(PermissionsDTO param) {
         // todo 需要状态字段值
-        return 0;
+        return baseMapper.countDelivery(param);
     }
 
     @Override
