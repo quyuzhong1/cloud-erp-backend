@@ -539,13 +539,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     /**
      * 新增平台仓B2C销售出库单
      */
-    void generatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> generateSourceDetailList);
+    Boolean generatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> generateSourceDetailList);
 
     /**
      * 更新平台仓B2C销售出库单
      */
 
-    void updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO,
+    Boolean updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO,
                                    PlatformSoOutStockDTO dto,
                                    SoB2cEntity soB2cEntity,
                                    Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList,
@@ -562,4 +562,9 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 停止更新销售出库单数据的日期
      */
     LocalDate getStopSoOutStockDate();
+
+    /**
+     * 更新主表和明细
+     */
+    void updateMainAndDetail(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> list);
 }
