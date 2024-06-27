@@ -908,6 +908,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> resultList = new ArrayList<>();
         for (TransferApplicationDTO.ViewGenerateTransferInfoDTO dto : list ) {
 
+            dto.setOutWarehouseLocation("");
             //直接调拨数量
             Integer transferInfoQty = MathUtil.ZERO;
             //分步式调出数量
