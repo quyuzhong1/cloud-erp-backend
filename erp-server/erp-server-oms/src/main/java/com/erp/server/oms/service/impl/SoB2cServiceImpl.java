@@ -7498,7 +7498,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         } else {
             // 自发货订单校验
-            List<SoB2cDeliveryEntity> list = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(entity.getId()));
+//            List<SoB2cDeliveryEntity> list = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(entity.getId()));
+            // 查询来源明细ID
+            List<SoB2cDeliveryEntity> list =  FeignQuery.create(SoB2cDeliveryEntity.class)
+                    .eq(SoB2cDeliveryEntity::getSourceId, entity.getId())
+                    .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                    .list();
             if (!CollectionUtils.isEmpty(list)) {
                 throw new ServiceException(ApiError.IS_B2C_DELIVERY_NOT_UPDATE_MAPPING);
             }
