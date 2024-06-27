@@ -21,7 +21,7 @@ public class WarehouseLocationReplenishFeignController {
      * @author: tanmujin
      */
     @PostMapping("/addReplenishBill")
-    public ApiResult<?> addReplenishBill(@RequestBody WarehouseLocationReplenishDTO.addDTO addDto){
+    public ApiResult<?> addReplenishBill(@RequestBody WarehouseLocationReplenishDTO.AddDTO addDto){
 
         return null;
     }
