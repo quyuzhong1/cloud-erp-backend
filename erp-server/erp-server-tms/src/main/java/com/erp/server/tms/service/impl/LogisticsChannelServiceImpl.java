@@ -615,10 +615,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
         }
-        if (StringUtils.isBlank(logisticsChannelEntity.getDeliveryType())){
-            logisticsChannelEntity.setDeliveryType(DeliveryTypeEnum.SELF_SEND.getCode());
-        }
-
     }
 
     @Override
