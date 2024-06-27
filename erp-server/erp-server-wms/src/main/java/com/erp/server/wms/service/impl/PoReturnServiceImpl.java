@@ -4,6 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -182,6 +184,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Resource
     private SyncWdtOtherInStockService syncWdtOtherInStockService;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     /**
      * 主页分页查询
@@ -808,6 +812,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
         }
+
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getReturnWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
+
         HashMap<String, BigDecimal> skuMap = new HashMap<>();
         detailList.stream()
                 .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
@@ -828,17 +839,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         });
 
         //发送异步任务
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTH);
-        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), code, entity.getReturnWarehouseId());
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode, entity.getCode(), entity.getId(), code, entity.getReturnWarehouseId());
-        if(dmpPushTaskEntity != null){
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-                }
-            });
-        }
+        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTH);
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
     }
 
     /**
@@ -1001,6 +1009,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @author: tanmujin
      */
     private void syncDisApprovePoReturnToWdt(PoReturnEntity entity, String operateCode) {
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getReturnWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
+
         List<PoReturnDetailEntity> detailList = poReturnDetailService.getDetailByMainId(entity.getId());
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
@@ -1024,17 +1038,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         });
 
         //发送异步任务
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), code, entity.getReturnWarehouseId());
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, inEntity, operateCode, entity.getCode(), entity.getId(), code, entity.getReturnWarehouseId());
-        if(dmpPushTaskEntity != null){
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-                }
-            });
-        }
+        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
     }
 
     /**
