@@ -14,9 +14,8 @@ import java.util.List;
 
 /**
  * 第三方仓库/店铺映射Feign控制器
- *
- * @author tanmujin
  * @date 2024-05-27
+ * @author tanmujin
  */
 @RestController
 @RequestMapping("/feign/dmp/thirdMapping")
