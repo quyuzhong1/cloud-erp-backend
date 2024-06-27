@@ -58,13 +58,14 @@ public class PdaSecondarySortingController extends BaseController {
 
     /**
      * 篮子明细
-     * @param code 波次编号
+     * @param waveId 波次id
      * @param basketNo 篮号
      * @see SecondarySortingDTO.BasketDetail
      */
     @GetMapping("/basketDetail")
-    public ApiResult<List<SecondarySortingDTO.BasketDetail>> basketDetail(@RequestParam("code") String code, @RequestParam("basketNo") String basketNo) {
-        List<SecondarySortingDTO.BasketDetail> details = secondarySortingService.basketDetail(code, basketNo);
+    public ApiResult<List<SecondarySortingDTO.BasketDetail>> basketDetail(@RequestParam("waveId") String waveId, @RequestParam("basketNo") String basketNo) {
+        List<SecondarySortingDTO.BasketDetail> details = secondarySortingService.basketDetail(waveId, basketNo);
         return success(details);
     }
+
 }

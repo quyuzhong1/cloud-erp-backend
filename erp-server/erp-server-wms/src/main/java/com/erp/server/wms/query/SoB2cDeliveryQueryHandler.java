@@ -88,7 +88,7 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
             }
 
             if ("generation_waves".equals(searchType)) {
-                // todo 状态
+
                 List<String> ids = pickingWaveService.listDeliveryIdByStatus("");
                 if (CollectionUtils.isEmpty(ids)) {
                     return getQueryEmptySql();
