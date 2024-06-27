@@ -439,6 +439,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     asyncService.asyncShipOrder(soB2cEntity.getId(),
                             soB2cEntity.getCode(),
                             soB2cEntity.getDictPlatform(),
+                            soB2cEntity.convertSubmitPlatformUniqueKey(),
                             JSONUtil.toJsonStr(dto),
                             businessDesc, false);
                 } else {

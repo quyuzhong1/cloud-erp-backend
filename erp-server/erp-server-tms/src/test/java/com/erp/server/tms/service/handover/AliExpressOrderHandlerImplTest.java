@@ -197,7 +197,7 @@ public class AliExpressOrderHandlerImplTest {
     @Test
     public void queryOrder() throws com.erp.tms.aliexpress.util.ApiException {
         QueryOrderRequest queryOrderRequest = QueryOrderRequest.builder()
-                .trade_order_id("8185112291932412")
+                .trade_order_id("5391488178675036")
                 .current_page(1)
                 .page_size(20)
                 .build();

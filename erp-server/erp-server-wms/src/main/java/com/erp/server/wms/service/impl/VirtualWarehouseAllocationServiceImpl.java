@@ -83,7 +83,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Resource
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
     @Resource
-    private VirtualWarehouseAllocationHandleService virtualWarehouseAllocationHandleService;
+    private VirtualWarehousePushHandleService virtualWarehousePushHandleService;
     @Resource
     private WmsAttachmentService wmsAttachmentService;
     @Resource
@@ -183,7 +183,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
         //获取明细
         List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
-                .eq(VirtualWarehouseAllocationDetailEntity::getMainId, id));
+                .eq(VirtualWarehouseAllocationDetailEntity::getMainId, id).orderByAsc(VirtualWarehouseAllocationDetailEntity::getId));
 
         //获取数量
         VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
@@ -306,7 +306,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             @Override
             public void afterCommit() {
 //                virtualWarehouseAllocationHandleService.handleData(allocationEntity);
-                CompletableFuture.runAsync(() -> virtualWarehouseAllocationHandleService.handleData(allocationEntity));
+                CompletableFuture.runAsync(() -> virtualWarehousePushHandleService.handleData(allocationEntity));
             }
         });
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);

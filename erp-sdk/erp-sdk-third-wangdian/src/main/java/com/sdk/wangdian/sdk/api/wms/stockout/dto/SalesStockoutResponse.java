@@ -1267,6 +1267,6 @@ public class SalesStockoutResponse {
          * 当前货位出库总货品数量
          */
         @SerializedName("position_goods_count")
-        private Integer positionGoodsCount;
+        private BigDecimal positionGoodsCount;
     }
 }

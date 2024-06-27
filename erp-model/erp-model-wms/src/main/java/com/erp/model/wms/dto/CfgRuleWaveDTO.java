@@ -69,19 +69,13 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
          * 波次类型
          */
+        @Dict(queryTypeField = "waveType")
         private String waveType;
-        /**
-         * 波次类型名称
-         */
-        private String waveTypeName;
         /**
          * 拣货车类型
          */
+        @Dict(queryFieldName = "id", tableName = "picking_cart_type")
         private String pickingCartTypeId;
-        /**
-         * 拣货车类型名称
-         */
-        private String pickingCartTypeName;
         /**
          * 最小单数
          */
@@ -101,7 +95,7 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
          * 状态
          */
-        private String disabled;
+        private Boolean disabled;
         /**
          * 更新时间
          */
@@ -174,9 +168,9 @@ public class CfgRuleWaveDTO implements Serializable {
         private Boolean disabled;
 
         /**
-        * 执行时间JSON
+        * 执行时间
         */
-        private String executionTimeJson;
+        private List<LocalTime> executionTimeList;
 
         /**
         * 执行类型（自动执行，手动执行）
@@ -186,14 +180,18 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
         * 分拣方式（边拣边分，先拣后分）
         */
-        private String sortingMethod;
+        private String pickingType;
 
         /**
         * 规则描述
         */
         private String remark;
 
-
+        /**
+         * 规则条件
+         */
+        @Dict
+        private List<CfgRuleConditionDTO.View> conditionList;
     }
 
     /**
@@ -310,7 +308,7 @@ public class CfgRuleWaveDTO implements Serializable {
         */
         @NotBlank(message = "分拣方式（边拣边分，先拣后分）不能为空")
         @Size(max = 32,message = "分拣方式（边拣边分，先拣后分）最大长度不能超过32位")
-        private String sortingMethod;
+        private String pickingType;
 
         /**
         * 规则描述

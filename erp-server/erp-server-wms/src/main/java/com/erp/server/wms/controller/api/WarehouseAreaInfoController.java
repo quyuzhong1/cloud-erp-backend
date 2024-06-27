@@ -113,8 +113,16 @@ public class WarehouseAreaInfoController extends BaseController {
      * 根据仓库ID查询库区信息：id，code，name
      * @param warehouseId 仓库ID
      */
-    @GetMapping("listAreaByWarehouseId")
+    @GetMapping("/listAreaByWarehouseId")
     public ApiResult<List<WarehouseLocationDTO.ViewDto>> listAreaByWarehouseId(@RequestParam @Validated String warehouseId){
         return success(warehouseLocationService.listAreaByWarehouseId(warehouseId));
+    }
+
+    /**
+     * 查询所有库区
+     */
+    @GetMapping("/listAllArea")
+    public ApiResult<List<WarehouseLocationDTO.ViewDto>> listAllArea(){
+        return success(warehouseLocationService.listAllArea());
     }
 }

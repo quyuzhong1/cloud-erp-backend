@@ -102,11 +102,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
-    private VirtualWarehouseAllocationHandleService virtualWarehouseAllocationHandleService;
+    private VirtualWarehousePushHandleService virtualWarehousePushHandleService;
     @Resource
-    private VirtualWarehouseAllocationHandleDetailService virtualWarehouseAllocationHandledetailService;
+    private VirtualWarehousePushHandleDetailService virtualWarehousePushHandledetailService;
     @Resource
-    private VirtualWarehouseAllocationHandleRelationService virtualWarehouseAllocationHandleRelationService;
+    private VirtualWarehousePushHandleRelationService virtualWarehousePushHandleRelationService;
     @Resource
     private SyncWdtVirtualWarehousePushOrderService syncWdtVirtualWarehousePushOrderService;
     @Resource
@@ -161,7 +161,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YHSQ);
         requisitionApplicationEntity.setCode(code);
         boolean save = super.save(requisitionApplicationEntity);
-        if (!save) {
+        if(!save) {
             throw new ServiceException("要货申请单保存失败");
         }
         // 新增明细
@@ -170,20 +170,20 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     /**
-     * 修改
-     */
+    * 修改
+    */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(RequisitionApplicationDTO.UpdateDTO updateDTO) {
         RequisitionApplicationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请单"));
-        RequisitionApplicationEntity requisitionApplicationEntity = BeanMapperUtils.map(RequisitionApplicationEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请单"));
+        RequisitionApplicationEntity requisitionApplicationEntity =  BeanMapperUtils.map(RequisitionApplicationEntity.class, updateDTO);
 
         // 数据处理
         handleData(requisitionApplicationEntity);
         log.info("编辑 开始修改要货申请单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(requisitionApplicationEntity);
-        if (!save) {
+        if(!save) {
             throw new ServiceException("要货申请单保存失败");
         }
         // 修改明细数据（包含增删改）
@@ -201,7 +201,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(RequisitionApplicationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
-            if (!existStatusList.contains(status)) {
+            if(!existStatusList.contains(status)) {
                 list.add(new RequisitionApplicationDTO.TabListDTO(status, 0));
             }
         });
@@ -215,7 +215,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<RequisitionApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if (CollUtil.isEmpty(pageData.getRecords())) {
+        if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
         // 数据处理
@@ -226,7 +226,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public RequisitionApplicationDTO.ViewDTO view(String id) {
         //发货单主信息
-        RequisitionApplicationEntity applicationEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
+        RequisitionApplicationEntity applicationEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到要货申请单数据"));
         RequisitionApplicationDTO.ViewDTO data = BeanMapperUtils.map(RequisitionApplicationDTO.ViewDTO.class, applicationEntity);
         //发货单详情
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(Arrays.asList(id));
@@ -401,35 +401,33 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
                 List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
                 //保存要货申请主单
-                VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity(requisitionApplication.getId(),
+                VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(requisitionApplication.getId(),
                         requisitionApplication.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplication.getStatus()
                         , VwAllocationDirectionEnum.REVERSE.getCode());
-                virtualWarehouseAllocationHandleService.save(allocationHandleEntity);
-                List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
-                saveList(requisitionApplication, haveFromVwMap, fromThirdMappingList, allocationHandleEntity, handleDetailList, VwAllocationDirectionEnum.REVERSE);
+                virtualWarehousePushHandleService.save(pushHandleEntity);
+                List<VirtualWarehousePushHandleDetailEntity> handleDetailList = new ArrayList<>();
+                saveList(requisitionApplication, haveFromVwMap, fromThirdMappingList, pushHandleEntity, handleDetailList, VwAllocationDirectionEnum.REVERSE);
                 if (CollectionUtils.isNotEmpty(handleDetailList)) {
                     //推送中台任务:保存任务+发送mq
                     List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
                             requisitionApplication.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode());
                     if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
-                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                            @Override
-                            public void afterCommit() {
-                                //发送mq
-                                dmpMqFeign.sendTask(dmpPushTaskEntityList);
-                            }
-                        });
+//                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                            @Override
+//                            public void afterCommit() {
+                        //发送mq
+                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+//                            }
+//                        });
                     }
                 }
             }
         });
     }
 
-    private void saveList(RequisitionApplicationEntity
-                                  requisitionApplication, Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap,
-                          List<ThirdMappingEntity> fromThirdMappingList, VirtualWarehouseAllocationHandleEntity
-                                  allocationHandleEntity,
-                          List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList, VwAllocationDirectionEnum code) {
+    private void saveList(RequisitionApplicationEntity requisitionApplication, Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap,
+                          List<ThirdMappingEntity> fromThirdMappingList, VirtualWarehousePushHandleEntity pushHandleEntity,
+                          List<VirtualWarehousePushHandleDetailEntity> handleDetailList, VwAllocationDirectionEnum code) {
         haveFromVwMap.forEach((fromVmId, fromHandleList) -> {
             //获取调出仓绑定的旺店通虚拟仓
             if (CollectionUtils.isNotEmpty(fromThirdMappingList)) {
@@ -437,11 +435,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 if (Objects.nonNull(thirdMapping)) {
 //                fromThirdMappingList.forEach(thirdMapping -> {
                     //保存合单明细
-                    VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = new VirtualWarehouseAllocationHandleDetailEntity();
-                    handleDetailEntity.setAllocationId(requisitionApplication.getId());
-                    handleDetailEntity.setDirection(allocationHandleEntity.getDirection());
+                    VirtualWarehousePushHandleDetailEntity handleDetailEntity = new VirtualWarehousePushHandleDetailEntity();
+                    handleDetailEntity.setSourceId(requisitionApplication.getId());
+                    handleDetailEntity.setDirection(pushHandleEntity.getDirection());
                     handleDetailEntity.setType(requisitionApplication.getType());
-                    handleDetailEntity.setStatus(allocationHandleEntity.getStatus());
+                    handleDetailEntity.setStatus(pushHandleEntity.getStatus());
                     switch (code) {
                         case FORWARD:
                             handleDetailEntity.setToVirtualWarehouseId(fromVmId);
@@ -455,27 +453,27 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                             break;
                     }
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
-                    handleDetailEntity.setMainId(allocationHandleEntity.getId());
+                    handleDetailEntity.setMainId(pushHandleEntity.getId());
                     handleDetailEntity.setWarehouseId(fromHandleList.get(0).getFromWarehouseId());
                     handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
                     Integer sumQty = fromHandleList.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum);
                     handleDetailEntity.setQty(sumQty);
-                    virtualWarehouseAllocationHandledetailService.save(handleDetailEntity);
+                    virtualWarehousePushHandledetailService.save(handleDetailEntity);
                     handleDetailList.add(handleDetailEntity);
                     fromHandleList.forEach(allocationDetail -> {
-                        VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehouseAllocationHandleRelationEntity();
-                        vmAllocationHandleRelationEntity.setAllocationId(requisitionApplication.getId());
+                        VirtualWarehousePushHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehousePushHandleRelationEntity();
+                        vmAllocationHandleRelationEntity.setSourceId(requisitionApplication.getId());
                         switch (code) {
                             case FORWARD:
-                                vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getId());
+                                vmAllocationHandleRelationEntity.setSourceDetailId(allocationDetail.getId());
                                 break;
                             default:
-                                vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getSourceDetailId());
+                                vmAllocationHandleRelationEntity.setSourceDetailId(allocationDetail.getSourceDetailId());
                                 break;
                         }
-                        vmAllocationHandleRelationEntity.setHandleId(allocationHandleEntity.getId());
+                        vmAllocationHandleRelationEntity.setHandleId(pushHandleEntity.getId());
                         vmAllocationHandleRelationEntity.setHandleDetailId(handleDetailEntity.getId());
-                        virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
+                        virtualWarehousePushHandleRelationService.save(vmAllocationHandleRelationEntity);
                     });
                 }
             }
@@ -667,10 +665,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
 
         //只拆分销售套装BOM
-        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v -> v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v->v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
 
         //只拆分销售套装BOM
-        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v -> v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v->v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
 
         List<String> childSkuIds = bomChildrenSkuList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         skuIds.addAll(childSkuIds);
@@ -813,63 +811,24 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 List<String> fromVwId = fromVmIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
                 List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
                 //保存要货申请主单
-                VirtualWarehouseAllocationHandleEntity allocationHandleEntity = new VirtualWarehouseAllocationHandleEntity(entity.getId(),
+                VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(entity.getId(),
                         entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getStatus(), VwAllocationDirectionEnum.FORWARD.getCode());
-                virtualWarehouseAllocationHandleService.save(allocationHandleEntity);
-                List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList = new ArrayList<>();
-                saveList(entity, haveFromVwMap, fromThirdMappingList, allocationHandleEntity, handleDetailList, VwAllocationDirectionEnum.FORWARD);
+                virtualWarehousePushHandleService.save(pushHandleEntity);
+                List<VirtualWarehousePushHandleDetailEntity> handleDetailList = new ArrayList<>();
+                saveList(entity, haveFromVwMap, fromThirdMappingList, pushHandleEntity, handleDetailList, VwAllocationDirectionEnum.FORWARD);
                 if (CollectionUtils.isNotEmpty(handleDetailList)) {
                     //推送中台任务:保存任务+发送mq
                     List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
                             entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), SourceTypeEnum.REQUISITION_APPLICATION.getCode());
                     if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
-                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                            @Override
-                            public void afterCommit() {
-                                //发送mq
-                                dmpMqFeign.sendTask(dmpPushTaskEntityList);
-                            }
-                        });
+//                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                            @Override
+//                            public void afterCommit() {
+                        //发送mq
+                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+//                            }
+//                        });
                     }
-                }
-            }
-        });
-    }
-
-    private void saceCancelList(RequisitionApplicationEntity
-                                        entity, Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap, List<ThirdMappingEntity> fromThirdMappingList, VirtualWarehouseAllocationHandleEntity
-                                        allocationHandleEntity, List<VirtualWarehouseAllocationHandleDetailEntity> handleDetailList) {
-        haveFromVwMap.forEach((fromVmId, fromHandleList) -> {
-            //获取调出仓绑定的旺店通虚拟仓
-            if (CollectionUtils.isNotEmpty(fromThirdMappingList)) {
-//                fromThirdMappingList.forEach(thirdMapping -> {
-                ThirdMappingEntity thirdMapping = fromThirdMappingList.stream().filter(item -> Objects.equals(item.getSysId(), fromVmId)).findFirst().orElse(null);
-                if (Objects.nonNull(thirdMapping)) {
-                    //保存合单明细
-                    VirtualWarehouseAllocationHandleDetailEntity handleDetailEntity = new VirtualWarehouseAllocationHandleDetailEntity();
-                    handleDetailEntity.setAllocationId(entity.getId());
-                    handleDetailEntity.setDirection(allocationHandleEntity.getDirection());
-                    handleDetailEntity.setType(entity.getType());
-                    handleDetailEntity.setStatus(allocationHandleEntity.getStatus());
-                    handleDetailEntity.setToVirtualWarehouseId(fromVmId);
-                    handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-                    handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
-                    handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
-                    handleDetailEntity.setMainId(allocationHandleEntity.getId());
-                    handleDetailEntity.setWarehouseId(fromHandleList.get(0).getFromWarehouseId());
-                    handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
-                    Integer sumQty = fromHandleList.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum);
-                    handleDetailEntity.setQty(sumQty);
-                    virtualWarehouseAllocationHandledetailService.save(handleDetailEntity);
-                    handleDetailList.add(handleDetailEntity);
-                    fromHandleList.forEach(allocationDetail -> {
-                        VirtualWarehouseAllocationHandleRelationEntity vmAllocationHandleRelationEntity = new VirtualWarehouseAllocationHandleRelationEntity();
-                        vmAllocationHandleRelationEntity.setAllocationId(entity.getId());
-                        vmAllocationHandleRelationEntity.setAllocationDetailId(allocationDetail.getSourceDetailId());
-                        vmAllocationHandleRelationEntity.setHandleId(allocationHandleEntity.getId());
-                        vmAllocationHandleRelationEntity.setHandleDetailId(handleDetailEntity.getId());
-                        virtualWarehouseAllocationHandleRelationService.save(vmAllocationHandleRelationEntity);
-                    });
                 }
             }
         });
@@ -1414,7 +1373,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      */
     private void validateSubmit(RequisitionApplicationEntity entity) {
         // 待提交允许提交
-        if(!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus()) ) {
+        if (!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus())) {
             throw new ServiceException(ApiError.IS_SUBMIT_IN_SUBMIT);
         }
         return;
@@ -1456,8 +1415,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      * @param warehouseList 要货申请表id
      * @return java.lang.Boolean
      **/
-    private void updateHandleDetailDate
-    (List<RequisitionApplicationDTO.HandleListDTO> list, List<WarehouseDTO.UpdateDTO> warehouseList) {
+    private void updateHandleDetailDate(List<RequisitionApplicationDTO.HandleListDTO> list, List<WarehouseDTO.UpdateDTO> warehouseList) {
         for (RequisitionApplicationDTO.HandleListDTO handleListDTO : list) {
             //调入仓
             WarehouseDTO.UpdateDTO toWarehouse = warehouseList.stream()

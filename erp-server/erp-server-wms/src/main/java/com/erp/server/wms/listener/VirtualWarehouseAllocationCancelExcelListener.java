@@ -150,7 +150,7 @@ public class VirtualWarehouseAllocationCancelExcelListener extends AnalysisEvent
                         detailDto.setWarehouseId(warehouseList.get(0).getId());
                         //获取数量
                         VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
-                        qtyTypeDTO.setType(VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode());
+                        qtyTypeDTO.setType(VirtualWarehouseAllocationTypeEnum.CANCEL.getCode());
                         VirtualInventoryDTO.QtySearchDTO qtySearchDTO = new VirtualInventoryDTO.QtySearchDTO();
                         BeanUtils.copyProperties(detailDto, qtySearchDTO);
                         List<VirtualInventoryDTO.QtySearchDTO> qtySearchList = new ArrayList<>();

@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.fastjson.JSONObject;
@@ -153,6 +155,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Resource
     private TransferInfoDetailMapper transferInfoDetailMapper;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -484,7 +488,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public void approve(BaseApproveParamDTO baseApproveParamDTO,Boolean isSyncKingDee) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
@@ -550,63 +554,52 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private void syncApproveInfoToWdt(TransferInfoEntity entity, String operateCode) {
         //查询直接调拨单明细数据
         List<TransferInfoDetailEntity> transferDetailList = transferInfoDetailService.listByMainId(entity.getId());
+        HashSet<String> warehouseIdSet = new HashSet<>();
+        for (TransferInfoDetailEntity detail : transferDetailList) {
+            warehouseIdSet.add(detail.getInWarehouseId());
+            warehouseIdSet.add(detail.getOutWarehouseId());
+        }
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
 
-        //转换成出库单
-        HashMap<String, BigDecimal> outSkuMap = new HashMap<>();
-        transferDetailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getOutWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
-                    outSkuMap.put(key, BigDecimal.valueOf(collect));
-                });
-        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
-        outSkuMap.forEach((key, value) -> {
-            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
-            outGoodsList.add(goods);
-        });
+        List<DmpPushTaskEntity> dmpPushTaskList = new ArrayList<>(transferDetailList.size() * 2);
+        for (TransferInfoDetailEntity dto : transferDetailList) {
+            //调出仓转化为其他出库单
+            if (thirdWarehouseMap.containsKey(dto.getOutWarehouseId())) {
+                CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+                outGoods.setSpecNo(dto.getSkuNo());
+                outGoods.setNum(BigDecimal.valueOf(dto.getQty()));
+                outGoods.setPositionNo(StringUtils.isNotBlank(dto.getOutWarehouseLocation()) ? dto.getOutWarehouseLocation() : "");
 
-        //转换成入库单
-        HashMap<String, BigDecimal> inSkuMap = new HashMap<>();
-        transferDetailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getInWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
-                    inSkuMap.put(key, BigDecimal.valueOf(collect));
-                });
-        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
-        inSkuMap.forEach((key, value) -> {
-            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
-            inGoodsList.add(goods);
-        });
+                String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+                String thirdWarehouseCode = thirdWarehouseMap.get(dto.getOutWarehouseId());
+                DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(Collections.singletonList(outGoods), operateCode, entity.getCode(), dto.getId(), outCode, thirdWarehouseCode, false);
+                dmpPushTaskList.add(outDmpPushTask);
+            }
 
-        //推送其他出库单给旺店通
-        String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        String outWarehouseId = transferDetailList.get(0).getOutWarehouseId();
-        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
-        DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
+            //调入仓转换为其他入库单
+            if (thirdWarehouseMap.containsKey(dto.getInWarehouseId())) {
+                CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+                inGoods.setSpecNo(dto.getSkuNo());
+                inGoods.setNum(BigDecimal.valueOf(dto.getQty()));
+                inGoods.setPositionNo(StringUtils.isNotBlank(dto.getInWarehouseLocation()) ? dto.getInWarehouseLocation() : "");
 
-        //推送其他入库单给旺店通
-        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        String inWarehouseId = transferDetailList.get(0).getInWarehouseId();
-        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-        DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
+                String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+                String thirdWarehouseCode = thirdWarehouseMap.get(dto.getInWarehouseId());
+                DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(Collections.singletonList(inGoods), operateCode, entity.getCode(), dto.getId(), inCode, thirdWarehouseCode, false);
+                dmpPushTaskList.add(inDmpPushTask);
+            }
+        }
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                if(outDmpPushTask != null){
-                    dmpMqFeign.sendTask(Collections.singletonList(outDmpPushTask));
-                }
-                if(inDmpPushTask != null){
-                    dmpMqFeign.sendTask(Collections.singletonList(inDmpPushTask));
+                if(! dmpPushTaskList.isEmpty()){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
                 }
             }
         });
@@ -625,62 +618,52 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_95107);
         }
 
-        //调出仓的其他入库单
-        HashMap<String, BigDecimal> inSkuMap = new HashMap<>();
-        transferDetailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getOutWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
-                    inSkuMap.put(key, BigDecimal.valueOf(collect));
-                });
-        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
-        inSkuMap.forEach((key, value) -> {
-            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
-            inGoodsList.add(goods);
-        });
+        HashSet<String> warehouseIdSet = new HashSet<>();
+        for (TransferInfoDetailEntity detail : transferDetailList) {
+            warehouseIdSet.add(detail.getInWarehouseId());
+            warehouseIdSet.add(detail.getOutWarehouseId());
+        }
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
 
-        //其他出库单
-        HashMap<String, BigDecimal> outSkuMap = new HashMap<>();
-        transferDetailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getInWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(TransferInfoDetailEntity::getQty).sum();
-                    outSkuMap.put(key, BigDecimal.valueOf(collect));
-                });
-        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
-        outSkuMap.forEach((key, value) -> {
-            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
-            outGoodsList.add(goods);
-        });
+        List<DmpPushTaskEntity> dmpPushTaskList = new ArrayList<>(transferDetailList.size() * 2);
+        for (TransferInfoDetailEntity dto : transferDetailList) {
+            //调入仓转换为其他出库单
+            if(thirdWarehouseMap.containsKey(dto.getInWarehouseId())){
+                CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+                outGoods.setSpecNo(dto.getSkuNo());
+                outGoods.setNum(BigDecimal.valueOf(dto.getQty()));
+                outGoods.setPositionNo(StringUtils.isNotBlank(dto.getInWarehouseLocation()) ? dto.getInWarehouseLocation() : "");
 
-        //推送其他入库单给旺店通
-        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        String inWarehouseId = transferDetailList.get(0).getOutWarehouseId();
-        OtherInstockEntity inEntity = new OtherInstockEntity(entity.getId(), inCode, inWarehouseId);
-        DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(inGoodsList, inEntity, operateCode, entity.getCode());
+                String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+                String thirdWarehouseCode = thirdWarehouseMap.get(dto.getInWarehouseId());
+                DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(Collections.singletonList(outGoods), operateCode, entity.getCode(), dto.getId(), outCode, thirdWarehouseCode, false);
+                dmpPushTaskList.add(outDmpPushTask);
+            }
 
-        //推送其他出库单给旺店通
-        String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        String outWarehouseId = transferDetailList.get(0).getInWarehouseId();
-        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, outWarehouseId);
-        DmpPushTaskEntity outDmpPushTask = syncWdtOtherOutStockService.saveTask(outGoodsList, outEntity, operateCode, entity.getCode());
+            //调出仓转换为其他入库单
+            if(thirdWarehouseMap.containsKey(dto.getOutWarehouseId())){
+                CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+                inGoods.setSpecNo(dto.getSkuNo());
+                inGoods.setNum(BigDecimal.valueOf(dto.getQty()));
+                inGoods.setPositionNo(StringUtils.isNotBlank(dto.getOutWarehouseLocation()) ? dto.getOutWarehouseLocation() : "");
+
+                String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+                String thirdWarehouseCode = thirdWarehouseMap.get(dto.getOutWarehouseId());
+                DmpPushTaskEntity inDmpPushTask = syncWdtOtherInStockService.saveTask(Collections.singletonList(inGoods), operateCode, entity.getCode(), dto.getId(), inCode, thirdWarehouseCode, false);
+                dmpPushTaskList.add(inDmpPushTask);
+            }
+        }
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                if(outDmpPushTask != null){
-                    dmpMqFeign.sendTask(Collections.singletonList(outDmpPushTask));
-                }
-                if(inDmpPushTask != null){
-                    dmpMqFeign.sendTask(Collections.singletonList(inDmpPushTask));
+                if(! dmpPushTaskList.isEmpty()){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
                 }
             }
         });
@@ -688,7 +671,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean disApprove(List<String> ids, Boolean isPushKingDee) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);

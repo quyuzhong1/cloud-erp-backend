@@ -1241,7 +1241,7 @@ public class ProductDetailController extends BaseController {
      * 首次推送sku到旺店通
      */
     @GetMapping("/initProductToWangDian")
-    public ApiResult<String> initProductToWangDian(@RequestParam List<String> ids){
+    public ApiResult<String> initProductToWangDian(@RequestParam(required = false) List<String> ids){
         productDetailService.initProductToWangDian(ids);
         return success();
     }

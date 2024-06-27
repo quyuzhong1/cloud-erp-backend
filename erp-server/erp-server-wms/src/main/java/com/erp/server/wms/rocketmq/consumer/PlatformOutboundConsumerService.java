@@ -145,6 +145,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 asyncService.asyncShipOrder(mainEntity.getId(),
                         mainEntity.getCode(),
                         mainEntity.getDictPlatform(),
+                        mainEntity.convertSubmitPlatformUniqueKey(),
                         JSONUtil.toJsonStr(dto),
                         businessDesc, false);
             }

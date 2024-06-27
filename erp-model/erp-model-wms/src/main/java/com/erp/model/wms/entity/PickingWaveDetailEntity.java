@@ -22,17 +22,32 @@ import java.io.Serializable;
 @TableName("picking_wave_detail")
 public class PickingWaveDetailEntity extends BaseEntity<PickingWaveDetailEntity> implements Serializable {
     /**
+     * 波次id
+     */
+    @TableField("main_id")
+    private String mainId;
+    /**
      * 包裹号
      */
     @TableField("basket_no")
     private String basketNo;
 
     /**
+     * 销售订单id
+     */
+    @TableField("so_id")
+    private String soId;
+    /**
      * 销售订单编号
      */
     @TableField("so_code")
     private String soCode;
 
+    /**
+     * 发货id
+     */
+    @TableField("delivery_id")
+    private String deliveryId;
     /**
      * 发货单号
      */
@@ -50,22 +65,6 @@ public class PickingWaveDetailEntity extends BaseEntity<PickingWaveDetailEntity>
      */
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
-
-    /**
-     * sku id
-     */
-    @TableField("sku_id")
-    private String skuId;
-
-    /**
-     * sku no
-     */
-    @TableField("sku_no")
-    private String skuNo;
-
-    /**
-     * 销售数量
-     */
-    @TableField("sales_qty")
-    private String salesQty;
 }
+
+

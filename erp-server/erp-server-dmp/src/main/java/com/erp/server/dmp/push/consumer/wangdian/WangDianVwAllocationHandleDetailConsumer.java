@@ -8,15 +8,17 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.server.dmp.push.service.wdt.WangDianVwAllocationHandleDetailService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.server.dmp.push.service.wdt.WangDianVwPushHandleDetailService;
 import com.erp.server.dmp.service.DmpPushTaskService;
-import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwAllocationHandelDetailPushDTO;
+import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwPushHandelDetailPushDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -28,7 +30,8 @@ public class WangDianVwAllocationHandleDetailConsumer<T extends DmpSyncTaskIdDTO
     @Resource
     private DmpPushTaskService dmpPushTaskService;
     @Resource
-    private WangDianVwAllocationHandleDetailService wangDianVwAllocationHandleDetailService;
+    private WangDianVwPushHandleDetailService wangDianVwPushHandleDetailService;
+
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
         dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
@@ -47,8 +50,13 @@ public class WangDianVwAllocationHandleDetailConsumer<T extends DmpSyncTaskIdDTO
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        VwAllocationHandelDetailPushDTO pushDTOS = JSON.parseObject(ext.toString(), VwAllocationHandelDetailPushDTO.class);
-        wangDianVwAllocationHandleDetailService.executeConsumer(pushDTOS);
+        log.info("虚拟仓订单创建->获取消费数据：{}", ext);
+        VwPushHandelDetailPushDTO pushDTOS = JSON.parseObject(ext.toString(), VwPushHandelDetailPushDTO.class);
+        //获取当前任务状态-不是成功状态再进行处理
+        DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(pushDTOS.getDmpSyncTaskId());
+        if (Objects.isNull(dmpPushTaskEntity) || !SyncStatusEnum.SUCCESS_SYNC.getCode().equals(dmpPushTaskEntity.getStatus())) {
+            wangDianVwPushHandleDetailService.executeConsumer(pushDTOS);
+        }
         return ApiResult.success();
     }
 }

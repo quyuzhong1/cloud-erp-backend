@@ -271,13 +271,6 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return java.util.List<com.erp.model.wms.entity.InventoryEntity>
      **/
     List<InventoryDTO.UsableInventoryViewDTO> listByParam(List<InventoryDTO.UsableInventoryParamDTO> list);
-    /**
-     * 根据skuId和仓库id获取可用数量
-     * @param paramDTO
-     * @return
-     */
-    List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(InventoryDTO.ParamDTO paramDTO);
-
 
     /**
      * 根据sku获取sku对应库位库存
@@ -331,4 +324,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return
      */
     Integer getFrozenInventoryTotal(String warehouseId, String skuId);
+    /**
+     * 根据skuId和仓库id获取可用数量
+     * @param paramDTO
+     * @return
+     */
+    List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(InventoryDTO.ParamDTO paramDTO);
+
 }

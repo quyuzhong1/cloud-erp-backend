@@ -23,7 +23,7 @@
        <result column="disabled" property="disabled" />
        <result column="execution_time_json" property="executionTimeJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
        <result column="execution_type" property="executionType" />
-       <result column="sorting_method" property="sortingMethod" />
+       <result column="picking_type" property="pickingType" />
        <result column="remark" property="remark" />
     </resultMap>
 
@@ -38,7 +38,7 @@
         crw.update_user_id,
         crw.version,
         crw.is_deleted,
-        crw.name, crw.wave_type, crw.priority, crw.picking_cart_type_id, crw.min_order_qty, crw.max_order_qty, crw.min_qty, crw.max_qty, crw.disabled, crw.execution_time_json, crw.execution_type, crw.sorting_method, crw.remark,
+        crw.name, crw.wave_type, crw.priority, crw.picking_cart_type_id, crw.min_order_qty, crw.max_order_qty, crw.min_qty, crw.max_qty, crw.disabled, crw.execution_time_json, crw.execution_type, crw.picking_type, crw.remark,
         pct.name as pickingCartTypeName
     </sql>
 
@@ -47,7 +47,7 @@
         select
             <include refid="Base_Column_List" />
         from cfg_rule_wave crw
-        left join picking_cart_type pct on pc.picking_cart_type_id = pct.id and pct.is_deleted = false
+        left join picking_cart_type pct on crw.picking_cart_type_id = pct.id and pct.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and crw.is_deleted = false

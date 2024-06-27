@@ -1,6 +1,8 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -235,4 +237,25 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO);
 
+    BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto);
+
+    BatchResultDTO clearException(String id);
+
+    BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto);
+
+    SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids);
+    /**
+     * 查询待处理发货单
+     * @author will
+     * @date 2024/6/25 18:07
+     * @return List<SoB2cDeliveryEntity>
+     */
+    List<SoB2cDeliveryEntity> listWaitHandle();
+
+    /**
+     *
+     * @param base64List base64
+     * @param printWayBillPdfDTO pdf
+     */
+    void customDistribute(List<String> base64List, PrintWayBillPdfDTO printWayBillPdfDTO);
 }

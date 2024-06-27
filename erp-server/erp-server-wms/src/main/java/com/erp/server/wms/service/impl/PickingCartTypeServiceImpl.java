@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -74,6 +75,7 @@ public class PickingCartTypeServiceImpl extends SuperServiceImpl<PickingCartType
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         PickingCartTypeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到拣货车类型数据"));
         //拣货车被使用不支持删除
@@ -87,6 +89,17 @@ public class PickingCartTypeServiceImpl extends SuperServiceImpl<PickingCartType
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
     }
 
+    @Override
+    public Boolean checkIsUsed(String id) {
+        PickingCartTypeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到拣货车类型数据"));
+        //拣货车被使用不支持删除
+        List<PickingCartEntity> list = pickingCartService.listByTypeId(entity.getId());
+        if (CollectionUtils.isNotEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
     /**
      * 删除未更新的数据
      * @author will
@@ -94,11 +107,16 @@ public class PickingCartTypeServiceImpl extends SuperServiceImpl<PickingCartType
      * @param updateIdList
      */
     private void deleteByUpdateIdList(List<String> updateIdList) {
+        List<PickingCartTypeEntity> deleteList = new ArrayList<>();
         if (CollectionUtils.isEmpty(updateIdList)) {
-            lambdaUpdate().remove();
+            deleteList  = this.list();
+        } else {
+            deleteList =  lambdaQuery().notIn(PickingCartTypeEntity::getId,updateIdList).list();
+        }
+        if (CollectionUtils.isEmpty(deleteList)) {
             return;
         }
-        lambdaUpdate().notIn(PickingCartTypeEntity::getId,updateIdList).remove();
+        deleteList.forEach(obj -> delete(obj.getId()));
     }
 
     /**

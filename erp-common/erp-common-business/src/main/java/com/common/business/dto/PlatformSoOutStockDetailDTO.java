@@ -81,5 +81,5 @@ public class PlatformSoOutStockDetailDTO {
     /**
      * 仓储中心(亚马逊专用)
      */
-    private String fulfillmentCenter;
+    private String fulfillmentCenterId;
 }

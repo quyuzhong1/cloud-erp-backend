@@ -437,7 +437,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过后生成拣货明细
-//            generatePickingDetail(list);
+            generatePickingDetail(list);
 
             //获取需要自动生成加工单的数据
             /* List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(ids);
@@ -470,7 +470,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.APPROVE.getStatus());
             //审核通过后生成拣货明细
-//            generatePickingDetail(Arrays.asList(entity));
+            generatePickingDetail(Arrays.asList(entity));
 
             //获取需要自动生成加工单的数据
             /*List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(Arrays.asList(id));

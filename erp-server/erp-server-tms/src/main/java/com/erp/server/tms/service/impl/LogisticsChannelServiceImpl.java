@@ -23,6 +23,7 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
@@ -539,24 +540,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return this.lambdaQuery().in(LogisticsChannelEntity::getName, channelNameList).list();
     }
 
-    @Override
-    public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
-        LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
-        LogisticsChannelEntity channelEntity = this.getById(channelId);
-        String code = "";
-        if (Objects.nonNull(channelEntity)) {
-            signShipDTO.setLogisticsChannelId(channelEntity.getId());
-            code = channelEntity.getCode();
-            signShipDTO.setCode(code);
-        }
-        LogisticsSaleChannelEntity saleChannelEntity = logisticsSaleChannelService.getByCode(code);
-        if (Objects.nonNull(saleChannelEntity)) {
-            signShipDTO.setSaleChannelSupplierName(saleChannelEntity.getSupplierName());
-        }
-        return signShipDTO;
-
-    }
-
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
@@ -632,6 +615,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
         }
+        if (StringUtils.isBlank(logisticsChannelEntity.getDeliveryType())){
+            logisticsChannelEntity.setDeliveryType(DeliveryTypeEnum.SELF_SEND.getCode());
+        }
 
     }
 
@@ -663,25 +649,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         LogisticsChannelDTO.SelectDTO params = dto.getParams();
         IPage<LogisticsChannelDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
-        List<LogisticsChannelDTO.PagingSelectDTO> records = pagResult.getRecords();
-        if (Boolean.TRUE.equals(dto.getParams().getShowSupplier())) {
-            List<String> supplierIds = records.stream().map(LogisticsChannelDTO.PagingSelectDTO::getLogisticsSupplierId).collect(Collectors.toList());
-            List<LogisticsSupplierDTO.LogisticsSupplierListDTO> supplierListDTOS = logisticsSupplierService.listLogisticsChannel(supplierIds);
-            if (CollectionUtils.isNotEmpty(supplierListDTOS)){
-                records.forEach(record->{
-                    LogisticsSupplierDTO.LogisticsSupplierListDTO logisticsSupplierListDTO = supplierListDTOS.stream().filter(item -> Objects.equals(item.getLogisticsSupplierId(), record.getLogisticsSupplierId())).findFirst().orElse(null);
-                    if (Objects.nonNull(logisticsSupplierListDTO)) {
-                        record.setLogisticsSupplierId(logisticsSupplierListDTO.getLogisticsSupplierId());
-                        record.setLogisticsSupplierName(logisticsSupplierListDTO.getLogisticsSupplierName());
-                    }else{
-                        record.setLogisticsSupplierId("");
-                    }
-                });
-            }
-        }
+//        List<LogisticsChannelDTO.PagingSelectDTO> records = pagResult.getRecords();
         //排序
-        List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
-        pagResult.setRecords(list);
+//        List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
+//        pagResult.setRecords(list);
         return new PagingVO<>(pagResult);
     }
 }

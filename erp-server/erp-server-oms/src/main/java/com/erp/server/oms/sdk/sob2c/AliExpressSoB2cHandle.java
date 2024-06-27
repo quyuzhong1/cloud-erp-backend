@@ -171,13 +171,14 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
                         notMatchSkuNoList.add(deliveryDetailDTO.getScItemId());
                         continue;
                     }
-                    deliveryDetailDTO.setSkuId(deliveryDetailDTO.getSkuId());
-                    deliveryDetailDTO.setSkuNo(deliveryDetailDTO.getSkuNo());
+                    deliveryDetailDTO.setSkuId(warehouseSkuDTO.getProductSkuId());
+                    deliveryDetailDTO.setSkuNo(warehouseSkuDTO.getProductSkuNo());
                     deliveryDetailDTO.setWarehouseId(mappingViewDTO.getWarehouseId());
                     deliveryDetailDTO.setWarehouseName(mappingViewDTO.getWarehouseName());
                     deliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
                     deliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
                 }
+                val = val.stream().filter(v->StringUtils.isNotBlank(v.getSkuId())).collect(Collectors.toList());
                 List<String> skuIdList = val.stream().map(PlatformDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
                 PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
                         .platformDeliveryDetailDTOList(val)

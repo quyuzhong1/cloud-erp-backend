@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -655,6 +656,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 保宏单号（报关单号类型） /tms/drop/down/dict/list?key=declareCodeType
          */
         private String declareCodeType;
+
+        /**
+         * 配送方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+         */
+        private String deliveryType;
     }
 
     @Data
@@ -747,11 +753,11 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private Boolean disabled;
         /**
-         * 渠道编码
+         * 编码
          */
         private String code;
         /**
-         * 渠道名称
+         * 值
          */
         private String value;
         /**

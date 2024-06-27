@@ -71,6 +71,7 @@ public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{
 				dmpInputTaskEntity.setEndTime(dmpInputHotfixCreateRequest.getEndTime());
 				dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
 				dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
+				dmpInputTaskEntity.setExecTimeout(dmpInputHotfixCreateRequest.getExecTimeout());
 				
 				dmpInputTaskEntityList.add(dmpInputTaskEntity);
 				

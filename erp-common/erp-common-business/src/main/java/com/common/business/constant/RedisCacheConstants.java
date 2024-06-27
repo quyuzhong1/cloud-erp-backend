@@ -200,4 +200,9 @@ public interface RedisCacheConstants {
      */
     String TMS_DECLARE_CODE = "tms_declare_code:{}_{}";
 
+    /**
+     * 亚马逊订单任务开始时间前置:taskId
+     */
+    String AMAZON_ORDER_TASK_TIME_PREFIX = "amazon_order_start_time:{}";
+
 }

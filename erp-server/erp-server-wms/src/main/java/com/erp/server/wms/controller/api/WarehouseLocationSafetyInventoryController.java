@@ -4,15 +4,13 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto;
 import com.erp.server.wms.query.WarehouseLocationSafetyInventoryHandler;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -27,11 +25,18 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/warehouseLocationSafetyInventory")
-public class WarehouseLocationSafetyInventoryController {
+public class WarehouseLocationSafetyInventoryController extends BaseController {
 
     @Resource
     private WarehouseLocationSafetyInventoryService safetyInventoryService;
 
+    /**
+     * 高级查询
+     * @param pagingDTO 查询参数
+     * @return
+     * @date: 2024-06-26
+     * @author: tanmujin
+     */
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
     public ApiResult<PagingVO<WarehouseLocationSafetyInventoryDto.ViewDto>> paging(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDto.SearchParamDto> pagingDTO){
@@ -39,30 +44,61 @@ public class WarehouseLocationSafetyInventoryController {
         return ApiResult.success(pagingResult);
     }
 
+    /**
+     * 批量更新
+     * @param list 更新的列表
+     * @return
+     * @date: 2024-06-26
+     * @author: tanmujin
+     */
     @PostMapping("/updateBatch")
     public ApiResult<List<BaseResultDTO.UpdateDTO>> updateBatch(@RequestBody List<WarehouseLocationSafetyInventoryDto.UpdateParamDto> list){
-//        List<BaseResultDTO.UpdateDTO> result = new ArrayList<>(list.size());
+        List<BaseResultDTO.UpdateDTO> resultList = new ArrayList<>(list.size());
         for (WarehouseLocationSafetyInventoryDto.UpdateParamDto dto : list) {
-            safetyInventoryService.updateInventory(dto);
-            /*if(updateCount == 0){
-                result.add(new BaseResultDTO.UpdateDTO(dto.getId(), null));
-            }*/
+            BaseResultDTO.UpdateDTO result = safetyInventoryService.updateInventory(dto);
+            if(result != null){
+                resultList.add(result);
+            }
         }
-        return ApiResult.success();
+        return ApiResult.success(resultList);
     }
 
+    /**
+     * 导入Excel
+     * @param file 导入的文件
+     * @return
+     * @date: 2024-06-26
+     * @author: tanmujin
+     */
     @PostMapping("/importExcel")
-    public void importExcel(MultipartFile file, HttpServletResponse response){
-        safetyInventoryService.importExcel(file, response);
+    public ApiResult<?> importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response){
+        boolean flag = safetyInventoryService.importExcel(file, response);
+        return flag ? success() : failure();
     }
 
+    /**
+     * 导出仓位安全库存
+     * @param dto 导出参数
+     * @return void
+     * @date: 2024-06-26
+     * @author: tanmujin
+     */
     @PostMapping("/exportExcel")
-    public void exportExcel(WarehouseLocationSafetyInventoryDto.exportParamDto dto, HttpServletResponse response){
-        safetyInventoryService.exportExcel(dto, response);
+    @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
+    public ApiResult<?> exportExcel(@RequestBody WarehouseLocationSafetyInventoryDto.exportParamDto dto, HttpServletResponse response){
+        boolean flag = safetyInventoryService.exportExcel(dto, response);
+        return flag ? success() : failure();
     }
 
-    @PostMapping("/downloadTemplate")
-    public void downloadTemplate(HttpServletResponse response){
-        ExcelUtil.downloadTemplate("excel/warehouseLocationSafetyInventoryImport.xlsx", "仓位安全库存导入模板.xlsx", response);
+    /**
+     * 下载导入模板
+     * @return
+     * @date: 2024-06-26
+     * @author: tanmujin
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult<?> downloadTemplate(HttpServletResponse response){
+        safetyInventoryService.downloadTemplate(response);
+        return success();
     }
 }

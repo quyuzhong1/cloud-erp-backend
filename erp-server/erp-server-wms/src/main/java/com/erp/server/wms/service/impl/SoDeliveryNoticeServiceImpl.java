@@ -746,35 +746,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (soCount > 0) {
             throw new ServiceException(ApiError.ERROR_99105);
         }
-        List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
-        //添加校验
-        List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(soIds);
-        List<SoDeliveryNoticeDetailEntity> noticeDetail = soDeliveryNoticeDetailService.listDetailByMainIds(idList);
-        for (SoDeliveryNoticeEntity soDeliveryNotice : list) {
-            List<SoDeliveryNoticeDetailEntity> detail = noticeDetail.stream()
-                    .filter(e -> e.getMainId().equals(soDeliveryNotice.getId()))
-                    .collect(Collectors.toList());
-            Map<String, Integer> detailMap = detail.stream().collect(Collectors.toMap(SoDeliveryNoticeDetailEntity::getSkuNo, SoDeliveryNoticeDetailEntity::getPickingQty, Integer::sum));
-            for (Map.Entry<String, Integer> entry : detailMap.entrySet()) {
-                List<SoDetailEntity> soDetailList = soDetails.stream()
-                        .filter(v -> v.getSkuNo().equals(entry.getKey()))
-                        .filter(v -> v.getMainId().equals(soDeliveryNotice.getSourceId()))
-                        .collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(soDetailList)) {
-                    throw new ServiceException(ApiError.ERROR_99107, entry.getKey());
-                }
-                int sellQty = soDetailList.stream().mapToInt(SoDetailEntity::getQty).sum();
-                int actualQty = detailEntities.stream()
-                        .filter(v -> v.getSkuNo().equals(entry.getKey()))
-                        .filter(v -> v.getSoId().equals(soDeliveryNotice.getSourceId()))
-                        .mapToInt(SoOutstockDetailEntity::getActualQty)
-                        .sum();
-                if (sellQty < actualQty + entry.getValue()) {
-                    throw new ServiceException(ApiError.ERROR_99103, entry.getKey());
-                }
-            }
-        }
-
         //获取到销售退货单 下推列表
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(idList, soDeliveryNotice);
@@ -1120,9 +1091,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     public void writeBackData(String sourceId) {
         List<SoDeliveryNoticeDetailEntity> detailEntities = soDeliveryNoticeDetailService.listDetailByMainId(sourceId);
-        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getSourceDetailId, sourceId));
-        Map<String, Integer> detailQtyMap = pickingDetailEntities.stream()
-                .collect(Collectors.toMap(PickingDetailEntity::getSkuId, PickingDetailEntity::getQty, Integer::sum));
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(sourceId));
+        Map<String, Integer> detailQtyMap = views.stream()
+                .collect(Collectors.toMap(PickingListsDTO.SourceView::getSkuId, PickingListsDTO.SourceView::getQty, Integer::sum));
         for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
             int qty = Optional.ofNullable(detailQtyMap.get(detailEntity.getSkuId())).orElse(0);
             if (qty > detailEntity.getDeliveryQty()) {

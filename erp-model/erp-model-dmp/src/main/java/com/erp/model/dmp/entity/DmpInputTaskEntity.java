@@ -56,7 +56,7 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
     @TableField("error_message")
     private String errorMessage;
     /**
-    * 任务类型：normal=正常任务，history=补偿任务，hotfix=及时任务  枚举：DmpInputTaskTaskTypeEnum
+    * 任务类型：normal=正常任务，history=历史任务，hotfix=及时任务  枚举：DmpInputTaskTaskTypeEnum
     */
     @TableField("task_type")
     private String taskType;
@@ -72,6 +72,12 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
       */
     @TableField("parent_task_id")
     private String parentTaskId;
+    
+    /**
+     * 执行超时时间，单位秒
+     */
+     @TableField("exec_timeout")
+     private Integer execTimeout;
 
     public static final String INPUT_DETAIL_ID = "input_detail_id";
 

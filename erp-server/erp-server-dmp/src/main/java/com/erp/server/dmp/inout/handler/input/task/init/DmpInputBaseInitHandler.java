@@ -78,11 +78,7 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				if(StringUtils.isNotBlank(extendJson)) {
 					DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
 					JSONObject parseObject = JSON.parseObject(extendJson);
-					if("order".equals(dmpCfgInputEntity.getCode())) {
-						dmpInputApiInitRequest.setFilterStr(parseObject.getString("filterStr")
-								.replace("{startTime}", sdf.format(startTime))
-								.replace("{endTime}", sdf.format(endTime)));
-					}else if("orderItem".equals(dmpCfgInputEntity.getCode())) {
+					if("orderItem".equals(dmpCfgInputEntity.getCode())) {
 						Map findMongoDataById = null;
 						parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
 						if(StringUtils.isNotBlank(parentStorageName)) {
@@ -98,6 +94,10 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 						dmpInputApiInitRequest.setFilterStr(parseObject.getString("filterStr")
 								.replace("{FBillNo}", findMongoDataById.get("FBillNo").toString())
 								.replace("{FID}", findMongoDataById.get("FID").toString()));
+					}else {
+						dmpInputApiInitRequest.setFilterStr(parseObject.getString("filterStr")
+								.replace("{startTime}", sdf.format(startTime))
+								.replace("{endTime}", sdf.format(endTime)));
 					}
 					
 					dmpInputApiInitRequest.setFieldKeys(parseObject.getString("fieldKeys"));

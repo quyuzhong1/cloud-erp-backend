@@ -185,6 +185,12 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("declare_code_type")
     private String declareCodeType;
 
+    /**
+     * 配送方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+     */
+    @TableField("delivery_type")
+    private String deliveryType;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String NAME = "name";

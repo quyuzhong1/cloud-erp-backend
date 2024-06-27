@@ -318,4 +318,17 @@ public class ThirdMappingDTO implements Serializable {
         private String sys_warehouse_id;
         private Integer is_start_up;
     }
+
+    @Data
+    public static class WarehouseMappingDTO{
+        /**
+         * ERP系统仓库ID
+         */
+        private String sysWarehouseId;
+
+        /**
+         * 第三方仓库编码
+         */
+        private String thirdWarehouseCode;
+    }
 }

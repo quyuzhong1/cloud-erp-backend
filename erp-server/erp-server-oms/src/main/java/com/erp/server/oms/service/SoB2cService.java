@@ -941,4 +941,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     List<SoB2cEntity> listByCreateTime(LocalDateTime startTime, LocalDateTime endTime);
 
+    /**
+     * 查询b2c销售订单数据
+     * @author will
+     * @date 2024/6/26 8:59
+     * @param paramDTO
+     * @return SoB2cDataDTO
+     */
+    SoB2cDTO.SoB2cDataDTO listSoB2cData(SoB2cDTO.SoB2cDataParamDTO paramDTO);
 }

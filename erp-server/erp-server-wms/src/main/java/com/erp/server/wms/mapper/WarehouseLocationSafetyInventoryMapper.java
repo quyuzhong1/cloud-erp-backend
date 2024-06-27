@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Mapper
 public interface WarehouseLocationSafetyInventoryMapper extends BaseMapper<WarehouseLocationSafetyInventoryEntity> {
-    IPage<WarehouseLocationSafetyInventoryDto.ViewDto> paging(Page<Object> page, @Param("searchParam") WarehouseLocationSafetyInventoryDto.SearchParamDto searchParamDto);
+    IPage<WarehouseLocationSafetyInventoryDto.ViewDto> paging(Page<Object> page, @Param("param") WarehouseLocationSafetyInventoryDto.SearchParamDto searchParamDto);
 
-    List<WarehouseLocationSafetyInventoryEntity> paging(@Param("searchParam") WarehouseLocationSafetyInventoryDto.SearchParamDto searchParam);
+    List<WarehouseLocationSafetyInventoryEntity> listByParam(@Param("param") WarehouseLocationSafetyInventoryDto.SearchParamDto searchParam);
 }

@@ -36,8 +36,6 @@ public class VirtualWarehouseRelationEntity extends BaseEntity<VirtualWarehouseR
     private String warehouseId;
 
 
-    public static final String DISABLED = "disabled";
-
     public static final String VIRTUAL_WAREHOUSE_ID = "virtual_warehouse_id";
 
     public static final String WAREHOUSE_ID = "warehouse_id";

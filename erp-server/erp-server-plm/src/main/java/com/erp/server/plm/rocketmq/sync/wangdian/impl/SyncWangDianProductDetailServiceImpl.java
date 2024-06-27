@@ -1,5 +1,6 @@
 package com.erp.server.plm.rocketmq.sync.wangdian.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -10,20 +11,18 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProductPackEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.SaleMethodEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
-import com.erp.server.plm.service.ProductInfoService;
-import com.erp.server.plm.service.ProductPackService;
-import com.erp.server.plm.service.ProductPurchaseService;
+import com.erp.server.plm.service.*;
 import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
@@ -31,6 +30,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,17 +48,28 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     @Resource
     private ProductPackService productPackService;
     @Resource
+    private BomSkuService bomSkuService;
+    @Resource
     private DmpMqFeign dmpMqFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void syncDataToWangDian(ProductDetailEntity entity) {
         DmpPushTaskEntity dmpPushTask = getGoodsBatchPushDTO(entity);
-        sendMTask(Collections.singletonList(dmpPushTask));
+        if (ObjectUtil.isNotEmpty(dmpPushTask)) {
+            sendMTask(Collections.singletonList(dmpPushTask));
+        }
     }
 
     private DmpPushTaskEntity getGoodsBatchPushDTO(ProductDetailEntity entity) {
+        List<BomInfoEntity> infoEntities = bomSkuService.listBomByParentSkuIds(Collections.singletonList(entity.getId()));
+        BomInfoEntity bomInfoEntity = infoEntities.stream()
+                .findFirst().orElse(null);
+        if (!ObjectUtils.isEmpty(bomInfoEntity) && BomTypeEnum.COMBINATION.getType().equals(bomInfoEntity.getType())){
+            return null;
+        }
         ProductInfoEntity info = productInfoService.getById(entity.getProductId());
-        ProductPurchaseEntity productPurchase = productPurchaseService.getBySkuId(entity.getId());
+        ProductPurchaseEntity productPurchase = Optional.ofNullable(productPurchaseService.getBySkuId(entity.getId())).orElse(new ProductPurchaseEntity());
         ProductPackEntity productPack = productPackService.getBySkuId(entity.getId());
         GoodsBatchPushDTO dto = new GoodsBatchPushDTO();
         dto.setGoodsNo(info.getSpuNo());
@@ -66,6 +77,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         dto.setGoodsType(getGoodsType(info.getSaleMethod(), info.getProperty()));
         GoodsBatchPushDTO.SpecList specList = new GoodsBatchPushDTO.SpecList();
         specList.setSpecNo(entity.getSkuNo());
+        specList.setSpecName(entity.getName());
         specList.setBarcode(productPurchase.getEan());
         specList.setWeight(MathUtil.divide(productPack.getNetWeight(), new BigDecimal(1000), 4, BigDecimal.ROUND_HALF_UP));
         specList.setLength(LengthConverterUtil.mmToCm(productPack.getProductLength()));
