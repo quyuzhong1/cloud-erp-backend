@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -78,4 +79,6 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
      * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO>
      **/
     List<String> listPoReturnAutoConfirm(@Param("params") List<CfgSettingDTO.ViewDTO> list);
+
+    List<PoReturnDetailEntity> listPoReturnByPoDetailIds(@Param("podIds") List<String> podIds,@Param("approveStatusList") List<String> approveStatusList);
 }

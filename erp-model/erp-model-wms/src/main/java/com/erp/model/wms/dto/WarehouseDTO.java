@@ -288,7 +288,14 @@ public class WarehouseDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
-
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 启用状态
+         */
+        private Boolean disabled;
     }
 
     @Data
@@ -687,6 +694,14 @@ public class WarehouseDTO implements Serializable {
          * 前端忽略
          */
         private String warehouseManageType;
+        /**
+         * 审核状态
+         * waitSubmit :待提交
+         * approveIng :审核中
+         * reject :审核不通过
+         * approve :已审核
+         */
+        private String approveStatus;
     }
 
     /**

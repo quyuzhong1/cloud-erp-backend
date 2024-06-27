@@ -1265,6 +1265,8 @@ public enum ApiError implements Serializable {
 
     ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE(92149,"订单下的明细仓库一致，无法按仓库拆分"),
     ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL(92150,"B2C销售订单【{}】物流下单平台不能为空"),
+    ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】不能设置多个渠道"),
+    ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
     /**
      * TMS 错误
      * 从94000 开始
@@ -1333,6 +1335,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
     ERROR_CFG_COST_EMPTY(94045,"未发现【{}】费用配置信息"),
     ERROR_LOGISTICS_CHANNEL_WAREHOUSE_NOT_NULL(94046,"指定仓库不能为空"),
+    ERROR_SO_B2C_STATUS_NOT_ALLOWED(92150,"非待提交和审核不通过的订单不允许添加赠品"),
 
 
 

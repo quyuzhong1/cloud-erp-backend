@@ -152,7 +152,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto) {
-        List<WarehouseEntity> list = baseMapper.listWarehouse(dto.getSearchKeyword());
+        List<WarehouseEntity> list = baseMapper.listWarehouse(dto);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }

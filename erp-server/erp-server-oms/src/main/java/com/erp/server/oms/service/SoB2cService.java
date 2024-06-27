@@ -913,6 +913,30 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void processOrderApproveData();
 
     /**
+     * 添加赠品
+     * @param entity
+     * @param detailEntityList
+     * @param dtoList
+     * @param LogisticsEntity
+     * @return
+     */
+    BatchResultDTO addGift(SoB2cEntity entity,List<SoB2cDTO.GiftDTO> dtoList,SoB2cLogisticsEntity LogisticsEntity,List<SoB2cDetailEntity> detailEntityList);
+
+    /**
+     * 根据销售订单id获取买家信息
+     * @param ids
+     * @return
+     */
+    List<SoB2cReceiverDTO.ViewDTO> getReceiverInfo(List<String> ids);
+
+    /**
+     * 更新买家信息
+     * @param dto
+     * @return
+     */
+    BatchResultDTO updateReceiverInfo(SoB2cReceiverDTO.UpdateBaseDTO dto);
+
+    /**
      * 根据订单创建时间查询订单
      */
     List<SoB2cEntity> listByCreateTime(LocalDateTime startTime, LocalDateTime endTime);

@@ -33,6 +33,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
+import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -227,8 +228,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         //同步中
         DmpPushTaskDTO.TabListDTO syncIng = new DmpPushTaskDTO.TabListDTO();
         syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getCode());
-        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(syncIng.getTabFlag())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(syncIng.getTabFlag()) || SyncStatusEnum.TO_BE_SYNC.getCode().equals(a.getTabFlag())).mapToInt(DmpPushTaskDTO.TabListDTO::getCount).sum();
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
         //已归档

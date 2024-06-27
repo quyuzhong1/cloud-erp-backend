@@ -869,6 +869,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                         savePurchasePriceDetailEntity.setExpireDate(expireDate);
                         savePurchasePriceDetailEntity.setTaxRate(taxRate);
                         savePurchasePriceDetailEntity.setId(detailId);
+                        if (StringUtils.isBlank(savePurchasePriceDetailEntity.getCurrency())){
+                            savePurchasePriceDetailEntity.setCurrency(item.getCurrency());
+                        }
                         updateItemList.add(savePurchasePriceDetailEntity);
                     }
                 } else {

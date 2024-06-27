@@ -1458,7 +1458,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<WarehouseReceiveDetailEntity> receiveDetailList = receiveDetails.stream()
                     .filter(req -> req.getMainId().equals(dto.getReceiveId())
                             && SourceTypeEnum.PO_RECEIVE.getCode().equals(dto.getReceiveType())
-                            && dto.getSkuId().equals(req.getSkuId())).collect(Collectors.toList());
+                            && dto.getSkuId().equals(req.getSkuId())
+                            && req.getId().equals(dto.getSourceDetailId())).collect(Collectors.toList());
             Integer receiveQty;
             if (CollectionUtils.isEmpty(receiveDetailList)){
                 //收货单已收数量
