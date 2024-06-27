@@ -10,9 +10,6 @@ import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -293,6 +290,16 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @author: tanmujin
      */
     List<WarehouseLocationEntity> listByLocationName(String warehouseLocationName);
+
+    /**
+     * 查询库区
+     * @param warehouseId 仓库ID
+     * @param areaTypeCode 库区类型
+     * @return 库区列表
+     * @date: 2024-06-25
+     * @author: tanmujin
+     */
+    List<WarehouseLocationDTO.CoreDTO> listArea(String warehouseId, String areaTypeCode);
 
     /**
      * 查询所有库区

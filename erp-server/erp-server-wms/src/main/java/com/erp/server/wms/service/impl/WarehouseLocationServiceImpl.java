@@ -887,6 +887,16 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    public List<WarehouseLocationDTO.CoreDTO> listArea(String warehouseId, String areaTypeCode) {
+        List<WarehouseLocationEntity> list = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>()
+                .eq("warehouse_id", warehouseId)
+                .eq("type", "area")
+                .eq("code", areaTypeCode)
+                .eq("is_deleted", false));
+        return BeanMapper.copyList(list, WarehouseLocationDTO.CoreDTO.class);
+    }
+
+    @Override
     public List<WarehouseLocationDTO.ViewDto> listAllArea() {
         List<WarehouseLocationEntity> entityList = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("type", "area")
