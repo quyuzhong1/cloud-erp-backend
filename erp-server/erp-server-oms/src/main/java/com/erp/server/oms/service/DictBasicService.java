@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -59,4 +60,14 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return com.erp.model.oms.entity.DictBasicEntity
      */
     DictBasicEntity getByTypeAndValue(String type,String value);
+
+    /**
+     * 根据key 获取字典数据
+     *
+     * @param key
+     * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     * @author yl
+     * @date 2023-03-17 14:16
+     */
+    List<BaseDropDownDTO.Tree> getTreeByKey(String key);
 }

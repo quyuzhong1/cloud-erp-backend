@@ -2,6 +2,9 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -21,14 +24,18 @@ import com.erp.server.dmp.mapper.ThirdMappingMapper;
 import com.erp.server.dmp.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sdk.wangdian.dto.ErpWarehouseDto;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -574,6 +581,58 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         return null;
     }
 
+    /**
+     * 根据系统id获取仓库
+     *
+     * @param sysIds
+     * @return
+     */
+    @Override
+    public List<ThirdMappingEntity> getListBySysIds(List<String> sysIds) {
+        LambdaQueryWrapper<ThirdMappingEntity> queryWrapper = new LambdaQueryWrapper<ThirdMappingEntity>()
+                .in(ThirdMappingEntity::getSysId, sysIds)
+                .eq(ThirdMappingEntity::getIsDeleted, false)
+                .eq(ThirdMappingEntity::getDisabled, false);
+        return baseMapper.selectList(queryWrapper);
+    }
+
+    /**
+     * 根据系统id获取虚拟仓绑定
+     *
+     * @param sysIds
+     * @return
+     */
+    @Override
+    public List<ThirdMappingEntity> getVwListBySysIds(List<String> sysIds) {
+        List<ThirdMappingEntity> listBySysIds = getListBySysIds(sysIds);
+        if (CollectionUtils.isNotEmpty(listBySysIds)) {
+            List<ThirdWarehouseEntity> thirdWarehouseEntities = thirdWarehouseService.listByIds(listBySysIds.stream().map(ThirdMappingEntity::getThirdInfoId).collect(Collectors.toList()));
+            listBySysIds.forEach(thirdMappingEntity -> {
+                ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseEntities.stream().filter(item -> Objects.equals(thirdMappingEntity.getThirdId(), item.getWarehouseId())).findFirst().orElse(null);
+                if (Objects.nonNull(thirdWarehouseEntity)) {
+                    String warehouseList = thirdWarehouseEntity.getWarehouseList();
+                    if (StringUtils.isNotBlank(warehouseList)) {
+                         JSONArray jsonArray = JSONObject.parseArray(warehouseList);
+
+                        if (Objects.nonNull(jsonArray)) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(0);
+
+                            String warehouseNo = jsonObject.getString("warehouse_no");
+                            thirdMappingEntity.setRemark(warehouseNo);
+                        }
+
+
+//                        ThirdMappingDTO.WarehouseListDto warehouseListDto = JSONObject.parseArray(warehouseList, ThirdMappingDTO.WarehouseListDto.class).stream().findFirst().orElse(null);
+//                        if (Objects.nonNull(warehouseListDto)) {
+//                            thirdWarehouseEntity.setRemark(warehouseListDto.getSys_warehouse_id());
+//                        }
+                    }
+                }
+            });
+        }
+        return listBySysIds;
+    }
+
 
     /**
      * 新增修改处理数据
@@ -681,6 +740,9 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 }
                 sysName = shopInfo.getName();
                 break;
+            case VIRTUAL_WAREHOUSE:
+                sysName = addDTO.getSysName();
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_400);
         }
@@ -755,7 +817,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 case WAREHOUSE:
                     if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType())) {
                         //校验第三方仓库是否存在
-                        ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId()))
+                        ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode()))
                                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
                         thirdName = thirdWarehouseEntity.getName();
                         thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
@@ -780,6 +842,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdShopEntity.getName();
                     thirdAddDTO.setThirdInfoId(thirdShopEntity.getId());
                     thirdAddDTO.setThirdCode(thirdShopEntity.getCode());
+                    break;
+                case VIRTUAL_WAREHOUSE:
+                    //校验第三方仓库是否存在
+                    ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode()))
+                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                    thirdName = thirdWarehouseEntity.getName();
+                    thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
+                    thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
                     break;
                 default:
                     throw new ServiceException(ApiError.ERROR_400);
@@ -809,6 +879,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdAddDTO.getType()), thirdName, existThirdMapping.getSysName());
             }
         });
+    }
+
+    @Override
+    public List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(List<String> warehouseIdList, String sysType) {
+        if(warehouseIdList.isEmpty()){
+           return Collections.emptyList();
+        }
+        return this.baseMapper.listMappingBySysIds(warehouseIdList, sysType);
     }
 
 

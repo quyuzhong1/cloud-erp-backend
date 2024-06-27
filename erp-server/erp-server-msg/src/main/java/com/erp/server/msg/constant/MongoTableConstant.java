@@ -12,5 +12,9 @@ public interface MongoTableConstant {
      * 消息日志
      */
     String MSG_LOG = "MSG_LOG";
+    /**
+     * 飞书预警消息
+     */
+    String FEISHU_WARN_MSG = "feishu_warn_msg";
 
 }

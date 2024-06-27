@@ -70,4 +70,10 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
      * @since 2023-11-10
      **/
     SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList);
+
+    /**
+     * 更新指定字段
+     * @param receiver
+     */
+    void updateFieldById(SoB2cReceiverEntity receiver);
 }

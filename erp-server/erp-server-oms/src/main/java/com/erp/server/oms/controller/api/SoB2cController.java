@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * B2C销售订单表
@@ -578,7 +579,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:43
      */
     @PostMapping("/saveSoB2cDistribution")
-    public ApiResult<List<BatchResultDTO>> saveSoB2cDistribution(@RequestBody @Validated SoB2cDTO.SaveSoB2cDistributionDTO dto) {
+    public ApiResult<List<BatchResultDTO>> saveSoB2cDistribution(@RequestBody SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO result;
@@ -1203,6 +1204,78 @@ public class SoB2cController extends BaseController {
     public ApiResult processOrderApproveData(){
         soB2cService.processOrderApproveData();
         return ApiResult.success();
+    }
+
+    /**
+     * 添加赠品
+     *
+     * @param dtoList
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2024-06-17
+     */
+    @PostMapping("/addGift")
+    public ApiResult<List<BatchResultDTO>> addGift(@RequestBody @Validated List<SoB2cDTO.GiftDTO> dtoList) {
+        Map<String, List<SoB2cDTO.GiftDTO>> collect = dtoList.stream().collect(Collectors.groupingBy(SoB2cDTO.GiftDTO::getId));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(collect.size());
+        List<String> ids = dtoList.stream().map(SoB2cDTO.GiftDTO::getId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> entityList = soB2cService.listByIds(ids);
+        List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listByMainIds(ids);
+        List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        for (List<SoB2cDTO.GiftDTO> dtoList1 : collect.values()) {
+            SoB2cDTO.GiftDTO dto = dtoList1.stream().filter(e -> StringUtils.isNotBlank(e.getId()) && StringUtils.isNotBlank(e.getCode())).findFirst().orElse(new SoB2cDTO.GiftDTO());
+            SoB2cEntity entity = entityList.stream().filter(v->v.getId().equals(dto.getId())).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getId(),"销售订单记录不存在"));
+                continue;
+            }
+            List<SoB2cDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> e.getMainId().equals(dto.getId())).collect(Collectors.toList());
+            SoB2cLogisticsEntity LogisticsEntity = logisticsEntityList.stream().filter(e -> e.getMainId().equals(dto.getId())).findFirst().orElse(null);
+            try {
+                resultDTOS.add(soB2cService.addGift(entity,dtoList1, LogisticsEntity, detailEntityList1));
+            } catch (Exception e) {
+                log.error("B2C销售订单添加赠品失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 获取买家信息
+     * @param idDTO
+     * @return
+     */
+    @PostMapping("/getReceiverInfo")
+    public ApiResult<List<SoB2cReceiverDTO.ViewDTO>> getReceiverInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        return success(soB2cService.getReceiverInfo(idDTO.getIds()));
+    }
+
+    /**
+     * 修改买家信息
+     * @param dtoList
+     * @return
+     */
+    @PostMapping("/updateReceiverInfo")
+    public ApiResult<List<BatchResultDTO>> updateReceiverInfo(@RequestBody @Validated List<SoB2cReceiverDTO.UpdateBaseDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        for (SoB2cReceiverDTO.UpdateBaseDTO dto : dtoList) {
+            BatchResultDTO receiverResult;
+            try {
+                receiverResult = soB2cService.updateReceiverInfo(dto);
+            } catch (Exception e) {
+                log.error("B2C销售订单作废失败", e);
+                SoB2cEntity entity = soB2cService.getById(dto.getMainId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    receiverResult = BatchResultDTO.fail(dto.getMainId(), dto.getSoB2cCode(), "B2C销售订单不存在, 修改买家信息失败");
+                    resultDTOS.add(receiverResult);
+                    continue;
+                }
+                receiverResult = BatchResultDTO.fail(dto.getMainId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(receiverResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -4,9 +4,9 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.db.Page;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
@@ -23,6 +23,7 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
@@ -614,7 +615,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
         }
-
     }
 
     @Override
@@ -641,15 +641,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return new LogisticsChannelDTO.SignShipDTO(entity.getId(),logisticsChannelId, entity.getCode(), entity.getCnName(), viewDTO.getOrderDeliveryMarkType());
     }
     @Override
-    public PagingVO<BaseDropDownDTO.DisabledDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto) {
+    public PagingVO<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsChannelDTO.SelectDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        BaseDropDownDTO.SelectDTO params = dto.getParams();
-        IPage<BaseDropDownDTO.DisabledDTO> pagResult = baseMapper.pagingSelect(query, params);
-        List<BaseDropDownDTO.DisabledDTO> records = pagResult.getRecords();
-//        handleSelect(records);
+        LogisticsChannelDTO.SelectDTO params = dto.getParams();
+        IPage<LogisticsChannelDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
+//        List<LogisticsChannelDTO.PagingSelectDTO> records = pagResult.getRecords();
         //排序
-        List<BaseDropDownDTO.DisabledDTO> list = records.stream().sorted(Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled)).collect(Collectors.toList());
-        pagResult.setRecords(list);
+//        List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
+//        pagResult.setRecords(list);
         return new PagingVO<>(pagResult);
     }
 }

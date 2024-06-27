@@ -16,10 +16,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -40,6 +37,7 @@ import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -58,10 +56,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.MachineRefSoEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.MachineTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
@@ -75,6 +70,7 @@ import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.convert.SoInfoConverter;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.listener.B2BSoImportExcelListener;
 import com.erp.server.oms.mapper.SoInfoMapper;
@@ -209,6 +205,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
     @Autowired
     private SkuMappingService skuMappingService;
 
@@ -301,6 +300,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         addEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(addEntity);
+        //获取虚拟仓库
+        handleVirtualWarehouse(addEntity);
 
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
@@ -324,6 +325,29 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return "";
     }
 
+    /**
+     * 查询虚拟仓库
+     * @author will
+     * @date 2024/6/12 19:14
+     * @param entity
+     */
+    private void handleVirtualWarehouse (SoInfoEntity entity) {
+        //查询客户信息
+        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getCustomerId());
+        if (ObjectUtil.isEmpty(customerInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+        //查询虚拟仓信息
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
+        platformDTO.setWarehouseIdList(Arrays.asList(entity.getWarehouseId()));
+        platformDTO.setRelationId("");
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+        if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+          return;
+        }
+        entity.setVirtualWarehouseId(virtualWarehouseList.get(0).getVirtualWarehouseId());
+    }
 
     /**
      * 提交
@@ -904,7 +928,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         draftEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(draftEntity);
-
+        //获取虚拟仓库
+        handleVirtualWarehouse(draftEntity);
         //保存成功
         Boolean draftResult = this.saveOrUpdate(draftEntity);
         if (draftResult) {
@@ -1010,6 +1035,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soInfo.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(soInfo);
+        //获取虚拟仓库
+        handleVirtualWarehouse(soInfo);
 
         Boolean updateResult = this.updateById(soInfo);
         if (updateResult) {
@@ -2841,6 +2868,62 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<SoInfoDTO.GenerateSoOutView> generateSoOutView(List<String> ids) {
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listSoDetailByIds(ids);
+        List<String> mainIds = soDetailEntityList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntityList = this.listByIds(mainIds);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> allDeliveryQtyDTOList = soOutstockFeign.listDetailBySoDetailIds(ids);
+        List<String> customerIds = soInfoEntityList.stream().map(SoInfoEntity::getCustomerId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoEntities = customerInfoService.listByIds(customerIds);
+        List<SoInfoDTO.GenerateSoOutView> viewList = new ArrayList<>();
+        //根据ids查询sku信息
+        List<String> skuIdList = soDetailEntityList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (SoDetailEntity soDetailEntity : soDetailEntityList) {
+            SoInfoEntity soInfoEntity = soInfoEntityList.stream().filter(v->v.getId().equals(soDetailEntity.getMainId())).findFirst().orElse(null);
+            ProductDetailEntity productDetailEntity  = productDetailEntityList.stream().filter(v->v.getId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            if(Objects.isNull(soInfoEntity)){
+                throw new ServiceException("销售订单为空"+soDetailEntity.getId());
+            }
+            if(!soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)){
+                throw new ServiceException(StrUtil.format("只有已审核的单据可以下推销售出库单:{}",soInfoEntity.getCode()));
+            }
+            CustomerInfoEntity customerInfo = customerInfoEntities.stream().filter(v->v.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            List<SoOutstockDetailDTO.DeliveryQtyDTO> deliveryQtyDTOList = allDeliveryQtyDTOList.stream().filter(v->v.getSoDetailId().equals(soDetailEntity.getId())).collect(Collectors.toList());
+            SoInfoDTO.GenerateSoOutView soOutView = SoInfoConverter.INSTANCE.soDetailToGenerateSoOutView(soDetailEntity,soInfoEntity,customerInfo);
+            Integer actualDeliveryQty = deliveryQtyDTOList.stream().mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
+            soOutView.setWaitDeliveryQty(soDetailEntity.getQty() - actualDeliveryQty);
+            soOutView.setProductName(productDetailEntity.getName());
+            viewList.add(soOutView);
+        }
+        return viewList;
+    }
+
+    @Override
+    public List<BatchResultDTO> generateSoOut(List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList) {
+        Map<String,List<SoInfoDTO.GenerateSoOutView>> groupMap = generateSoOutViewList.stream().collect(Collectors.groupingBy(SoInfoDTO.GenerateSoOutView::getCode));
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        groupMap.forEach((key,val)->{
+            List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList = new ArrayList<>();
+            for (SoInfoDTO.GenerateSoOutView soOutView : val) {
+                if(soOutView.getActualDeliveryQty() > soOutView.getWaitDeliveryQty()){
+                    batchResultDTOList.add(BatchResultDTO.fail(key,key,StrUtil.format("{}实发数量不能大于待发数量",soOutView.getSkuNo())));
+                    return;
+                }
+                SoOutstockDTO.GenerateSoOutstockViewDTO generateB2cDTO = SoInfoConverter.INSTANCE.soOutViewToGenerateSoOut(soOutView);
+                generateSoOutstockViewDTOList.add(generateB2cDTO);
+            }
+            try {
+                soOutstockFeign.addB2bPushDownNo(generateSoOutstockViewDTOList);
+            }catch (Exception e){
+                batchResultDTOList.add(BatchResultDTO.fail(key,key,StrUtil.format("生成销售出库单失败:{}",e.getMessage())));
+            }
+        });
+
+        return batchResultDTOList;
     }
 
     /**

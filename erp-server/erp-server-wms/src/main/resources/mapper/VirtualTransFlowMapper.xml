@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.VirtualTransFlowMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.VirtualTransFlowEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="virtual_inventory_id" property="virtualInventoryId" />
+       <result column="org_id" property="orgId" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="dict_inventory_status" property="dictInventoryStatus" />
+       <result column="bill_date" property="billDate" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="dict_biz_type" property="dictBizType" />
+       <result column="user_id" property="userId" />
+       <result column="trade_time" property="tradeTime" />
+       <result column="qty" property="qty" />
+       <result column="cur_inventory_qty" property="curInventoryQty" />
+       <result column="virtual_trans_rule_id" property="virtualTransRuleId" />
+       <result column="operation_mode" property="operationMode" />
+       <result column="transaction_no" property="transactionNo" />
+       <result column="is_unapproved" property="isUnapproved" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        vtf.id,
+        vtf.create_time,
+        vtf.update_time,
+        vtf.create_user_name,
+        vtf.create_user_id,
+        vtf.update_user_name,
+        vtf.update_user_id,
+        vtf.version,
+        vtf.is_deleted,
+        vtf.virtual_inventory_id, vtf.org_id, vtf.warehouse_id, vtf.virtual_warehouse_id, vtf.dict_inventory_status, vtf.bill_date, vtf.sku_id, vtf.sku_no, vtf.source_type, vtf.source_id, vtf.source_code, vtf.source_detail_id, vtf.dict_biz_type, vtf.user_id, vtf.trade_time, vtf.qty, vtf.cur_inventory_qty, vtf.virtual_trans_rule_id, vtf.operation_mode, vtf.transaction_no, vtf.is_unapproved
+    </sql>
+
+    <!-- 虚拟库存流水总数查询 -->
+    <select id="pagingCount" resultType="java.lang.Integer">
+        select
+            count(0)
+        from virtual_trans_flow vtf
+        left join virtual_warehouse vw on vtf.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and vtf.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <!-- 虚拟库存流水分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDTO$ListDTO">
+        select
+            vtf.transaction_no as transactionNo,
+            vtf.bill_date as billDate,
+            vtf.trade_time as tradeTime,
+            vtf.source_type as sourceType,
+            vtf.source_code as sourceCode,
+            vtf.operation_mode as operationMode,
+            vtf.org_id as orgId,
+            vtf.warehouse_id as warehouseId,
+            vtf.virtual_warehouse_id as virtualWarehouseId,
+            vw.code as virtualWarehouseCode,
+            vw.name as virtualWarehouseName,
+            vtf.sku_id as skuId,
+            vtf.sku_no as skuNo,
+            vtf.dict_inventory_status as dictInventoryStatus,
+            vtf.qty ,
+            vtf.cur_inventory_qty as curInventoryQty
+        from virtual_trans_flow vtf
+        left join virtual_warehouse vw on vtf.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+             ${params.sqlMap.default}
+            and vtf.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vtf.id desc
+    </select>
+
+    <!-- 虚拟库库存明细分页查询 -->
+    <select id="detailPaging" resultType="com.erp.model.wms.dto.VirtualTransFlowDTO$InventoryDetailDTO">
+        select
+            <include refid="Base_Column_List"></include>
+        from virtual_trans_flow vtf
+        <where>
+            and vtf.is_deleted = false
+            <if test="params.skuId != null and params.skuId != ''">
+                and vtf.sku_id = #{params.skuId}
+            </if>
+            <if test="params.warehouseId != null and params.warehouseId != ''">
+                and vtf.warehouse_id = #{params.warehouseId}
+            </if>
+            <if test="params.virtualWarehouseId != null and params.virtualWarehouseId != ''">
+                and vtf.virtual_warehouse_id = #{params.virtualWarehouseId}
+            </if>
+            <if test="params.dictInventoryStatus != null and params.dictInventoryStatus != ''">
+                and vtf.dict_inventory_status = #{params.dictInventoryStatus}
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vtf.id desc
+    </select>
+
+    <!-- 更新流水状态为反审核 -->
+    <update id="updateUnapprovedById">
+        update virtual_trans_flow set is_unapproved = true,version = version + 1,
+        update_time = #{updateTime}, update_user_id = #{updateUserId}, update_user_name = #{updateUserName}
+        where id = #{id} and is_deleted = false
+    </update>
+
+</mapper>

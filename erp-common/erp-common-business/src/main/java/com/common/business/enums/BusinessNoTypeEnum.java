@@ -76,6 +76,9 @@ public enum BusinessNoTypeEnum {
     CODE_SJDB(61, "sjdb","数据对比","SJDB"),
     CODE_BGZD(61, "bgzd","报关账单","BGZD"),
     CODE_TCZD(62, "tczd","头程账单","TCZD"),
+    CODE_XNC(63, "xnc","虚拟仓", BusinessNoConstant.XNC),
+    CODE_XLS(64, "xls","虚拟仓库存流水", BusinessNoConstant.XLS),
+    CODE_FH(65, "FH","虚拟仓分货单", BusinessNoConstant.FH),
 
     CODE_DQDD(53, "DQDD","多渠道订单(平台)",BusinessNoConstant.DQDD),
 

@@ -2,31 +2,23 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryDetailMapper;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
-import java.util.*;
-import java.util.stream.Collectors;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 /**
  * <p>
  * b2c发货单详情 服务实现类
@@ -89,6 +81,8 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
                 entity.setWarehouseId(soB2cDetailEntity.getWarehouseId());
                 entity.setWarehouseName(soB2cDetailEntity.getWarehouseName());
                 entity.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
+                //虚拟仓库
+                entity.setVirtualWarehouseId(soB2cDetailEntity.getVirtualWarehouseId());
             }
         }
     }

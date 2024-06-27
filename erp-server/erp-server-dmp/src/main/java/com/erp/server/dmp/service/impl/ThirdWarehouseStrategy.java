@@ -227,7 +227,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
             if (CollectionUtils.isNotEmpty(saveDtoList)) {
                 saveList.addAll(saveList);
             }
-        }else {
+        } else {
             //判断当前平台是否绑定第三方数据
             existMappingList.forEach(existMapping -> {
                 ThirdMappingDTO.ThirdAddDTO thirdAddDTO = thirdList.stream().filter(item ->
@@ -252,9 +252,9 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
             //获取新增数据
             thirdList.forEach(thirdAddDTO -> {
                 ThirdMappingEntity thirdMappingEntity = updateList.stream().filter(item -> !Objects.equals(item.getThirdId(), thirdAddDTO.getThirdId())).findFirst().orElse(null);
-                if (Objects.isNull(thirdMappingEntity)){
-                    ThirdMappingEntity newEntity=  new ThirdMappingEntity();
-                    BeanUtils.copyProperties(thirdAddDTO,newEntity);
+                if (Objects.isNull(thirdMappingEntity)) {
+                    ThirdMappingEntity newEntity = new ThirdMappingEntity();
+                    BeanUtils.copyProperties(thirdAddDTO, newEntity);
                     saveList.add(newEntity);
                 }
             });
@@ -266,7 +266,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
             String thirdName = null;
             if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType())) {
                 //校验第三方仓库是否存在
-                ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId()))
+                ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode()))
                         .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
                 thirdName = thirdWarehouseEntity.getName();
                 thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
@@ -480,7 +480,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
             ThirdMappingDTO.ViewDTO viewDTO = new ThirdMappingDTO.ViewDTO();
 
             if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
-                ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByWarehouseId(thirdMappingEntity.getThirdId());
+                ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByWarehouseId(thirdMappingEntity.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode());
                 if (Objects.isNull(thirdWarehouseEntity)) {
                     viewDTOList.add(viewDTO);
                     continue;

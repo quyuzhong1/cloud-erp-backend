@@ -366,4 +366,21 @@
             </if>
         </foreach>
     </select>
+    <select id="listPoReturnByPoDetailIds" resultType="com.erp.model.wms.entity.PoReturnDetailEntity">
+        select prd.id,prd.return_qty,prd.main_id,prd.purchase_order_detail_id
+        from po_return pr
+        inner join po_return_detail prd on pr.id = prd.main_id
+        where pr.is_deleted = false and prd.is_deleted = false
+          and pr.source_type = 'qcInfo'
+        and pr.approve_status in
+        <foreach collection="approveStatusList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        <if test="podIds != null and podIds.size > 0">
+        and prd.purchase_order_detail_id in
+            <foreach collection="podIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        </if>
+    </select>
 </mapper>

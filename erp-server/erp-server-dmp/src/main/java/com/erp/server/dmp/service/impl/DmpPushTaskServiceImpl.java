@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -32,6 +33,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
+import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -51,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,6 +97,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     private RedisUtil redisUtil;
     @Resource
     private DmpPushTaskHistoryMapper dmpPushTaskHistoryMapper;
+    @Resource
+    @Lazy
+    private DmpPushTaskServiceImpl dmpPushTaskService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -104,6 +110,21 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         isSendParentBillTask(entity);
         saveOrUpdateDmpSyncTask(entity);
         return entity;
+    }
+
+    /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos) {
+        List<DmpPushTaskEntity> dmpPushTaskEntityList=new ArrayList<>();
+        dtos.forEach(dto->{
+            dmpPushTaskEntityList.add(dmpPushTaskService.saveTask(dto));
+        });
+        return dmpPushTaskEntityList;
     }
 
     @Override
@@ -207,8 +228,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         //同步中
         DmpPushTaskDTO.TabListDTO syncIng = new DmpPushTaskDTO.TabListDTO();
         syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getCode());
-        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(syncIng.getTabFlag())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(syncIng.getTabFlag()) || SyncStatusEnum.TO_BE_SYNC.getCode().equals(a.getTabFlag())).mapToInt(DmpPushTaskDTO.TabListDTO::getCount).sum();
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
         //已归档
@@ -344,6 +364,62 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         }
         return Boolean.TRUE;
     }
+    @Override
+    public Boolean batchNoNeedSyncBySourceId(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //获取数据
+        List<DmpPushTaskEntity> list = this.list(new LambdaQueryWrapper<DmpPushTaskEntity>().in(DmpPushTaskEntity::getSourceId,sourceIds));
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        }
+        List<DmpPushTaskEntity> noNeedSyncIds = list.stream().filter(obj ->
+                        (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))
+                .collect(Collectors.toList());
+        noNeedSyncIds.forEach(dmpPushTaskEntity -> dmpPushTaskEntity.setStatus(SyncStatusEnum.NO_NEED_SYNC.getCode()));
+        if (CollectionUtils.isNotEmpty(noNeedSyncIds)) {
+            updateBatchById(noNeedSyncIds, 500);
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 根据sourceId重新同步
+     * @param sourceIds
+     * @return
+     */
+    @Override
+    public Boolean batchSyncBySourceId(List<String> sourceIds) {
+        List<DmpPushTaskEntity> list = this.list(new LambdaQueryWrapper<DmpPushTaskEntity>().in(DmpPushTaskEntity::getSourceId,sourceIds));
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+        }
+        //需要修改备注信息
+        List<DmpPushTaskEntity> updateList = new ArrayList<>();
+        for (DmpPushTaskEntity dmpPushTaskEntity : list) {
+            try {
+                //查询来源上级单据
+                Boolean isSend = isSendParentBillTask(dmpPushTaskEntity);
+                //判断是否存在上级单据，并且推送成功
+                if (!isSend) {
+                    dmpPushTaskEntity.setStatus(SyncStatusEnum.IN_SYNC.getCode());
+                    updateList.add(dmpPushTaskEntity);
+                    continue;
+                }
+                DmpPushTaskHistoryServiceImpl.sendMq(dmpPushTaskEntity.getMqData(), dmpPushTaskEntity.getId(), mqProducerService, dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpPushTaskEntity.getSourceId());
+            }catch (Exception e){
+                String sourceTypeName = SourceTypeEnum.getName(dmpPushTaskEntity.getSourceType());
+                log.error("从{}推送{}到{}发送消息异常", dmpPushTaskEntity.getSourcePlatformName(), sourceTypeName, dmpPushTaskEntity.getTargetPlatformName(), e);
+            }
+        }
+        //更新信息
+        if (CollectionUtil.isNotEmpty(updateList)) {
+            this.updateBatchById(updateList);
+        }
+        return Boolean.TRUE;
+    }
+
 
     @Override
     public void sendWarnMsg(String syncTaskId) {

@@ -804,8 +804,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 throw new ServiceException("仓库信息为空");
             }
             WarehouseDTO.UpdateDTO warehouseInfo = warehouseList.get(0);
-//            deliveryOrderEntity.setReceiveUserId(warehouseInfo.getChargeId());
-//            deliveryOrderEntity.setReceiveUserName(warehouseInfo.getContacts());
+            deliveryOrderEntity.setReceiveUserId(warehouseInfo.getChargeId());
+            deliveryOrderEntity.setReceiveUserName(warehouseInfo.getContacts());
             deliveryOrderEntity.setReceivePhone(warehouseInfo.getContactTelNumber());
             deliveryOrderEntity.setReceiveAddress(warehouseInfo.getAddress());
         }

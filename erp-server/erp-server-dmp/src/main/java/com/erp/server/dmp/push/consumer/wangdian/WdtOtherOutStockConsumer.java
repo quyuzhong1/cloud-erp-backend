@@ -20,11 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 旺店通其他出库单消费
@@ -44,6 +46,7 @@ public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
 
     @Resource
     private WdtOtherOutStockService wdtService;
+    private final RateLimiter limiter = RateLimiter.create(1, 1, TimeUnit.SECONDS);
 
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
@@ -95,6 +98,7 @@ public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
         }
 
         //请求旺店通
+        limiter.acquire();
         wdtService.executeConsumer(request);
         return ApiResult.success();
     }

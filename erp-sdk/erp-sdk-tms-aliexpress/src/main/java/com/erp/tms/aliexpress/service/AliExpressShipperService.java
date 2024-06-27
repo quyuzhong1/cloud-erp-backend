@@ -205,14 +205,28 @@ public class AliExpressShipperService {
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.querylogisticsorderdetail");
         request.addApiParameter("current_page", String.valueOf(queryOrderRequest.getCurrent_page()));
-        request.addApiParameter("domestic_logistics_num", queryOrderRequest.getDomestic_logistics_num());
-        request.addApiParameter("gmt_create_end_str", queryOrderRequest.getGmt_create_end_str());
-        request.addApiParameter("gmt_create_start_str", queryOrderRequest.getGmt_create_start_str());
-        request.addApiParameter("international_logistics_num", queryOrderRequest.getInternational_logistics_num());
-        request.addApiParameter("logistics_status", queryOrderRequest.getLogistics_status());
-        request.addApiParameter("page_size", String.valueOf(queryOrderRequest.getPage_size()));
+        if (StringUtils.isNotBlank(queryOrderRequest.getDomestic_logistics_num())){
+            request.addApiParameter("domestic_logistics_num", queryOrderRequest.getDomestic_logistics_num());
+        }
+        if (StringUtils.isNotBlank(queryOrderRequest.getGmt_create_end_str())){
+            request.addApiParameter("gmt_create_end_str", queryOrderRequest.getGmt_create_end_str());
+        }
+        if (StringUtils.isNotBlank(queryOrderRequest.getGmt_create_start_str())){
+            request.addApiParameter("gmt_create_start_str", queryOrderRequest.getGmt_create_start_str());
+        }
+        if (StringUtils.isNotBlank(queryOrderRequest.getInternational_logistics_num())){
+            request.addApiParameter("international_logistics_num", queryOrderRequest.getInternational_logistics_num());
+        }
+        if (StringUtils.isNotBlank(queryOrderRequest.getLogistics_status())){
+            request.addApiParameter("logistics_status", queryOrderRequest.getLogistics_status());
+        }
+        if (Objects.nonNull(queryOrderRequest.getPage_size())){
+            request.addApiParameter("page_size", String.valueOf(queryOrderRequest.getPage_size()));
+        }
         request.addApiParameter("trade_order_id", queryOrderRequest.getTrade_order_id());
-        request.addApiParameter("warehouse_carrier_service", queryOrderRequest.getWarehouse_carrier_service());
+        if (Objects.nonNull(queryOrderRequest.getPage_size())){
+            request.addApiParameter("warehouse_carrier_service", queryOrderRequest.getWarehouse_carrier_service());
+        }
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         return JSONObject.parseObject(response.getBody(), BaseResult.class);

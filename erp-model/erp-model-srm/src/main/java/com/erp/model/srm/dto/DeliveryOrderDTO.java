@@ -623,7 +623,10 @@ public class DeliveryOrderDTO implements Serializable {
          */
         private String toWarehouseId;
 
-
+        /**
+         * 收货员名
+         */
+        private String receiveUserName;
         /**
          * 收货电话
          */
