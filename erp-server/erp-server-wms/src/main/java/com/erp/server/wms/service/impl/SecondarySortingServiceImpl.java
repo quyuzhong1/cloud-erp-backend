@@ -58,10 +58,12 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
                 .map(v -> {
                     SoB2cDeliveryInterceptEntity intercept = interceptList.stream().findFirst().orElse(null);
                     int qty = views.stream().filter(e -> e.getSourceId().equals(v.getDeliveryId())).mapToInt(PickingListsDTO.SourceView::getQty).sum();
+                    int allocatedQty = views.stream().filter(e -> e.getSourceId().equals(v.getDeliveryId())).mapToInt(PickingListsDTO.SourceView::getAllocatedQty).sum();
                     boolean isOutStock = views.stream().filter(e -> e.getSourceId().equals(v.getDeliveryId())).anyMatch(PickingListsDTO.SourceView::getIsOutStock);
                     SecondarySortingDTO.BasketDTO dto = new SecondarySortingDTO.BasketDTO();
                     dto.setBasketNo(v.getBasketNo());
                     dto.setPickingQty(qty);
+                    dto.setAllocatedQty(allocatedQty);
                     if (!ObjectUtils.isEmpty(intercept) && SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode().equals(intercept.getHandleStatus())) {
                         dto.setIsIntercept(true);
                     } else {

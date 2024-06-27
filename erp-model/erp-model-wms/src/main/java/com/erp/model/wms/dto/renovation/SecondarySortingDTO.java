@@ -45,6 +45,10 @@ public class SecondarySortingDTO {
          */
         private Integer pickingQty;
         /**
+         * 已分货数量
+         */
+        private Integer allocatedQty;
+        /**
          * 是否拦截
          */
         private Boolean isIntercept;
