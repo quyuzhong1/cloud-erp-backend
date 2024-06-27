@@ -37,6 +37,7 @@ import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -55,10 +56,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.MachineRefSoEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.MachineTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
@@ -207,6 +205,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
     @Autowired
     private SkuMappingService skuMappingService;
 
@@ -299,6 +300,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         addEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(addEntity);
+        //获取虚拟仓库
+        handleVirtualWarehouse(addEntity);
 
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
@@ -322,6 +325,29 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return "";
     }
 
+    /**
+     * 查询虚拟仓库
+     * @author will
+     * @date 2024/6/12 19:14
+     * @param entity
+     */
+    private void handleVirtualWarehouse (SoInfoEntity entity) {
+        //查询客户信息
+        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getCustomerId());
+        if (ObjectUtil.isEmpty(customerInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+        //查询虚拟仓信息
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
+        platformDTO.setWarehouseIdList(Arrays.asList(entity.getWarehouseId()));
+        platformDTO.setRelationId("");
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+        if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+          return;
+        }
+        entity.setVirtualWarehouseId(virtualWarehouseList.get(0).getVirtualWarehouseId());
+    }
 
     /**
      * 提交
@@ -902,7 +928,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         draftEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(draftEntity);
-
+        //获取虚拟仓库
+        handleVirtualWarehouse(draftEntity);
         //保存成功
         Boolean draftResult = this.saveOrUpdate(draftEntity);
         if (draftResult) {
@@ -1008,6 +1035,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soInfo.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(soInfo);
+        //获取虚拟仓库
+        handleVirtualWarehouse(soInfo);
 
         Boolean updateResult = this.updateById(soInfo);
         if (updateResult) {

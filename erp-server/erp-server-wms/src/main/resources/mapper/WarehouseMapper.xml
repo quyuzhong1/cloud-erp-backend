@@ -303,7 +303,8 @@
     <select id="getByNames" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
         SELECT
         id,
-        name
+        name,
+        disabled
         FROM warehouse  WHERE is_deleted=false and approve_status = 'approve'
         <if test="nameList != null and nameList.size > 0">
             and name in
@@ -356,7 +357,7 @@
 
     <select id="pagingSelect" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
         select id,createUserName,createTime,name,typeId,chargeId,contacts,contactTelNumber,disabled,address,
-            warehouseManageType,geographyLocation,orgId,kingdeeWarehouseCode,isVirtual,approveStatus,isEnableLocation
+        warehouseManageType,geographyLocation,orgId,kingdeeWarehouseCode,isVirtual,approveStatus,isEnableLocation
         from
         (
             select
@@ -386,6 +387,12 @@
             <if test="params.warehouseManageType != null and params.warehouseManageType != ''">
                 and wh.warehouse_manage_type = #{params.warehouseManageType}
             </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            and wh.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                (#{item})
+            </foreach>
+        </if>
             <if test="params.orgIds != null and params.orgIds.size > 0">
                 and org_id in
                 <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">
@@ -395,17 +402,14 @@
             <if test="params.approveStatus != null and params.approveStatus != ''">
                 and wh.approve_status = #{params.approveStatus}
             </if>
+        order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or (wh.id = #{params.searchKeyword})  or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            case when wh.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when wh.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when wh.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , wh.name,
         </if>
-            order by
-            <if test="params.searchKeyword != null and params.searchKeyword != ''">
-                case when wh.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
-                when wh.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
-                when wh.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
-                end , wh.name,
-            </if>
-            wh.disabled , wh.index asc
+        wh.disabled , wh.index asc
         ) wls
     </select>
 </mapper>

@@ -753,11 +753,11 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private Boolean disabled;
         /**
-         * 渠道编码
+         * 编码
          */
         private String code;
         /**
-         * 渠道名称
+         * 值
          */
         private String value;
         /**
@@ -782,6 +782,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+        /**
+         * 是否展示物流商
+         */
+        private Boolean showSupplier=false;
     }
 
 }

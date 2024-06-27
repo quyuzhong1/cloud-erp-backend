@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums.inventory;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -14,7 +15,7 @@ import java.util.Optional;
  * @CreateTime: 2023-04-25  11:25
  * @Author: zhangchunlin
  */
-public enum InventoryStatusEnum {
+public enum InventoryStatusEnum  implements EnumMessage {
     USABLE("usable", "可用", Boolean.TRUE),
     FROZEN("frozen", "冻结", Boolean.TRUE),
     IN_TRANSIT("inTransit", "在途", Boolean.FALSE),

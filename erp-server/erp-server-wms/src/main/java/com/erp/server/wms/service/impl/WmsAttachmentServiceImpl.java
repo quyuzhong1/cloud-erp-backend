@@ -12,6 +12,7 @@ import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.List;
 public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapper, WmsAttachmentEntity> implements WmsAttachmentService {
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
         //先删除
         this.delete(type, businessId);

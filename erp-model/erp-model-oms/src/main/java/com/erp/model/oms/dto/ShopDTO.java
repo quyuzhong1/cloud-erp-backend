@@ -1,6 +1,8 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.annotation.Dict;
@@ -821,6 +823,7 @@ public class ShopDTO implements Serializable {
 
         private List<String> ids;
     }
+
     @Data
     @NoArgsConstructor
     public static class SelectDTO {
@@ -841,6 +844,7 @@ public class ShopDTO implements Serializable {
          * 平台
          */
         private List<String> shopIdList;
+
     }
     @Data
     @NoArgsConstructor
@@ -866,8 +870,12 @@ public class ShopDTO implements Serializable {
          */
         private String authStatus;
 
-    }
+        /**
+         * 是否可选
+         */
+        private Boolean canCheck=true;
 
+    }
     @Data
     @NoArgsConstructor
     public static class AddInternalDTO {
