@@ -65,5 +65,5 @@ public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehou
      * @param newChannel
      * @return
      */
-    List<VirtualWarehouseDTO.BindChannelDto> getByParams(VirtualWarehouseChannelDTO.ChannelAddDTO newChannel);
+    List<VirtualWarehouseDTO.BindChannelDto> getByParams(@Param("params")VirtualWarehouseChannelDTO.ChannelAddDTO newChannel);
 }
