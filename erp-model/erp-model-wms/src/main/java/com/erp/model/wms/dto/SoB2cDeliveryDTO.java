@@ -5,7 +5,9 @@ import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
+import com.erp.model.wms.enums.OutStockModeEnum;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -490,6 +492,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 异常原因
          */
+        @Dict(enumClass = AbnormalCauseEnum.class)
         private String abnormalCause;
 
     }
