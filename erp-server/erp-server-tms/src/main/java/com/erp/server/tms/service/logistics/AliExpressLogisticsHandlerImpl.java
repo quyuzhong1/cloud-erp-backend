@@ -178,7 +178,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if (!Objects.isNull(response) && !Objects.isNull(response.getResultSuccess()) && response.getResultSuccess()) {
                 OrderResponse orderResponse = response.getResult();
                 responseVO.setDeliveryNo(orderResponse.getTradeOrderId());
-                responseVO.setTransportNo(orderResponse.getWarehouseOrderId());
+                responseVO.setTransportNo(orderResponse.getOutOrderCode());
                 responseVO.setTrackNo(orderResponse.getIntlTrackingNo());
                 success = true;
                 responseVO.success();
