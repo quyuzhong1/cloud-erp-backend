@@ -65,7 +65,6 @@ public class DmpThirdMappingFeignController {
         return thirdMappingService.listMappingBySysIds(warehouseIdList, sysType);
     }
 
-
     @PostMapping("/view")
     public ThirdMappingDTO.MappingViewDTO view(@RequestBody @Validated ThirdMappingDTO.ViewParamDTO viewParamDTO) {
         return thirdMappingService.view(viewParamDTO);

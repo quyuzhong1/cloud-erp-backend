@@ -351,14 +351,14 @@ public class BusinessServiceImpl {
         Map<String, String> unqueIdAndTaskIdMap = allResultList.stream().collect(Collectors.toMap(DmpPullTaskEntity::uniqueKey, DmpPullTaskEntity::getId));
         // 设置taskId到消息体
         pushToMqList.forEach(e -> {
-            String uniqueKey = Md5Util.md5(StrUtil.format("{}_{}_{}_{}_{}_{}_{}",
-                    sourceType,
+            String uniqueKey = StrUtil.format("{}_{}_{}_{}_{}_{}_{}",
+                    sourceType.getCode(),
                     e.getUniqueId(),
                     e.getUniqueId(),
                     platform,
                     targetPlatform,
                     topic,
-                    tag));
+                    tag);
             String taskId = unqueIdAndTaskIdMap.get(uniqueKey);
             if (StringUtils.isBlank(taskId)){
                 throw new ServiceException("处理异常:未找到DmpPullTaskEntity的Id， sourceId=" + e.getUniqueId());

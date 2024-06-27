@@ -51,6 +51,11 @@ public interface DmpThirdMappingFeign {
     BaseResultDTO.AddDTO batchAdd(@RequestBody @Validated ThirdMappingDTO.FeignMappingDTO feignMappingDTO);
 
     /**
+     * 查询三方仓库映射
+     */
+    @GetMapping("/listMappingBySysIds")
+    List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(@RequestParam List<String> warehouseIdList, @RequestParam String sysType);
+    /**
      * 新增、编辑
      */
     @PostMapping("/add")

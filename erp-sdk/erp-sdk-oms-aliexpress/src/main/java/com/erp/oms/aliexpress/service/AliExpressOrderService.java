@@ -502,9 +502,9 @@ public class AliExpressOrderService {
         if (!success){
             String errorMsg = resultJson.getStr("error_msg", "");
             if (StringUtils.isNotBlank(errorMsg)){
-                throw new ServiceException(ApiError.Default, errorMsg);
+                ServiceException.runError(errorMsg);
             } else {
-                throw new ServiceException(ApiError.Default, JSONUtil.toJsonStr(body));
+                ServiceException.runError(JSONUtil.toJsonStr(body));
             }
         }
     }

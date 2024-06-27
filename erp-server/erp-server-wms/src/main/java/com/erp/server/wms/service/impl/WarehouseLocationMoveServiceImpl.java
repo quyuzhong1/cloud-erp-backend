@@ -555,11 +555,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         //同步旺店通 审核{调入仓位做其他入库单，调出仓位做其他出库单}，反审核{调入仓位做其他出库单，调出仓位做其他入库单}
         List<DmpPushTaskEntity> dmpPushTaskEntityList = new ArrayList<>();
         for (WarehouseLocationMoveDetailEntity moveDetailEntity : detailEntityList) {
+            //转换成出库单
             if(! thirdWarehouseMap.containsKey(moveDetailEntity.getWarehouseId())){
                 continue;
             }
-
-            //转换成出库单
             CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
             outGoods.setSpecNo(moveDetailEntity.getSkuNo());
             outGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
@@ -568,8 +567,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
             String outWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
             DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(Collections.singletonList(outGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), outCode, outWarehouseId, false);
-            dmpPushTaskEntityList.add(outDmpPushTask);
-
+            if(outDmpPushTask != null){
+                dmpPushTaskEntityList.add(outDmpPushTask);
+            }
             //调入仓转换为其他入库单
             CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
             inGoods.setSpecNo(moveDetailEntity.getSkuNo());
@@ -579,7 +579,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
             String inWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
             DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(Collections.singletonList(inGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), inCode, inWarehouseId, false);
-            dmpPushTaskEntityList.add(inDmpPushTask);
+            if(inDmpPushTask != null){
+                dmpPushTaskEntityList.add(inDmpPushTask);
+            }
         }
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
