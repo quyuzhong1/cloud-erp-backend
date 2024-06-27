@@ -68,6 +68,7 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.dto.renovation.PickingWaveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -1348,9 +1349,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
-
-
-        return new BaseResultDTO.AddDTO("", "");
+        PickingWaveDTO.AddDTO addDTO = new PickingWaveDTO.AddDTO();
+        addDTO.setPickCartTypeId(dto.getPickingCartTypeId());
+        addDTO.setDeliveryIdList(dto.getIds());
+        addDTO.setPickingType(dto.getPickingType());
+        addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
+        return pickingWaveService.add(addDTO);
     }
 
     @Override
