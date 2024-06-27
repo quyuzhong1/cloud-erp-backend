@@ -259,8 +259,16 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Override
     public void autoExecuteRule() {
-        LocalTime time = LocalTime.now();
-
+        //当前时间
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+        List<CfgRuleWaveEntity> cfgRuleWaveList = baseMapper.listRuleWaveByTime(time);
+        if (CollectionUtil.isEmpty(cfgRuleWaveList)) {
+            log.info("时间【{}】未找到符合条件的波次规则");
+            return;
+        }
+        for (CfgRuleWaveEntity waveEntity : cfgRuleWaveList) {
+            executeRule(waveEntity.getId());
+        }
     }
 
     /**

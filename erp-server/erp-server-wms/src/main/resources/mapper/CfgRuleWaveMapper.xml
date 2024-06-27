@@ -65,4 +65,15 @@
         </where>
     </select>
 
+    <!-- 根据时间查询符合条件的波次规则 -->
+    <select id="listRuleWaveByTime" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from cfg_rule_wave crw
+        left join picking_cart_type pct on crw.picking_cart_type_id = pct.id and pct.is_deleted = false
+        <where>
+            crw.is_deleted = false and crw.execution_type = 'auto' and crw.execution_time_json ~ #{time}
+        </where>
+        order by crw.priority asc
+    </select>
 </mapper>
