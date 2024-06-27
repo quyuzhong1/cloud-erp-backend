@@ -51,7 +51,7 @@ public class AllocateCargoBillPrintController extends BaseController {
      */
     @GetMapping("/print")
     @Idempotent
-    public void print(@RequestParam("waveCode") String waveId, HttpServletResponse response){
+    public void print(@RequestParam("waveId") String waveId, HttpServletResponse response){
          allocateCargoBillPrintService.print(waveId, response);
     }
 }
