@@ -82,5 +82,5 @@ public interface CfgRuleWaveService extends SuperService<CfgRuleWaveEntity> {
      * @author will
      * @date 2024/6/27 16:26
      */
-    void autoExecuteRule();
+    void autoExecuteRule(String time);
 }
