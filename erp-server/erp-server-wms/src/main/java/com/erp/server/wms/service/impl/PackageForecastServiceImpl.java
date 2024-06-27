@@ -643,50 +643,17 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIdList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
         Map<String, String> authMap = base.getAuthMap();
-        //销售订单
-        List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIdList);
-        for (SoB2cEntity soB2c : soB2cList) {
-            String tradeOrderId = soB2c.getSourceId();
-            PackageForecastDetailEntity detailEntity = forecastDetailList.stream().filter(d -> d.getSoId().equals(soB2c.getId())).
-                    findFirst().orElse(null);
-            String transportNo = detailEntity.getTransportNo();
-            if (StringUtils.isNotBlank(tradeOrderId) && Objects.nonNull(detailEntity) && StringUtils.isBlank(detailEntity.getSourceCode())) {
-                QueryOrderRequest queryOrderRequest=QueryOrderRequest.builder()
-                        .trade_order_id(tradeOrderId)
-                        .current_page(1)
-                        .page_size(20)
-                        .build();
-                try {
-                    BaseResult iopResponse = aliExpressShipperService.queryLogisticsOrder(authMap, queryOrderRequest);
-                    ErrorResponse errorResponse = iopResponse.getErrorResponse();
-                    if(Objects.nonNull(errorResponse)){
-                        continue;
-                    }
-                    QueryResponse queryResponse = JSONObject.parseObject(iopResponse.getResult(), QueryResponse.class);
-                    //成功
-                    if (Objects.nonNull(queryResponse) && queryResponse.getSuccess()) {
-                        List<QueryResult> responseList = queryResponse.getResultList();
-                        String outOrderCode= responseList.stream().filter(r->r.getLogistics_order_id().equals(transportNo)).
-                               map(QueryResult::getOut_order_code).findFirst().orElse("");
-                       detailEntity.setSourceCode(outOrderCode);
-                    }
-                } catch (ApiException e) {
-                 log.error("查询物流单信息失败,tradeOrderId:{}，错误信息:{}",tradeOrderId,e);
-                }
-            }
+        //根据销售订单获取销售物流信息
+        List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+        List<String> orderCodeList = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if (orderCodeList.size() != forecastDetailList.size()) {
+            throw new ServiceException("未获取到小包第三方交易号");
         }
-
-
-
         List<SellerParcelOrder> sellerParcelOrderList = new ArrayList<>(1);
         String topUserKey = base.getUserInfo().getTopUserKey();
         packageForecastDetailService.updateBatchById(forecastDetailList);
         SellerParcelOrder parcelOrder = new SellerParcelOrder();
         parcelOrder.setSellerId(topUserKey);
-        List<String> orderCodeList =forecastDetailList.stream().map(PackageForecastDetailEntity::getSourceCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        if (orderCodeList.size() != forecastDetailList.size()) {
-            throw new ServiceException("未获取到小包第三方交易号");
-        }
         parcelOrder.setOrderCodeList(orderCodeList);
         sellerParcelOrderList.add(parcelOrder);
 
