@@ -3807,7 +3807,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean checkPlatformShipOrder(String soB2cId) {
         SoB2cEntity soB2cEntity = this.getById(soB2cId);
         if (Objects.isNull(soB2cEntity)) {
-            return Boolean.FALSE;
+            ServiceException.runError("未找到B2C销售订单:id={}" + soB2cId);
         }
         //明细如果有非手工单则可以平台标发
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
