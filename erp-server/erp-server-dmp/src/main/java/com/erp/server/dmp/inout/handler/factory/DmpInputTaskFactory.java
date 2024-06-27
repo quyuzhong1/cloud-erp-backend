@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -48,10 +49,21 @@ public class DmpInputTaskFactory{
 	 * @return
 	 */
 	public DmpInputFinishResponse dealInputTask(DmpInputFinishRequest dmpInputFinishRequest) {
-		DmpInputTaskStatusEnum[] values = DmpInputTaskStatusEnum.values();
+		String inputTaskId = dmpInputFinishRequest.getInputTaskId();
+		
+		if(StringUtils.isBlank(inputTaskId)) {
+			log.warn("输入任务id为空");
+			return null;
+		}
+		DmpInputTaskEntity dbDmpInputTaskEntity = dmpInputTaskService.getById(inputTaskId);
+		if(dbDmpInputTaskEntity == null) {
+			log.warn("输入任务不存在id={}" , inputTaskId);
+			return null;
+		}
+		
+		List<DmpInputTaskStatusEnum> values = DmpInputTaskStatusEnum.getNextStatus(dbDmpInputTaskEntity.getStatus());
 		DmpInputFinishResponse dmpResponse = new DmpInputFinishResponse();
 		
-		String inputTaskId = dmpInputFinishRequest.getInputTaskId();
 		String redisKey = "dmp:input:task:" + inputTaskId;
 		Integer execTimeout = dmpInputFinishRequest.getExecTimeout();
 		if(execTimeout == null || execTimeout < 3) {
