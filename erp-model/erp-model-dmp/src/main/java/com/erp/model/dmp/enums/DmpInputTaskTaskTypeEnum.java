@@ -14,7 +14,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum DmpInputTaskTaskTypeEnum implements EnumMessage {
 	NORMAL("normal", "正常任务"),
-	HISTORY("history", "补偿任务"),
+	HISTORY("history", "历史任务"),
+	COMPENSATE("compensate", "补偿任务"),
 	HOTFIX("hotfix", "及时任务"),
 	CHILD("child", "子类任务"),
     ;

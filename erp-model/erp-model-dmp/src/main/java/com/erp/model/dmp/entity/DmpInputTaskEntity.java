@@ -56,7 +56,7 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
     @TableField("error_message")
     private String errorMessage;
     /**
-    * 任务类型：normal=正常任务，history=补偿任务，hotfix=及时任务  枚举：DmpInputTaskTaskTypeEnum
+    * 任务类型：normal=正常任务，history=历史任务，hotfix=及时任务  枚举：DmpInputTaskTaskTypeEnum
     */
     @TableField("task_type")
     private String taskType;

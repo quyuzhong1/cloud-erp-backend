@@ -17,13 +17,13 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2024-06-27
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("dmp_cfg_input_history")
-public class DmpCfgInputHistoryEntity extends BaseEntity<DmpCfgInputHistoryEntity> {
+@TableName("dmp_cfg_input_compensate")
+public class DmpCfgInputCompensateEntity extends BaseEntity<DmpCfgInputCompensateEntity> {
 
     /**
     * 输入信息id
@@ -31,7 +31,7 @@ public class DmpCfgInputHistoryEntity extends BaseEntity<DmpCfgInputHistoryEntit
     @TableField("main_id")
     private String mainId;
     /**
-    * 拉取历史类型：day=一天之前,week=一周之前,month=一月之前  枚举：DmpCfgInputHistoryTypeEnum
+    * 拉取历史类型：day=一天之前,week=一周之前,month=一月之前  枚举：DmpCfgInputCompensateTypeEnum
     */
     @TableField("type")
     private String type;
@@ -75,6 +75,11 @@ public class DmpCfgInputHistoryEntity extends BaseEntity<DmpCfgInputHistoryEntit
     */
     @TableField("extend_json")
     private String extendJson;
+    /**
+    * 延迟时间，单位秒
+    */
+    @TableField("dealy_time")
+    private Integer dealyTime;
 
 
     public static final String MAIN_ID = "main_id";
@@ -96,6 +101,8 @@ public class DmpCfgInputHistoryEntity extends BaseEntity<DmpCfgInputHistoryEntit
     public static final String DISABLED = "disabled";
 
     public static final String EXTEND_JSON = "extend_json";
+
+    public static final String DEALY_TIME = "dealy_time";
 
     @Override
     public Serializable pkVal() {
