@@ -148,7 +148,7 @@ public interface WmsTaskFeign {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("feign/wmsWorkOption/purchaseReturnOrderApprove")
-    Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+    List<BatchResultDTO> purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * 调拨申请单审核
