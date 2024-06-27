@@ -3,8 +3,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -51,45 +49,35 @@ public enum DmpInputTaskStatusEnum implements EnumMessage {
     		List<DmpInputTaskStatusEnum> preStatusList = new ArrayList<>();
     		List<DmpInputTaskStatusEnum> nextStatusList = new ArrayList<>();
     		if(value == DmpInputTaskStatusEnum.INIT) {
-    			preStatusList.add(value);
     			
-    			nextStatusList.add(value);
     			nextStatusList.add(DmpInputTaskStatusEnum.FDS);
     			nextStatusList.add(DmpInputTaskStatusEnum.MONGO);
     			nextStatusList.add(DmpInputTaskStatusEnum.DMP);
     			nextStatusList.add(DmpInputTaskStatusEnum.FINISH);
     		}else if(value == DmpInputTaskStatusEnum.FDS) {
     			preStatusList.add(DmpInputTaskStatusEnum.INIT);
-    			preStatusList.add(value);
     			
-    			nextStatusList.add(value);
     			nextStatusList.add(DmpInputTaskStatusEnum.MONGO);
     			nextStatusList.add(DmpInputTaskStatusEnum.DMP);
     			nextStatusList.add(DmpInputTaskStatusEnum.FINISH);
     		}else if(value == DmpInputTaskStatusEnum.MONGO) {
     			preStatusList.add(DmpInputTaskStatusEnum.INIT);
     			preStatusList.add(DmpInputTaskStatusEnum.FDS);
-    			preStatusList.add(value);
     			
-    			nextStatusList.add(value);
     			nextStatusList.add(DmpInputTaskStatusEnum.DMP);
     			nextStatusList.add(DmpInputTaskStatusEnum.FINISH);
     		}else if(value == DmpInputTaskStatusEnum.DMP) {
     			preStatusList.add(DmpInputTaskStatusEnum.INIT);
     			preStatusList.add(DmpInputTaskStatusEnum.FDS);
     			preStatusList.add(DmpInputTaskStatusEnum.MONGO);
-    			preStatusList.add(value);
     			
-    			nextStatusList.add(value);
     			nextStatusList.add(DmpInputTaskStatusEnum.FINISH);
     		}else if(value == DmpInputTaskStatusEnum.FINISH) {
     			preStatusList.add(DmpInputTaskStatusEnum.INIT);
     			preStatusList.add(DmpInputTaskStatusEnum.FDS);
     			preStatusList.add(DmpInputTaskStatusEnum.MONGO);
     			preStatusList.add(DmpInputTaskStatusEnum.DMP);
-    			preStatusList.add(value);
     			
-    			nextStatusList.add(value);
     		}
     		preStatusMap.put(value, preStatusList);
     		nextStatusMap.put(value, nextStatusList);
@@ -122,11 +110,19 @@ public enum DmpInputTaskStatusEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static List<DmpInputTaskStatusEnum> getNextStatus(String status){
+    	return nextStatusMap.get(EnumMessage.getByCode(DmpInputTaskStatusEnum.class, status));
+    }
     
     public static boolean isNextStatus(String status ,DmpInputTaskStatusEnum updateTaskStatus) {
+    	DmpInputTaskStatusEnum currStatus = EnumMessage.getByCode(DmpInputTaskStatusEnum.class, status);
+    	if(currStatus == updateTaskStatus) {
+    		return true;
+    	}
     	List<DmpInputTaskStatusEnum> list = nextStatusMap.get(updateTaskStatus);
     	if(CollUtil.isNotEmpty(list)) {
-    		return list.contains(EnumMessage.getCodeByName(DmpInputTaskStatusEnum.class, status));
+			return list.contains(currStatus);
     	}
     	return false;
     }

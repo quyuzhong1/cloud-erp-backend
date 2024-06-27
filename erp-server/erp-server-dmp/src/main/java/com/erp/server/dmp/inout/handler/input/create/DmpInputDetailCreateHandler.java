@@ -3,7 +3,6 @@ package com.erp.server.dmp.inout.handler.input.create;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -54,7 +53,7 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 				.eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
 				.eq(DmpCfgInputDetailEntity::getTaskType, taskType.getCode())
 				.eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
-				.le(DmpCfgInputDetailEntity::getNextTime, new Date())
+				.last(" next_time <= NOW() - (INTERVAL '1 seconds' *  dealy_time) ")
 				.list();
 		if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
 			log.info("输入信息数据代码【{}】没有符合条件的明细任务" ,  dmpCfgInputEntity.getCode());
@@ -108,15 +107,7 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 			dmpInputTaskEntity.setStartTime(startTime);
 			
 			// 2024-06-19 18:00:00
-			LocalDateTime nextTime = dmpCfgInputDetailEntity.getNextTime();
-			LocalDateTime endTime = nextTime;
-			// 4 * 3600
-			Integer dealyTime = dmpCfgInputDetailEntity.getDealyTime();
-			if(dealyTime != null && dealyTime != 0) {
-				endTime = LocalDateTimeUtil.offset(endTime, dealyTime * -1, ChronoUnit.SECONDS);
-			}else {
-				dealyTime = 0;
-			}
+			LocalDateTime endTime = dmpCfgInputDetailEntity.getNextTime();
 			// 2024-06-19 12:00:00
 			dmpInputTaskEntity.setEndTime(endTime);
 			dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
@@ -129,7 +120,7 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 			dmpCfgInputDetailEntity.setLastTime(endTime);
 			
 			// 2024-06-20 18:00:00
-			dmpCfgInputDetailEntity.setNextTime(LocalDateTimeUtil.offset(nextTime, dmpCfgInputDetailEntity.getIntervalTime() + dealyTime, ChronoUnit.SECONDS));
+			dmpCfgInputDetailEntity.setNextTime(LocalDateTimeUtil.offset(endTime, dmpCfgInputDetailEntity.getIntervalTime(), ChronoUnit.SECONDS));
 		}
 		dmpInputTaskService.saveBatch(dmpInputTaskEntityList);
 		
