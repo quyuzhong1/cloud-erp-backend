@@ -135,7 +135,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             // ERP加工单如果审核通过需要先反审核再作废
             if(Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE)) {
                 // 先反审核
-                machineInfoService.disApprove(Arrays.asList(machineInfoEntity.getId()));
+                machineInfoService.disApprove(machineInfoEntity);
             } else if (Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE_ING)) {
                 // 撤销
                 machineInfoService.cancelProcess(Arrays.asList(machineInfoEntity.getId()));

@@ -160,15 +160,29 @@ public class WmsWorkOptionFeignController {
     /**
      * 调拨申请单审核
      *
-     * @param baseApproveParamDTO
+     * @param dto
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/8/3 16:38
      **/
     @PostMapping("/transferApplicationApprove")
-    public Boolean transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        transferApplicationService.approve(baseApproveParamDTO);
-        return Boolean.TRUE;
+    public List<BatchResultDTO> transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferApplicationEntity> entityList = transferApplicationService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferApplicationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"调拨申请单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferApplicationService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("调拨申请单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 
     /**
