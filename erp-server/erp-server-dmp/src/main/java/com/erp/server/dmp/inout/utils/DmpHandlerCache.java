@@ -125,7 +125,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 		
 		dmpCfgInputConvertCache = dmpCfgInputConvertService.lambdaQuery()
 				.eq(DmpCfgInputConvertEntity::getDisabled, false).list();
-		this.dealConvertMappingCache();
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityFreshList = dmpCfgInputConvertService.lambdaQuery()
 					.gt(DmpCfgInputConvertEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
@@ -135,7 +134,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 				dmpCfgInputConvertCache.removeIf(d -> newIds.contains(d.getId()));
 				dmpCfgInputConvertCache.addAll(dmpCfgInputConvertEntityFreshList.stream()
 						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
-				this.dealConvertMappingCache();
 			}
 			
 		}, 2, freshCacheTime, TimeUnit.SECONDS);
@@ -159,6 +157,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 		dmpCfgInputConvertMappingCache = dmpCfgInputConvertMappingService.lambdaQuery()
 				.eq(DmpCfgInputConvertMappingEntity::getDisabled, false)
 				.list();
+		this.dealConvertMappingCache();
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityFreshList = dmpCfgInputConvertMappingService.lambdaQuery()
 					.gt(DmpCfgInputConvertMappingEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
@@ -168,6 +167,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 				dmpCfgInputConvertMappingCache.removeIf(d -> newIds.contains(d.getId()));
 				dmpCfgInputConvertMappingCache.addAll(dmpCfgInputConvertMappingEntityFreshList.stream()
 						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				this.dealConvertMappingCache();
 			}
 			
 		}, 4, freshCacheTime, TimeUnit.SECONDS);
