@@ -8,13 +8,17 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.TransferApplicationDetailDTO;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
+import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.TransferApplicationDetailEntity;
+import com.erp.model.wms.entity.TransferApplicationEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferApplicationDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.TransferApplicationDetailService;
+import com.erp.server.wms.service.TransferApplicationService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -23,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,6 +47,9 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
 
   @Resource
   private OperateLogService operateLogService;
+
+  @Resource
+  private TransferApplicationService transferApplicationService;
 
     
     @Override
@@ -107,6 +115,47 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
     @Override
     public List<TransferApplicationDetailEntity> listByMainIds(List<String> mainIds) {
         return lambdaQuery().in(TransferApplicationDetailEntity::getMainId,mainIds).list();
+    }
+
+    @Override
+    public List<PickingDetailDTO.ListDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto) {
+        TransferApplicationEntity entity = transferApplicationService.getById(dto.getSourceId());
+        List<TransferApplicationDetailEntity> list = lambdaQuery()
+                .eq(TransferApplicationDetailEntity::getMainId, dto.getSourceId())
+                .in(CollectionUtils.isNotEmpty(dto.getSkuNoList()), TransferApplicationDetailEntity::getSkuNo, dto.getSkuNoList())
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<PickingDetailDTO.ListDTO> resultList = new ArrayList<>();
+        for (TransferApplicationDetailEntity detailEntity : list) {
+            PickingDetailDTO.ListDTO listDTO = new PickingDetailDTO.ListDTO();
+            listDTO.setId(detailEntity.getId());
+            listDTO.setSkuId(detailEntity.getSkuId());
+            listDTO.setSkuNo(detailEntity.getSkuNo());
+            listDTO.setQty(detailEntity.getQty());
+            listDTO.setUnit(detailEntity.getUnit());
+            listDTO.setWarehouseId(entity.getInWarehouseId());
+            listDTO.setWarehouseName(entity.getInWarehouseName());
+            listDTO.setWarehouseLocation("");
+            listDTO.setOrgId(entity.getInOrgId());
+            listDTO.setOrgName(entity.getInOrgName());
+            listDTO.setSourceId(entity.getId());
+            listDTO.setSourceDetailId(detailEntity.getId());
+            listDTO.setSourceCode(entity.getCode());
+            resultList.add(listDTO);
+        }
+        List<String> skuIds = resultList.stream().map(PickingDetailDTO.ListDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+
+        for (PickingDetailDTO.ListDTO listDTO : resultList) {
+            //产品名称
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(listDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
+                listDTO.setProductName(productName);
+            }
+        }
+        return resultList;
     }
 
     /**

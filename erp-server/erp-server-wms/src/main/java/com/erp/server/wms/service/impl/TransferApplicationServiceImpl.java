@@ -113,9 +113,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
-    private PickingDetailService pickingDetailService;
-
-    @Resource
     private TransferInfoService transferInfoService;
 
     @Resource
@@ -641,14 +638,12 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
 
         List<String> sourceDetailIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceDetailId).distinct().collect(Collectors.toList());
-        //拣货明细信息
-        List<PickingDetailEntity> detailList = pickingDetailService.listByIds(sourceDetailIds);
 
         //直接调拨明细
         List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
         //分步式调出明细
         List<TransferOutDetailEntity> transferOutDetailList = transferOutDetailService.listSourceDetailIds(sourceDetailIds);
-
+        List<TransferApplicationDetailEntity> detailList = transferApplicationDetailService.listByIds(sourceDetailIds);
         //根据来源id分组生成下推直接调拨单
         Map<String, List<TransferApplicationDTO.GenerateTransferInfoDTO>> map = list.stream().collect(Collectors.groupingBy(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceId));
 
@@ -714,14 +709,14 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @param transferOutDetailList
      * @param dto
      */
-    private void checkGenerateTransfer (List<TransferInfoDetailEntity> transferInfoDetailList,List<TransferOutDetailEntity> transferOutDetailList,List<PickingDetailEntity> detailList,TransferApplicationDTO.GenerateTransferInfoDTO dto) {
+    private void checkGenerateTransfer (List<TransferInfoDetailEntity> transferInfoDetailList,List<TransferOutDetailEntity> transferOutDetailList,List<TransferApplicationDetailEntity> detailList,TransferApplicationDTO.GenerateTransferInfoDTO dto) {
         //来源明细id
         String sourceDetailId = dto.getSourceDetailId();
         //sku编码
         String skuNo = dto.getSkuNo();
 
-        //拣货数量
-        Integer pickingQty = detailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(PickingDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
+        //明细数量
+        Integer pickingQty = detailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(TransferApplicationDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
 
         //直接调拨数量
        Integer transferInfoQty = MathUtil.ZERO;
@@ -745,17 +740,14 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 throw new ServiceException(ApiError.ERROR_99055.code, String.format(ApiError.ERROR_99055.msg,dto.getSourceCode(), skuNo));
             }
         }
-        //调拨数量校验（直接调拨数量+分步式调出数量+本次调拨数量 不能大于 拣货数量）
+        //调拨数量校验（直接调拨数量+分步式调出数量+本次调拨数量 不能大于 明细数量）
         if (transferInfoQty.intValue() + transferOutQty.intValue() + dto.getQty().intValue() > pickingQty.intValue()) {
             throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg,dto.getSourceCode(), skuNo, pickingQty.intValue() - transferOutQty.intValue() - transferOutQty.intValue()));
 
         }
     }
 
-    @Override
-    public List<PickingDetailDTO.ListDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto) {
-        return pickingDetailService.listPickingDetailBySourceId(dto);
-    }
+
 
     /**
      * 下推加工单-列表查询
@@ -952,88 +944,92 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @description: 生成拣货明细
      * @author Will
      * @date: 2023/5/12 10:45
-     * @param list
      */
-    private void generatePickingDetail (List<TransferApplicationEntity> list) {
-        //生成拣货明细
-        List<String> ids = list.stream().map(TransferApplicationEntity::getId).collect(Collectors.toList());
-        List<TransferApplicationDetailEntity> detailList = transferApplicationDetailService.listByMainIds(ids);
-        if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99044);
-        }
-        //拣货明细集合
-        List<PickingDetailDTO.CommonDTO> addList = new ArrayList<>();
+//    private void generatePickingDetail (List<TransferApplicationEntity> list) {
+//        //生成拣货明细
+//        List<String> ids = list.stream().map(TransferApplicationEntity::getId).collect(Collectors.toList());
+//        List<TransferApplicationDetailEntity> detailList = transferApplicationDetailService.listByMainIds(ids);
+//        if (CollectionUtils.isEmpty(detailList)) {
+//            throw new ServiceException(ApiError.ERROR_99044);
+//        }
+//        //拣货明细集合
+//        List<PickingDetailDTO.CommonDTO> addList = new ArrayList<>();
+//
+//        // 忽略库存计算SKU
+//        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+//        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+//        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+//            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+//        }
+//
+//        for (TransferApplicationEntity entity :list) {
+//            List<TransferApplicationDetailEntity> detailEntities = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
+//            if (CollectionUtils.isEmpty(detailEntities)) {
+//                throw new ServiceException(ApiError.ERROR_99044);
+//            }
+//            for (TransferApplicationDetailEntity detailEntity : detailEntities) {
+//                //查询可用库存生成拣货明细
+//                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(entity.getOutOrgId(),entity.getOutOrgName(),entity.getOutWarehouseId(),
+//                        entity.getOutWarehouseName(),detailEntity.getSkuId(),detailEntity.getSkuNo(),detailEntity.getQty());
+//
+//                List<InventoryEntity> inventoryList = Lists.newArrayList();
+//                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
+//                    InventoryEntity inventoryEntity = new InventoryEntity();
+//                    inventoryEntity.setWarehouseId(dto.getWarehouseId());
+//                    inventoryEntity.setOrgId(dto.getOrgId());
+//                    inventoryEntity.setWarehouseLocation("");
+//                    inventoryEntity.setQty(detailEntity.getQty());
+//                    inventoryEntity.setSkuId(detailEntity.getSkuId());
+//                    inventoryEntity.setSkuNo(detailEntity.getSkuNo());
+//                    inventoryEntity.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+//                    inventoryList.add(inventoryEntity);
+//                } else {
+//                    inventoryList = inventoryService.listPickingDetailInventory(dto);
+//                }
+//
+//                List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
+//
+//                List<InOutStockDTO>  inOutStockList = new ArrayList<>();
+//                for ( PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {
+//                    addDTO.setSourceId(entity.getId());
+//                    addDTO.setSourceCode(entity.getCode());
+//                    addDTO.setSourceType(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
+//                    addDTO.setSourceDetailId(detailEntity.getId());
+//                    addDTO.setUnit(detailEntity.getUnit());
+//                    addDTO.setWarehouseName(entity.getOutWarehouseName());
+//                    addDTO.setOrgName(entity.getOutOrgName());
+//
+//                    //调拨操作请求实体
+//                    InOutStockDTO inOutStockDTO = new InOutStockDTO();
+//                    inOutStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_APPLY);
+//                    inOutStockDTO.setSourceId(entity.getId());
+//                    inOutStockDTO.setSourceCode(entity.getCode());
+//                    inOutStockDTO.setSourceDetailId(detailEntity.getId());
+//                    inOutStockDTO.setBillDate(entity.getBillDate());
+//                    inOutStockDTO.setSkuId(addDTO.getSkuId());
+//                    inOutStockDTO.setSkuNo(addDTO.getSkuNo());
+//                    inOutStockDTO.setQty(addDTO.getQty());
+//                    inOutStockDTO.setWarehouseId(entity.getOutWarehouseId());
+//                    inOutStockDTO.setWarehouseLocation(addDTO.getWarehouseLocation());
+//                    inOutStockList.add(inOutStockDTO);
+//                }
+//                addList.addAll(pickingDetailList);
+//
+//                //减少可用库存，添加冻结库存
+//                InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+//                inventoryInOutStockDTO.setParamList(inOutStockList);
+//                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.TRANSFER_APPLY.getCode());
+//                //更新库存
+//                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+//            }
+//        }
+//        //添加拣货明细数据
+//        pickingDetailService.add(addList);
+//    }
 
-        // 忽略库存计算SKU
-        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        }
-
-        for (TransferApplicationEntity entity :list) {
-            List<TransferApplicationDetailEntity> detailEntities = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(detailEntities)) {
-                throw new ServiceException(ApiError.ERROR_99044);
-            }
-            for (TransferApplicationDetailEntity detailEntity : detailEntities) {
-                //查询可用库存生成拣货明细
-                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(entity.getOutOrgId(),entity.getOutOrgName(),entity.getOutWarehouseId(),
-                        entity.getOutWarehouseName(),detailEntity.getSkuId(),detailEntity.getSkuNo(),detailEntity.getQty());
-
-                List<InventoryEntity> inventoryList = Lists.newArrayList();
-                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
-                    InventoryEntity inventoryEntity = new InventoryEntity();
-                    inventoryEntity.setWarehouseId(dto.getWarehouseId());
-                    inventoryEntity.setOrgId(dto.getOrgId());
-                    inventoryEntity.setWarehouseLocation("");
-                    inventoryEntity.setQty(detailEntity.getQty());
-                    inventoryEntity.setSkuId(detailEntity.getSkuId());
-                    inventoryEntity.setSkuNo(detailEntity.getSkuNo());
-                    inventoryEntity.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-                    inventoryList.add(inventoryEntity);
-                } else {
-                    inventoryList = inventoryService.listPickingDetailInventory(dto);
-                }
-
-                List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
-
-                List<InOutStockDTO>  inOutStockList = new ArrayList<>();
-                for ( PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {
-                    addDTO.setSourceId(entity.getId());
-                    addDTO.setSourceCode(entity.getCode());
-                    addDTO.setSourceType(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
-                    addDTO.setSourceDetailId(detailEntity.getId());
-                    addDTO.setUnit(detailEntity.getUnit());
-                    addDTO.setWarehouseName(entity.getOutWarehouseName());
-                    addDTO.setOrgName(entity.getOutOrgName());
-
-                    //调拨操作请求实体
-                    InOutStockDTO inOutStockDTO = new InOutStockDTO();
-                    inOutStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_APPLY);
-                    inOutStockDTO.setSourceId(entity.getId());
-                    inOutStockDTO.setSourceCode(entity.getCode());
-                    inOutStockDTO.setSourceDetailId(detailEntity.getId());
-                    inOutStockDTO.setBillDate(entity.getBillDate());
-                    inOutStockDTO.setSkuId(addDTO.getSkuId());
-                    inOutStockDTO.setSkuNo(addDTO.getSkuNo());
-                    inOutStockDTO.setQty(addDTO.getQty());
-                    inOutStockDTO.setWarehouseId(entity.getOutWarehouseId());
-                    inOutStockDTO.setWarehouseLocation(addDTO.getWarehouseLocation());
-                    inOutStockList.add(inOutStockDTO);
-                }
-                addList.addAll(pickingDetailList);
-
-                //减少可用库存，添加冻结库存
-                InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-                inventoryInOutStockDTO.setParamList(inOutStockList);
-                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.TRANSFER_APPLY.getCode());
-                //更新库存
-                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-            }
-        }
-        //添加拣货明细数据
-        pickingDetailService.add(addList);
+    @Override
+    public List<PickingDetailDTO.ListDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto) {
+        return transferApplicationDetailService.listPickingDetail(dto);
     }
 
     /**

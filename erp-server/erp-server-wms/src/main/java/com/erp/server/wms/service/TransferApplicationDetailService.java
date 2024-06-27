@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.TransferApplicationDetailDTO;
 import com.erp.model.wms.entity.TransferApplicationDetailEntity;
 
@@ -55,4 +56,11 @@ public interface TransferApplicationDetailService extends SuperService<TransferA
      * @return List<TransferApplicationDetailEntity>
      */
     List<TransferApplicationDetailEntity> listByMainIds(List<String> mainIds);
+
+    /**
+     * 兼容旧代码，查询后转成对应DTO
+     * @param dto
+     * @return
+     */
+    List<PickingDetailDTO.ListDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto);
 }
