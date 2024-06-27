@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -82,6 +83,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Resource
     private SpElServer spElServer;
+
+    @Resource
+    private PickingWaveService pickingWaveService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -285,18 +290,21 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         addDTO.setPickCartTypeId(entity.getPickingCartTypeId());
 
         List<String> deliveryIdList = new ArrayList<>();
+        //需要新增的波次数据
         List<PickingWaveDTO.AddDTO> resultList = new ArrayList<>();
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
 
-            //商品总数超出最大数量则不加入波次,发货单数量超过最大单数也无需加入波次
+            //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
             if ((ObjectUtil.isNotEmpty(entity.getMaxQty()) && MathUtil.compareTo(totalQty,entity.getMaxQty()) > MathUtil.ZERO)
                     || (MathUtil.compareTo(orderQty,entity.getMaxOrderQty()) > MathUtil.ZERO)) {
                 addDTO.setDeliveryIdList(deliveryIdList);
                 resultList.add(addDTO);
-                continue;
+
+                //清空合计数据
+                totalQty = MathUtil.ZERO;
+                orderQty = MathUtil.ZERO;
+                deliveryIdList = new ArrayList<>();
             }
-
-
 
             //发货明细商品数量合计
             Integer detailTotalQty = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -305,8 +313,13 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //发货单的数量
             orderQty++;
 
-
             deliveryIdList.add(deliveryEntity.getId());
+        }
+        if (CollectionUtil.isEmpty(resultList)) {
+            return;
+        }
+        for (PickingWaveDTO.AddDTO waveAddDTO : resultList) {
+            pickingWaveService.add(waveAddDTO);
         }
     }
 
@@ -405,10 +418,14 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         //自动执行
         if (StrUtil.equals(cfgRuleWaveEntity.getExecutionType(), ExecutionTypeEnum.AUTO.getCode())) {
-            if (ObjectUtil.isEmpty(executionTimeList)) {
+            if (CollectionUtil.isEmpty(executionTimeList)) {
                 throw new ServiceException("自动执行时执行时间不能为空");
             }
-            cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.parseObj(executionTimeList));
+            List<String> timeList = executionTimeList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj))
+                    .map(obj -> obj.format(DateTimeFormatter.ofPattern("HH:mm"))).collect(Collectors.toList());
+            cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.toJsonStr(timeList));
+        } else {
+            cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.toJsonStr(new JSONArray()));
         }
     }
 
