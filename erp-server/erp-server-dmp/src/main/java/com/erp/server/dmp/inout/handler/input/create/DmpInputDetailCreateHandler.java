@@ -53,7 +53,7 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 				.eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
 				.eq(DmpCfgInputDetailEntity::getTaskType, taskType.getCode())
 				.eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
-				.last(" next_time <= NOW() - (INTERVAL '1 seconds' *  dealy_time) ")
+				.last(" and next_time <= NOW() - (INTERVAL '1 seconds' *  dealy_time) ")
 				.list();
 		if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
 			log.info("输入信息数据代码【{}】没有符合条件的明细任务" ,  dmpCfgInputEntity.getCode());
