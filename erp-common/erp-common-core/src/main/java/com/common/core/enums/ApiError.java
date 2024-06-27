@@ -846,6 +846,8 @@ public enum ApiError implements Serializable {
     ERROR_99104(99104,"只有已处理的要货申请可以下推发货单，且只能下推一次"),
     ERROR_99105(99105,"销售订单未审核不能下推出库"),
 
+    ERROR_99111(99111,"sku【{}】已分完货"),
+
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
