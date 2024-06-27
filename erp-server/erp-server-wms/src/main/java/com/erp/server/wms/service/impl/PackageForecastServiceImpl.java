@@ -665,7 +665,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         /**
          * 要创建交接单的小包编码集合
          */
-        List<String> sourceCodeList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSourceCode).collect(Collectors.toList());
         String type = PackageForecastConstant.CAINIAO_PICKUP;
         String collectMode = entity.getCollectMode();
         String selfSend = PackageForecastCollectModeEnum.SELF_SEND.getCode();
@@ -675,7 +674,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         String client = PackageForecastConstant.CLIENT;
         CommitRequest commitRequest = CommitRequest.builder().pickInfo(addressInfo).
                 skipInvalidParcel(Boolean.FALSE).
-                orderCodeList(sourceCodeList).
+                orderCodeList(orderCodeList).
                 handoverOrderId("").
                 appointmentType("bigbag").
                 weight(entity.getTotalPackageWeight().setScale(0)).
