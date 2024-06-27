@@ -23,4 +23,6 @@ public interface ThirdMappingMapper extends BaseMapper<ThirdMappingEntity> {
 
     List<ThirdMappingDTO.ThirdAddDTO> getByThirdSysCode(@Param("thirdSysType") String thirdSysType, @Param("type") String type);
 
+    List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(@Param("warehouseIdList") List<String> warehouseIdList, @Param("sysType") String sysType);
+
 }

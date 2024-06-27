@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -56,6 +57,15 @@ public class DmpThirdMappingFeignController {
     public BaseResultDTO.AddDTO add(@RequestBody @Validated ThirdMappingDTO.AddDTO dto) {
         return thirdMappingService.add(dto);
     }
+
+    /**
+     * 查询三方仓库映射
+     */
+    @GetMapping("/listMappingBySysIds")
+    List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(@RequestParam List<String> warehouseIdList, @RequestParam String sysType){
+        return thirdMappingService.listMappingBySysIds(warehouseIdList, sysType);
+    }
+}
 
     @PostMapping("/view")
     public ThirdMappingDTO.MappingViewDTO view(@RequestBody @Validated ThirdMappingDTO.ViewParamDTO viewParamDTO) {

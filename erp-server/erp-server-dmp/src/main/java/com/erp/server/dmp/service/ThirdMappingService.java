@@ -114,4 +114,6 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
      * @return
      */
     List<ThirdMappingEntity> getVwListBySysIds(List<String> sysIds);
+
+    List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(List<String> warehouseIdList, String sysType);
 }
