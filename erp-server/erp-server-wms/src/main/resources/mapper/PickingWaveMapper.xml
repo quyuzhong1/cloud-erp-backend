@@ -9,8 +9,21 @@
     </select>
     <select id="listDetailByMainId"
             resultType="com.erp.model.wms.dto.renovation.PickingWaveDTO$PickingWaveDetailDTO">
-
-
+        SELECT
+            pwd.main_id,
+            pwd.basket_no,
+            pwd.delivery_id,
+            pd.ID,
+            pd.sku_id,
+            pd.sku_no,
+            pd.picked_qty,
+            pd.allocated_qty
+        FROM
+            picking_wave_detail AS pwd
+                LEFT JOIN so_b2c_delivery_detail AS sbdd ON sbdd.is_deleted = FALSE
+                AND sbdd.main_id = pwd.delivery_id
+                LEFT JOIN picking_detail AS pd ON pd.is_deleted = FALSE
+                AND pd.source_detail_id = sbdd.ID
 
     </select>
 </mapper>
