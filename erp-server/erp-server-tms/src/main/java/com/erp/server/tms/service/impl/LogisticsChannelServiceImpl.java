@@ -23,6 +23,7 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
@@ -613,6 +614,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             if (Objects.isNull(saleChannel)) {
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
+        }
+        if (StringUtils.isBlank(logisticsChannelEntity.getDeliveryType())){
+            logisticsChannelEntity.setDeliveryType(DeliveryTypeEnum.SELF_SEND.getCode());
         }
 
     }
