@@ -13,6 +13,7 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.rpc.wms.feign.VirtualWarehouseAllocationDetailFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WangDianVwPushHandleDetailService;
@@ -27,6 +28,8 @@ import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -62,13 +65,19 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
             boolean locked = lock.tryLock(10, 30, TimeUnit.SECONDS);
             if (locked) {
                 VwPushHandleDetailAPI api = wangDianClientService.get(VwPushHandleDetailAPI.class);
-                log.info("旺店通虚拟仓订单创建：消费者接收数据：{}",pushDTOS);
-                Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {});
+                log.info("旺店通虚拟仓订单创建：消费者接收数据：{}", pushDTOS);
+                Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {
+                });
                 Object bizType = map.get("bizType");
                 Map<String, Object> request = commonService.makeApiFieldMap(map, platformEntity.getId(), ApiModuleTypeEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL.getCode());
-                log.info("旺店通虚拟仓订单创建：请求参数：{}",request);
+                log.info("旺店通虚拟仓订单创建：请求参数：{}", request);
                 String msg = null;
                 VirtualWarehouseAllocationDTO.SyncUpdateDto dto = new VirtualWarehouseAllocationDTO.SyncUpdateDto();
+                //审核时间: 仅在order_type=3时生效, 格式: yyyy-MM-dd HH:mm, 时间要大于当前服务器时间2分钟以上
+                Object orderTypeObj = request.get("order_type");
+                if (Objects.nonNull(orderTypeObj) && !StringUtil.isEmpty(orderTypeObj.toString()) && Objects.equals(orderTypeObj.toString(), "3")) {
+                    request.put("pre_time", LocalDateTime.now().plusMinutes(5).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                }
                 try {
                     VwPushHandelDetailResponse pushResult = api.push(request, request.get("detailList"));
                     log.info("旺店通虚拟仓订单创建：响应结果：{}", pushResult);
@@ -78,14 +87,14 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
                         dto.setThirdCode(pushResult.getMessage());
                         dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.SUCCESS_SYNC.getCode());
                         dto.setHandelDetailId(map.get("sourceId").toString());
-                        log.info("旺店通虚拟仓订单创建：成功同步分货单：{}",dto);
+                        log.info("旺店通虚拟仓订单创建：成功同步分货单：{}", dto);
                         allocationDetailFeign.updateSyncStatus(dto);
                     }
-                }catch (WdtErpException e){
+                } catch (WdtErpException e) {
                     if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
                         dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
                         dto.setHandelDetailId(map.get("sourceId").toString());
-                        log.info("旺店通虚拟仓订单创建：失败同步分货单：{}",dto);
+                        log.info("旺店通虚拟仓订单创建：失败同步分货单：{}", dto);
                         allocationDetailFeign.updateSyncStatus(dto);
                     }
                     throw new ServiceException(e.getMessage());
