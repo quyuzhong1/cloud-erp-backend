@@ -4,9 +4,7 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
-import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +44,8 @@ public class WmsWorkOptionFeignController {
 
     @Resource
     private PoReturnService poReturnService;
-
+    @Resource
+    private PoReturnDetailService poReturnDetailService;
     @Resource
     private TransferApplicationService transferApplicationService;
 
@@ -131,15 +130,31 @@ public class WmsWorkOptionFeignController {
     /**
      * 采购退货审核
      *
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
      **/
     @PostMapping("/purchaseReturnOrderApprove")
-    public Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = poReturnService.approve(baseApproveParamDTO);
-        return flag;
+    public List<BatchResultDTO> purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PoReturnEntity> entityList = poReturnService.listByIds(dto.getIds());
+        List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByMainIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoReturnEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购退货单记录不存在"));
+                continue;
+            }
+            List<PoReturnDetailEntity> detailEntityList = poReturnDetailList.stream().filter(e -> e.getMainId().equals(id)).collect(Collectors.toList());
+            try {
+                resultDTOS.add(poReturnService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess(),detailEntityList));
+            }catch (Exception e){
+                log.error("采购退货单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 
     /**
