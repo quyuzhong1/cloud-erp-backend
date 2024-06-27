@@ -43,6 +43,9 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     @Override
     public SecondarySortingDTO.ScanCodeView scanCode(String code) {
         PickingWaveEntity pickingWave = pickingWaveService.getByCodeOrCarCode(code);
+        if (ObjectUtils.isEmpty(pickingWave)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, code);
+        }
         SecondarySortingDTO.ScanCodeView view = new SecondarySortingDTO.ScanCodeView();
         view.setWaveId(pickingWave.getId());
         view.setCode(pickingWave.getCode());
@@ -125,13 +128,14 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SecondarySortingDTO.ScanCodeView reset(String code) {
-        List<PickingWaveDTO.PickingWaveDetailDTO> waveDetailDTOS = pickingWaveService.listDetailByMainId(code);
+    public SecondarySortingDTO.ScanCodeView reset(String waveId) {
+        PickingWaveEntity pickingWave = pickingWaveService.getById(waveId);
+        List<PickingWaveDTO.PickingWaveDetailDTO> waveDetailDTOS = pickingWaveService.listDetailByMainId(waveId);
         List<String> detailIds = waveDetailDTOS.stream().map(PickingWaveDTO.PickingWaveDetailDTO::getPickDetailId).collect(Collectors.toList());
         pickingDetailService.update(Wrappers.<PickingDetailEntity>lambdaUpdate()
                 .set(PickingDetailEntity::getAllocatedQty, 0)
                 .in(PickingDetailEntity::getId, detailIds)
         );
-        return scanCode(code);
+        return scanCode(pickingWave.getCode());
     }
 }
