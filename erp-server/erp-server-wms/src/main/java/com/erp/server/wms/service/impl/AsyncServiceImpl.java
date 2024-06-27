@@ -52,14 +52,10 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Async("wmsErpExecutor")
     @Override
-    @DataIdempotent(keyIdName = "soId")
-    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
-        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-        platformShipOrderDTO.setSoB2cId(soId);
-        platformShipOrderDTO.setDictPlatform(dictPlatform);
-        platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
+    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
         try {
-            List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+            // 根据提交平台唯一key幂等提交
+            List<String> detailIds = submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey);
             //更新销售明细标识
             soB2cFeign.updateSignShippedByDetailId(detailIds);
         } catch (Exception e) {
@@ -82,5 +78,17 @@ public class AsyncServiceImpl implements AsyncService {
         deleteDTO.setType(SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode());
         deleteDTO.setMainId(soId);
         soB2cFeign.deleteError(deleteDTO);
+    }
+
+
+    @Override
+    @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
+    public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey) {
+        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+        platformShipOrderDTO.setSoB2cId(soId);
+        platformShipOrderDTO.setDictPlatform(dictPlatform);
+        platformShipOrderDTO.setSubmitPlatformUniqueKey(submitPlatformUniqueKey);
+        platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
+        return PlatformSaveHandler.shipOrder(platformShipOrderDTO);
     }
 }

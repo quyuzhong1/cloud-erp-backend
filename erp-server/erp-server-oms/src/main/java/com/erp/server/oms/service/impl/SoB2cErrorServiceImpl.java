@@ -260,6 +260,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         String soCode = mainEntity.getCode();
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soB2cId);
+        platformShipOrderDTO.setSubmitPlatformUniqueKey(mainEntity.convertSubmitPlatformUniqueKey());
         platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
         platformShipOrderDTO.setFalseDeliveryFlag(true);
         try {
