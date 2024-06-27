@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.wms.entity.PickingWaveDetailEntity;
 
 import java.util.List;
+import java.util.Map;
 
 public interface PickingWaveDetailService extends SuperService<PickingWaveDetailEntity> {
     /**
@@ -12,4 +13,5 @@ public interface PickingWaveDetailService extends SuperService<PickingWaveDetail
      */
     List<PickingWaveDetailEntity> listByMainId(String mainId);
 
+    Map<String, String> getOrderBasketNoMap(List<String> soIds);
 }

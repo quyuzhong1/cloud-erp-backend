@@ -100,6 +100,7 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.Pair;
+import org.python.antlr.ast.Str;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -176,9 +177,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Resource
     private PickingWaveService pickingWaveService;
+    @Resource
+    private PickingWaveDetailService pickingWaveDetailService;
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -759,8 +763,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             //匹配订单字段，用于打印
             List<String> soIds = waybillDetailDTOList.stream().map(req -> req.getSoB2cId()).distinct().collect(Collectors.toList());
+            //订单波次篮号信息
+            Map<String, String> orderBasketNoMap = pickingWaveDetailService.getOrderBasketNoMap(soIds);
             List<PrintWayBillPdfDTO> printWayBillPdfResultList = soB2cFeign.printWayBillPdf(soIds);
-
+            printWayBillPdfResultList.forEach(v->{
+                v.setBasketNo(orderBasketNoMap.getOrDefault(v.getSoId(), "").toString());
+            });
 
             List<SoB2cDTO.WaybillDTO> platformWaybill = new ArrayList<>();
 
@@ -1749,6 +1757,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             wayBillDetailList.add(detailDTO);
         }
         printWayBillPdf.setDetailList(wayBillDetailList);
+
+        printWayBillPdf.setBasketNo("#"+printWayBillPdf.getBasketNo());
+        String orderTip = printWayBillPdf.getIsOutStock()?printWayBillPdf.getIsIntercept()?"缺货订单/拦截订单":"缺货订单":printWayBillPdf.getIsIntercept()?"拦截订单":"";
+        printWayBillPdf.setOrderTip(orderTip);
         return printWayBillPdf;
     }
 

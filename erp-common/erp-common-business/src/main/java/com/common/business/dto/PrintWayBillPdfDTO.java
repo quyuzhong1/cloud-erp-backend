@@ -22,6 +22,11 @@ public class PrintWayBillPdfDTO {
      * 是否缺货
      */
     private Boolean isOutStock = false;
+
+    /**
+     * 是否拦截
+     */
+    private Boolean isIntercept = false;
     /**
      * 订单提示
      */
