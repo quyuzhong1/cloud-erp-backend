@@ -266,11 +266,17 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	
 	protected Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> convertData(List<Map<String, Object>> dmpInputMongoEntityList) {
 		Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps = new HashMap<>();
+		Map<String, List<String>> originaConvertMap = new HashMap<>();
 		for(Map<String, Object> dmpInputMongoBaseEntity : dmpInputMongoEntityList) {
 			TreeMap<String , Object> dmpInputDmpBaseEntity = new TreeMap<>();
 			Set<Entry<String, Object>> entrySet = dmpInputMongoBaseEntity.entrySet();
 			for (Map.Entry<String, Object> entry : entrySet) {
-				List<String> convertKey = this.convertKey(entry.getKey().toString());
+				String originalKey = entry.getKey().toString();
+				List<String> convertKey = originaConvertMap.get(originalKey);
+				if(convertKey == null) {
+					convertKey = this.convertKey(originalKey);
+					originaConvertMap.put(originalKey, convertKey);
+				}
 				for(String c : convertKey) {
 					dmpInputDmpBaseEntity.put(c, entry.getValue());
 				}
