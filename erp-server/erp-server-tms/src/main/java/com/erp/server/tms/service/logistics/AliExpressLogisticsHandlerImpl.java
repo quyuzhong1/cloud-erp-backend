@@ -232,10 +232,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         return OrderRequest.builder()
                 .oaid(logisticsOrderVO.getOaid())
-//                .pickup_type(logisticsOrderVO.getPickupType())
-                .pickup_type("SELF_SEND")
+                .pickup_type(logisticsOrderVO.getLogisticsChannelEntity().getDeliveryType())
                 .declareProducts(declareProducts)
-//                .domestic_logistics_company(logisticsOrderVO.getLogisticsSaleChannel().getSupplierName())
                 .domestic_logistics_company("自送")
                 .domestic_logistics_company_id(-1L)
 //                .domestic_tracking_no(logisticsOrderVO.getDeliveryNo())
