@@ -75,7 +75,7 @@ public class PurchasePriceDetailImportExcelDTO  {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "生效时间", index = 6)
-    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
+//    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String effectiveDateStr;
 
 
