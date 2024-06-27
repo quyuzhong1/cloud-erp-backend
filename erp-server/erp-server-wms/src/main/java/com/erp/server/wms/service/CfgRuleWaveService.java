@@ -77,4 +77,10 @@ public interface CfgRuleWaveService extends SuperService<CfgRuleWaveEntity> {
      * @return BatchResultDTO
      */
     Boolean executeRule(String id);
+    /**
+     * 根据配置自动执行规则
+     * @author will
+     * @date 2024/6/27 16:26
+     */
+    void autoExecuteRule();
 }

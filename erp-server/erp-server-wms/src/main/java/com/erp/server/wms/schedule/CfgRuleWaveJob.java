@@ -1,6 +1,6 @@
 package com.erp.server.wms.schedule;
 
-import com.erp.server.wms.service.CfgSettingService;
+import com.erp.server.wms.service.CfgRuleWaveService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -19,7 +19,7 @@ import javax.annotation.Resource;
 public class CfgRuleWaveJob {
 
     @Resource
-    private CfgSettingService cfgSettingService;
+    private CfgRuleWaveService cfgRuleWaveService;
 
 
     /**
@@ -31,8 +31,8 @@ public class CfgRuleWaveJob {
     @XxlJob("autoExecuteRule")
     public ReturnT<String> autoExecuteRule() {
         XxlJobHelper.log("====开始执行波次规则=====");
-
-
+        cfgRuleWaveService.autoExecuteRule();
+        XxlJobHelper.log("====结束执行波次规则=====");
         return ReturnT.SUCCESS;
     }
 

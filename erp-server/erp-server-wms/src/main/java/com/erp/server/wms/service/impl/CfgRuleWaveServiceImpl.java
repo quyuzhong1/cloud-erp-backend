@@ -257,6 +257,12 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         return Boolean.TRUE;
     }
 
+    @Override
+    public void autoExecuteRule() {
+        LocalTime time = LocalTime.now();
+
+    }
+
     /**
      * 生成拣货波次列表数据
      * @author will
@@ -352,7 +358,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if (ObjectUtil.isEmpty(soB2cReceiverEntity)) {
             throw new ServiceException(StrUtil.format("发货单【{}】未找到上游销售订单买家信息",soB2cDeliveryEntity.getCode()));
         }
-
+        List<Map<String, Object>> detailList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : deliveryDetailList) {
             Map<String, Object> detailMap = new HashMap<>();
             //仓库
@@ -383,8 +389,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             detailMap.put("pickingType",soB2cDeliveryEntity.getPickingType());
             //发货单-创建时间
             detailMap.put("deliveryCreateTime",soB2cDeliveryEntity.getCreateTime());
-            map.put("detailList",detailMap);
+            detailList.add(detailMap);
         }
+        map.put("detailList",detailList);
         return map;
     }
 
