@@ -173,7 +173,7 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
 //                        detailDto.setToVirtualWarehouseCode(vwDtoList.get(0).getCode());
                         //获取数量
                         VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
-                        qtyTypeDTO.setType(VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode());
+                        qtyTypeDTO.setType(VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode());
                         VirtualInventoryDTO.QtySearchDTO qtySearchDTO = new VirtualInventoryDTO.QtySearchDTO();
                         BeanUtils.copyProperties(detailDto, qtySearchDTO);
                         List<VirtualInventoryDTO.QtySearchDTO> qtySearchList = new ArrayList<>();

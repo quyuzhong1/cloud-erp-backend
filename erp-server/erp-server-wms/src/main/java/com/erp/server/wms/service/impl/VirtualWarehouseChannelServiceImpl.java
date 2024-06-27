@@ -49,7 +49,6 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
 
 
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -98,6 +97,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
 
     /**
      * 封装数据
+     *
      * @param batchAddDTO
      * @param dtoList
      * @return
@@ -163,6 +163,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         return baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>()
                 .eq(VirtualWarehouseChannelEntity::getVirtualWarehouseId, virtualWarehouseId).orderByAsc(VirtualWarehouseChannelEntity::getId));
     }
+
     /**
      * 获取所有绑定的平台（聚合）
      */
@@ -170,6 +171,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatform() {
         return baseMapper.getBindedDictPlatform();
     }
+
     /**
      * 获取所有绑定的平台（不聚合）
      */
@@ -177,8 +179,10 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public List<VirtualWarehouseDTO.BindChannelDto> getBindedDictPlatformNoGroup() {
         return baseMapper.getBindedDictPlatformNoGroup();
     }
+
     /**
      * 获取当前渠道绑定的店铺
+     *
      * @param dictPlatform
      * @return
      */
@@ -193,7 +197,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         if (ObjectUtil.isEmpty(channelEntity)) {
             return Collections.EMPTY_LIST;
         }
-        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(),Arrays.asList(channelEntity.getVirtualWarehouseId()));
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(), Arrays.asList(channelEntity.getVirtualWarehouseId()));
         if (ObjectUtil.isEmpty(warehouseEntityList)) {
             return Collections.EMPTY_LIST;
         }
@@ -207,11 +211,11 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             return Collections.EMPTY_LIST;
         }
         List<String> virtualWarehouseIdList = channelEntityList.stream().map(VirtualWarehouseChannelEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
-        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(listPlatformDTO.getWarehouseIdList(),virtualWarehouseIdList);
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(listPlatformDTO.getWarehouseIdList(), virtualWarehouseIdList);
         if (ObjectUtil.isEmpty(warehouseEntityList)) {
             return Collections.EMPTY_LIST;
         }
-        List<VirtualWarehouseRelationDTO.ListPlatformDTO> resultList =new ArrayList<>();
+        List<VirtualWarehouseRelationDTO.ListPlatformDTO> resultList = new ArrayList<>();
         for (VirtualWarehouseRelationEntity entity : warehouseEntityList) {
             VirtualWarehouseRelationDTO.ListPlatformDTO platformDTO = new VirtualWarehouseRelationDTO.ListPlatformDTO();
             platformDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
@@ -227,15 +231,21 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         return resultList;
     }
 
+    @Override
+    public List<VirtualWarehouseDTO.BindChannelDto> getByParams(VirtualWarehouseChannelDTO.ChannelAddDTO newChannel) {
+        return baseMapper.getByParams(newChannel);
+    }
+
     /**
      * 根据关联id和平台查询
-     * @author will
-     * @date 2024/6/12 12:34
+     *
      * @param platformDTO
      * @return VirtualWarehouseChannelEntity
+     * @author will
+     * @date 2024/6/12 12:34
      */
-    private VirtualWarehouseChannelEntity getByPlatform (VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
-        return  baseMapper.getByPlatform(platformDTO);
+    private VirtualWarehouseChannelEntity getByPlatform(VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
+        return baseMapper.getByPlatform(platformDTO);
     }
 
 

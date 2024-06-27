@@ -81,4 +81,6 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
      * @return List<VirtualWarehouseRelationDTO.ListPlatformDTO>
      */
     List<VirtualWarehouseRelationDTO.ListPlatformDTO> listVirtualWarehouseByPlatform(VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO);
+
+    List<VirtualWarehouseDTO.BindChannelDto> getByParams(VirtualWarehouseChannelDTO.ChannelAddDTO newChannel);
 }
