@@ -873,16 +873,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         soInfoFeign.updateDeliveryStatus(paramList);
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
-        List<SoOutstockDetailEntity> soOutstockDetails = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-        List<PickingListsDTO.SourceView> pickingLists = pickingListsService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
+        String soInfoType = SourceTypeEnum.SO_INFO.getCode();
         List<InOutStockDTO> members = new ArrayList<>();
-        for (PickingListsDTO.SourceView detail : pickingLists) {
-            SoOutstockDetailEntity outstockDetail = soOutstockDetails.stream().filter(v -> v.getSourceDetailId().equals(detail.getSourceDetailId()))
-                    .findFirst()
-                    .orElse(new SoOutstockDetailEntity());
-            InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, outstockDetail,detail.getSkuId(), detail.getSkuNo(),detail.getStagingLocation(),detail.getQty());
-            members.add(stockDTO);
+        //迭代1.27.5   B2B销售订单下推的销售出库单扣可用库存
+        if (soInfoType.equals(sourceType)) {
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
+            members = baseMapper.listInventoryInOut(allList);
+        } else {
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
+            List<SoOutstockDetailEntity> soOutstockDetails = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            List<PickingListsDTO.SourceView> pickingLists = pickingListsService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
+            members = new ArrayList<>();
+            for (PickingListsDTO.SourceView detail : pickingLists) {
+                SoOutstockDetailEntity outstockDetail = soOutstockDetails.stream().filter(v -> v.getSourceDetailId().equals(detail.getSourceDetailId()))
+                        .findFirst()
+                        .orElse(new SoOutstockDetailEntity());
+                InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, outstockDetail,detail.getSkuId(), detail.getSkuNo(),detail.getStagingLocation(),detail.getQty());
+                members.add(stockDTO);
+            }
         }
         for (InOutStockDTO member : members) {
             member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
