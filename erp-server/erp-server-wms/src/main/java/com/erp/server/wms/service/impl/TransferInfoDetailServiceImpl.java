@@ -55,9 +55,6 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     private TransferInfoService transferInfoService;
 
     @Resource
-    private PickingDetailService pickingDetailService;
-
-    @Resource
     private WarehouseService warehouseService;
 
     @Resource
@@ -65,6 +62,9 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private TransferApplicationDetailService transferApplicationDetailService;
 
 
     @Override
@@ -160,7 +160,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         List<String> sourceDetailIds = newList.stream().map(TransferInfoDetailEntity::getSourceDetailId).collect(Collectors.toList());
 
         //拣货明细
-        List<PickingDetailEntity> pickingDetailList = pickingDetailService.listByIds(sourceDetailIds);
+        List<TransferApplicationDetailEntity> pickingDetailList = transferApplicationDetailService.listByIds(sourceDetailIds);
 
         //已下推明细
         List<TransferInfoDetailEntity> transferInfoDetailList = this.listSourceDetailIds(sourceDetailIds);
@@ -170,7 +170,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             Integer pickingQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(pickingDetailList)) {
                 pickingQty = pickingDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId()))
-                        .map(PickingDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
+                        .map(TransferApplicationDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
             }
             //已下推数量（不包括本明细数量）
             Integer hasPickingQty = MathUtil.ZERO;
