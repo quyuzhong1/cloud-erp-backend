@@ -1,31 +1,33 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.ValidatorUtil;
+import com.erp.model.wms.dto.TransferOutDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.model.wms.entity.TransferInDetailEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
+import com.erp.server.wms.service.*;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.TransferOutDetailDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferOutDetailMapper;
-import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +53,8 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
     @Autowired
     private OperateLogService operateLogService;
 
-    @Resource
-    private TransferApplicationDetailService transferApplicationDetailService;
+    @Autowired
+    private PickingDetailService pickingDetailService;
 
     @Autowired
     private TransferOutService transferOutService;
@@ -225,7 +227,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         List<String> sourceDetailIds = newList.stream().map(TransferOutDetailEntity::getSourceDetailId).collect(Collectors.toList());
 
         //拣货明细
-        List<TransferApplicationDetailEntity> pickingDetailList = transferApplicationDetailService.listByIds(sourceDetailIds);
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.listByIds(sourceDetailIds);
 
         //已下推明细
         List<TransferOutDetailEntity> transferOutDetailList = this.listSourceDetailIds(sourceDetailIds);
@@ -235,7 +237,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
             Integer pickingQty = 0;
             if (CollUtil.isNotEmpty(pickingDetailList)) {
                 pickingQty = pickingDetailList.stream().filter(obj -> Objects.equals(obj.getId(), detailEntity.getSourceDetailId()))
-                        .map(TransferApplicationDetailEntity::getQty).findFirst().orElse(0);
+                        .map(PickingDetailEntity::getQty).findFirst().orElse(0);
             }
             //已下推数量（不包括本明细数量）
             Integer hasPickingQty = MathUtil.ZERO;
