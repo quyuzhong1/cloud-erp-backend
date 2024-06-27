@@ -158,7 +158,7 @@ public interface WmsTaskFeign {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("feign/wmsWorkOption/transferApplicationApprove")
-    Boolean transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+    List<BatchResultDTO> transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * 盘点任务审核通过
