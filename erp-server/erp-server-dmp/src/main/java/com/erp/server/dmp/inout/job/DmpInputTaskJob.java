@@ -68,4 +68,18 @@ public class DmpInputTaskJob {
 			});
 		}
 	}
+	
+	@XxlJob("doInputTask")
+    public ReturnT doInputTask(){
+		String idList = XxlJobHelper.getJobParam();
+		if(StringUtils.isNotBlank(idList)) {
+			String[] ids = idList.split(",");
+			for(String id : ids) {
+				DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+				dmpInputFinishRequest.setInputTaskId(id);
+				dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+			}
+		}
+        return ReturnT.SUCCESS;
+    }
 }
