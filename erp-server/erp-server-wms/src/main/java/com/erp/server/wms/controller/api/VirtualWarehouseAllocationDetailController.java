@@ -169,7 +169,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                 }
             }
         } catch (Exception e) {
-            log.error("手动完结分货单失败>>>>{}", e);
+            log.error("手动同步分货单失败>>>>{}", e);
             submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
         }
         return submit.getSuccess() ? success(submit) : failure(submit);
