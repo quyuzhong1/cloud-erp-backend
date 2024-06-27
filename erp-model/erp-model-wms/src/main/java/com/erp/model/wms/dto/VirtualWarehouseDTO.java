@@ -62,6 +62,7 @@ public class VirtualWarehouseDTO implements Serializable {
         private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
         private List<String> warehouseIdList;
     }
+
     /**
      * 详情
      */
@@ -98,7 +99,7 @@ public class VirtualWarehouseDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
         @Valid
         private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
-//        @Valid
+        //        @Valid
         private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
     }
@@ -263,6 +264,7 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String id;
     }
+
     @Data
     @NoArgsConstructor
     public static class Tree {
@@ -277,6 +279,7 @@ public class VirtualWarehouseDTO implements Serializable {
         private Boolean disabled;
         private List<VirtualWarehouseDTO.ChildTree> childTreeList;
     }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -293,7 +296,9 @@ public class VirtualWarehouseDTO implements Serializable {
         private Boolean disabled;
         private Boolean platformDisabled;
         private Boolean shopDisabled;
-    }    @Data
+    }
+
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder

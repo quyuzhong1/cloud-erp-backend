@@ -93,4 +93,20 @@
             </foreach>
         </where>
     </select>
+    <select id="getByParams" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
+        SELECT vwc.dict_platform, vwc.type,vwc.virtual_warehouse_id,vwc.relation_id
+        ,vwc.virtual_warehouse_id
+        FROM "virtual_warehouse_channel" vwc
+        inner join virtual_warehouse vw
+        on vw.id = vwc.virtual_warehouse_id and vw.is_deleted = false and vw.disabled = false
+        where vwc.is_deleted = false
+        and vwc.dict_platform=#{params.dictPlatform}
+        and vwc.type=#{params.type}
+        <if test="params.relationList !=null and params.relationList.size()>0">
+            and vwc.relation_id in
+            <foreach collection="params.relationList" item="relationId" separator="," open="(" close=")">
+                #{relationId}
+            </foreach>
+        </if>
+    </select>
 </mapper>

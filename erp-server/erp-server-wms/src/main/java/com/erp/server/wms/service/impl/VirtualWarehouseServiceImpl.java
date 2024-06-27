@@ -163,57 +163,49 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     /**
      * 新增关联渠道
      *
-     * @param channelList
-     * @param virtualWarehouseEntityId
+     * @param newChannelList
+     * @param virtualWarehouseId
      */
-    private VirtualWarehouseChannelDTO.BatchAddDTO bindChannel(List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList, String virtualWarehouseEntityId) {
+    private VirtualWarehouseChannelDTO.BatchAddDTO bindChannel(List<VirtualWarehouseChannelDTO.ChannelAddDTO> newChannelList, String virtualWarehouseId) {
         //校验一个渠道只能绑定一种类型：平台、店铺
-        Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> collect = channelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform));
+        Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> collect = newChannelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform));
         collect.forEach((k, v) -> {
             if (v.size() > 1) {
                 throw new ServiceException(ApiError.ERROR_ONLYONE);
             }
         });
-//        //校验当前类型（平台、店铺）是否被其他虚拟仓占用
-//        if (CollectionUtils.isNotEmpty(channelList)) {
-//            //系统所有绑定的渠道
-//            List<VirtualWarehouseDTO.BindChannelDto> bindedDictPlatform = virtualWarehouseChannelService.getBindedDictPlatform();
-//            if (CollectionUtils.isNotEmpty(bindedDictPlatform)) {
-//                //获取当前虚拟仓绑定的渠道
-//                Map<String, List<VirtualWarehouseDTO.BindChannelDto>> allBindedMap = bindedDictPlatform.stream().collect(Collectors.groupingBy(VirtualWarehouseDTO.BindChannelDto::getDictPlatform));
-//                //获取当前虚拟仓绑定的渠道
-//                VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = virtualWarehouseChannelService.getByVirtualWarehouseId(virtualWarehouseEntityId).stream().findFirst().orElse(null);
-//                Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> newChannelMap = channelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform));
-//
-//                newChannelMap.forEach((k, v) -> {
-//                    List<VirtualWarehouseDTO.BindChannelDto> bindChannelDtos = allBindedMap.get(k);
-//                    if (CollectionUtils.isNotEmpty(bindChannelDtos)) {
-////                        if (Objects.nonNull(virtualWarehouseChannelEntity)
-////                                && Objects.equals(virtualWarehouseChannelEntity.getType(), childTree.getCode())) {
-//                        //如果是本虚拟仓绑定需要设置为可选
-////                        }
-//                    }
-//                });
-//
-//
-//                Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> listMap = channelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getType));
-//                listMap.forEach((type, list) -> {
-//                    if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(type)) {
-//                        //todo 获取已经绑定的平台
-////                        allBindedMap.get()
-////                    List<VirtualWarehouseChannelDTO.CommonDTO> bindedInfoList = virtualWarehouseChannelService.getBindedInfoByDictPlatform();
-//                        List<String> newDictPlatformList = list.stream().map(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform).collect(Collectors.toList());
-//                        //校验是否存在过绑定关系
-//                        bindedDictPlatform.retainAll(newDictPlatformList);
-//                        if (CollectionUtils.isNotEmpty(bindedDictPlatform)) {
-//                        }
-//                    }
-//                });
-//            }
-//        }
+        //校验当前类型（平台、店铺）是否被其他虚拟仓占用
+        if (CollectionUtils.isNotEmpty(newChannelList)) {
+            StringBuilder stringBuilder = new StringBuilder();
+            newChannelList.forEach(newChannel -> {
+                List<VirtualWarehouseDTO.BindChannelDto> bindedDictPlatformList = virtualWarehouseChannelService.getByParams(newChannel);
+                if (CollectionUtils.isNotEmpty(bindedDictPlatformList)) {
+                    if (StringUtils.isNotBlank(virtualWarehouseId)) {
+                        bindedDictPlatformList.forEach(bindChannelDto -> {
+                            if (!Objects.equals(bindChannelDto.getVirtualWarehouseId(), virtualWarehouseId)) {
+                                VirtualWarehouseEntity virtualWarehouse = this.getById(bindChannelDto.getVirtualWarehouseId());
+                                if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(bindChannelDto.getType())) {
+                                    stringBuilder.append(StrUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, "渠道", omsDropDownFeign.getByTypeAndValue("salesPlatform", bindChannelDto.getDictPlatform()).getName(), virtualWarehouse.getName()));
+                                } else {
+                                    //获取绑定过的店铺
+                                    List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Collections.singletonList(bindChannelDto.getRelationId()));
+                                    if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
+                                        stringBuilder.append(StrUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, VitualWarehouseChannelTypeEnum.SHOP.getName(), shopInfoEntities.stream().map(ShopInfoEntity::getName).collect(Collectors.joining("、")), virtualWarehouse.getName()));
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    if (StringUtils.isNotBlank(stringBuilder.toString())) {
+                        throw new ServiceException(stringBuilder.toString());
+                    }
+                }
+            });
+
+        }
         VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO = new VirtualWarehouseChannelDTO.BatchAddDTO();
-        batchAddDTO.setVirtualWarehouseId(virtualWarehouseEntityId);
-        batchAddDTO.setChannelList(channelList);
+        batchAddDTO.setVirtualWarehouseId(virtualWarehouseId);
+        batchAddDTO.setChannelList(newChannelList);
         return batchAddDTO;
     }
 
@@ -476,7 +468,8 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         }
         Map<String, List<VirtualWarehouseDTO.BindChannelDto>> allBindedMap = bindedDictPlatform.stream().collect(Collectors.groupingBy(VirtualWarehouseDTO.BindChannelDto::getDictPlatform));
         //获取当前虚拟仓绑定的渠道
-        VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = virtualWarehouseChannelService.getByVirtualWarehouseId(id).stream().findFirst().orElse(null);
+        List<VirtualWarehouseChannelEntity> curVwChannelList = virtualWarehouseChannelService.getByVirtualWarehouseId(id);
+        List<String> curChannelPlatformList = curVwChannelList.stream().map(VirtualWarehouseChannelEntity::getDictPlatform).collect(Collectors.toList());
         for (VirtualWarehouseDTO.Tree dictPlatform : trees) {
             List<VirtualWarehouseDTO.ChildTree> childTreeList = dictPlatform.getChildTreeList();
             if (CollectionUtils.isEmpty(childTreeList)) {
@@ -486,8 +479,8 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                 List<VirtualWarehouseDTO.BindChannelDto> bindChannelDtos = allBindedMap.get(childTree.getCode());
                 if (Objects.nonNull(bindChannelDtos)) {
                     String bindedType = bindChannelDtos.get(0).getType();
-                    if (Objects.nonNull(virtualWarehouseChannelEntity)) {
-                        if (Objects.equals(virtualWarehouseChannelEntity.getDictPlatform(), childTree.getCode())) {
+                    if (CollectionUtils.isNotEmpty(curVwChannelList)) {
+                        if (curChannelPlatformList.contains(childTree.getCode())) {
                             if (Objects.equals(bindedType, VitualWarehouseChannelTypeEnum.PLATFORM.getCode())) {
                                 //如果是本虚拟仓绑定平台，则当前行都可选
                                 childTree.setDisabled(false);
@@ -503,7 +496,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                                     childTree.setDisabled(false);
                                     childTree.setShopDisabled(false);
                                     childTree.setPlatformDisabled(true);
-                                }else{
+                                } else {
                                     childTree.setDisabled(false);
                                     childTree.setShopDisabled(false);
                                     childTree.setPlatformDisabled(false);

@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
@@ -32,6 +33,7 @@ public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehou
 
     /**
      * 获取当前渠道绑定的店铺
+     *
      * @param dictPlatform
      * @return
      */
@@ -45,13 +47,23 @@ public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehou
      * @author will
      * @date 2024/6/13 12:27
      */
-    VirtualWarehouseChannelEntity getByPlatform(@Param("platformDTO")VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
+    VirtualWarehouseChannelEntity getByPlatform(@Param("platformDTO") VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
+
     /**
      * 根据平台参数查询
-     * @author will
-     * @date 2024/6/13 12:27
+     *
      * @param listPlatformDTO
      * @return List<VirtualWarehouseChannelEntity>
+     * @author will
+     * @date 2024/6/13 12:27
      */
-    List<VirtualWarehouseChannelEntity> listVirtualWarehouseByPlatform(@Param("listPlatformDTO")VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO);
+    List<VirtualWarehouseChannelEntity> listVirtualWarehouseByPlatform(@Param("listPlatformDTO") VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO);
+
+    /**
+     * 根据参数获取数据
+     *
+     * @param newChannel
+     * @return
+     */
+    List<VirtualWarehouseDTO.BindChannelDto> getByParams(@Param("params")VirtualWarehouseChannelDTO.ChannelAddDTO newChannel);
 }
