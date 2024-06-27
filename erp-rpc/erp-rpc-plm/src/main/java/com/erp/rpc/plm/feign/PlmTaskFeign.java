@@ -616,5 +616,5 @@ public interface PlmTaskFeign {
     List<SkuVO> listSkuPurchaseByIds(@RequestBody List<String> skuIds);
 
     @GetMapping("feign/product/listSkuPurchaseByIds")
-    ProductDetailEntity getBySkuNoOrEan(String skuCode);
+    ProductDetailEntity getBySkuNoOrEan(@RequestParam("skuCode") String skuCode);
 }

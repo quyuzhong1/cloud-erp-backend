@@ -5103,7 +5103,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .eq(ProductPurchaseEntity::getEan, skuCode)
                     .last("LIMIT 1")
             );
-            if (ObjectUtil.isEmpty(purchaseEntity)) {
+            if (ObjectUtil.isNotEmpty(purchaseEntity)) {
                 entity = getById(purchaseEntity.getSkuId());
             }
         }
