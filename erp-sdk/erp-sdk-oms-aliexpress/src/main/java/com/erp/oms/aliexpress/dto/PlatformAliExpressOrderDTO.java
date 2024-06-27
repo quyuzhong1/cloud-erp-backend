@@ -286,8 +286,9 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                     for (LogisitcsDTO item : logisticInfoList) {
                         warehouseName = item.getWarehouseName();
                         PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
+                        // 自发货订单
                         // 部分发货拉取过来是已审核、部分发货、有跟踪单号不能操作反审核也不能操作拆单
-                        if (SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode().equalsIgnoreCase(orderDTO.getBillStatus())){
+                        if (!isAliexpressPlatformWarehouseOrder && SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode().equalsIgnoreCase(orderDTO.getBillStatus())){
                             logisticsDTO.setCode("");
                         } else {
                             logisticsDTO.setCode(item.getLogisticsNo());
