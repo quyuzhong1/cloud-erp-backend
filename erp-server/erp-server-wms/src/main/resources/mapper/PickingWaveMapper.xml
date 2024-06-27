@@ -13,7 +13,7 @@
             pwd.main_id,
             pwd.basket_no,
             pwd.delivery_id,
-            pd.ID,
+            pd.id as pickDetailId,
             pd.sku_id,
             pd.sku_no,
             pd.picked_qty,
