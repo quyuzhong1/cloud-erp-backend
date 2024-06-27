@@ -100,4 +100,6 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
     List<ThirdMappingEntity> getByThirdId(ThirdMappingDTO.ViewParamDTO viewParamDTO);
 
     BaseResultDTO.AddDTO batchAdd(ThirdMappingDTO.FeignMappingDTO feignMappingDTO);
+
+    List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(List<String> warehouseIdList, String sysType);
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,4 +44,9 @@ public interface DmpThirdMappingFeign {
     @PostMapping("/batchAdd")
     BaseResultDTO.AddDTO batchAdd(@RequestBody @Validated ThirdMappingDTO.FeignMappingDTO feignMappingDTO);
 
+    /**
+     * 查询三方仓库映射
+     */
+    @GetMapping("/listMappingBySysIds")
+    List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(@RequestParam List<String> warehouseIdList, @RequestParam String sysType);
 }
