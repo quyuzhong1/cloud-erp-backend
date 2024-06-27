@@ -2527,13 +2527,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         // 新增
-        soOutstockService.generatePlatformB2cOutStock(generateB2cDTO, dto, soB2cEntity, generateSourceDetailList);
+        Boolean addResult = soOutstockService.generatePlatformB2cOutStock(generateB2cDTO, dto, soB2cEntity, generateSourceDetailList);
 
         // 更新
-        soOutstockService.updatePlatformB2cOutStock(generateB2cDTO, dto, soB2cEntity, updateGenerateSourceDetailList, mainEntityMap, detailEntityListMap);
+        Boolean updateResult = soOutstockService.updatePlatformB2cOutStock(generateB2cDTO, dto, soB2cEntity, updateGenerateSourceDetailList, mainEntityMap, detailEntityListMap);
 
-        // 检查清理历史异常信息
-        soOutstockService.checkAndDeletePlatformB2cOutStock(existSourceDetailList, soB2cEntity, detailEntityListMap.values());
+        if (addResult && updateResult){
+            // 检查清理历史异常信息
+            soOutstockService.checkAndDeletePlatformB2cOutStock(existSourceDetailList, soB2cEntity, detailEntityListMap.values());
+        }
 
         return true;
     }
@@ -2541,10 +2543,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void generatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> generateSourceDetailList) {
+    public Boolean generatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> generateSourceDetailList) {
         if (CollectionUtils.isEmpty(generateSourceDetailList)){
             // 无新增
-            return;
+            return true;
         }
 
         // 按来源日期分组
@@ -2552,6 +2554,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         // 分组后的生成销售出库单DTO
         List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = new LinkedList<>();
+
+        boolean result = true;
 
         // 检查添加的明细数据
         for (Map.Entry<LocalDate, List<PlatformSoOutStockDetailDTO>> entry : gourpMap.entrySet()) {
@@ -2613,8 +2617,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 addError.setDetailId(genDTO.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSoDetailId).findFirst().orElse(""));
                 addError.setMessage(StrUtil.format("自动生成销售出库单失败：{}", e.getMessage()));
                 soB2cFeign.addSoB2cError(addError);
+                result = false;
             }
         }
+        return result;
     }
 
 
@@ -3273,37 +3279,48 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public void updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList, Map<String, SoOutstockEntity> mainEntityMap, Map<String, SoOutstockDetailEntity> detailEntityListMap) {
+    public Boolean updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList, Map<String, SoOutstockEntity> mainEntityMap, Map<String, SoOutstockDetailEntity> detailEntityListMap) {
         if (CollectionUtils.isEmpty(updateGenerateSourceDetailList)){
             // 无新增
-            return;
+            return true;
         }
         // 需要检查清除异常的明细IDS
         List<String> checkErrorDetailIds = new LinkedList<>();
+
+        boolean result = true;
 
         for (PlatformSoOutStockDetailDTO detailDTO : updateGenerateSourceDetailList) {
             SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
             SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
             try {
-                // 反审核
-                BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
-                idsDTO.setIds(Collections.singletonList(soOutstockEntity.getId()));
-                soOutstockService.disApprove(idsDTO, Boolean.TRUE);
-                // 修改信息
+                // 反审核(独立事务)
+                if (ApproveStatusEnum.APPROVE.equals(soOutstockEntity.getApproveStatus())){
+                    BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
+                    idsDTO.setIds(Collections.singletonList(soOutstockEntity.getId()));
+                    soOutstockService.disApprove(idsDTO, Boolean.TRUE);
+                }
+                // 审核中撤销(独立事务)
+                if (ApproveStatusEnum.APPROVE_ING.equals(soOutstockEntity.getApproveStatus())){
+                    soOutstockService.cancelProcess(Collections.singletonList(soOutstockEntity.getId()));
+                }
+
+                // 修改信息(独立事务)
                 soOutstockEntity.setBillDate(generateB2cDTO.getBillDate());
+                soOutstockEntity.setPlanDeliveryDate(generateB2cDTO.getBillDate());
                 detailEntity.setActualQty(detailDTO.getQtyShipped());
                 detailEntity.setPlanQty(detailDTO.getQtyShipped());
-                // 更新
-                soOutstockService.updateById(soOutstockEntity);
-                soOutstockDetailService.updateById(detailEntity);
+                soOutstockService.updateMainAndDetail(soOutstockEntity, Collections.singletonList(detailEntity));
 
-                // 提交并审核通过
-                soOutstockService.submitAndApprove(soOutstockEntity.getId());
+                // 提交(独立事务)
+                soOutstockService.submit(Collections.singletonList(soOutstockEntity.getId()));
+
+                // 审核(独立事务)
+                soOutstockService.approve(new ApproveOneDTO(soOutstockEntity.getId(), ApproveTypeEnum.PASS.getStatus(), ""));
 
                 checkErrorDetailIds.add(detailEntity.getId());
             } catch (Exception e) {
+                log.error("【平台销售出库单生成失败】dto={},error={}", JSONUtil.toJsonStr(dto), ExceptionUtil.stacktraceToString(e));
+                // 记录信息(独立事务)
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setParamJson(JSONUtil.toJsonStr(generateB2cDTO));
@@ -3312,6 +3329,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 addError.setDetailId(detailEntity.getId());
                 addError.setMessage(StrUtil.format("自动生成销售出库单失败：{}", e.getMessage()));
                 soB2cFeign.addSoB2cError(addError);
+                result = false;
             }
         }
 
@@ -3324,6 +3342,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             deleteDTO.setDetailIdList(checkErrorDetailIds);
             soB2cFeign.deleteDetailError(deleteDTO);
         }
+        return result;
     }
 
 
@@ -3362,6 +3381,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
         return null;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateMainAndDetail(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> list) {
+        // 更新
+        soOutstockService.updateById(soOutstockEntity);
+        soOutstockDetailService.updateBatchById(list);
     }
 
 }

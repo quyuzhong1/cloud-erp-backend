@@ -167,6 +167,18 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     @Panno(findType = PannoEnum.EQ,field = "warehouseName")
     private String warehouseName;
 
+    /**
+     * 库存组织ID
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseOrgId")
+    private String warehouseOrgId;
+
+    /**
+     * 库存组织名称
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseOrgName")
+    private String warehouseOrgName;
+
 
     public void checkAndSetAllDateLocale(String timeZone) {
         if (StringUtils.isBlank(timeZone)){

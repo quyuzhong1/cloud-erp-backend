@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.DmpMongoHandleTaskEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
@@ -32,6 +33,7 @@ import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DmpMongoHandleTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -180,14 +182,20 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
                 .collect(Collectors.toMap(CfgAmzFulfillmentCenterEntity::getCode, Function.identity()));
 
         // 店铺信息
-        List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(
-                new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
+        List<ShopInfoEntity> shopList =  FeignQuery.create(ShopInfoEntity.class)
+                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode())
+                .ne(ShopInfoEntity::getPlatformShopCode, "")
+                .list();
 
-        // 所有店铺信息Map<亚马逊账号， Map<国家代号, 店铺ID>
+        // 所有店铺信息Map<亚马逊账号， Map<国家代号, 店铺信息>
         Map<String, Map<String, ShopInfoEntity>> shopMap = shopList
                 .stream()
                 .collect(Collectors.groupingBy(ShopInfoEntity::getPlatformShopCode,
-                        Collectors.toMap(ShopInfoEntity::getDictCountryCode, Function.identity())));
+                        Collectors.toMap(ShopInfoEntity::getDictCountryCode,
+                                Function.identity(),
+                                // 已授权优先
+                                (existing, replacement) -> AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(replacement.getAuthStatus()) ? replacement : existing
+                        )));
 
         // 仓库信息
         Map<String, WarehouseDTO.ListDTO> warehouseMap = new HashMap<>();
@@ -248,11 +256,11 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         if (null != centerEntity && !curMap.isEmpty()){
             ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
             e.setWarehouseId(shopInfo.getWarehouseId());
-            if (!CollectionUtils.isEmpty(warehouseMap) && warehouseMap.containsKey(shopInfo.getId())){
-                WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(shopInfo.getId());
+            if (!CollectionUtils.isEmpty(warehouseMap) && warehouseMap.containsKey(shopInfo.getWarehouseId())){
+                WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(shopInfo.getWarehouseId());
                 e.setWarehouseName(warehouseDTO.getName());
                 e.setWarehouseOrgId(warehouseDTO.getOrgId());
-                e.setWarehouseName(warehouseDTO.getOrgName());
+                e.setWarehouseOrgName(warehouseDTO.getOrgName());
             }
         }
         if (e.hasMultiChannel()) {
