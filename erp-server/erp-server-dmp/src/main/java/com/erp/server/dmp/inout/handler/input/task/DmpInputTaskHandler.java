@@ -308,6 +308,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 					convertInputTaskFileEntityListMaps.put(dmpCfgInputConvertEntity, convertIdInputTaskFileEntityListMaps.get(dmpCfgInputConvertEntity.getId()));
 				}
 			}
+			dmpResponse.setConvertInputTaskFileEntityListMaps(convertInputTaskFileEntityListMaps);
 		}
 	}
 	
@@ -327,6 +328,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 				List<Map<String, Object>> dmpInputMongoBaseEntityList = mongoService.findMongoData(paramDataList, mongoStorageName);
 				convertInputMongoEntityListMaps.put(dmpCfgInputConvertEntity, dmpInputMongoBaseEntityList);
 			}
+			dmpResponse.setConvertInputMongoEntityListMaps(convertInputMongoEntityListMaps);
 		}
 	}
 	
@@ -345,6 +347,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 				wrapper.eq(DmpInputDmpHandler.CONVERT_ID, dmpCfgInputConvertEntity.getId());
 				convertInputDmpBaseEntityListMaps.put(dmpCfgInputConvertEntity, this.getServiceImpl(dmpCfgInputConvertEntity.getStorageName()).list(wrapper));
 			}
+			dmpResponse.setConvertInputDmpBaseEntityListMaps(convertInputDmpBaseEntityListMaps);
 		}
 	}
 	

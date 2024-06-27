@@ -66,6 +66,9 @@ public class DmpInputTaskFactory{
 		
 		String redisKey = "dmp:input:task:" + inputTaskId;
 		Integer execTimeout = dmpInputFinishRequest.getExecTimeout();
+		if(execTimeout == null) {
+			execTimeout = dbDmpInputTaskEntity.getExecTimeout();
+		}
 		if(execTimeout == null || execTimeout < 3) {
 			execTimeout = 3600;
 		}
