@@ -53,6 +53,7 @@
                  left join third_warehouse w on m.third_id = w.warehouse_id and m.type = w.category
         where m.disabled = false and w.disabled = false
           and m.third_sys_type = #{sysType} and m.type = 'warehouse'
+          and m.is_deleted = false and w.is_deleted = false
         <if test="warehouseIdList != null and warehouseIdList.size() != 0">
             and m.sys_id in
             <foreach collection="warehouseIdList" open="(" item="warehouseId" close=")" separator=",">
