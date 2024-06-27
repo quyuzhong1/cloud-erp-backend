@@ -395,6 +395,10 @@ public class ThirdShopDTO implements Serializable {
          * 编号
          */
         private String code;
+        /**
+         * 是否可选
+         */
+        private Boolean canCheck = true;
     }
 
     /**

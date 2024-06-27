@@ -39,5 +39,8 @@ public interface TaskConstant {
      */
     String LX_PULL_DATA_TASK = "LX_PULL_DATA_TASK";
 
+    /**
+     * 旺店通任务名称
+     */
     String WDT_PULL_DATA_TASK = "WDT_PULL_DATA_TASK";
 }

@@ -1,6 +1,8 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.annotation.Dict;
@@ -328,57 +330,6 @@ public class ShopDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
-
-
-    }
-    @Data
-    @NoArgsConstructor
-    public static class AddInternalDTO {
-
-
-        /**
-         * 平台
-         */
-        @NotBlank(message = "平台不能为空")
-        private String dictPlatform;
-
-
-        /**
-         * 店铺名称
-         */
-        @NotBlank(message = "店铺名称不能为空")
-        @Size(max = 100, message = "店铺名称最大100字符")
-        private String name;
-
-
-        /**
-         * 店铺账号
-         */
-        @NotBlank(message = "店铺账号不能为空")
-        @Size(max = 100, message = "店铺账号最大100字符")
-        private String account;
-
-
-        /**
-         * 店铺负责人
-         */
-        @NotBlank(message = "负责人不能为空")
-        private String chargeId;
-        /**
-         * 金蝶客户编码
-         */
-        private String customerId;
-
-        /**
-         * 销售组织
-         */
-        @NotBlank(message = "销售组织不能为空")
-        private String salesOrgId;
-
-        /**
-         * 是否包含平台仓 true 包含
-         */
-        private Boolean  isHaveWarehouse;
 
 
     }
@@ -872,6 +823,7 @@ public class ShopDTO implements Serializable {
 
         private List<String> ids;
     }
+
     @Data
     @NoArgsConstructor
     public static class SelectDTO {
@@ -892,6 +844,7 @@ public class ShopDTO implements Serializable {
          * 平台
          */
         private List<String> shopIdList;
+
     }
     @Data
     @NoArgsConstructor
@@ -917,6 +870,59 @@ public class ShopDTO implements Serializable {
          */
         private String authStatus;
 
-    }
+        /**
+         * 是否可选
+         */
+        private Boolean canCheck=true;
 
+    }
+    @Data
+    @NoArgsConstructor
+    public static class AddInternalDTO {
+
+
+        /**
+         * 平台
+         */
+        @NotBlank(message = "平台不能为空")
+        private String dictPlatform;
+
+
+        /**
+         * 店铺名称
+         */
+        @NotBlank(message = "店铺名称不能为空")
+        @Size(max = 100, message = "店铺名称最大100字符")
+        private String name;
+
+
+        /**
+         * 店铺账号
+         */
+        @NotBlank(message = "店铺账号不能为空")
+        @Size(max = 100, message = "店铺账号最大100字符")
+        private String account;
+
+
+        /**
+         * 店铺负责人
+         */
+        @NotBlank(message = "负责人不能为空")
+        private String chargeId;
+        /**
+         * 金蝶客户编码
+         */
+        private String customerId;
+
+        /**
+         * 销售组织
+         */
+        @NotBlank(message = "销售组织不能为空")
+        private String salesOrgId;
+
+        /**
+         * 是否包含平台仓 true 包含
+         */
+        private Boolean  isHaveWarehouse;
+    }
 }

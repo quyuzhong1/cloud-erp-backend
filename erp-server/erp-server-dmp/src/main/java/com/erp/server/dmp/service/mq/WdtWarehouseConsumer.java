@@ -13,6 +13,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.dmp.service.ThirdWarehouseService;
@@ -85,6 +86,7 @@ public class WdtWarehouseConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPl
         //入库
         ThirdWarehouseDTO.AddDTO addDTO = new ThirdWarehouseDTO.AddDTO();
         BeanUtils.copyProperties(entity,addDTO);
+        addDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
         thirdWarehouseService.add(addDTO);
         return ApiResult.success();
     }

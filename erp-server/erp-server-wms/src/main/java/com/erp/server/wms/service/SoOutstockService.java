@@ -204,7 +204,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param resultList
      * @return java.lang.Boolean
      */
-    Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
+    Boolean addB2bPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
 
     
     /**

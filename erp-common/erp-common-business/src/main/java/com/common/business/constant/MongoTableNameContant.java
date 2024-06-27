@@ -247,6 +247,7 @@ public interface MongoTableNameContant {
     String THIRD_SYSTEM_WDT_RETURN_STOCK_OUT_ORDER = "third_system_wdt_return_stock_out_order";
     String ORIGNAL_WANGDIAN_WAREHOUSE = "orignal_wangdian_warehouse";
     String ORIGNAL_WANGDIAN_SHOP = "orignal_wangdian_shop";
+    String ORIGNAL_WANGDIAN_VIRTUAL_WAREHOUSE = "orignal_wangdian_virtual_warehouse";
     /**
      * 根据任务 key 获取表名
      *
@@ -266,7 +267,7 @@ public interface MongoTableNameContant {
             case TaskConstant.LX_PULL_DATA_TASK:
                 return Arrays.asList(ORIGINAL_LX_SHOP_LIST, ORIGINAL_LX_FBA_SHIPMENT_RECEIVE);
             case TaskConstant.WDT_PULL_DATA_TASK:
-                return Arrays.asList(THIRD_SYSTEM_WDT_SELL_STOCK_OUT_ORDER, THIRD_SYSTEM_WDT_RETURN_STOCK_OUT_ORDER,ORIGNAL_WANGDIAN_WAREHOUSE,ORIGNAL_WANGDIAN_SHOP);
+                return Arrays.asList(THIRD_SYSTEM_WDT_SELL_STOCK_OUT_ORDER, THIRD_SYSTEM_WDT_RETURN_STOCK_OUT_ORDER,ORIGNAL_WANGDIAN_WAREHOUSE,ORIGNAL_WANGDIAN_SHOP,ORIGNAL_WANGDIAN_VIRTUAL_WAREHOUSE);
             default:
                 return Collections.EMPTY_LIST;
         }

@@ -5,8 +5,11 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RefundOrderStatusEnum;
+import com.erp.model.oms.enums.ShopTypeEnum;
 import com.erp.server.oms.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,9 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -67,6 +68,17 @@ public class DropDownListController extends BaseController {
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
+    }
+
+    /**
+     * 根据type和subType返回树状结构
+     *
+     * @param key
+     * @return
+     */
+    @GetMapping("/dict/tree")
+    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam("key") String key) {
+        return success(dictBasicService.getTreeByKey(key));
     }
 
     /**

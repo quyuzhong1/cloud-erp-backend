@@ -187,7 +187,20 @@
             </foreach>
         </if>
     </select>
-
+    <select id="getActualLogisticCost" resultType="java.math.BigDecimal">
+        SELECT
+            COALESCE ( sum(cd.cost_value),0)
+        FROM
+            logistics_bill AS lb
+                inner JOIN logistics_bill_cost AS lbc ON lb.ID = lbc.logistics_bill_id AND lbc.is_deleted = FALSE
+                inner JOIN tms_cost_detail AS cd ON cd.main_id = lbc.id and cd.is_deleted = false
+                inner JOIN tms_cfg_cost AS cc ON cc.id = cd.cfg_cost_id and cc.is_deleted = false
+        WHERE
+            lb.is_deleted = FALSE
+        and cc.dict_cost_category = 'shippingCost'
+          and cd.type = 'actual'
+        and lb.source_id = #{soId}
+    </select>
 
 
 </mapper>

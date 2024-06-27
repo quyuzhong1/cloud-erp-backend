@@ -2357,64 +2357,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productCustomsService.updateBatchById(updateCustomsList);
         }
     }
+
     @Override
     public void initProductToWangDian(List<String> ids) {
         int count = productInfoService.count();
         int pageSize = 50;
         int pageCount = count / pageSize + 1;
-        RateLimiter limiter = RateLimiter.create(60, 1, TimeUnit.MINUTES);
         for (int i = 0; i < pageCount; i++) {
-            if (limiter.tryAcquire()) {
-                Page<ProductInfoEntity> page = productInfoService.page(new Page<>(i, pageSize), Wrappers.<ProductInfoEntity>lambdaQuery().in(CollectionUtil.isNotEmpty(ids), ProductInfoEntity::getId, ids));
-                List<ProductInfoEntity> records = page.getRecords();
-                if (CollectionUtils.isEmpty(records)){
-                    return;
-                }
-                List<String> infoIds = records.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
-                List<ProductDetailEntity> detailEntities = listSkuByProductIds(infoIds);
-                Map<String, List<ProductDetailEntity>> productDetailMap = detailEntities.stream()
-                        .collect(Collectors.groupingBy(ProductDetailEntity::getProductId));
-                List<String> detailIds = detailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-                List<ProductPackEntity> productPacks = productPackService.listBySkuIdList(detailIds);
-                List<ProductPurchaseEntity> productPurchaseEntities = productPurchaseService.listBySkuIds(detailIds);
-                List<GoodsBatchPushDTO> batchPushDTOS = new ArrayList<>();
-                for (ProductInfoEntity info : records) {
-                    GoodsBatchPushDTO dto = new GoodsBatchPushDTO();
-                    dto.setGoodsNo(info.getSpuNo());
-                    dto.setGoodsName(info.getName());
-                    dto.setGoodsType(getGoodsType(info.getSaleMethod(),info.getProperty()));
-                    List<ProductDetailEntity> details = productDetailMap.get(info.getId());
-                    List<GoodsBatchPushDTO.SpecList> specList = details.stream()
-                            .map(detail -> {
-                                ProductPackEntity productPack = productPacks.stream()
-                                        .filter(pack -> pack.getSkuId().equals(detail.getId()))
-                                        .findFirst().orElse(new ProductPackEntity());
-                                ProductPurchaseEntity productPurchase = productPurchaseEntities.stream()
-                                        .filter(pack -> pack.getSkuId().equals(detail.getId()))
-                                        .findFirst().orElse(new ProductPurchaseEntity());
-                                GoodsBatchPushDTO.SpecList spec = new GoodsBatchPushDTO.SpecList();
-                                spec.setSpecNo(detail.getSkuNo());
-                                spec.setBarcode(productPurchase.getEan());
-                                spec.setWeight(LengthConverterUtil.mmToCm(productPack.getProductLength()));
-                                spec.setLength(LengthConverterUtil.mmToCm(productPack.getProductLength()));
-                                spec.setWidth(LengthConverterUtil.mmToCm(productPack.getProductLength()));
-                                spec.setHeight(LengthConverterUtil.mmToCm(productPack.getProductLength()));
-                                spec.setImgUrl(detail.getImagesUrl());
-//                                spec.setUnitName(detail.getUnitName().toUpperCase());
-                                return spec;
-                            }).collect(Collectors.toList());
-                    dto.setSpecList(specList);
-                    batchPushDTOS.add(dto);
-                }
-                GoodsAPI api = wangDianClientService.get(GoodsAPI.class);
-                List<Map<String, Object>> list = JSON.parseObject(JSON.toJSONString(batchPushDTOS), new TypeReference<List<Map<String, Object>>>() {
-                });
-                Result result = api.batchPush(list);
-                String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
-                        .map(errorList -> String.format("【spu:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))
-                        .collect(Collectors.joining(","));
-                if (StringUtils.isNotBlank(msg)){
-                    log.info("{}", msg);
+            Page<ProductInfoEntity> page = productInfoService.page(new Page<>(i, pageSize), Wrappers.<ProductInfoEntity>lambdaQuery().in(CollectionUtil.isNotEmpty(ids), ProductInfoEntity::getId, ids));
+            List<ProductInfoEntity> records = page.getRecords();
+            if (CollectionUtils.isEmpty(records)) {
+                return;
+            }
+            List<String> infoIds = records.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            List<ProductDetailEntity> detailEntities = list(Wrappers.<ProductDetailEntity>lambdaQuery()
+                    .eq(ProductDetailEntity::getStatus, 2)
+                    .in(ProductDetailEntity::getProductId, infoIds));
+            for (ProductDetailEntity entity : detailEntities) {
+                RateLimiter limiter = RateLimiter.create(60, 1, TimeUnit.MINUTES);
+                if (limiter.tryAcquire()) {
+                    try {
+                        syncWangDianProductDetailService.syncDataToWangDian(entity);
+                    } catch (Exception e) {
+                        log.error("推送旺店通失败:{}", e.getMessage(), e);
+                    }
                 }
             }
         }
@@ -4187,6 +4153,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
         //已存在数据
         skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        List<String> saleMethodList = skuParamDTO.getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            skuParamDTO.setSaleMethod(StringUtils.join(saleMethodParams, ","));
+        }
         List<ProductSearchDTO.SkuListDTO> list = this.baseMapper.listSkuBySkuNos(skuParamDTO);
 
         List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
@@ -4965,6 +4939,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public PagingVO<ProductDetailDTO.SkuDTO> listSku(PagingDTO<ProductSkuDTO> pagingDTO) {
         if(StringUtils.isEmpty(pagingDTO.getParams().getRemoteSearchSku())){
             return new PagingVO<>();
+        }
+        List<String> saleMethodList = pagingDTO.getParams().getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            pagingDTO.getParams().setSaleMethod(StringUtils.join(saleMethodParams, ","));
         }
         Page<ProductDetailDTO.SkuDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailDTO.SkuDTO> pageData=  baseMapper.listSku(query, pagingDTO.getParams());

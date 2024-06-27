@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.excel.EasyExcel;
@@ -148,6 +150,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Resource
     private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
 
     @Override
@@ -1149,6 +1153,12 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
      * @author: tanmujin
      */
     private void syncApproveInfoToWdt(OtherInstockEntity entity, String operateCode) {
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
+
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
         HashMap<String, BigDecimal> skuMap = new HashMap<>();
         detailList.stream()
@@ -1167,7 +1177,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             goodsList.add(goods);
         });
 
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInstockService.saveTask(goodsList, entity, operateCode, entity.getCode());
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInstockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
@@ -1186,6 +1196,12 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
      * @author: tanmujin
      */
     private void syncDisApproveInfoToWdt(OtherInstockEntity entity, String operateCode) {
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
+
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
         HashMap<String, BigDecimal> skuMap = new HashMap<>();
         detailList.stream()
@@ -1208,8 +1224,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
         //保存任务
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        OtherOutstockEntity outEntity = new OtherOutstockEntity(entity.getId(), outCode, entity.getWarehouseId());
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, outEntity, operateCode, entity.getCode());
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outCode, thirdWarehouseCode, false);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {

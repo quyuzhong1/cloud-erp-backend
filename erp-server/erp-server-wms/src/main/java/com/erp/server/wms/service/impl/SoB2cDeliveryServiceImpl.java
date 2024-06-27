@@ -13,7 +13,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
-import com.common.business.dto.*;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.PrintWayBillPdfDetailDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -35,11 +38,12 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.OperateLogDTO;
-import com.erp.model.oms.dto.PackageDTO;
-import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -54,20 +58,18 @@ import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
-import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -149,7 +151,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private AsyncService asyncService;
 
-
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -183,10 +186,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 新增明细
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
 
+        //冻结虚拟库存
+        freezeVirtualInventory(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
+
         //冻结库存
         freezeInventory(soB2cDeliveryEntity, soB2cDeliveryDetailEntities);
+
         return save;
     }
+
 
     @Override
     public List<SoB2cDeliveryDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -828,8 +836,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //修改状态为取消发货
         this.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
 
-        //回滚库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_B2C_DELIVERY, ids);
+
+        //回滚虚拟仓库存
+        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+
+        //回滚实体仓库存
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //新增日志
@@ -1585,5 +1597,43 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
         taskFeignDTO.setSyncOperate(view.getStatus());
         dmpMqFeign.saveTask(taskFeignDTO);
+    }
+
+    /**
+     * 冻结虚拟库存
+     * @author will
+     * @date 2024/6/12 10:58
+     * @param entity
+     * @param soB2cDeliveryDetailList
+     */
+    private void freezeVirtualInventory (SoB2cDeliveryEntity entity,List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
+        List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
+        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+            outInStockDTO.setSourceId(entity.getId());
+            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setQty(detailEntity.getDeliveryQty());
+            outInStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            if (StrUtil.isBlank(detailEntity.getVirtualWarehouseId())) {
+                continue;
+            }
+            outInStockDTO.setVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
+            paramList.add(outInStockDTO);
+        }
+        //无虚拟仓库不扣虚拟库存
+        if (CollectionUtils.isEmpty(paramList)) {
+            return;
+        }
+        //添加冻结库存
+        VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+        dto.setParamList(paramList);
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
+        //更新库存
+        virtualInventoryTransCoreService.approve(dto);
     }
 }

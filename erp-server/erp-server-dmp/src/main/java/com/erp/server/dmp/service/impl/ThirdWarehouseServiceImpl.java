@@ -138,10 +138,15 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
         }
         return new PagingVO<>();
     }
-
+    /**
+     * 根据分类和第三方id获取
+     * @param thirdId
+     * @param category
+     * @return
+     */
     @Override
-    public ThirdWarehouseEntity getByWarehouseId(String thirdId) {
-        return baseMapper.getByWarehouseId(thirdId);
+    public ThirdWarehouseEntity getByWarehouseId(String thirdId, String category) {
+        return baseMapper.getByWarehouseId(thirdId,category);
     }
 
 
@@ -151,7 +156,8 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
     private void handleData(ThirdWarehouseEntity thirdWarehouseEntity) {
         //根据第三方id校验
         ThirdWarehouseEntity warehouseEntity = this.getOne(new LambdaQueryWrapper<ThirdWarehouseEntity>()
-                .eq(ThirdWarehouseEntity::getWarehouseId, thirdWarehouseEntity.getWarehouseId()));
+                .eq(ThirdWarehouseEntity::getWarehouseId, thirdWarehouseEntity.getWarehouseId())
+                .eq(ThirdWarehouseEntity::getCategory, thirdWarehouseEntity.getCategory()));
         if (Objects.nonNull(warehouseEntity)) {
             thirdWarehouseEntity.setId(warehouseEntity.getId());
         }

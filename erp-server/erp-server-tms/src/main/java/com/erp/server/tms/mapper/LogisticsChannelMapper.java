@@ -1,8 +1,8 @@
 package com.erp.server.tms.mapper;
 
-import cn.hutool.db.Page;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
@@ -73,5 +73,5 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
      * @return
      */
     List<LogisticsChannelEntity> listByMainIdsAndName(@Param("mainIdList") List<String> mainIdList,@Param("params") LogisticsSupplierDTO.PagingParamDTO params);
-    IPage<BaseDropDownDTO.DisabledDTO> pagingSelect(Page query, @Param("params") BaseDropDownDTO.SelectDTO params);
+    IPage<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(Page query, @Param("params") LogisticsChannelDTO.SelectDTO params);
 }

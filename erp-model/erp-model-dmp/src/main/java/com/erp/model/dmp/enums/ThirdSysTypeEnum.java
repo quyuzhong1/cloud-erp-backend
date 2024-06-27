@@ -13,6 +13,7 @@ public enum ThirdSysTypeEnum {
 
     SHOP("shop", "店铺"),
     WAREHOUSE("warehouse", "仓库"),
+    VIRTUAL_WAREHOUSE("virtualWarehouse", "虚拟仓"),
     ;
 
     private String code;

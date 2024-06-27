@@ -212,11 +212,10 @@ public class ShopInfoController extends BaseController {
         List<ShopInfoEntity> list = shopInfoService.listAuth(platformDTO);
         return success(list);
     }
-
     /**
      * 获取店铺--showByAuth true已授权 false所有数据
      *
-     * @return ApiResult<List<ShopInfoEntity>>
+     * @return ApiResult<List < ShopInfoEntity>>
      * @author hyj
      */
     @PostMapping("/pagingSelect")

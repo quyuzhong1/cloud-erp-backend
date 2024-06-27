@@ -171,14 +171,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      **/
     List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(List<String> channelIds);
 
-    /** 
-     * @description 根据渠道id 获取到标记发货的信息
-     * @param channelId
-     * @author Lambda
-     * @return 
-     * @create 2023-12-25 10:59
-     */
-    LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId);
 
     /**
      * 根据名称匹配现在的渠道
@@ -216,6 +208,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * 所有渠道下拉远程搜索
      * @return PagingVO<BaseDropDownDTO.DisabledDTO>
      */
-    PagingVO<BaseDropDownDTO.DisabledDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto);
+    PagingVO<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsChannelDTO.SelectDTO> dto);
 
 }
