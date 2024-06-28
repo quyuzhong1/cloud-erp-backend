@@ -569,8 +569,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 poReturnService.updateArrivalState(podIds);
             }
             //修改发货单确认状态
-            if(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(entity.getSourceType())){
-                srmDeliveryOrderFeign.confirmReceiveStatus(Collections.singletonList(entity.getSourceId()));
+            List<String> detailIdsByDeliverySource = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+            if(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(entity.getSourceType()) && CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
+                srmDeliveryOrderFeign.confirmReceiveStatus(detailIdsByDeliverySource);
             }
         } else {
             //审核不通过
@@ -786,8 +787,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         inventoryUnApproveDTO.setBillId(entity.getId());
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         //修改发货单确认状态
-        if(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(entity.getSourceType())){
-            srmDeliveryOrderFeign.unConfirmReceiveStatus(Collections.singletonList(entity.getSourceId()));
+        List<String> detailIdsByDeliverySource = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        if(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(entity.getSourceType()) && CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
+            srmDeliveryOrderFeign.unConfirmReceiveStatus(detailIdsByDeliverySource);
         }
         //操作日志
         operateLogService.addModuleOperateLog("反审核了一个收货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "反审核操作");
