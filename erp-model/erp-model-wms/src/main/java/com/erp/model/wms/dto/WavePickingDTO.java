@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import javafx.util.Pair;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -134,12 +133,12 @@ public class WavePickingDTO implements Serializable {
         /**
          * 操作人
          */
-        private List<Pair<String, String>> operateUser;
+        private String operateUser;
 
         /**
          * 操作时间
          */
-        private List<Pair<String, String>> operateTime;
+        private String operateTime;
     }
 
     @Data
