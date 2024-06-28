@@ -651,6 +651,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
+        List<PoInstockEntity> list = Arrays.asList(entity);
         log.info("采购入库单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -664,10 +665,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             setFirstMassInstock(Collections.singletonList(entity.getId()));
             //更新采购入库单明细对应采购订单明细的执行状态
             updatePodArrivalState(Collections.singletonList(entity.getId()));
-            //审核通过发送金蝶
-            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //修改采购收货单入库状态
             warehouseReceiveService.updateReceiveInStockStatus(Collections.singletonList(entity));
+
+            //审核通过发送金蝶
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+
             //同步旺店通
             syncApproveInStockToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -758,6 +761,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
+        List<PoInstockEntity> list = Arrays.asList(entity);
         //判断是否已经下推退货单
         if (CollectionUtils.isNotEmpty(returnEntityList)) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99014.msg);
@@ -781,8 +785,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         //修改采购收货单入库状态
         warehouseReceiveService.updateReceiveInStockStatus(Collections.singletonList(entity));
+
         //反审核通过发送旺店通
-        syncDisApproveInStockToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        list.forEach(obj -> syncDisApproveInStockToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
