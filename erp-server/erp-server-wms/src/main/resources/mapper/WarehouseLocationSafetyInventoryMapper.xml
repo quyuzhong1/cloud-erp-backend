@@ -23,7 +23,7 @@
         <result column="is_deleted" property="isDeleted" />
     </resultMap>
 
-    <select id="paging" resultType="com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto$ViewDto">
+    <select id="paging" resultType="com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO$ViewDTO">
         select id,
                sku_no,
                product_name,
@@ -38,6 +38,7 @@
         <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
             and ${param.sqlMap.default}
         </if>
+        order by id
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity">
         select id,

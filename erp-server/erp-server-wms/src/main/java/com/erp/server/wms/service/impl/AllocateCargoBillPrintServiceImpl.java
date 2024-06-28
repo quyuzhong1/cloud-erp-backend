@@ -88,6 +88,7 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> printDetailDTOList = printLogisticsWaybillDTOList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDTO::getDetailList).flatMap(Collection::stream).collect(Collectors.toList());
         SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
         dto.setDetailList(printDetailDTOList);
+        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
         soB2cDeliveryService.printLogisticsBillConfirm(dto,response);
     }
 }

@@ -666,6 +666,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 物流类型
          */
         private String logisticType;
+        /**
+         * 打印排序
+         */
+        private Integer index;
     }
 
     /**

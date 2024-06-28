@@ -26,7 +26,7 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
     /**
      * 标记仓位库存预警无需处理
      * @param id
-     * @return 更新成功返回null，否则返回BaseResultDTO.UpdateDTO
+     * @return
      * @date: 2024-06-24
      * @author: tanmujin
      */
@@ -55,12 +55,12 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
 
     /**
      * 保存补货信息
-     * @param handleDto
+     * @param handleDTO
      * @return
      * @date: 2024-06-25
      * @author: tanmujin
      */
-    BatchResultDTO handle(WarehouseLocationReplenishDTO.HandleDTO handleDto);
+    BatchResultDTO handle(WarehouseLocationReplenishDTO.HandleDTO handleDTO);
 
     /**
      * 新增补货单
@@ -70,4 +70,8 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
      * @author: tanmujin
      */
     BatchResultDTO add(WarehouseLocationReplenishDTO.AddDTO addDTO);
+
+    BatchResultDTO finish(WarehouseLocationReplenishDTO.HandleDTO dto);
+
+    List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo();
 }

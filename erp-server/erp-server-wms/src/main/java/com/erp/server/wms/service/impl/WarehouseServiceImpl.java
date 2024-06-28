@@ -727,6 +727,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_99003.msg);
         }
+        List<WarehouseEntity> list = Arrays.asList(entity);
         //仓库已绑定店铺不允许反审核
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(entity.getId()));
         ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(entity.getId())).distinct().findFirst().orElse(null);
@@ -735,8 +736,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //仓库下绑定第三方店铺不能进行反审核
-        checkDmpThirdMapping(entity.getId(),entity.getName());
+        list.forEach(warehouseEntity -> {
+            checkDmpThirdMapping(warehouseEntity.getId(),warehouseEntity.getName());
+        });
 
+        this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //反审核后发送金蝶
         sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getName(), "操作成功");

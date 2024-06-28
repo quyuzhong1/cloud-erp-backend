@@ -156,7 +156,7 @@ public class ShopInfoController extends BaseController {
                     //提交
                     Boolean submitResult = customerInfoService.submit(ids);
                     if (submitResult) {
-                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE), customerInfoEntity);
+                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
                     }
                 }
             }
