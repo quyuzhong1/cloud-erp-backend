@@ -1,13 +1,11 @@
 package com.erp.model.wms.entity;
 
-import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 
@@ -44,8 +42,8 @@ public class CfgRuleWaveEntity extends BaseEntity<CfgRuleWaveEntity> {
     /**
     * 拣货车类型id
     */
-    @TableField("picking_cart_type_id")
-    private String pickingCartTypeId;
+    @TableField("picking_cart_type_json")
+    private String pickingCartTypeJson;
     /**
     * 最小单数
     */
@@ -74,7 +72,7 @@ public class CfgRuleWaveEntity extends BaseEntity<CfgRuleWaveEntity> {
     /**
     * 执行时间JSON
     */
-    @TableField(value = "execution_time_json",jdbcType = JdbcType.OTHER)
+    @TableField(value = "execution_time_json")
     private String executionTimeJson;
     /**
     * 执行类型（自动执行，手动执行）

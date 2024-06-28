@@ -97,7 +97,7 @@ public class PickingListsDTO {
 
     @Getter
     @Setter
-    public static class Update {
+    public static class UpdateDTO {
         private String id;
         private List<PickingDetailDTO.View> details;
     }
@@ -206,7 +206,7 @@ public class PickingListsDTO {
 
     @Getter
     @Setter
-    public static class Add {
+    public static class AddDTO {
         /**
          * 单据类型
          *
@@ -248,7 +248,7 @@ public class PickingListsDTO {
         /**
          * 明细
          */
-        private List<PickingDetailDTO.Add> details;
+        private List<PickingDetailDTO.AddDTO> details;
     }
 
     @Getter

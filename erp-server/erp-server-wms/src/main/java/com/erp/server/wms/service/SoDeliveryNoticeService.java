@@ -252,5 +252,5 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     List<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(String id);
 
 
-    void writeBackData(List<String> sourceDetailIds);
+    void writeBackData(String sourceId);
 }

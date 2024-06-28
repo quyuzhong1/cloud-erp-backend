@@ -351,6 +351,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list) {
+        long countQty = list.stream().mapToInt(RequisitionApplicationDTO.FinishListDTO::getPickingQty).sum();
+        if (countQty <= 0) {
+            throw new ServiceException(ApiError.ERROR_99106);
+        }
         //根据调出调入仓id查询仓库信息
         List<String> toWarehouseIds = list.stream().map(req -> req.getToWarehouseId()).collect(Collectors.toList());
         List<String> requisitionWarehouseIds = list.stream().map(req -> req.getRequisitionWarehouseId()).collect(Collectors.toList());
@@ -688,7 +692,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException(ApiError.ERROR_99104);
         }
         List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(entities)) {
+        boolean invalidStatus = entities.stream().anyMatch(FirstMileDeliveryEntity::getInvalidStatus);
+        if (CollectionUtils.isNotEmpty(entities) && Boolean.TRUE.equals(invalidStatus)) {
             throw new ServiceException(ApiError.ERROR_99104);
         }
 
@@ -813,6 +818,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public List<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(String id) {
+        //判断是否存在下游单据，已有下游单据就不能再生成拣货单
+        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(id);
+        if (ObjectUtil.isNotEmpty(firstMileDelivery)) {
+            throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
+        }
         List<RequisitionApplicationDetailEntity> details = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(id));
         List<RequisitionApplicationDTO.PickingViewDTO> result = new ArrayList<>();
         for (RequisitionApplicationDetailEntity detail : details) {
@@ -853,18 +863,18 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailEntity> updateDetails = new ArrayList<>();
         for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : detailByWarehouseMap.entrySet()) {
             String warehouseId = entry.getKey();
-            PickingListsDTO.Add add = new PickingListsDTO.Add();
-            add.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
+            PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
+            addDTO.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
                     PickingBillTypeEnum.FBA.getCode() : PickingBillTypeEnum.THIRD.getCode());
-            add.setDeliveryWarehouseId(application.getRequisitionWarehouseId());
-            add.setWarehouseId(warehouseId);
-            add.setWarehouseName(entry.getValue().get(0).getFromWarehouseName());
-            add.setSourceId(application.getId());
-            add.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
-            add.setSourceCode(application.getCode());
-            List<PickingDetailDTO.Add> detailList = entry.getValue().stream()
+            addDTO.setDeliveryWarehouseId(application.getRequisitionWarehouseId());
+            addDTO.setWarehouseId(warehouseId);
+            addDTO.setWarehouseName(entry.getValue().get(0).getFromWarehouseName());
+            addDTO.setSourceId(application.getId());
+            addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+            addDTO.setSourceCode(application.getCode());
+            List<PickingDetailDTO.AddDTO> detailList = entry.getValue().stream()
                     .map(detailEntity -> {
-                        PickingDetailDTO.Add detail = new PickingDetailDTO.Add();
+                        PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
                         detail.setSkuId(detailEntity.getSkuId());
                         detail.setSkuNo(detailEntity.getSkuNo());
                         detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
@@ -873,8 +883,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         updateDetails.add(detailEntity);
                         return detail;
                     }).collect(Collectors.toList());
-            add.setDetails(detailList);
-            pickingListsService.add(add);
+            addDTO.setDetails(detailList);
+            pickingListsService.add(addDTO);
         }
         requisitionApplicationDetailService.updateBatchById(updateDetails);
     }
