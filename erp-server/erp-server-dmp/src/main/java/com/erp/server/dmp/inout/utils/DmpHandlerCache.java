@@ -58,27 +58,52 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpCfgInputConvertMappingService dmpCfgInputConvertMappingService;
 	
 	public List<DmpBasicSystemEntity> getDmpBasicSystemEntityList(Predicate<? super DmpBasicSystemEntity> paramPredicate) {
+		if(dmpBasicSystemCache == null) {
+			dmpBasicSystemCache = dmpBasicSystemService.lambdaQuery()
+					.eq(DmpBasicSystemEntity::getDisabled, false).list();
+		}
 		return dmpBasicSystemCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}
 	
-	public List<DmpCfgInputConvertEntity> getDmpCfgInputConvertEntityList(Predicate<? super DmpCfgInputConvertEntity> paramPredicate) {
-		return dmpCfgInputConvertCache.stream().filter(paramPredicate).collect(Collectors.toList());
-	}
-	
 	public List<DmpCfgInputEntity> getDmpCfgInputEntityList(Predicate<? super DmpCfgInputEntity> paramPredicate) {
+		if(dmpCfgInputCache == null) {
+			dmpCfgInputCache = dmpCfgInputService.lambdaQuery()
+					.eq(DmpCfgInputEntity::getDisabled, false).list();
+		}
 		return dmpCfgInputCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}
 	
+	public List<DmpCfgInputConvertEntity> getDmpCfgInputConvertEntityList(Predicate<? super DmpCfgInputConvertEntity> paramPredicate) {
+		if(dmpCfgInputConvertCache == null) {
+			dmpCfgInputConvertCache = dmpCfgInputConvertService.lambdaQuery()
+					.eq(DmpCfgInputConvertEntity::getDisabled, false).list();
+		}
+		return dmpCfgInputConvertCache.stream().filter(paramPredicate).collect(Collectors.toList());
+	}
+	
+	
 	public List<DmpCfgInputDetailEntity> getDmpCfgInputDetailEntityList(Predicate<? super DmpCfgInputDetailEntity> paramPredicate) {
+		if(dmpCfgInputDetailCache == null) {
+			dmpCfgInputDetailCache = dmpCfgInputDetailService.lambdaQuery()
+					.eq(DmpCfgInputDetailEntity::getDisabled, false).list();
+		}
 		return dmpCfgInputDetailCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}
 	
 	public Map<String, List<String>> getDmpCfgInputConvertMapping(String mainId){
+		if(convertMappingCache == null) {
+			this.dealConvertMappingCache();
+		}
 		return convertMappingCache.get(mainId);
 	}
 	
 	private void dealConvertMappingCache() {
 		convertMappingCache = new HashMap<>();
+		if(dmpCfgInputConvertMappingCache == null) {
+			dmpCfgInputConvertMappingCache = dmpCfgInputConvertMappingService.lambdaQuery()
+					.eq(DmpCfgInputConvertMappingEntity::getDisabled, false)
+					.list();
+		}
 		Map<String, List<DmpCfgInputConvertMappingEntity>> mainEntityMap = dmpCfgInputConvertMappingCache.stream().collect(Collectors.groupingBy(DmpCfgInputConvertMappingEntity::getMainId));
 		for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> mainEntity : mainEntityMap.entrySet()) {
 			Map<String, List<String>> map = new HashMap<>();
@@ -92,7 +117,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	@Override
 	public void run(String... args) throws Exception {
-		
 		dmpBasicSystemCache = dmpBasicSystemService.lambdaQuery()
 				.eq(DmpBasicSystemEntity::getDisabled, false).list();
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
