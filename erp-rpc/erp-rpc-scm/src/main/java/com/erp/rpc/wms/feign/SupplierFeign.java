@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -41,7 +42,7 @@ public interface SupplierFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("/feign/supplier/supplierApprove")
-    Boolean supplierApprove(@RequestBody BaseApproveParamDTO dto);
+    List<BatchResultDTO> supplierApprove(@RequestBody BaseApproveParamDTO dto);
 
     /**
      * 获取供应商列表

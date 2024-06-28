@@ -14,14 +14,31 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
+import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
+import com.erp.model.scm.entity.PurchaseChangeEntity;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.SalesDemandEntity;
+import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.scm.service.PurchaseChangeDetailService;
 import com.erp.server.scm.service.PurchaseChangeService;
+import com.erp.server.scm.service.PurchaseOrderDetailService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 采购变更管理
@@ -29,6 +46,7 @@ import java.util.List;
  * @author will
  * @since 2023-03-16
  */
+@Slf4j
 @RestController
 @LogSystemModule("采购变更单")
 @RequestMapping("/purchaseChange")
@@ -36,7 +54,12 @@ public class PurchaseChangeController extends BaseController {
 
     @Resource
     private PurchaseChangeService purchaseChangeService;
-
+    @Resource
+    private PurchaseChangeDetailService purchaseChangeDetailService;
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
     /**
      * 分页查询
      * @author Will
@@ -228,7 +251,7 @@ public class PurchaseChangeController extends BaseController {
      * 批量审核
      * @author Will
      * @date: 2023/3/15 17:54
-     * @param baseApproveParamDTO
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核采购变更单")
@@ -238,9 +261,32 @@ public class PurchaseChangeController extends BaseController {
             menuCode = "scm:purchaseChange:approve",
             serviceClass = PurchaseChangeService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        purchaseChangeService.approve(baseApproveParamDTO);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchaseChangeEntity> entityList = purchaseChangeService.listByIds(dto.getIds());
+        //查询原采购订单明细信息
+        List<PurchaseChangeDetailEntity> purchaseChangeDetailEntityList = purchaseChangeDetailService.listByPurchaseChangeIds(dto.getIds());
+        List<String> purchaseOrderDetailIds = purchaseChangeDetailEntityList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList =  purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
+        //修改到货状态
+        List<String> podIds = purchaseChangeDetailEntityList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PoReturnDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        List<WarehouseReceiveDetailEntity> receiveDetailEntityList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        for (String id : dto.getIds()) {
+            PurchaseChangeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购变更单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseChangeService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess(),
+                        purchaseChangeDetailEntityList, purchaseOrderDetailEntityList,returnDetailEntityList, receiveDetailEntityList));
+            }catch (Exception e){
+                log.error("采购变更单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -562,9 +562,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //查找发货单下推的分步式调出单自动反审并删除
         List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceIds(Arrays.asList(id));
         //直接调拨单已审核先反审核
-        List<String> approveTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(approveTransferOutIds)) {
-            transferInfoService.disApprove(approveTransferOutIds, Boolean.FALSE);
+        if (CollectionUtils.isNotEmpty(transferInfoEntities)) {
+            transferInfoEntities.forEach(transferInfoEntity -> {
+                transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE);
+            });
         }
         //直接调拨单审核中先撤销
         List<String> approveIngTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
@@ -764,10 +765,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 //提交
                 transferInfoService.submit(Arrays.asList(transferOutId));
                 //审核
-                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-                baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
-                baseApproveParamDTO.setType(ApproveType.PASS);
-                transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+                TransferInfoEntity transferInfoEntity = transferInfoService.getById(transferOutId);
+                if (Objects.nonNull(transferInfoEntity)){
+                    transferInfoService.approve(transferInfoEntity,ApproveType.PASS,"", null , Boolean.TRUE);
+                }
             } else {
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
             }
@@ -1162,16 +1163,27 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    public Boolean fbaDeliveryGenerateMachineSubmitAndApprove(List<FirstMileDeliveryDTO.GenerateMachineView> list) {
+    public List<BatchResultDTO> fbaDeliveryGenerateMachineSubmitAndApprove(List<FirstMileDeliveryDTO.GenerateMachineView> list) {
         List<String> ids = fbaDeliveryGenerateMachine(list);
         //提审
         Boolean submit = machineInfoService.submit(ids);
         //审核
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(ids);
-        baseApproveParamDTO.setType(ApproveType.PASS);
-        machineInfoService.approve(baseApproveParamDTO);
-        return submit;
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<MachineInfoEntity> entityList = machineInfoService.listByIds(ids);
+        for (String id : ids) {
+            MachineInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"加工单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(machineInfoService.approve(entity,ApproveType.PASS,"",null));
+            }catch (Exception e){
+                log.error("加工单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 
     /**

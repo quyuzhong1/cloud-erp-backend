@@ -128,7 +128,7 @@ public interface WmsTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/wmsWorkOption/warehouseReceiveApprove")
-    Boolean warehouseReceiveApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+    List<BatchResultDTO> warehouseReceiveApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * 采购入库审核
@@ -138,7 +138,7 @@ public interface WmsTaskFeign {
      * @return ApiResult
      */
     @PostMapping("feign/wmsWorkOption/poInstockApprove")
-    void poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+    List<BatchResultDTO> poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * 采购退货审核
@@ -148,7 +148,7 @@ public interface WmsTaskFeign {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("feign/wmsWorkOption/purchaseReturnOrderApprove")
-    Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+    List<BatchResultDTO> purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * 调拨申请单审核
@@ -158,7 +158,7 @@ public interface WmsTaskFeign {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("feign/wmsWorkOption/transferApplicationApprove")
-    Boolean transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+    List<BatchResultDTO> transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * 盘点任务审核通过

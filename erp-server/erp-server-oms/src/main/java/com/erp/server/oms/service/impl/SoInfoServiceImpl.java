@@ -44,7 +44,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -1084,6 +1083,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 审核
      *
      * @param dto
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:46
@@ -1091,22 +1091,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
-        List<SoInfoEntity> list = this.listByIds(ids);
+    public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
+        List<SoInfoEntity> list = Arrays.asList(entity);
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //审核流程
         approveProcess(list, dto);
-
         //添加日志
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售订单", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO.getCode(), pairList, "审核操作");
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
     /**
@@ -1214,6 +1211,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 反审核
      *
      * @param dto
+     * @param entity
+     * @param soChangeEntityList
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:48
@@ -1221,34 +1220,32 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean disApprove(BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<SoInfoEntity> list = this.listByIds(ids);
+    public BatchResultDTO disApprove(BaseIdsDTO.IdsDTO dto, SoInfoEntity entity, List<SoChangeEntity> soChangeEntityList) {
+        List<String> ids = Arrays.asList(entity.getId());
+        List<SoInfoEntity> list = Arrays.asList(entity);
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        List<String> statusList = new ArrayList<>(2);
-        statusList.add(approveStatus);
-        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+
+        if(!BillApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
 
         //检查关联单据
         checkRefBill(ids);
         //有销售变更的也不能反审核
-        List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(ids);
-
+        List<SoChangeEntity> soChangeList = soChangeEntityList.stream().filter(v->v.getSoId().equals(entity.getId())).collect(Collectors.toList());
         long soChangeCount = soChangeList.stream().filter(s -> !s.getInvalidStatus()).count();
         //表示 有变更中的销售变更单
         if (soChangeCount > 0) {
             throw new ServiceException(ApiError.ERROR_92047);
         }
+
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus), "");
-        List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
+
         //反审核
         if (result) {
             //添加日志
@@ -1262,7 +1259,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
-        return result;
+        return BatchResultDTO.success(entity.getId(),entity.getCode());
     }
 
 

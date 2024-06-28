@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
@@ -76,11 +77,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      **/
     private Boolean purchasePriceApproveEnd(EndProcessDTO dto) {
         //销售变更单
-        List<PurchasePriceEntity> list = purchasePriceService.listByIds(Arrays.asList(dto.getBusinessId()));
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-        return purchasePriceService.approveEnd(baseApproveParamDTO,list);
+        PurchasePriceEntity entity = purchasePriceService.getById(dto.getBusinessId());
+        return purchasePriceService.approveEnd(entity,dto.getApproveStatus().getStatus(),"", null);
     }
 
     /**
@@ -90,13 +88,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      * @param dto
      * @return java.lang.Boolean
      **/
-    private Boolean purchasePriceChangeApproveEnd(EndProcessDTO dto) {
+    private BatchResultDTO purchasePriceChangeApproveEnd(EndProcessDTO dto) {
         //销售变更单
-        List<PurchasePriceChangeEntity> list = purchasePriceChangeService.listByIds(Arrays.asList(dto.getBusinessId()));
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-        return purchasePriceChangeService.approveEnd(baseApproveParamDTO,list);
+        PurchasePriceChangeEntity entity = purchasePriceChangeService.getById(dto.getBusinessId());
+        return purchasePriceChangeService.approveEnd(entity,dto.getApproveStatus().getStatus(), "", null);
     }
 
     /**
@@ -108,11 +103,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      */
     private Boolean supplierApproveEnd(EndProcessDTO dto) {
         //供应商
-        List<SupplierEntity> list = supplierService.listByIds(Arrays.asList(dto.getBusinessId()));
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-        return supplierService.approveEnd(baseApproveParamDTO,list);
+        SupplierEntity entity = supplierService.getById(dto.getBusinessId());
+        return supplierService.approveEnd(entity,dto.getApproveStatus().getStatus(),"", null);
     }
 
     /**

@@ -8,11 +8,11 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.*;
+import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -38,10 +38,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
-import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
@@ -458,24 +455,23 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(ApproveOneDTO dto) {
-        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        SoDeliveryNoticeEntity entity = this.getById(dto.getId());
+    public BatchResultDTO approve(SoDeliveryNoticeEntity entity, String type, String comment, Boolean isNeedProcess) {
         //判断是否是审核中的状态
-        if (!Boolean.FALSE.equals(entity.getInvalidStatus()) || !ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if (!entity.getInvalidStatus() && ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //TODO 待加审核流程
-        if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoDeliveryNoticeEntity::getApproveUserId, userInfo.getUid())
                     .set(SoDeliveryNoticeEntity::getApproveUserName, userInfo.getUserName())
                     .set(SoDeliveryNoticeEntity::getApproveTime, LocalDateTime.now())
-                    .eq(SoDeliveryNoticeEntity::getId, dto.getId())
+                    .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                     .update();
 
+            generatePickingDetail(Collections.singletonList(entity));
             //销售通知明细信息
             List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Arrays.asList(dto.getId()));
             if (CollectionUtils.isEmpty(detailList)) {
@@ -483,97 +479,46 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
 
             //虚拟库存扣减
-            handleVirtualInventory(Arrays.asList(entity),detailList);
-
+            handleVirtualInventory(entity,detailList);
         } else {
             //审核不通过
             lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
-                    .eq(SoDeliveryNoticeEntity::getId, dto.getId())
+                    .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                     .update();
         }
         //操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知单", approveType.getName(), dto.getComment());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
-    }
-
-    /**
-     * 处理虚拟库存数据
-     * @author will
-     * @date 2024/6/14 10:39
-     * @param deliveryNoticeEntityList
-     * @param detailList
-     */
-    private void handleVirtualInventory (List<SoDeliveryNoticeEntity> deliveryNoticeEntityList,List<SoDeliveryNoticeDetailEntity> detailList) {
-
-        List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
-        for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
-
-            //发货通知单主表信息
-            SoDeliveryNoticeEntity soDeliveryNoticeEntity = deliveryNoticeEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
-                throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST);
-            }
-
-            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
-            outInStockDTO.setSourceId(soDeliveryNoticeEntity.getId());
-            outInStockDTO.setSourceCode(soDeliveryNoticeEntity.getCode());
-            outInStockDTO.setSourceDetailId(detailEntity.getId());
-            outInStockDTO.setBillDate(LocalDate.now());
-            outInStockDTO.setSkuId(detailEntity.getSkuId());
-            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
-            outInStockDTO.setQty(detailEntity.getDeliveryQty());
-            outInStockDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
-            if (StrUtil.isBlank(soDeliveryNoticeEntity.getVirtualWarehouseId())) {
-                continue;
-            }
-            outInStockDTO.setVirtualWarehouseId(soDeliveryNoticeEntity.getVirtualWarehouseId());
-            paramList.add(outInStockDTO);
-        }
-        //无虚拟仓库不扣虚拟库存
-        if (CollectionUtils.isEmpty(paramList)) {
-            return;
-        }
-        //添加冻结库存
-        VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
-        dto.setParamList(paramList);
-        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE.getCode());
-        //更新库存
-        virtualInventoryTransCoreService.approve(dto);
-
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO disApprove(String id) {
-        SoDeliveryNoticeEntity entity = this.getById(id);
+    public BatchResultDTO disApprove(SoDeliveryNoticeEntity entity) {
         //已审核支持反审核
-        if (!Boolean.FALSE.equals(entity.getInvalidStatus()) || !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if (!entity.getInvalidStatus() && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
         //TODO 待加审核流程
 
         //下推出库单不能反审核
-        List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listBySourceId(Arrays.asList(id));
+        List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listBySourceId(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(soOutstockEntityList)) {
             throw new ServiceException(ApiError.ERROR_92004);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                .eq(SoDeliveryNoticeEntity::getId, id)
+                .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                 .update();
-
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE, Arrays.asList(id));
-
+        //回滚库存
+        InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE, entity.getId());
+        //删除拣货详情
+        pickingDetailService.deleteBySourceId(Collections.singletonList(entity.getId()));
         //回滚虚拟库存
-        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+        virtualInventoryTransCoreService.unApprove(inventoryUnApproveDTO);
 
         //操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "反审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+        operateLogService.addModuleOperateLog("反审核了一个发货通知单【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
