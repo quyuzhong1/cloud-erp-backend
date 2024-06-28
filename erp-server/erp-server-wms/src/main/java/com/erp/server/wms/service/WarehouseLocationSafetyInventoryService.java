@@ -4,7 +4,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto;
+import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO;
 import com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +23,7 @@ public interface WarehouseLocationSafetyInventoryService extends SuperService<Wa
      * @date: 2024-06-21
      * @author: tanmujin
      */
-    PagingVO<WarehouseLocationSafetyInventoryDto.ViewDto> paging(PagingDTO<WarehouseLocationSafetyInventoryDto.SearchParamDto> pagingDTO);
+    PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> paging(PagingDTO<WarehouseLocationSafetyInventoryDTO.SearchParamDTO> pagingDTO);
 
     /**
      * 根据ID修改 安全库存 与 库存上限
@@ -33,7 +33,7 @@ public interface WarehouseLocationSafetyInventoryService extends SuperService<Wa
      * @date: 2024-06-21
      * @author: tanmujin
      */
-    BaseResultDTO.UpdateDTO updateInventory(WarehouseLocationSafetyInventoryDto.UpdateParamDto updateParamDto);
+    BaseResultDTO.UpdateDTO updateInventory(WarehouseLocationSafetyInventoryDTO.UpdateParamDTO updateParamDto);
 
     /**
      * 导入Excel
@@ -53,7 +53,7 @@ public interface WarehouseLocationSafetyInventoryService extends SuperService<Wa
      * @date: 2024-06-21
      * @author: tanmujin
      */
-    boolean exportExcel(WarehouseLocationSafetyInventoryDto.exportParamDto dto, HttpServletResponse response);
+    boolean exportExcel(WarehouseLocationSafetyInventoryDTO.exportParamDTO dto, HttpServletResponse response);
 
     /**
      * 下载导入模板

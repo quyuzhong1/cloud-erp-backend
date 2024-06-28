@@ -63,7 +63,7 @@ public class WarehouseLocationReplenishController extends BaseController {
                 resultList.add(result);
             }
         }
-        return ApiResult.success(resultList);
+        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
     }
 
     /**
@@ -81,7 +81,7 @@ public class WarehouseLocationReplenishController extends BaseController {
     }
 
     /**
-     * 批量处理补货单
+     * 处理补货单（批量）
      * @param dtoList 数据清单
      * @return 批量处理结果
      * @date: 2024-06-26
@@ -92,6 +92,16 @@ public class WarehouseLocationReplenishController extends BaseController {
         List<BatchResultDTO> resultList = new ArrayList<>(dtoList.size());
         for (WarehouseLocationReplenishDTO.HandleDTO dto : dtoList) {
             BatchResultDTO resultDTO = replenishService.handle(dto);
+            resultList.add(resultDTO);
+        }
+        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
+    }
+
+    @PostMapping("/finishBatch")
+    public ApiResult<List<BatchResultDTO>> finishBatch(@RequestBody List<WarehouseLocationReplenishDTO.HandleDTO> dtoList){
+        List<BatchResultDTO> resultList = new ArrayList<>(dtoList.size());
+        for (WarehouseLocationReplenishDTO.HandleDTO dto : dtoList) {
+            BatchResultDTO resultDTO = replenishService.finish(dto);
             resultList.add(resultDTO);
         }
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
@@ -110,6 +120,11 @@ public class WarehouseLocationReplenishController extends BaseController {
         return resultDTO.getSuccess() ? success(resultDTO) : failure(resultDTO);
     }
 
+    @GetMapping("/tabList")
+    public ApiResult<List<WarehouseLocationReplenishDTO.TabDTO>> tabList(){
+        List<WarehouseLocationReplenishDTO.TabDTO> tabDtoList = replenishService.listTabInfo();
+        return ApiResult.success(tabDtoList);
+    }
     /**
      * 根据仓库id和库区类型 查询库区
      * @param warehouseId 仓库ID

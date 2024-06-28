@@ -12,7 +12,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum LocationReplenishStatusEnum {
     WAIT_HANDLE("wait_handle", "待处理"),
-    HANDLE_ING("handle_ing", "待处理"),
+    HANDLE_ING("handle_ing", "处理中"),
     HANDLED("handled", "已处理"),
     NO_NEED_HANDLE("no_need_handle", "无需处理"),
     ;
