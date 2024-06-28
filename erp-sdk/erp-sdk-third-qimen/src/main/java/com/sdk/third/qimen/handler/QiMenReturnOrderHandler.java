@@ -1,6 +1,7 @@
 package com.sdk.third.qimen.handler;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -81,6 +82,7 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
         while (hasNext) {
             WdtWmsStockinRefundQuerywithdetailResponse response;
             try {
+                log.info("拉取奇门销售退货入库单请求参数：{}", JSONObject.toJSONString(request));
                 response = qimenService.execute(request);
             } catch (ApiException e) {
                 log.error("拉取奇门销售退货入库单失败，原因【{}】 {}", e.getMessage(), e);

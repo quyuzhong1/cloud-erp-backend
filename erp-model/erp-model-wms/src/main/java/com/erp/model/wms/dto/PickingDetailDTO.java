@@ -267,8 +267,19 @@ public class PickingDetailDTO implements Serializable {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class AddDTO {
 
+        /**
+         * 拣货仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 收货仓库名称
+         */
+        private String warehouseName;
         /**
          * skuId
          */

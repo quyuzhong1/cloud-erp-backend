@@ -210,6 +210,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     @Transactional(rollbackFor = Exception.class)
     public void syncWdtReturnOrderToSoReturn(WdtReturnOrderDTO dto) {
         SoReturnInstockEntity inStockEntity = BeanMapperUtils.map(SoReturnInstockEntity.class, dto);
+        //暂时使用空仓位
+        dto.getDetailList().forEach(v -> v.setWarehouseLocation(""));
         List<SoReturnInstockDetailEntity> detailList = BeanMapperUtils.copyList(SoReturnInstockDetailEntity.class, dto.getDetailList());
         SoReturnInstockEntity entity = soReturnInstockService.getOne(Wrappers.<SoReturnInstockEntity>lambdaQuery()
                 .eq(SoReturnInstockEntity::getThirdCode, inStockEntity.getThirdCode()));

@@ -8,39 +8,69 @@ import com.erp.server.auth.config.OpenApi;
 
 import javax.validation.Valid;
 
+/**
+ * <p>
+ * 对接汇创智能设备
+ * @see <a href="https://ulanzichina.feishu.cn/docx/Ur9XdRkgdoQojYx2mIhcjR7knDf?from=from_copylink"> 对接文档</br>
+ * </p>
+ * 设备调用接口,返回尺寸重量视频地址图片地址相关文件
+ */
 @OpenApi
 public class WarehouseOpenApi {
 
+    /**
+     * 流水线称重 设备调用该接口 返回渠道口分货口1-9，9为异常口）成功根据渠道返回1-8的分货口，失败返回9的异常口
+     * @param dto 参数
+     */
     @OpenApi("dimensionalWeightPipeline")
     public ApiResult<String> dimensionalWeightPipeline(@Valid DimensionalWeightDTO dto) {
         return ApiResult.success("1");
     }
 
+    /**
+     * B2B称重
+     * @param dto 参数
+     */
     @OpenApi("dimensionalWeightTob")
     public ApiResult<String> dimensionalWeightTob(@Valid DimensionalWeightDTO dto) {
 
         return ApiResult.success("");
     }
 
+    /**
+     * FBA称重
+     * @param dto 参数
+     */
     @OpenApi("dimensionalWeightFba")
     public ApiResult<String> dimensionalWeightFba(@Valid DimensionalWeightDTO dto) {
 
         return ApiResult.success("");
     }
 
+    /**
+     * 品质测量
+     * @param dto 参数
+     */
     @OpenApi("dimensionalWeightMeasure")
     public ApiResult<String> dimensionalWeightMeasure(@Valid DimensionalWeightDTO dto) {
 
         return ApiResult.success("");
     }
 
+    /**
+     * 速卖通集包
+     * @param dto 参数
+     */
     @OpenApi("dimensionalWeightPackage")
     public ApiResult<String> dimensionalWeightPackage(@Valid CollectorPacksDTO dto) {
 
         return ApiResult.success("");
     }
 
-
+    /**
+     * 退货跟踪
+     * @param dto 参数
+     */
     @OpenApi("dimensionalWeightReturn")
     public ApiResult<String> dimensionalWeightReturn(@Valid ReturnTrackingDTO dto) {
 

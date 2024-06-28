@@ -31,6 +31,7 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;

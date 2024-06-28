@@ -88,7 +88,7 @@ public class WarehouseLocationReplenishDTO implements Serializable {
         private String sourceCode;
 
         /**
-         * 来源类型
+         * 来源类型（补货类型）
          */
         private String sourceType;
 

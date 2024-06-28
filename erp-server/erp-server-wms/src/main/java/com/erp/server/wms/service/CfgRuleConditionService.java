@@ -40,7 +40,8 @@ public interface CfgRuleConditionService extends SuperService<CfgRuleConditionEn
 
     /**
      * 根据规则id集合查询规则条件
+     *
      * @param cfgRuleIds 规则id
      */
-    List<CfgRuleConditionEntity> listByRuleIds(List<String> cfgRuleIds);
+    List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleIds(List<String> cfgRuleIds);
 }

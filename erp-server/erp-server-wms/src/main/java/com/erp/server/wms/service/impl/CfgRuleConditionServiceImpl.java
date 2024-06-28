@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
@@ -15,6 +16,7 @@ import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.server.wms.mapper.CfgRuleConditionMapper;
 import com.erp.server.wms.service.CfgConditionService;
 import com.erp.server.wms.service.CfgRuleConditionService;
+import com.erp.server.wms.service.CfgRulePickingService;
 import com.erp.server.wms.service.OperateLogService;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -140,11 +142,11 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                 operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));
             }
         }
-        saveOrUpdateBatch(ruleConditionEntities);
+        ApplicationContextUtils.getBean(CfgRuleConditionService.class).saveOrUpdateBatch(ruleConditionEntities);
     }
 
     @Override
-    public List<CfgRuleConditionEntity> listByRuleIds(List<String> cfgRuleIds) {
+    public List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleIds(List<String> cfgRuleIds) {
         return baseMapper.listByRuleIds(cfgRuleIds);
     }
 }
