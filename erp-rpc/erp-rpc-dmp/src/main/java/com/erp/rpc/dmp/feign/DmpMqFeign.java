@@ -62,4 +62,7 @@ public interface DmpMqFeign {
     @PostMapping("/listByCodeParam")
     List<DmpPushTaskEntity> listByCodeParam(@RequestBody @Valid DmpSyncTaskDTO.ListCodeDTO listDTO);
 
+    @PostMapping("/save/pushTaskList")
+    List<DmpPushTaskEntity> saveTaskList(@RequestBody @Valid List<DmpPushTaskFeignDTO> dtoList);
+
 }

@@ -43,6 +43,17 @@ public class DmpMqFeignController {
     }
 
     /**
+     * 批量保存旺店通任务！
+     * @param dtoList
+     * @return
+     */
+    @PostMapping("/save/pushTaskList")
+    public List<DmpPushTaskEntity> saveTaskList(@RequestBody @Valid List<DmpPushTaskFeignDTO> dtoList){
+        List<DmpPushTaskEntity> resultList = dmpPushTaskService.saveWdtTaskList(dtoList);
+        return resultList;
+    }
+
+    /**
      * 推送任务
      * @author Will
      * @date: 2024/5/14 9:38
