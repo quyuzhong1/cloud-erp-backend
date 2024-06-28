@@ -580,7 +580,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }
         }
 
-        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveWdtTaskList(unSaveTaskList);
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(unSaveTaskList);
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -646,7 +646,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }
         }
 
-        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveWdtTaskList(unSaveTaskList);
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(unSaveTaskList);
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override

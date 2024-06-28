@@ -486,6 +486,11 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .list();
     }
 
+    @Override
+    public List<WarehouseLocationDTO.CoreDTO> listArea(String warehouseId, String areaTypeCode) {
+        return Collections.emptyList();
+    }
+
 
     /**
      * @description: 下拉数据处理

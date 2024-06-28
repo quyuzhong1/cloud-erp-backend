@@ -583,7 +583,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             unSaveTaskList.add(outUnSaveTask);
         }
 
-        return dmpMqFeign.saveWdtTaskList(unSaveTaskList);
+        return dmpMqFeign.saveTaskList(unSaveTaskList);
     }
 
     /**
@@ -629,7 +629,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             unSaveTaskList.add(outUnSaveTask);
         }
 
-        return dmpMqFeign.saveWdtTaskList(unSaveTaskList);
+        return dmpMqFeign.saveTaskList(unSaveTaskList);
     }
 
     /**
