@@ -741,9 +741,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             Map<String, String> orderBasketNoMap = pickingWaveDetailService.getOrderBasketNoMap(soIds);
             List<PrintWayBillPdfDTO> printWayBillPdfResultList = soB2cFeign.printWayBillPdf(soIds);
             printWayBillPdfResultList.forEach(v->{
-                v.setBasketNo(orderBasketNoMap.getOrDefault(v.getSoId(), "").toString());
+                v.setBasketNo(orderBasketNoMap.getOrDefault(v.getSoId(), ""));
             });
+            waybillDetailDTOList.forEach(v -> v.setIndex(orderBasketNoMap.containsKey(v.getSoB2cId()) ? Integer.parseInt(orderBasketNoMap.get(v.getSoB2cId())) : Integer.MAX_VALUE));
 
+            //根据篮号排序，为空放最后
+            waybillDetailDTOList = waybillDetailDTOList.stream()
+                    .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO::getIndex))
+                    .collect(Collectors.toList());
             List<SoB2cDTO.WaybillDTO> platformWaybill = new ArrayList<>();
 
             // 配货单需要根据渠道查询是否是自定义配置

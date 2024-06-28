@@ -5553,6 +5553,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<SoB2cDetailEntity> detailList = allDetailEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
             List<SoB2cDetailDTO.ListDTO> soB2cDetailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ListDTO.class, detailList);
             for (SoB2cDetailDTO.ListDTO detailDTO : soB2cDetailList) {
+                Integer useableQty = MathUtil.ZERO;
+                Integer freezeQty = MathUtil.ZERO;
+                if (CollectionUtils.isNotEmpty(inventoryList)) {
+                    //可用库存
+                    useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
+                                    && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
+                                    && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
+                                    && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                            .orElse(MathUtil.ZERO);
+                    //冻结库存
+                    freezeQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
+                                    && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
+                                    && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
+                                    && InventoryStatusEnum.FROZEN.getCode().equals(obj.getInventoryStatus()))
+                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                            .orElse(MathUtil.ZERO);
+                }
+                detailDTO.setUseableQty(useableQty);
+                detailDTO.setFreezeQty(freezeQty);
                 if(!printWayBillPdfDTO.getIsOutStock()){
                     Boolean outStock = isOutStock(bomChildrenList, inventoryList, detailDTO, ignoreInventorySkuIds);
                     if(outStock){
