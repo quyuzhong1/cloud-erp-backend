@@ -143,16 +143,9 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
     @Override
     public boolean exportExcel(WarehouseLocationSafetyInventoryDTO.exportParamDTO dto, HttpServletResponse response) {
-        Optional<AdvanceQueryDTO> checkIdsOptional = dto.getAdvanceQueryDTOList().stream().filter(item -> item.getCompare().equals("inList")).findFirst();
-        List<WarehouseLocationSafetyInventoryEntity> entityList;
-        if(checkIdsOptional.isPresent() && !ObjectUtil.isEmpty(checkIdsOptional.get().getValue())){
-            List<String> ids = (List<String>) checkIdsOptional.get().getValue();
-            entityList = this.baseMapper.selectBatchIds(ids);
-        }else {
-            WarehouseLocationSafetyInventoryDTO.SearchParamDTO searchParamDto = new WarehouseLocationSafetyInventoryDTO.SearchParamDTO();
-            BeanMapper.copy(dto, searchParamDto);
-            entityList = this.baseMapper.listByParam(searchParamDto);
-        }
+        WarehouseLocationSafetyInventoryDTO.SearchParamDTO searchParamDto = new WarehouseLocationSafetyInventoryDTO.SearchParamDTO();
+        BeanMapper.copy(dto, searchParamDto);
+        List<WarehouseLocationSafetyInventoryEntity> entityList = this.baseMapper.listByParam(searchParamDto);
         List<WarehouseLocationSafetyInventoryDTO.ViewDTO> viewList = BeanMapper.copyList(entityList, WarehouseLocationSafetyInventoryDTO.ViewDTO.class);
         fillViewList(viewList);
         try {
