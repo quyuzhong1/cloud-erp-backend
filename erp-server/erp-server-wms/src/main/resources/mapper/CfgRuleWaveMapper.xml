@@ -15,7 +15,7 @@
        <result column="name" property="name" />
        <result column="wave_type" property="waveType" />
        <result column="priority" property="priority" />
-       <result column="picking_cart_type_id" property="pickingCartTypeId" />
+       <result column="picking_cart_type_Json" property="pickingCartTypeJson" />
        <result column="min_order_qty" property="minOrderQty" />
        <result column="max_order_qty" property="maxOrderQty" />
        <result column="min_qty" property="minQty" />
@@ -38,8 +38,7 @@
         crw.update_user_id as updateUserId,
         crw.version,
         crw.is_deleted,
-        crw.name, crw.wave_type as waveType, crw.priority, crw.picking_cart_type_id as pickingCartTypeId, crw.min_order_qty as minOrderQty, crw.max_order_qty as maxOrderQty, crw.min_qty as minQty, crw.max_qty as maxQty, crw.disabled, crw.execution_time_json, crw.execution_type as executionType, crw.picking_type as pickingType, crw.remark,
-        pct.name as pickingCartTypeName
+        crw.name, crw.wave_type as waveType, crw.priority, crw.picking_cart_type_Json as pickingCartTypeJson, crw.min_order_qty as minOrderQty, crw.max_order_qty as maxOrderQty, crw.min_qty as minQty, crw.max_qty as maxQty, crw.disabled, crw.execution_time_json, crw.execution_type as executionType, crw.picking_type as pickingType, crw.remark
     </sql>
 
     <!-- 分页查询 -->
@@ -47,7 +46,6 @@
         select
             <include refid="Base_Column_List" />
         from cfg_rule_wave crw
-        left join picking_cart_type pct on crw.picking_cart_type_id = pct.id and pct.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and crw.is_deleted = false
@@ -66,11 +64,10 @@
     </select>
 
     <!-- 根据时间查询符合条件的波次规则 -->
-    <select id="listRuleWaveByTime" resultMap="BaseResultMap">
+    <select id="listRuleWaveByTime" resultType="com.erp.model.wms.entity.CfgRuleWaveEntity">
         select
         <include refid="Base_Column_List" />
         from cfg_rule_wave crw
-        left join picking_cart_type pct on crw.picking_cart_type_id = pct.id and pct.is_deleted = false
         <where>
             crw.is_deleted = false and crw.execution_type = 'auto' and crw.execution_time_json ~ #{time}
         </where>
