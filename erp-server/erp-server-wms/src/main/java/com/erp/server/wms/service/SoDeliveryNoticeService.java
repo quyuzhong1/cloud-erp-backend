@@ -1,6 +1,5 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -102,19 +101,22 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
-     * @param approveOneDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      **/
-    BatchResultDTO approve(ApproveOneDTO approveOneDTO);
+    BatchResultDTO approve(SoDeliveryNoticeEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param id id
+     * @param entity
      * @return java.lang.Boolean
      **/
-    BatchResultDTO disApprove(String id);
+    BatchResultDTO disApprove(SoDeliveryNoticeEntity entity);
 
     /**
      * 取消流程

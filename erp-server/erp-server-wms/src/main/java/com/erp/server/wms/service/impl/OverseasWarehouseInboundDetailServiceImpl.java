@@ -18,6 +18,7 @@ import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
+import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.wms.convert.WmsOverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundDetailMapper;
 import com.erp.server.wms.service.*;
@@ -320,10 +321,10 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                 //提交
                 transferInfoService.submit(Collections.singletonList(transferOutId));
                 //审核
-                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-                baseApproveParamDTO.setIds(Collections.singletonList(transferOutId));
-                baseApproveParamDTO.setType(ApproveType.PASS);
-                transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+                TransferInfoEntity entity = transferInfoService.getById(transferOutId);
+                if (Objects.nonNull(entity)){
+                    transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE);
+                }
             } else {
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
             }

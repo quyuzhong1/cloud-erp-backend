@@ -1,9 +1,11 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -14,12 +16,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto;
+import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity;
 import com.erp.server.wms.listener.WarehouseLocationSafetyInventoryExcelListener;
 import com.erp.server.wms.mapper.WarehouseLocationSafetyInventoryMapper;
+import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
@@ -34,9 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -49,20 +51,21 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
-
     @Resource
     private WarehouseService warehouseService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
-    public PagingVO<WarehouseLocationSafetyInventoryDto.ViewDto> paging(PagingDTO<WarehouseLocationSafetyInventoryDto.SearchParamDto> paramDto) {
+    public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> paging(PagingDTO<WarehouseLocationSafetyInventoryDTO.SearchParamDTO> paramDto) {
         Page<Object> page = new Page<>(paramDto.getCurrPage(), paramDto.getPageSize());
-        IPage<WarehouseLocationSafetyInventoryDto.ViewDto> result = this.baseMapper.paging(page, paramDto.getParams());
+        IPage<WarehouseLocationSafetyInventoryDTO.ViewDTO> result = this.baseMapper.paging(page, paramDto.getParams());
         fillViewList(result.getRecords());
         return new PagingVO<>(result);
     }
 
     @Override
-    public BaseResultDTO.UpdateDTO updateInventory(WarehouseLocationSafetyInventoryDto.UpdateParamDto updateParamDto) {
+    public BaseResultDTO.UpdateDTO updateInventory(WarehouseLocationSafetyInventoryDTO.UpdateParamDTO updateParamDto) {
         WarehouseLocationSafetyInventoryEntity entity = new WarehouseLocationSafetyInventoryEntity();
         BeanMapper.copy(updateParamDto, entity);
         int count = this.baseMapper.updateById(entity);
@@ -79,16 +82,16 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
     public boolean importExcel(MultipartFile file, HttpServletResponse response) {
         WarehouseLocationSafetyInventoryExcelListener listener = new WarehouseLocationSafetyInventoryExcelListener();
         try {
-            EasyExcel.read(file.getInputStream(), WarehouseLocationSafetyInventoryDto.importExcelDto.class, listener).sheet(0).doRead();
+            EasyExcel.read(file.getInputStream(), WarehouseLocationSafetyInventoryDTO.importExcelDTO.class, listener).sheet(0).doRead();
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_95124);
         }
 
         //校验失败的数据
-        List<WarehouseLocationSafetyInventoryDto.importExcelDto> errorList = listener.getErrorList();
+        List<WarehouseLocationSafetyInventoryDTO.importExcelDTO> errorList = listener.getErrorList();
 
         //校验成功的数据
-        List<WarehouseLocationSafetyInventoryDto.importExcelDto> successList = listener.getSuccessList();
+        List<WarehouseLocationSafetyInventoryDTO.importExcelDTO> successList = listener.getSuccessList();
         List<String> warehouseNameList = successList.stream().map(item -> item.getWarehouseName()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(warehouseNameList);
         Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(item1 -> item1.getName(), item2 -> item2.getId()));
@@ -99,7 +102,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
                 .eq("is_deleted", false)
                 .in("name", warehouseAreaNameList)
         );
-        for (WarehouseLocationSafetyInventoryDto.importExcelDto importExcelDto : successList) {
+        for (WarehouseLocationSafetyInventoryDTO.importExcelDTO importExcelDto : successList) {
             //数据填充，将仓库名称转为仓库ID，将库区名称转为库区ID
             WarehouseLocationSafetyInventoryEntity entity = new WarehouseLocationSafetyInventoryEntity();
             BeanMapper.copy(importExcelDto, entity);
@@ -139,17 +142,18 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public boolean exportExcel(WarehouseLocationSafetyInventoryDto.exportParamDto dto, HttpServletResponse response) {
+    public boolean exportExcel(WarehouseLocationSafetyInventoryDTO.exportParamDTO dto, HttpServletResponse response) {
+        Optional<AdvanceQueryDTO> checkIdsOptional = dto.getAdvanceQueryDTOList().stream().filter(item -> item.getCompare().equals("inList")).findFirst();
         List<WarehouseLocationSafetyInventoryEntity> entityList;
-        List<String> ids = dto.getIds();
-        if(! ids.isEmpty()){
+        if(checkIdsOptional.isPresent() && !ObjectUtil.isEmpty(checkIdsOptional.get().getValue())){
+            List<String> ids = (List<String>) checkIdsOptional.get().getValue();
             entityList = this.baseMapper.selectBatchIds(ids);
         }else {
-            WarehouseLocationSafetyInventoryDto.SearchParamDto searchParamDto = new WarehouseLocationSafetyInventoryDto.SearchParamDto();
+            WarehouseLocationSafetyInventoryDTO.SearchParamDTO searchParamDto = new WarehouseLocationSafetyInventoryDTO.SearchParamDTO();
             BeanMapper.copy(dto, searchParamDto);
             entityList = this.baseMapper.listByParam(searchParamDto);
         }
-        List<WarehouseLocationSafetyInventoryDto.ViewDto> viewList = BeanMapper.copyList(entityList, WarehouseLocationSafetyInventoryDto.ViewDto.class);
+        List<WarehouseLocationSafetyInventoryDTO.ViewDTO> viewList = BeanMapper.copyList(entityList, WarehouseLocationSafetyInventoryDTO.ViewDTO.class);
         fillViewList(viewList);
         try {
             String fileName = "仓位安全库存" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -193,29 +197,33 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
      * @date: 2024-06-21
      * @author: tanmujin
      */
-    private void fillViewList(List<WarehouseLocationSafetyInventoryDto.ViewDto> records) {
+    private void fillViewList(List<WarehouseLocationSafetyInventoryDTO.ViewDTO> records) {
         if(records.isEmpty()){
             return;
         }
         List<String> warehouseIds = records.stream().map(item -> item.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.getBaseMapper().selectBatchIds(warehouseIds);
         Map<String, String> idNameMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
-
         List<WarehouseLocationEntity> areaList = warehouseLocationService.getBaseMapper().selectList(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("warehouse_id", warehouseIds.get(0))
                 .eq("type", "area")
                 .eq("is_deleted", false)
         );
+        List<DictBasicEntity> dictEntityList = dictBasicService.getBaseMapper().selectList(new QueryWrapper<DictBasicEntity>().eq("type", "warehouseAreaType"));
+        Map<String, String> dictValueNameMap = dictEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
 
         WarehouseLocationEntity emptyAreaEntity = new WarehouseLocationEntity();
         emptyAreaEntity.setName("");
-        for (WarehouseLocationSafetyInventoryDto.ViewDto dto : records) {
+        for (WarehouseLocationSafetyInventoryDTO.ViewDTO dto : records) {
             String warehouseArea = dto.getWarehouseArea();
             WarehouseLocationEntity areaEntity = areaList.stream().filter(item -> item.getCode().equals(warehouseArea)).findFirst().orElse(emptyAreaEntity);
             dto.setWarehouseAreaName(areaEntity.getName());
 
             String warehouseId = dto.getWarehouseId();
             dto.setWarehouseName(idNameMap.get(warehouseId));
+
+            String areaTypeCode = dto.getWarehouseAreaType();
+            dto.setWarehouseAreaType(dictValueNameMap.get(areaTypeCode));
         }
     }
 }

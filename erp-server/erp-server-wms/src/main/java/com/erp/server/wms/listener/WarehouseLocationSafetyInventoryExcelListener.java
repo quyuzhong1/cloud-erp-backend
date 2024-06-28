@@ -2,16 +2,13 @@ package com.erp.server.wms.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto;
-import com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity;
+import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO;
 import lombok.Getter;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 仓位安全库存导入监听
@@ -19,13 +16,13 @@ import java.util.stream.Collectors;
  * @author tanmujin
  */
 @Getter
-public class WarehouseLocationSafetyInventoryExcelListener extends AnalysisEventListener<WarehouseLocationSafetyInventoryDto.importExcelDto> {
+public class WarehouseLocationSafetyInventoryExcelListener extends AnalysisEventListener<WarehouseLocationSafetyInventoryDTO.importExcelDTO> {
 
-    private List<WarehouseLocationSafetyInventoryDto.importExcelDto> successList = new ArrayList<>();
-    private List<WarehouseLocationSafetyInventoryDto.importExcelDto> errorList = new ArrayList<>();
+    private List<WarehouseLocationSafetyInventoryDTO.importExcelDTO> successList = new ArrayList<>();
+    private List<WarehouseLocationSafetyInventoryDTO.importExcelDTO> errorList = new ArrayList<>();
 
     @Override
-    public void invoke(WarehouseLocationSafetyInventoryDto.importExcelDto data, AnalysisContext context) {
+    public void invoke(WarehouseLocationSafetyInventoryDTO.importExcelDTO data, AnalysisContext context) {
         /*if(ObjectUtils.isEmpty(data.getSkuNo())){
             data.setErrorInfo("SKU不能为空");
         }

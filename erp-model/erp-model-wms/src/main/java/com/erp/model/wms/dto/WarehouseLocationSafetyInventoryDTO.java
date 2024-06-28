@@ -17,11 +17,11 @@ import java.util.Map;
  * @author tanmujin
  */
 @Data
-public class WarehouseLocationSafetyInventoryDto implements Serializable {
+public class WarehouseLocationSafetyInventoryDTO implements Serializable {
 
     @EqualsAndHashCode(callSuper = true)
     @Data
-    public static class SearchParamDto extends SortDTO {
+    public static class SearchParamDTO extends SortDTO {
         private String skuNo;
 
         /**
@@ -62,12 +62,12 @@ public class WarehouseLocationSafetyInventoryDto implements Serializable {
 
     @EqualsAndHashCode(callSuper = true)
     @Data
-    public static class exportParamDto extends SearchParamDto{
+    public static class exportParamDTO extends SearchParamDTO {
         private List<String> ids;
     }
 
     @Data
-    public static class ViewDto{
+    public static class ViewDTO {
         private String id;
 
         private String skuNo;
@@ -119,7 +119,7 @@ public class WarehouseLocationSafetyInventoryDto implements Serializable {
     }
 
     @Data
-    public static class UpdateParamDto{
+    public static class UpdateParamDTO {
         private String id;
 
         /**
@@ -134,7 +134,7 @@ public class WarehouseLocationSafetyInventoryDto implements Serializable {
     }
 
     @Data
-    public static class importExcelDto implements Serializable{
+    public static class importExcelDTO implements Serializable{
         @ExcelProperty(value = "*SKU", index = 0)
         @FieldValid(fieldName = "SKU", isNotBlank = true, maxLength = 64)
         private String skuNo;
@@ -171,7 +171,7 @@ public class WarehouseLocationSafetyInventoryDto implements Serializable {
     }
 
     @Data
-    public static class ExportExcelDto implements Serializable{
+    public static class ExportExcelDTO implements Serializable{
 
     }
 }

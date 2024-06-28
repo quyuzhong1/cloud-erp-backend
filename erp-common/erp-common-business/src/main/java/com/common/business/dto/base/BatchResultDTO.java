@@ -43,6 +43,13 @@ public class BatchResultDTO implements Serializable {
         return new BatchResultDTO(id, code, StrUtil.format("{}_{}",operationType.getName(),"成功"), Boolean.TRUE);
     }
 
+    public static BatchResultDTO success(String id, String code) {
+        code = null == code ? "" : code;
+        return new BatchResultDTO(id, code, "成功", Boolean.TRUE);
+    }
+    public static BatchResultDTO success() {
+        return new BatchResultDTO("","","",Boolean.TRUE);
+    }
     public static BatchResultDTO success(String id, String code, String msg) {
         code = null == code ? "" : code;
         return new BatchResultDTO(id, code, msg, Boolean.TRUE);

@@ -1653,10 +1653,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             transferInfoService.submit(Collections.singletonList(transferOutId));
 
             //审核
-            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setIds(Collections.singletonList(transferOutId));
-            baseApproveParamDTO.setType(ApproveType.PASS);
-            transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+            TransferInfoEntity entity1 = transferInfoService.getById(transferOutId);
+            if (Objects.nonNull(entity1)){
+                transferInfoService.approve(entity1,ApproveType.PASS,"", null , Boolean.TRUE);
+            }
         } else {
             throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
         }

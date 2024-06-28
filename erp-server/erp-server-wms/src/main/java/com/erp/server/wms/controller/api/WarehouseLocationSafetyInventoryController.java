@@ -6,8 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.ExcelUtil;
-import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDto;
+import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO;
 import com.erp.server.wms.query.WarehouseLocationSafetyInventoryHandler;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
 import org.springframework.web.bind.annotation.*;
@@ -39,8 +38,8 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
-    public ApiResult<PagingVO<WarehouseLocationSafetyInventoryDto.ViewDto>> paging(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDto.SearchParamDto> pagingDTO){
-        PagingVO<WarehouseLocationSafetyInventoryDto.ViewDto> pagingResult = safetyInventoryService.paging(pagingDTO);
+    public ApiResult<PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO>> paging(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDTO.SearchParamDTO> pagingDTO){
+        PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> pagingResult = safetyInventoryService.paging(pagingDTO);
         return ApiResult.success(pagingResult);
     }
 
@@ -52,9 +51,9 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/updateBatch")
-    public ApiResult<List<BaseResultDTO.UpdateDTO>> updateBatch(@RequestBody List<WarehouseLocationSafetyInventoryDto.UpdateParamDto> list){
+    public ApiResult<List<BaseResultDTO.UpdateDTO>> updateBatch(@RequestBody List<WarehouseLocationSafetyInventoryDTO.UpdateParamDTO> list){
         List<BaseResultDTO.UpdateDTO> resultList = new ArrayList<>(list.size());
-        for (WarehouseLocationSafetyInventoryDto.UpdateParamDto dto : list) {
+        for (WarehouseLocationSafetyInventoryDTO.UpdateParamDTO dto : list) {
             BaseResultDTO.UpdateDTO result = safetyInventoryService.updateInventory(dto);
             if(result != null){
                 resultList.add(result);
@@ -85,7 +84,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody WarehouseLocationSafetyInventoryDto.exportParamDto dto, HttpServletResponse response){
+    public ApiResult<?> exportExcel(@RequestBody WarehouseLocationSafetyInventoryDTO.exportParamDTO dto, HttpServletResponse response){
         boolean flag = safetyInventoryService.exportExcel(dto, response);
         return flag ? success() : failure();
     }

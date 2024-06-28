@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -68,9 +69,12 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @description: 审核
      * @author Will
      * @date: 2023/3/15 17:54
-    * @param baseApproveParamDTO
+    * @param entity
+    * @param type
+    * @param comment
+    * @param isNeedProcess
      */
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(SalesDemandEntity entity, String type, String comment, Boolean isNeedProcess);
     /**
      * @description: 取消流程
      * @author Will
@@ -92,10 +96,10 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @description: 批量反审核
      * @author Will
      * @date: 2023/3/15 18:19
-     * @param ids
+     * @param entity
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(SalesDemandEntity entity);
 
     /**
      * @description: 删除

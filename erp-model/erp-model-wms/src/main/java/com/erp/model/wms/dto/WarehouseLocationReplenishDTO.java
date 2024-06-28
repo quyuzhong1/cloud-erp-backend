@@ -231,20 +231,10 @@ public class WarehouseLocationReplenishDTO implements Serializable {
         private String fromWarehouseArea;
 
         /**
-         * 取货库区名称
-         */
-        private String fromWarehouseAreaName;
-
-        /**
          * 取货仓位
          */
         @NotBlank
         private String fromWarehouseLocation;
-
-        /**
-         * 取货仓位名称
-         */
-        private String fromWarehouseLocationName;
 
         /**
          * 补货数量
@@ -259,20 +249,10 @@ public class WarehouseLocationReplenishDTO implements Serializable {
         private String toWarehouseArea;
 
         /**
-         * 补货库区名称
-         */
-        private String toWarehouseAreaName;
-
-        /**
          * 补货仓位
          */
         @NotBlank
         private String toWarehouseLocation;
-
-        /**
-         * 补货仓位名称
-         */
-        private String toWarehouseLocationName;
     }
 
     @Data
@@ -326,5 +306,18 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          * 缺货仓位：发货缺货补货单可不传
          */
         private String warehouseLocation;
+    }
+
+    @Data
+    public static class TabDTO{
+        /**
+         * 类型
+         */
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 }
