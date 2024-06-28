@@ -820,6 +820,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         @Size(min = 1, message = "发货单不能为空")
         @Valid
+        @Dict
         private List<CancelShipmentDTO> cancelShipments;
     }
 
