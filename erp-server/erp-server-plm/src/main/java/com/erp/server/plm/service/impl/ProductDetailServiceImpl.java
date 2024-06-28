@@ -252,8 +252,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
-    @Resource
-    private WangDianClientService wangDianClientService;
 
 
     //变更财务人员审核
@@ -3719,6 +3717,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode()))) {
             return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_95038.msg);
         }
+        List<ProductDetailEntity> entityList = Arrays.asList(entity);
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         Integer approveStatus;
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {

@@ -569,10 +569,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 poReturnService.updateArrivalState(podIds);
             }
             //修改发货单确认状态
-            List<String> idByDeliverySource = warehouseReceiveList.stream().filter(v-> PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getId).distinct().collect(Collectors.toList());
-            List<String> detailIdsByDeliverySource = receiveDetailList.stream().filter(v->idByDeliverySource.contains(v.getMainId())).map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+            List<String> detailIdsByDeliverySource = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
-                srmDeliveryOrderFeign.confirmReceiveStatus(Collections.singletonList(entity.getSourceId()));
+                srmDeliveryOrderFeign.confirmReceiveStatus(detailIdsByDeliverySource);
             }
         } else {
             //审核不通过
@@ -788,8 +787,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         inventoryUnApproveDTO.setBillId(entity.getId());
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         //修改发货单确认状态
-        List<String> idByDeliverySource = warehouseReceiveList.stream().filter(v-> PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getId).distinct().collect(Collectors.toList());
-        List<String> detailIdsByDeliverySource = receiveDetailList.stream().filter(v->idByDeliverySource.contains(v.getMainId())).map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> detailIdsByDeliverySource = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
             srmDeliveryOrderFeign.unConfirmReceiveStatus(detailIdsByDeliverySource);
         }
