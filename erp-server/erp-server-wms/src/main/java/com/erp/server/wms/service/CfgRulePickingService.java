@@ -52,19 +52,9 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
     void updateStatus(UpdateStateDTO.BatchUpdateDTO dto);
 
     /**
+     * 限制来源单据只有一个,返回可能存在多个仓库id(来源单据sku对应拣货仓库可能不同), 需要根据warehouseId分组生成拣货单
      * 根据传入参数获取sku对应库位及拣货数量
-     * @param map 参考
-     *         <p>
-     *         Map<String, Object> map = new HashMap<>();<br/>
-     *         单据类型<br/>
-     *         map.put("billType", PickingBillTypeEnum.B2C.getCode());<br/>
-     *         仓库id<br/>
-     *         map.put("deliveryWarehouseId", detailEntity.getWarehouseId());<br/>
-     *         key skuId value sku数量<br/>
-     *         map.put("sku", sku);<br/>
-     *         key skuId value skuNo<br/>
-     *         map.put("skuMap", skuMap);<br/>
-     *         </p>
+     * @param dto 参数
      */
-    List<LocationInventoryResultDTO> getRuleOrderMatchResult(Map<String,Object> map);
+    List<LocationInventoryResultDTO> getRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto);
 }

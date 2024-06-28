@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.pickingstrategy;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.enums.ServiceCodeNameEnum;
 import lombok.Getter;
@@ -53,5 +54,67 @@ public class CfgRuleConditionDTO {
     @Setter
     public static class Update extends Common {
         private String id;
+    }
+
+    @Getter
+    @Setter
+    public static class ConditionElementDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 左括号
+         */
+        private String leftBracket;
+
+        /**
+         * 条件的字段
+         */
+        private String field;
+
+        /**
+         * 比较符
+         */
+        private String compare;
+
+        /**
+         * 对应的值
+         */
+        private String value;
+
+        /**
+         * 右括号
+         */
+        private String rightBracket;
+
+        /**
+         * 逻辑关系 or 和 and
+         */
+        private String logic;
+
+        /**
+         * 规则id
+         */
+        private String ruleId;
+
+        /**
+         * 顺序
+         */
+        private Integer index;
+
+        /**
+         * 值对应名称
+         */
+        private String name;
+        /**
+         * 所属类型
+         */
+        private String sourceType;
+
+        /**
+         * 对应的值类型
+         */
+        private String valueType;
     }
 }

@@ -223,15 +223,6 @@ public class PickingListsDTO {
         private String deliveryWarehouseId;
 
         /**
-         * 拣货仓库id
-         */
-        private String warehouseId;
-
-        /**
-         * 收货仓库名称
-         */
-        private String warehouseName;
-        /**
          * 来源id
          */
         private String sourceId;

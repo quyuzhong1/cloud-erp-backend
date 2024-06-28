@@ -1173,33 +1173,30 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (Boolean.FALSE.equals(checkUnpickedQty)) {
             throw new ServiceException(ApiError.UNPICKED_QUANTITY_SHORTAGE);
         }
-        Map<String, List<RequisitionApplicationDetailEntity>> detailByWarehouseMap = details.stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getFromWarehouseId));
+        PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
+        addDTO.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
+                PickingBillTypeEnum.FBA.getCode() : PickingBillTypeEnum.THIRD.getCode());
+        addDTO.setDeliveryWarehouseId(application.getRequisitionWarehouseId());
+        addDTO.setSourceId(application.getId());
+        addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+        addDTO.setSourceCode(application.getCode());
         List<RequisitionApplicationDetailEntity> updateDetails = new ArrayList<>();
-        for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : detailByWarehouseMap.entrySet()) {
-            String warehouseId = entry.getKey();
-            PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
-            addDTO.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
-                    PickingBillTypeEnum.FBA.getCode() : PickingBillTypeEnum.THIRD.getCode());
-            addDTO.setDeliveryWarehouseId(application.getRequisitionWarehouseId());
-            addDTO.setWarehouseId(warehouseId);
-            addDTO.setWarehouseName(entry.getValue().get(0).getFromWarehouseName());
-            addDTO.setSourceId(application.getId());
-            addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
-            addDTO.setSourceCode(application.getCode());
-            List<PickingDetailDTO.AddDTO> detailList = entry.getValue().stream()
-                    .map(detailEntity -> {
-                        PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
-                        detail.setSkuId(detailEntity.getSkuId());
-                        detail.setSkuNo(detailEntity.getSkuNo());
-                        detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
-                        detail.setSourceDetailId(detailEntity.getId());
-                        detailEntity.setPickingQty(detailEntity.getApproveQty());
-                        updateDetails.add(detailEntity);
-                        return detail;
-                    }).collect(Collectors.toList());
-            addDTO.setDetails(detailList);
-            pickingListsService.add(addDTO);
+        List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
+        for (RequisitionApplicationDetailEntity detailEntity : details) {
+            PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
+            detail.setWarehouseId(detailEntity.getFromWarehouseId());
+            detail.setWarehouseName(detailEntity.getFromWarehouseName());
+            detail.setSkuId(detailEntity.getSkuId());
+            detail.setSkuNo(detailEntity.getSkuNo());
+            detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
+            detail.setSourceDetailId(detailEntity.getId());
+            detailList.add(detail);
+            detailEntity.setPickingQty(detailEntity.getApproveQty());
+            updateDetails.add(detailEntity);
+
         }
+        addDTO.setDetails(detailList);
+        pickingListsService.add(addDTO);
         requisitionApplicationDetailService.updateBatchById(updateDetails);
     }
 
