@@ -9,8 +9,10 @@ import com.erp.server.auth.config.OpenApi;
 import javax.validation.Valid;
 
 /**
+ * <p>
  * 对接汇创智能设备
- * @see <a href="https://ulanzichina.feishu.cn/docx/Ur9XdRkgdoQojYx2mIhcjR7knDf?from=from_copylink"> 对接文档
+ * @see <a href="https://ulanzichina.feishu.cn/docx/Ur9XdRkgdoQojYx2mIhcjR7knDf?from=from_copylink"> 对接文档</br>
+ * </p>
  * 设备调用接口,返回尺寸重量视频地址图片地址相关文件
  */
 @OpenApi
