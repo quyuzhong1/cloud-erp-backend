@@ -197,6 +197,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
         BeanMapper.copy(handleDTO, updateEntity);
         updateEntity.setId(entity.getId());
+        updateEntity.setStatus(LocationReplenishStatusEnum.HANDLED.getCode());
         this.baseMapper.updateById(updateEntity);
 
         return BatchResultDTO.success(updateEntity.getId(), updateEntity.getSkuNo() + " : " + handleDTO.getFromWarehouseLocation(), OperationTypeEnum.ADD);
