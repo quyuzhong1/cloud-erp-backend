@@ -820,6 +820,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         @Size(min = 1, message = "发货单不能为空")
         @Valid
+        @Dict
         private List<CancelShipmentDTO> cancelShipments;
     }
 
@@ -867,6 +868,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 返还仓位
          */
         private String returnWarehouseLocation;
+        /**
+         * 返还仓位
+         */
+        private String returnWarehouseLocationId;
         /**
          * 返还仓位名称
          */

@@ -63,7 +63,7 @@
                pd.sku_no,
                sbdd.warehouse_id,
                pd.warehouse_location,
-               pd.qty
+               pd.qty as pickingQty
         FROM so_b2c_delivery sbd
                  LEFT JOIN so_b2c_delivery_detail sbdd ON sbdd.main_id = sbd.id
             AND sbdd.is_deleted = FALSE

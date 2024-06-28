@@ -48,7 +48,7 @@ public class WarehouseLocationReplenishController extends BaseController {
     }
 
     /**
-     * 取消处理（批量）
+     * 无需处理
      * @param dto
      * @return 批量处理结果
      * @date: 2024-06-26
@@ -81,7 +81,7 @@ public class WarehouseLocationReplenishController extends BaseController {
     }
 
     /**
-     * 处理补货单（批量）
+     * 批量处理
      * @param dtoList 数据清单
      * @return 批量处理结果
      * @date: 2024-06-26
@@ -97,7 +97,7 @@ public class WarehouseLocationReplenishController extends BaseController {
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
     }
 
-    @PostMapping("/finishBatch")
+    /*@PostMapping("/finishBatch")
     public ApiResult<List<BatchResultDTO>> finishBatch(@RequestBody List<WarehouseLocationReplenishDTO.HandleDTO> dtoList){
         List<BatchResultDTO> resultList = new ArrayList<>(dtoList.size());
         for (WarehouseLocationReplenishDTO.HandleDTO dto : dtoList) {
@@ -105,7 +105,7 @@ public class WarehouseLocationReplenishController extends BaseController {
             resultList.add(resultDTO);
         }
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
-    }
+    }*/
 
     /**
      * 新增补货单
@@ -120,6 +120,9 @@ public class WarehouseLocationReplenishController extends BaseController {
         return resultDTO.getSuccess() ? success(resultDTO) : failure(resultDTO);
     }
 
+    /**
+     * tabList
+     */
     @GetMapping("/tabList")
     public ApiResult<List<WarehouseLocationReplenishDTO.TabDTO>> tabList(){
         List<WarehouseLocationReplenishDTO.TabDTO> tabDtoList = replenishService.listTabInfo();
