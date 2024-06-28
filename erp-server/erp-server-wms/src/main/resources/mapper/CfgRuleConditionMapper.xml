@@ -4,58 +4,49 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.CfgRuleConditionEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="left_bracket" property="leftBracket" />
-        <result column="field" property="field" />
-        <result column="compare" property="compare" />
-        <result column="value" property="value" />
-        <result column="right_bracket" property="rightBracket" />
-        <result column="logic" property="logic" />
-        <result column="rule_id" property="ruleId" />
-        <result column="index" property="index" />
-        <result column="name" property="name" />
-        <result column="value_type" property="valueType" />
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="left_bracket" property="leftBracket"/>
+        <result column="field" property="field"/>
+        <result column="compare" property="compare"/>
+        <result column="value" property="value"/>
+        <result column="right_bracket" property="rightBracket"/>
+        <result column="logic" property="logic"/>
+        <result column="rule_id" property="ruleId"/>
+        <result column="index" property="index"/>
+        <result column="name" property="name"/>
     </resultMap>
-
-    <!-- 根据规则ids查询 -->
-    <select id="listByRuleIds" resultMap="BaseResultMap">
-        select
-            crc.id,
-            crc.create_user_id,
-            crc.create_user_name,
-            crc.create_time,
-            crc.update_user_id,
-            crc.update_user_name,
-            crc.update_time,
-            crc.version,
-            crc.is_deleted,
-            crc.left_bracket,
-            crc.field,
-            crc.compare,
-            crc.value,
-            crc.right_bracket,
-            crc.logic,
-            crc.rule_id,
-            crc.index,
-            crc.name,
-            cc.value_type
-        from cfg_rule_condition crc
-        left join cfg_condition cc on crc.field = cc.condition_field and cc.is_deleted = false
-        <where>
-            crc.is_deleted = false and crc.rule_id in
-            <foreach collection="cfgRuleIds" open="(" close=")" separator="," item="item">
-                #{item}
-            </foreach>
-        </where>
-        order by index
+    <select id="listByRuleIds"
+            resultType="com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO$ConditionElementDTO">
+        SELECT
+        crc.id,
+        crc.left_bracket,
+        crc.field,
+        crc.compare,
+        crc.value,
+        crc.right_bracket,
+        crc.logic,
+        crc.rule_id,
+        crc.index,
+        crc.name,
+        cc.value_type
+        FROM
+        cfg_rule_condition AS crc
+        LEFT JOIN cfg_condition AS cc ON cc.condition_field = crc.field
+        AND cc.is_deleted = FALSE
+        WHERE
+        crc.is_deleted = FALSE
+        AND crc.rule_id IN
+        <foreach collection="cfgRuleIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </select>
 
 </mapper>

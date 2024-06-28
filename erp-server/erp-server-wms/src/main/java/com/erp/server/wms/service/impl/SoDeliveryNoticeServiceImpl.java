@@ -984,8 +984,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
         addDTO.setBillType(PickingBillTypeEnum.B2B.getCode());
         addDTO.setCustomerId(soDeliveryNotice.getCustomerId());
-        addDTO.setWarehouseId(soDeliveryNotice.getWarehouseId());
-        addDTO.setWarehouseName(soDeliveryNotice.getWarehouseName());
         addDTO.setSourceId(soDeliveryNotice.getId());
         addDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         addDTO.setSourceCode(soDeliveryNotice.getCode());
@@ -994,11 +992,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 .map(id -> {
                     SoDeliveryNoticeDetailEntity detailEntity = details.stream().filter(v -> v.getId().equals(id))
                             .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
-                    PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
-                    detail.setSkuId(detailEntity.getSkuId());
-                    detail.setSkuNo(detailEntity.getSkuNo());
-                    detail.setQty(detailEntity.getDeliveryQty() - detailEntity.getPickingQty());
-                    detail.setSourceDetailId(detailEntity.getId());
+                    PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO(soDeliveryNotice.getWarehouseId(),
+                            soDeliveryNotice.getWarehouseName(),
+                            detailEntity.getSkuId(),
+                            detailEntity.getSkuNo(),
+                            detailEntity.getDeliveryQty() - detailEntity.getPickingQty(),
+                            detailEntity.getId()
+                    );
                     detailEntity.setPickingQty(detailEntity.getDeliveryQty());
                     updateDetails.add(detailEntity);
                     return detail;

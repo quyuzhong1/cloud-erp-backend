@@ -1,5 +1,6 @@
 package com.erp.server.wms.mapper;
 
+import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -17,6 +18,7 @@ import java.util.List;
  */
 @Mapper
 public interface CfgRuleConditionMapper extends BaseMapper<CfgRuleConditionEntity> {
+
     /**
      * 根据规则ids查询
      * @author will
@@ -24,5 +26,5 @@ public interface CfgRuleConditionMapper extends BaseMapper<CfgRuleConditionEntit
      * @param cfgRuleIds
      * @return List<CfgRuleConditionEntity>
      */
-    List<CfgRuleConditionEntity> listByRuleIds(@Param("cfgRuleIds") List<String> cfgRuleIds);
+    List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleIds(@Param("cfgRuleIds") List<String> cfgRuleIds);
 }

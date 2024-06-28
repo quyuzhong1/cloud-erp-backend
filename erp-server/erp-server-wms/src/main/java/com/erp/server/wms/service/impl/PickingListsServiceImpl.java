@@ -24,6 +24,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.CfgRulePickingStagingEntity;
@@ -92,63 +93,65 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     public void add(PickingListsDTO.AddDTO dto) {
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JHD);
-        // 生成拣货单主表数据
-        PickingListsEntity entity = new PickingListsEntity();
-        entity.setId(IdWorker.getIdStr());
-        entity.setCode(code);
-        entity.setWarehouseId(dto.getWarehouseId());
-        entity.setWarehouseName(dto.getWarehouseName());
-        entity.setSourceId(dto.getSourceId());
-        entity.setSourceCode(dto.getSourceCode());
-        entity.setSourceType(dto.getSourceType());
-        int skuTotal = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getQty).reduce(0, Math::addExact);
-        entity.setSkuTotal(skuTotal);
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
-        Map<String, Integer> sku = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getQty, Integer::sum));
-        Map<String, String> skuMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getSkuNo, (o1, o2) -> o1));
+        Map<String, String> warehouseMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getWarehouseId, PickingDetailDTO.AddDTO::getWarehouseName, (o1, o2) -> o1));
         Map<String, String> sourceDetailMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getSourceDetailId, (o1, o2) -> o1));
-        Map<String, Object> map = new HashMap<>();
-        map.put("billType", dto.getBillType());
-        map.put("customerId", dto.getCustomerId());
-        map.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
-        map.put("warehouseId", dto.getWarehouseId());
-        map.put("sku", sku);
-        map.put("skuMap", skuMap);
-        List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(map);
-        List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList = new ArrayList<>();
-        List<PickingDetailEntity> entities = new ArrayList<>();
-        for (LocationInventoryResultDTO result : results) {
-            // 获取仓库暂存区默认配置
-            CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
-                    .filter(staging -> staging.getBillType().equals(dto.getBillType()))
-                    .filter(staging -> staging.getWarehouseId().equals(result.getWarehouseId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
-            // 获取产品信息
-            ProductDetailEntity productDetailEntity = detailEntityList.stream()
-                    .filter(entityClass -> entityClass.getId().equals(result.getSkuId()))
-                    .findFirst().orElse(new ProductDetailEntity());
-            PickingDetailEntity detail = new PickingDetailEntity();
-            detail.setMainId(entity.getId());
-            detail.setSkuId(result.getSkuId());
-            detail.setSkuNo(skuMap.get(result.getSkuId()));
-            detail.setQty(result.getQuantity());
-            detail.setUnit(productDetailEntity.getUnitName());
-            detail.setWarehouseLocation(result.getWarehouseLocation());
-            detail.setSourceDetailId(sourceDetailMap.get(result.getSkuId()));
-            detail.setStagingLocation(pickingStaging.getWarehouseLocation());
-            entities.add(detail);
-            moveDetailList.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detail.getSkuId(), detail.getSkuNo(),
-                    detail.getWarehouseLocation(), detail.getStagingLocation(), detail.getQty(), dto.getWarehouseId()));
+        List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = dto.getDetails().stream()
+                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getQty())).collect(Collectors.toList());
+        CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
+        executionData.setBillType(dto.getBillType());
+        executionData.setCustomerId(dto.getCustomerId());
+        executionData.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
+        executionData.setDetails(details);
+        List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+        Map<String, List<LocationInventoryResultDTO>> warehouseResultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
+        for (Map.Entry<String, List<LocationInventoryResultDTO>> result : warehouseResultMap.entrySet()) {
+            // 生成拣货单主表数据
+            PickingListsEntity entity = new PickingListsEntity();
+            entity.setId(IdWorker.getIdStr());
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JHD);
+            entity.setCode(code);
+            entity.setWarehouseId(result.getKey());
+            entity.setWarehouseName(warehouseMap.get(result.getKey()));
+            entity.setSourceId(dto.getSourceId());
+            entity.setSourceCode(dto.getSourceCode());
+            entity.setSourceType(dto.getSourceType());
+            int skuTotal = result.getValue().stream().map(LocationInventoryResultDTO::getQuantity).reduce(0, Math::addExact);
+            entity.setSkuTotal(skuTotal);
+            List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList = new ArrayList<>();
+            List<PickingDetailEntity> entities = new ArrayList<>();
+            WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
+            for (LocationInventoryResultDTO resultDTO : result.getValue()) {
+                // 获取仓库暂存区默认配置
+                CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                        .filter(staging -> staging.getBillType().equals(dto.getBillType()))
+                        .filter(staging -> staging.getWarehouseId().equals(resultDTO.getWarehouseId()))
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                // 获取产品信息
+                ProductDetailEntity productDetailEntity = detailEntityList.stream()
+                        .filter(entityClass -> entityClass.getId().equals(resultDTO.getSkuId()))
+                        .findFirst().orElse(new ProductDetailEntity());
+                PickingDetailEntity detail = new PickingDetailEntity();
+                detail.setMainId(entity.getId());
+                detail.setSkuId(resultDTO.getSkuId());
+                detail.setSkuNo(resultDTO.getSkuNO());
+                detail.setQty(resultDTO.getQuantity());
+                detail.setUnit(productDetailEntity.getUnitName());
+                detail.setWarehouseLocation(resultDTO.getWarehouseLocation());
+                detail.setSourceDetailId(sourceDetailMap.get(resultDTO.getSkuId()));
+                detail.setStagingLocation(pickingStaging.getWarehouseLocation());
+                entities.add(detail);
+                moveDto.setWarehouseId(resultDTO.getWarehouseId());
+                moveDetailList.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detail.getSkuId(), detail.getSkuNo(),
+                        detail.getWarehouseLocation(), detail.getStagingLocation(), detail.getQty(), resultDTO.getWarehouseId()));
+            }
+            entity.setLocationTotal(entities.size());
+            moveDto.setPcShow(true);
+            moveDto.setDetailList(moveDetailList);
+            ApplicationContextUtils.getBean(PickingListsServiceImpl.class).saveAddData(entity, entities, moveDto);
         }
-        entity.setLocationTotal(entities.size());
-        WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
-        moveDto.setWarehouseId(dto.getWarehouseId());
-        moveDto.setPcShow(true);
-        moveDto.setDetailList(moveDetailList);
-        ApplicationContextUtils.getBean(PickingListsServiceImpl.class).saveAddData(entity, entities, moveDto);
     }
 
     @Transactional(rollbackFor = Exception.class)
