@@ -13,6 +13,7 @@ import com.erp.model.tms.enums.DictCostAttributionEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -163,4 +164,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return Boolean
      */
     Boolean updateShopCharge(LogisticsBillCostDTO.UpdateShopChargeDTO dto);
+
+    BigDecimal getActualLogisticCost(String soId);
 }

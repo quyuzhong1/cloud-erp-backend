@@ -195,4 +195,8 @@ public class AmzReportTaskEntity extends BaseEntity<AmzReportTaskEntity> {
        // Amazon:A7XZMJAHE7S5Z:US_EAST_1取出A7XZMJAHE7S5Z
         return StringUtils.substringBetween(this.groupId, ":", ":");
     }
+
+    public Integer checkAndGetQueryRetryCount() {
+        return null == this.getQueryRetryCount() ? 0 : this.getCreatedRetryCount();
+    }
 }

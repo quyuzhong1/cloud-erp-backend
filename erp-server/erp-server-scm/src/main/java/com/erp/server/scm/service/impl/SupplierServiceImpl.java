@@ -1416,6 +1416,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     }
 
+    @Override
+    public PagingVO<BaseDropDownDTO.RemarkDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        BaseDropDownDTO.SelectDTO params = dto.getParams();
+        IPage<BaseDropDownDTO.RemarkDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<BaseDropDownDTO.RemarkDTO> records = pagResult.getRecords();
+        //排序
+        List<BaseDropDownDTO.RemarkDTO> list = records.stream().sorted(Comparator.comparing(BaseDropDownDTO.RemarkDTO::getDisabled)).collect(Collectors.toList());
+        pagResult.setRecords(list);
+        return new PagingVO<>(pagResult);
+    }
+
     /**
      * @description: 更新状态
      * @author Will

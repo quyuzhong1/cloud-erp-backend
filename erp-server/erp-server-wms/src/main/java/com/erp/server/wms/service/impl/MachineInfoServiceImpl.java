@@ -11,7 +11,6 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
@@ -33,6 +32,11 @@ import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.MachineSourceTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
@@ -64,6 +68,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 加工单
@@ -86,6 +91,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Resource
     private MachineDetailService machineDetailService;
+
+    @Resource
+    private CommonService commonService;
 
     @Resource
     private InventoryService inventoryService;
@@ -126,7 +134,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Resource
     private DmpMqFeign dmpMqFeign;
 
-
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -171,6 +180,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //处理数据id
         doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
         log.info("加工单新增");
+        List<String> checkSkuIdList=dto.getDetailList().stream().
+                map(MachineDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        checkSkuIsCombination(checkSkuIdList);
         //生成单号
         String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZZCX);
         entity.setCode(code);
@@ -186,6 +198,27 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
 
+    /**
+     * @description
+     * @param checkSkuIdList 检查 的sku
+     * @return
+     * @date 2024-02-28 11:58
+     * @author Lambda
+     */
+    private void checkSkuIsCombination(List<String> checkSkuIdList) {
+        List<BomChildrenSkuDTO> bomSkuList = plmTaskFeign.listBomChildBySkuIds(checkSkuIdList);
+        //套装
+        String combinationType = BomTypeEnum.COMBINATION.getType();
+        //套装bom的父级sku
+        List<String> parentSkuIdList = bomSkuList.stream().filter(b-> combinationType.equals(b.getType())).
+                map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+
+        List<String> notExistSkuIdList = checkSkuIdList.stream().filter(c -> !parentSkuIdList.contains(c)).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(notExistSkuIdList)){
+            throw new ServiceException("存在非销售套装的sku");
+        }
+
+    }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -212,6 +245,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        List<String> checkSkuIdList=dto.getDetailList().stream().
+                map(MachineDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        checkSkuIsCombination(checkSkuIdList);
 
         MachineInfoEntity entity = new MachineInfoEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -279,13 +315,18 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             throw new ServiceException(ApiError.ERROR_99044);
         }
         List<MachineDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(MachineDetailDTO.ViewDTO.class, detailList);
-
         //查询明细子件
         List<String> detailIdList = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIdList);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
             throw new ServiceException(ApiError.ERROR_99056);
         }
+        //库位信息查询
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList1 = detailList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(entity.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList2 = machineSubComponentsList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = Stream.concat(paramList1.stream(), paramList2.stream())
+                .collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         //子件仓库id集合
         List<String> warehouseIdList = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).distinct().collect(Collectors.toList());
         warehouseIdList.add(viewDTO.getWarehouseId());
@@ -321,7 +362,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                             && StrUtil.equals(obj.getWarehouseLocationId(),viewDetailDTO.getWarehouseLocation()))
                     .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
-
+            //仓位信息
+            WarehouseLocationEntity warehouseLocationEntity1 = warehouseLocationEntityList.stream().filter(e -> Objects.nonNull(e) && e.getWarehouseId().equals(entity.getWarehouseId())
+                    && e.getCode().equals(viewDetailDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDetailDTO.setWarehouseLocationName(warehouseLocationEntity1.getName());
             //明细子件
             List<MachineSubComponentsEntity> subComponentsList = machineSubComponentsList.stream().filter(obj -> StrUtil.equals(viewDetailDTO.getId(), obj.getDetailId())).collect(Collectors.toList());
             List<MachineSubComponentsDTO.ViewDTO> subComponentsDTOList = BeanMapperUtils.copyList(MachineSubComponentsDTO.ViewDTO.class, subComponentsList);
@@ -347,6 +391,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                     throw new ServiceException(ApiError.ERROR_95173,viewDetailDTO.getSkuNo());
                 }
                 subComponentsDTO.setItemQty(quantity);
+                //仓位信息
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> Objects.nonNull(e) && e.getWarehouseId().equals(subComponentsDTO.getWarehouseId())
+                        && e.getCode().equals(subComponentsDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+                subComponentsDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
             }
             viewDetailDTO.setSubComponentsList(subComponentsDTOList);
         }
@@ -471,7 +519,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //删除关联关系数据
         machineRefSoService.removeByMachineIdList(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的加工单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(MachineInfoEntity::getCode).collect(Collectors.joining(",")));
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的加工单", commonService.getUserInfo().getUserName(), list.stream().map(MachineInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "删除操作");
         //删除发送金蝶
@@ -842,7 +890,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      */
     private void updateApproveStatusForApprove(List<String> ids, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = commonService.getUserInfo();
 
         this.lambdaUpdate().in(MachineInfoEntity::getId, ids)
                 .set(MachineInfoEntity::getApproveUserId, userInfo.getUid())

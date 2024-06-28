@@ -507,6 +507,10 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 detailDTO.setWarehouseName(childDetailEntity.getWarehouseName());
                 detailDTO.setReceiveQty(childDetailEntity.getDeliveryQty());
                 detailDTO.setWarehouseLocation(childDetailEntity.getWarehouseLocation());
+                WarehouseLocationEntity warehouseLocation = warehouseLocationService.findByWarehouseIdAndCode(childDetailEntity.getWarehouseId(), childDetailEntity.getWarehouseLocation());
+                if (Objects.nonNull(warehouseLocation)){
+                    detailDTO.setWarehouseLocationName(warehouseLocation.getName());
+                }
                 //bom信息
                 BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
                         .findFirst().orElse(null);

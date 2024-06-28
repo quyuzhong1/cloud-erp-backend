@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -88,6 +89,17 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             String msg = StrUtil.format("【订单拉取】 taskId={}, groupId={},存在429等待恢复:放弃当前请求任务", data.getId(), data.getGroupId());
             throw new ServiceException(msg);
         }
+        // 开始时间缓存key
+        LocalDateTime orderLastUpdateTime = null;
+        String orderStartTimeKey = StrUtil.format(RedisCacheConstants.AMAZON_ORDER_TASK_TIME_PREFIX, data.getId());
+        Object orderLastUpdateTimeObj = redisUtil.get(orderStartTimeKey);
+        if (null != orderLastUpdateTimeObj){
+            if (orderLastUpdateTimeObj instanceof LocalDateTime){
+                orderLastUpdateTime =  (LocalDateTime) orderLastUpdateTimeObj;
+            } else {
+                orderLastUpdateTime = LocalDateTimeUtil.parse(orderLastUpdateTimeObj.toString(), "yyyy-MM-dd HH:mm:ss");
+            }
+        }
 
         String rateLimitStr = AmazonRequestTypeRateLimiterEnum.ORDER_LIST.getRateLimit();
         // 根据亚马逊的响应时间记录下次执行开始时间
@@ -98,7 +110,14 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         OrdersV0Api api = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         // 正式环境请求
         // 东八区转UTC时间
-        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
+        // 取开始时间最小值
+        LocalDateTime lastUpdatedAfterLocal;
+        if (null == orderLastUpdateTime){
+            lastUpdatedAfterLocal = data.getLastTime();
+        } else {
+            lastUpdatedAfterLocal = data.getLastTime().isAfter(orderLastUpdateTime) ? orderLastUpdateTime : data.getLastTime();
+        }
+        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(lastUpdatedAfterLocal).toString();
         String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(data.getNextTime()).toString();
         try {
 //            List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
@@ -140,8 +159,11 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 //                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
 //                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
 //            }
-            // 设置根据亚马逊的响应时间记录下次执行开始时间
-            data.setNextTime(nextStartTime);
+            // （临时）缓存设置根据亚马逊的响应时间记录下次执行开始时间
+            // 前置10分钟（防止订单状态延时更新)
+            nextStartTime = nextStartTime.minusMinutes(10);
+            redisUtil.set(orderStartTimeKey, nextStartTime);
+
             // 返回下载源数据
             return orderList.stream()
                     .map(e-> new PlatformAmazonOrderDTO(e, shopInfoDTO))

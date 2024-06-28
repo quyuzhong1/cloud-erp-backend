@@ -3,6 +3,7 @@ package com.erp.rpc.dmp.feign;
 
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +27,13 @@ public interface DmpMqFeign {
      */
     @PostMapping("save/pushTask")
     DmpPushTaskEntity saveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto);
-
+    /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+    @PostMapping("/save/pushTaskList")
+    List<DmpPushTaskEntity> saveTaskList(@RequestBody List<DmpPushTaskFeignDTO> dtos);
 
     /**
      * @description: 发送MQ消息
@@ -54,4 +61,32 @@ public interface DmpMqFeign {
     @PostMapping("/listByParam")
     List<DmpPushTaskEntity> listByParam(@RequestBody @Valid DmpSyncTaskDTO.ListDTO listDTO);
 
+    /**
+     * 根据多个Code查询推送任务
+     * @param listDTO
+     * @return
+     */
+    @PostMapping("/listByCodeParam")
+    List<DmpPushTaskEntity> listByCodeParam(@RequestBody @Valid DmpSyncTaskDTO.ListCodeDTO listDTO);
+
+    /**
+     * 批量修改无需同步
+     *
+     * @param sourceIds
+     * @return ApiResult
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    @PostMapping(value = "/batchNoNeedSyncBySourceId")
+    Boolean batchNoNeedSyncBySourceId(@RequestBody List<String> sourceIds);
+    /**
+     * 根据sourceId重新同步
+     *
+     * @param sourceIds
+     * @return ApiResult
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    @PostMapping(value = "/batchSyncBySourceId")
+    Boolean batchSyncBySourceId(@RequestBody List<String> sourceIds);
 }

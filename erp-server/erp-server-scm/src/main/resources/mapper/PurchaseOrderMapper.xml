@@ -257,7 +257,9 @@
             po.create_time as createTime,
             pod.is_end_receive as isEndReceive,
             pod.end_receive_time as endReceiveTime,
-            so.code as subContractCode
+            so.code as subContractCode,
+            po.source_id as sourceId,
+            po.source_type as sourceType
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
@@ -357,6 +359,7 @@
         po.id AS purchaseOrderId,
         pod.id AS sourceDetailId,
         pod.id AS purchaseOrderDetailId,
+        pod.warehouse_location AS warehouseLocation,
         po.code AS purchaseOrderCode,
         po.delivery_warehouse_name AS deliveryWarehouseName,
         po.delivery_warehouse_id AS deliveryWarehouseId,

@@ -4,6 +4,7 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -102,6 +103,11 @@ public interface SoOutstockFeign {
     Boolean generateB2cSoOutstockByData(@RequestBody SoOutstockDTO.GenerateB2cDTO generateB2cDTO);
 
     /**
+     * 单据下推 销售出库单
+     */
+    @PostMapping("feign/soOutstock/addB2bPushDownNo")
+    Boolean addB2bPushDownNo(@RequestBody List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateB2cDTO);
+    /**
      * 生成b2c 销售出库单(平台拉取发货信息生成)
      */
     @PostMapping("feign/soOutstock/generateB2cSoOutstockByPlatformData")
@@ -125,4 +131,11 @@ public interface SoOutstockFeign {
      */
     @PostMapping("feign/soOutstock/afreshGenerateB2cOutstock")
     Boolean afreshGenerateB2cOutstock(@RequestBody List<String> ids);
+
+    /**
+     * 更新销售出库单价格
+     * @param saveOrUpdateList
+     */
+    @PostMapping("feign/soOutstock/updateSoOutPrice")
+    Boolean updateSoOutPrice(List<SoDetailEntity> saveOrUpdateList);
 }

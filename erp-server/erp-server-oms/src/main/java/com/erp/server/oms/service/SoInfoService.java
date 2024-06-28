@@ -435,4 +435,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return BatchResultDTO
      */
     Boolean generateMachineInfo(List<String> ids);
+
+    List<SoInfoDTO.GenerateSoOutView> generateSoOutView(List<String> ids);
+
+    List<BatchResultDTO> generateSoOut(List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList);
 }

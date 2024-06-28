@@ -59,21 +59,20 @@
         li.platform_sku_name AS platformProductName,
         li.match_result,
         li.product_image_url,
-        li.product_spec,
+        case when li.platform = 'AliExpress' then li.platform_sku_id else li.product_spec end as product_spec,
         li.product_packing,
         li.platform_update_time,
         li.platform_spu_no,
         li.platform_spu_name,
         li.platform_fn_sku,
         sm.update_user_name,
+        sm.effective_time,
+        sm.expire_time,
         sm.update_time
         FROM sku_mapping sm
-        LEFT JOIN shop_info si
-        ON sm.shop_id=si.id AND si.is_deleted=FALSE
-        LEFT JOIN listing_info li
-        ON sm.listing_id=li.id AND li.is_deleted=FALSE
-        WHERE sm.is_deleted=FALSE
-        AND sm.is_expire = FALSE
+        LEFT JOIN shop_info si ON sm.shop_id=si.id AND si.is_deleted=FALSE
+        LEFT JOIN listing_info li ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
         </if>
@@ -311,6 +310,8 @@
         sm.warehouse_name,
         sm.update_user_name,
         sm.update_time,
+        sm.effective_time,
+        sm.expire_time,
         sm.dict_platform,
         sm.platform_name,
         sm.has_mapping_all
@@ -644,7 +645,7 @@
             </foreach>
         </if>
         <!--平台sku id 列表-->
-        <if test="params.platformSkuIdList !=null and params.platformSkuIdList.size>0">
+        <if test="params.platformSkuIdList != null and params.platformSkuIdList.size>0">
             AND li.platform_sku_id IN
             <foreach collection="params.platformSkuIdList" item="item" open="(" separator="," close=")">
                 #{item}
@@ -771,5 +772,51 @@
         and listing_id = #{listingId}
         and shop_id = #{shopId}
         and product_sku_id = #{productSkuId}
+        order by expire_time asc
+    </select>
+    <select id="listHistoryByListingId" resultType="com.erp.model.oms.entity.SkuMappingEntity">
+        select  id,
+                create_user_id,
+                create_user_name,
+                create_time,
+                update_user_id,
+                update_user_name,
+                update_time,
+                version,
+                is_deleted,
+                shop_id, platform_name, product_sku_id, product_sku_no, effective_time, expire_time, is_expire, dict_platform, product_name, listing_id, type, warehouse_id, warehouse_name, has_mapping_all, rule_id
+        from sku_mapping
+        where listing_id = #{listingId}
+        and product_sku_id != ''
+        order by update_time asc
+    </select>
+    <select id="listByWarehouseAndPlatformSku"
+            resultType="com.erp.model.oms.dto.SkuMappingDTO$WarehouseSkuDTO">
+        select
+            sm.id as tableId,
+            sm.dict_platform as dictPlatform,
+            sm.product_sku_id as productSkuId,
+            sm.product_sku_no as productSkuNo,
+            sm.product_name as productName,
+            sm.type as type,
+            sm.warehouse_id as warehouseId,
+            sm.warehouse_name as warehouseName,
+            sm.is_expire as isExpire,
+            li.id as listingId,
+            li.platform_sku_no as platformSkuNo,
+            li.platform_sku_name as platformSkuName,
+            li.platform_spu_no as platformSpuNo,
+            li.platform_spu_name as platformSpuName,
+            li.platform_fn_sku as platformFnSku
+        from sku_mapping sm
+                 inner join listing_info li on sm.listing_id = li.id
+        where sm.is_deleted = false
+          and li.is_deleted = false
+          and sm.is_expire = false
+          and sm.warehouse_id = #{warehouseId}
+          AND li.platform_sku_no IN
+        <foreach collection="platformSkuNoList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
     </select>
 </mapper>

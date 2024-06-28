@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
@@ -24,6 +25,7 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.excel.SoDetailImportExcelDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -33,11 +35,10 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
@@ -49,10 +50,7 @@ import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.listener.SoDetailExcelListener;
 import com.erp.server.oms.mapper.SoDetailMapper;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoDetailService;
-import com.erp.server.oms.service.SoInfoService;
-import com.erp.server.oms.service.SoReturnDetailService;
+import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -123,6 +121,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Autowired
     private WmsTaskFeign wmsTaskFeign;
 
+    @Autowired
+    private CustomerInfoService customerInfoService;
+
+    @Autowired
+    private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
+
+    @Autowired
+    private VirtualInventoryFeign virtualInventoryFeign;
 
     @Autowired
     private RedisUtil redisUtil;
@@ -136,6 +142,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      **/
     @Override
     public List<SoDetailEntity> listSoDetailByIds(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return new ArrayList<>();
+        }
         return lambdaQuery().in(SoDetailEntity::getId, detailIds).list();
     }
 
@@ -284,6 +293,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      */
     @Override
     public List<SoDetailDTO.ViewDTO> listByMainId(String mainId, String warehouseId) {
+        SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
+        Optional.ofNullable(soInfoEntity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单"));
+
         List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
         List<SoDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
@@ -300,6 +312,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
         //sku的历史价格
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
+
+        //查询虚拟库存
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyList = handleVirtualInventory(soInfoEntity, skuIdList);
 
         //发货通知单的
         List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(Arrays.asList(mainId));
@@ -353,6 +368,16 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setAvailableQty(getAvailableQty(curInventoryQty, qty));
             item.setDeliveryQty(deliveryQty);
             item.setWaitQty(waitQty);
+
+            //虚拟可用库存
+            Integer virtualUsableQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getInventoryQty())).orElse(MathUtil.ZERO);
+            item.setVirtualAvailableQty(MathUtil.compareTo(virtualUsableQty,qty) > MathUtil.ZERO ? qty : virtualUsableQty);
+
+            //虚拟缺货数量(显示正数)
+            Integer virtualScarceQty =  MathUtil.compareTo(virtualUsableQty,qty) > MathUtil.ZERO ? MathUtil.ZERO : qty - virtualUsableQty;
+            item.setVirtualScarceQty(virtualScarceQty);
+
             //税率
             BigDecimal taxRate = item.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
@@ -1341,6 +1366,30 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 .update(new SoDetailEntity());
     }
 
+    private List<VirtualInventoryDTO.VirtualInventoryQtyDTO> handleVirtualInventory(SoInfoEntity soInfoEntity,List<String> skuIdList) {
+        //客户信息
+        CustomerInfoEntity customerInfoEntity = customerInfoService.getCustomerById(soInfoEntity.getCustomerId());
+        if (ObjectUtil.isEmpty(customerInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+        //虚拟仓库信息
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
+        platformDTO.setWarehouseIdList(Arrays.asList(soInfoEntity.getWarehouseId()));
+        platformDTO.setRelationId("");
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+        if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+            return Collections.EMPTY_LIST;
+        }
+        //查询虚拟库存
+        VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+        paramDTO.setSkuIdList(skuIdList);
+        paramDTO.setWarehouseIdList(Arrays.asList(soInfoEntity.getWarehouseId()));
+        paramDTO.setVirtualWarehouseIdList(Arrays.asList(virtualWarehouseList.get(0).getVirtualWarehouseId()));
+        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventorList = virtualInventoryFeign.listInventoryQty(paramDTO);
+        return virtualInventorList;
+    }
 
     /**
      * sku集合信息
@@ -1359,7 +1408,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         List<SoDetailDTO.SkuDTO> resultList = new ArrayList<>(skuNoList.size());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
-        List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+
 
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
 
@@ -1420,6 +1470,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             result.setAvailableQty(getAvailableQty(curInventoryQty, qty));
             result.setDeliveryQty(deliveryQty);
             result.setWaitQty(waitQty);
+
+            //虚拟库存
+            result.setVirtualAvailableQty(MathUtil.ZERO);
+            result.setVirtualScarceQty(MathUtil.ZERO);
+
+
             //税率
             BigDecimal taxRate = BigDecimal.ZERO;
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);

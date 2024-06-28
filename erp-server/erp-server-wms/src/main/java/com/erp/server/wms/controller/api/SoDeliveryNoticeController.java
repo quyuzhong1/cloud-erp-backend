@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -9,9 +10,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
@@ -198,7 +199,7 @@ public class SoDeliveryNoticeController extends BaseController {
     /**
      * 批量审核
      *
-     * @param dto
+     * @param  dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
@@ -210,21 +211,24 @@ public class SoDeliveryNoticeController extends BaseController {
             menuCode = "wms:soDeliveryNotice:approve",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(dto.getIds());
-        for (String id : dto.getIds()) {
-            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
-                continue;
-            }
+        for (String id : ids) {
+            BatchResultDTO approveResult;
             try {
-                resultDTOS.add(soDeliveryNoticeService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+                approveResult = soDeliveryNoticeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
-                log.error("发货通知单审核失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                log.error("采购订单审核失败",e);
+                SoDeliveryNoticeEntity entity = soDeliveryNoticeService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "发货通知单不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
+            resultDTOS.add(approveResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -244,21 +248,23 @@ public class SoDeliveryNoticeController extends BaseController {
             menuCode = "wms:soDeliveryNotice:disApprove",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(dto.getIds());
         for (String id : dto.getIds()) {
-            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
-                continue;
-            }
+            BatchResultDTO disApproveResult;
             try {
-                resultDTOS.add(soDeliveryNoticeService.disApprove(entity));
+                disApproveResult = soDeliveryNoticeService.disApprove(id);
             }catch (Exception e){
                 log.error("发货通知单反审核失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                SoDeliveryNoticeEntity entity = soDeliveryNoticeService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    disApproveResult = BatchResultDTO.fail(id, id, "发货通知单不存在, 反审核失败");
+                    resultDTOS.add(disApproveResult);
+                    continue;
+                }
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
+            resultDTOS.add(disApproveResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

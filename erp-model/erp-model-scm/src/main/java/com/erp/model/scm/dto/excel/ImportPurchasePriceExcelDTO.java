@@ -32,7 +32,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "报价日期", index = 1)
-    @FieldValid(fieldName = "报价日期",formatPattern = FieldFormatPatternTypeEnum.DATE)
+//    @FieldValid(fieldName = "报价日期",formatPattern = FieldFormatPatternTypeEnum.DATE_S)
     private String quotedDate;
 
     /**
@@ -111,7 +111,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "生效时间", index = 11)
-    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
+//    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE_S)
     private String effectiveDate;
 
 

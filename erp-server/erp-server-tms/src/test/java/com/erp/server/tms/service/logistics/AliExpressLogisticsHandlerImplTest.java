@@ -63,7 +63,7 @@ public class AliExpressLogisticsHandlerImplTest {
     public AliExpressLogisticsHandlerImplTest(){
         String CLIENT_CODE = "502978";
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000201913g5RZqpecEaQ6pT179453ddTkJkRLXEqUDEXFxOEwPXvtsX3DHKlWZJx01";
+        String token = "50000700312cJ4nYbrzErAqH159364aboXoPdAcJwjMuEzrGXEAudlrVcjGsjo4bIr30";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -85,6 +85,10 @@ public class AliExpressLogisticsHandlerImplTest {
         System.out.println(channel);
     }
 
+    @Test
+    public void getSaleChannel() throws InterruptedException, ApiException {
+        aliExpressShipperService.getChanelList(authMap);
+    }
     @Test
     public void createOrder(){
         //发货人
@@ -206,7 +210,8 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void queryOrderList(){
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo("3028833906081879");
+        logisticsQueryVOList.setDeliveryNo("5391488178675036");
+        logisticsQueryVOList.setTransportNo("250441247805667");
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> listApiResult = aliExpressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println("结果输出");

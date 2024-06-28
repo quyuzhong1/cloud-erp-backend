@@ -7,6 +7,12 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
+import com.sdk.wangdian.sdk.api.Result;
+import com.sdk.wangdian.sdk.api.goods.GoodsAPI;
+import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
+import com.sdk.wangdian.server.WangDianClientService;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
@@ -14,6 +20,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
@@ -72,6 +79,7 @@ import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -79,6 +87,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -98,8 +107,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
+import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
 
 /**
  * @Description: 产品明细信息服务类
@@ -236,6 +249,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private NoticeMessageService noticeMessageService;
+
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
+    @Resource
+    private WangDianClientService wangDianClientService;
 
 
     //变更财务人员审核
@@ -960,8 +978,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
+        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
+        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+        // 添加默认spu
+        productSpuBaseInfoDTO.setSpuNo(Optional.ofNullable(productSpuBaseInfoDTO.getSpuNo()).orElse(productSkuBaseInfoDTO.getSkuNo()));
         //检查spu编号是否重复
-        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
+        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
         }
         //检查sku编号是否重复
@@ -971,9 +993,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
         checkSizeAndWeight(productPackDTO);
-
-        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
-        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
         //产品等级
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
@@ -1732,7 +1751,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean checkSpuNo(String spuNo, String id) {
-        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getSpuNo, spuNo);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
@@ -2109,7 +2128,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        LoginUser loginUser = UserContext.getLoginUser();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
 
@@ -2146,6 +2165,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //发送金蝶
         sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+        if (isCheck) {
+            syncWangDianProductDetailService.syncDataToWangDian(entity);
+        }
         //增加缓存清除
         redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, entity.getId());
         return true;
@@ -2284,7 +2306,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
 
     }
+    @Override
+    public PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        SkuVO.SelectDTO params = dto.getParams();
+        IPage<SkuVO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
 
+    }
     private void customDataProcess(List<ProductDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)){
             return;
@@ -2332,6 +2361,46 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
     }
 
+    @Override
+    public void initProductToWangDian(List<String> ids) {
+        int count = productInfoService.count();
+        int pageSize = 50;
+        int pageCount = count / pageSize + 1;
+        for (int i = 0; i < pageCount; i++) {
+            Page<ProductInfoEntity> page = productInfoService.page(new Page<>(i, pageSize), Wrappers.<ProductInfoEntity>lambdaQuery().in(CollectionUtil.isNotEmpty(ids), ProductInfoEntity::getId, ids));
+            List<ProductInfoEntity> records = page.getRecords();
+            if (CollectionUtils.isEmpty(records)) {
+                return;
+            }
+            List<String> infoIds = records.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            List<ProductDetailEntity> detailEntities = list(Wrappers.<ProductDetailEntity>lambdaQuery()
+                    .eq(ProductDetailEntity::getStatus, 2)
+                    .in(ProductDetailEntity::getProductId, infoIds));
+            for (ProductDetailEntity entity : detailEntities) {
+                RateLimiter limiter = RateLimiter.create(60, 1, TimeUnit.MINUTES);
+                if (limiter.tryAcquire()) {
+                    try {
+                        syncWangDianProductDetailService.syncDataToWangDian(entity);
+                    } catch (Exception e) {
+                        log.error("推送旺店通失败:{}", e.getMessage(), e);
+                    }
+                }
+            }
+        }
+    }
+
+    private int getGoodsType(String saleMethod, String property){
+        SaleMethodEnum saleMethodEnum = SaleMethodEnum.getEnumByType(saleMethod);
+        if (org.springframework.util.ObjectUtils.isEmpty(saleMethodEnum)){
+            return 0;
+        }
+        switch (saleMethodEnum){
+            case GOODS:return (PRODUCT_PROPERTY_COST.equals(property) || PRODUCT_PROPERTY_SERVICE.equals(property)) ? 5 : 1;
+            case PACKAGING_MATERIALS: return 3;
+            case SEMI_FINISHED:return 2;
+            default: return 0;
+        }
+    }
     @Override
     @Transactional
     public Boolean approvalReject(ProductDetailOperateDTO dto) {
@@ -3658,6 +3727,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noticeMessageService.approveProductNotice(UserContext.getLoginUser().getUserName(), entity);
             //发送金蝶
             sendSinglePushTask(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            syncWangDianProductDetailService.syncDataToWangDian(entityList);
         } else {
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
             //新增审核不通过意见
@@ -4054,6 +4124,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
         //已存在数据
         skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        List<String> saleMethodList = skuParamDTO.getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            skuParamDTO.setSaleMethod(StringUtils.join(saleMethodParams, ","));
+        }
         List<ProductSearchDTO.SkuListDTO> list = this.baseMapper.listSkuBySkuNos(skuParamDTO);
 
         List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
@@ -4527,7 +4605,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productInfoDTO.setSalesChannel(dto.getSalesChannel());
             productInfoDTO.setMoldCost(MathUtil.valueOf(dto.getMoldCost()));
             productInfoDTO.setEntrustedDevelopCost(MathUtil.valueOf(dto.getEntrustedDevelopCost()));
-
+            // 添加默认spu
+            productInfoDTO.setSpuNo(Optional.ofNullable(dto.getSpuNo()).orElse(dto.getSkuNo()));
+            //检查spu编号是否重复
+            if (Boolean.TRUE.equals(this.checkSpuNo(productInfoDTO.getSpuNo(), productInfoDTO.getId()))) {
+                throw new ServiceException(ApiError.ERROR_95017);
+            }
             //sku信息
             BeanMapper.copy(dto, productSkuBaseInfoDTO);
             if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
@@ -4827,6 +4910,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public PagingVO<ProductDetailDTO.SkuDTO> listSku(PagingDTO<ProductSkuDTO> pagingDTO) {
         if(StringUtils.isEmpty(pagingDTO.getParams().getRemoteSearchSku())){
             return new PagingVO<>();
+        }
+        List<String> saleMethodList = pagingDTO.getParams().getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            pagingDTO.getParams().setSaleMethod(StringUtils.join(saleMethodParams, ","));
         }
         Page<ProductDetailDTO.SkuDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailDTO.SkuDTO> pageData=  baseMapper.listSku(query, pagingDTO.getParams());

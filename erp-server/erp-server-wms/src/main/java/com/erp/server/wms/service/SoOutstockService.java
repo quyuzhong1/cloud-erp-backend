@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
@@ -8,6 +9,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -202,7 +204,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param resultList
      * @return java.lang.Boolean
      */
-    Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
+    Boolean addB2bPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
 
     
     /**
@@ -537,13 +539,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     /**
      * 新增平台仓B2C销售出库单
      */
-    void generatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> generateSourceDetailList);
+    Boolean generatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> generateSourceDetailList);
 
     /**
      * 更新平台仓B2C销售出库单
      */
 
-    void updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO,
+    Boolean updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO,
                                    PlatformSoOutStockDTO dto,
                                    SoB2cEntity soB2cEntity,
                                    Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList,
@@ -560,4 +562,9 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 停止更新销售出库单数据的日期
      */
     LocalDate getStopSoOutStockDate();
+
+    /**
+     * 更新主表和明细
+     */
+    void updateMainAndDetail(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> list);
 }

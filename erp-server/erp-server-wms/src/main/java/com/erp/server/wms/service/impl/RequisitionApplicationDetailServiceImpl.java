@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -101,14 +102,19 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
-    public Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id) {
-        return lambdaUpdate().set(RequisitionApplicationDetailEntity::getFromWarehouseId, fromWarehouseId)
+    public Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String fromVirtualWarehouseId,
+                                           String fromVirtualWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id) {
+        LambdaUpdateChainWrapper<RequisitionApplicationDetailEntity> eq = lambdaUpdate().set(RequisitionApplicationDetailEntity::getFromWarehouseId, fromWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getFromWarehouseName, fromWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
-                .eq(RequisitionApplicationDetailEntity::getId, id)
-                .update();
+                .eq(RequisitionApplicationDetailEntity::getId, id);
+        if (StringUtils.isNotBlank(fromVirtualWarehouseId)) {
+            eq.set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId, fromVirtualWarehouseId)
+                    .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName, fromVirtualWarehouseName);
+        }
+        return eq.update();
     }
 
     @Override

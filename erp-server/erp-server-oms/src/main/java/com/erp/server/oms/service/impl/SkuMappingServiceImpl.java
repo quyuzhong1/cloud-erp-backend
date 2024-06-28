@@ -342,10 +342,15 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String updatePlatformSku(SkuMappingDTO.UpdatePlatformDTO dto) {
+        //step1 参数校验
         String id = dto.getId();
         SkuMappingEntity skuMaping = this.getById(id);
         if (Objects.isNull(skuMaping)) {
             throw new ServiceException(ApiError.ERROR_92051);
+        }
+        //启用日期不能大于上个映射关系的开始时间
+        if (dto.getEffectiveTime().isBefore(skuMaping.getEffectiveTime())){
+            throw new ServiceException(ApiError.ERROR_92151,skuMaping.getEffectiveTime());
         }
         // 历史skuId
         String historyProductSkuId = skuMaping.getProductSkuId();
@@ -365,9 +370,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (null == listing) {
             throw new ServiceException("listing记录不存在");
         }
-
+        //检查映射关系是否存在
         checkExist(id, listing.getId(), dto.getShopId());
-
+        //检查历史映射关系是否存在
         checkHistory(id, listing.getId(), dto.getShopId(), dto.getProductSkuId());
 
         // 平台sku校验
@@ -387,16 +392,15 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("[listing] 更新失败");
         }
         // 无修改
-        if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId)) {
+        if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId) && dto.getEffectiveTime().equals(skuMaping.getEffectiveTime())) {
             // 检查仓库发货配置
             skuMappingExtendService.checkAndSave(skuMaping, dto.getExtendList());
             return skuMaping.getId();
         }
-        LocalDateTime now = LocalDateTime.now();
         // 历史SkuId为设置过期
         boolean update = lambdaUpdate()
                 .set(SkuMappingEntity::getIsExpire, true)
-                .set(SkuMappingEntity::getExpireTime, now)
+                .set(SkuMappingEntity::getExpireTime, dto.getEffectiveTime())
                 //       // 历史SkuId为空逻辑删除
                 .set(StringUtils.isBlank(historyProductSkuId), BaseEntity::getIsDeleted, true)
                 .eq(BaseEntity::getId, skuMaping.getId())
@@ -414,8 +418,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMaping.setListingId(listing.getId());
         addSkuMaping.setType(RuleTypeEnum.PLATFORM);
         addSkuMaping.setIsExpire(Boolean.FALSE);
-        addSkuMaping.setEffectiveTime(now);
-        addSkuMaping.setExpireTime(now.plusYears(100));
+        addSkuMaping.setEffectiveTime(dto.getEffectiveTime());
+        addSkuMaping.setExpireTime(dto.getEffectiveTime().plusYears(100));
         if (!this.save(addSkuMaping)) {
             throw new ServiceException("[SkuMapping] 映射修改新增失败");
         }
@@ -480,6 +484,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String warehouseSkuNo = dto.getWarehouseSkuNo();
         String warehouseId = dto.getWarehouseId();
         String warehouseProductName = dto.getWarehouseProductName();
+        LocalDateTime effectiveTime = dto.getEffectiveTime();
 //        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         // 查询当前仓库的平台类型
         List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(Collections.singletonList(dto.getWarehouseId()));
@@ -516,10 +521,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setListingId(listingId);
         skuMappingEntity.setDictPlatform("");
         skuMappingEntity.setHasMappingAll(false);
-        LocalDateTime now = LocalDateTime.now();
+//        LocalDateTime now = LocalDateTime.now();
         //生效时间
-        skuMappingEntity.setEffectiveTime(now);
-        skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        skuMappingEntity.setEffectiveTime(effectiveTime);
+        skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
         if (this.save(skuMappingEntity)) {
             // 操作日志
             String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getId());
@@ -586,7 +591,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.isNull(skuMapping)) {
             throw new ServiceException(ApiError.ERROR_92051);
         }
-
+        //启用日期不能大于上个映射关系的开始时间
+        if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
+            throw new ServiceException(ApiError.ERROR_92151,skuMapping.getEffectiveTime());
+        }
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
@@ -622,13 +630,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
 
-        SkuMappingEntity existEntity = this.getWarehouseMapping(listingId,dto.getWarehouseId(),dto.getProductSkuId(),RuleTypeEnum.WAREHOUSE);
+        SkuMappingEntity existEntity = this.getWarehouseMapping(listingId,dto.getWarehouseId(),dto.getProductSkuId(),RuleTypeEnum.WAREHOUSE,dto.getEffectiveTime());
         if(Objects.nonNull(existEntity)){
             throw new ServiceException("该仓库下已存在该sku");
         }
         //更改原有的
-        LocalDateTime now = LocalDateTime.now();
-        skuMapping.setExpireTime(now);
+//        LocalDateTime now = LocalDateTime.now();
+        skuMapping.setExpireTime(dto.getEffectiveTime());
         skuMapping.setIsExpire(Boolean.TRUE);
 //        skuMapping.setIsDeleted(true);
         boolean updateResult = this.updateById(skuMapping);
@@ -651,8 +659,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMapping.setPlatformName(skuMapping.getPlatformName());
         addSkuMapping.setHasMappingAll(!StringUtils.isBlank(skuMapping.getDictPlatform()) && dto.checkAndGetHasMappingAll());
         //生效时间
-        addSkuMapping.setEffectiveTime(now);
-        addSkuMapping.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        addSkuMapping.setEffectiveTime(dto.getEffectiveTime());
+        addSkuMapping.setExpireTime(dto.getEffectiveTime().plusYears(MathUtil.NUMBER_100));
         if (!this.save(addSkuMapping)) {
             throw new ServiceException("[SkuMapping] 数据新增失败");
         }
@@ -664,11 +672,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     }
 
-    private SkuMappingEntity getWarehouseMapping(String listingId,String warehouseId ,String skuId,RuleTypeEnum ruleTypeEnum){
+    private SkuMappingEntity getWarehouseMapping(String listingId,String warehouseId ,String skuId,RuleTypeEnum ruleTypeEnum,LocalDateTime effectiveTime){
         return lambdaQuery()
                 .eq(SkuMappingEntity::getListingId, listingId)
                 .eq(SkuMappingEntity::getWarehouseId, warehouseId)
                 .eq(SkuMappingEntity::getType, ruleTypeEnum)
+                .eq(SkuMappingEntity::getEffectiveTime, effectiveTime)
                 .eq(SkuMappingEntity::getProductSkuId, skuId)
                 .eq(SkuMappingEntity::getIsExpire, false)
                 .last(" LIMIT 1")
@@ -943,11 +952,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public void checkHistory(String id, String listingId, String shopId, String productSkuId) {
-        SkuMappingEntity oldEntity = this.baseMapper.findHistory(id, listingId, shopId, productSkuId);
-        if(null == oldEntity){
+        List<SkuMappingEntity> oldEntities = this.baseMapper.findHistory(id, listingId, shopId, productSkuId);
+        if(CollectionUtils.isEmpty(oldEntities)){
             return;
         }
-        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntity.getExpireTime().toString());
+        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntities.get(0).getExpireTime().toString());
     }
 
     /**
@@ -1274,5 +1283,33 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .filter(e->e.getPlatformSpuNo().equalsIgnoreCase(platformSpuNo))
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * 根据平台sku记录获取变更历史记录
+     * @param id
+     * @return
+     */
+    @Override
+    public List<SkuMappingEntity> listHistoryByListingId(String id) {
+        if (StringUtils.isBlank(id)){
+            return Collections.emptyList();
+        }
+        List<SkuMappingEntity> list = baseMapper.listHistoryByListingId(id);
+        //修改最后一条数据
+        if (!list.isEmpty()){
+            SkuMappingEntity skuMappingEntity = list.get(list.size() - 1);
+            skuMappingEntity.setExpireTime(null);
+            list.set(list.size() - 1, skuMappingEntity);
+        }
+        return list;
+    }
+
+    @Override
+    public List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(String warehouseId, List<String> platformSkuNoList) {
+        if(StringUtils.isBlank(warehouseId) || CollectionUtils.isEmpty(platformSkuNoList)){
+            return new ArrayList<>();
+        }
+        return baseMapper.listByWarehouseAndPlatformSku(warehouseId,platformSkuNoList);
     }
 }

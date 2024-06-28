@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -9,27 +10,22 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.model.workflow.entity.ProcessTaskCcEntity;
-import com.erp.model.workflow.enums.CcStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -37,6 +33,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -642,6 +639,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Override
     public List<SoOutstockDetailDTO.AddDTO> checkAndGenerateDetail(SoOutstockDTO.GenerateB2cDTO dto) {
+        if(!dto.isCheckSkuHistory()){
+            return dto.getDetailList();
+        }
         List<String> notExistMapping = dto.getDetailList()
                 .stream()
                 .filter(v->CollectionUtils.isEmpty(v.getHistorySkuMappingList()))
@@ -844,6 +844,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIdList);
 
+        //销售订单主表信息
+        List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIdList);
+
         //查询销售订单下的销售出库单
         List<SoOutstockDetailEntity> soOutstockDetailList = this.listBySoDetailIds(soDetailIdList);
 
@@ -853,6 +857,13 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             if (ObjectUtils.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }
+            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soInfoEntity)) {
+                throw new ServiceException(ApiError.ERROR_92016);
+            }
+            //虚拟仓信息
+            detailEntity.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+
             //单价信息
             detailEntity.setPrice(soDetailEntity.getPrice());
             detailEntity.setTaxRate(soDetailEntity.getTaxRate());
@@ -896,8 +907,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //销售订单明细
             SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92015);
+                continue;
             }
+            //虚拟仓库
+            detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
+
             BigDecimal price=soDetailEntity.getPrice();
             //单价信息
             detailEntity.setPrice(price);
@@ -954,5 +968,42 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             groupSkuDTO.setProductName(skuVO.getSkuName());
         }
         return list;
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateSoOutPrice(List<SoDetailEntity> soDetailEntityList) {
+        soDetailEntityList = soDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getId())).collect(Collectors.toList());
+        List<String> soDetailIds = soDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(soDetailIds)){
+            return true;
+        }
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = this.lambdaQuery().in(SoOutstockDetailEntity::getSoDetailId,soDetailIds).list();
+        List<SoOutstockDetailEntity> updateList = new ArrayList<>();
+        for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
+            //销售订单明细
+            SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soDetailEntity)) {
+                continue;
+            }
+            BigDecimal price=soDetailEntity.getPrice();
+            //单价信息
+            detailEntity.setPrice(price);
+            BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
+            BigDecimal amount=MathUtil.multiply(price, detailEntity.getActualQty());
+            detailEntity.setAmount(amount);
+            BigDecimal amountLocalCurrency=amount;
+            if(Objects.nonNull(exchangeRate) && BigDecimal.ZERO.compareTo(exchangeRate)!=0){
+                amountLocalCurrency=MathUtil.multiply(amount,exchangeRate,4);
+            }
+            detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
+            updateList.add(detailEntity);
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        
+        return true;
     }
 }

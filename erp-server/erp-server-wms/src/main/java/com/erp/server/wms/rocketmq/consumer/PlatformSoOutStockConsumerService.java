@@ -9,6 +9,7 @@ import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
@@ -162,16 +163,26 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO;
         try {
             PlatformSoOutStockDetailDTO detailDTO = dto.getDetailList().get(0);
-            if (StringUtils.isNotBlank(detailDTO.getWarehouseId())){
-                String msg = StrUtil.format("未找到对应仓库, 仓库【{}】, 仓库中心【{}】", detailDTO.getWarehouseName(), detailDTO.getFulfillmentCenter());
+            if (StringUtils.isBlank(detailDTO.getWarehouseId())){
+                String msg = StrUtil.format("未找到对应仓库, 仓库【{}】, 仓库中心【{}】", detailDTO.getWarehouseName(), detailDTO.getFulfillmentCenterId());
                 throw new ServiceException(msg);
             }
             generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
-            // 按仓库中心对应仓库
-            generateB2cDTO.setWarehouseId(detailDTO.getWarehouseId());
-            generateB2cDTO.setWarehouseName(detailDTO.getWarehouseName());
-            generateB2cDTO.setWarehouseOrgId(detailDTO.getWarehouseOrgId());
-            generateB2cDTO.setWarehouseOrgName(detailDTO.getWarehouseOrgName());
+            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+                if (StringUtils.isBlank(detailDTO.getWarehouseId()) ||
+                    StringUtils.isBlank(detailDTO.getWarehouseName()) ||
+                    StringUtils.isBlank(detailDTO.getWarehouseOrgId()) ||
+                    StringUtils.isBlank(detailDTO.getWarehouseOrgName())
+                ){
+                    ServiceException.runError(StrUtil.format("仓库信息缺失缺失:未找到仓储中心【{}】对应仓库", detailDTO.getFulfillmentCenterId()));
+                }
+                // 按仓库中心对应仓库
+                generateB2cDTO.setWarehouseId(detailDTO.getWarehouseId());
+                generateB2cDTO.setWarehouseName(detailDTO.getWarehouseName());
+                generateB2cDTO.setWarehouseOrgId(detailDTO.getWarehouseOrgId());
+                generateB2cDTO.setWarehouseOrgName(detailDTO.getWarehouseOrgName());
+            }
+
         } catch (Exception e) {
             // 生成明细异常记录
             List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));

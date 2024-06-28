@@ -176,28 +176,12 @@ public class SoB2cDeliveryController extends BaseController {
                         soB2cDeliveryService.generateB2cSoOutstock(entity);
                     }
                 }
-                //清状态
-                if(isSuccess){
-                    SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-                    deleteDTO.setType(type);
-                    deleteDTO.setMainId(entity.getSourceId());
-                    soB2cFeign.deleteError(deleteDTO);
-                }
             } catch (Exception e) {
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "发货单不存在, 手动发货失败");
                     resultDTOS.add(result);
                     continue;
-                }else{
-                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                    addError.setType(type);
-                    addError.setParamJson(deliveryType);
-                    addError.setReturnJson("");
-                    addError.setMainId(entity.getSourceId());
-                    addError.setMessage(e.getMessage());
-                    soB2cFeign.addSoB2cError(addError);
-                    log.error("发货单发货失败", e);
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
@@ -207,7 +191,7 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
-     * 虚假发货
+     * 手动标发
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
@@ -227,10 +211,10 @@ public class SoB2cDeliveryController extends BaseController {
             try {
                 result = soB2cDeliveryService.falseDelivery(id);
             } catch (Exception e) {
-                log.error("发货单 虚假发货失败", e);
+                log.error("发货单 手动标发失败", e);
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "发货单不存在, 虚假发货失败");
+                    result = BatchResultDTO.fail(id, id, "发货单不存在, 手动标发失败");
                     resultDTOS.add(result);
                     continue;
                 }

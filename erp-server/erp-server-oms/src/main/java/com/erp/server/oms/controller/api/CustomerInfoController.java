@@ -330,6 +330,27 @@ public class CustomerInfoController extends BaseController {
     }
 
     /**
+     * 远程搜索
+     * @param dto
+     */
+    @PostMapping("/pageSelect")
+    public ApiResult<PagingVO<CustomerDTO.PageSelectDTO>> pageSelect(@RequestBody @Validated PagingDTO<CustomerDTO.SelectDTO> dto) {
+        dto.setPageSize(100);
+        PagingVO<CustomerDTO.PageSelectDTO> pagingVO = customerInfoService.pagingSelect(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 远程搜索
+     * @param dto
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<CustomerDTO.PageSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<CustomerDTO.SelectDTO> dto) {
+        PagingVO<CustomerDTO.PageSelectDTO> pagingVO = customerInfoService.pagingSelect(dto);
+        return success(pagingVO);
+    }
+
+    /**
      * 根据名称搜索客户收货信息
      */
     @GetMapping("/listByName")

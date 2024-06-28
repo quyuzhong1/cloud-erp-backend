@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
@@ -46,11 +47,15 @@ public class AsyncServiceImpl implements AsyncService {
         if (StringUtils.isBlank(authMap.get("logisticsPlatform"))) return;
         try {
             LogisticsService service = logisticsRegistry.getHandler(authMap.get("logisticsPlatform"));
+            String logisticsPlatform = authMap.get("logisticsPlatform");
             ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
             chanelQueryVO.setAuthMap(authMap);
             ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
             if (channels.isSuccess()) {
                 channels.getData().forEach(logisticsSaleChannelEntity -> {
+                    if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform)){
+                        logisticsSaleChannelEntity.setServicePlatform("tms");
+                    }
                     logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                 });
             } else {

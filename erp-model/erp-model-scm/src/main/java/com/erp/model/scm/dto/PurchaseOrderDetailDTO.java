@@ -398,6 +398,18 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+        /**
+         * 发货仓库id
+         */
+        private String deliveryWarehouseId;
+        /**
+         * 发货仓库名称
+         */
+        private String deliveryWarehouseName;
 
         /**
          * 一级供应商id

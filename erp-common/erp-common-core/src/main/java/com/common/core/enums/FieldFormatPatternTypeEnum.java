@@ -19,6 +19,7 @@ public enum FieldFormatPatternTypeEnum  {
     ENUM_NOT_CHINESE("not_chinese","非中文","[\\x00-\\xff]+"),
     ENUM_AMOUNT("amount", "金额","^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,4})?$"),
     ENUM_DATE("date", "日期","\\d{4}\\/([1-9]|0[1-9]|1[012])\\/([1-9]|0[1-9]|[12][0-9]|3[01])"),
+    ENUM_DATE_PRO("dates", "日期(多格式兼容)","^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$|^\\d{4}/(0[1-9]|1[0-2])/(0[1-9]|[12]\\d|3[01])$"),
     ENUM_DATE_("date_", "日期(横杠)","\\d{4}-([1-9]|0[1-9]|1[012])-([1-9]|0[1-9]|[12][0-9]|3[01])"),
     ENUM_DATETIME("date_time", "时间","\\d{4}\\/([1-9]|0[1-9]|1[012])\\/([1-9]|0[1-9]|[12][0-9]|3[01] [0-9]{2}:[0-9]{2}:[0-9]{2})"),
     ENUM__DATETIME_("date_time_", "时间（横杠）","\\d{4}-([1-9]|0[1-9]|1[012])-([1-9]|0[1-9]|[12][0-9]|3[01] [0-9]{2}:[0-9]{2}:[0-9]{2})"),
@@ -46,6 +47,7 @@ public enum FieldFormatPatternTypeEnum  {
     public static final String NOT_CHINESE = "not_chinese";
     public static final String AMOUNT = "amount";
     public static final String DATE = "date";
+    public static final String DATE_S = "dates";
     public static final String DATETIME = "date_time";
     public static final String DATE_ = "date_";
     public static final String DATETIME_ = "date_time_";

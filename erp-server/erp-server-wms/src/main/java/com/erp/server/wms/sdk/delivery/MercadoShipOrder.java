@@ -60,6 +60,7 @@ public class MercadoShipOrder extends AbstractShipOrder {
         return new ArrayList<>();
     }
 
+
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
         return null;

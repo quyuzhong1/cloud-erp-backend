@@ -876,7 +876,17 @@ public class ProductDetailController extends BaseController {
         List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
         return success(skuList);
     }
-
+    /**
+     * 获取已授权店铺
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
+     * @author hyj
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<SkuVO>> pagingSelect(@RequestBody @Validated PagingDTO<SkuVO.SelectDTO> dto) {
+        PagingVO<SkuVO> list = productDetailService.pagingSelect(dto);
+        return success(list);
+    }
     /**
      * 远程搜索包装辅料SKU
      * @author Will
@@ -1254,11 +1264,11 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
-     * 初始化尺寸历史数据
+     * 首次推送sku到旺店通
      */
-    @GetMapping("/initProductSizeAndBoxSize")
-    public ApiResult<String> initProductSizeAndBoxSize(){
-        productDetailService.initProductSizeAndBoxSize();
+    @GetMapping("/initProductToWangDian")
+    public ApiResult<String> initProductToWangDian(@RequestParam(required = false) List<String> ids){
+        productDetailService.initProductToWangDian(ids);
         return success();
     }
 

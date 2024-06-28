@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -108,6 +109,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 渠道id
          */
         private String  channelId;
+        /**
+         * 物流平台（下单平台）
+         */
+        private String  logisticsPlatform;
 
         /**
          * 国家二字码
@@ -651,6 +656,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 保宏单号（报关单号类型） /tms/drop/down/dict/list?key=declareCodeType
          */
         private String declareCodeType;
+
+        /**
+         * 配送方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+         */
+        private String deliveryType;
     }
 
     @Data
@@ -731,4 +741,51 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String logisticsSupplierName;
     }
+    @Data
+    @NoArgsConstructor
+    public static class PagingSelectDTO {
+        /**
+         * 渠道id
+         */
+        private String id;
+        /**
+         * 启用/禁用
+         */
+        private Boolean disabled;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 值
+         */
+        private String value;
+        /**
+         * 物流供应商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流供应商名称
+         */
+        private String logisticsSupplierName;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+        /**
+         * 是否展示物流商
+         */
+        private Boolean showSupplier=false;
+    }
+
 }

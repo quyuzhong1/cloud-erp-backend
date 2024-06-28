@@ -178,7 +178,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if (!Objects.isNull(response) && !Objects.isNull(response.getResultSuccess()) && response.getResultSuccess()) {
                 OrderResponse orderResponse = response.getResult();
                 responseVO.setDeliveryNo(orderResponse.getTradeOrderId());
-                responseVO.setTransportNo(orderResponse.getWarehouseOrderId());
+                responseVO.setTransportNo(orderResponse.getOutOrderCode());
                 responseVO.setTrackNo(orderResponse.getIntlTrackingNo());
                 success = true;
                 responseVO.success();
@@ -230,11 +230,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             addressDTO.setPickup(sender);
             addressDTO.getPickup().setMemberType("pickup");
         }
-        OrderRequest orderRequest = OrderRequest.builder()
+        return OrderRequest.builder()
                 .oaid(logisticsOrderVO.getOaid())
-                .pickup_type(logisticsOrderVO.getPickupType())
+                .pickup_type(logisticsOrderVO.getLogisticsChannelEntity().getDeliveryType())
                 .declareProducts(declareProducts)
-//                .domestic_logistics_company(logisticsOrderVO.getLogisticsSaleChannel().getSupplierName())
                 .domestic_logistics_company("自送")
                 .domestic_logistics_company_id(-1L)
 //                .domestic_tracking_no(logisticsOrderVO.getDeliveryNo())
@@ -242,13 +241,12 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .trade_order_from(logisticsOrderVO.getOrderSource())
                 .trade_order_id(logisticsOrderVO.getDeliveryNo())
                 .undeliverable_decision("1")
-                .warehouse_carrier_service(logisticsOrderVO.getLogisticsSaleChannel().getCode())
+                .warehouse_carrier_service(logisticsOrderVO.getLogisticsChannelEntity().getCode())
                 //托寄物信息
                 .address_d_t_os(addressDTO)
                 .is_agree_upgrade_reverse_parcel_insure(false)
                 .top_user_key(logisticsOrderVO.getTopUserKey())
                 .build();
-        return orderRequest;
     }
 
     /**

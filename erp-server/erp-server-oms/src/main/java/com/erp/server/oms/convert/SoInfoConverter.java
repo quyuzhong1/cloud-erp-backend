@@ -2,8 +2,11 @@ package com.erp.server.oms.convert;
 
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -72,6 +75,26 @@ public interface SoInfoConverter {
     })
     DmpOrderItemSplitEntity soDetailToDmpOrderItem(SoDetailEntity soDetailEntity);
 
+    @Mappings({
+            @Mapping(target = "id", source = "soInfoEntity.id"),
+            @Mapping(target = "code", source = "soInfoEntity.code"),
+            @Mapping(target = "detailId", source = "soDetailEntity.id"),
+            @Mapping(target = "customerId", source = "soInfoEntity.customerId"),
+            @Mapping(target = "customerName", source = "customerInfo.name"),
+            @Mapping(target = "skuId", source = "soDetailEntity.skuId"),
+            @Mapping(target = "skuNo", source = "soDetailEntity.skuNo"),
+            @Mapping(target = "billDate", expression = "java(java.time.LocalDate.now())"),
+            @Mapping(target = "salesQty", source = "soDetailEntity.qty"),
+            @Mapping(target = "warehouseId", source = "soInfoEntity.warehouseId"),
+            @Mapping(target = "warehouseOrgId", source = "soInfoEntity.warehouseOrgId"),
+            @Mapping(target = "warehouseOrgName", source = "soInfoEntity.warehouseOrgName"),
+            @Mapping(target = "sellerId", source = "soInfoEntity.sellerId"),
+            @Mapping(target = "sellerName", source = "soInfoEntity.sellerName"),
+            @Mapping(target = "warehouseLocation", source = "soDetailEntity.warehouseLocation"),
+            @Mapping(target = "remark", ignore = true),
+    })
+    SoInfoDTO.GenerateSoOutView soDetailToGenerateSoOutView(SoDetailEntity soDetailEntity, SoInfoEntity soInfoEntity, CustomerInfoEntity customerInfo);
+
     static int getIsGift(SoDetailEntity soDetailEntity) {
         if (Optional.ofNullable(soDetailEntity.getIsGift()).isPresent()) {
             return soDetailEntity.getIsGift() ? 1 : 2;
@@ -79,4 +102,25 @@ public interface SoInfoConverter {
             return 2;
         }
     }
+    @Mappings({
+            @Mapping(target = "soId", source = "id"),
+            @Mapping(target = "sourceId", source = "id"),
+            @Mapping(target = "sourceType", expression = "java(com.common.business.enums.SourceTypeEnum.SO_INFO.getCode())"),
+            @Mapping(target = "sourceCode", source = "code"),
+            @Mapping(target = "deliveryOrgId", source = "warehouseOrgId"),
+            @Mapping(target = "deliveryOrgName", source = "warehouseOrgName"),
+            @Mapping(target = "orderType",  expression = "java(com.common.business.enums.OrderTypeEnum.B2B.getCode())"),
+            @Mapping(target = "planDeliveryDate", source = "billDate"),
+            @Mapping(target = "sellerId", source = "sellerId"),
+            @Mapping(target = "sellerName", source = "sellerName"),
+            @Mapping(target = "warehouseId", source = "warehouseId"),
+            @Mapping(target = "soDetailId", source = "detailId"),
+            @Mapping(target = "sourceDetailId", source = "detailId"),
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "skuNo", source = "skuNo"),
+            @Mapping(target = "qty", source = "actualDeliveryQty"),
+            @Mapping(target = "warehouseLocation", source = "warehouseLocation"),
+            @Mapping(target = "remark", source = "remark"),
+    })
+    SoOutstockDTO.GenerateSoOutstockViewDTO soOutViewToGenerateSoOut(SoInfoDTO.GenerateSoOutView soOutView);
 }

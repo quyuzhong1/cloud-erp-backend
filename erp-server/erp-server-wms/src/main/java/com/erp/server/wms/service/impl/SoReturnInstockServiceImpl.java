@@ -465,8 +465,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
                 }
             }
-
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(detailView.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
+                    .filter(req -> req.getCode().equals(detailView.getWarehouseLocation()) && req.getWarehouseId().equals(detailView.getWarehouseId()))
+                    .findFirst().orElse(new WarehouseLocationEntity());
             detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
             if(StringUtils.isBlank(detailView.getWarehouseId())){
                 detailView.setWarehouseId(viewDTO.getWarehouseId());
@@ -1161,6 +1162,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     viewChildDTO.setHandleType(MachineHandleTypeEnum.RETURN_SUPPLIER.getCode());
                     viewChildDTO.setChildWarehouseId(viewDTO.getWarehouseId());
                     viewChildDTO.setChildWarehouseLocation(viewDTO.getWarehouseLocation());
+                    viewChildDTO.setChildWarehouseLocationName(viewDTO.getWarehouseLocationName());
                     viewChildDTO.setChildSupplierId(childSkuVO.getSupplierId());
                     resultList.add(viewChildDTO);
                 }

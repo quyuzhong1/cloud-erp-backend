@@ -212,6 +212,7 @@ public class BusinessServiceImpl {
             String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, sourceType.getCode(), targetPlatform, topic, tag, msg));
             msg.setDmpSyncTaskId(modelTaskId);
             SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, msg, msg.getUniqueId());
+            log.info("MQ消息发送成功：{} {} {} {}", topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
             }else {
@@ -350,14 +351,14 @@ public class BusinessServiceImpl {
         Map<String, String> unqueIdAndTaskIdMap = allResultList.stream().collect(Collectors.toMap(DmpPullTaskEntity::uniqueKey, DmpPullTaskEntity::getId));
         // 设置taskId到消息体
         pushToMqList.forEach(e -> {
-            String uniqueKey = Md5Util.md5(StrUtil.format("{}_{}_{}_{}_{}_{}_{}",
-                    sourceType,
+            String uniqueKey = StrUtil.format("{}_{}_{}_{}_{}_{}_{}",
+                    sourceType.getCode(),
                     e.getUniqueId(),
                     e.getUniqueId(),
                     platform,
                     targetPlatform,
                     topic,
-                    tag));
+                    tag);
             String taskId = unqueIdAndTaskIdMap.get(uniqueKey);
             if (StringUtils.isBlank(taskId)){
                 throw new ServiceException("处理异常:未找到DmpPullTaskEntity的Id， sourceId=" + e.getUniqueId());

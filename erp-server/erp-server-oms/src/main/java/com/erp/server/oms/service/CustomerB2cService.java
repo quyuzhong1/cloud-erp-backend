@@ -307,4 +307,12 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @return CustomerB2cEntity
      */
     CustomerB2cEntity getByIdOrName (String keyWord);
+
+    /**
+     * 远程搜索
+     * @param searchDTO
+     * @return
+     */
+    PagingVO<CustomerB2CDTO.InfoDTO> pagingSelect(PagingDTO<CustomerB2CDTO.SelectDTO> searchDTO);
+
 }

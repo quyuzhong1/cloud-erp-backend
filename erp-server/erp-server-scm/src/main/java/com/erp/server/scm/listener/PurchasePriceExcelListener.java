@@ -19,17 +19,24 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
+import org.jfree.util.Log;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  * @CreateTime: 2023-08-03  18:07
  * @Author: zhangchunlin
  */
+@Slf4j
 public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurchasePriceExcelDTO> {
 
     private List<FindUserDTO> userList;
@@ -64,8 +71,26 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
     private static final String DEFAULT_PURCHASE_ORG_NAME = "东莞市简拍智造科技有限公司";
 
-    private static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy/M/d");
+    private static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+    private static DateTimeFormatter TIME_FORMAT2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+    // 用于补充月份和日期中缺少的零的正则表达式
+    private static final Pattern pattern = Pattern.compile("(\\d{4})/(\\d{1,2})/(\\d{1,2})");
+    private static final Pattern pattern2 = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})");
+
+    //为TIME_FORMAT2 进行补充数据结构
+    public static LocalDate parseDate(String dateString, String splitStr,Pattern pattern, DateTimeFormatter TIME_FORMAT) {
+        // 使用正则表达式补充零
+        Matcher matcher = pattern.matcher(dateString);
+        if (matcher.matches()) {
+            String year = matcher.group(1);
+            String month = matcher.group(2).length() == 1 ? "0" + matcher.group(2) : matcher.group(2);
+            String day = matcher.group(3).length() == 1 ? "0" + matcher.group(3) : matcher.group(3);
+            dateString = year + splitStr + month + splitStr + day;
+        }
+        // 使用补充后的字符串进行解析
+        return LocalDate.parse(dateString, TIME_FORMAT);
+    }
     private static final String DEFAULT_CURRENCY = "CNY";
 
     private static final List<String> CHECK_STATUS_LIST = Lists.newArrayList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus(), ApproveStatusEnum.APPROVE.getStatus(),
@@ -119,7 +144,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             if(!isDate(quotedDateStr)) {
                 errorMsgList.add("报价日期格式错误");
             } else {
-                LocalDate quotedDate = LocalDate.parse(quotedDateStr, TIME_FORMAT);
+                LocalDate quotedDate = getDate(quotedDateStr);
                 addDTO.setQuotedDate(quotedDate);
             }
         } else {
@@ -261,7 +286,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             if(!isDate(effectiveDateStr)) {
                 errorMsgList.add("生效日期格式错误");
             } else {
-                LocalDate effectiveDate = LocalDate.parse(effectiveDateStr, TIME_FORMAT);
+                LocalDate effectiveDate = getDate(effectiveDateStr);
                 detailDTO.setEffectiveDate(effectiveDate);
             }
         } else {
@@ -380,13 +405,40 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
     private static boolean isDate(String dateStr) {
         if(StrUtils.isNotEmpty(dateStr)) {
             try {
-                LocalDate.parse(dateStr, TIME_FORMAT);
+                parseDate(dateStr,"/",pattern, TIME_FORMAT);
                 return true;
             } catch (Exception e) {
-                return false;
+                log.error("日期转换异常{},{}",dateStr,"yyyy/MM/dd");
             }
+            try {
+                parseDate(dateStr,"-",pattern2, TIME_FORMAT2);
+                return true;
+            }catch (Exception e2){
+                log.error("日期转换异常{},{}",dateStr,"yyyy-MM-dd");
+            }
+            return false;
         }
         return true;
+    }
+    /**
+     * 判断是否日期格式
+     * @param dateStr
+     * @return
+     */
+    private static LocalDate getDate(String dateStr) {
+        if(StrUtils.isNotEmpty(dateStr)) {
+            try {
+                return parseDate(dateStr,"/",pattern, TIME_FORMAT);
+            } catch (Exception e) {
+                log.error("日期转换异常{},{}",dateStr,"yyyy/MM/dd");
+            }
+            try {
+                return parseDate(dateStr,"-",pattern2, TIME_FORMAT2);
+            }catch (Exception e2){
+                log.error("日期转换异常{},{}",dateStr,"yyyy-MM-dd");
+            }
+        }
+        return null;
     }
 
     private static boolean checkCross(int[] range0, int[] range1) {

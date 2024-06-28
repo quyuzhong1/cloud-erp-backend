@@ -88,11 +88,11 @@ public class MQConsumerAmzReportService {
                 boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
                 if (!unAuthorized){
                     String errorMsg = ExceptionUtil.stacktraceToString(e, 2000);
-                    amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg, null, entity.getQueryRetryCount() + 1, null, null);
+                    amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg, null, entity.checkAndGetQueryRetryCount() + 1, null, null);
                     // 发送预警
                     amzReportTaskService.sendReportWarnMsg(entity, errorMsg);
                     // 检查重试次数过多停止
-                    if (amzReportTaskService.stopRetryCount(entity.getQueryRetryCount() + 1)){
+                    if (amzReportTaskService.stopRetryCount(entity.checkAndGetQueryRetryCount() + 1)){
                         return;
                     }
                     throw e;
@@ -191,11 +191,11 @@ public class MQConsumerAmzReportService {
                 boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
                 if (!unAuthorized){
                     String errorMsg = ExceptionUtil.stacktraceToString(e, 2000);
-                    amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg, null, entity.getQueryRetryCount() + 1, null, null);
+                    amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg, null, entity.checkAndGetQueryRetryCount() + 1, null, null);
                     // 发送预警
                     amzReportTaskService.sendReportWarnMsg(entity, errorMsg);
                     // 检查重试次数过多停止
-                    if (amzReportTaskService.stopRetryCount(entity.getQueryRetryCount() + 1)){
+                    if (amzReportTaskService.stopRetryCount(entity.checkAndGetQueryRetryCount() + 1)){
                         return;
                     }
                     throw e;

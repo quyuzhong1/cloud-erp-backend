@@ -25,9 +25,9 @@ public class PurchaseOrderExportExcelDTO implements Serializable {
     private String code;
 
     /**
-     * 采购申请号
+     * 来源单号
      */
-    @ExcelProperty(value = "采购申请号", index = 1)
+    @ExcelProperty(value = "来源单号", index = 1)
     private String sourceCode;
 
     /**

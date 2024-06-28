@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.DmpMongoHandleTaskEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
@@ -25,12 +26,14 @@ import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
+import com.erp.server.dmp.enums.DownloadStatusEnum;
 import com.erp.server.dmp.handler.DmpMongoHandler;
 import com.erp.server.dmp.service.AmazonDownloadService;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DmpMongoHandleTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -102,7 +105,7 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         if (CollectionUtils.isEmpty(existOrderList)) {
             // 都不存在直接保存mongo等待重新触发
             // 不存在保存mongo等待重新触发
-            directSaveMongo(canHandleList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, -10);
+            directSaveMongo(canHandleList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, DownloadStatusEnum.WAIT);
             return allList.size();
         }
         Map<String, PlatformAmazonOrderDTO> existMap = existOrderList.stream()
@@ -128,11 +131,11 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
 
         if (!CollectionUtils.isEmpty(notExistList)) {
             // 不存在保存mongo等待重新触发
-            directSaveMongo(notExistList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, -10);
+            directSaveMongo(notExistList, AmazonHandleStatusEnum.WAIT_DOWNLOAD, DownloadStatusEnum.WAIT);
         }
         if (!CollectionUtils.isEmpty(existMainList)) {
             // 不存在保存mongo等待重新触发
-            directSaveMongo(existMainList, AmazonHandleStatusEnum.WAIT_HANDLE, CleanStatusEnum.NONE.getCode());
+            directSaveMongo(existMainList, AmazonHandleStatusEnum.WAIT_HANDLE, DownloadStatusEnum.FINISH);
         }
 
         // 存在的订单直接触发销售出库单
@@ -179,14 +182,20 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
                 .collect(Collectors.toMap(CfgAmzFulfillmentCenterEntity::getCode, Function.identity()));
 
         // 店铺信息
-        List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(
-                new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
+        List<ShopInfoEntity> shopList =  FeignQuery.create(ShopInfoEntity.class)
+                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode())
+                .ne(ShopInfoEntity::getPlatformShopCode, "")
+                .list();
 
-        // 所有店铺信息Map<亚马逊账号， Map<国家代号, 店铺ID>
+        // 所有店铺信息Map<亚马逊账号， Map<国家代号, 店铺信息>
         Map<String, Map<String, ShopInfoEntity>> shopMap = shopList
                 .stream()
                 .collect(Collectors.groupingBy(ShopInfoEntity::getPlatformShopCode,
-                        Collectors.toMap(ShopInfoEntity::getDictCountryCode, Function.identity())));
+                        Collectors.toMap(ShopInfoEntity::getDictCountryCode,
+                                Function.identity(),
+                                // 已授权优先
+                                (existing, replacement) -> AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(replacement.getAuthStatus()) ? replacement : existing
+                        )));
 
         // 仓库信息
         Map<String, WarehouseDTO.ListDTO> warehouseMap = new HashMap<>();
@@ -214,14 +223,14 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         return mongoTemplate.find(query, PlatformAmazonOrderDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER);
     }
 
-    private void directSaveMongo(List<ReportFulfilledShipmentsMongoDTO> handleList, AmazonHandleStatusEnum handleStatusEnum, Integer isClean) {
+    private void directSaveMongo(List<ReportFulfilledShipmentsMongoDTO> handleList, AmazonHandleStatusEnum handleStatusEnum, DownloadStatusEnum downloadStatusEnum) {
         List<PlatformAmazonFulfilledShipmentsDTO> sourceList = handleList.stream()
                 .map(e -> SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(e,
                         e.getReportId(),
                         e.getShopId(),
                         StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), e.getShopId()),
                         handleStatusEnum.getCode(),
-                        isClean
+                        downloadStatusEnum.getCode()
                 ))
                 .collect(Collectors.toList());
         businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());
@@ -247,11 +256,11 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         if (null != centerEntity && !curMap.isEmpty()){
             ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
             e.setWarehouseId(shopInfo.getWarehouseId());
-            if (!CollectionUtils.isEmpty(warehouseMap)){
-                WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(shopInfo.getId());
+            if (!CollectionUtils.isEmpty(warehouseMap) && warehouseMap.containsKey(shopInfo.getWarehouseId())){
+                WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(shopInfo.getWarehouseId());
                 e.setWarehouseName(warehouseDTO.getName());
                 e.setWarehouseOrgId(warehouseDTO.getOrgId());
-                e.setWarehouseName(warehouseDTO.getOrgName());
+                e.setWarehouseOrgName(warehouseDTO.getOrgName());
             }
         }
         if (e.hasMultiChannel()) {
@@ -277,7 +286,7 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         if (null != timeZoneEntity) {
             // 设置所有本地时区
             e.checkAndSetAllDateLocale(timeZoneEntity.getTimeZone());
-            if (!curMap.isEmpty()) {
+            if (!curMap.isEmpty() && curMap.containsKey(timeZoneEntity.getCountry())) {
                 ShopInfoEntity shopInfo = curMap.get(timeZoneEntity.getCountry());
                 e.setShopId(shopInfo.getId());
             }

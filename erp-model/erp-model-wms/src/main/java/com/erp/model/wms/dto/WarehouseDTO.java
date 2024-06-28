@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -12,7 +13,9 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -248,6 +251,11 @@ public class WarehouseDTO implements Serializable {
          */
         private Integer inventoryQty;
 
+        /**
+         * 虚拟库存数量
+         */
+        private Integer virtualInventoryQty;
+
     }
 
     @Data
@@ -271,16 +279,41 @@ public class WarehouseDTO implements Serializable {
     public static class ListInventoryQtyParamDTO {
 
         /**
-         * sku
+         * 明细信息
          */
-        @NotEmpty(message = "SKU不能为空")
-        private List<String> skuIdList;
+        @NotEmpty(message = "明细信息不能为空")
+        private List<ListInventoryDetailParamDTO> detailList;
 
         /**
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 启用状态
+         */
+        private Boolean disabled;
+    }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryDetailParamDTO {
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 关联id
+         */
+        private String relationId;
     }
 
 
@@ -534,7 +567,14 @@ public class WarehouseDTO implements Serializable {
          * 库存组织id 集合
          */
         private List<String> orgIdList;
-
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 
 
@@ -649,7 +689,19 @@ public class WarehouseDTO implements Serializable {
         /**
          * 前端忽略
          */
+        private List<String> ids;
+        /**
+         * 前端忽略
+         */
         private String warehouseManageType;
+        /**
+         * 审核状态
+         * waitSubmit :待提交
+         * approveIng :审核中
+         * reject :审核不通过
+         * approve :已审核
+         */
+        private String approveStatus;
     }
 
     /**
@@ -809,6 +861,5 @@ public class WarehouseDTO implements Serializable {
             this.warehouseName = viewDTO.getWarehouseName();
         }
     }
-
 
 }

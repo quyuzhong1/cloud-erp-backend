@@ -1499,7 +1499,16 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         CustomerB2cEntity b2cEntity = this.getByName(keyWord);
         return b2cEntity;
     }
-
+    /**
+     * 远程搜索
+     */
+    @Override
+    public PagingVO<CustomerB2CDTO.InfoDTO> pagingSelect(PagingDTO<CustomerB2CDTO.SelectDTO> searchDTO) {
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        CustomerB2CDTO.SelectDTO params = searchDTO.getParams();
+        IPage<CustomerB2CDTO.InfoDTO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
+    }
     /**
      * @description: 根据名称查询
      * @author Will

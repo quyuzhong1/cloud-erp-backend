@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -10,6 +11,7 @@ import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,10 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <p>
@@ -244,6 +243,16 @@ public class TransferDeclareDTO implements Serializable {
     @Data
     public static class PagingParamDTO extends SortDTO {
         /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
          * ids
          */
         private List<String> ids;
@@ -337,7 +346,7 @@ public class TransferDeclareDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
-         * 主键id
+         * 主键id[可排序]
          */
         private String id;
         /**
@@ -345,23 +354,23 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String detailId;
         /**
-         * 中转报关单号
+         * 中转报关单号[可排序]
          */
         private String code;
         /**
-         * 预计中转时间
+         * 预计中转时间[可排序]
          */
         private String planTransferDate;
         /**
-         * 入库预报日期（推送保宏入库预报成功的日期）
+         * 入库预报日期（推送保宏入库预报成功的日期）[可排序]
          */
         private String instockForecastDate;
         /**
-         * 上传状态(批次)
+         * 上传状态(批次)[可排序]
          */
         private String uploadBatchStatus;
         /**
-         * 入库预报状态
+         * 入库预报状态[可排序]
          */
         private String instockForecastStatus;
         /**
@@ -369,11 +378,11 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String instockForecastStatusName;
         /**
-         * 入库预报异常原因
+         * 入库预报异常原因[可排序]
          */
         private String instockForecastRemark;
         /**
-         * 总件数（页面录入）
+         * 总件数（页面录入）[可排序]
          */
         private Integer totalQty;
         /**
@@ -449,13 +458,17 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String failureReason;
         /**
-         * 创建人
+         * 创建人[可排序]
          */
         private String createUserName;
         /**
-         * 创建时间
+         * 创建时间[可排序]
          */
         private LocalDateTime createTime;
+        /**
+         * 明细记录
+         */
+        private List<TransferDeclareDetailEntity> detailEntityList;
     }
 
     /**

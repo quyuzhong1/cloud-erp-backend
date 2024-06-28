@@ -11,6 +11,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -402,7 +403,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean checkPlatformShipOrder(String soB2cId);
 
     /**
-     * 虚假发货
+     * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/27 15:07
      * @param id
@@ -488,13 +489,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 物流规则
-     * @description
+     *
      * @param
-     * @author Lambda
+     * @param isCheckProductRegistration
      * @return
+     * @description
+     * @author Lambda
      * @create 2023-12-29 8:41
      */
-    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map);
+    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
 
     /**
      * 获取客户信息
@@ -853,9 +856,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      *
      * @param detailList
      * @param soB2cEntity
+     * @param logisticsPlatform
      * @return
      */
-    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
+    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity, String logisticsPlatform);
 
     /**
      * 修复历史平均成本数据数据
@@ -907,6 +911,30 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 同步处理历史审核订单数据到订单表
      */
     void processOrderApproveData();
+
+    /**
+     * 添加赠品
+     * @param entity
+     * @param detailEntityList
+     * @param dtoList
+     * @param LogisticsEntity
+     * @return
+     */
+    BatchResultDTO addGift(SoB2cEntity entity,List<SoB2cDTO.GiftDTO> dtoList,SoB2cLogisticsEntity LogisticsEntity,List<SoB2cDetailEntity> detailEntityList);
+
+    /**
+     * 根据销售订单id获取买家信息
+     * @param ids
+     * @return
+     */
+    List<SoB2cReceiverDTO.ViewDTO> getReceiverInfo(List<String> ids);
+
+    /**
+     * 更新买家信息
+     * @param dto
+     * @return
+     */
+    BatchResultDTO updateReceiverInfo(SoB2cReceiverDTO.UpdateBaseDTO dto);
 
     /**
      * 根据订单创建时间查询订单

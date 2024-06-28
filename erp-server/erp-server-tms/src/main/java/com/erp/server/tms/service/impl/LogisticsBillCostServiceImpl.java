@@ -7,6 +7,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -621,6 +622,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //更新店铺负责人
         updateShopChargeId(logisticsBillIdList,dto.getShopChargeId());
         return Boolean.TRUE;
+    }
+
+    @Override
+    public BigDecimal getActualLogisticCost(String soId) {
+        if(StringUtils.isBlank(soId)){
+            return BigDecimal.ZERO;
+        }
+        return baseMapper.getActualLogisticCost(soId);
     }
 
     /**

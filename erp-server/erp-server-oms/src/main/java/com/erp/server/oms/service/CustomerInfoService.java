@@ -45,6 +45,15 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
 
 
     /**
+     * 添加客户信息
+     *
+     * @param dto
+     * @return java.lang.String
+     */
+    CustomerInfoEntity addOrGetCustom(CustomerDTO.AddDTO dto);
+
+
+    /**
      * 提交
      *
      * @param ids
@@ -366,4 +375,6 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.SellerUserDeptDTO>
      **/
     List<CustomerDTO.SellerUserDeptDTO> listSellerUserDepByCodes(List<String> codeList);
+
+    PagingVO<CustomerDTO.PageSelectDTO> pagingSelect(PagingDTO<CustomerDTO.SelectDTO> dto);
 }

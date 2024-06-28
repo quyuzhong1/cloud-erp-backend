@@ -18,6 +18,8 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.sdk.tms.weishi.dto.request.WeiShiUpdateWeightRequest;
+import com.sdk.tms.weishi.dto.response.WeiShiResponse;
 import com.sdk.tms.yuntu.dto.request.*;
 import com.sdk.tms.yuntu.dto.response.*;
 import com.sdk.tms.yuntu.server.YunTuService;
@@ -27,6 +29,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -286,6 +290,36 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return isSuccess?success(result):failure(result);
 
     }
+
+
+    @Override
+    public ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO) {
+        try {
+            YunTuUpdateWeightRequest request = YunTuUpdateWeightRequest.builder()
+                    .orderNumber(logisticsUpdateWeightVO.getDeliveryNo())
+                    .weight(logisticsUpdateWeightVO.getWeight().divide(new BigDecimal(1000),4, RoundingMode.HALF_UP))
+                    .build();
+            ValidatorUtil.validateEntity(request);
+            YunTuResponse<String> response = yunTuService.updateWeight(request, logisticsUpdateWeightVO.getAuthMap());
+
+            if(isFailure(response.getCode())){
+                logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                        logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getMessage());
+            }
+            logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                    logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
+            return success();
+        }catch (Exception e){
+            logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                    logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(e),true);
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }
+    }
+
     /**
      * 授权判断
      * @param authMap
