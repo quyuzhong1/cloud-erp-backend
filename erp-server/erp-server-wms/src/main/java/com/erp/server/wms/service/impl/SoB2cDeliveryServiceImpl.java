@@ -1726,7 +1726,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         printWayBillPdf.setDetailList(wayBillDetailList);
 
-        printWayBillPdf.setBasketNo("#"+printWayBillPdf.getBasketNo());
+        printWayBillPdf.setBasketNo(StringUtils.isNotBlank(printWayBillPdf.getBasketNo())?"#"+printWayBillPdf.getBasketNo():"");
         String orderTip = printWayBillPdf.getIsOutStock()?printWayBillPdf.getIsIntercept()?"缺货订单/拦截订单":"缺货订单":printWayBillPdf.getIsIntercept()?"拦截订单":"";
         printWayBillPdf.setOrderTip(orderTip);
         return printWayBillPdf;
