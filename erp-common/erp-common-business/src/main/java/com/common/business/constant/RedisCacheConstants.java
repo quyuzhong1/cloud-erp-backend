@@ -205,4 +205,6 @@ public interface RedisCacheConstants {
      */
     String AMAZON_ORDER_TASK_TIME_PREFIX = "amazon_order_start_time:{}";
 
+    String SNOWFLAKE_KEY = "snowflake_key:{}";
+
 }
