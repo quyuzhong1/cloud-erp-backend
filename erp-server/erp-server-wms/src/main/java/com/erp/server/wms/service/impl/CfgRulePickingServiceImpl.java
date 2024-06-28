@@ -149,8 +149,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
      * 库存不满足sku对应数量   循环库位 ===> 循环库区 ===>循环仓库 ===> 循环规则
      */
     @Override
-    @SuppressWarnings("unchecked")
-    public List<LocationInventoryResultDTO> getRuleOrderMatchResult(Map<String, Object> map) {
+    public List<LocationInventoryResultDTO> getRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
         // 获取所有已启用规则
         List<CfgRulePickingEntity> cfgRulePickings = this.listOrderByPriority();
         if (CollectionUtils.isEmpty(cfgRulePickings)) {
@@ -158,51 +157,40 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         }
         List<String> cfgRuleIds = cfgRulePickings.stream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
         // 查询所有规则对应的规则条件
-        List<CfgRuleConditionEntity> conditions = cfgRuleConditionService.listByRuleIds(cfgRuleIds);
+        List<CfgRuleConditionDTO.ConditionElementDTO> conditions = cfgRuleConditionService.listByRuleIds(cfgRuleIds);
         // 查询所有规则对应的规则动作
         List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.listByRuleIds(cfgRuleIds);
         List<LocationInventoryResultDTO> result = new ArrayList<>();
         List<WarehouseLocationEntity> locationList = warehouseLocationService.list();
-        // 获取参数中sku及数量
-        Map<String, Integer> skuMap = (Map<String, Integer>) map.get("sku");
-        Map<String, String> skuNameMap = (Map<String, String>) map.get("skuMap");
         Map<String, Object> detailMap = new HashMap<>();
-        detailMap.put("billType", map.get("billType"));
-        detailMap.put("customerId",map.get("customerId"));
-        detailMap.put("deliveryWarehouseId",map.get("deliveryWarehouseId"));
+        detailMap.put("billType", dto.getBillType());
+        detailMap.put("customerId", dto.getCustomerId());
+        detailMap.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
+        Map<String, Object> map = new HashMap<>();
         map.put("detailList", Collections.singletonList(detailMap));
-        for (Map.Entry<String, Integer> entry : skuMap.entrySet()) {
-            String skuId = entry.getKey();
-            AtomicInteger quantity = new AtomicInteger(entry.getValue());
+        for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : dto.getDetails()) {
+            AtomicInteger quantity = new AtomicInteger(detail.getQty());
             for (CfgRulePickingEntity picking : cfgRulePickings) {
-                List<CfgRuleConditionEntity> conditionList = conditions.stream().
+                List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = conditions.stream().
                         filter(r -> r.getRuleId().equals(picking.getId())).
-                        sorted(Comparator.comparing(CfgRuleConditionEntity::getIndex)).collect(Collectors.toList());
-                List<String> fieldList = conditionList.stream().map(CfgRuleConditionEntity::getField).distinct().collect(Collectors.toList());
-                List<CfgConditionEntity> cfgConditionList = cfgConditionService.listByFields(fieldList);
-                for (CfgRuleConditionEntity item : conditionList) {
-                    String fieldFlag = item.getField();
-                    String valueType = cfgConditionList.stream().filter(c -> c.getConditionField().equals(fieldFlag)).
-                            findFirst().map(CfgConditionEntity::getValueType).orElse("String");
-                    item.setValueType(valueType);
-                }
+                        sorted(Comparator.comparing(CfgRuleConditionDTO.ConditionElementDTO::getIndex)).collect(Collectors.toList());
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
                 //获取到表达式,判断表达式是否匹配
                 Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
                 if (Boolean.TRUE.equals(matchResult)) {
                     List<CfgRulePackingActionEntity> actionList = actions.stream()
                             .filter(r -> r.getRuleId().equals(picking.getId()))
-                            .filter(r -> ObjectUtils.isEmpty(map.get("warehouseId")) || r.getWarehouseId().equals(map.get("warehouseId")))
+                            .filter(r -> ObjectUtils.isEmpty(detail.getWarehouseId()) || r.getWarehouseId().equals(detail.getWarehouseId()))
                             .sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex))
                             .collect(Collectors.toList());
-                    handlerAction(actionList, result, locationList, skuId, quantity);
+                    handlerAction(actionList, result, locationList, detail, quantity);
                     if (0 == quantity.get()) {
                         break;
                     }
                 }
             }
             if (0 != quantity.get()) {
-                throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, skuNameMap.get(skuId));
+                throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, detail.getSkuNo());
             }
         }
         return result;
@@ -212,7 +200,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     private void handlerAction(List<CfgRulePackingActionEntity> actionList,
                                List<LocationInventoryResultDTO> result,
                                List<WarehouseLocationEntity> locationList,
-                               String skuId, AtomicInteger quantity) {
+                               CfgRulePickingDTO.CfgExecutionDataDetailDTO detail, AtomicInteger quantity) {
 
         // 循环仓位分配规则
         for (CfgRulePackingActionEntity action : actionList) {
@@ -230,7 +218,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 // todo FIFO 数据和表不支持，后续优化
             } else {
                 List<InventoryEntity> inventoryList = inventoryService.list(Wrappers.<InventoryEntity>lambdaQuery()
-                        .eq(InventoryEntity::getSkuId, skuId)
+                        .eq(InventoryEntity::getSkuId, detail.getSkuId())
                         .eq(InventoryEntity::getWarehouseId, action.getWarehouseId())
                         .in(InventoryEntity::getWarehouseLocation, locationCodes)
                         .ne(InventoryEntity::getQty, 0)
@@ -240,7 +228,8 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 //循环计算需要占用多少库位及对应库存
                 for (InventoryEntity inventoryEntity : inventoryList) {
                     LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
-                    inventoryResultDTO.setSkuId(skuId);
+                    inventoryResultDTO.setSkuId(detail.getSkuId());
+                    inventoryResultDTO.setSkuNO(detail.getSkuNo());
                     WarehouseLocationEntity entity = locations.stream().filter(location -> location.getCode().equals(inventoryEntity.getWarehouseLocation()))
                             .findFirst().orElse(new WarehouseLocationEntity());
                     inventoryResultDTO.setWarehouseId(action.getWarehouseId());

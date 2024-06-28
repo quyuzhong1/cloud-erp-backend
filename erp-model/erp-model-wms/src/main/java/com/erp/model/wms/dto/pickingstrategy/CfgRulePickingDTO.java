@@ -3,7 +3,10 @@ package com.erp.model.wms.dto.pickingstrategy;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.enums.PickingBillTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.validation.Valid;
@@ -95,5 +98,51 @@ public class CfgRulePickingDTO {
         private Integer priority;
         private String id;
         private Boolean disabled;
+    }
+
+    @Getter
+    @Setter
+    public static class CfgExecutionDataDTO {
+        /**
+         * 单据类型
+         * @see PickingBillTypeEnum
+         */
+        private String billType;
+        /**
+         * B2B客户
+         */
+        private String customerId;
+        /**
+         * 头程目的仓库
+         */
+        private String deliveryWarehouseId;
+        /**
+         * sku明细数据
+         */
+        private List<CfgExecutionDataDetailDTO> details;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CfgExecutionDataDetailDTO {
+        /**
+         * 拣货仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 数量
+         */
+        private Integer qty;
     }
 }
