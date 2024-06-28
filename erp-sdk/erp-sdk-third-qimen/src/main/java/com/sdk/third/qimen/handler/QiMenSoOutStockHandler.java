@@ -1,6 +1,7 @@
 package com.sdk.third.qimen.handler;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -64,8 +65,6 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
         WdtWmsStockoutSalesQuerywithdetailRequest.Params params = new WdtWmsStockoutSalesQuerywithdetailRequest.Params();
         params.setStatus("110");
         params.setStatusType(3L);
-//        params.setStartTime("2023-03-03 13:00:00");
-//        params.setEndTime("2023-03-03 14:00:00");
         params.setStartTime(dto.getLastTime().minusMinutes(15).format(timeFormatter));
         params.setEndTime(dto.getNextTime().format(timeFormatter));
 
@@ -84,9 +83,10 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
         while (hasNext) {
             WdtWmsStockoutSalesQuerywithdetailResponse response;
             try {
+                log.info("拉取奇门通销售出库单请求参数：{}", JSONObject.toJSONString(request));
                 response = qimenService.execute(request);
             } catch (ApiException e) {
-                log.error("拉取旺店通销售出库单失败，原因【{}】", e.getMessage(), e);
+                log.error("拉取奇门通销售出库单失败，原因【{}】", e.getMessage(), e);
                 return result;
             }
 
