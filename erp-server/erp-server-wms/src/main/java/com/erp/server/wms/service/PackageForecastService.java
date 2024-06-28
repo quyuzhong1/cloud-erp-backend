@@ -126,7 +126,7 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @param logisticsPlatform
      * @return
      */
-    PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform);
+    PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform, String shopId);
 
     /**
      * 获取组包订单 更新订单明细
@@ -137,8 +137,7 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     /**
      * 更新订单状态信息
      * @param packageForecastEntity
-     * @param alExpressHandoverBase
      */
-    void queryAliExpressInfo(PackageForecastEntity packageForecastEntity, PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase);
+    void queryAliExpressInfo(PackageForecastEntity packageForecastEntity);
 
 }
