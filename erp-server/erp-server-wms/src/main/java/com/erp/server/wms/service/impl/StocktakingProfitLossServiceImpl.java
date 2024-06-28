@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -566,7 +567,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
 
-        List<DmpPushTaskEntity> resultList = new ArrayList<>(detailList.size());
+        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>(detailList.size() * 2);
         for (StocktakingProfitLossDetailDTO.ViewDTO dto : detailList) {
             if(! thirdWarehouseMap.containsKey(dto.getWarehouseId())){
                 continue;
@@ -578,10 +579,11 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
             String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
             String thirdWarehouseCode = thirdWarehouseMap.get(dto.getWarehouseId());
-            DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(Collections.singletonList(goods), operateCode, entity.getCode(), dto.getId(), outerCode, thirdWarehouseCode, false);
-            resultList.add(dmpPushTaskEntity);
+            DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherOutStockService.generateTask(Collections.singletonList(goods), operateCode, entity.getCode(), dto.getId(), outerCode, thirdWarehouseCode, false);
+            unSaveTaskList.add(outUnSaveTask);
         }
-        return resultList;
+
+        return dmpMqFeign.saveWdtTaskList(unSaveTaskList);
     }
 
     /**
@@ -610,7 +612,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
 
-        List<DmpPushTaskEntity> resultList = new ArrayList<>(detailList.size());
+        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>(detailList.size() * 2);
         for (StocktakingProfitLossDetailDTO.ViewDTO dto : detailList) {
             if(! thirdWarehouseMap.containsKey(dto.getWarehouseId())){
                 continue;
@@ -623,12 +625,11 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
             String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
             String thirdWarehouseCode = thirdWarehouseMap.get(dto.getWarehouseId());
-            DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(Collections.singletonList(goods), operateCode, entity.getCode(), dto.getId(), outerCode, thirdWarehouseCode, false);
-            if(dmpPushTaskEntity != null){
-                resultList.add(dmpPushTaskEntity);
-            }
+            DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherInStockService.generateTask(Collections.singletonList(goods), operateCode, entity.getCode(), dto.getId(), outerCode, thirdWarehouseCode, false);
+            unSaveTaskList.add(outUnSaveTask);
         }
-        return resultList;
+
+        return dmpMqFeign.saveWdtTaskList(unSaveTaskList);
     }
 
     /**

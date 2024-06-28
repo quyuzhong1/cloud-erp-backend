@@ -179,4 +179,9 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
     Boolean batchSyncBySourceId(List<String> sourceIds);
 
     List<DmpPushTaskEntity> listByCodeParam(DmpSyncTaskDTO.ListCodeDTO listCodeDTO);
+
+    /**
+     * 批量保存旺店通任务!
+     */
+    List<DmpPushTaskEntity> saveWdtTaskList(List<DmpPushTaskFeignDTO> dtoList);
 }
