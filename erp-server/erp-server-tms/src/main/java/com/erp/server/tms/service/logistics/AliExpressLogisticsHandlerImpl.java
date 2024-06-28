@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.utils.StringUtils;
@@ -357,7 +358,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         });
         ApiResult<List<LogisticsOrderResponseVO>> queryOrderList = this.queryOrderList(logisticsQueryVOList);
         //根据查询结果进行打印
-        if (queryOrderList.isSuccess()){
+        if (queryOrderList.isSuccess() && CollectionUtil.isNotEmpty(queryOrderList.getData())){
             List<LogisticsOrderResponseVO> data = queryOrderList.getData();
             Map<String, LogisticsOrderResponseVO> collect = data.stream().collect(Collectors.toMap(LogisticsOrderResponseVO::getDeliveryNo, Function.identity()));
             logisticsQueryVO.forEach(logisticsGetLabelVO -> {
