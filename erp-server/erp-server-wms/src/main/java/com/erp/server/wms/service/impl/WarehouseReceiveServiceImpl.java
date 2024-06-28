@@ -570,7 +570,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             //修改发货单确认状态
             List<String> detailIdsByDeliverySource = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
+            if(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(entity.getSourceType()) && CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
                 srmDeliveryOrderFeign.confirmReceiveStatus(detailIdsByDeliverySource);
             }
         } else {
@@ -788,7 +788,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         //修改发货单确认状态
         List<String> detailIdsByDeliverySource = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
+        if(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(entity.getSourceType()) && CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
             srmDeliveryOrderFeign.unConfirmReceiveStatus(detailIdsByDeliverySource);
         }
         //操作日志
