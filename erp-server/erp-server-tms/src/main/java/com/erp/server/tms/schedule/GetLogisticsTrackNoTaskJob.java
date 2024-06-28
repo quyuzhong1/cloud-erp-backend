@@ -21,10 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -147,7 +144,7 @@ public class GetLogisticsTrackNoTaskJob {
                 }
                 item.setDeliveryNo(deliveryNo);
                 queryBase.setDeliveryNo(deliveryNo);
-                Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId, logisticsPlatform);
+                Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId,item.getShopId(), logisticsPlatform);
                 authMap.put("token", item.getShopToken());
                 queryBase.setAuthMap(authMap);
                 queryBaseList.add(queryBase);

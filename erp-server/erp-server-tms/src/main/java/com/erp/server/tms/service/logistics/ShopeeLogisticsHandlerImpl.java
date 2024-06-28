@@ -64,11 +64,11 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
     /**
      * 虾皮  authId 需要是店铺 shopId
      *
-     * @param authId
+     * @param shopId
      * @return
      */
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
+    public Map<String, String> getLogisticsAuthConfigByShopId(String shopId) {
         //获取商铺配置信息
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
@@ -77,13 +77,13 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         findDTO.setPlatformType(appClientEnum.getPlatformType());
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         Map<String, String> map = new HashMap<>();
-        map.put("id", authId);
+        map.put("id", shopId);
         map.put("logisticsPlatform", getPlatForm().getCode());
         map.put("partnerKey", cfgAppClient.getClientSecret());
         map.put("partnerId", cfgAppClient.getClientId());
         map.put("url", cfgAppClient.getUrl());
-        if (StringUtils.isNotBlank(authId)) {
-            ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(authId);
+        if (StringUtils.isNotBlank(shopId)) {
+            ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(shopId);
             if (Objects.nonNull(shopAuth)) {
                 map.put("shopId", shopAuth.getData().getShopeeId());
                 map.put("token", shopAuth.getData().getAccessToken());

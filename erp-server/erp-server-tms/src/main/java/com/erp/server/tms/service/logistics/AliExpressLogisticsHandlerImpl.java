@@ -124,11 +124,11 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     /**
      * 速卖通  authId 需要是店铺 shopId
      *
-     * @param authId
+     * @param shopId
      * @return
      */
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
+    public Map<String, String> getLogisticsAuthConfigByShopId(String shopId) {
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_LOGISTICS;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
@@ -150,8 +150,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("url", cfgAppClient.getUrl());
         map.put("orderId", orderId);
         map.put("childOrderId",childOrderId);
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(authId)) {
-            ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(authId);
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(shopId)) {
+            ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(shopId);
             if (Objects.nonNull(shopAuth)) {
                 map.put("shopId", shopAuth.getShopId());
                 map.put("token", shopAuth.getAccessToken());

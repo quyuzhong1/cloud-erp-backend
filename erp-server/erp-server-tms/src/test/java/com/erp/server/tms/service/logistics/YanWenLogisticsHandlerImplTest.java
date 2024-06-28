@@ -49,7 +49,7 @@ public class YanWenLogisticsHandlerImplTest {
         authMap.put("clientSecret","D6140AA383FD8515B09028C586493DDB");
     }
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = yanWenLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = yanWenLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
