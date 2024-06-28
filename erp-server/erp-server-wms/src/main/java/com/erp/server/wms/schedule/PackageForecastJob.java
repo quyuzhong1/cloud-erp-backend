@@ -3,7 +3,10 @@ package com.erp.server.wms.schedule;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.PackageForecastDTO;
+import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
@@ -19,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author zdy
@@ -49,15 +53,8 @@ public class PackageForecastJob {
             return;
         }
         //查询需要查询的订单
-        PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase;
-        try {
-            alExpressHandoverBase = packageForecastService.getAlExpressHandoverBase(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
-        }catch (Exception e){
-            XxlJobHelper.log("syncPackageForecastInfo error : {}", e.getMessage());
-            throw new Exception(e);
-        }
         orders.forEach(packageForecastEntity -> {
-            packageForecastService.queryAliExpressInfo(packageForecastEntity, alExpressHandoverBase);
+            packageForecastService.queryAliExpressInfo(packageForecastEntity);
             XxlJobHelper.log("syncPackageForecastInfo update : {}", packageForecastEntity.getHandoverNo());
         });
         XxlJobHelper.log("syncPackageForecastInfo end : {}", LocalDateTime.now());
