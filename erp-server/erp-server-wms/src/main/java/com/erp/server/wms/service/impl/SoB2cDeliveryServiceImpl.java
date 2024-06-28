@@ -1362,12 +1362,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO clearException(String id) {
         SoB2cDeliveryEntity entity = getById(id);
-        if (!SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99103);
-        }
-        if (AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause())){
-            throw new ServiceException(ApiError.ERROR_99104);
-        }
+        checkDelivery(entity);
         entity.setStatus(SoB2cDeliveryStatusEnum.PICKING.getStatus());
         updateById(entity);
         // 操作日志
@@ -1375,17 +1370,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "清除异常成功");
     }
 
+    private static void checkDelivery(SoB2cDeliveryEntity entity) {
+        if (!SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99113);
+        }
+        if (AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause())){
+            throw new ServiceException(ApiError.ERROR_99112);
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto) {
         SoB2cDeliveryEntity entity = getById(dto.getId());
-        if (!SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99103);
-        }
-        if (AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause())){
-            throw new ServiceException(ApiError.ERROR_99102);
-        }
+        checkDelivery(entity);
         //修改订单状态
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
