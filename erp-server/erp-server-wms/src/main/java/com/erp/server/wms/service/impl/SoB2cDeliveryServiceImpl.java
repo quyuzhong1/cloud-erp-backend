@@ -256,65 +256,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 }
             }
         }
-        List<String> skuIdList = detailList.stream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
         executionData.setBillType(PickingBillTypeEnum.B2C.getCode());
         executionData.setDetails(detailList);
-        List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
-        Map<String, List<LocationInventoryResultDTO>> resultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
-        for (Map.Entry<String, List<LocationInventoryResultDTO>> entry : resultMap.entrySet()) {
-            PickingListsEntity entity = new PickingListsEntity();
-            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JHD);
-            // 生成拣货单主表数据
-            entity.setId(IdWorker.getIdStr());
-            entity.setCode(code);
-            entity.setWarehouseId(entry.getKey());
-            entity.setWarehouseName(warehouseMap.get(entry.getKey()));
-            entity.setSourceId(soB2cDeliveryEntity.getId());
-            entity.setSourceCode(soB2cDeliveryEntity.getCode());
-            entity.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
-            int skuTotal = entry.getValue().stream().map(LocationInventoryResultDTO::getQuantity).reduce(0, Math::addExact);
-            entity.setSkuTotal(skuTotal);
-            List<PickingDetailEntity> entities = new ArrayList<>();
-            List<InOutStockDTO> inOutStockList = new ArrayList<>();
-            for (LocationInventoryResultDTO result : entry.getValue()) {
-                // 获取产品信息
-                ProductDetailEntity productDetailEntity = detailEntityList.stream()
-                        .filter(entityClass -> entityClass.getId().equals(result.getSkuId()))
-                        .findFirst().orElse(new ProductDetailEntity());
-                PickingDetailEntity detail = new PickingDetailEntity();
-                detail.setSkuId(result.getSkuId());
-                detail.setMainId(entity.getId());
-                detail.setSkuNo(result.getSkuNO());
-                detail.setUnit(productDetailEntity.getUnitName());
-                detail.setQty(result.getQuantity());
-                detail.setWarehouseLocation(result.getWarehouseLocation());
-                detail.setSourceDetailId(sourceDetailMap.get(result.getSkuId()));
-                entities.add(detail);
-                InOutStockDTO inOutStockDTO = new InOutStockDTO();
-                inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
-                inOutStockDTO.setSourceId(soB2cDeliveryEntity.getId());
-                inOutStockDTO.setSourceCode(soB2cDeliveryEntity.getCode());
-                inOutStockDTO.setSourceDetailId(detail.getSourceDetailId());
-                inOutStockDTO.setSkuNo(detail.getSkuNo());
-                inOutStockDTO.setBillDate(LocalDate.now());
-                inOutStockDTO.setSkuId(detail.getSkuId());
-                inOutStockDTO.setQty(detail.getQty());
-                inOutStockDTO.setWarehouseId(entity.getWarehouseId());
-                inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
-                inOutStockList.add(inOutStockDTO);
-            }
-            entity.setLocationTotal(entities.size());
-            //添加冻结库存
-            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-            inventoryInOutStockDTO.setParamList(inOutStockList);
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
-            //更新库存
-            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-            pickingListsService.save(entity);
-            pickingDetailService.saveBatch(entities);
-        }
+        pickingListsService.generateSoB2cPicking(soB2cDeliveryEntity, executionData, warehouseMap, sourceDetailMap);
     }
 
     @Override

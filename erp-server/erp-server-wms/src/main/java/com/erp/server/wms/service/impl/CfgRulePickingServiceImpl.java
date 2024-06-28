@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -168,7 +169,18 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         detailMap.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
         Map<String, Object> map = new HashMap<>();
         map.put("detailList", Collections.singletonList(detailMap));
+        map.put("billType", dto.getBillType());
+        map.put("customerId", dto.getCustomerId());
+        map.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
+        //明细根据sku + 仓库分组 合并数量
+        Map<String, CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailDTOMap = new HashMap<>();
         for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : dto.getDetails()) {
+            if (!ObjectUtils.isEmpty(detailDTOMap.get(detail.getSkuId() + ":" + detail.getWarehouseId()))) {
+                detail.setQty(detail.getQty() + detailDTOMap.get(detail.getSkuId() + ":" + detail.getWarehouseId()).getQty());
+            }
+            detailDTOMap.put(detail.getSkuId() + ":" + detail.getWarehouseId(),detail);
+        }
+        for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : detailDTOMap.values()) {
             AtomicInteger quantity = new AtomicInteger(detail.getQty());
             for (CfgRulePickingEntity picking : cfgRulePickings) {
                 List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = conditions.stream().
