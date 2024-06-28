@@ -21,16 +21,7 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(CfgRuleOutDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addOrUpdate(CfgRuleOutDTO.CommonDTO dto);
 
-    /**
-    * 修改
-    * @author lrp
-    * @date: 2024-06-28
-    * @param dto
-    * @return
-    */
-    Boolean update(CfgRuleOutDTO.UpdateDTO dto);
-
-
+    CfgRuleOutDTO.CommonDTO view();
 }
