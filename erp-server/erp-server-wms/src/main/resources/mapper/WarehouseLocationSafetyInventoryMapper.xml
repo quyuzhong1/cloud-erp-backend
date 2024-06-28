@@ -23,7 +23,7 @@
         <result column="is_deleted" property="isDeleted" />
     </resultMap>
 
-    <select id="paging" resultType="com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO.ViewDTO">
+    <select id="paging" resultType="com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO$ViewDTO">
         select id,
                sku_no,
                product_name,
