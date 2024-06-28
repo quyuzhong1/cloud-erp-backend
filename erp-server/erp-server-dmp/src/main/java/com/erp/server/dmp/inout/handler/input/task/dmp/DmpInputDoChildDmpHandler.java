@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputChildEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
@@ -48,33 +49,31 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 			List<Map<String, Object>> dmpInputMongoEntityList) {
 		Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(dmpInputMongoEntityList)) {
-			List<String> mongoIds = dmpInputMongoEntityList.stream().map(d -> d.get(DmpInputMongoHandler.MONGO_BASE_ID).toString()).collect(Collectors.toList());
-			List<ParamData> paramDataList = new ArrayList<>();
-			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.IN, mongoIds));
 			String childMongoStorageName = this.getChildMongoStorageName();
 			if(StringUtils.isNotBlank(childMongoStorageName)) {
-				List<Map<String, Object>> dmpInputMongoChildEntityList = mongoService.findMongoData(paramDataList, childMongoStorageName);
-				Map<String, String> mongIdDmpIdMap = dmpInputMongoDmpRelationService.lambdaQuery()
-						.in(DmpInputMongoDmpRelationEntity::getMongoId, mongoIds)
-						.eq(DmpInputMongoDmpRelationEntity::getIsDeleted, false)
-						.eq(DmpInputMongoDmpRelationEntity::getConvertId, this.getMainConvertId())
-						.list()
-						.stream().collect(Collectors.toMap(DmpInputMongoDmpRelationEntity::getMongoId, DmpInputMongoDmpRelationEntity::getDmpId));
-				for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-					TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
-					String mainDmpId = mongIdDmpIdMap.get(dmpInputMongoChildEntity.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
-					if(StringUtils.isNotBlank(mainDmpId)) {
-						dmpInputDmpBaseEntity.put(StrUtils.underlineToCamel(MAIN_ID, true), mainDmpId);
-						Set<Entry<String, Object>> entrySet = dmpInputMongoChildEntity.entrySet();
-						for (Map.Entry<String, Object> d : entrySet) {
-							String key = d.getKey();
-							Object value = d.getValue();
-							List<String> convertKey = this.convertKey(key);
-							for(String c : convertKey) {
-								dmpInputDmpBaseEntity.put(c.replace(".", ""), value);
-							}
+				List<Map<String, Object>> dmpInputMongoChildEntityList = this.getDmpInputMongoChildEntityList(dmpInputMongoEntityList, childMongoStorageName);
+				if(CollUtil.isNotEmpty(dmpInputMongoChildEntityList)) {
+					this.putDmpId(dmpInputMongoChildEntityList);
+					for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
+						TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
+						Object mainDmpIdObj = dmpInputMongoChildEntity.get(MAIN_ID);
+						if(mainDmpIdObj == null) {
+							throw new ServiceException("子类数据mongo集合" + childMongoStorageName + "的id=" + dmpInputMongoChildEntity.get(DmpInputMongoHandler.MONGO_BASE_ID) + "未查询到dmpid");
 						}
-						dmpInputDataDmpRelationMaps.put(Collections.singletonList(dmpInputMongoChildEntity), Collections.singletonList(dmpInputDmpBaseEntity));
+						String mainDmpId = mainDmpIdObj.toString();
+						if(StringUtils.isNotBlank(mainDmpId)) {
+							dmpInputDmpBaseEntity.put(StrUtils.underlineToCamel(MAIN_ID, true), mainDmpId);
+							Set<Entry<String, Object>> entrySet = dmpInputMongoChildEntity.entrySet();
+							for (Map.Entry<String, Object> d : entrySet) {
+								String key = d.getKey();
+								Object value = d.getValue();
+								List<String> convertKey = this.convertKey(key);
+								for(String c : convertKey) {
+									dmpInputDmpBaseEntity.put(c.replace(".", ""), value);
+								}
+							}
+							dmpInputDataDmpRelationMaps.put(Collections.singletonList(dmpInputMongoChildEntity), Collections.singletonList(dmpInputDmpBaseEntity));
+						}
 					}
 				}
 			}
@@ -100,5 +99,28 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 			return null;
 		}
 		return DmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService.getById(childId), dmpCfgInputConvertEntityList.get(0));
+	}
+	
+	protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList , String childMongoStorageName){
+		List<String> mongoIds = dmpInputMongoEntityList.stream().map(d -> d.get(DmpInputMongoHandler.MONGO_BASE_ID).toString()).collect(Collectors.toList());
+		List<ParamData> paramDataList = new ArrayList<>();
+		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.IN, mongoIds));
+		List<Map<String, Object>> dmpInputMongoChildEntityList = mongoService.findMongoData(paramDataList, childMongoStorageName);
+		return dmpInputMongoChildEntityList;
+	}
+	
+	protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList){
+		List<String> mongoIds = dmpInputMongoChildEntityList.stream().map(d -> d.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID).toString()).collect(Collectors.toList());
+		Map<String, String> mongIdDmpIdMap = dmpInputMongoDmpRelationService.lambdaQuery()
+				.in(DmpInputMongoDmpRelationEntity::getMongoId, mongoIds)
+				.eq(DmpInputMongoDmpRelationEntity::getIsDeleted, false)
+				.eq(DmpInputMongoDmpRelationEntity::getConvertId, this.getMainConvertId().getId())
+				.list()
+				.stream().collect(Collectors.toMap(DmpInputMongoDmpRelationEntity::getMongoId, DmpInputMongoDmpRelationEntity::getDmpId));
+		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
+			String nextLevelId = dmpInputMongoChildEntity.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID).toString();
+			String dmpId = mongIdDmpIdMap.get(nextLevelId);
+			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
+		}
 	}
 }

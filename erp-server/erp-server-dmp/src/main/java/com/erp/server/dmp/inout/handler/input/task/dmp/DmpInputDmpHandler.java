@@ -305,11 +305,11 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		}
 	}
 	
-	protected String getMainConvertId() {
+	protected DmpCfgInputConvertEntity getMainConvertId() {
 		List<DmpCfgInputConvertEntity> list = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(dmpCfgInputConvertEntity.getMainId())
 				&& d.getInputStatus().equals(dmpCfgInputConvertEntity.getInputStatus()));
 		list.sort((d1 , d2) -> d1.getOrder().compareTo(d2.getOrder()));
-		return list.get(0).getId();
+		return list.get(0);
 	}
 	
 	public abstract List<Map<String, Object>> convertMongoToDmp(DmpInputDmpRequest dmpRequest, DmpInputMongoResponse dmpResponse);

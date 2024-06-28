@@ -34,7 +34,7 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 		Map<String, String> mongIdDmpIdMap = dmpInputMongoDmpRelationService.lambdaQuery()
 				.in(DmpInputMongoDmpRelationEntity::getMongoId, mongoIds)
 				.eq(DmpInputMongoDmpRelationEntity::getIsDeleted, false)
-				.eq(DmpInputMongoDmpRelationEntity::getConvertId, this.getMainConvertId())
+				.eq(DmpInputMongoDmpRelationEntity::getConvertId, this.getMainConvertId().getId())
 				.list()
 				.stream().collect(Collectors.toMap(DmpInputMongoDmpRelationEntity::getMongoId, DmpInputMongoDmpRelationEntity::getDmpId));
 		for(List<TreeMap<String, Object>> dmpInputMongoNextEntityList : convertData.values()) {

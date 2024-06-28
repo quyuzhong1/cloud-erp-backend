@@ -1,10 +1,7 @@
 package com.erp.server.dmp.inout.handler.factory;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.common.business.utils.ApplicationContextUtils;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.dto.request.DmpInputChildCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputCreateRequest;
@@ -133,26 +129,15 @@ public class DmpInputCreateFactory{
 	 */
 	@Transactional(rollbackFor = Exception.class)
 	public List<DmpInputFinishResponse> doChildInputTask(DmpInputChildCreateRequest dmpInputChildCreateRequest) {
-		List<DmpInputFinishResponse> dmpInputFinishResponseList = new LinkedList<>();
-        //线程安全
-        List<DmpInputFinishResponse> sycList = Collections.synchronizedList(dmpInputFinishResponseList);
-        
+		List<DmpInputFinishResponse> dmpInputFinishResponseList = new ArrayList<>();
 		DmpInputCreateResponse dmpInputCreateResponse = this.createChildInputTask(dmpInputChildCreateRequest);
 		List<DmpInputTaskEntity> afterDmpInputTaskEntityList = dmpInputCreateResponse.getAfterDmpInputTaskEntityList();
-//		CountDownLatch countDownLatch = new CountDownLatch(afterDmpInputTaskEntityList.size());
 		for(DmpInputTaskEntity dmpInputTaskEntity : afterDmpInputTaskEntityList) {
 			DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
 			dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
 			dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
-			sycList.add(dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest));
-//			countDownLatch.countDown();
+			dmpInputFinishResponseList.add(dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest));
 		}
-//		try {
-//            countDownLatch.await();
-//        } catch (InterruptedException e) {
-//        	log.error("多线程执行父任务{}下的子任务失败" , dmpInputChildCreateRequest.getParentInputTaskId(), e);
-//        	throw new ServiceException("多线程执行父任务下的子任务失败");
-//        }
-		return sycList;
+		return dmpInputFinishResponseList;
 	}
 }
