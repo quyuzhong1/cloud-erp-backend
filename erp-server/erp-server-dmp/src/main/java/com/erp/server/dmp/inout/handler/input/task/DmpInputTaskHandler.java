@@ -33,12 +33,12 @@ import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
 import com.erp.model.dmp.enums.DmpCfgInputTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputChildCreateRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputRequest;
 import com.erp.server.dmp.inout.dto.request.DmpRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputDmpResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
+import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -56,6 +56,7 @@ import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpCfgApiService;
+import com.erp.server.dmp.service.DmpCfgInputChildService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.DmpCfgOutputDetailService;
 import com.erp.server.dmp.service.DmpCfgOutputService;
@@ -95,6 +96,8 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	protected MongoService mongoService;
 	@Autowired
 	protected DmpCfgInputService dmpCfgInputService;
+	@Autowired
+	protected DmpCfgInputChildService dmpCfgInputChildService;
 	
 	/**----------多例对象属性,初始化在DmpInputBaseTaskHandler.addDmpHandler(DmpInputTaskRequest, DmpInputTaskResponse, List<DmpHandler>, DmpInputTaskStatusEnum)-----------**/
 	protected String convertId;
@@ -293,6 +296,31 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	}
 	
 	/**
+	 * 获取父类存储名称
+	 * @param taskStatusEnum
+	 * @return
+	 */
+	protected String getParentStorageName(DmpInputTaskStatusEnum taskStatusEnum) {
+		String cfgInputId = dmpCfgInputEntity.getId();
+		String parentStorageName = "";
+		List<DmpCfgInputChildEntity> dmpCfgInputChildEntityList = dmpCfgInputChildService.lambdaQuery()
+				.eq(DmpCfgInputChildEntity::getChildId, cfgInputId)
+				.eq(DmpCfgInputChildEntity::getInputStatus, taskStatusEnum.getCode())
+				.list();
+		if(CollUtil.isNotEmpty(dmpCfgInputChildEntityList)) {
+			String parentId = dmpCfgInputChildEntityList.get(0).getParentId();
+			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(parentId) 
+					&& d.getInputStatus().equals(taskStatusEnum.getCode()));
+			if(DmpInputTaskStatusEnum.MONGO == taskStatusEnum) {
+				parentStorageName = DmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService.getById(parentId), dmpCfgInputConvertEntityList.get(0));
+			}else if(DmpInputTaskStatusEnum.DMP == taskStatusEnum) {
+				parentStorageName = dmpCfgInputConvertEntityList.get(0).getStorageName();
+			}
+		}
+		return parentStorageName;
+	}
+	
+	/**
 	 * 处理转换文件数据，即fds层输出数据
 	 * @param dmpResponse
 	 */
@@ -366,8 +394,8 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param dmpResponse
 	 * @param resultDmpInputMongoEntityList
 	 */
-	protected List<DmpInputHotfixCreateRequest> doChildCfgInput(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-		List<DmpInputHotfixCreateRequest> dmpInputHotfixCreateRequestList = new ArrayList<>();
+	protected Map<String, List<DmpInputFinishResponse>> doChildCfgInput(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+		Map<String, List<DmpInputFinishResponse>> cfgInputChildFinishResponseMap = new HashMap<>();
 		List<String> nextLevelIdList = this.getNextLevelIdList(dmpRequest, dmpResponse);
 		this.beforeToDoChildCfgInput(dmpRequest, dmpResponse , nextLevelIdList);
 		if(CollUtil.isNotEmpty(nextLevelIdList)) {
@@ -379,12 +407,12 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 			    	dmpInputHotfixCreateRequest.setCfgInputId(childCfgInputId);
 			    	dmpInputHotfixCreateRequest.setNextLevelIdList(nextLevelIdList);
 			    	dmpInputHotfixCreateRequest.setParentInputTaskId(inputTaskId);
-			    	dmpInputCreateFactory.doChildInputTask(dmpInputHotfixCreateRequest);
+			    	cfgInputChildFinishResponseMap.put(childCfgInputId, dmpInputCreateFactory.doChildInputTask(dmpInputHotfixCreateRequest));
 				}
 			}
 		}
-		this.afterToDoChildCfgInput(dmpRequest, dmpResponse, dmpInputHotfixCreateRequestList);
-		return dmpInputHotfixCreateRequestList;
+		this.afterToDoChildCfgInput(dmpRequest, dmpResponse, cfgInputChildFinishResponseMap);
+		return cfgInputChildFinishResponseMap;
 	}
 	
 	/**
@@ -515,7 +543,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param nextLevelIdList
 	 */
 	protected void afterToDoChildCfgInput(DmpInputTaskRequest dmpRequest,
-			DmpInputTaskResponse dmpResponse , List<DmpInputHotfixCreateRequest> dmpInputHotfixCreateRequestList) {
+			DmpInputTaskResponse dmpResponse , Map<String, List<DmpInputFinishResponse>> cfgInputChildFinishResponseMap) {
 		
 	}
 	
