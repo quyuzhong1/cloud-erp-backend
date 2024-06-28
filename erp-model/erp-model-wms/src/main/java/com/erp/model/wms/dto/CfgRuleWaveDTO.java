@@ -75,8 +75,11 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
          * 拣货车类型【可排序】
          */
-        @Dict(queryFieldName = "id", tableName = "picking_cart_type")
-        private String pickingCartTypeId;
+        private String pickingCartTypeJson;
+        /**
+         * 拣货车类型
+         */
+        private String pickingCartTypeName;
         /**
          * 最小单数【可排序】
          */
@@ -140,8 +143,12 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
         * 拣货车类型id
         */
-        @Dict(queryFieldName = "id", tableName = "picking_cart_type")
-        private String pickingCartTypeId;
+        private String pickingCartTypeJson;
+
+        /**
+         * 拣货车类型id集合
+         */
+        private List<String> pickingCartTypeIdList;
 
         /**
         * 最小单数
@@ -171,6 +178,7 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
         * 执行时间
         */
+        @JsonFormat(pattern = "HH:mm")
         private List<LocalTime> executionTimeList;
 
         /**
@@ -258,11 +266,10 @@ public class CfgRuleWaveDTO implements Serializable {
         private Integer priority;
 
         /**
-        * 拣货车类型id
+        * 拣货车类型id集合
         */
-        @NotBlank(message = "拣货车类型id不能为空")
-        @Size(max = 19,message = "拣货车类型id最大长度不能超过19位")
-        private String pickingCartTypeId;
+        @NotEmpty(message = "拣货车类型id不能为空")
+        private List<String> pickingCartTypeIdList;
 
         /**
         * 最小单数

@@ -18,6 +18,7 @@ import java.util.List;
  */
 @Mapper
 public interface CfgRuleConditionMapper extends BaseMapper<CfgRuleConditionEntity> {
+
     /**
      * 根据规则ids查询
      * @author will
