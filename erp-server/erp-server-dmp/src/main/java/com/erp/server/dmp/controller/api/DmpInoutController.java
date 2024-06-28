@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,7 +26,7 @@ public class DmpInoutController extends BaseController {
 	private DmpInputCreateFactory dmpInputCreateFactory;
 	
     @PostMapping("doInputTask")
-    public ApiResult<?> doInputTask(DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest) {
+    public ApiResult<?> doInputTask(@RequestBody DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest) {
     	return success(dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest));
     }
     
