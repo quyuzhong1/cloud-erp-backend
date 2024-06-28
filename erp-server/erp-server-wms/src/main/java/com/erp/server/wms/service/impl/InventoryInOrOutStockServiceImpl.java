@@ -57,11 +57,11 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
                 InOutStockDTO param = (InOutStockDTO) baseParam;
                 ValidatorUtil.validateEntity(param);
                 if(0 == param.getQty()) {
-                    throw new ServiceException("库存变更数量不能等于0");
+                    ServiceException.runError("库存变更数量不能等于0");
                 }
 
                 if(param.getQty() < 0 && !this.allowNegativeQtyBusinessList.contains(param.getSourceType())) {
-                    throw new ServiceException("库存变更数量不能小于0");
+                    ServiceException.runError("库存变更数量不能小于0");
                 }
 
                 if(ignoreInventorySkuIds.contains(param.getSkuId())) {
@@ -71,12 +71,12 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
 
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getWarehouseId(), v -> warehouseService.detailWithCache(v));
                 if (Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99002);
+                    ServiceException.runError(ApiError.ERROR_99002);
                 }
                 if (StrUtils.isNotEmpty(param.getWarehouseLocation())) {
                     WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(), v -> warehouseLocationService.findByWarehouseIdAndCode(param.getWarehouseId(), v));
                     if (Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
-                        throw new ServiceException("仓位信息不存在");
+                        ServiceException.runError("仓位信息不存在");
                     }
                 }
 
@@ -128,7 +128,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
     public <T extends InventoryStockBaseDTO> void singleHandler(T baseParam, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
         InOutStockDTO param = (InOutStockDTO)baseParam;
         if(CollUtil.isEmpty(transactionRuleParams)) {
-            throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+            ServiceException.runError(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
         }
         log.warn("从配置读取库存交易规则，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
         // 交易规则安装状态排序
