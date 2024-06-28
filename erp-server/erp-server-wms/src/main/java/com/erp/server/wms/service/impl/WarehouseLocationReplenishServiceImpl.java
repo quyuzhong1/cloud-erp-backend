@@ -1,29 +1,29 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.lang.Pair;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.LocationReplenishStatusEnum;
 import com.erp.model.wms.enums.LocationReplenishTypeEnum;
 import com.erp.server.wms.mapper.WarehouseLocationReplenishMapper;
 import com.erp.server.wms.service.*;
-import io.seata.spring.boot.autoconfigure.properties.SagaAsyncThreadPoolProperties;
-import javafx.util.Pair;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -48,8 +48,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     private InventoryService inventoryService;
     @Resource
     private WarehouseLocationSafetyInventoryService safetyInventoryService;
-    @Autowired
-    private SagaAsyncThreadPoolProperties sagaAsyncThreadPoolProperties;
+    @Resource
+    private WarehouseLocationMoveService warehouseLocationMoveService;
 
     @Override
     public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> paging(PagingDTO<WarehouseLocationReplenishDTO.SearchParamDTO> pagingDTO) {
@@ -120,23 +120,26 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         WarehouseLocationReplenishEntity entity = new WarehouseLocationReplenishEntity();
         entity.setId(id);
         entity.setStatus(LocationReplenishStatusEnum.NO_NEED_HANDLE.getCode());
-        int updateCount = this.baseMapper.updateById(entity);
+        this.baseMapper.updateById(entity);
 
         WarehouseLocationReplenishEntity replenishEntity = this.baseMapper.selectById(id);
         String code = replenishEntity.getSkuNo() + " : " + replenishEntity.getToWarehouseLocation();
-        return updateCount > 0 ? BatchResultDTO.success(id, code, OperationTypeEnum.UPDATE) : BatchResultDTO.fail(id, code, OperationTypeEnum.UPDATE);
+        return BatchResultDTO.success(id, code, OperationTypeEnum.UPDATE);
     }
 
     @Override
     public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response) {
+        Optional<AdvanceQueryDTO> checkIdsOptional = dto.getAdvanceQueryDTOList().stream().filter(item -> item.getCompare().equals("inList")).findFirst();
         List<WarehouseLocationReplenishEntity> entityList;
-        List<String> ids = dto.getIds();
-        if(! ids.isEmpty()){
+        List<String> ids;
+        if(checkIdsOptional.isPresent() && !ObjectUtil.isEmpty(checkIdsOptional.get().getValue())){
+            ids = (List<String>) checkIdsOptional.get().getValue();
             entityList = this.baseMapper.selectBatchIds(ids);
         }else {
             WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
             BeanMapper.copy(dto, searchParamDto);
             entityList = this.baseMapper.listByParam(searchParamDto);
+            ids = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         }
 
         List<WarehouseLocationReplenishDTO.ViewDTO> viewList = fillViewList(entityList);
@@ -144,8 +147,13 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             String fileName = "仓位补货" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             String excelPath = "excel/warehouseLocationReplenishExport.xlsx";
             new ExcelPrintUtils().patchExport(viewList, response, fileName, excelPath);
+
+            //更新状态：处理中
+            WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
+            updateEntity.setStatus(LocationReplenishStatusEnum.HANDLE_ING.getCode());
+            this.baseMapper.update(updateEntity, new QueryWrapper<WarehouseLocationReplenishEntity>().in("id", ids));
         } catch (IOException e) {
-            log.error("导出补货清单失败：{}", e);
+            log.error("导出仓位补货清单失败：{}", e);
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
@@ -183,23 +191,15 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     }
 
     @Override
-    public BatchResultDTO handle(WarehouseLocationReplenishDTO.HandleDTO handleDto) {
-        //todo 生成仓位移动
+    public BatchResultDTO handle(WarehouseLocationReplenishDTO.HandleDTO handleDTO) {
+        WarehouseLocationReplenishEntity entity = this.baseMapper.selectById(handleDTO.getId());
 
-        WarehouseLocationReplenishEntity entity = this.baseMapper.selectById(handleDto.getId());
-        if(StringUtils.compare(entity.getStatus(), LocationReplenishStatusEnum.WAIT_HANDLE.getCode()) == 0){
-            WarehouseLocationReplenishEntity update = new WarehouseLocationReplenishEntity();
-            BeanMapper.copy(handleDto, update);
-            this.baseMapper.updateById(update);
-            return BatchResultDTO.success(handleDto.getId(), entity.getSkuNo() + " : " + handleDto.getFromWarehouseLocation(), OperationTypeEnum.UPDATE);
-        }
-        entity.setFromWarehouseArea(handleDto.getFromWarehouseArea());
-        entity.setFromWarehouseLocation(handleDto.getFromWarehouseLocation());
-        entity.setSuggestQty(handleDto.getQty());
-        entity.setQty(handleDto.getQty());
-        entity.setId(null);
-        this.baseMapper.insert(entity);
-        return BatchResultDTO.success(entity.getId(), entity.getSkuNo() + " : " + handleDto.getFromWarehouseLocation(), OperationTypeEnum.ADD);
+        WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
+        BeanMapper.copy(handleDTO, updateEntity);
+        updateEntity.setId(entity.getId());
+        this.baseMapper.updateById(updateEntity);
+
+        return BatchResultDTO.success(updateEntity.getId(), updateEntity.getSkuNo() + " : " + handleDTO.getFromWarehouseLocation(), OperationTypeEnum.ADD);
     }
 
     @Override
@@ -308,6 +308,39 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
         this.baseMapper.insert(entity);
         return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
+    }
+
+    @Override
+    public BatchResultDTO finish(WarehouseLocationReplenishDTO.HandleDTO dto) {
+        WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
+        BeanMapper.copy(dto, updateEntity);
+        updateEntity.setStatus(LocationReplenishStatusEnum.HANDLED.getCode());
+        this.baseMapper.updateById(updateEntity);
+
+        //生成仓位移动，并自动审核通过
+        WarehouseLocationReplenishEntity fullEntity = this.baseMapper.selectById(dto.getId());
+        WarehouseLocationMoveDetailDTO.AddDTO moveDetail = new WarehouseLocationMoveDetailDTO.AddDTO();
+        moveDetail.setMainId(fullEntity.getId());
+        moveDetail.setSkuId(fullEntity.getSkuId());
+        moveDetail.setSkuNo(fullEntity.getSkuNo());
+        moveDetail.setWarehouseId(fullEntity.getWarehouseId());
+        moveDetail.setQty(fullEntity.getQty());
+        moveDetail.setOutWarehouseLocation(fullEntity.getFromWarehouseLocation());
+        moveDetail.setInWarehouseLocation(fullEntity.getToWarehouseLocation());
+        moveDetail.setRemark("仓位补货自动生成");
+
+        WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
+        addDTO.setWarehouseId(fullEntity.getWarehouseId());
+        addDTO.setPcShow(Boolean.TRUE);
+        addDTO.setDetailList(Collections.singletonList(moveDetail));
+        warehouseLocationMoveService.addAndApprove(addDTO);
+        
+        return BatchResultDTO.success(fullEntity.getId(), fullEntity.getSourceCode(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo() {
+        return this.baseMapper.listTabInfo();
     }
 
     /**
