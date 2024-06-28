@@ -24,17 +24,19 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.CfgRulePickingStagingEntity;
-import com.erp.model.wms.entity.PickingDetailEntity;
-import com.erp.model.wms.entity.PickingListsEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,6 +87,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @Resource
     @Lazy
     private SoDeliveryNoticeService soDeliveryNoticeService;
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
 
     @Override
     public PagingVO<PickingListsDTO.PagingView> paging(PagingDTO<PickingListsDTO.PagingParam> dto) {
@@ -387,6 +392,67 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         int count = count(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99102);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, Map<String, String> sourceDetailMap) {
+        List<String> skuIdList = executionData.getDetails().stream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+        Map<String, List<LocationInventoryResultDTO>> resultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
+        for (Map.Entry<String, List<LocationInventoryResultDTO>> entry : resultMap.entrySet()) {
+            PickingListsEntity entity = new PickingListsEntity();
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JHD);
+            // 生成拣货单主表数据
+            entity.setId(IdWorker.getIdStr());
+            entity.setCode(code);
+            entity.setWarehouseId(entry.getKey());
+            entity.setWarehouseName(warehouseMap.get(entry.getKey()));
+            entity.setSourceId(soB2cDeliveryEntity.getId());
+            entity.setSourceCode(soB2cDeliveryEntity.getCode());
+            entity.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+            int skuTotal = entry.getValue().stream().map(LocationInventoryResultDTO::getQuantity).reduce(0, Math::addExact);
+            entity.setSkuTotal(skuTotal);
+            List<PickingDetailEntity> entities = new ArrayList<>();
+            List<InOutStockDTO> inOutStockList = new ArrayList<>();
+            for (LocationInventoryResultDTO result : entry.getValue()) {
+                // 获取产品信息
+                ProductDetailEntity productDetailEntity = detailEntityList.stream()
+                        .filter(entityClass -> entityClass.getId().equals(result.getSkuId()))
+                        .findFirst().orElse(new ProductDetailEntity());
+                PickingDetailEntity detail = new PickingDetailEntity();
+                detail.setSkuId(result.getSkuId());
+                detail.setMainId(entity.getId());
+                detail.setSkuNo(result.getSkuNO());
+                detail.setUnit(productDetailEntity.getUnitName());
+                detail.setQty(result.getQuantity());
+                detail.setWarehouseLocation(result.getWarehouseLocation());
+                detail.setSourceDetailId(sourceDetailMap.get(result.getSkuId()));
+                entities.add(detail);
+                InOutStockDTO inOutStockDTO = new InOutStockDTO();
+                inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+                inOutStockDTO.setSourceId(soB2cDeliveryEntity.getId());
+                inOutStockDTO.setSourceCode(soB2cDeliveryEntity.getCode());
+                inOutStockDTO.setSourceDetailId(detail.getSourceDetailId());
+                inOutStockDTO.setSkuNo(detail.getSkuNo());
+                inOutStockDTO.setBillDate(LocalDate.now());
+                inOutStockDTO.setSkuId(detail.getSkuId());
+                inOutStockDTO.setQty(detail.getQty());
+                inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+                inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
+                inOutStockList.add(inOutStockDTO);
+            }
+            entity.setLocationTotal(entities.size());
+            //添加冻结库存
+            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+            inventoryInOutStockDTO.setParamList(inOutStockList);
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+            save(entity);
+            pickingDetailService.saveBatch(entities);
         }
     }
 

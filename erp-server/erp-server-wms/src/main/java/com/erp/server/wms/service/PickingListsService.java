@@ -3,11 +3,14 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PickingListsEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -76,4 +79,13 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
 
     void exist(String id);
     void exist(List<String> id);
+
+    /**
+     * B2C发货单生成拣货单逻辑
+     * @param soB2cDeliveryEntity soB2c发货单
+     * @param executionData 需要执行拣货规则的数据
+     * @param warehouseMap 仓库id和仓库名映射
+     * @param sourceDetailMap skuId和来源明细id的映射
+     */
+    void generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, Map<String, String> sourceDetailMap);
 }
