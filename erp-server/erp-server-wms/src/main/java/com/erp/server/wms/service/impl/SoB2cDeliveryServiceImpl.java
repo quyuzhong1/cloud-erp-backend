@@ -1483,6 +1483,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     .filter(e -> e.getCode().equals(cancelShipment.getWarehouseLocation()))
                     .findFirst().orElse(new WarehouseLocationEntity());
             cancelShipment.setWarehouseLocationName(location.getName());
+            cancelShipment.setReturnWarehouseLocationId(location.getId());
             cancelShipment.setReturnWarehouseLocation(cancelShipment.getWarehouseLocation());
             cancelShipment.setReturnWarehouseLocationName(cancelShipment.getWarehouseLocationName());
             cancelShipment.setReturnQty(cancelShipment.getPickingQty());
