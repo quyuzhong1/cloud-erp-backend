@@ -52,4 +52,8 @@ public interface PickingWaveService extends SuperService<PickingWaveEntity> {
      * @param skuId sku
      */
     List<PickingWaveDTO.PickingWaveDetailDTO> listDetailByMainId(String waveId, String basketNo, String skuId);
+
+    PickingWaveEntity getByCode(String code);
+
+    List<PickingWaveEntity> listByCarCode(String carCode);
 }

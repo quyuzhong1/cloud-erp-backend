@@ -1,5 +1,6 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.util.StrUtil;
 import com.erp.server.wms.service.CfgRuleWaveService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -30,8 +31,11 @@ public class CfgRuleWaveJob {
      */
     @XxlJob("autoExecuteRule")
     public ReturnT<String> autoExecuteRule() {
+        //可输入时间
+        String time = XxlJobHelper.getJobParam();
+
         XxlJobHelper.log("====开始执行波次规则=====");
-        cfgRuleWaveService.autoExecuteRule();
+        cfgRuleWaveService.autoExecuteRule(time);
         XxlJobHelper.log("====结束执行波次规则=====");
         return ReturnT.SUCCESS;
     }
