@@ -1243,7 +1243,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         paramDTO.setPlatform(dictPlatform);
         paramDTO.setShopIdList(Collections.singletonList(shopId));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-        paramDTO.setPlatformSkuNoList(platformSkuList);
+
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)){
+            // 速卖通订单SKU为空的情况只根据PlatformSkuNo匹配
+            if (CollectionUtils.isNotEmpty(platformSkuList) && platformSkuList.stream().allMatch(StringUtils::isNotBlank)){
+                paramDTO.setPlatformSkuNoList(platformSkuList);
+            }
+            // 存在空SKU忽略PlatformSkuNo查询
+        } else {
+            // 其他平台正常通过平台SKU查询
+            paramDTO.setPlatformSkuNoList(platformSkuList);
+        }
+
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
