@@ -84,13 +84,6 @@ public class CfgRuleOutDTO implements Serializable {
         @Size(max = 20,message = "配置规则类型最大长度不能超过20位")
         private String type;
 
-        /**
-        * 规则内容
-        */
-        @NotBlank(message = "规则内容不能为空")
-        private String ruleContent;
-
-
     }
 
 
