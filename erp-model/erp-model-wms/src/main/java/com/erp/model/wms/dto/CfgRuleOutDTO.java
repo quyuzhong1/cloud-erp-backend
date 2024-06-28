@@ -29,12 +29,12 @@ public class CfgRuleOutDTO implements Serializable {
     @NoArgsConstructor
     public static class EquipmentSortingPortConditionDTO {
         /**
-         * 设置类型
+         * 设置类型 wms/common/enumDropDown?type=EquipmentSortingPortType
          */
         private String type;
 
         /**
-         * 比较符
+         * 比较符 wms/common/enumDropDown?type=EquipmentSortingPortCompare
          */
         private String compare;
 
@@ -44,7 +44,7 @@ public class CfgRuleOutDTO implements Serializable {
         private String value;
 
         /**
-         * 分拣口
+         * 分拣口 wms/dict/drop/down?type=equipmentSortingPort
          */
         private String port;
     }
@@ -58,7 +58,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 设备分拣口配置条件
          */
-        private List<EquipmentSortingPortConditionDTO> conditionDTOList;;
+        private List<EquipmentSortingPortConditionDTO> sortingConditionDTOList;;
     }
 
 
@@ -75,16 +75,15 @@ public class CfgRuleOutDTO implements Serializable {
         private String leftBracket;
 
         /**
-         * 条件的字段
+         * 条件的字段 wms/common/enumDropDown?type=AllowableDeviationsCondition
          */
         @NotBlank(message = "条件的字段不能为空")
-        @Size(max = 30, message = "条件的字段最大长度不能超过30位")
         private String field;
 
         private String fieldName;
 
         /**
-         * 下拉逻辑关系
+         * 下拉逻辑关系 wms/common/enumDropDown?type=AllowableDeviationsCompare
          */
         @NotBlank(message = "比较符不能为空")
         @Size(max = 30, message = "比较符最大长度不能超过30位")
@@ -104,7 +103,7 @@ public class CfgRuleOutDTO implements Serializable {
         private String rightBracket;
 
         /**
-         * 逻辑关系 or 和 and
+         * 逻辑关系 or 和 and 下拉逻辑关系 wms/common/enumDropDown?type=AllowableDeviationsLogic
          */
         @StateEnumValue(strValues = {"or", "and"}, message = "逻辑关系有误")
         private String logic;
@@ -122,9 +121,9 @@ public class CfgRuleOutDTO implements Serializable {
     public static class B2cAllowableDeviationsCondition {
 
         /**
-         * 类型
+         * 值
          */
-        private String type;
+        private List<String> valList;
 
         /**
          * 条件明细
@@ -139,7 +138,7 @@ public class CfgRuleOutDTO implements Serializable {
     public static class B2cAllowableDeviations {
 
         /**
-         * 设置类型
+         * 设置类型 wms/dict/drop/down?type=AllowableDeviationsType
          */
         private String type;
 
