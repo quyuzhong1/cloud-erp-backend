@@ -732,6 +732,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             if (Objects.nonNull(handoverCommitResult) && handoverCommitResult.getSuccess()) {
                 entity.setHandoverNo(handoverCommitResult.getResponse().getHandoverContentCode());
                 entity.setPlatformPackageNo(String.valueOf(handoverCommitResult.getResponse().getHandoverContentId()));
+                entity.setRemark("");
             }
         } catch (ApiException e) {
             log.error("创建交接单失败>>>>>>{}", e);
