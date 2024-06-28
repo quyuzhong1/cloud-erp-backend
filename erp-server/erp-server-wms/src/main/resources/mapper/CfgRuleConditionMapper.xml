@@ -47,6 +47,7 @@
         <foreach collection="cfgRuleIds" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
+        order by crc.index
     </select>
 
 </mapper>
