@@ -163,6 +163,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private PickingWaveDetailService pickingWaveDetailService;
 
+    @Resource
     private WarehouseLocationService warehouseLocationService;
 
 
