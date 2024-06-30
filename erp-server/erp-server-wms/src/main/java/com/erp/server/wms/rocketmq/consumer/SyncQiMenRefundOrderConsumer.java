@@ -32,7 +32,7 @@ import java.util.Objects;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
         selectorExpression = "third_system_qimen_return_order_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_return_order_consumer",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_qimen_return_order_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class SyncQiMenRefundOrderConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
