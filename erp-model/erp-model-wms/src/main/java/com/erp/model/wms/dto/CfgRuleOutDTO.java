@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -44,7 +45,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 对应值
          */
-        private String value;
+        private List<String> valueList = new ArrayList<>();
 
         /**
          * 分拣口 wms/dict/drop/down?type=equipmentSortingPort
@@ -214,6 +215,17 @@ public class CfgRuleOutDTO implements Serializable {
          * 订单包装高(cm)
          */
         private BigDecimal orderHeight;
+
+        public void handleNullToZero(){
+            this.setScanWeight(Objects.isNull(this.getScanWeight()) ? BigDecimal.ZERO : this.getScanWeight());
+            this.setScanLength(Objects.isNull(this.getScanLength()) ? BigDecimal.ZERO : this.getScanLength());
+            this.setScanWidth(Objects.isNull(this.getScanWidth()) ? BigDecimal.ZERO : this.getScanWidth());
+            this.setScanHeight(Objects.isNull(this.getScanHeight()) ? BigDecimal.ZERO : this.getScanHeight());
+            this.setOrderWeight(Objects.isNull(this.getOrderWeight()) ? BigDecimal.ZERO : this.getOrderWeight());
+            this.setOrderLength(Objects.isNull(this.getOrderLength()) ? BigDecimal.ZERO : this.getOrderLength());
+            this.setOrderWidth(Objects.isNull(this.getOrderWidth()) ? BigDecimal.ZERO : this.getOrderWidth());
+            this.setOrderHeight(Objects.isNull(this.getOrderHeight()) ? BigDecimal.ZERO : this.getOrderHeight());
+        }
 
     }
 

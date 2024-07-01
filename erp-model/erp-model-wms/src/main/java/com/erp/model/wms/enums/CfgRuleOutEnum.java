@@ -50,15 +50,15 @@ public enum CfgRuleOutEnum {
 
     @Getter
     public enum EquipmentSortingPortEnum implements EnumMessage  {
-        ONE("eq", "1"),
-        TWO("nq", "2"),
-        THREE("inList", "3"),
-        FOUR("notInList", "4"),
-        FIVE("notInList", "5"),
-        SIX("notInList", "6"),
-        SEVEN("notInList", "7"),
-        EIGHT("notInList", "8"),
-        NINE("notInList", "9(异常口)");
+        ONE("1", "1"),
+        TWO("2", "2"),
+        THREE("3", "3"),
+        FOUR("4", "4"),
+        FIVE("5", "5"),
+        SIX("6", "6"),
+        SEVEN("7", "7"),
+        EIGHT("8", "8"),
+        NINE("9", "9(异常口)");
         private String code;
         private String name;
         EquipmentSortingPortEnum(String code, String name) {
@@ -81,12 +81,12 @@ public enum CfgRuleOutEnum {
 
     @Getter
     public enum AllowableDeviationsConditionEnum implements EnumMessage  {
-        WEIGHING_VARIANCE_RATE("weighingVarianceRate", "称重差异率(%)"),
-        VOLUME_DIFFERENCE_RATE_LONG("volumeDifferenceRateLong", "量方差异率-长(%)"),
+        WEIGHING_VARIANCE_RATE("weightVarianceRate", "称重差异率(%)"),
+        VOLUME_DIFFERENCE_RATE_LONG("volumeDifferenceRateLength", "量方差异率-长(%)"),
         VOLUME_DIFFERENCE_RATE_WIDTH("volumeDifferenceRateWidth", "量方差异率-宽(%)"),
         VOLUME_DIFFERENCE_RATE_HEIGHT("volumeDifferenceRateHeight", "量方差异率-高(%)"),
-        WEIGHING_VARIANCE_VALUE("weighingVarianceValue", "称重差异值(g)"),
-        VOLUME_DIFFERENCE_VALUE_LONG("volumeDifferenceValueLong", "量方差异值-长(cm)"),
+        WEIGHING_VARIANCE_VALUE("weightVarianceValue", "称重差异值(g)"),
+        VOLUME_DIFFERENCE_VALUE_LONG("volumeDifferenceValueLength", "量方差异值-长(cm)"),
         VOLUME_DIFFERENCE_VALUE_WIDTH("volumeDifferenceValueWidth", "量方差异值-宽(cm)"),
         VOLUME_DIFFERENCE_VALUE_HEIGHT("volumeDifferenceValueHeight", "量方差异值-高(cm)");
         private String code;
@@ -98,8 +98,6 @@ public enum CfgRuleOutEnum {
     }
     @Getter
     public enum AllowableDeviationsCompareEnum implements EnumMessage  {
-        EQ("==", "等于"),
-        NE("!=", "不等于"),
         GREATER_THAN(">", "大于"),
         GREATER_THAN_OR_EQUAL_TO(">=", "大于等于"),
         LESS_THAN("<", "小于"),
