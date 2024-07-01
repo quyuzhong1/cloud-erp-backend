@@ -13,7 +13,7 @@ import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputFdsRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
-import com.erp.server.dmp.inout.dto.request.DmpOutputFdsRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -69,7 +69,7 @@ public abstract class DmpInputFdsHandler extends DmpInputTaskHandler{
 		dmpResponse.getConvertInputTaskFileEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputTaskFileEntityList);
 		this.afterToDoStatus(dmpRequest, dmpResponse);
 		
-		DmpOutputFdsRequest dmpOutputFdsRequest = new DmpOutputFdsRequest();
+		DmpOutputTaskRequest dmpOutputFdsRequest = new DmpOutputTaskRequest();
 		dmpOutputFdsRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
 		dmpOutputFdsRequest.setConvertInputTaskFileEntityListMaps(dmpResponse.getConvertInputTaskFileEntityListMaps());
 		this.doBaseChain(dmpRequest, dmpResponse, chain, dmpOutputFdsRequest);

@@ -13,7 +13,7 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
-import com.erp.server.dmp.inout.dto.request.DmpOutputFinishRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
@@ -73,7 +73,7 @@ public abstract class DmpInputFinishHandler extends DmpInputTaskHandler{
 		}
 		this.afterToDoStatus(dmpRequest, dmpResponse);
 		
-		DmpOutputFinishRequest dmpOutputFinishRequest = new DmpOutputFinishRequest();
+		DmpOutputTaskRequest dmpOutputFinishRequest = new DmpOutputTaskRequest();
 		dmpOutputFinishRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
 		dmpOutputFinishRequest.setConvertInputTaskFileEntityListMaps(dmpResponse.getConvertInputTaskFileEntityListMaps());
 		dmpOutputFinishRequest.setConvertInputMongoEntityListMaps(dmpResponse.getConvertInputMongoEntityListMaps());

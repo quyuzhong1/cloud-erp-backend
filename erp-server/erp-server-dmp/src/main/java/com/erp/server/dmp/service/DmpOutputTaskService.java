@@ -10,14 +10,14 @@ import com.erp.model.dmp.dto.DmpOutputTaskDTO;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2024-07-01
  */
 public interface DmpOutputTaskService extends SuperService<DmpOutputTaskEntity> {
 
     /**
     * 新增
     * @author shukai
-    * @date: 2024-06-11
+    * @date: 2024-07-01
     * @param dto
     * @return
     */
@@ -26,11 +26,11 @@ public interface DmpOutputTaskService extends SuperService<DmpOutputTaskEntity> 
     /**
     * 修改
     * @author shukai
-    * @date: 2024-06-11
+    * @date: 2024-07-01
     * @param dto
     * @return
     */
     Boolean update(DmpOutputTaskDTO.UpdateDTO dto);
 
-
+    boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e);
 }

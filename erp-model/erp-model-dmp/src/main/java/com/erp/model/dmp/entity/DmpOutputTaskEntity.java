@@ -17,7 +17,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2024-07-01
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -26,10 +26,15 @@ import com.common.business.enums.ApproveStatusEnum;
 public class DmpOutputTaskEntity extends BaseEntity<DmpOutputTaskEntity> {
 
     /**
-    * 推送数据配置明细id
+    * 推送数据配置id
     */
-    @TableField("output_detail_id")
-    private String outputDetailId;
+    @TableField("cfg_output_id")
+    private String cfgOutputId;
+    /**
+    * 推送下一层级id
+    */
+    @TableField("next_level_id")
+    private String nextLevelId;
     /**
     * 推送接口条件的开始时间
     */
@@ -56,8 +61,39 @@ public class DmpOutputTaskEntity extends BaseEntity<DmpOutputTaskEntity> {
     @TableField("response_data")
     private String responseData;
 
+    /**
+     * 推送类型：  枚举：DmpOutputTaskTypeEnum
+     */
+     @TableField("task_type")
+     private String taskType;
+     
+     /**
+      * 错误次数
+      */
+     @TableField("error_count")
+     private Integer errorCount;
+     
+      /**
+       * 输入任务id
+       */
+     @TableField("input_task_id")
+     private String inputTaskId;
+     
+     /**
+      * 执行超时时间，单位秒
+      */
+     @TableField("exec_timeout")
+     private Integer execTimeout;
+      
+      /**
+       * 异常原因
+       */
+      @TableField("error_message")
+      private String errorMessage;
 
-    public static final String OUTPUT_DETAIL_ID = "output_detail_id";
+    public static final String CFG_OUTPUT_ID = "cfg_output_id";
+
+    public static final String NEXT_LEVEL_ID = "next_level_id";
 
     public static final String START_TIME = "start_time";
 

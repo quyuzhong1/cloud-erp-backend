@@ -6,16 +6,14 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 推送任务 推送状态 枚举
+ * 推送任务 推送类型 枚举
  * </p>
  *
  * @author shukai
  * @since 2024-07-01 16:29:02
  */
-public enum DmpOutputTaskStatusEnum implements EnumMessage {
-	INIT("init", "待推送"),
-	FINISH("finish", "已推送"),
-	ERROR("error", "推送失败"),
+public enum DmpOutputTaskTypeEnum implements EnumMessage {
+	INPUT("input", "输入任务"),
     ;
     /**
      * 类型
@@ -28,7 +26,7 @@ public enum DmpOutputTaskStatusEnum implements EnumMessage {
      */
     private String name;
 
-    DmpOutputTaskStatusEnum(String code, String name) {
+    DmpOutputTaskTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -47,7 +45,7 @@ public enum DmpOutputTaskStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpOutputTaskStatusEnum statusEnum : DmpOutputTaskStatusEnum.values()) {
+        for (DmpOutputTaskTypeEnum statusEnum : DmpOutputTaskTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

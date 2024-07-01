@@ -21,7 +21,6 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
-import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.entity.DmpCfgInputChildEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
@@ -30,11 +29,11 @@ import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
-import com.erp.model.dmp.enums.DmpCfgInputTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputChildCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
-import com.erp.server.dmp.inout.dto.request.DmpOutputRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputInputCreateRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.request.DmpRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputDmpResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
@@ -42,16 +41,15 @@ import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.inout.dto.response.DmpOutputFinishResponse;
-import com.erp.server.dmp.inout.dto.response.DmpOutputInitResponse;
+import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.dto.response.DmpResponse;
 import com.erp.server.dmp.inout.handler.DmpHandler;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.inout.handler.input.DmpInputHandler;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.erp.server.dmp.inout.handler.output.task.init.DmpOutputInitHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -98,6 +96,8 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	protected DmpCfgInputService dmpCfgInputService;
 	@Autowired
 	protected DmpCfgInputChildService dmpCfgInputChildService;
+	@Autowired
+	protected DmpOutputCreateFactory dmpOutputCreateFactory;
 	
 	/**----------多例对象属性,初始化在DmpInputBaseTaskHandler.addDmpHandler(DmpInputTaskRequest, DmpInputTaskResponse, List<DmpHandler>, DmpInputTaskStatusEnum)-----------**/
 	protected String convertId;
@@ -199,8 +199,8 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param dmpResponse
 	 * @return
 	 */
-	protected List<String> getOutputClassList(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-		List<String> apiClassList = new ArrayList<>();
+	protected List<DmpOutputInputCreateRequest> getDmpCfgOutputDetailEntity(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+		List<DmpOutputInputCreateRequest> dmpOutputInputCreateRequestList = new ArrayList<>();
 
 		List<DmpCfgOutputEntity> dmpCfgOutputEntityList = dmpCfgOutputService.lambdaQuery()
 				.eq(DmpCfgOutputEntity::getInputConvertId, convertId)
@@ -213,25 +213,15 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 						.eq(StringUtils.isNotBlank(nextLevelId) , DmpCfgOutputDetailEntity::getNextLevelId, nextLevelId)
 						.list();
 				for(DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity : dmpCfgOutputDetailEntityList) {
-					String type = dmpCfgOutputEntity.getType();
-					String apiClass = "";
-					if(DmpCfgInputTypeEnum.API.getCode().equals(type)) {
-						String typeId = dmpCfgOutputEntity.getTypeId();
-						if(StringUtils.isNotBlank(typeId)) {
-							DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
-							apiClass = dmpCfgApiEntity.getApiClass();
-						}
-					}else if(DmpCfgInputTypeEnum.MQ.getCode().equals(type)) {
-						apiClass = "mqPushHandler";
-					}else if(DmpCfgInputTypeEnum.DB.getCode().equals(type)) {
-						apiClass = "dbPushHandler";
-					}
-					apiClassList.add(apiClass);
+					DmpOutputInputCreateRequest dmpOutputInputCreateRequest = new DmpOutputInputCreateRequest();
+					dmpOutputInputCreateRequest.setCfgOutputId(dmpCfgOutputEntity.getId());
+					dmpOutputInputCreateRequest.setDmpCfgOutputDetailEntity(dmpCfgOutputDetailEntity);
+					dmpOutputInputCreateRequestList.add(dmpOutputInputCreateRequest);
 				}
 			}
 		}
 	
-		return apiClassList;
+		return dmpOutputInputCreateRequestList;
 	}
 	
 	/**
@@ -261,7 +251,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param chain
 	 * @param dmpOutputRequest
 	 */
-	protected void doBaseChain(DmpInputTaskRequest dmpRequest, DmpInputInitResponse dmpResponse , DmpHandlerChain chain , DmpOutputRequest dmpOutputRequest) {
+	protected void doBaseChain(DmpInputTaskRequest dmpRequest, DmpInputInitResponse dmpResponse , DmpHandlerChain chain , DmpOutputTaskRequest dmpOutputRequest) {
 		if(dmpResponse.isDoOutputChain()) {
 			this.doOutputChain(dmpRequest, dmpResponse, chain, dmpOutputRequest);
 		}
@@ -422,17 +412,14 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param chain
 	 * @param dmpOutputRequest
 	 */
-	protected void doOutputChain(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse , DmpHandlerChain chain , DmpOutputRequest dmpOutputRequest) {
-		List<String> outputClassList = this.getOutputClassList(dmpRequest, dmpResponse);
-		this.beforeToDoOutputChain(dmpRequest, dmpResponse , outputClassList);
-		Map<String, DmpOutputInitResponse> outputResultMap = new HashMap<>();
-		if(CollUtil.isNotEmpty(outputClassList)) {
-			dmpOutputRequest.setDoNextChain(false);
-			for(String outputClass : outputClassList) {
-				DmpOutputInitHandler dmpHandlerBean = this.getDmpHandlerBean(outputClass, DmpOutputInitHandler.class);
-				DmpOutputFinishResponse dmpOutputFinishResponse = new DmpOutputFinishResponse();
-				dmpHandlerBean.doDmpHandler(BeanUtil.copyProperties(dmpOutputRequest, DmpOutputRequest.class), dmpOutputFinishResponse, chain);
-				outputResultMap.put(outputClass, dmpOutputFinishResponse);
+	protected void doOutputChain(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse , DmpHandlerChain chain , DmpOutputTaskRequest dmpOutputRequest) {
+		List<DmpOutputInputCreateRequest> dmpOutputInputCreateRequestList = this.getDmpCfgOutputDetailEntity(dmpRequest, dmpResponse);
+		this.beforeToDoOutputChain(dmpRequest, dmpResponse , dmpOutputInputCreateRequestList);
+		Map<DmpOutputInputCreateRequest, DmpOutputTaskResponse> outputResultMap = new HashMap<>();
+		if(CollUtil.isNotEmpty(dmpOutputInputCreateRequestList)) {
+			for(DmpOutputInputCreateRequest dmpOutputInputCreateRequest : dmpOutputInputCreateRequestList) {
+				dmpOutputInputCreateRequest.setDmpOutputTaskRequest(BeanUtil.copyProperties(dmpOutputRequest, DmpOutputTaskRequest.class));
+				outputResultMap.put(dmpOutputInputCreateRequest, dmpOutputCreateFactory.doInputOutputTask(dmpOutputInputCreateRequest));
 			}
 		}
 		this.afterToDoOutputChain(dmpRequest, dmpResponse , outputResultMap);
@@ -510,7 +497,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param outputClassList
 	 */
 	protected void beforeToDoOutputChain(DmpInputTaskRequest dmpRequest,
-			DmpInputTaskResponse dmpResponse , List<String> outputClassList) {
+			DmpInputTaskResponse dmpResponse , List<DmpOutputInputCreateRequest> dmpOutputInputCreateRequestList) {
 		
 	}
 	
@@ -521,7 +508,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param outputClassList
 	 */
 	protected void afterToDoOutputChain(DmpInputTaskRequest dmpRequest,
-			DmpInputTaskResponse dmpResponse , Map<String, DmpOutputInitResponse> outputResultMap) {
+			DmpInputTaskResponse dmpResponse , Map<DmpOutputInputCreateRequest, DmpOutputTaskResponse> outputResultMap) {
 		
 	}
 	

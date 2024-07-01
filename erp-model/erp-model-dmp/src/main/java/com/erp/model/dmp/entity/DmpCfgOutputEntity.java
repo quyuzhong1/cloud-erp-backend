@@ -54,6 +54,12 @@ public class DmpCfgOutputEntity extends BaseEntity<DmpCfgOutputEntity> {
     */
     @TableField("extend_json")
     private String extendJson;
+    
+    /**
+     * 输出处理类
+     */
+     @TableField("output_class")
+     private String outputClass;
 
 
     public static final String SYSTEM_ID = "system_id";
