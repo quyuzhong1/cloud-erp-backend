@@ -257,8 +257,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 }
             } else {
                 for (WdtSoOutStockDetailDTO.PositionDetailsList detail : detailDTO.getPositionDetailsList()) {
-                    List<String> list = Arrays.asList("1676949540118204418", "1676949540114010116");
-                    if (!list.contains(warehouse.getId())) {
+                    if (Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
                         detail.setPositionNo("");
                     }
                     SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
