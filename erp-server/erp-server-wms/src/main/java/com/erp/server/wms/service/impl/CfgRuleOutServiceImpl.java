@@ -11,6 +11,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
+import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -29,6 +31,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 
 /**
  * <p>
@@ -145,6 +148,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
     @Override
     public String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
+        ValidatorUtil.validateEntity(dto);
         CfgRuleOutDTO.CommonDTO commonDTO = this.view();
         String sortingPort = this.getSortingPort(commonDTO,dto);
         if(sortingPort.equals(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode())){
