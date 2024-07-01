@@ -1177,7 +1177,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //筛选订单物流渠道 相同订单不能存在多个渠道
         List<String> channelIds = dto.getDetailList().stream().filter(e -> StringUtils.isNotBlank(e.getLogisticsChannelId())
-                && id.equals(e.getId())).map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getLogisticsChannelId)
+                        && id.equals(e.getId())).map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getLogisticsChannelId)
                 .distinct().collect(Collectors.toList());
         if (channelIds.size() > 1){
             throw new ServiceException(ApiError.ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION);
@@ -1198,13 +1198,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          * 否：新选择的物流渠道和仓库只添加到物流方式和仓库为空的订单，已存在物流方式和仓库的订单不做更改
          */
         Boolean isCover = dto.getIsCover();
-        String logisticsChannelId = "";
-        if (CollectionUtils.isNotEmpty(channelIds)){
-            logisticsChannelId = channelIds.get(0);
-        }else {
-            //渠道为空时，使用原来的渠道id
-            logisticsChannelId = existChannelId;
-        }
+        String logisticsChannelId = dto.getLogisticsChannelId();
+        //获取检查备案结果
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
         String packageStatus = resultDTO.getPackageStatus();
         String transferStatus = resultDTO.getTransferStatus();
@@ -1217,55 +1212,50 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION, skuStr, resultDTO.getDeclarePlatformName(), resultDTO.getLogisticsChannelName());
         }
-
-        if (StrUtil.isNotBlank(logisticsChannelId) && Boolean.TRUE.equals(isCover)) {
-            //预报成功不支持配货
-            if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
-                throw new ServiceException(StrUtil.format("B2C销售订单【{}】已预报成功不可更换渠道", entity.getCode()));
-            }
+        //预报成功不支持配货
+        if (StringUtils.isNotBlank(existChannelId) && !existChannelId.equals(logisticsChannelId) && TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
+            throw new ServiceException(StrUtil.format("B2C销售订单【{}】已预报成功不可更换渠道", entity.getCode()));
         }
         if(!TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())){
             entity.setTransferStatus(transferStatus);
         }
         boolean isUpdateTransferStatus = !TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus());
+        //修改组包和中转状态
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration,isUpdateTransferStatus);
 
-        //选择了渠道则更新
-            if (Boolean.TRUE.equals(isCover)) {
-
-                //如果有物流单号 就要去取消
-                if (StringUtils.isNotBlank(code)) {
-                    //已存在的渠道为空
-                    if (StringUtils.isBlank(existChannelId)) {
-                        throw new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
-                    }
-                    //取消物流单
-                    LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                            channelId(existChannelId).transportNo(code).
-                            referenceNumber(entity.getCode()).orderId(entity.getId()).build();
-                    ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
-                    //取消失败
-                    if (!cancelResult.isSuccess()) {
-                        throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI, code);
-                    }
-                }
-                soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
-                soB2cLogisticsEntity.setCode("");
-                soB2cLogisticsEntity.setTrackNo("");
-                logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
-            } else {
-                soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+        //如果有物流单号 就要去取消
+        if (StringUtils.isNotBlank(code)) {
+            //已存在的渠道为空
+            if (StringUtils.isBlank(existChannelId)) {
+                throw new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
             }
-        if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
+            //取消物流单
+            LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
+                    channelId(existChannelId).transportNo(code).
+                    referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
+            ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+            //取消失败
+            if (!cancelResult.isSuccess()) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI, code);
+            }
+            soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+            soB2cLogisticsEntity.setCode("");
+            soB2cLogisticsEntity.setTrackNo("");
+            logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
         }
+        //重置物流渠道信息
+        if (StringUtils.isBlank(logisticsChannelId)) {
+            soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+            soB2cLogisticsEntity.setLogisticsChannelName("");
+        }else {
             LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
             if (Objects.isNull(logisticsChannel)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
             }
             soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
-            //物流信息更新
-            soB2cLogisticsService.updateById(soB2cLogisticsEntity);
+        }
+        //物流信息更新
+        soB2cLogisticsService.updateById(soB2cLogisticsEntity);
 
         if(StrUtil.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
             //验证渠道下是否设置了仓库
@@ -1375,7 +1365,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                     channelId(soB2cLogisticsEntity.getLogisticsChannelId()).transportNo(soB2cLogisticsEntity.getCode()).
-                    referenceNumber(entity.getCode()).orderId(entity.getId()).build();
+                    referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
             if (!cancelResult.isSuccess() && cancelResult.getCode()!=-1) {
@@ -5485,7 +5475,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                     channelId(existChannelId).transportNo(code).
-                    referenceNumber(entity.getCode()).orderId(entity.getId()).build();
+                    referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
             if (!cancelResult.isSuccess() && cancelResult.getCode()!=-1) {

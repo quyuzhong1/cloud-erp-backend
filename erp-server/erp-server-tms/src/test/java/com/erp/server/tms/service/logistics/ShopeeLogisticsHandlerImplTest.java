@@ -44,7 +44,7 @@ public class ShopeeLogisticsHandlerImplTest {
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = shopeeLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = shopeeLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){

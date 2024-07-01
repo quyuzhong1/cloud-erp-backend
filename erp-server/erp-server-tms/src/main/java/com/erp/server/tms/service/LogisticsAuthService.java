@@ -68,17 +68,12 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * 根据授权id组装授权信息
      *
      * @param authId
+     * @param shopId
+     * @param logisticsPlatform
      * @return
      */
-    Map<String, String> getLogisticsAuthConfig(String authId,String logisticsPlatform);
+    Map<String, String> getLogisticsAuthConfig(String authId,String shopId,String logisticsPlatform);
 
-    /**
-     * 根据授权id组装授权信息
-     *
-     * @param platform
-     * @return
-     */
-    List<Map<String, String>> getLogisticsAuthByPlatform(String platform);
     /**
      * 授权完成后 同步销售渠道
      * @param logisticsPlatform
@@ -123,8 +118,6 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @return java.util.List<com.erp.model.tms.dto.LogisticsSupplierDTO.AuthChannelViewDTO>
      **/
     List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(List<String> channelIdList);
-
-    ApiResult authLogistics(String id, String logisticsPlatform);
 
     /**
      * 根据授权信息进行校验

@@ -800,6 +800,10 @@ public class LogisticsBillDTO implements Serializable {
          *  订单id(erp 销售订单id)
          */
         private String orderId;
+        /**
+         * 店铺id
+         */
+        private String shopId;
 
         private String reason;
     }

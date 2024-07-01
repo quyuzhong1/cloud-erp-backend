@@ -40,7 +40,7 @@ public class YunTuLogisticsHandlerImplTest {
         authMap.put("clientSecret","rBM7VwsVHRE=");
     }
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = yunTuLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = yunTuLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
