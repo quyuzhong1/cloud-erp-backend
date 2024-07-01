@@ -256,8 +256,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 }
             } else {
                 for (WdtSoOutStockDetailDTO.PositionDetailsList detail : detailDTO.getPositionDetailsList()) {
-                    //暂时使用空仓位
-                    detail.setPositionNo("");
                     SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
                     detailEntity.setId(IdWorker.getIdStr());
                     String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
