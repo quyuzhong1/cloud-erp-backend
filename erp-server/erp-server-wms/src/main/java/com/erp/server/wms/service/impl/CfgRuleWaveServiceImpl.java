@@ -36,7 +36,7 @@ import com.erp.model.wms.dto.CfgRuleWaveRecordDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
-import com.erp.model.wms.dto.renovation.PickingWaveDTO;
+import com.erp.model.wms.dto.renovation.WaveListDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
@@ -86,7 +86,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     private SpElServer spElServer;
 
     @Resource
-    private PickingWaveService pickingWaveService;
+    private WaveListService waveListService;
 
 
     @Resource
@@ -333,13 +333,13 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         Integer totalQty = MathUtil.ZERO;
         Integer orderQty = MathUtil.ZERO;
 
-        PickingWaveDTO.AddDTO addDTO = new PickingWaveDTO.AddDTO();
+        WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
         addDTO.setWaveType(entity.getWaveType());
         addDTO.setPickingType(entity.getPickingType());
 
         List<String> deliveryIdList = new ArrayList<>();
         //需要新增的波次数据
-        List<PickingWaveDTO.AddDTO> resultList = new ArrayList<>();
+        List<WaveListDTO.AddDTO> resultList = new ArrayList<>();
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
             //发货明细
             List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
@@ -383,8 +383,8 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if (CollectionUtil.isEmpty(resultList)) {
             return;
         }
-        for (PickingWaveDTO.AddDTO waveAddDTO : resultList) {
-            pickingWaveService.add(waveAddDTO);
+        for (WaveListDTO.AddDTO waveAddDTO : resultList) {
+            waveListService.add(waveAddDTO);
         }
     }
 

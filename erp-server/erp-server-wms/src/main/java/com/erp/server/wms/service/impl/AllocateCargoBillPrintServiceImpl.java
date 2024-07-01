@@ -11,8 +11,8 @@ import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
 import com.erp.server.wms.service.AllocateCargoBillPrintService;
-import com.erp.server.wms.service.PickingWaveDetailService;
-import com.erp.server.wms.service.PickingWaveService;
+import com.erp.server.wms.service.WaveListDetailService;
+import com.erp.server.wms.service.WaveListService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,23 +37,23 @@ import java.util.stream.Collectors;
 public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrintService {
 
     @Resource
-    private PickingWaveService pickingWaveService;
+    private WaveListService waveListService;
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
 
     @Resource
-    private PickingWaveDetailService pickingWaveDetailService;
+    private WaveListDetailService waveListDetailService;
 
     @Override
     public AllocateCargoBillPrintDTO.ScanWaveDTO scanWaveOrPickingCarCode(String businessCode) {
         //查询波次号，如果查询到直接返回
-        WaveListEntity pickingWave = pickingWaveService.getByCode(businessCode);
+        WaveListEntity pickingWave = waveListService.getByCode(businessCode);
         if(ObjectUtil.isNotEmpty(pickingWave)){
             return AllocateCargoBillPrintDTO.ScanWaveDTO.builder().isDirectPrint(true).waveList(Arrays.asList(AllocateCargoBillPrintDTO.WaveDTO.convertFromPickingWaveEntity(pickingWave))).build();
         }
         //根据拣货车编号查询
-        List<WaveListEntity> pickingWaveList = pickingWaveService.listByCarCode(businessCode);
+        List<WaveListEntity> pickingWaveList = waveListService.listByCarCode(businessCode);
         //有拣货中的波次，直接返回
         WaveListEntity waveListEntity = pickingWaveList.stream().filter(v->v.getStatus().equals(WaveStatusEnum.PICK_ING.getCode())).findFirst().orElse(null);
         if(Objects.nonNull(waveListEntity)){
@@ -72,11 +72,11 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
 
     @Override
     public void print(String waveId, HttpServletResponse response) {
-        WaveListEntity pickingWave = pickingWaveService.getById(waveId);
+        WaveListEntity pickingWave = waveListService.getById(waveId);
         if(Objects.isNull(pickingWave)){
             throw new ServiceException("波次为空");
         }
-        List<WaveListDetailEntity> detailEntityList = pickingWaveDetailService.listByMainId(pickingWave.getId());
+        List<WaveListDetailEntity> detailEntityList = waveListDetailService.listByMainId(pickingWave.getId());
         List<String> deliveryIds = detailEntityList.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
         if(CollectionUtil.isEmpty(deliveryIds)){
             throw new ServiceException("关联的发货单为空");
