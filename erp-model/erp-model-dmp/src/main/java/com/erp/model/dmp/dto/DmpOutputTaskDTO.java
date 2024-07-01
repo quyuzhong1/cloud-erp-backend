@@ -15,7 +15,7 @@ import javax.validation.constraints.Size;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2024-07-01
 */
 @Data
 @NoArgsConstructor
@@ -37,9 +37,14 @@ public class DmpOutputTaskDTO implements Serializable {
         private String  id;
 
         /**
-        * 推送数据配置明细id
+        * 推送数据配置id
         */
-        private String outputDetailId;
+        private String cfgOutputId;
+
+        /**
+        * 推送下一层级id
+        */
+        private String nextLevelId;
 
         /**
         * 推送接口条件的开始时间
@@ -99,11 +104,18 @@ public class DmpOutputTaskDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 推送数据配置明细id
+        * 推送数据配置id
         */
-        @NotBlank(message = "推送数据配置明细id不能为空")
-        @Size(max = 19,message = "推送数据配置明细id最大长度不能超过19位")
-        private String outputDetailId;
+        @NotBlank(message = "推送数据配置id不能为空")
+        @Size(max = 19,message = "推送数据配置id最大长度不能超过19位")
+        private String cfgOutputId;
+
+        /**
+        * 推送下一层级id
+        */
+        @NotBlank(message = "推送下一层级id不能为空")
+        @Size(max = 50,message = "推送下一层级id最大长度不能超过50位")
+        private String nextLevelId;
 
         /**
         * 推送接口条件的开始时间

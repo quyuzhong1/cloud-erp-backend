@@ -32,7 +32,7 @@ import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
-import com.erp.server.dmp.inout.dto.request.DmpOutputDmpRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputDmpResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
@@ -65,6 +65,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	protected Set<String> entityFieldNameSet;
 	protected ServiceImpl dmpEntityServiceImpl;
 	protected final MD5 md5 = MD5.create();
+	protected List<BaseEntity> changeConvertInputDmpBaseEntityList = new ArrayList<>();
 	
 	public static final String INPUT_TASK_ID = "input_task_id";
 	public static final String CONVERT_ID = "convert_id";
@@ -130,17 +131,18 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 					}
 				}
 			}
-			this.convertToDmp(inputMongoEntityList);
+			dmpInputDmpBaseEntityList = this.convertToDmp(inputMongoEntityList);
 		}
 		
 		dmpResponse.getConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputDmpBaseEntityList);
 		this.afterToDoStatus(dmpRequest, dmpResponse);
 		
-		DmpOutputDmpRequest dmpOutputDmpRequest = new DmpOutputDmpRequest();
+		DmpOutputTaskRequest dmpOutputDmpRequest = new DmpOutputTaskRequest();
 		dmpOutputDmpRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
 		dmpOutputDmpRequest.setConvertInputTaskFileEntityListMaps(dmpResponse.getConvertInputTaskFileEntityListMaps());
 		dmpOutputDmpRequest.setConvertInputMongoEntityListMaps(dmpResponse.getConvertInputMongoEntityListMaps());
 		dmpOutputDmpRequest.setConvertInputDmpBaseEntityListMaps(dmpResponse.getConvertInputDmpBaseEntityListMaps());
+		dmpOutputDmpRequest.getChangeConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, changeConvertInputDmpBaseEntityList);
 		this.doBaseChain(dmpRequest, dmpResponse, chain, dmpOutputDmpRequest);
 	}
 	
@@ -200,7 +202,6 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			}
 		}
 	
-		
 		List<BaseEntity> saveDmpInputDmpEntityList = new ArrayList<>();
 		if(beanDmpInputDmpEntityMaps.size() > 0) {
 			List<BaseEntity> updateDmpInputDmpEntityList = new ArrayList<>();
@@ -230,7 +231,11 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 						});
 						waitEntity.put(BaseEntity.CREATE_TIME, findEntity.get(BaseEntity.CREATE_TIME));
 						deleteDmpIdList.add(dmpId);
-						updateDmpInputDmpEntityList.add(BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass));
+						BaseEntity waitBeanEntity = BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass);
+						updateDmpInputDmpEntityList.add(waitBeanEntity);
+						if(!findEntity.get(DATA_ENCRYPT).toString().equals(waitEntity.get(DATA_ENCRYPT).toString())) {
+							changeConvertInputDmpBaseEntityList.add(waitBeanEntity);
+						}
 					}else {
 						saveDmpInputDmpEntityList.add(BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass));
 					}
@@ -238,6 +243,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			}else {
 				saveDmpInputDmpEntityList = beanDmpInputDmpEntityMaps.values().stream().map(waitEntity -> BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass)).collect(Collectors.toList());
 			}
+			changeConvertInputDmpBaseEntityList.addAll(saveDmpInputDmpEntityList);
 			
 			if(CollUtil.isNotEmpty(saveDmpInputDmpEntityList)) {
 				dmpEntityServiceImpl.saveBatch(saveDmpInputDmpEntityList);

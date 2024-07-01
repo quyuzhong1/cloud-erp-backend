@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
-import com.erp.server.dmp.inout.dto.request.DmpOutputInitRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
@@ -43,7 +43,7 @@ public abstract class DmpInputInitHandler extends DmpInputTaskHandler{
 		this.afterToDoStatus(dmpRequest, dmpResponse);
 		
 		dmpResponse.setDoUpdateStatus(false);
-		DmpOutputInitRequest dmpOutputInitRequest = new DmpOutputInitRequest();
+		DmpOutputTaskRequest dmpOutputInitRequest = new DmpOutputTaskRequest();
 		dmpOutputInitRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
 		this.doBaseChain(dmpRequest, dmpResponse, chain, dmpOutputInitRequest);
 	}

@@ -12,7 +12,8 @@
        <result column="update_user_id" property="updateUserId" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="output_detail_id" property="outputDetailId" />
+       <result column="cfg_output_id" property="cfgOutputId" />
+       <result column="next_level_id" property="nextLevelId" />
        <result column="start_time" property="startTime" />
        <result column="end_time" property="endTime" />
        <result column="status" property="status" />
@@ -31,7 +32,7 @@
         update_user_id,
         version,
         is_deleted,
-        output_detail_id, start_time, end_time, status, request_data, response_data
+        cfg_output_id, next_level_id, start_time, end_time, status, request_data, response_data
     </sql>
 
 

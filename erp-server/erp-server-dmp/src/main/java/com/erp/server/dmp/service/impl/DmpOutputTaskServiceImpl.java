@@ -1,9 +1,12 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.common.business.dto.base.BaseResultDTO;
@@ -14,9 +17,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
+import com.erp.model.dmp.enums.DmpOutputTaskStatusEnum;
 import com.erp.server.dmp.mapper.DmpOutputTaskMapper;
 import com.erp.server.dmp.service.DmpOutputTaskService;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -26,11 +31,12 @@ import lombok.extern.slf4j.Slf4j;
  * </p>
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2024-07-01
  */
 @Slf4j
 @Service
 public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapper, DmpOutputTaskEntity> implements DmpOutputTaskService {
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -88,4 +94,18 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
     private void handleData(DmpOutputTaskEntity dmpOutputTaskEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+    public boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e) {
+    	String errorBeforeStatus = "";
+    	if(errorFlag) {
+    		errorBeforeStatus = getById(id).getStatus() + "@@";
+    	}
+    	return lambdaUpdate().eq(DmpOutputTaskEntity::getId, id)
+				.set(DmpOutputTaskEntity::getErrorCount, errorCount)
+				.set(errorFlag , DmpOutputTaskEntity::getStatus, DmpOutputTaskStatusEnum.ERROR.getCode())
+				.set(DmpOutputTaskEntity::getUpdateTime, LocalDateTime.now())
+				.set(DmpOutputTaskEntity::getErrorMessage,  errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e))
+				.update();
+	}
 }

@@ -24,7 +24,7 @@ import com.erp.model.dmp.dto.DmpOutputTaskDTO;
  * 推送任务
  *
  * @author shukai
- * @since 2024-06-11
+ * @since 2024-07-01
  */
 @Slf4j
 @RestController
@@ -38,7 +38,7 @@ public class DmpOutputTaskController extends BaseController {
     /**
     * 新增
     * @author shukai
-    * @date:  2024-06-11
+    * @date:  2024-07-01
     * @param dto
     * @return ApiResult<String>
     */
@@ -51,7 +51,7 @@ public class DmpOutputTaskController extends BaseController {
     /**
     * 修改
     * @author shukai
-    * @date:  2024-06-11
+    * @date:  2024-07-01
     * @param dto
     * @return ApiResult
     */
