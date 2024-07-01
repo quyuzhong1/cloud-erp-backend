@@ -6485,16 +6485,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public SoB2cDTO.SoB2cDataDTO listSoB2cData(SoB2cDTO.SoB2cDataParamDTO paramDTO) {
+        //校验必填
+        if(CollectionUtils.isEmpty(paramDTO.getB2cSoIdList()) && CollectionUtils.isEmpty(paramDTO.getB2cSoCodeList())) {
+            throw new ServiceException("销售订单id或编码不能为空");
+        }
+
         SoB2cDTO.SoB2cDataDTO resultDTO = new SoB2cDTO.SoB2cDataDTO();
         //数据类型
         List<String> dataTypeList = paramDTO.getDataTypeList();
         //数据id集合
         List<String> b2cSoIdList = paramDTO.getB2cSoIdList();
         //主表信息
-        if (dataTypeList.contains(SoB2cDataTypeEnum.MAIN.getCode())) {
-            List<SoB2cEntity> list = this.listByIds(b2cSoIdList);
-            resultDTO.setList(list);
+        List<SoB2cEntity> list = new ArrayList<>();
+        //只有编号，没有id
+        if (CollectionUtils.isEmpty(b2cSoIdList) && CollectionUtils.isNotEmpty(paramDTO.getB2cSoCodeList())) {
+             list = this.listBySoCodeList(b2cSoIdList);
+             b2cSoIdList = list.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+        } else {
+            list = this.listByIds(b2cSoIdList);
         }
+        resultDTO.setList(list);
+
         //物流信息
         if (dataTypeList.contains(SoB2cDataTypeEnum.LOGISTIC.getCode())) {
             List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(b2cSoIdList);
@@ -6506,6 +6517,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             resultDTO.setReceiverList(soB2cReceiverlist);
         }
         return resultDTO;
+    }
+
+    /**
+     * 根据销售订单编号集合查询
+     * @author will
+     * @date 2024/7/1 11:37
+     * @param soCodeList
+     * @return List<SoB2cEntity>
+     */
+    private List<SoB2cEntity>  listBySoCodeList (List<String> soCodeList) {
+        if (CollectionUtils.isEmpty(soCodeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(SoB2cEntity::getCode,soCodeList).list();
     }
 
     /**

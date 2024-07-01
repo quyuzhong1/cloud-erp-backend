@@ -2643,8 +2643,13 @@ public class SoB2cDTO implements Serializable {
         /**
          * 销售订单id集合
          */
-        @NotEmpty(message = "销售订单id集合不能为空")
         private List<String> b2cSoIdList;
+
+        /**
+         * 销售订单编码集合
+         */
+        private List<String> b2cSoCodeList;
+
 
         /**
          * 数据类型集合

@@ -28,7 +28,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -48,6 +47,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cDataTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -60,6 +60,7 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -166,6 +167,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Resource
     private PackingInspectionService packingInspectionService;
+
+
+    @Resource
+    private CfgRuleOutService cfgRuleOutService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -823,13 +829,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public String dimensionalWeightPipeline(DimensionalWeightDTO dto) {
         //销售订单编码
         String soCode = dto.getBarCode();
-        List<SoB2cEntity> list = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getCode, soCode).list();
-        if (CollectionUtils.isEmpty(list)) {
+
+        SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO();
+        paramDTO.setB2cSoCodeList(Arrays.asList(dto.getBarCode()));
+        paramDTO.setDataTypeList(Arrays.asList(SoB2cDataTypeEnum.LOGISTIC.getCode()));
+        SoB2cDTO.SoB2cDataDTO soB2cDataDTO = soB2cFeign.listSoB2cData(paramDTO);
+        //物流信息
+        List<SoB2cLogisticsEntity> logisticsList = soB2cDataDTO.getLogisticsList();
+        if (CollectionUtils.isEmpty(soB2cDataDTO.getList()) || CollectionUtils.isEmpty(logisticsList)) {
+            log.error("编码【{}】未查询到销售订单信息",soCode);
             return "9";
         }
         //发货单信息
         SoB2cDeliveryEntity entity = getBySoCode(soCode);
         if (ObjectUtil.isEmpty(entity)) {
+            log.error("编码【{}】未查询到发货单信息",soCode);
             return "9";
         }
         entity.setLength(dto.getLength());
@@ -840,14 +854,34 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         entity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.getCode());
         entity.setIsWeigh(Boolean.TRUE);
 
+        //查询渠道信息
+        LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsList.get(0).getLogisticsChannelId());
+        if (ObjectUtil.isEmpty(channelEntity)) {
+            log.error("编码【{}】未查询到渠道信息",soCode);
+            return "9";
+        }
+
         //出库配置，TODO
-        String pickPort = "1";
+        CfgRuleOutDTO.SortingPortRuleDTO sortingPortRuleDTO = CfgRuleOutDTO.SortingPortRuleDTO.builder()
+                .scanLength(dto.getLength())
+                .scanWidth(dto.getWidth())
+                .scanHeight(dto.getHeight())
+                .orderWeight(dto.getWeight())
+                .orderLength(logisticsList.get(0).getLength())
+                .orderWidth(logisticsList.get(0).getWidth())
+                .orderHeight(logisticsList.get(0).getHeight())
+                .orderWeight(logisticsList.get(0).getWeight())
+                .logisticsSupplierId(channelEntity.getMainId())
+                .channelId(logisticsList.get(0).getLogisticsChannelId())
+                .build();
+        //返回分检口
+        String sortingPort = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
         Boolean isDeviation = Boolean.FALSE;
 
         //自动出库
         if (!isDeviation && entity.getIsAutoOut()) {
             //发货单自动出库
-            SoB2cEntity soB2cEntity = list.get(0);
+            SoB2cEntity soB2cEntity = soB2cDataDTO.getList().get(0);
             try {
                 packingInspectionService.soB2cDeliveryAutoOut(soB2cEntity,entity);
             } catch (Exception e) {
@@ -856,7 +890,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         //更新发货单
         this.updateById(entity);
-        return pickPort;
+        return sortingPort;
     }
 
 
