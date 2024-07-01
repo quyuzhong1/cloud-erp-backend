@@ -32,6 +32,7 @@ import com.erp.model.oms.enums.SoB2cDataTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
+import com.erp.model.wms.dto.CfgRuleWaveRecordDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
@@ -94,6 +95,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Resource
     private PickingCartTypeService pickingCartTypeService;
+
+    @Resource
+    private CfgRuleWaveRecordService cfgRuleWaveRecordService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -288,7 +292,16 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             return;
         }
         for (CfgRuleWaveEntity waveEntity : cfgRuleWaveList) {
-            executeRule(waveEntity.getId());
+            try {
+                //执行规则
+                executeRule(waveEntity.getId());
+            } catch (Exception e) {
+                CfgRuleWaveRecordDTO.AddDTO addDTO = new CfgRuleWaveRecordDTO.AddDTO();
+                addDTO.setRuleWaveId(waveEntity.getId());
+                addDTO.setExecutionTime(LocalTime.parse(time,DateTimeFormatter.ofPattern("HH:mm")));
+                addDTO.setReturnMsg(e.getMessage());
+                cfgRuleWaveRecordService.add(addDTO);
+            }
         }
     }
 
