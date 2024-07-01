@@ -533,7 +533,7 @@ public class SoB2cController extends BaseController {
      * @return 拆分为基础信息校验和尺寸校验 其中基础信息失败即为失败 尺寸校验失败只做展示 仍为成功
      */
     @PostMapping("/checkLogisticsSize")
-    public ApiResult<List<BatchResultDTO>> checkLogisticsSize(@RequestBody @Validated SoB2cDTO.SaveSoB2cDistributionDTO dto) {
+    public ApiResult<List<BatchResultDTO>> checkLogisticsSize(@RequestBody SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO result;
