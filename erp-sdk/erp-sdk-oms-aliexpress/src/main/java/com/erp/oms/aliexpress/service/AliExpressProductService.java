@@ -165,7 +165,7 @@ public static void main(String[] args) {
             .build();
 
     try {
-        AliExpressProduct productInfo = service.getProductInfo(1005006502798243L, productRequest);
+        AliExpressProduct productInfo = service.getProductInfo(1005006946525861L, productRequest);
         System.out.println(JSONUtil.toJsonStr(productInfo));
     } catch (ApiException e) {
         e.printStackTrace();
