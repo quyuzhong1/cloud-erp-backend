@@ -357,7 +357,8 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 平台sku no
          */
-        @NotBlank(message = "平台sku不能为空")
+//        @NotBlank(message = "平台sku不能为空")
+        @NotNull(message = "平台sku不能为null")
         @Size(max=200,message = "平台SKU最大100字符")
         private String platformSkuNo;
 
