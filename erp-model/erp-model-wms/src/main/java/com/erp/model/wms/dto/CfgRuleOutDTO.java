@@ -145,7 +145,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 配置条件
          */
-        private List<B2cAllowableDeviationsCondition> conditionDTOList;
+        private List<B2cAllowableDeviationsCondition> conditionDTO;
 
         /**
          * 为0正常出库开关
