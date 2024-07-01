@@ -1244,11 +1244,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
         }
         //重置物流渠道信息
+        soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
         if (StringUtils.isBlank(logisticsChannelId)) {
-            soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
             soB2cLogisticsEntity.setLogisticsChannelName("");
         }else {
-            LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
+            LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(logisticsChannelId);
             if (Objects.isNull(logisticsChannel)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
             }
