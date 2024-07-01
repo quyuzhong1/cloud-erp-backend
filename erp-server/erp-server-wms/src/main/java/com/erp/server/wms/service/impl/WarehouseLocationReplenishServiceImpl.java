@@ -65,6 +65,10 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
      * @author: tanmujin
      */
     private List<WarehouseLocationReplenishDTO.ViewDTO> fillViewList(List<WarehouseLocationReplenishEntity> entityList) {
+        if(entityList.isEmpty()){
+            return Collections.emptyList();
+        }
+
         List<WarehouseLocationReplenishDTO.ViewDTO> dtoList = new ArrayList<>(entityList.size());
 
         //仓库信息
@@ -109,6 +113,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .findFirst().orElse(new WarehouseLocationEntity());
             dto.setToWarehouseLocationName(toLocationEntity.getName());
 
+            //处理状态
+            dto.setStatusName(LocationReplenishStatusEnum.getNameByCode(dto.getStatus()));
+
             dtoList.add(dto);
         }
 
@@ -129,7 +136,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response) {
-        Optional<AdvanceQueryDTO> checkIdsOptional = dto.getAdvanceQueryDTOList().stream().filter(item -> item.getCompare().equals("inList")).findFirst();
+        /*Optional<AdvanceQueryDTO> checkIdsOptional = dto.getAdvanceQueryDTOList().stream().filter(item -> item.getCompare().equals("inList")).findFirst();
         List<WarehouseLocationReplenishEntity> entityList;
         List<String> ids;
         if(checkIdsOptional.isPresent() && !ObjectUtil.isEmpty(checkIdsOptional.get().getValue())){
@@ -140,9 +147,12 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             BeanMapper.copy(dto, searchParamDto);
             entityList = this.baseMapper.listByParam(searchParamDto);
             ids = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        }
-
+        }*/
+        WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
+        BeanMapper.copy(dto, searchParamDto);
+        List<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(searchParamDto);
         List<WarehouseLocationReplenishDTO.ViewDTO> viewList = fillViewList(entityList);
+        List<String> ids = viewList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
         try {
             String fileName = "仓位补货" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             String excelPath = "excel/warehouseLocationReplenishExport.xlsx";
@@ -380,5 +390,11 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         InventoryEntity maxQtyInventoryEntity = stockInventoryList.get(0);
 
         return new Pair<>(stockAreaEntity, maxQtyInventoryEntity);
+    }
+
+    @Override
+    public List<WarehouseLocationReplenishDTO.LocationQtyDTO> listLocationQty(List<WarehouseLocationReplenishDTO.LocationQtyDTO> paramlist) {
+
+        return Collections.emptyList();
     }
 }
