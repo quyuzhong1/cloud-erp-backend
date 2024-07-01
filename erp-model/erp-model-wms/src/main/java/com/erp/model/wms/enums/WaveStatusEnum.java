@@ -11,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum PickingWaveStatusEnum implements EnumMessage {
+public enum WaveStatusEnum implements EnumMessage {
     AWAIT_PICK("await_pick", "待拣货"),
     PICK_ING("pick_ing", "拣货中"),
     HANG_UP("hang_up", "挂起"),

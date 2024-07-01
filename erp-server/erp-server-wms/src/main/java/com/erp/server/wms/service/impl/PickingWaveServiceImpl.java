@@ -5,16 +5,15 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.wms.dto.renovation.PickingWaveDTO;
-import com.erp.model.wms.entity.PickingWaveEntity;
-import com.erp.server.wms.mapper.PickingWaveMapper;
+import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.PickingWaveService;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 
 @Service
-public class PickingWaveServiceImpl extends SuperServiceImpl<PickingWaveMapper, PickingWaveEntity> implements PickingWaveService {
+public class PickingWaveServiceImpl extends SuperServiceImpl<WaveListMapper, WaveListEntity> implements PickingWaveService {
 
     @Override
     public BaseResultDTO.AddDTO add(PickingWaveDTO.AddDTO dto) {
@@ -32,8 +31,8 @@ public class PickingWaveServiceImpl extends SuperServiceImpl<PickingWaveMapper, 
     }
 
     @Override
-    public PickingWaveEntity getByCodeOrCarCode(String code) {
-        return getOne(Wrappers.<PickingWaveEntity>lambdaQuery().eq(PickingWaveEntity::getCode, code).or().eq(PickingWaveEntity::getPickingCartCode, code));
+    public WaveListEntity getByCodeOrCarCode(String code) {
+        return getOne(Wrappers.<WaveListEntity>lambdaQuery().eq(WaveListEntity::getCode, code).or().eq(WaveListEntity::getPickingCartCode, code));
     }
 
     @Override
@@ -52,12 +51,12 @@ public class PickingWaveServiceImpl extends SuperServiceImpl<PickingWaveMapper, 
     }
 
     @Override
-    public PickingWaveEntity getByCode(String code) {
-        return getOne(Wrappers.<PickingWaveEntity>lambdaQuery().eq(PickingWaveEntity::getCode, code).last("limit 1"));
+    public WaveListEntity getByCode(String code) {
+        return getOne(Wrappers.<WaveListEntity>lambdaQuery().eq(WaveListEntity::getCode, code).last("limit 1"));
     }
 
     @Override
-    public List<PickingWaveEntity> listByCarCode(String carCode) {
-        return list(Wrappers.<PickingWaveEntity>lambdaQuery().eq(PickingWaveEntity::getPickingCartCode, carCode));
+    public List<WaveListEntity> listByCarCode(String carCode) {
+        return list(Wrappers.<WaveListEntity>lambdaQuery().eq(WaveListEntity::getPickingCartCode, carCode));
     }
 }

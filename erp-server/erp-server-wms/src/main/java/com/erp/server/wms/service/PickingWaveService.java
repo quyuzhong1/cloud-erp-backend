@@ -4,11 +4,11 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.renovation.PickingWaveDTO;
-import com.erp.model.wms.entity.PickingWaveEntity;
+import com.erp.model.wms.entity.WaveListEntity;
 
 import java.util.List;
 
-public interface PickingWaveService extends SuperService<PickingWaveEntity> {
+public interface PickingWaveService extends SuperService<WaveListEntity> {
 
     /**
      * 新增
@@ -30,7 +30,7 @@ public interface PickingWaveService extends SuperService<PickingWaveEntity> {
      * 通过波次号/拣货车号查询波次
      * @param code 波次号/拣货车号
      */
-    PickingWaveEntity getByCodeOrCarCode(String code);
+    WaveListEntity getByCodeOrCarCode(String code);
 
     /**
      * 获取波次明细
@@ -53,7 +53,7 @@ public interface PickingWaveService extends SuperService<PickingWaveEntity> {
      */
     List<PickingWaveDTO.PickingWaveDetailDTO> listDetailByMainId(String waveId, String basketNo, String skuId);
 
-    PickingWaveEntity getByCode(String code);
+    WaveListEntity getByCode(String code);
 
-    List<PickingWaveEntity> listByCarCode(String carCode);
+    List<WaveListEntity> listByCarCode(String carCode);
 }

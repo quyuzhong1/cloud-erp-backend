@@ -1,10 +1,13 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 波次拣货DTO
@@ -13,10 +16,20 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class WavePickingDTO implements Serializable {
+public class WaveListDTO implements Serializable {
 
     @Data
-    public static class searchParamDTO {
+    public static class SearchParamDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
         /**
          * 波次编码
          */
@@ -86,29 +99,33 @@ public class WavePickingDTO implements Serializable {
     @Data
     public static class ViewDTO {
         /**
+         * 波次ID
+         */
+        private String id;
+        /**
          * 波次编码
          */
-        private String waveCode;
+        private String code;
 
         /**
          * 波次名称
          */
-        private String waveName;
+        private String name;
 
         /**
          * 波次类型
          */
-        private String waveTypeName;
+        private String type;
 
         /**
          * 拣货车类型
          */
-        private String pickingTruckType;
+        private String pickingCartType;
 
         /**
          * 拣货车编码
          */
-        private String pickingTruckCode;
+        private String pickingCartCode;
 
         /**
          * 分拣方式
@@ -118,7 +135,7 @@ public class WavePickingDTO implements Serializable {
         /**
          * 波次状态
          */
-        private String waveStatusName;
+        private String status;
 
         /**
          * 打印状态
@@ -128,26 +145,68 @@ public class WavePickingDTO implements Serializable {
         /**
          * 是否缺货
          */
-        private String isSoldOut;
+        private Boolean isOutStock;
 
         /**
-         * 操作人
+         * 异常原因
          */
-        private String operateUser;
+        private String exceptionCause;
 
         /**
-         * 操作时间
+         * 创建人
          */
-        private String operateTime;
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 拣货人
+         */
+        private String pickingUserName;
+
+        /**
+         * 拣货时间
+         */
+        private LocalDateTime pickingTime;
+
+        /**
+         * 完成时间
+         */
+        private LocalDateTime finishTime;
+
+        /**
+         * 打印时间
+         */
+        private LocalDateTime printTime;
     }
 
     @Data
-    public static class DetailViewDTO {
-        /**
-         * 波次编码
-         */
-        private String waveCode;
+    public static class SkuInfoDTO{
+        private String skuId;
 
+        private String skuNo;
+
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+
+        /**
+         * 已拣数量汇总
+         */
+        private Integer pickedSumQty;
+
+        /**
+         * 拣货仓位信息
+         */
+        private List<PickingLocationInfoDTO> pickingLocationInfoList;
+    }
+
+    @Data
+    public static class DeliveryInfoDTO {
         /**
          * 销售订单编号
          */
@@ -168,43 +227,30 @@ public class WavePickingDTO implements Serializable {
          */
         private String logisticsChannelName;
 
-        /**
-         * SKU
-         */
-        private String skuNo;
-
-        /**
-         * 销售数量
-         */
-        private Integer salesQty;
-
-        /**
-         * 已拣数量汇总
-         */
-        private Integer pickedSumQty;
-
-        /**
-         * 拣货仓位信息
-         */
-        private List<PickingLocationInfoDTO> pickingLocationInfoList;
+        private List<SkuInfoDTO> skuInfoList;
     }
 
     @Data
     public static class PickingLocationInfoDTO {
         /**
-         * 仓位名称
+         * 库区
          */
-        private String locationName;
+        private String warehouseArea;
+
+        /**
+         * 库区名称
+         */
+        private String warehouseAreaName;
 
         /**
          * 仓位编码
          */
-        private String locationCode;
+        private String warehouseLocation;
 
         /**
          * 是否缺货
          */
-        private String isSoldOut;
+        private String isOutStock;
 
         /**
          * 应拣数量
@@ -218,38 +264,19 @@ public class WavePickingDTO implements Serializable {
     }
 
     @Data
-    public static class moveOutDTO {
+    public static class TabDTO{
         /**
-         * 波次编码
+         * tab页代码<br/>
+         * await_pick：待拣货<br/>
+         * pick_ing：拣货中<br/>
+         * hang_up：挂起<br/>
+         * finish：已完成
          */
-        private String waveCode;
+        private String tabCode;
 
         /**
-         * 发货单号
+         * 统计数量
          */
-        private String soB2cDeliveryCode;
-    }
-
-    @Data
-    public static class addDTO {
-        /**
-         * 波次编码
-         */
-        private String waveCode;
-
-        /**
-         * 发货单号集合
-         */
-        private List<String> deliveryCodeList;
-
-        /**
-         * 分拣方式
-         */
-        private String pickingType;
-
-        /**
-         * 拣货车类型
-         */
-        private String pickingTruckType;
+        private  Integer count;
     }
 }

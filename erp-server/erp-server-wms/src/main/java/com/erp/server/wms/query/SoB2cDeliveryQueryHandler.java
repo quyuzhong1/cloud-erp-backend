@@ -6,7 +6,7 @@ import com.common.business.query.AbstractQueryHandler;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.enums.PickingWaveStatusEnum;
+import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -90,7 +90,7 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
 
             if ("generation_waves".equals(searchType)) {
 
-                List<String> ids = pickingWaveService.listDeliveryIdByStatus(PickingWaveStatusEnum.AWAIT_PICK.getCode());
+                List<String> ids = pickingWaveService.listDeliveryIdByStatus(WaveStatusEnum.AWAIT_PICK.getCode());
                 if (CollectionUtils.isEmpty(ids)) {
                     return getQueryEmptySql();
                 }
