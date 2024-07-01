@@ -823,6 +823,88 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    public String dimensionalWeightPipeline(DimensionalWeightDTO dto) {
+        //销售订单编码
+        String soCode = dto.getBarCode();
+
+        SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO();
+        paramDTO.setB2cSoCodeList(Arrays.asList(dto.getBarCode()));
+        paramDTO.setDataTypeList(Arrays.asList(SoB2cDataTypeEnum.LOGISTIC.getCode()));
+        SoB2cDTO.SoB2cDataDTO soB2cDataDTO = soB2cFeign.listSoB2cData(paramDTO);
+        //物流信息
+        List<SoB2cLogisticsEntity> logisticsList = soB2cDataDTO.getLogisticsList();
+        if (CollectionUtils.isEmpty(soB2cDataDTO.getList()) || CollectionUtils.isEmpty(logisticsList)) {
+            log.error("编码【{}】未查询到销售订单信息",soCode);
+            return "9";
+        }
+        //发货单信息
+        SoB2cDeliveryEntity entity = getBySoCode(soCode);
+        if (ObjectUtil.isEmpty(entity)) {
+            log.error("编码【{}】未查询到发货单信息",soCode);
+            return "9";
+        }
+        entity.setLength(dto.getLength());
+        entity.setWidth(dto.getWidth());
+        entity.setHeight(dto.getHeight());
+        entity.setWeight(dto.getWeight());
+        //单位默认kg
+        entity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.getCode());
+        entity.setIsWeigh(Boolean.TRUE);
+
+        //查询渠道信息
+        LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsList.get(0).getLogisticsChannelId());
+        if (ObjectUtil.isEmpty(channelEntity)) {
+            log.error("编码【{}】未查询到渠道信息",soCode);
+            return "9";
+        }
+
+        //出库配置，TODO
+        CfgRuleOutDTO.SortingPortRuleDTO sortingPortRuleDTO = CfgRuleOutDTO.SortingPortRuleDTO.builder()
+                .scanLength(dto.getLength())
+                .scanWidth(dto.getWidth())
+                .scanHeight(dto.getHeight())
+                .orderWeight(dto.getWeight())
+                .orderLength(logisticsList.get(0).getLength())
+                .orderWidth(logisticsList.get(0).getWidth())
+                .orderHeight(logisticsList.get(0).getHeight())
+                .orderWeight(logisticsList.get(0).getWeight())
+                .logisticsSupplierId(channelEntity.getMainId())
+                .channelId(logisticsList.get(0).getLogisticsChannelId())
+                .build();
+        //返回分检口
+        String sortingPort = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
+        Boolean isDeviation = Boolean.FALSE;
+
+        //自动出库
+        if (!isDeviation && entity.getIsAutoOut()) {
+            //发货单自动出库
+            SoB2cEntity soB2cEntity = soB2cDataDTO.getList().get(0);
+            try {
+                packingInspectionService.soB2cDeliveryAutoOut(soB2cEntity,entity);
+            } catch (Exception e) {
+                log.error("发货单【{}】自动出库失败",entity.getCode());
+            }
+        }
+        //更新发货单
+        this.updateById(entity);
+        return sortingPort;
+    }
+
+    @Override
+    public Boolean updateAbnormal(List<String> ids, AbnormalCauseEnum abnormalCauseEnum) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.FALSE;
+        }
+
+        Boolean flag = lambdaUpdate()
+                .set(SoB2cDeliveryEntity::getAbnormalCause, abnormalCauseEnum.getCode())
+                .in(SoB2cDeliveryEntity::getId, ids)
+                .update();
+        return flag;
+    }
+
+
+    @Override
     public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds) {
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Collections.emptyList();

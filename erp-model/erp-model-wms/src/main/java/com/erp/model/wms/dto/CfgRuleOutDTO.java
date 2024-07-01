@@ -154,7 +154,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 为0正常出库开关
          */
-        private Boolean whenZeroNormalOutSwitch;
+        private boolean whenZeroNormalOutSwitch;
     }
 
 
@@ -175,6 +175,12 @@ public class CfgRuleOutDTO implements Serializable {
          */
         @NotBlank(message = "渠道id不能为空")
         private String channelId;
+
+        /**
+         * 发货单id
+         */
+        @NotBlank(message = "发货单id不能为空")
+        private String deliveryOrderId;
 
         /**
          * 称重重量（g）
