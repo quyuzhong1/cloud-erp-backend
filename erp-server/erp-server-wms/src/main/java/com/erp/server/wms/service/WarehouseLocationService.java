@@ -297,4 +297,9 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationDTO.ViewDto> listAllArea();
 
     List<WarehouseLocationDTO.ReplenishAreaDTO> listArea(BaseIdsDTO.IdsDTO idsDTO);
+
+    /**
+     * 查询库区下的仓位
+     */
+    List<WarehouseLocationEntity> listLocation(String warehouseId, String warehouseArea);
 }

@@ -3,7 +3,7 @@ package com.erp.server.wms.controller.feign;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.renovation.WaveListDTO;
+import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.server.wms.service.WaveListFeignService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

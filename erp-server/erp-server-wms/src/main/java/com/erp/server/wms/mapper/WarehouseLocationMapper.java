@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
@@ -78,4 +79,6 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
      * @author: tanmujin
      */
     Integer countByStatus(@Param("statusCode") String statusCode);
+
+    List<WarehouseLocationEntity> listLocation(@Param("warehouseId") String warehouseId, @Param("warehouseArea") String warehouseArea);
 }

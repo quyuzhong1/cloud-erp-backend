@@ -916,6 +916,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> stockingAreaDTOList = new ArrayList<>();
             List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> pickingAreaDTOList = new ArrayList<>();
             for (WarehouseLocationEntity areaEntity : areaList) {
+                if(! StringUtils.isNotBlank(areaEntity.getAreaType())){
+                    continue;
+                }
                 if(areaEntity.getAreaType().equals("stockingArea")){
                     WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO areaDTO = new WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO(areaEntity.getCode(), areaEntity.getName());
                     stockingAreaDTOList.add(areaDTO);
@@ -932,5 +935,10 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             replenishAreaDTOList.add(replenishAreaDTO);
         }
         return replenishAreaDTOList;
+    }
+
+    @Override
+    public List<WarehouseLocationEntity> listLocation(String warehouseId, String warehouseArea) {
+        return warehouseLocationMapper.listLocation(warehouseId, warehouseArea);
     }
 }

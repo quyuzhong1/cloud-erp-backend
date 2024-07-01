@@ -1,17 +1,14 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.lang.Pair;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.entity.BaseEntity;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
@@ -23,7 +20,7 @@ import com.erp.model.wms.enums.LocationReplenishStatusEnum;
 import com.erp.model.wms.enums.LocationReplenishTypeEnum;
 import com.erp.server.wms.mapper.WarehouseLocationReplenishMapper;
 import com.erp.server.wms.service.*;
-import org.springframework.context.annotation.Bean;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -394,7 +391,24 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public List<WarehouseLocationReplenishDTO.LocationQtyDTO> listLocationQty(List<WarehouseLocationReplenishDTO.LocationQtyDTO> paramlist) {
+        if(CollectionUtils.isEmpty(paramlist)){
+            return Collections.emptyList();
+        }
+        List<WarehouseLocationReplenishDTO.LocationQtyDTO> resultList = new ArrayList<>();
+        for (WarehouseLocationReplenishDTO.LocationQtyDTO param : paramlist) {
+            List<WarehouseLocationEntity> locationList = warehouseLocationService.listLocation(param.getWarehouseId(), param.getWarehouseArea());
+            List<String> locationCodeList = locationList.stream().map(item -> item.getCode()).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(locationCodeList)){
+                return resultList;
+            }
+            List<InventoryEntity> inventoryList = inventoryService.getBaseMapper().selectList(new QueryWrapper<InventoryEntity>()
+                    .eq("warehouse_id", param.getWarehouseId())
+                    .in("warehouse_location", locationCodeList)
+                    .eq("sku_id", param.getSkuId())
+                    .eq("dict_inventory_status", "usable"));
+            inventoryList.forEach(item -> resultList.add(new WarehouseLocationReplenishDTO.LocationQtyDTO(param.getWarehouseId(), param.getWarehouseArea(), param.getSkuId(), item.getSkuNo(), item.getWarehouseLocation(), item.getQty())));
+        }
 
-        return Collections.emptyList();
+        return resultList;
     }
 }

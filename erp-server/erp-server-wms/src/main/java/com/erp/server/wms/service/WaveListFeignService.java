@@ -2,7 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
-import com.erp.model.wms.dto.renovation.WaveListDTO;
+import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.WaveListEntity;
 
 /**

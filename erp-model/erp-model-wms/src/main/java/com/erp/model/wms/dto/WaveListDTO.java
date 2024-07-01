@@ -1,4 +1,4 @@
-package com.erp.model.wms.dto.renovation;
+package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import lombok.Data;

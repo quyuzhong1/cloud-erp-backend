@@ -9,7 +9,6 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WaveListDTO;
-import com.erp.model.wms.dto.renovation.WaveListDTO;
 import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.WaveListService;

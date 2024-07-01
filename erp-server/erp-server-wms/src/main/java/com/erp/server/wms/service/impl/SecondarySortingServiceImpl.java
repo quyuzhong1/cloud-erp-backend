@@ -7,7 +7,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.dto.renovation.WaveListDTO;
+import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.renovation.SecondarySortingDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;

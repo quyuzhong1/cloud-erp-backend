@@ -36,7 +36,7 @@ import com.erp.model.wms.dto.CfgRuleWaveRecordDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
-import com.erp.model.wms.dto.renovation.WaveListDTO;
+import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;

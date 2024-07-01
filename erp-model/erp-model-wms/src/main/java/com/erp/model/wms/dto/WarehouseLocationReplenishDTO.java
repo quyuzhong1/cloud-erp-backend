@@ -3,8 +3,10 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.enums.LocationReplenishTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
@@ -190,20 +192,25 @@ public class WarehouseLocationReplenishDTO implements Serializable {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class LocationQtyDTO {
         /**
          * 仓库ID
          */
+        @NotBlank
         private String warehouseId;
 
         /**
          * 库区编码
          */
+        @NotBlank
         private String warehouseArea;
 
         /**
          * sku id
          */
+        @NotBlank
         private String skuId;
 
         /**
