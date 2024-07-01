@@ -893,6 +893,19 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return sortingPort;
     }
 
+    @Override
+    public Boolean updateAbnormal(List<String> ids, AbnormalCauseEnum abnormalCauseEnum) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.FALSE;
+        }
+
+        Boolean flag = lambdaUpdate()
+                .set(SoB2cDeliveryEntity::getAbnormalCause, abnormalCauseEnum.getCode())
+                .in(SoB2cDeliveryEntity::getId, ids)
+                .update();
+        return flag;
+    }
+
 
     @Override
     public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds) {

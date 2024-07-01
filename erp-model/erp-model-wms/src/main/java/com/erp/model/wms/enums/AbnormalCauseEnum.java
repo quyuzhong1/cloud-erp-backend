@@ -10,7 +10,7 @@ public enum AbnormalCauseEnum implements EnumMessage {
 
     GENERATION_WAVE("generation_wave", "拣货区补货中"),
     PICK_MARKINGS("pick_markings", "拣货时手动标记缺货"),
-    EQUIPMENT_SORTING("equipment_sorting", "设备异常口订单-（尺寸超限/重量超限/单号不存在）")
+    EQUIPMENT_SORTING("equipment_sorting", "设备异常口订单-（尺寸超限/重量超限/单号不存在/未配置拣货口）")
     ;
 
     private final String code;

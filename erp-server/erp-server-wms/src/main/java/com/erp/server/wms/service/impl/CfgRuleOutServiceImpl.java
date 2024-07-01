@@ -12,10 +12,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgRuleOutService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.SoB2cDeliveryService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +47,9 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
     @Resource
     private SpElServer spElServer;
+
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -141,6 +146,15 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     @Override
     public String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
         CfgRuleOutDTO.CommonDTO commonDTO = this.view();
+        String sortingPort = this.getSortingPort(commonDTO,dto);
+        if(sortingPort.equals(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode())){
+            //更新异常
+            soB2cDeliveryService.updateAbnormal(Arrays.asList(dto.getDeliveryOrderId()), AbnormalCauseEnum.EQUIPMENT_SORTING);
+        }
+        return sortingPort;
+    }
+
+    public String getSortingPort(CfgRuleOutDTO.CommonDTO commonDTO,CfgRuleOutDTO.SortingPortRuleDTO dto) {
         //校验称重量方规则，通过走设备分拣口规则
         CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations = commonDTO.getB2cAllowableDeviations();
         Boolean b2cAllowableDeviationsResult = this.handleB2cAllowableDeviations(b2cAllowableDeviations,dto);
@@ -172,23 +186,31 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 continue;
             }
             List<ConditionElement> conditionElementList = BeanMapper.copyList(condition.getConditionDetailList(), ConditionElement.class);
-            Map<String,Object> map = this.getConditionMap(dto);
+            Map<String,Object> map = this.getConditionMap(dto,b2cAllowableDeviations.isWhenZeroNormalOutSwitch());
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             return matchResult;
         }
         return true;
     }
 
-    private Map<String, Object> getConditionMap(CfgRuleOutDTO.SortingPortRuleDTO dto) {
+    private Map<String, Object> getConditionMap(CfgRuleOutDTO.SortingPortRuleDTO dto,boolean whenZeroNormalOutSwitch) {
         Map<String,Object> map = new HashMap<>();
-        map.put("weightVarianceRate",dto.getOrderWeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWeight().subtract(dto.getScanWeight()).abs().divide(dto.getOrderWeight(),4, RoundingMode.HALF_UP));
-        map.put("volumeDifferenceRateLength",dto.getOrderLength().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderLength().subtract(dto.getScanLength()).abs().divide(dto.getOrderLength(),4, RoundingMode.HALF_UP));
-        map.put("volumeDifferenceRateWidth",dto.getOrderWidth().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWidth().subtract(dto.getScanWidth()).abs().divide(dto.getOrderWidth(),4, RoundingMode.HALF_UP));
-        map.put("volumeDifferenceRateHeight",dto.getOrderHeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderHeight().subtract(dto.getScanHeight()).abs().divide(dto.getOrderHeight(),4, RoundingMode.HALF_UP));
-        map.put("weightVarianceValue",dto.getOrderWeight().subtract(dto.getScanWeight()).abs());
-        map.put("volumeDifferenceValueLength",dto.getOrderLength().subtract(dto.getScanLength()).abs());
-        map.put("volumeDifferenceValueWidth",dto.getOrderWidth().subtract(dto.getScanWidth()).abs());
-        map.put("volumeDifferenceValueHeight",dto.getOrderHeight().subtract(dto.getScanHeight()).abs());
+        if(!whenZeroNormalOutSwitch || dto.getOrderWeight().compareTo(BigDecimal.ZERO) != 0){
+            map.put("weightVarianceRate",dto.getOrderWeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWeight().subtract(dto.getScanWeight()).abs().divide(dto.getOrderWeight(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
+            map.put("weightVarianceValue",dto.getOrderWeight().subtract(dto.getScanWeight()).abs());
+        }
+        if(!whenZeroNormalOutSwitch || dto.getOrderLength().compareTo(BigDecimal.ZERO) != 0){
+            map.put("volumeDifferenceRateLength",dto.getOrderLength().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderLength().subtract(dto.getScanLength()).abs().divide(dto.getOrderLength(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
+            map.put("volumeDifferenceValueLength",dto.getOrderLength().subtract(dto.getScanLength()).abs());
+        }
+        if(!whenZeroNormalOutSwitch || dto.getOrderWidth().compareTo(BigDecimal.ZERO) != 0){
+            map.put("volumeDifferenceRateWidth",dto.getOrderWidth().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWidth().subtract(dto.getScanWidth()).abs().divide(dto.getOrderWidth(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
+            map.put("volumeDifferenceValueWidth",dto.getOrderWidth().subtract(dto.getScanWidth()).abs());
+        }
+        if(!whenZeroNormalOutSwitch || dto.getOrderHeight().compareTo(BigDecimal.ZERO) != 0){
+            map.put("volumeDifferenceRateHeight",dto.getOrderHeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderHeight().subtract(dto.getScanHeight()).abs().divide(dto.getOrderHeight(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
+            map.put("volumeDifferenceValueHeight",dto.getOrderHeight().subtract(dto.getScanHeight()).abs());
+        }
         return map;
     }
 }
