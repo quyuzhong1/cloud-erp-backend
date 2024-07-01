@@ -69,7 +69,7 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.dto.renovation.PickingWaveDTO;
+import com.erp.model.wms.dto.renovation.WaveListDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -158,9 +158,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private CfgRulePickingService cfgRulePickingService;
     @Resource
-    private PickingWaveService pickingWaveService;
+    private WaveListService waveListService;
     @Resource
-    private PickingWaveDetailService pickingWaveDetailService;
+    private WaveListDetailService waveListDetailService;
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
@@ -266,7 +266,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Integer interceptCount = interceptDTO == null?0:interceptDTO.getCount();
         list.add(new SoB2cDeliveryDTO.TabListDTO("intercepting", interceptCount));
         //生成波次
-        int generationWavesCount = pickingWaveService.countDelivery(param);
+        int generationWavesCount = waveListService.countDelivery(param);
         list.add(new SoB2cDeliveryDTO.TabListDTO("generation_waves", generationWavesCount));
         list.add(new SoB2cDeliveryDTO.TabListDTO("all", list.stream().mapToInt(SoB2cDeliveryDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
@@ -678,7 +678,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //匹配订单字段，用于打印
             List<String> soIds = waybillDetailDTOList.stream().map(req -> req.getSoB2cId()).distinct().collect(Collectors.toList());
             //订单波次篮号信息
-            Map<String, String> orderBasketNoMap = pickingWaveDetailService.getOrderBasketNoMap(soIds);
+            Map<String, String> orderBasketNoMap = waveListDetailService.getOrderBasketNoMap(soIds);
             List<PrintWayBillPdfDTO> printWayBillPdfResultList = soB2cFeign.printWayBillPdf(soIds);
             printWayBillPdfResultList.forEach(v->{
                 v.setBasketNo(orderBasketNoMap.getOrDefault(v.getSoId(), ""));
@@ -1384,12 +1384,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
-        PickingWaveDTO.AddDTO addDTO = new PickingWaveDTO.AddDTO();
+        WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
         addDTO.setPickCartTypeId(dto.getPickingCartTypeId());
         addDTO.setDeliveryIdList(dto.getIds());
         addDTO.setPickingType(dto.getPickingType());
         addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
-        return pickingWaveService.add(addDTO);
+        return waveListService.add(addDTO);
     }
 
     @Override

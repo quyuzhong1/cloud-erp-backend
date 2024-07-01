@@ -10,7 +10,7 @@ import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.service.PickingWaveService;
+import com.erp.server.wms.service.WaveListService;
 import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -29,7 +29,7 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
     private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
 
     @Resource
-    private PickingWaveService pickingWaveService;
+    private WaveListService waveListService;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
@@ -90,7 +90,7 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
 
             if ("generation_waves".equals(searchType)) {
 
-                List<String> ids = pickingWaveService.listDeliveryIdByStatus(WaveStatusEnum.AWAIT_PICK.getCode());
+                List<String> ids = waveListService.listDeliveryIdByStatus(WaveStatusEnum.AWAIT_PICK.getCode());
                 if (CollectionUtils.isEmpty(ids)) {
                     return getQueryEmptySql();
                 }

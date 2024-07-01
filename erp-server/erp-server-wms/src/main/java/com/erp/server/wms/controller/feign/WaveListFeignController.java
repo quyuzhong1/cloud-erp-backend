@@ -3,9 +3,8 @@ package com.erp.server.wms.controller.feign;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.renovation.PickingWaveDTO;
+import com.erp.model.wms.dto.renovation.WaveListDTO;
 import com.erp.server.wms.service.WaveListFeignService;
-import com.erp.server.wms.service.WaveListService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +28,7 @@ public class WaveListFeignController extends BaseController {
      * 新增波次
      */
     @PostMapping("/add")
-    public ApiResult<BatchResultDTO> add(@RequestBody PickingWaveDTO.AddDTO addDto){
+    public ApiResult<BatchResultDTO> add(@RequestBody WaveListDTO.AddDTO addDto){
         BatchResultDTO resultDTO = waveListFeignService.add(addDto);
         return resultDTO.getSuccess() ? success() : failure();
     }

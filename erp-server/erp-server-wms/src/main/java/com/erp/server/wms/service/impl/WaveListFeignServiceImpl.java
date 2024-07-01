@@ -3,7 +3,7 @@ package com.erp.server.wms.service.impl;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.model.wms.dto.renovation.PickingWaveDTO;
+import com.erp.model.wms.dto.renovation.WaveListDTO;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.model.wms.enums.WaveStatusEnum;
@@ -28,7 +28,7 @@ public class WaveListFeignServiceImpl extends SuperServiceImpl<WaveListMapper, W
     private WaveListDetailService waveListDetailService;
 
     @Override
-    public BatchResultDTO add(PickingWaveDTO.AddDTO dto) {
+    public BatchResultDTO add(WaveListDTO.AddDTO dto) {
         WaveListEntity entity = new WaveListEntity();
         entity.setCode(dto.getCode());
         entity.setName("");
