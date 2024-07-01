@@ -49,7 +49,7 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
         this.aliExpressProduct = aliExpressProduct;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        this.setUniqueId(aliExpressProduct.getProductId().toString());
+        this.setUniqueId(StrUtil.format("{}_{}",aliExpressProduct.getProductId().toString(), dto.getShopId()));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
         this.shopId = dto.getShopId();
@@ -87,7 +87,7 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             product.setPlatformProductNo(sourceProduct.getProductId().toString());
             // 平台sku 名
             product.setPlatformProductName(sourceProduct.getSubject());
-            product.setPlatformSkuNo(item.getSkuCode());
+            product.setPlatformSkuNo(StringUtils.isBlank(item.getSkuCode())? "" : item.getSkuCode());
 
             product.setPlatformSkuName(sourceProduct.getSubject());
             // 类型 platform 平台  warehouse 仓库
