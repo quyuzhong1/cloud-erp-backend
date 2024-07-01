@@ -23,7 +23,7 @@ import cn.hutool.core.collection.CollUtil;
  */
 @Service
 @Scope("prototype")
-public class DmpInputKingdeeNextDmpHandler extends DmpInputDoNextDmpHandler{
+public class DmpInputKingdeeNextDmpHandler extends DmpInputDbConvertDmpHandler{
 	
 	@Override
 	protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(
