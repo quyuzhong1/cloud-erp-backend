@@ -270,4 +270,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     String dimensionalWeightPipeline(DimensionalWeightDTO dto);
 
     Boolean updateAbnormal(List<String> ids, AbnormalCauseEnum abnormalCauseEnum);
+    /**
+     * 根据发货单大于物流面单
+     * @author will
+     * @date 2024/7/1 18:14
+     * @param id
+     * @param response
+     */
+    void printLogisticsBillConfirmById(String id, HttpServletResponse response);
 }

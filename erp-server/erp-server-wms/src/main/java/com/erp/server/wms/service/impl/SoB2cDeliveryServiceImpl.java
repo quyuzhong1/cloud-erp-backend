@@ -907,6 +907,31 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return flag;
     }
 
+    @Override
+    public void printLogisticsBillConfirmById(String id, HttpServletResponse response) {
+        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
+        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new ArrayList<>();
+        //发货单
+        SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
+           throw new ServiceException("未发现发货单信息");
+        }
+        //物流信息
+        List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
+        if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
+            throw new ServiceException("未发现销售订单物流信息");
+        }
+        SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO detailDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO();
+        BeanMapperUtils.copy(soB2cDeliveryEntity,detailDTO);
+        detailDTO.setIndex(MathUtil.ZERO);
+        detailDTO.setSoB2cId(soB2cDeliveryEntity.getSourceId());
+        detailDTO.setLogisticType(soB2cLogisticsList.get(0).getLogisticType());
+        detailList.add(detailDTO);
+        dto.setDetailList(detailList);
+        printLogisticsBillConfirm(dto,response);
+    }
+
 
     @Override
     public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds) {
