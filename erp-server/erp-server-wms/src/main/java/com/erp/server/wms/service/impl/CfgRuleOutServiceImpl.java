@@ -2,8 +2,10 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -39,15 +42,71 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         CfgRuleOutEntity equipmentSortingPortEntity = new CfgRuleOutEntity();
         equipmentSortingPortEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.EQUIPMENT_SORTING_PORT.getCode());
         Map<String, Object> equipmentSortingPortMap = BeanUtil.beanToMap(commonDTO.getEquipmentSortingPortDTO());
+        this.checkEquipmentSortingPort(commonDTO.getEquipmentSortingPortDTO());
         equipmentSortingPortEntity.setRuleContent(equipmentSortingPortMap);
         CfgRuleOutEntity b2cAllowableDeviationsEntity = new CfgRuleOutEntity();
         b2cAllowableDeviationsEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.B2C_ALLOWABLE_DEVIATIONS.getCode());
         Map<String, Object> b2cAllowableDeviationsMap = BeanUtil.beanToMap(commonDTO.getB2cAllowableDeviations());
+        this.checkB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations());
         b2cAllowableDeviationsEntity.setRuleContent(b2cAllowableDeviationsMap);
         //删除数据后再保存
         service.remove(new QueryWrapper<>());
         service.saveBatch(Arrays.asList(equipmentSortingPortEntity, b2cAllowableDeviationsEntity));
         return new BaseResultDTO.AddDTO();
+    }
+
+    private void checkB2cAllowableDeviations(CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations) {
+        if(Objects.isNull(b2cAllowableDeviations)){
+            return;
+        }
+        List<CfgRuleOutDTO.B2cAllowableDeviationsCondition> conditionDTOS = b2cAllowableDeviations.getConditionDTO();
+        if(CollectionUtil.isEmpty(conditionDTOS)){
+            return;
+        }
+        List<String> valueList = conditionDTOS.stream().flatMap(v->v.getValList().stream()).collect(Collectors.toList());
+        Set<String> values = new HashSet<>();
+        List<String> duplicates = valueList.stream()
+                .filter(v -> !values.add(v))
+                .collect(Collectors.toList());
+
+        if (!duplicates.isEmpty()) {
+            throw new ServiceException("B2C称重量方允许偏差条件存在物流商获渠道");
+        }
+
+        for (CfgRuleOutDTO.B2cAllowableDeviationsCondition b2cAllowableDeviationsConditionDetail : conditionDTOS) {
+            if(CollectionUtil.isEmpty(b2cAllowableDeviationsConditionDetail.getConditionDetailList())){
+                continue;
+            }
+            Set<String> detailSet = new HashSet<>();
+            List<String> detailDuplicates = b2cAllowableDeviationsConditionDetail.getConditionDetailList().stream()
+                    .map(CfgRuleOutDTO.B2cAllowableDeviationsConditionDetail::getField)
+                    .filter(v -> !detailSet.add(v))
+                    .collect(Collectors.toList());
+
+            if (!detailDuplicates.isEmpty()) {
+                throw new ServiceException("B2C称重量方允许偏差条件存在相同配置");
+            }
+        }
+
+    }
+
+    private void checkEquipmentSortingPort(CfgRuleOutDTO.EquipmentSortingPortDTO equipmentSortingPortDTO) {
+        if(Objects.isNull(equipmentSortingPortDTO)){
+            return;
+        }
+        List<CfgRuleOutDTO.EquipmentSortingPortConditionDTO> conditionDTOS = equipmentSortingPortDTO.getSortingConditionDTOList();
+        if(CollectionUtil.isEmpty(conditionDTOS)){
+            return;
+        }
+        Set<String> values = new HashSet<>();
+        List<String> duplicates = conditionDTOS.stream()
+                .map(CfgRuleOutDTO.EquipmentSortingPortConditionDTO::getValue)
+                .filter(value -> !values.add(value))
+                .collect(Collectors.toList());
+
+        if (!duplicates.isEmpty()) {
+            throw new ServiceException("设备分拣口存在相同的物流商或渠道配置");
+        }
     }
 
     @Override
