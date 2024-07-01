@@ -206,8 +206,8 @@ public class LogisticsChannelController extends BaseController {
      * @return
      */
     @GetMapping("tree")
-    public ApiResult<List<BaseDropDownDTO.Tree>> tree(){
-        return success(logisticsChannelService.tree());
+    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam(value = "filterDisabled",required = false, defaultValue = "false") Boolean filterDisabled){
+        return success(logisticsChannelService.tree(filterDisabled));
     }
 
     /**
