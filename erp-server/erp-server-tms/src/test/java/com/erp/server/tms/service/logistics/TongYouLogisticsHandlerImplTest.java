@@ -37,7 +37,7 @@ public class TongYouLogisticsHandlerImplTest {
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = tongYouLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = tongYouLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){

@@ -760,7 +760,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 }
             }
         }
-
+        if(CollectionUtils.isEmpty(base64List)){
+            throw new ServiceException("未找到面单数据");
+        }
         try {
             String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
 

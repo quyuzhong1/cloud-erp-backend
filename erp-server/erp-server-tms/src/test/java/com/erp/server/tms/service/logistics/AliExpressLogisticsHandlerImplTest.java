@@ -63,7 +63,8 @@ public class AliExpressLogisticsHandlerImplTest {
     public AliExpressLogisticsHandlerImplTest(){
         String CLIENT_CODE = "502978";
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000700312cJ4nYbrzErAqH159364aboXoPdAcJwjMuEzrGXEAudlrVcjGsjo4bIr30";
+        String token = "50000200918tiFq5iBtYmQcdaF1Gox1875decdETPc8fCQAtRXFGFPo1Fy1cLR4iEp3v";
+//        String token = "50000100620rOCpJesBimsVqwhdznwFL19448dbexeSxecBcvdotvGJILKkYWzw0qLEq";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -71,7 +72,7 @@ public class AliExpressLogisticsHandlerImplTest {
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = aliExpressLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = aliExpressLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
@@ -225,8 +226,8 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("3028833906081879");
-        logisticsQueryVO2.setTransportNo("241166290576312");
+        logisticsQueryVO2.setDeliveryNo("8189755534784883");
+        logisticsQueryVO2.setTransportNo("LP00660890024775");
 //        logisticsQueryVO2.setTransportNo("PQ936A0792035050134690Z ");
         logisticsQueryVO2.setAuthMap(authMap);
         logisticsQueryVO2.setLabelType("1");

@@ -58,7 +58,10 @@ public class WalmartLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
 
 
-
+    @Override
+    public Map<String, String> getLogisticsAuthConfigByShopId(String shopId) {
+        return null;
+    }
 
     /**
      * 根据平台获取授权列表

@@ -48,7 +48,7 @@ public class Track123LogisticsHandlerImplTest {
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = track123LogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = track123LogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){

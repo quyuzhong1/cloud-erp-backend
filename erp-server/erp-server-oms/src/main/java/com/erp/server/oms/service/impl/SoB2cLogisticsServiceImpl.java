@@ -416,8 +416,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
         //取消物流单
         LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                channelId(soB2cLogisticsEntity.getLogisticsChannelId()).transportNo(soB2cLogisticsEntity.getCode()).
-                referenceNumber(soB2cEntity.getCode()).build();
+                channelId(soB2cLogisticsEntity.getLogisticsChannelId())
+                .transportNo(soB2cLogisticsEntity.getCode())
+                .referenceNumber(soB2cEntity.getCode())
+                .shopId(soB2cEntity.getShopId())
+                .build();
         ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
         //取消失败
         if (!cancelResult.isSuccess() && cancelResult.getCode()!=-1) {
