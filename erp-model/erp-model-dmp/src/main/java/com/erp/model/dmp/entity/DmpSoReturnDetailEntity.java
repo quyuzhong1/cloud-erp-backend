@@ -63,8 +63,8 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     /**
     * 商品售价
     */
-    @TableField("sell_price0")
-    private BigDecimal sellPrice0;
+    @TableField("sell_price")
+    private BigDecimal sellPrice;
     /**
     * 金额
     */
