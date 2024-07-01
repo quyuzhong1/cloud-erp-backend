@@ -98,12 +98,12 @@ public enum CfgRuleOutEnum {
     }
     @Getter
     public enum AllowableDeviationsCompareEnum implements EnumMessage  {
-        EQ("eq", "等于"),
-        NE("ne", "不等于"),
-        GREATER_THAN("greaterThan", "大于"),
-        GREATER_THAN_OR_EQUAL_TO("greaterThanOrEqualTo", "大于等于"),
-        LESS_THAN("lessThan", "小于"),
-        LESS_THAN_OR_EQUAL_TO("lessThanOrEqualTo", "小于等于");
+        EQ("==", "等于"),
+        NE("!=", "不等于"),
+        GREATER_THAN(">", "大于"),
+        GREATER_THAN_OR_EQUAL_TO(">=", "大于等于"),
+        LESS_THAN("<", "小于"),
+        LESS_THAN_OR_EQUAL_TO("<=", "小于等于");
         private String code;
         private String name;
         AllowableDeviationsCompareEnum(String code, String name) {
