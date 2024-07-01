@@ -1,13 +1,11 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
-import com.erp.model.wms.enums.OutStockModeEnum;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -116,6 +114,20 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 称重重量单位
          */
         private String weightUnit;
+
+        /**
+         * 长
+         */
+        private BigDecimal length;
+        /**
+         * 宽
+         */
+        private BigDecimal width;
+        /**
+         * 高
+         */
+        private BigDecimal height;
+
         /**
          * 详情
          */

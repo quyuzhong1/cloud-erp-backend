@@ -33,6 +33,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
+import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.renovation.PickingWaveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
@@ -87,7 +89,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
 
     @Resource
-    private DictBasicService dictBasicService;
+    private CfgRulePickingService cfgRulePickingService;
 
 
     @Resource
@@ -295,7 +297,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
      * @author will
      * @date 2024/6/26 11:39
      */
-    private void generatePickingWave(List<SoB2cDeliveryEntity> compliantList, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList, CfgRuleWaveEntity entity) {
+    private void generatePickingWave(List<SoB2cDeliveryEntity> compliantList, List<SoB2cDeliveryDetailEntity> allDetailList, CfgRuleWaveEntity entity) {
         if (CollectionUtil.isEmpty(compliantList)) {
             return;
         }
@@ -305,7 +307,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             return;
         }
         //符合发货单的商品数量小于最低商品数量
-        Integer orderTotalQty = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+        Integer orderTotalQty = allDetailList.stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
         if (MathUtil.compareTo(entity.getMinQty(), orderTotalQty) > MathUtil.ZERO) {
             return;
         }
@@ -323,6 +325,23 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         //需要新增的波次数据
         List<PickingWaveDTO.AddDTO> resultList = new ArrayList<>();
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
+            //发货明细
+            List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
+                    .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getDeliveryQty()))
+                    .collect(Collectors.toList());
+            //拣货规则
+            CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
+            executionData.setBillType("B2C");
+            executionData.setDetails(detailList);
+            List<LocationInventoryResultDTO> ruleOrderMatchResult = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+
+            //判断是否匹配仓位成功
+            long count = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+            if (count > MathUtil.ZERO) {
+                String skuNos = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).map(LocationInventoryResultDTO::getSkuNO).collect(Collectors.joining(","));
+                log.warn("发货单【{}】SKU【{}】匹配仓卫不成功",deliveryEntity.getCode(),skuNos);
+                continue;
+            }
 
             //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
             if ((ObjectUtil.isNotEmpty(entity.getMaxQty()) && MathUtil.compareTo(totalQty, entity.getMaxQty()) > MathUtil.ZERO)
@@ -337,7 +356,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             }
 
             //发货明细商品数量合计
-            Integer detailTotalQty = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer detailTotalQty = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             totalQty = detailTotalQty + totalQty;
 
             //发货单的数量

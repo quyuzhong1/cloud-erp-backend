@@ -8,7 +8,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -29,6 +28,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -52,12 +52,12 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
@@ -73,7 +73,6 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
-import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.dto.renovation.PickingWaveDTO;
 import com.erp.model.wms.entity.*;
@@ -101,7 +100,6 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.Pair;
-import org.python.antlr.ast.Str;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -184,6 +182,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
+    @Resource
+    private PackingInspectionService packingInspectionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -845,6 +845,45 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    public String dimensionalWeightPipeline(DimensionalWeightDTO dto) {
+        //销售订单编码
+        String soCode = dto.getBarCode();
+        List<SoB2cEntity> list = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getCode, soCode).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return "9";
+        }
+        //发货单信息
+        SoB2cDeliveryEntity entity = getBySoCode(soCode);
+        if (ObjectUtil.isEmpty(entity)) {
+            return "9";
+        }
+        entity.setLength(dto.getLength());
+        entity.setWidth(dto.getWidth());
+        entity.setHeight(dto.getHeight());
+        entity.setWeight(dto.getWeight());
+        entity.setIsWeigh(Boolean.TRUE);
+
+        //出库配置，TODO
+        String pickPort = "1";
+        Boolean isDeviation = Boolean.FALSE;
+
+        //自动出库
+        if (!isDeviation && entity.getIsAutoOut()) {
+            //发货单自动出库
+            SoB2cEntity soB2cEntity = list.get(0);
+            try {
+                packingInspectionService.soB2cDeliveryAutoOut(soB2cEntity,entity);
+            } catch (Exception e) {
+                log.error("发货单【{}】自动出库失败",entity.getCode());
+            }
+        }
+        //更新发货单
+        this.updateById(entity);
+        return pickPort;
+    }
+
+
+    @Override
     public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds) {
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Collections.emptyList();
@@ -1442,6 +1481,17 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public List<SoB2cDeliveryEntity> listWaitHandle() {
         return lambdaQuery().eq(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
                 .list();
+    }
+
+    /**
+     * 根据销售订单编码查询
+     * @author will
+     * @date 2024/6/28 15:55
+     * @param soCode
+     * @return SoB2cDeliveryEntity
+     */
+    private SoB2cDeliveryEntity getBySoCode (String soCode) {
+       return lambdaQuery().eq(SoB2cDeliveryEntity::getSoCode,soCode).last("limit 1").one();
     }
 
     /**
