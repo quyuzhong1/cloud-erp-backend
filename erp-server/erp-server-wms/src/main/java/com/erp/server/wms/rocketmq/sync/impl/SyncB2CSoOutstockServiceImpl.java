@@ -262,6 +262,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     inOutStock.setSourceCode(soOutstock.getCode());
                     inOutStock.setWarehouseId(soOutstock.getWarehouseId());
                     inOutStock.setWarehouseLocation(detail.getPositionNo());
+                    inOutStock.setVirtualWarehouseId(virtualWarehouseId);
                     inOutStockList.add(inOutStock);
                 }
             }
