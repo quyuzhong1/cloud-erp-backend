@@ -1,10 +1,13 @@
 package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import javax.validation.constraints.NotBlank;
@@ -153,6 +156,66 @@ public class CfgRuleOutDTO implements Serializable {
         private Boolean whenZeroNormalOutSwitch;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SortingPortRuleDTO {
+
+        /**
+         * 物流商id
+         */
+        @NotBlank(message = "物流商id不能为空")
+        private String logisticsSupplierId;
+
+        /**
+         * 渠道id
+         */
+        @NotBlank(message = "渠道id不能为空")
+        private String channelId;
+
+        /**
+         * 称重重量（g）
+         */
+        private BigDecimal scanWeight;
+
+        /**
+         * 扫描长(cm)
+         */
+        private BigDecimal scanLength;
+
+        /**
+         * 扫描宽(cm)
+         */
+        private BigDecimal scanWidth;
+
+        /**
+         * 扫描高(cm)
+         */
+        private BigDecimal scanHeight;
+
+        /**
+         * 订单重量（g）
+         */
+        private BigDecimal orderWeight;
+
+        /**
+         * 订单包装长(cm)
+         */
+        private BigDecimal orderLength;
+
+        /**
+         * 订单包装宽(cm)
+         */
+        private BigDecimal orderWidth;
+
+        /**
+         * 订单包装高(cm)
+         */
+        private BigDecimal orderHeight;
+
+    }
 
     @Data
     @NoArgsConstructor

@@ -133,4 +133,9 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         commonDTO.setB2cAllowableDeviations(BeanUtil.mapToBean(b2cAllowableDeviationsEntity.getRuleContent(), CfgRuleOutDTO.B2cAllowableDeviations.class,true));
         return commonDTO;
     }
+
+    @Override
+    public String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
+        return "";
+    }
 }
