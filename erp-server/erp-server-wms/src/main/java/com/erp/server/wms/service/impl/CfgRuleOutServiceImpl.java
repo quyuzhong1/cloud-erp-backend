@@ -10,6 +10,7 @@ import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
@@ -19,6 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -112,10 +116,10 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         if(CollectionUtil.isEmpty(conditionDTOS)){
             return;
         }
+        List<String> valueList = conditionDTOS.stream().flatMap(v->v.getValueList().stream()).collect(Collectors.toList());
         Set<String> values = new HashSet<>();
-        List<String> duplicates = conditionDTOS.stream()
-                .map(CfgRuleOutDTO.EquipmentSortingPortConditionDTO::getValue)
-                .filter(value -> !values.add(value))
+        List<String> duplicates = valueList.stream()
+                .filter(v -> !values.add(v))
                 .collect(Collectors.toList());
 
         if (!duplicates.isEmpty()) {
@@ -136,6 +140,55 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
     @Override
     public String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
-        return "";
+        CfgRuleOutDTO.CommonDTO commonDTO = this.view();
+        //校验称重量方规则，通过走设备分拣口规则
+        CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations = commonDTO.getB2cAllowableDeviations();
+        Boolean b2cAllowableDeviationsResult = this.handleB2cAllowableDeviations(b2cAllowableDeviations,dto);
+        //不通过返回异常口
+        if(!b2cAllowableDeviationsResult){
+            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+        }
+        List<CfgRuleOutDTO.EquipmentSortingPortConditionDTO> equipmentSortingPortDTO = commonDTO.getEquipmentSortingPortDTO().getSortingConditionDTOList();
+        for (CfgRuleOutDTO.EquipmentSortingPortConditionDTO equipmentSortingPortConditionDTO : equipmentSortingPortDTO) {
+            if(equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.IN_LIST.getCode()) || equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.EQ.getCode())){
+                if(equipmentSortingPortConditionDTO.getValueList().contains(dto.getLogisticsSupplierId()) || equipmentSortingPortConditionDTO.getValueList().contains(dto.getChannelId())){
+                    return equipmentSortingPortConditionDTO.getPort();
+                }
+            }
+            if(equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.NOT_IN_LIST.getCode()) || equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.NQ.getCode())){
+                if(!equipmentSortingPortConditionDTO.getValueList().contains(dto.getLogisticsSupplierId()) && !equipmentSortingPortConditionDTO.getValueList().contains(dto.getChannelId())){
+                    return equipmentSortingPortConditionDTO.getPort();
+                }
+            }
+        }
+        return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+    }
+
+    private Boolean handleB2cAllowableDeviations(CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations, CfgRuleOutDTO.SortingPortRuleDTO dto) {
+        List<CfgRuleOutDTO.B2cAllowableDeviationsCondition> conditionList = b2cAllowableDeviations.getConditionDTOList();
+        dto.handleNullToZero();
+        for (CfgRuleOutDTO.B2cAllowableDeviationsCondition condition : conditionList) {
+            if(!condition.getValList().contains(dto.getChannelId()) && !condition.getValList().contains(dto.getLogisticsSupplierId())){
+                continue;
+            }
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(condition.getConditionDetailList(), ConditionElement.class);
+            Map<String,Object> map = this.getConditionMap(dto);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            return matchResult;
+        }
+        return true;
+    }
+
+    private Map<String, Object> getConditionMap(CfgRuleOutDTO.SortingPortRuleDTO dto) {
+        Map<String,Object> map = new HashMap<>();
+        map.put("weightVarianceRate",dto.getOrderWeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWeight().subtract(dto.getScanWeight()).abs().divide(dto.getOrderWeight(),4, RoundingMode.HALF_UP));
+        map.put("volumeDifferenceRateLength",dto.getOrderLength().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderLength().subtract(dto.getScanLength()).abs().divide(dto.getOrderLength(),4, RoundingMode.HALF_UP));
+        map.put("volumeDifferenceRateWidth",dto.getOrderWidth().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWidth().subtract(dto.getScanWidth()).abs().divide(dto.getOrderWidth(),4, RoundingMode.HALF_UP));
+        map.put("volumeDifferenceRateHeight",dto.getOrderHeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderHeight().subtract(dto.getScanHeight()).abs().divide(dto.getOrderHeight(),4, RoundingMode.HALF_UP));
+        map.put("weightVarianceValue",dto.getOrderWeight().subtract(dto.getScanWeight()).abs());
+        map.put("volumeDifferenceValueLength",dto.getOrderLength().subtract(dto.getScanLength()).abs());
+        map.put("volumeDifferenceValueWidth",dto.getOrderWidth().subtract(dto.getScanWidth()).abs());
+        map.put("volumeDifferenceValueHeight",dto.getOrderHeight().subtract(dto.getScanHeight()).abs());
+        return map;
     }
 }

@@ -55,4 +55,14 @@ public class CfgRuleOutController extends BaseController {
     public ApiResult<CfgRuleOutDTO.CommonDTO> view() {
         return success(cfgRuleOutService.view());
     }
+    /**
+     * 详情
+     * @author lrp
+     * @date:  2024-06-28
+     * @return ApiResult<String>
+     */
+    @PostMapping("/getSortingPort")
+    public ApiResult<String> getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
+        return success(cfgRuleOutService.getSortingPort(dto));
+    }
 }
