@@ -74,4 +74,6 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
     BatchResultDTO finish(WarehouseLocationReplenishDTO.HandleDTO dto);
 
     List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo();
+
+    List<WarehouseLocationReplenishDTO.LocationQtyDTO> listLocationQty(List<WarehouseLocationReplenishDTO.LocationQtyDTO> paramlist);
 }

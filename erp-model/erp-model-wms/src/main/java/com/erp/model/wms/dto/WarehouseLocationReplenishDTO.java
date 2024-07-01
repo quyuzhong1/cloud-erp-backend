@@ -195,6 +195,17 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          * 仓库ID
          */
         private String warehouseId;
+
+        /**
+         * 库区编码
+         */
+        private String warehouseArea;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
         /**
          * sku编码
          */
@@ -209,11 +220,6 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          * 可用数量
          */
         private Integer qty;
-
-        /**
-         * 库区编码
-         */
-        private String warehouseArea;
     }
 
     @Data

@@ -235,7 +235,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         //销售订单
         List<String> b2cSoIdList = soB2cDeliveryList.stream().map(SoB2cDeliveryEntity::getSourceId).collect(Collectors.toList());
-        SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO(b2cSoIdList, Arrays.asList(SoB2cDataTypeEnum.MAIN.getCode(), SoB2cDataTypeEnum.LOGISTIC.getCode(), SoB2cDataTypeEnum.RECEIVER.getCode()));
+        SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO();
+        paramDTO.setB2cSoIdList(b2cSoIdList);
+        paramDTO.setDataTypeList(Arrays.asList(SoB2cDataTypeEnum.LOGISTIC.getCode(), SoB2cDataTypeEnum.RECEIVER.getCode()));
         SoB2cDTO.SoB2cDataDTO soB2cDataDTO = soB2cFeign.listSoB2cData(paramDTO);
 
 
@@ -264,6 +266,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             }
         }
         if (CollectionUtil.isEmpty(compliantList)) {
+            log.info("未发现需要新增的波次列表数据");
             return Boolean.TRUE;
         }
         //生成拣货波次列表数据

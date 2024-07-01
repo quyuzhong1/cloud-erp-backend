@@ -893,20 +893,44 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
-    public List<WarehouseLocationDTO.CoreDTO> listArea(String warehouseId, String areaTypeCode) {
-        List<WarehouseLocationEntity> list = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("warehouse_id", warehouseId)
-                .eq("type", "area")
-                .eq("code", areaTypeCode)
-                .eq("is_deleted", false));
-        return BeanMapper.copyList(list, WarehouseLocationDTO.CoreDTO.class);
-    }
-
-    @Override
     public List<WarehouseLocationDTO.ViewDto> listAllArea() {
         List<WarehouseLocationEntity> entityList = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("type", "area")
                 .eq("is_deleted", false));
         return BeanMapper.copyList(entityList, WarehouseLocationDTO.ViewDto.class);
+    }
+
+    @Override
+    public List<WarehouseLocationDTO.ReplenishAreaDTO> listArea(BaseIdsDTO.IdsDTO idsDTO) {
+        List<String> ids = idsDTO.getIds();
+        if(ids.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<WarehouseLocationEntity> entityList = warehouseLocationMapper.selectList(new QueryWrapper<WarehouseLocationEntity>()
+                .in("warehouse_id", ids)
+                .eq("disabled", false)
+        );
+        List<WarehouseLocationDTO.ReplenishAreaDTO> replenishAreaDTOList = new ArrayList<>(ids.size());
+        for (String warehouseId : ids) {
+            List<WarehouseLocationEntity> areaList = entityList.stream().filter(item -> item.getWarehouseId().equals(warehouseId) && item.getType().equals("area")).collect(Collectors.toList());
+            List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> stockingAreaDTOList = new ArrayList<>();
+            List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> pickingAreaDTOList = new ArrayList<>();
+            for (WarehouseLocationEntity areaEntity : areaList) {
+                if(areaEntity.getAreaType().equals("stockingArea")){
+                    WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO areaDTO = new WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO(areaEntity.getCode(), areaEntity.getName());
+                    stockingAreaDTOList.add(areaDTO);
+                }
+                if(areaEntity.getAreaType().equals("pickingArea")){
+                    WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO areaDTO = new WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO(areaEntity.getCode(), areaEntity.getName());
+                    pickingAreaDTOList.add(areaDTO);
+                }
+            }
+            WarehouseLocationDTO.ReplenishAreaDTO replenishAreaDTO = new WarehouseLocationDTO.ReplenishAreaDTO();
+            replenishAreaDTO.setWarehouseId(warehouseId);
+            replenishAreaDTO.setStockingAreaList(stockingAreaDTOList);
+            replenishAreaDTO.setPickingAreaList(pickingAreaDTOList);
+            replenishAreaDTOList.add(replenishAreaDTO);
+        }
+        return replenishAreaDTOList;
     }
 }

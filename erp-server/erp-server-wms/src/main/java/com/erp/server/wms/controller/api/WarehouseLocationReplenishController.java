@@ -130,30 +130,26 @@ public class WarehouseLocationReplenishController extends BaseController {
     }
     /**
      * 根据仓库id和库区类型 查询库区
-     * @param warehouseId 仓库ID
-     * @param areaTypeCode 库区类型编码 /wms/dict/drop/down?type=warehouseAreaType
+     * 库区类型 /wms/dict/drop/down?type=warehouseAreaType
+     * @param idsDTO 仓库ID
      * @return 库区列表
      * @date: 2024-06-24
      * @author: tanmujin
      */
     @GetMapping("/listArea")
-    public ApiResult<List<WarehouseLocationDTO.CoreDTO>> listArea(@RequestParam String warehouseId, @RequestParam String areaTypeCode){
-        List<WarehouseLocationDTO.CoreDTO> list = warehouseLocationService.listArea(warehouseId, areaTypeCode);
+    public ApiResult<List<WarehouseLocationDTO.ReplenishAreaDTO>> listArea(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
+        List<WarehouseLocationDTO.ReplenishAreaDTO> list = warehouseLocationService.listArea(idsDTO);
         return ApiResult.success(list);
     }
 
     /**
      * 查询仓位及仓位下的SKU数量
-     * @param skuNo sku编码
-     * @param warehouseId 仓库ID
-     * @param warehouseAreaCode 库区编码
-     * @return 仓位，sku，以及关联的库区
      * @date: 2024-06-24
      * @author: tanmujin
      */
     @GetMapping("/listLocationQty")
-    public ApiResult<List<WarehouseLocationReplenishDTO.LocationQtyDTO>> listLocationQty(@RequestParam String warehouseId, @RequestParam String warehouseAreaCode, @RequestParam String skuNo){
-        List<WarehouseLocationReplenishDTO.LocationQtyDTO> list = replenishService.listLocationQty(warehouseId, warehouseAreaCode, skuNo);
+    public ApiResult<List<WarehouseLocationReplenishDTO.LocationQtyDTO>> listLocationQty(@RequestBody List<WarehouseLocationReplenishDTO.LocationQtyDTO> paramlist){
+        List<WarehouseLocationReplenishDTO.LocationQtyDTO> list = replenishService.listLocationQty(paramlist);
         return ApiResult.success(list);
     }
 }
