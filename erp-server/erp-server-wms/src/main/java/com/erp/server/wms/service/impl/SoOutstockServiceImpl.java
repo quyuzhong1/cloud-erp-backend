@@ -212,7 +212,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private StocktakingProfitLossService stocktakingProfitLossService;
 
     @Resource
-    private WmsCartonService wmsCartonService;
+    private WmsCartonSpecService wmsCartonSpecService;
 
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
@@ -2777,15 +2777,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         //删除原装箱信息
-        wmsCartonService.deleteCarton(dto.getId());
+        wmsCartonSpecService.deleteCarton(dto.getId());
         if (CollectionUtils.isNotEmpty(dto.getWmsCartonList())) {
             //新增装箱信息
             for (WmsCartonDTO.AddDTO addDTO : dto.getWmsCartonList()) {
                 //新增装箱信息
-                wmsCartonService.add(addDTO, dto.getId(), SourceTypeEnum.SO_OUTSTOCK.getCode());
+                wmsCartonSpecService.add(addDTO, dto.getId(), SourceTypeEnum.SO_OUTSTOCK.getCode());
 
                 //根据主表id分组sku查询发货及待装箱数
-                List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonService.listPackDateBySourceId(dto.getId());
+                List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateBySourceId(dto.getId());
                 List<String> ids = packDateDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
                 List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(ids);
 
@@ -2855,7 +2855,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
         }
         //查询装箱详情
-        WmsCartonDTO.WmsCartonView cartonView = wmsCartonService.getCartonViewBySourceId(id);
+        WmsCartonDTO.WmsCartonView cartonView = wmsCartonSpecService.getCartonViewBySourceId(id);
 
         cartonView.setId(entity.getId());
         cartonView.setCode(entity.getCode());
@@ -2875,8 +2875,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         listPackingDTO.setCode(entity.getCode());
 
         //获取总箱数
-        List<WmsCartonEntity> firstMileCartonEntities = wmsCartonService.listBySourceIds(Arrays.asList(id));
-        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonEntity::getBoxQty).sum();
+        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listBySourceIds(Arrays.asList(id));
+        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
         listPackingDTO.setBoxQty(boxQty);
 
         //箱子明细信息
@@ -2995,7 +2995,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         //查询已装箱数
-        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(id, null);
+        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(id, null);
         for (WmsCartonDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             int usePackQty = packingQtyDTOS.stream()

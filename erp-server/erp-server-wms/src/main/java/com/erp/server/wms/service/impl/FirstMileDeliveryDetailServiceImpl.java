@@ -21,7 +21,7 @@ import com.erp.server.wms.mapper.FirstMileDeliveryDetailMapper;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsCartonDetailService;
-import com.erp.server.wms.service.WmsCartonService;
+import com.erp.server.wms.service.WmsCartonSpecService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -50,7 +50,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     @Autowired
     private OmsListingInfoFeign omsListingInfoFeign;
     @Autowired
-    private WmsCartonService wmsCartonService;
+    private WmsCartonSpecService wmsCartonSpecService;
     @Autowired
     private WmsCartonDetailService wmsCartonDetailService;
     @Autowired
@@ -129,7 +129,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //查询已装箱数
-        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(mainId, null);
+        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(mainId, null);
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             int usePackQty = packingQtyDTOS.stream()
@@ -153,7 +153,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //查询已装箱数
-        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(mainId, boxSpecNo);
+        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(mainId, boxSpecNo);
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             WmsCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()

@@ -48,23 +48,14 @@ public class DmpMqFeignController {
     }
 
     /**
-     * 批量保存
-     * @param dtos
-     * @return
-     */
-    @PostMapping("/save/pushTaskList")
-    public List<DmpPushTaskEntity> saveTaskList(@RequestBody List<DmpPushTaskFeignDTO> dtos){
-       return dmpPushTaskService.saveTaskList(dtos);
-    }
-
-    /**
-     * 批量保存旺店通任务
+     * 批量保存旺店通任务！
      * @param dtoList
      * @return
      */
-    @PostMapping("/save/pushWdtTaskList")
-    public List<DmpPushTaskEntity> saveWdtTaskList(@RequestBody List<DmpPushTaskFeignDTO> dtoList){
-        return dmpPushTaskService.saveWdtTaskList(dtoList);
+    @PostMapping("/save/pushTaskList")
+    public List<DmpPushTaskEntity> saveTaskList(@RequestBody @Valid List<DmpPushTaskFeignDTO> dtoList){
+        List<DmpPushTaskEntity> resultList = dmpPushTaskService.saveWdtTaskList(dtoList);
+        return resultList;
     }
 
     /**
@@ -103,6 +94,17 @@ public class DmpMqFeignController {
     }
 
     /**
+     * 根据多个来源ID查询推送任务
+     * @param listDTO
+     * @return
+     */
+    @PostMapping("/listByCodeParam")
+    public List<DmpPushTaskEntity> listByCodeParam(@RequestBody @Valid DmpSyncTaskDTO.ListCodeDTO listDTO){
+        List<DmpPushTaskEntity> list = dmpPushTaskService.listByCodeParam(listDTO);
+        return CollectionUtils.isEmpty(list) ? new ArrayList<>() : list;
+    }
+
+    /**
      * 批量修改无需同步
      *
      * @param dto
@@ -135,16 +137,5 @@ public class DmpMqFeignController {
     @PostMapping(value = "/batchSyncBySourceId")
     public Boolean batchSyncBySourceId(@RequestBody List<String> sourceIds) {
         return dmpPushTaskService.batchSyncBySourceId(sourceIds);
-    }
-
-    /**
-     * 根据多个来源ID查询推送任务
-     * @param listDTO
-     * @return
-     */
-    @PostMapping("/listByCodeParam")
-    public List<DmpPushTaskEntity> listByCodeParam(@RequestBody @Valid DmpSyncTaskDTO.ListCodeDTO listDTO){
-        List<DmpPushTaskEntity> list = dmpPushTaskService.listByCodeParam(listDTO);
-        return CollectionUtils.isEmpty(list) ? new ArrayList<>() : list;
     }
 }

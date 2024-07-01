@@ -1,6 +1,6 @@
 package com.erp.server.wms.mapper;
 import com.erp.model.wms.dto.WmsCartonDTO;
-import com.erp.model.wms.entity.WmsCartonEntity;
+import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -18,7 +18,7 @@ import java.util.List;
  * @since 2023-11-16
  */
 @Mapper
-public interface FirstMileCartonMapper extends BaseMapper<WmsCartonEntity> {
+public interface WmsCartonSpecMapper extends BaseMapper<WmsCartonSpecEntity> {
 
     /**
      * 查询已装箱数量

@@ -60,10 +60,10 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.listener.PackingExcelListener;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
@@ -140,9 +140,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Autowired
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
     @Autowired
-    private WmsCartonService wmsCartonService;
+    private WmsCartonSpecService wmsCartonSpecService;
     @Autowired
-    private WmsCartonBillService wmsCartonBillService;
+    private WmsCartonService wmsCartonService;
     @Autowired
     private WmsCartonDetailService wmsCartonDetailService;
     @Autowired
@@ -1503,7 +1503,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //删除原装箱信息
-        wmsCartonService.deleteCarton(dto.getId());
+        wmsCartonSpecService.deleteCarton(dto.getId());
 
 
 
@@ -1511,10 +1511,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //新增装箱信息
         for (WmsCartonDTO.AddDTO addDTO : dto.getWmsCartonList()) {
             //新增装箱信息
-            wmsCartonService.add(addDTO, dto.getId(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+            wmsCartonSpecService.add(addDTO, dto.getId(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
 
             //根据主表id分组sku查询发货及待装箱数
-            List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonService.listPackDateBySourceId(dto.getId());
+            List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateBySourceId(dto.getId());
             List<String> ids = packDateDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
             List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(ids);
 
@@ -1597,7 +1597,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInbound.getCode());
         }
         //查询装箱详情
-        WmsCartonDTO.WmsCartonView cartonView = wmsCartonService.getCartonViewBySourceId(id);
+        WmsCartonDTO.WmsCartonView cartonView = wmsCartonSpecService.getCartonViewBySourceId(id);
         cartonView.setId(entity.getId());
         cartonView.setCode(entity.getCode());
         return cartonView;
@@ -1614,8 +1614,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         listPackingDTO.setCode(entity.getCode());
 
         //获取总箱数
-        List<WmsCartonEntity> firstMileCartonEntities = wmsCartonService.listBySourceIds(Arrays.asList(id));
-        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonEntity::getBoxQty).sum();
+        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listBySourceIds(Arrays.asList(id));
+        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
         listPackingDTO.setBoxQty(boxQty);
 
         //箱子明细信息
@@ -1731,7 +1731,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         });
 
         //查询已装箱信息
-        List<WmsCartonDTO.PackDateDTO> packDateDTOList = wmsCartonService.listPackDateBySourceId(entity.getId());
+        List<WmsCartonDTO.PackDateDTO> packDateDTOList = wmsCartonSpecService.listPackDateBySourceId(entity.getId());
 
         for (OverseasWarehouseInboundDetailDTO.ViewDTO dto : detailViewList) {
             //装箱数量
