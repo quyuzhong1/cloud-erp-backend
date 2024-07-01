@@ -225,7 +225,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                 .eq(ThirdMappingEntity::getThirdId, dto.getShopId()));
         if (CollectionUtils.isEmpty(shop)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, dto.getShopId());
+            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, dto.getShopName());
         }
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
         //查询旺店通对应系统仓库
@@ -237,8 +237,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, dto.getWarehouseName());
         }
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
-        List<String> list = Arrays.asList("1676949540118204418", "1676949540114010116");
-        if (!list.contains(warehouse.getId())) {
+        if (Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
             //暂时使用空仓位
             detailList.forEach(v -> v.setWarehouseLocation(""));
         }
