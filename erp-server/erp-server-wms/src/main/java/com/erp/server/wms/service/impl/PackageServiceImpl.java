@@ -244,6 +244,26 @@ public class PackageServiceImpl implements PackageService {
         return resultDTOList;
     }
 
+    @Override
+    public PackageDTO.WeightDTO getOrderWeight(PackageDTO.WeightParamDTO dto) {
+        PackageDTO.WeightDTO weightDTO = new PackageDTO.WeightDTO();
+        //默认重量
+        weightDTO.setWeight(BigDecimal.ZERO);
+        weightDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.getCode());
+
+        PackageDTO.ScanResultDTO scanResult = soB2cFeign.packageScanByCode(dto.getCode());
+        if (ObjectUtil.isEmpty(scanResult)) {
+            return weightDTO;
+        }
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()));
+        if (CollectionUtils.isEmpty(soB2cDeliveryList)) {
+            return  weightDTO;
+        }
+        weightDTO.setWeight(soB2cDeliveryList.get(0).getWeight());
+        weightDTO.setWeightUnit(soB2cDeliveryList.get(0).getWeightUnit());
+        return weightDTO;
+    }
+
     /**
      * 拼装数据
      *

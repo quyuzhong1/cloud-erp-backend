@@ -836,6 +836,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         entity.setWidth(dto.getWidth());
         entity.setHeight(dto.getHeight());
         entity.setWeight(dto.getWeight());
+        //单位默认kg
+        entity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.getCode());
         entity.setIsWeigh(Boolean.TRUE);
 
         //出库配置，TODO
