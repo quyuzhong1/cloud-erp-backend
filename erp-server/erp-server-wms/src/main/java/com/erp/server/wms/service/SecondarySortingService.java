@@ -28,10 +28,10 @@ public interface SecondarySortingService {
     /**
      * 打印配货单
      *
-     * @param code     波次编号
+     * @param waveId     波次编号
      * @see SecondarySortingDTO.BasketDetail
      */
-    void printDistribution(String code, HttpServletResponse response);
+    void printDistribution(String waveId, HttpServletResponse response);
     /**
      * 重置
      * @param waveId 波次id

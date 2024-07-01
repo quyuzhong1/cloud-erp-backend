@@ -1,15 +1,18 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.dto.renovation.PickingWaveDTO;
 import com.erp.model.wms.dto.renovation.SecondarySortingDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -39,6 +43,8 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
 
     @Override
     public SecondarySortingDTO.ScanCodeView scanCode(String code) {
@@ -124,8 +130,18 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     }
 
     @Override
-    public void printDistribution(String code, HttpServletResponse response) {
-
+    public void printDistribution(String waveId, HttpServletResponse response) {
+        List<PickingWaveDetailEntity> waveDetailEntities = pickingWaveDetailService.listByMainId(waveId);
+        List<String> deliveryIds = waveDetailEntities.stream().map(PickingWaveDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam();
+        param.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
+        param.setIds(deliveryIds);
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillDTOList = soB2cDeliveryService.printLogisticsWaybillPreview(param);
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> printDetailDTOList = printLogisticsWaybillDTOList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDTO::getDetailList).flatMap(Collection::stream).collect(Collectors.toList());
+        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
+        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
+        dto.setDetailList(printDetailDTOList);
+        soB2cDeliveryService.printLogisticsBillConfirm(dto,response);
     }
 
     @Override
