@@ -9,6 +9,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -258,4 +259,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param printWayBillPdfDTO pdf
      */
     void customDistribute(List<String> base64List, PrintWayBillPdfDTO printWayBillPdfDTO);
+    /**
+     * 流水线称重回填
+     * @author will
+     * @date 2024/6/28 15:48
+     * @param dto
+     * @return String
+     */
+    String dimensionalWeightPipeline(DimensionalWeightDTO dto);
 }
