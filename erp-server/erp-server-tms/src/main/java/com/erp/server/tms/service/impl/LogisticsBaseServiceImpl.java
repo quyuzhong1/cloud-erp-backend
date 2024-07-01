@@ -416,7 +416,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
             for (ShopAuthEntity shopAuthEntity : data) {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
-                Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
+                Map<String, String> map = service.getLogisticsAuthConfigByShopId(shopAuthEntity.getShopId());
                 if (CollectionUtils.isEmpty(map)) {
                     continue;
                 }
@@ -463,7 +463,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 //            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE); 速卖通需要进行渠道增量
             for (ShopAuthEntity shopAuthEntity : data) {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
-                Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
+                Map<String, String> map = service.getLogisticsAuthConfigByShopId(shopAuthEntity.getShopId());
                 if (CollectionUtils.isEmpty(map)) {
                     continue;
                 }

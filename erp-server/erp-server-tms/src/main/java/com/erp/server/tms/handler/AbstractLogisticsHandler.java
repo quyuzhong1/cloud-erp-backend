@@ -35,7 +35,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     private LogisticsAuthFieldService logisticsAuthFieldService;
 
     //对于一些公共方法可以进行封装
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
+    public Map<String, String> getLogisticsAuthConfigByAuthId(String authId) {
         Map<String, String> map = new HashMap<>();
         List<LogisticsAuthFieldEntity> fieldEntities = null;
         if (StringUtils.isNoneBlank(authId)) {
@@ -52,7 +52,10 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
         }
         return map;
     }
-
+    @Override
+    public Map<String, String> getLogisticsAuthConfigByShopId(String shopId) {
+        return new HashMap<>();
+    }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform) {
         List<Map<String, String>> mapList = new ArrayList<>();
         List<LogisticsAuthEntity> authEntityList = logisticsAuthService.lambdaQuery()

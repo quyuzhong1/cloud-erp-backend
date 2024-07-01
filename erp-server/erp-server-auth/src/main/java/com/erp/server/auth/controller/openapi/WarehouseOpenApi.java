@@ -4,8 +4,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.CollectorPacksDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.ReturnTrackingDTO;
+import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.server.auth.config.OpenApi;
 
+import javax.annotation.Resource;
 import javax.validation.Valid;
 
 /**
@@ -18,13 +20,18 @@ import javax.validation.Valid;
 @OpenApi
 public class WarehouseOpenApi {
 
+    @Resource
+    private SoB2cDeliveryFeign soB2cDeliveryFeign;
+
     /**
      * 流水线称重 设备调用该接口 返回渠道口分货口1-9，9为异常口）成功根据渠道返回1-8的分货口，失败返回9的异常口
      * @param dto 参数
      */
     @OpenApi("dimensionalWeightPipeline")
     public ApiResult<String> dimensionalWeightPipeline(@Valid DimensionalWeightDTO dto) {
-        return ApiResult.success("1");
+        //设备回传的称重量方信息
+        String pickPort = soB2cDeliveryFeign.dimensionalWeightPipeline(dto);
+        return ApiResult.success(pickPort);
     }
 
     /**
