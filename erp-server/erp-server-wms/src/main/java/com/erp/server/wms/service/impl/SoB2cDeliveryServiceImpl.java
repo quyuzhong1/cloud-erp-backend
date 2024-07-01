@@ -873,6 +873,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .orderWeight(logisticsList.get(0).getWeight())
                 .logisticsSupplierId(channelEntity.getMainId())
                 .channelId(logisticsList.get(0).getLogisticsChannelId())
+                .deliveryOrderId(entity.getId())
                 .build();
         //返回分检口
         String sortingPort = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
