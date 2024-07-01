@@ -141,6 +141,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
 
         if("deliveryTime".equals(field)){
+            compareCodeSplicingValueSql = compareCodeSplicingValueSql.replace("deliveryTime","sout.bill_date");
             return " EXISTS (SELECT 1 from so_outstock sout where sout.so_id = sb2c.id and sout.is_deleted = false and sout.bill_date "+compareCodeSplicingValueSql+" )";
         }
 
