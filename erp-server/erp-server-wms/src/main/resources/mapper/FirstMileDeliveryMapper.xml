@@ -187,8 +187,8 @@
             fmc.box_height as height,
             (select string_agg(cd.sku_no , ',') from wms_carton_detail cd where cd.is_deleted = false and cd.carton_id = fmc.id) as sku
         FROM first_mile_delivery fmd
-        INNER JOIN wms_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
-        INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        INNER JOIN wms_carton_spec fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
+        INNER JOIN wms_carton fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE fmd.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND fmd.id IN
@@ -212,8 +212,8 @@
         fmcb.box_desc
         FROM first_mile_delivery fd
         LEFT JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id
-        LEFT JOIN wms_carton fmc ON fmc.source_id = fd.id AND fmc.is_deleted = FALSE
-        LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        LEFT JOIN wms_carton_spec fmc ON fmc.source_id = fd.id AND fmc.is_deleted = FALSE
+        LEFT JOIN wms_carton fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE 1 = 1
         <if test="params.ids !=null and params.ids.size>0">
             AND fd.id IN

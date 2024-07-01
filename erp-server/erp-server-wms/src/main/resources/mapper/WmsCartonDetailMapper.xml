@@ -28,7 +28,7 @@
             fmcd.pack_qty
         FROM
             wms_carton_detail fmcd
-            INNER JOIN wms_carton_bill fmcb ON fmcd.carton_id = fmcb.carton_id
+            INNER JOIN wms_carton fmcb ON fmcd.carton_id = fmcb.carton_id
         WHERE
             fmcd.is_deleted = FALSE AND fmcb.is_deleted = FALSE
           and fmcd.source_Id = #{sourceId};

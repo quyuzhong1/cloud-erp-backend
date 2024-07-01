@@ -10,13 +10,11 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.FirstMileCartonBillDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
-import com.erp.model.wms.entity.WmsCartonBillEntity;
+import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import com.erp.server.wms.mapper.WmsCartonDetailMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.WmsCartonDetailService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.WmsCartonBillService;
+import com.erp.server.wms.service.WmsCartonService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -41,7 +39,7 @@ import java.util.List;
 @Service
 public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetailMapper, WmsCartonDetailEntity> implements WmsCartonDetailService {
     @Autowired
-    private WmsCartonBillService wmsCartonBillService;
+    private WmsCartonService wmsCartonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -131,7 +129,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
      * @return void
      **/
     private void firstMileCartonBillSave(Integer boxQty, List<WmsCartonDetailEntity> detailEntityList, String cartonId, String sourceId) {
-        List<WmsCartonBillEntity> firstMileCartonBillEntities = wmsCartonBillService.listBySourceIds(Arrays.asList(sourceId));
+        List<WmsCartonEntity> firstMileCartonBillEntities = wmsCartonService.listBySourceIds(Arrays.asList(sourceId));
         Integer maxBoxNo = 0;
         if (CollectionUtils.isNotEmpty(firstMileCartonBillEntities)) {
             maxBoxNo = firstMileCartonBillEntities.stream().max(Comparator.comparingInt(req -> Integer.valueOf(req.getBoxNo()))).map(req -> Integer.valueOf(req.getBoxNo())).get();
@@ -151,7 +149,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
             billAdd.setBoxNo(String.valueOf(i));
             billAdd.setCartonId(cartonId);
             billAdd.setSourceId(sourceId);
-            wmsCartonBillService.add(billAdd);
+            wmsCartonService.add(billAdd);
         }
     }
 }
