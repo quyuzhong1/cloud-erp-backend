@@ -245,6 +245,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 detailEntity.setWarehouseId(warehouse.getId());
                 detailEntity.setWarehouseName(warehouse.getName());
                 detailEntity.setWarehouseLocation("");
+                detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                 detailEntity.setPlanQty(detailDTO.getPlanQty());
                 detailEntity.setActualQty(detailDTO.getActualQty());
                 detailList.add(detailEntity);
@@ -271,6 +272,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     detailEntity.setWarehouseId(warehouse.getId());
                     detailEntity.setWarehouseName(warehouse.getName());
                     detailEntity.setWarehouseLocation(detail.getPositionNo());
+                    detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                     detailEntity.setPlanQty(detail.getPositionGoodsCount());
                     detailEntity.setActualQty(detail.getPositionGoodsCount());
                     detailList.add(detailEntity);
