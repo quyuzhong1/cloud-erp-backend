@@ -3,10 +3,10 @@ package com.erp.model.wms.dto;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -58,7 +58,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 设备分拣口配置条件
          */
-        private List<EquipmentSortingPortConditionDTO> sortingConditionDTOList;;
+        private List<EquipmentSortingPortConditionDTO> sortingConditionDTOList = new ArrayList<>();
     }
 
 
@@ -123,12 +123,12 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 值
          */
-        private List<String> valList;
+        private List<String> valList = new ArrayList<>();
 
         /**
          * 条件明细
          */
-        private List<B2cAllowableDeviationsConditionDetail> conditionDetailList;
+        private List<B2cAllowableDeviationsConditionDetail> conditionDetailList = new ArrayList<>();
     }
     /**
      * B2C称重量方允许偏差配置
@@ -145,7 +145,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 配置条件
          */
-        private List<B2cAllowableDeviationsCondition> conditionDTO;
+        private List<B2cAllowableDeviationsCondition> conditionDTOList = new ArrayList<>();
 
         /**
          * 为0正常出库开关
@@ -161,12 +161,12 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 设备分拣口
          */
-        private EquipmentSortingPortDTO equipmentSortingPortDTO;
+        private EquipmentSortingPortDTO equipmentSortingPortDTO = new EquipmentSortingPortDTO();
 
         /**
          * B2c称重量方允许偏差
          */
-        private B2cAllowableDeviations b2cAllowableDeviations;
+        private B2cAllowableDeviations b2cAllowableDeviations = new B2cAllowableDeviations();
     }
 
 

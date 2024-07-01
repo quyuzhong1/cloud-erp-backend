@@ -5,7 +5,11 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.core.dto.SpElExpressionDTO;
+import com.common.core.entity.ConditionElement;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.server.rule.SpElServer;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
@@ -35,6 +39,9 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     @Resource
     private CfgRuleOutService service;
 
+    @Resource
+    private SpElServer spElServer;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addOrUpdate(CfgRuleOutDTO.CommonDTO commonDTO) {
@@ -59,7 +66,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         if(Objects.isNull(b2cAllowableDeviations)){
             return;
         }
-        List<CfgRuleOutDTO.B2cAllowableDeviationsCondition> conditionDTOS = b2cAllowableDeviations.getConditionDTO();
+        List<CfgRuleOutDTO.B2cAllowableDeviationsCondition> conditionDTOS = b2cAllowableDeviations.getConditionDTOList();
         if(CollectionUtil.isEmpty(conditionDTOS)){
             return;
         }
@@ -85,6 +92,13 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
             if (!detailDuplicates.isEmpty()) {
                 throw new ServiceException("B2C称重量方允许偏差条件存在相同配置");
+            }
+            List<ConditionElement> conditionElementList = BeanUtil.copyToList(b2cAllowableDeviationsConditionDetail.getConditionDetailList(),ConditionElement.class);
+            SpElExpressionDTO splElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
+            String expression = splElDTO.getExpression();
+            Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
+            if (!checkResult) {
+                throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
             }
         }
 
