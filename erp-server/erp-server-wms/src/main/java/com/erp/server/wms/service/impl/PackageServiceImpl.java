@@ -34,6 +34,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
+import com.erp.server.wms.service.CfgSettingService;
 import com.erp.server.wms.service.PackageForecastService;
 import com.erp.server.wms.service.PackageService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -81,6 +82,8 @@ public class PackageServiceImpl implements PackageService {
 
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Override
     public PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO) {
@@ -233,9 +236,21 @@ public class PackageServiceImpl implements PackageService {
                 }
             }
         }
-
+        //判断是否是组包限制的发货物流商
+        Boolean isPackageSupplier = cfgSettingService.getPackageSupplierSetting(scanResult.getLogisticsSupplierId());
+        scanResult.setIsPackageSupplier(isPackageSupplier);
+        scanResult.setUniqueId(getPackageUniqueId(isPackageSupplier,scanResult.getLogisticsSupplierId(),scanResult.getTransferLogisticsChannelId(),scanResult.getTransferLogisticsSupplierId(), scanResult.getShopId()));
         return scanResult;
     }
+
+    private String getPackageUniqueId(Boolean isPackageSupplier, String logisticsSupplierId, String transferLogisticsChannelId, String transferLogisticsSupplierId, String shopId) {
+        if (isPackageSupplier){
+            return logisticsSupplierId+"-"+transferLogisticsChannelId+"-"+transferLogisticsSupplierId + "-" + shopId;
+        }else {
+            return logisticsSupplierId+"-"+transferLogisticsChannelId+"-"+transferLogisticsSupplierId;
+        }
+    }
+
 
     /**
      * 组包合并
@@ -284,13 +299,15 @@ public class PackageServiceImpl implements PackageService {
             if(logisticsChannel!=null){
                 item.setLogisticsChannelName(logisticsChannel.getName());
                 item.setLogisticsSupplierId(logisticsChannel.getLogisticsSupplierId());
+                item.setIsPackageSupplier(cfgSettingService.getPackageSupplierSetting(logisticsChannel.getLogisticsSupplierId()));
                 item.setLogisticsSupplierName(logisticsChannel.getLogisticsSupplierName());
                 item.setLogisticsSupplierShortName(logisticsChannel.getLogisticsSupplierShortName());
             }
+            item.setUniqueId(getPackageUniqueId(item.getIsPackageSupplier(),item.getLogisticsSupplierId(),item.getTransferLogisticsChannelId(),item.getTransferLogisticsSupplierId(), item.getShopId()));
         }
 
         Map<String, List<PackageDTO.ScanResultDTO>> map = list.stream().filter(s -> StringUtils.isNotBlank(s.getLogisticsSupplierId())).
-                collect(Collectors.groupingBy(req -> req.getLogisticsSupplierId()+"-"+req.getTransferLogisticsChannelId()+"-"+req.getTransferLogisticsSupplierId()));
+                collect(Collectors.groupingBy(PackageDTO.ScanResultDTO::getUniqueId));
 
         LocalDate nowDate = LocalDate.now();
         String weightUnit= UnitEnum.WeightUnitEnum.G.getCode();
