@@ -43,6 +43,7 @@ import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpInputMongoDmpRelationService;
+import com.google.common.collect.Lists;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
@@ -207,9 +208,14 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			List<BaseEntity> updateDmpInputDmpEntityList = new ArrayList<>();
 			List<String> deleteDmpIdList = new ArrayList<>();
 			
-			QueryWrapper<?> wrapper = new QueryWrapper<>();
-			wrapper.in(UNIQUE_ENCRYPT, beanDmpInputDmpEntityMaps.keySet());
-			List<Map<String, Object>> listMaps = dmpEntityServiceImpl.listMaps(wrapper);
+			List<Map<String, Object>> listMaps = new ArrayList<>();
+			List<String> uniqueEncryptList = new ArrayList<>(beanDmpInputDmpEntityMaps.keySet());
+			List<List<String>> partition = Lists.partition(uniqueEncryptList, 50000);
+			for(List<String> p : partition) {
+				QueryWrapper<?> wrapper = new QueryWrapper<>();
+				wrapper.in(UNIQUE_ENCRYPT, p);
+				listMaps.addAll(dmpEntityServiceImpl.listMaps(wrapper));
+			}
 			if(CollUtil.isNotEmpty(listMaps)) {
 				Map<String, Map<String, Object>> uniqueMaps = new HashMap<>();
 				for(Map<String, Object> listMap : listMaps) {

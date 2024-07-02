@@ -33,13 +33,6 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
     DmpPushTaskEntity saveTask(DmpPushTaskFeignDTO dto);
 
     /**
-     * 批量保存
-     * @param dtos
-     * @return
-     */
-    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
-
-    /**
      * 根据id推送任务
      * @author Will
      * @date: 2024/5/14 9:35
@@ -184,4 +177,6 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @return
      */
     Boolean batchSyncBySourceId(List<String> sourceIds);
+
+    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
 }

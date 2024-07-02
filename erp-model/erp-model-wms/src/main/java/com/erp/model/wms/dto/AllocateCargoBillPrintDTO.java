@@ -1,6 +1,6 @@
 package com.erp.model.wms.dto;
 
-import com.erp.model.wms.entity.PickingWaveEntity;
+import com.erp.model.wms.entity.WaveListEntity;
 import lombok.*;
 
 import java.io.Serializable;
@@ -34,11 +34,11 @@ public class AllocateCargoBillPrintDTO implements Serializable {
          */
         private String code;
 
-        public static WaveDTO convertFromPickingWaveEntity(PickingWaveEntity pickingWaveEntity){
-            if(Objects.isNull(pickingWaveEntity)){
+        public static WaveDTO convertFromPickingWaveEntity(WaveListEntity waveListEntity){
+            if(Objects.isNull(waveListEntity)){
                 return new WaveDTO();
             }
-            return new WaveDTO(pickingWaveEntity.getId(),pickingWaveEntity.getCode());
+            return new WaveDTO(waveListEntity.getId(), waveListEntity.getCode());
         }
 
     }

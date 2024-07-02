@@ -205,8 +205,8 @@ public class LogisticsSupplierController extends BaseController {
      * @return
      */
     @GetMapping("/listAll")
-    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAll(){
-        return success(logisticsSupplierService.listAll());
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAll(@RequestParam(value = "filterDisabled",required = false, defaultValue = "false") Boolean filterDisabled){
+        return success(logisticsSupplierService.listAll(filterDisabled));
     }
 
 

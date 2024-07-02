@@ -175,17 +175,17 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     private Boolean isAutoOut;
 
     /**
-     * 长
+     * 长，cm
      */
     @TableField("length")
     private BigDecimal length;
     /**
-     * 宽
+     * 宽，cm
      */
     @TableField("width")
     private BigDecimal width;
     /**
-     * 高
+     * 高，cm
      */
     @TableField("height")
     private BigDecimal height;

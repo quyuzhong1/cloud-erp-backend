@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.WarehouseLocationReplenishMapper">
-    <resultMap id="baseResultMap" type="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
+    <!--<resultMap id="baseResultMap" type="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
         <id column="id" property="id" />
         <result column="sku_id" property="skuId" />
         <result column="sku_no" property="skuNo" />
@@ -22,7 +22,7 @@
         <result column="update_user_id" property="updateUserId" />
         <result column="update_user_name" property="updateUserName" />
         <result column="update_time" property="updateTime" />
-    </resultMap>
+    </resultMap>-->
 
     <select id="paging" resultType="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
         select id,
@@ -38,11 +38,15 @@
                from_warehouse_location,
                to_warehouse_area,
                to_warehouse_location,
-               suggest_qty
+               suggest_qty,
+               create_user_name,
+               create_time,
+               update_user_name,
+               update_time
         from warehouse_location_replenish
         where is_deleted = false
-        <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
-            and ${param.sqlMap.default}
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
         </if>
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
@@ -62,8 +66,8 @@
                suggest_qty
         from warehouse_location_replenish
         where is_deleted = false
-        <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
-            and ${param.sqlMap.default}
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
         </if>
     </select>
     <select id="listTabInfo" resultType="com.erp.model.wms.dto.WarehouseLocationReplenishDTO$TabDTO">

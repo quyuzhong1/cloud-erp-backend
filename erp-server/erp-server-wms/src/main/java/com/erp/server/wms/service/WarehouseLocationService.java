@@ -1,9 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
@@ -316,4 +313,11 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @author: tanmujin
      */
     List<WarehouseLocationDTO.ViewDto> listAllArea();
+
+    List<WarehouseLocationDTO.ReplenishAreaDTO> listArea(BaseIdsDTO.IdsDTO idsDTO);
+
+    /**
+     * 查询库区下的仓位
+     */
+    List<WarehouseLocationEntity> listLocation(String warehouseId, String warehouseArea);
 }

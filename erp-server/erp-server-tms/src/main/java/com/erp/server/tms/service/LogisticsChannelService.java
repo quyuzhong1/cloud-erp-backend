@@ -201,7 +201,7 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
 
     List<LogisticsChannelEntity> listByName(List<String> channelNameList);
 
-    List<BaseDropDownDTO.Tree> tree();
+    List<BaseDropDownDTO.Tree> tree(Boolean filterDisabled);
 
     LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform);
     /**

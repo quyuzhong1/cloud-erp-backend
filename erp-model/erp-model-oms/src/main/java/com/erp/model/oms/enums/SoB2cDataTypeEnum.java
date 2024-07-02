@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
  * @date 2024/6/25 20:10
  */
 public enum SoB2cDataTypeEnum implements EnumMessage {
-    MAIN("main","主表"),
     DETAIL("detail","明细"),
     LOGISTIC("logistic","物流"),
     RECEIVER("receiver","买家"),

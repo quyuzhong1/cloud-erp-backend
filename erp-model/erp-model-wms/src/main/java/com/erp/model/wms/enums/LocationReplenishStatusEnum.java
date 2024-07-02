@@ -19,4 +19,13 @@ public enum LocationReplenishStatusEnum {
 
     private String code;
     private String name;
+
+    public static String getNameByCode(String code) {
+        for (LocationReplenishStatusEnum e : LocationReplenishStatusEnum.values()) {
+            if (e.getCode().equals(code)) {
+                return e.getName();
+            }
+        }
+        return "";
+    }
 }

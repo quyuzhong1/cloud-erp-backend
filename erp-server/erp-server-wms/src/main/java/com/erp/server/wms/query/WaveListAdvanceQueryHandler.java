@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
  * @author tanmujin
  */
 @Component
-public class WavePickingAdvanceQueryHandler extends AbstractQueryHandler {
+public class WaveListAdvanceQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         return null;

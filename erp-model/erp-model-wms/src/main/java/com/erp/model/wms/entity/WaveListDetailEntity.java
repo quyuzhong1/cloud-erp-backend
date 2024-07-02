@@ -19,8 +19,8 @@ import java.io.Serializable;
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("picking_wave_detail")
-public class PickingWaveDetailEntity extends BaseEntity<PickingWaveDetailEntity> implements Serializable {
+@TableName("wave_list_detail")
+public class WaveListDetailEntity extends BaseEntity<WaveListDetailEntity> implements Serializable {
     /**
      * 波次id
      */

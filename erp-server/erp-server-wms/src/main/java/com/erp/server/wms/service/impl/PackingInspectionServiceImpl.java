@@ -369,6 +369,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             asyncService.asyncShipOrder(soB2cEntity.getId(),
                     soB2cEntity.getCode(),
                     soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
                     JSONUtil.toJsonStr(entity),
                     businessDesc, false);
         } else {

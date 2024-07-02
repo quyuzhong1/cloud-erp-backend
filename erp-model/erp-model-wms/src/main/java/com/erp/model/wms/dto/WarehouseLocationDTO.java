@@ -573,4 +573,37 @@ public class WarehouseLocationDTO implements Serializable {
          */
         private Boolean occupyStatus;
     }
+
+    @Data
+    public static class ReplenishAreaDTO {
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
+
+        /**
+         * 备货区仓位汇总
+         */
+        private List<WarehouseAreaDTO> stockingAreaList;
+
+        /**
+         * 拣货区仓位汇总
+         */
+        private List<WarehouseAreaDTO> pickingAreaList;
+
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class WarehouseAreaDTO{
+            /**
+             * 库区编码
+             */
+            private String warehouseArea;
+
+            /**
+             * 库区名称
+             */
+            private String warehouseAreaName;
+        }
+    }
 }
