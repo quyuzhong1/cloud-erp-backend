@@ -685,6 +685,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelProcess(String id) {
         RequisitionApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
 /*        // 只有待处理的单据允许撤销
@@ -725,6 +726,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         log.info("撤销 开始修改要货申请状态，id：【{}】", id);
 
+        //清空明细中的虚拟仓
+        requisitionApplicationDetailService.cleanVirtualWarehouseIdByMianId(id);
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);

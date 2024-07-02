@@ -73,4 +73,11 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
      * @return void
      **/
     Boolean removeByMainIds(List<String> mainIds);
+    /**
+     * 根据主表id清空虚拟仓库
+     * @author will
+     * @date 2024/7/2 11:45
+     * @param mainId
+     */
+    void cleanVirtualWarehouseIdByMianId(String mainId);
 }
