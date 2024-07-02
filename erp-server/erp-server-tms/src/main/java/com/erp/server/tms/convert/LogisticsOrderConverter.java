@@ -509,7 +509,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "hs_code" ,source = "customsCode"),
             @Mapping(target = "only_battery" ,source = "isElectric"),
             @Mapping(target = "product_declare_amount" ,source = "destDeclarePrice"),
-            @Mapping(target = "product_id" ,source = "skuId"),
+            @Mapping(target = "product_id" ,source = "skuId", qualifiedByName = "strToLong"),
             @Mapping(target = "product_num" ,source = "quantity"),
             @Mapping(target = "product_weight" ,source = "grossWeight", qualifiedByName = "gTokg"),
             @Mapping(target = "child_order_id" ,source = "childOrderId"),

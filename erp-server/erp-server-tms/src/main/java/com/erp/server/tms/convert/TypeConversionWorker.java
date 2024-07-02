@@ -118,6 +118,20 @@ public class TypeConversionWorker {
             return "0";
         }
     }
+    @Named("strToLong")
+    public Long strToLong(Object obj) {
+        if (Objects.isNull(obj)) {
+            return null;
+        }
+        if (obj instanceof String){
+            String res = (String) obj;
+            if (StringUtils.isBlank(res)){
+                return null;
+            }
+            return Long.valueOf(res);
+        }
+        return null;
+    }
     /**
      * 虾皮 渠道状态0正常1.暂停2.已关闭（默认0）
      * @param obj
