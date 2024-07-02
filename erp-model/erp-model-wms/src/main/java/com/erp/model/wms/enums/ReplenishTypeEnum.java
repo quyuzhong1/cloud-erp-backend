@@ -11,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum LocationReplenishTypeEnum implements EnumMessage {
+public enum ReplenishTypeEnum implements EnumMessage {
     DELIVER_STOCK_OUT("deliver_stock_out", "发货缺货补货"),
     SAFETY_INVENTORY("safety_inventory", "安全库存补货")
     ;

@@ -64,7 +64,7 @@ public class WarehouseLocationReplenishEntity extends BaseEntity<WarehouseLocati
     private Integer qty;
 
     /**
-     * 单据状态：LocationReplenishStatusEnum
+     * 单据状态：ReplenishBillStatusEnum
      */
     @TableField("status")
     private String status;

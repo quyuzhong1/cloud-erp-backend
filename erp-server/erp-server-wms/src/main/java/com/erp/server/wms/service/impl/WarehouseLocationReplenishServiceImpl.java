@@ -18,8 +18,8 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.LocationReplenishStatusEnum;
-import com.erp.model.wms.enums.LocationReplenishTypeEnum;
+import com.erp.model.wms.enums.ReplenishBillStatusEnum;
+import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.server.wms.mapper.WarehouseLocationReplenishMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.boot.autoconfigure.properties.SagaAsyncThreadPoolProperties;
@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 仓位库存预警服务类
@@ -117,7 +118,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             dto.setToWarehouseLocationName(toLocationEntity.getName());
 
             //处理状态
-            dto.setStatusName(LocationReplenishStatusEnum.getNameByCode(dto.getStatus()));
+            dto.setStatusName(ReplenishBillStatusEnum.getNameByCode(dto.getStatus()));
 
             dtoList.add(dto);
         }
@@ -129,7 +130,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     public BatchResultDTO cancelHandle(String id) {
         WarehouseLocationReplenishEntity entity = new WarehouseLocationReplenishEntity();
         entity.setId(id);
-        entity.setStatus(LocationReplenishStatusEnum.NO_NEED_HANDLE.getCode());
+        entity.setStatus(ReplenishBillStatusEnum.NO_NEED_HANDLE.getCode());
         this.baseMapper.updateById(entity);
 
         WarehouseLocationReplenishEntity replenishEntity = this.baseMapper.selectById(id);
@@ -163,7 +164,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
             //更新状态：处理中
             WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
-            updateEntity.setStatus(LocationReplenishStatusEnum.HANDLE_ING.getCode());
+            updateEntity.setStatus(ReplenishBillStatusEnum.HANDLE_ING.getCode());
             this.baseMapper.update(updateEntity, new QueryWrapper<WarehouseLocationReplenishEntity>().in("id", ids));
         } catch (IOException e) {
             log.error("导出仓位补货清单失败：{}", e);
@@ -210,7 +211,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
         BeanMapper.copy(handleDTO, updateEntity);
         updateEntity.setId(entity.getId());
-        updateEntity.setStatus(LocationReplenishStatusEnum.HANDLED.getCode());
+        updateEntity.setStatus(ReplenishBillStatusEnum.HANDLED.getCode());
         this.baseMapper.updateById(updateEntity);
 
         return BatchResultDTO.success(updateEntity.getId(), updateEntity.getSkuNo() + " : " + handleDTO.getFromWarehouseLocation(), OperationTypeEnum.ADD);
@@ -225,10 +226,10 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         entity.setSourceCode(dto.getSourceCode());
         entity.setSourceType(dto.getSourceType().getCode());
         entity.setWarehouseId(dto.getWarehouseId());
-        entity.setStatus(LocationReplenishStatusEnum.WAIT_HANDLE.getCode());
+        entity.setStatus(ReplenishBillStatusEnum.WAIT_HANDLE.getCode());
 
         //发货缺货补货
-        if(dto.getSourceType().equals(LocationReplenishTypeEnum.DELIVER_STOCK_OUT)){
+        if(dto.getSourceType().equals(ReplenishTypeEnum.DELIVER_STOCK_OUT)){
             //推荐取货库区和取货仓位
             Pair<WarehouseLocationEntity, InventoryEntity> pair = getFromAreaAndLocation(dto);
             entity.setFromWarehouseArea(pair.getKey().getCode());
@@ -283,7 +284,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         }
 
         //安全库存补货
-        if(dto.getSourceType().equals(LocationReplenishTypeEnum.SAFETY_INVENTORY)){
+        if(dto.getSourceType().equals(ReplenishTypeEnum.SAFETY_INVENTORY)){
             Pair<WarehouseLocationEntity, InventoryEntity> pair = getFromAreaAndLocation(dto);
             entity.setFromWarehouseArea(pair.getKey().getCode());
             entity.setFromWarehouseLocation(pair.getValue().getWarehouseLocation());
@@ -328,7 +329,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     public BatchResultDTO finish(WarehouseLocationReplenishDTO.HandleDTO dto) {
         WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
         BeanMapper.copy(dto, updateEntity);
-        updateEntity.setStatus(LocationReplenishStatusEnum.HANDLED.getCode());
+        updateEntity.setStatus(ReplenishBillStatusEnum.HANDLED.getCode());
         this.baseMapper.updateById(updateEntity);
 
         //生成仓位移动，并自动审核通过
@@ -354,7 +355,24 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo() {
-        return this.baseMapper.listTabInfo();
+        List<WarehouseLocationReplenishDTO.TabDTO> list = this.baseMapper.listTabInfo();
+        if(list.size() == 4){
+            return list;
+        }
+        List<String> tabFlagList = list.stream().map(item -> item.getTabFlag()).collect(Collectors.toList());
+        if(! tabFlagList.contains(ReplenishBillStatusEnum.HANDLED.getCode())){
+            list.add(new WarehouseLocationReplenishDTO.TabDTO(ReplenishBillStatusEnum.WAIT_HANDLE.getCode(), 0));
+        }
+        if(! tabFlagList.contains(ReplenishBillStatusEnum.HANDLE_ING.getCode())){
+            list.add(new WarehouseLocationReplenishDTO.TabDTO(ReplenishBillStatusEnum.HANDLE_ING.getCode(), 0));
+        }
+        if(! tabFlagList.contains(ReplenishBillStatusEnum.HANDLED.getCode())){
+            list.add(new WarehouseLocationReplenishDTO.TabDTO(ReplenishBillStatusEnum.HANDLED.getCode(), 0));
+        }
+        if(! tabFlagList.contains(ReplenishBillStatusEnum.NO_NEED_HANDLE.getCode())){
+            list.add(new WarehouseLocationReplenishDTO.TabDTO(ReplenishBillStatusEnum.NO_NEED_HANDLE.getCode(), 0));
+        }
+        return list;
     }
 
     /**
