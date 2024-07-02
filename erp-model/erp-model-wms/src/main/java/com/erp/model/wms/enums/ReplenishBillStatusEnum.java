@@ -10,7 +10,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum LocationReplenishStatusEnum {
+public enum ReplenishBillStatusEnum {
     WAIT_HANDLE("wait_handle", "待处理"),
     HANDLE_ING("handle_ing", "处理中"),
     HANDLED("handled", "已处理"),
@@ -21,7 +21,7 @@ public enum LocationReplenishStatusEnum {
     private String name;
 
     public static String getNameByCode(String code) {
-        for (LocationReplenishStatusEnum e : LocationReplenishStatusEnum.values()) {
+        for (ReplenishBillStatusEnum e : ReplenishBillStatusEnum.values()) {
             if (e.getCode().equals(code)) {
                 return e.getName();
             }

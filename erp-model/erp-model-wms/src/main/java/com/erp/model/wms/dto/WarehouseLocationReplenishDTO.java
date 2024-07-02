@@ -2,7 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.wms.enums.LocationReplenishTypeEnum;
+import com.erp.model.wms.enums.ReplenishTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -93,6 +93,11 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          * 来源类型（补货类型）
          */
         private String sourceType;
+
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
 
         /**
          * 仓库id
@@ -296,7 +301,7 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          * 来源类型
          */
         @NotBlank
-        private LocationReplenishTypeEnum sourceType;
+        private ReplenishTypeEnum sourceType;
 
         /**
          * 仓库id
