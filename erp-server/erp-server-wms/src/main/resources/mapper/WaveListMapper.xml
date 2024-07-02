@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.erp.server.wms.mapper.PickingWaveMapper">
+<mapper namespace="com.erp.server.wms.mapper.WaveListMapper">
     <select id="listDeliveryIdByStatus" resultType="java.lang.String">
         select delivery_id
         from picking_wave as pw
@@ -8,7 +8,7 @@
         where pw.status = #{status} and pw.is_deleted = false
     </select>
     <select id="listDetailByMainId"
-            resultType="com.erp.model.wms.dto.renovation.PickingWaveDTO$PickingWaveDetailDTO">
+            resultType="com.erp.model.wms.dto.WaveListDTO$PickingWaveDetailDTO">
         SELECT
             pwd.main_id,
             pwd.basket_no,
@@ -32,5 +32,27 @@
                  LEFT JOIN picking_wave_detail as pwd on pwd.main_id = pw.id and pwd.is_deleted = false
         WHERE pw.is_deleted = false
           and pw.status = 'await_pick'
+    </select>
+    <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
+        select id,
+               create_time,
+               update_time,
+               create_user_name,
+               update_user_name,
+               code,
+               name,
+               type,
+               status,
+               picking_cart_type,
+               picking_cart_code,
+               pick_type,
+               print_status,
+               picking_user,
+               picking_time
+        from wave_list
+        where is_deleted = false
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
+        </if>
     </select>
 </mapper>

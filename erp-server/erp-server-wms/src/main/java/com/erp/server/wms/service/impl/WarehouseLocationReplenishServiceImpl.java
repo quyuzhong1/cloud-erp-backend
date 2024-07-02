@@ -3,17 +3,14 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.lang.Pair;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.entity.BaseEntity;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
@@ -29,6 +26,7 @@ import io.seata.spring.boot.autoconfigure.properties.SagaAsyncThreadPoolProperti
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -70,6 +68,10 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
      * @author: tanmujin
      */
     private List<WarehouseLocationReplenishDTO.ViewDTO> fillViewList(List<WarehouseLocationReplenishEntity> entityList) {
+        if(entityList.isEmpty()){
+            return Collections.emptyList();
+        }
+
         List<WarehouseLocationReplenishDTO.ViewDTO> dtoList = new ArrayList<>(entityList.size());
 
         //仓库信息
@@ -114,6 +116,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .findFirst().orElse(new WarehouseLocationEntity());
             dto.setToWarehouseLocationName(toLocationEntity.getName());
 
+            //处理状态
+            dto.setStatusName(LocationReplenishStatusEnum.getNameByCode(dto.getStatus()));
+
             dtoList.add(dto);
         }
 
@@ -134,7 +139,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response) {
-        Optional<AdvanceQueryDTO> checkIdsOptional = dto.getAdvanceQueryDTOList().stream().filter(item -> item.getCompare().equals("inList")).findFirst();
+        /*Optional<AdvanceQueryDTO> checkIdsOptional = dto.getAdvanceQueryDTOList().stream().filter(item -> item.getCompare().equals("inList")).findFirst();
         List<WarehouseLocationReplenishEntity> entityList;
         List<String> ids;
         if(checkIdsOptional.isPresent() && !ObjectUtil.isEmpty(checkIdsOptional.get().getValue())){
@@ -145,9 +150,12 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             BeanMapper.copy(dto, searchParamDto);
             entityList = this.baseMapper.listByParam(searchParamDto);
             ids = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        }
-
+        }*/
+        WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
+        BeanMapper.copy(dto, searchParamDto);
+        List<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(searchParamDto);
         List<WarehouseLocationReplenishDTO.ViewDTO> viewList = fillViewList(entityList);
+        List<String> ids = viewList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
         try {
             String fileName = "仓位补货" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             String excelPath = "excel/warehouseLocationReplenishExport.xlsx";
@@ -385,5 +393,28 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         InventoryEntity maxQtyInventoryEntity = stockInventoryList.get(0);
 
         return new Pair<>(stockAreaEntity, maxQtyInventoryEntity);
+    }
+
+    @Override
+    public List<WarehouseLocationReplenishDTO.LocationQtyDTO> listLocationQty(List<WarehouseLocationReplenishDTO.LocationQtyDTO> paramlist) {
+        if(CollectionUtils.isEmpty(paramlist)){
+            return Collections.emptyList();
+        }
+        List<WarehouseLocationReplenishDTO.LocationQtyDTO> resultList = new ArrayList<>();
+        for (WarehouseLocationReplenishDTO.LocationQtyDTO param : paramlist) {
+            List<WarehouseLocationEntity> locationList = warehouseLocationService.listLocation(param.getWarehouseId(), param.getWarehouseArea());
+            List<String> locationCodeList = locationList.stream().map(item -> item.getCode()).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(locationCodeList)){
+                return resultList;
+            }
+            List<InventoryEntity> inventoryList = inventoryService.getBaseMapper().selectList(new QueryWrapper<InventoryEntity>()
+                    .eq("warehouse_id", param.getWarehouseId())
+                    .in("warehouse_location", locationCodeList)
+                    .eq("sku_id", param.getSkuId())
+                    .eq("dict_inventory_status", "usable"));
+            inventoryList.forEach(item -> resultList.add(new WarehouseLocationReplenishDTO.LocationQtyDTO(param.getWarehouseId(), param.getWarehouseArea(), param.getSkuId(), item.getSkuNo(), item.getWarehouseLocation(), item.getQty())));
+        }
+
+        return resultList;
     }
 }

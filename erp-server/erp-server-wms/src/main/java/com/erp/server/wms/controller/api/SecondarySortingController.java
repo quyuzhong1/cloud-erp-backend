@@ -71,12 +71,12 @@ public class SecondarySortingController extends BaseController {
 
     /**
      * 打印配货单
-     * @param code 波次编号
+     * @param waveId 波次编号
      * @see SecondarySortingDTO.BasketDetail
      */
     @GetMapping("/printDistribution")
-    public void printDistribution(@RequestParam("code") String code, HttpServletResponse response) {
-        secondarySortingService.printDistribution(code, response);
+    public void printDistribution(@RequestParam("waveId") String waveId, HttpServletResponse response) {
+        secondarySortingService.printDistribution(waveId, response);
     }
 
 }

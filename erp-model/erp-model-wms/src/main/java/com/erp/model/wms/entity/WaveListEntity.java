@@ -3,18 +3,16 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 波次拣货数据库实体
+ * 波次列表数据库实体
  * @date 2024-06-24
  * @author tanmujin
  */
@@ -22,8 +20,8 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("picking_wave")
-public class PickingWaveEntity extends BaseEntity<PickingWaveEntity> implements Serializable {
+@TableName("wave_list")
+public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serializable {
     @TableField("code")
     private String code;
 

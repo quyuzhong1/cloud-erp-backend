@@ -1,12 +1,16 @@
 package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import javax.validation.constraints.NotNull;
+import java.util.Objects;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -41,7 +45,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 对应值
          */
-        private String value;
+        private List<String> valueList = new ArrayList<>();
 
         /**
          * 分拣口 wms/dict/drop/down?type=equipmentSortingPort
@@ -58,7 +62,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 设备分拣口配置条件
          */
-        private List<EquipmentSortingPortConditionDTO> sortingConditionDTOList;;
+        private List<EquipmentSortingPortConditionDTO> sortingConditionDTOList = new ArrayList<>();
     }
 
 
@@ -123,12 +127,12 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 值
          */
-        private List<String> valList;
+        private List<String> valList = new ArrayList<>();
 
         /**
          * 条件明细
          */
-        private List<B2cAllowableDeviationsConditionDetail> conditionDetailList;
+        private List<B2cAllowableDeviationsConditionDetail> conditionDetailList = new ArrayList<>();
     }
     /**
      * B2C称重量方允许偏差配置
@@ -145,14 +149,91 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 配置条件
          */
-        private List<B2cAllowableDeviationsCondition> conditionDTOList;
+        private List<B2cAllowableDeviationsCondition> conditionDTOList = new ArrayList<>();
 
         /**
          * 为0正常出库开关
          */
-        private Boolean whenZeroNormalOutSwitch;
+        private boolean whenZeroNormalOutSwitch;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SortingPortRuleDTO {
+
+        /**
+         * 物流商id
+         */
+        @NotBlank(message = "物流商id不能为空")
+        private String logisticsSupplierId;
+
+        /**
+         * 渠道id
+         */
+        @NotBlank(message = "渠道id不能为空")
+        private String channelId;
+
+        /**
+         * 发货单id
+         */
+        @NotBlank(message = "发货单id不能为空")
+        private String deliveryOrderId;
+
+        /**
+         * 称重重量（g）
+         */
+        private BigDecimal scanWeight;
+
+        /**
+         * 扫描长(cm)
+         */
+        private BigDecimal scanLength;
+
+        /**
+         * 扫描宽(cm)
+         */
+        private BigDecimal scanWidth;
+
+        /**
+         * 扫描高(cm)
+         */
+        private BigDecimal scanHeight;
+
+        /**
+         * 订单重量（g）
+         */
+        private BigDecimal orderWeight;
+
+        /**
+         * 订单包装长(cm)
+         */
+        private BigDecimal orderLength;
+
+        /**
+         * 订单包装宽(cm)
+         */
+        private BigDecimal orderWidth;
+
+        /**
+         * 订单包装高(cm)
+         */
+        private BigDecimal orderHeight;
+
+        public void handleNullToZero(){
+            this.setScanWeight(Objects.isNull(this.getScanWeight()) ? BigDecimal.ZERO : this.getScanWeight());
+            this.setScanLength(Objects.isNull(this.getScanLength()) ? BigDecimal.ZERO : this.getScanLength());
+            this.setScanWidth(Objects.isNull(this.getScanWidth()) ? BigDecimal.ZERO : this.getScanWidth());
+            this.setScanHeight(Objects.isNull(this.getScanHeight()) ? BigDecimal.ZERO : this.getScanHeight());
+            this.setOrderWeight(Objects.isNull(this.getOrderWeight()) ? BigDecimal.ZERO : this.getOrderWeight());
+            this.setOrderLength(Objects.isNull(this.getOrderLength()) ? BigDecimal.ZERO : this.getOrderLength());
+            this.setOrderWidth(Objects.isNull(this.getOrderWidth()) ? BigDecimal.ZERO : this.getOrderWidth());
+            this.setOrderHeight(Objects.isNull(this.getOrderHeight()) ? BigDecimal.ZERO : this.getOrderHeight());
+        }
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -161,12 +242,12 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 设备分拣口
          */
-        private EquipmentSortingPortDTO equipmentSortingPortDTO;
+        private EquipmentSortingPortDTO equipmentSortingPortDTO = new EquipmentSortingPortDTO();
 
         /**
          * B2c称重量方允许偏差
          */
-        private B2cAllowableDeviations b2cAllowableDeviations;
+        private B2cAllowableDeviations b2cAllowableDeviations = new B2cAllowableDeviations();
     }
 
 

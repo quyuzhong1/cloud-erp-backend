@@ -5,11 +5,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.dto.renovation.PickingWaveDTO;
+import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.renovation.SecondarySortingDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,9 +30,9 @@ import java.util.stream.Collectors;
 public class SecondarySortingServiceImpl implements SecondarySortingService {
 
     @Resource
-    private PickingWaveService pickingWaveService;
+    private WaveListService waveListService;
     @Resource
-    private PickingWaveDetailService pickingWaveDetailService;
+    private WaveListDetailService waveListDetailService;
     @Resource
     private PickingListsService pickingListsService;
 
@@ -39,18 +42,20 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
 
     @Override
     public SecondarySortingDTO.ScanCodeView scanCode(String code) {
-        PickingWaveEntity pickingWave = pickingWaveService.getByCodeOrCarCode(code);
+        WaveListEntity pickingWave = waveListService.getByCodeOrCarCode(code);
         if (ObjectUtils.isEmpty(pickingWave)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, code);
         }
         SecondarySortingDTO.ScanCodeView view = new SecondarySortingDTO.ScanCodeView();
         view.setWaveId(pickingWave.getId());
         view.setCode(pickingWave.getCode());
-        List<PickingWaveDetailEntity> details = pickingWaveDetailService.listByMainId(pickingWave.getId());
-        List<String> deliveryIds = details.stream().map(PickingWaveDetailEntity::getDeliveryId).collect(Collectors.toList());
+        List<WaveListDetailEntity> details = waveListDetailService.listByMainId(pickingWave.getId());
+        List<String> deliveryIds = details.stream().map(WaveListDetailEntity::getDeliveryId).collect(Collectors.toList());
         List<SoB2cDeliveryInterceptEntity> interceptList = soB2cDeliveryInterceptService.listByDeliveryIds(deliveryIds);
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(deliveryIds);
         view.setBasketQty(details.size());
@@ -82,14 +87,14 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
 
         ProductDetailEntity productDetail = plmTaskFeign.getBySkuNoOrEan(skuCode);
         SecondarySortingDTO.ScanSkuView view = new SecondarySortingDTO.ScanSkuView();
-        List<PickingWaveDTO.PickingWaveDetailDTO> waveDetailList = pickingWaveService.listDetailByMainId(waveId, null, productDetail.getId());
-        PickingWaveDTO.PickingWaveDetailDTO detailDTO = waveDetailList.stream()
+        List<WaveListDTO.PickingWaveDetailDTO> waveDetailList = waveListService.listDetailByMainId(waveId, null, productDetail.getId());
+        WaveListDTO.PickingWaveDetailDTO detailDTO = waveDetailList.stream()
                 .filter(v -> v.getSkuId().equals(productDetail.getId()))
                 .filter(v -> v.getPickedQty() > v.getAllocatedQty())
                 .findFirst()
                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_99111));
-        int pickingQty = waveDetailList.stream().mapToInt(PickingWaveDTO.PickingWaveDetailDTO::getPickedQty).sum();
-        int allocatedQty = waveDetailList.stream().mapToInt(PickingWaveDTO.PickingWaveDetailDTO::getAllocatedQty).sum();
+        int pickingQty = waveDetailList.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getPickedQty).sum();
+        int allocatedQty = waveDetailList.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getAllocatedQty).sum();
         view.setBasketNo(detailDTO.getBasketNo());
         view.setSkuId(detailDTO.getSkuId());
         view.setSkuNo(detailDTO.getSkuNo());
@@ -104,15 +109,15 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
 
     @Override
     public List<SecondarySortingDTO.BasketDetail> basketDetail(String waveId, String basketNo) {
-        List<PickingWaveDTO.PickingWaveDetailDTO> waveDetailDTOS = pickingWaveService.listDetailByMainId(waveId, basketNo);
-        Map<String, List<PickingWaveDTO.PickingWaveDetailDTO>> skuMap = waveDetailDTOS.stream().collect(Collectors.groupingBy(PickingWaveDTO.PickingWaveDetailDTO::getSkuId));
+        List<WaveListDTO.PickingWaveDetailDTO> waveDetailDTOS = waveListService.listDetailByMainId(waveId, basketNo);
+        Map<String, List<WaveListDTO.PickingWaveDetailDTO>> skuMap = waveDetailDTOS.stream().collect(Collectors.groupingBy(WaveListDTO.PickingWaveDetailDTO::getSkuId));
         List<SkuVO> vos = plmTaskFeign.listSkuPurchaseByIds(new ArrayList<>(skuMap.keySet()));
         return skuMap.values()
                 .stream().map(v -> {
-                    PickingWaveDTO.PickingWaveDetailDTO detailDTO = v.stream().findFirst().orElse(new PickingWaveDTO.PickingWaveDetailDTO());
+                    WaveListDTO.PickingWaveDetailDTO detailDTO = v.stream().findFirst().orElse(new WaveListDTO.PickingWaveDetailDTO());
                     SkuVO skuVO = vos.stream().filter(e -> e.getSkuId().equals(detailDTO.getSkuId())).findFirst().orElse(new SkuVO());
-                    int pickingQty = v.stream().mapToInt(PickingWaveDTO.PickingWaveDetailDTO::getPickedQty).sum();
-                    int allocatedQty = v.stream().mapToInt(PickingWaveDTO.PickingWaveDetailDTO::getAllocatedQty).sum();
+                    int pickingQty = v.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getPickedQty).sum();
+                    int allocatedQty = v.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getAllocatedQty).sum();
                     SecondarySortingDTO.BasketDetail detail = new SecondarySortingDTO.BasketDetail();
                     detail.setSkuId(detailDTO.getSkuId());
                     detail.setSkuNo(detailDTO.getSkuNo());
@@ -124,16 +129,26 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     }
 
     @Override
-    public void printDistribution(String code, HttpServletResponse response) {
-
+    public void printDistribution(String waveId, HttpServletResponse response) {
+        List<WaveListDetailEntity> waveDetailEntities = waveListDetailService.listByMainId(waveId);
+        List<String> deliveryIds = waveDetailEntities.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam();
+        param.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
+        param.setIds(deliveryIds);
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillDTOList = soB2cDeliveryService.printLogisticsWaybillPreview(param);
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> printDetailDTOList = printLogisticsWaybillDTOList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDTO::getDetailList).flatMap(Collection::stream).collect(Collectors.toList());
+        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
+        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
+        dto.setDetailList(printDetailDTOList);
+        soB2cDeliveryService.printLogisticsBillConfirm(dto,response);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SecondarySortingDTO.ScanCodeView reset(String waveId) {
-        PickingWaveEntity pickingWave = pickingWaveService.getById(waveId);
-        List<PickingWaveDTO.PickingWaveDetailDTO> waveDetailDTOS = pickingWaveService.listDetailByMainId(waveId);
-        List<String> detailIds = waveDetailDTOS.stream().map(PickingWaveDTO.PickingWaveDetailDTO::getPickDetailId).collect(Collectors.toList());
+        WaveListEntity pickingWave = waveListService.getById(waveId);
+        List<WaveListDTO.PickingWaveDetailDTO> waveDetailDTOS = waveListService.listDetailByMainId(waveId);
+        List<String> detailIds = waveDetailDTOS.stream().map(WaveListDTO.PickingWaveDetailDTO::getPickDetailId).collect(Collectors.toList());
         pickingDetailService.update(Wrappers.<PickingDetailEntity>lambdaUpdate()
                 .set(PickingDetailEntity::getAllocatedQty, 0)
                 .in(PickingDetailEntity::getId, detailIds)

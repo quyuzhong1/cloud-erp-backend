@@ -32,10 +32,11 @@ import com.erp.model.oms.enums.SoB2cDataTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
+import com.erp.model.wms.dto.CfgRuleWaveRecordDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
-import com.erp.model.wms.dto.renovation.PickingWaveDTO;
+import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
@@ -85,7 +86,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     private SpElServer spElServer;
 
     @Resource
-    private PickingWaveService pickingWaveService;
+    private WaveListService waveListService;
 
 
     @Resource
@@ -94,6 +95,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Resource
     private PickingCartTypeService pickingCartTypeService;
+
+    @Resource
+    private CfgRuleWaveRecordService cfgRuleWaveRecordService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -235,7 +239,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         //销售订单
         List<String> b2cSoIdList = soB2cDeliveryList.stream().map(SoB2cDeliveryEntity::getSourceId).collect(Collectors.toList());
-        SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO(b2cSoIdList, Arrays.asList(SoB2cDataTypeEnum.MAIN.getCode(), SoB2cDataTypeEnum.LOGISTIC.getCode(), SoB2cDataTypeEnum.RECEIVER.getCode()));
+        SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO();
+        paramDTO.setB2cSoIdList(b2cSoIdList);
+        paramDTO.setDataTypeList(Arrays.asList(SoB2cDataTypeEnum.LOGISTIC.getCode(), SoB2cDataTypeEnum.RECEIVER.getCode()));
         SoB2cDTO.SoB2cDataDTO soB2cDataDTO = soB2cFeign.listSoB2cData(paramDTO);
 
 
@@ -264,6 +270,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             }
         }
         if (CollectionUtil.isEmpty(compliantList)) {
+            log.info("未发现需要新增的波次列表数据");
             return Boolean.TRUE;
         }
         //生成拣货波次列表数据
@@ -285,7 +292,16 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             return;
         }
         for (CfgRuleWaveEntity waveEntity : cfgRuleWaveList) {
-            executeRule(waveEntity.getId());
+            try {
+                //执行规则
+                executeRule(waveEntity.getId());
+            } catch (Exception e) {
+                CfgRuleWaveRecordDTO.AddDTO addDTO = new CfgRuleWaveRecordDTO.AddDTO();
+                addDTO.setRuleWaveId(waveEntity.getId());
+                addDTO.setExecutionTime(LocalTime.parse(time,DateTimeFormatter.ofPattern("HH:mm")));
+                addDTO.setReturnMsg(e.getMessage());
+                cfgRuleWaveRecordService.add(addDTO);
+            }
         }
     }
 
@@ -317,13 +333,13 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         Integer totalQty = MathUtil.ZERO;
         Integer orderQty = MathUtil.ZERO;
 
-        PickingWaveDTO.AddDTO addDTO = new PickingWaveDTO.AddDTO();
+        WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
         addDTO.setWaveType(entity.getWaveType());
         addDTO.setPickingType(entity.getPickingType());
 
         List<String> deliveryIdList = new ArrayList<>();
         //需要新增的波次数据
-        List<PickingWaveDTO.AddDTO> resultList = new ArrayList<>();
+        List<WaveListDTO.AddDTO> resultList = new ArrayList<>();
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
             //发货明细
             List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
@@ -367,8 +383,8 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if (CollectionUtil.isEmpty(resultList)) {
             return;
         }
-        for (PickingWaveDTO.AddDTO waveAddDTO : resultList) {
-            pickingWaveService.add(waveAddDTO);
+        for (WaveListDTO.AddDTO waveAddDTO : resultList) {
+            waveListService.add(waveAddDTO);
         }
     }
 

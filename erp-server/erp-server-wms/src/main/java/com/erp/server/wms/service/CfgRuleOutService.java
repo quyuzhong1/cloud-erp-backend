@@ -24,4 +24,9 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
     BaseResultDTO.AddDTO addOrUpdate(CfgRuleOutDTO.CommonDTO dto);
 
     CfgRuleOutDTO.CommonDTO view();
+
+    /**
+     * 根据出库配置返回分拣口
+     */
+    String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto);
 }

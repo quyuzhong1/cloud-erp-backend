@@ -324,6 +324,18 @@ public class SoB2cDeliveryController extends BaseController {
         soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
     }
 
+    /**
+     * 根据发货单大于物流面单
+     * @author will
+     * @date 2024/7/1 18:14
+     * @param dto
+     * @param response
+     */
+    @PostMapping("/printLogisticsBillConfirmById")
+    public void printLogisticsBillConfirmById(@RequestBody @Validated BaseIdDTO dto, HttpServletResponse response) {
+        soB2cDeliveryService.printLogisticsBillConfirmById(dto.getId(), response);
+    }
+
 
     /**
      * 完成打印
