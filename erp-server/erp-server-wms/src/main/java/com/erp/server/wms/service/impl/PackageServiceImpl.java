@@ -228,6 +228,10 @@ public class PackageServiceImpl implements PackageService {
             }
 
             if (TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
+                //判断是否是组包限制的发货物流商
+                Boolean isPackageSupplier = cfgSettingService.getPackageSupplierSetting(scanResult.getLogisticsSupplierId());
+                scanResult.setIsPackageSupplier(isPackageSupplier);
+                scanResult.setUniqueId(getPackageUniqueId(isPackageSupplier,scanResult.getLogisticsSupplierId(),scanResult.getTransferLogisticsChannelId(),scanResult.getTransferLogisticsSupplierId(), scanResult.getShopId()));
                 return scanResult;
             }
 
