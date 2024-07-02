@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 仓位库存预警服务类
@@ -348,7 +349,24 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo() {
-        return this.baseMapper.listTabInfo();
+        List<WarehouseLocationReplenishDTO.TabDTO> list = this.baseMapper.listTabInfo();
+        if(list.size() == 4){
+            return list;
+        }
+        List<String> tabFlagList = list.stream().map(item -> item.getTabFlag()).collect(Collectors.toList());
+        if(! tabFlagList.contains(ReplenishBillStatusEnum.HANDLED.getCode())){
+            list.add(new WarehouseLocationReplenishDTO.TabDTO(ReplenishBillStatusEnum.WAIT_HANDLE.getCode(), 0));
+        }
+        if(! tabFlagList.contains(ReplenishBillStatusEnum.HANDLE_ING.getCode())){
+            list.add(new WarehouseLocationReplenishDTO.TabDTO(ReplenishBillStatusEnum.HANDLE_ING.getCode(), 0));
+        }
+        if(! tabFlagList.contains(ReplenishBillStatusEnum.HANDLED.getCode())){
+            list.add(new WarehouseLocationReplenishDTO.TabDTO(ReplenishBillStatusEnum.HANDLED.getCode(), 0));
+        }
+        if(! tabFlagList.contains(ReplenishBillStatusEnum.NO_NEED_HANDLE.getCode())){
+            list.add(new WarehouseLocationReplenishDTO.TabDTO(ReplenishBillStatusEnum.NO_NEED_HANDLE.getCode(), 0));
+        }
+        return list;
     }
 
     /**

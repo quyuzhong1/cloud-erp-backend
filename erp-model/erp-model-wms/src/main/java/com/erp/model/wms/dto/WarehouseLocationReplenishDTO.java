@@ -327,6 +327,8 @@ public class WarehouseLocationReplenishDTO implements Serializable {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class TabDTO{
         /**
          * 类型
