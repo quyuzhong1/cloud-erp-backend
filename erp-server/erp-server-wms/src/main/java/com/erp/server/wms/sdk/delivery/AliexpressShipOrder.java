@@ -55,7 +55,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
     @Override
     public List<String> shipOrder(PlatformShipOrderDTO dto) {
         // 查询拆分前的原平台订单
-        dto.setHasFindSourcePlatformOrder(true);
+//        dto.setHasFindSourcePlatformOrder(true);
         // 查询所有信息
         Tuple tuple = super.allSourceOrderInfo(dto);
         List<SoB2cEntity> sourceOrderList = tuple.get(0);
@@ -63,7 +63,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         // 当前单据物流信息
         SoB2cLogisticsEntity logisticsEntity = tuple.get(2);
         // 源平台仓单信息
-        Map<String, List<SoB2cDetailEntity>> sourceDetailEntityMap = tuple.get(3);
+//        Map<String, List<SoB2cDetailEntity>> sourceDetailEntityMap = tuple.get(3);
 
         //渠道
         String channelId = logisticsEntity.getLogisticsChannelId();
@@ -106,12 +106,14 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                 throw new ServiceException("【速卖通标记发货】操作失败，渠道标发单号为空");
             }
             // 源单信息明细
-            List<SoB2cDetailEntity> allSourceDetailEntityList = sourceDetailEntityMap.get(mainEntity.getPlatformCode());
-            if (CollectionUtils.isEmpty(allSourceDetailEntityList)){
-                throw new ServiceException("【速卖通标记发货】操作失败，原平台明细为空,平台单号=" + mainEntity.getCode());
-            }
+//            List<SoB2cDetailEntity> allSourceDetailEntityList = sourceDetailEntityMap.get(mainEntity.getPlatformCode());
+//            if (CollectionUtils.isEmpty(allSourceDetailEntityList)){
+//                throw new ServiceException("【速卖通标记发货】操作失败，原平台明细为空,平台单号=" + mainEntity.getCode());
+//            }
             // 声明发货类型，all表示全部发货，part表示部分声明发货。
-            String sendType = convertSendType(detailEntityList, allSourceDetailEntityList);
+//            String sendType = convertSendType(detailEntityList, allSourceDetailEntityList);
+            // 都是全部发货
+            String sendType = "all";
 
             DeclareDeliverRequest request = DeclareDeliverRequest.builder().
                     outRef(mainEntity.getPlatformCode()).

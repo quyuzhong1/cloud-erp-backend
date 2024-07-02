@@ -25,13 +25,16 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.Objects;
 
+/**
+ * 奇门销售退货入库单
+ */
 @Component
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_wdt_return_order_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_return_order_consumer",
+        selectorExpression = "third_system_qimen_return_order_tag",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_qimen_return_order_consumer",
         consumeMode = ConsumeMode.ORDERLY)
-public class WdtRefundOrderConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+public class SyncQiMenRefundOrderConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
     private SyncSoReturnService syncSoReturnService;
@@ -68,7 +71,7 @@ public class WdtRefundOrderConsumer<T extends DmpSyncTaskIdDTO> extends Abstract
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        log.error("销售退货入库单参数：{}", ext.toString());
+        log.info("监听到奇门销售退货入库单：{}", JSONUtil.toJsonStr(ext));
         WdtReturnOrderDTO dto = JSONUtil.toBean(ext.toString(), WdtReturnOrderDTO.class);
         syncSoReturnService.syncWdtReturnOrderToSoReturn(dto);
         return ApiResult.success();
@@ -80,6 +83,6 @@ public class WdtRefundOrderConsumer<T extends DmpSyncTaskIdDTO> extends Abstract
      */
     private String getTableName(String platform){
         return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
-                platform, BusinessTypeEnum.ORDER.getCode());
+                platform, BusinessTypeEnum.QIMEN_RETURN_ORDER.getCode());
     }
 }

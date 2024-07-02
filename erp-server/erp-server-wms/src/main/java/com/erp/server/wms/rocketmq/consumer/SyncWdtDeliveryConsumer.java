@@ -28,8 +28,8 @@ import java.util.Objects;
 @Component
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_wdt_so_out_stock_tag || third_system_qimen_so_out_stock_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-third_system_pull_so_out_stock_consumer",
+        selectorExpression = "third_system_wdt_so_out_stock_tag",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_so_out_stock_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class SyncWdtDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
     @Resource
