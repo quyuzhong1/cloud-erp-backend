@@ -680,6 +680,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if (CollectionUtils.isEmpty(shopIds)){
             throw new ServiceException("销售订单店铺未找到");
         }
+        if (shopIds.size() > 1){
+            throw new ServiceException("速卖通不支持多店铺组包预报");
+        }
         PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
 
         List<String> soIdList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
