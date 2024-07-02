@@ -1,6 +1,6 @@
 package com.sdk.third.qimen.handler;
 
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -9,6 +9,7 @@ import com.common.business.dto.WdtReturnOrderDTO;
 import com.common.business.dto.WdtReturnOrderDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractSoOutStockHandler;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.qimencloud.api.scene3ldsmu02o9.request.WdtWmsStockinRefundQuerywithdetailRequest;
 import com.qimencloud.api.scene3ldsmu02o9.response.WdtWmsStockinRefundQuerywithdetailResponse;
@@ -58,7 +59,7 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
     private List<WdtWmsStockinRefundQuerywithdetailResponse.Order> pullData(JobTaskDTO dto) {
         WdtWmsStockinRefundQuerywithdetailRequest.Pager pager = new WdtWmsStockinRefundQuerywithdetailRequest.Pager();
         long pageSize = 200L;
-        pager.setPageNo(0L);
+        pager.setPageNo(1L);
         pager.setPageSize(pageSize);
 
         WdtWmsStockinRefundQuerywithdetailRequest.Params params = new WdtWmsStockinRefundQuerywithdetailRequest.Params();
@@ -83,10 +84,14 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
             try {
                 response = qimenService.execute(request);
             } catch (ApiException e) {
-                log.error("拉取奇门销售退货入库单失败，原因【{}】 {}", e.getMessage(), e);
+                log.error("拉取奇门销售退货入库单异常：{}", e);
                 return result;
             }
-            if (ObjectUtil.isEmpty(response) || ObjectUtil.isEmpty(response.getData().getOrder())) {
+            if(response.getStatus() != 0L){
+                log.error("拉取奇门销售退货入库单失败，request：{}，response：{}", JSONUtil.toJsonStr(request), JSONUtil.toJsonStr(response));
+                return result;
+            }
+            if (response.getData().getTotalCount() == 0L) {
                 return result;
             }
             result.addAll(response.getData().getOrder());
@@ -126,10 +131,11 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
             dto.setShopId(String.valueOf(orderEntity.getShopId()));
             dto.setShopName(orderEntity.getShopName());
             dto.setShopNo(orderEntity.getShopNo());
+            dto.setCreated(LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(orderEntity.getCreatedTime())), ZoneId.systemDefault()));
             //仓库id
             dto.setWarehouseId(String.valueOf(orderEntity.getWarehouseId()));
             dto.setWarehouseName(orderEntity.getWarehouseName());
-            dto.setSourceType(SourceTypeEnum.WDT_RETURN_ORDER.getCode());
+            dto.setSourceType(SourceTypeEnum.QIMEN_RETURN_ORDER.getCode());
             dto.setSourceId(orderEntity.getTidList());
             dto.setSourceCode(orderEntity.getTradeNoList());
             List<WdtReturnOrderDetailDTO> detailList = new ArrayList<>();

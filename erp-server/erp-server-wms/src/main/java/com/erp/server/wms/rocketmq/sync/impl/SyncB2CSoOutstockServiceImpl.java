@@ -228,7 +228,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         ArrayList<SoOutstockDetailEntity> detailList = new ArrayList<>();
         for (WdtSoOutStockDetailDTO detailDTO : entity.getDetailList()) {
-            for (WdtSoOutStockDetailDTO.PositionDetailsList detail : detailDTO.getPositionDetailsList()) {
+            if (CollectionUtils.isEmpty(detailDTO.getPositionDetailsList())){
+                //暂时使用空仓位
                 SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
                 detailEntity.setId(IdWorker.getIdStr());
                 String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
@@ -243,26 +244,46 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 //仓库
                 detailEntity.setWarehouseId(warehouse.getId());
                 detailEntity.setWarehouseName(warehouse.getName());
-                detailEntity.setWarehouseLocation(detail.getPositionNo());
-                detailEntity.setPlanQty(detail.getPositionGoodsCount());
-                detailEntity.setPlanQty(detail.getPositionGoodsCount());
+                detailEntity.setWarehouseLocation("");
+                detailEntity.setVirtualWarehouseId(virtualWarehouseId);
+                detailEntity.setPlanQty(detailDTO.getPlanQty());
+                detailEntity.setActualQty(detailDTO.getActualQty());
                 detailList.add(detailEntity);
                 //是否扣减库存 true 就要
                 boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
                 if (Boolean.TRUE.equals(isDeduction)) {
                     //并且扣库存 才执行
-                    InOutStockDTO inOutStock = new InOutStockDTO();
-                    inOutStock.setSourceId(id);
-                    inOutStock.setSourceDetailId(detailEntity.getId());
-                    inOutStock.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
-                    inOutStock.setBillDate(soOutstock.getBillDate());
-                    inOutStock.setQty(detailEntity.getActualQty());
-                    inOutStock.setSkuId(detailEntity.getSkuId());
-                    inOutStock.setSkuNo(detailEntity.getSkuNo());
-                    inOutStock.setSourceCode(soOutstock.getCode());
-                    inOutStock.setWarehouseId(soOutstock.getWarehouseId());
-                    inOutStock.setWarehouseLocation(detail.getPositionNo());
-                    inOutStockList.add(inOutStock);
+                    buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList,"");
+                }
+            } else {
+                for (WdtSoOutStockDetailDTO.PositionDetailsList detail : detailDTO.getPositionDetailsList()) {
+                    if (Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
+                        detail.setPositionNo("");
+                    }
+                    SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
+                    detailEntity.setId(IdWorker.getIdStr());
+                    String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
+                            findFirst().map(SkuVO::getSkuId).orElse("");
+                    if (StringUtils.isBlank(skuId)) {
+                        throw new ServiceException(ApiError.ERROR_92055, detailEntity.getSkuNo());
+                    }
+                    String detailId = IdWorker.getIdStr();
+                    detailEntity.setId(detailId);
+                    detailEntity.setMainId(id);
+                    detailEntity.setSkuId(skuId);
+                    //仓库
+                    detailEntity.setWarehouseId(warehouse.getId());
+                    detailEntity.setWarehouseName(warehouse.getName());
+                    detailEntity.setWarehouseLocation(detail.getPositionNo());
+                    detailEntity.setVirtualWarehouseId(virtualWarehouseId);
+                    detailEntity.setPlanQty(detail.getPositionGoodsCount());
+                    detailEntity.setActualQty(detail.getPositionGoodsCount());
+                    detailList.add(detailEntity);
+                    //是否扣减库存 true 就要
+                    boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
+                    if (Boolean.TRUE.equals(isDeduction)) {
+                        buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList,detail.getPositionNo());
+                    }
                 }
             }
         }
@@ -283,11 +304,26 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 dto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
                 virtualInventoryTransCoreService.approve(dto);
             }
-
             inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
         }
         //推送金蝶
         sendPushTask(soOutstock);
+    }
+
+    private static void buildInOutStock(String id, SoOutstockDetailEntity detailEntity, SoOutstockEntity soOutstock, String virtualWarehouseId, List<InOutStockDTO> inOutStockList, String warehouseLocation) {
+        InOutStockDTO inOutStock = new InOutStockDTO();
+        inOutStock.setSourceId(id);
+        inOutStock.setSourceDetailId(detailEntity.getId());
+        inOutStock.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
+        inOutStock.setBillDate(soOutstock.getBillDate());
+        inOutStock.setQty(detailEntity.getActualQty());
+        inOutStock.setSkuId(detailEntity.getSkuId());
+        inOutStock.setSkuNo(detailEntity.getSkuNo());
+        inOutStock.setSourceCode(soOutstock.getCode());
+        inOutStock.setWarehouseId(soOutstock.getWarehouseId());
+        inOutStock.setWarehouseLocation(warehouseLocation);
+        inOutStock.setVirtualWarehouseId(virtualWarehouseId);
+        inOutStockList.add(inOutStock);
     }
 
     private void sendPushTask(SoOutstockEntity obj) {

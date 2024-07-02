@@ -1,15 +1,19 @@
 package com.erp.server.wms.aliExpress;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
 import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
+import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.enums.Protocol;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
 import com.erp.server.wms.service.FbaShipmentService;
@@ -38,7 +42,7 @@ public class AliExpressTests {
 
     @Test
     public void querySellerShipmentInfo() {
-        String orderId = "8189674800231826";
+        String orderId = "1106029852145370";
         try {
             String appKey = "503630";
             String appSecret = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
@@ -65,23 +69,19 @@ public class AliExpressTests {
     @Test
     public void shipOrder() {
         QueryShipmentOrder.Shipment shipment = QueryShipmentOrder.Shipment.builder()
-                .logistics_no("CNG00659545751639")
-                .service_name("CAINIAO_STANDARD")
-                .build();
-        QueryShipmentOrder.Shipment shipment1 = QueryShipmentOrder.Shipment.builder()
-                .logistics_no("CNG00660718632504")
+                .logistics_no("CNG00660781498574")
                 .service_name("CAINIAO_STANDARD")
                 .build();
 
         QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
-                .send_type("part")
+                .send_type("all")
 //                .sub_trade_order_index("LP00659545751639")
                 .sub_trade_order_index("1")
-                .shipment_list(Arrays.asList(shipment, shipment1))
+                .shipment_list(Arrays.asList(shipment))
                 .build();
 
         QueryShipmentOrder declareDeliverRequest = QueryShipmentOrder.builder()
-                .trade_order_id("8189674800231826")
+                .trade_order_id("1106029852145370")
                 .sub_trade_order_list(Arrays.asList(tradeOrder))
                 .build();
 
@@ -99,7 +99,7 @@ public class AliExpressTests {
             String appKey = "503630";
             String appSecret = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
             String baseUrl = "https://api-sg.aliexpress.com";
-            String apiName = AliexpressConstants.DECLARE_DELIVER;
+            String apiName = AliexpressConstants.SUB_DECLARE_DELIVER;
             String token = "50000100620rOCpJesBimsVqwhdznwFL19448dbexeSxecBcvdotvGJILKkYWzw0qLEq";
             IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
             IopRequest request = new IopRequest();
@@ -127,10 +127,43 @@ public class AliExpressTests {
         String url = "https://api-sg.aliexpress.com";
         com.erp.tms.aliexpress.api.IopClient client = new com.erp.tms.aliexpress.api.IopClientImpl(url, appKey, appSecret);
         com.erp.tms.aliexpress.api.IopRequest request = new com.erp.tms.aliexpress.api.IopRequest();
-        request.setApiName("aliexpress.logistics.redefining.listlogisticsservice");
+        request.setApiName("aliexpress.logistics.redefining.supercalifragilistic");
         request.addApiParameter("simplify", "true");
         com.erp.tms.aliexpress.api.IopResponse response = client.execute(request, "50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG", com.erp.tms.aliexpress.domain.Protocol.TOP);
         System.out.println("响应结果");
         System.out.println(JSONUtil.toJsonStr(response));
+    }
+
+
+
+    @Test
+    public void testExpress() throws Exception{
+        SoB2cEntity mainEntity = new SoB2cEntity();
+        mainEntity.setCode("1106029852145370TEST");
+        mainEntity.setPlatformCode("1106029852145370");
+//        mainEntity.setShopId("1744978322774822913");
+        AliExpressOrderService aliExpressOrderService = new AliExpressOrderService();
+        DeclareDeliverRequest request = DeclareDeliverRequest.builder().
+                outRef(mainEntity.getPlatformCode()).
+                logisticsNo("CNG00660781498574").
+                shopId(mainEntity.getShopId()).
+                shopName(mainEntity.getShopName()).
+                serviceName("CAINIAO_STANDARD").
+                sendType("all").
+                build();
+        try {
+            aliExpressOrderService.subDeclareDeliver(request);
+        } catch (ServiceException e) {
+            if (-353 == e.getCode()){
+                log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+//                return signShippedDetailList;
+                return;
+            }
+            log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(),ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException("速卖通标记发货失败:" + e.getMessage());
+        } catch (Exception e){
+            log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货失败 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(),ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException("速卖通标记发货失败:" + e.getMessage());
+        }
     }
 }

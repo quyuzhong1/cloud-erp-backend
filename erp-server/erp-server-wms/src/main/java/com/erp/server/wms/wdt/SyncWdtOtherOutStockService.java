@@ -1,5 +1,6 @@
 package com.erp.server.wms.wdt;
 
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 
@@ -27,4 +28,6 @@ public interface SyncWdtOtherOutStockService {
      * @author: tanmujin
      */
     DmpPushTaskEntity saveTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode);
+
+    DmpPushTaskFeignDTO generateTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode);
 }

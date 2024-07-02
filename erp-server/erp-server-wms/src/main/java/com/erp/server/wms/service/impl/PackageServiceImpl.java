@@ -138,16 +138,6 @@ public class PackageServiceImpl implements PackageService {
             throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
         }
 
-        if (!TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
-            TransferLogisticsStatusEnum platformTransferStatus = transferLogisticsFeign.getPlatformTransferStatus(entity.getShippingOrderNo(), scanResult.getTransferLogisticsSupplierId());
-            if (ObjectUtil.isEmpty(platformTransferStatus)
-                    || TransferLogisticsStatusEnum.DELETED.getCode().equals(platformTransferStatus.getCode())
-                    || TransferLogisticsStatusEnum.UNUSUAL.getCode().equals(platformTransferStatus.getCode())
-            ) {
-                throw new ServiceException(ApiError.ORDER_CANCEL_NOT_PACKAGE);
-            }
-        }
-
         if (entity.getIsIntercept()) {
             throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
         }
