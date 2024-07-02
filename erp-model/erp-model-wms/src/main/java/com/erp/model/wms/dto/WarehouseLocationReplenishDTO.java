@@ -218,20 +218,8 @@ public class WarehouseLocationReplenishDTO implements Serializable {
         @NotBlank
         private String skuId;
 
-        /**
-         * sku编码
-         */
-        private String skuNo;
 
-        /**
-         * 仓位编码
-         */
-        private String warehouseLocation;
-
-        /**
-         * 可用数量
-         */
-        private Integer qty;
+        private List<LocationQtyDetailDTO> locationQtyList;
     }
 
     @Data
@@ -339,5 +327,20 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Data
+    public static class LocationQtyDetailDTO {
+        /**
+         * 仓位编码
+         */
+        private String warehouseLocation;
+
+        /**
+         * 可用数量
+         */
+        private Integer qty;
     }
 }

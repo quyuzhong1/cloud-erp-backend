@@ -134,18 +134,6 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response) {
-        /*Optional<AdvanceQueryDTO> checkIdsOptional = dto.getAdvanceQueryDTOList().stream().filter(item -> item.getCompare().equals("inList")).findFirst();
-        List<WarehouseLocationReplenishEntity> entityList;
-        List<String> ids;
-        if(checkIdsOptional.isPresent() && !ObjectUtil.isEmpty(checkIdsOptional.get().getValue())){
-            ids = (List<String>) checkIdsOptional.get().getValue();
-            entityList = this.baseMapper.selectBatchIds(ids);
-        }else {
-            WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
-            BeanMapper.copy(dto, searchParamDto);
-            entityList = this.baseMapper.listByParam(searchParamDto);
-            ids = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        }*/
         WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
         BeanMapper.copy(dto, searchParamDto);
         List<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(searchParamDto);
@@ -165,37 +153,6 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
-    }
-
-    @Override
-    public List<WarehouseLocationReplenishDTO.LocationQtyDTO> listLocationQty(String warehouseId, String warehouseAreaCode, String skuNo) {
-        WarehouseLocationEntity areaEntity = warehouseLocationService.getBaseMapper().selectOne(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("warehouse_id", warehouseId)
-                .eq("type", "area")
-                .eq("code", warehouseAreaCode)
-                .eq("is_deleted", false));
-        List<WarehouseLocationEntity> locationList = warehouseLocationService.getBaseMapper().selectList(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("warehouse_id", warehouseId)
-                .eq("type", "location")
-                .eq("parent_id", areaEntity.getId())
-                .eq("is_deleted", false));
-        List<String> locationCodeList = locationList.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.toList());
-        List<InventoryEntity> inventoryList = inventoryService.getBaseMapper().selectList(new QueryWrapper<InventoryEntity>()
-                .eq("warehouse_id", areaEntity.getWarehouseId())
-                .eq("sku_no", skuNo)
-                .eq("dict_inventory_status", "usable")
-                .in("warehouse_location", locationCodeList));
-
-        List<WarehouseLocationReplenishDTO.LocationQtyDTO> resultList = new ArrayList<>(inventoryList.size());
-        for (InventoryEntity inventory : inventoryList) {
-            WarehouseLocationReplenishDTO.LocationQtyDTO dto = new WarehouseLocationReplenishDTO.LocationQtyDTO();
-            dto.setWarehouseId(warehouseId);
-            dto.setWarehouseArea(areaEntity.getCode());
-            dto.setSkuNo(skuNo);
-            dto.setWarehouseLocation(inventory.getWarehouseLocation());
-            dto.setQty(inventory.getQty());
-        }
-        return resultList;
     }
 
     @Override
@@ -354,7 +311,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             return list;
         }
         List<String> tabFlagList = list.stream().map(item -> item.getTabFlag()).collect(Collectors.toList());
-        if(! tabFlagList.contains(ReplenishBillStatusEnum.HANDLED.getCode())){
+        if(! tabFlagList.contains(ReplenishBillStatusEnum.WAIT_HANDLE.getCode())){
             list.add(new WarehouseLocationReplenishDTO.TabDTO(ReplenishBillStatusEnum.WAIT_HANDLE.getCode(), 0));
         }
         if(! tabFlagList.contains(ReplenishBillStatusEnum.HANDLE_ING.getCode())){
@@ -421,10 +378,17 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             }
             List<InventoryEntity> inventoryList = inventoryService.getBaseMapper().selectList(new QueryWrapper<InventoryEntity>()
                     .eq("warehouse_id", param.getWarehouseId())
-                    .in("warehouse_location", locationCodeList)
                     .eq("sku_id", param.getSkuId())
-                    .eq("dict_inventory_status", "usable"));
-            inventoryList.forEach(item -> resultList.add(new WarehouseLocationReplenishDTO.LocationQtyDTO(param.getWarehouseId(), param.getWarehouseArea(), param.getSkuId(), item.getSkuNo(), item.getWarehouseLocation(), item.getQty())));
+                    .eq("dict_inventory_status", "usable")
+                    .in("warehouse_location", locationCodeList));
+            List<WarehouseLocationReplenishDTO.LocationQtyDetailDTO> detailList = new ArrayList<>();
+            WarehouseLocationReplenishDTO.LocationQtyDTO locationQtyDTO = new WarehouseLocationReplenishDTO.LocationQtyDTO();
+            locationQtyDTO.setWarehouseId(param.getWarehouseId());
+            locationQtyDTO.setWarehouseArea(param.getWarehouseArea());
+            locationQtyDTO.setSkuId(param.getSkuId());
+            inventoryList.forEach(item -> detailList.add(new WarehouseLocationReplenishDTO.LocationQtyDetailDTO(item.getWarehouseLocation(), item.getQty())));
+            locationQtyDTO.setLocationQtyList(detailList);
+            resultList.add(locationQtyDTO);
         }
 
         return resultList;
