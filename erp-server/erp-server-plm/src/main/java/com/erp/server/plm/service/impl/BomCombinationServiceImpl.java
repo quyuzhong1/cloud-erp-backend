@@ -22,10 +22,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomCombinationImportExcelDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.BasicDictTypeEnum;
-import com.erp.model.plm.enums.BomStateEnum;
-import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.enums.*;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.constant.ProductConstant;
@@ -482,6 +479,8 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         productSkuBaseInfoDTO.setName(dto.getName());
         productSkuBaseInfoDTO.setChargeId(child.getChargeId());
         productSkuBaseInfoDTO.setChargeName(child.getChargeName());
+        productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.DEVELOP_FINISH.getCode());
+
 
         //单位默认Pcs
         ProductUnitEntity productUnitEntity = productUnitService.getByName(ProductConstant.PRODUCT_UNIT_DEFAULT);
@@ -500,6 +499,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         productNoSpecDTO.setProductPurchaseDTO(productPurchaseDTO);
         //销售信息
         ProductSaleDTO productSaleDTO = new ProductSaleDTO();
+        productSaleDTO.setSaleState(SaleStateEnum.SALES.getCode());
         productNoSpecDTO.setProductSaleDTO(productSaleDTO);
         //物流信息
         ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
