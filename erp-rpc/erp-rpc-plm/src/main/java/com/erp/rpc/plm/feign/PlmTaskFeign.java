@@ -7,6 +7,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.SysUserInfoDTO;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -617,4 +618,7 @@ public interface PlmTaskFeign {
 
     @GetMapping("feign/product/listSkuPurchaseByIds")
     ProductDetailEntity getBySkuNoOrEan(@RequestParam("skuCode") String skuCode);
+
+    @PostMapping("feign/product/dimensionalWeightMeasure")
+    String dimensionalWeightMeasure(@RequestBody DimensionalWeightDTO dto);
 }

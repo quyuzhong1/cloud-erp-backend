@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
@@ -11,6 +12,7 @@ import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
@@ -19,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -581,4 +584,14 @@ public class ProductSkuFeignController {
     ProductDetailEntity getBySkuNoOrEan(String skuCode){
         return productDetailService.getBySkuNoOrEan(skuCode);
     }
+
+    /**
+     *  品质测量更新产品尺寸重量
+     *
+     */
+    @PostMapping("/dimensionalWeightMeasure")
+    public String dimensionalWeightMeasure(@RequestBody DimensionalWeightDTO dto){
+        return productDetailService.dimensionalWeightMeasure(dto);
+    }
+
 }
