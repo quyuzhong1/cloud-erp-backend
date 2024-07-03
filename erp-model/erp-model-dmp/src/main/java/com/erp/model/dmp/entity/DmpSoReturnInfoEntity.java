@@ -111,6 +111,49 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     */
     @TableField("all_amount")
     private BigDecimal allAmount;
+    
+    /**
+     * 销售组织id
+     */
+     @TableField("sale_org_id")
+     private String saleOrgId;
+     
+     /**
+      * ulz数据来源
+      */
+     @TableField("ulz_data_sources")
+     private String ulzDataSources;
+     
+     /**
+      * 销售部门名称
+      */
+     @TableField("saledept_name")
+     private String saledeptName;
+     
+     /**
+      * 销售人名称
+      */
+     @TableField("sales_man_name")
+     private String salesManName;
+     
+     /**
+      * 第三方单据编号
+      */
+     @TableField("third_bill_no")
+     private String thirdBillNo;
+     
+     /**
+      * 销售组织名称
+      */
+     @TableField("sale_org_name")
+     private String saleOrgName;
+     
+     /**
+      * 销售组织编码
+      */
+     @TableField("saledept_number")
+     private String saledeptNumber;
+     
     /**
     * 输入任务id
     */
