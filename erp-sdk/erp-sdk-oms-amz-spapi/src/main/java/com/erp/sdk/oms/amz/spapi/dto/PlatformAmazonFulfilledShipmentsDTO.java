@@ -204,6 +204,9 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     }
 
     public static OffsetDateTime parseOffsetDateTime(String dateTimeStr) {
+        if (StringUtils.isBlank(dateTimeStr)){
+            return null;
+        }
         //  兼容地区解析
         if (dateTimeStr.contains("[") || dateTimeStr.contains("]") ) {
             // 尝试解析包含时区的字符串
