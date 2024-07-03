@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -158,7 +157,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         }
         List<String> cfgRuleIds = cfgRulePickings.stream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
         // 查询所有规则对应的规则条件
-        List<CfgRuleConditionDTO.ConditionElementDTO> conditions = cfgRuleConditionService.listByRuleIds(cfgRuleIds);
+        List<CfgRuleConditionDTO.ConditionElementDTO> conditions = cfgRuleConditionService.listByRuleIds(cfgRuleIds,RuleTypeEnum.PICKING_STRATEGY.getCode());
         // 查询所有规则对应的规则动作
         List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.listByRuleIds(cfgRuleIds);
         List<LocationInventoryResultDTO> result = new ArrayList<>();

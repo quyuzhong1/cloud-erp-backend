@@ -16,7 +16,6 @@ import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.server.wms.mapper.CfgRuleConditionMapper;
 import com.erp.server.wms.service.CfgConditionService;
 import com.erp.server.wms.service.CfgRuleConditionService;
-import com.erp.server.wms.service.CfgRulePickingService;
 import com.erp.server.wms.service.OperateLogService;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -146,7 +145,7 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
     }
 
     @Override
-    public List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleIds(List<String> cfgRuleIds) {
-        return baseMapper.listByRuleIds(cfgRuleIds);
+    public List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleIds(List<String> cfgRuleIds,String ruleType) {
+        return baseMapper.listByRuleIds(cfgRuleIds,ruleType);
     }
 }

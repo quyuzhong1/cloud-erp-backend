@@ -49,12 +49,13 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().eq("main_id", waveId));
         List<String> deliveryCodes = waveDetailList.stream().map(item -> item.getDeliveryCode()).collect(Collectors.toList());
         List<PickingDetailEntity> pickingDetailList = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("source_code", deliveryCodes));
-        pickingDetailList.stream().collect(Collectors.toMap(item1 -> item1.get))
+        //pickingDetailList.stream().collect(Collectors.toMap(item1 -> item1.get))
 
 
         for (WaveListDetailPdaDTO.PickingLocationDTO dto : pickingLocationList) {
 
         }
+        return  null;
     }
 
     @Override
