@@ -107,7 +107,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         List<PickingDetailEntity> updateList = getPickingDetailEntities(finishParamDTO.getWaveId(), finishParamDTO.getLocationPickingDetailList());
         pickingDetailService.updateBatchById(updateList);
         WaveListDetailPdaDTO.FinishResultDTO resultDTO = new WaveListDetailPdaDTO.FinishResultDTO();
-        WaveListDetailPdaDTO.ViewDTO resultViewDTO = getViewDTO(waveId);
+        WaveListDetailPdaDTO.ViewDTO resultViewDTO = getViewDTO(finishParamDTO.getWaveCode());
         resultDTO.setCode(finishParamDTO.getWaveCode());
         resultDTO.setSkuShouldPickingQty(0);
         resultDTO.setSkuPickedQty(0);
