@@ -664,6 +664,7 @@
             sb.code AS soCode,
             sb.bill_status AS billStatus,
             sb.package_status AS packageStatus,
+            sb.shop_id AS shopId,
             sbl.logistics_channel_id AS logisticsChannelId,
             sbl.code AS trackNo,
             sbl.track_no AS trackNo,

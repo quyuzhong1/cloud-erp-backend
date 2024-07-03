@@ -1137,4 +1137,14 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
         baseMapper.deleteByIds(ids);
     }
+
+    @Override
+    public int countMonth(LocalDateTime date) {
+        return baseMapper.countMonth(date);
+    }
+
+    @Override
+    public List<DmpPullTaskEntity> listMonth(LocalDateTime date, int pageSize, int effect) {
+        return baseMapper.listMonth(date, pageSize, effect);
+    }
 }

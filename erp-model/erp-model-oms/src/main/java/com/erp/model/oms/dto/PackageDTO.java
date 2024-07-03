@@ -266,7 +266,20 @@ public class PackageDTO implements Serializable {
          * 销售订单code
          */
         private String soCode;
-
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 是否是组包的物流商 根据wms组包配置 判断是否是已配置组包物流商
+         * true 发货物流商+中转物流商+中转渠道+店铺
+         * false 发货物流商+中转物流商+中转渠道
+         */
+        private Boolean isPackageSupplier;
+        /**
+         * 唯一值拼接 用于 isPackageSupplier
+         */
+        private String uniqueId;
         /**
          * 包裹重量
          */
