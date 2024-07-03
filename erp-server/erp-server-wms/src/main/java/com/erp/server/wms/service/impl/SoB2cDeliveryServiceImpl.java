@@ -927,6 +927,19 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return entities.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
     }
 
+    @Override
+    public void updateShipmentMark(List<String> ids, String code) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+
+        lambdaUpdate()
+                .set(SoB2cDeliveryEntity::getShipmentMark, code)
+                .in(SoB2cDeliveryEntity::getId, ids)
+                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                .update();
+    }
+
 
     @Override
     public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds) {

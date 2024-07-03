@@ -118,4 +118,12 @@ public interface SoB2cDeliveryFeign {
      */
     @PostMapping("/feign/soB2cDelivery/dimensionalWeightPipeline")
     String dimensionalWeightPipeline(@RequestBody DimensionalWeightDTO dto);
+
+    /**
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
+     */
+    @PostMapping("feign/soB2cDelivery/updateShipmentMark")
+    void updateShipmentMark(@RequestParam("ids") List<String> ids,@RequestParam("code") String code);
 }
