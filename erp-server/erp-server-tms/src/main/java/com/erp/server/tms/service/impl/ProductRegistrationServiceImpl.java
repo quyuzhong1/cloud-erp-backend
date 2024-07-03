@@ -137,7 +137,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         List<String> noExistsSkuList = skuIds.stream().filter(v->!existSkuIds.contains(v)).collect(Collectors.toList());
         List<ProductRegistrationEntity> addList = new ArrayList<>();
         //产品信息
-        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(noExistsSkuList);
+        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listLogisticsProduct(noExistsSkuList);
         for(String skuId : skuIds){
             ProductRegistrationEntity entity = entities.stream().filter(v->v.getSkuId().equals(skuId)).findFirst().orElse(null);
             if(Objects.nonNull(entity)){
@@ -285,7 +285,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
 
 
         //最新产品信息
-        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(Arrays.asList(old.getSkuId()));
+        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listLogisticsProduct(Arrays.asList(old.getSkuId()));
         LogisticsProductDTO.ProductDTO latestDTO = productDTOList.stream().findFirst().orElse(new LogisticsProductDTO.ProductDTO());
         view.setDetailList(ProductRegistrationEnum.DetailDescEnum.convertToViewList(ruleDTO,pullEntity,latestDTO));
         return view;
@@ -325,7 +325,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
             if(Objects.isNull(transferLogisticsService)){
                 throw new ServiceException("未开发平台");
             }
-            List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(skuIdList);
+            List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listLogisticsProduct(skuIdList);
             List<ProductRegistrationEntity> entities = this.listBySkuListAndPlatform(skuIdList,dto.getDeclareSupplierId());
             List<ProductRegistrationEntity> addList = new ArrayList<>();
             List<ProductRegistrationEntity> updateList = new ArrayList<>();
@@ -523,7 +523,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     }
     private void fillPagingDb(List<ProductRegistrationDTO.PagingVO> list) {
         List<String> skuIdList = list.stream().map(ProductRegistrationDTO.PagingVO::getSkuId).distinct().collect(Collectors.toList());
-        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuIdList(skuIdList);
+        List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listLogisticsProduct(skuIdList);
         list.forEach(v->{
             v.setStatusName(EnumMessage.getNameByCode(ProductRegistrationEnum.StatusEnum.class,v.getStatus()));
             v.setDeclarePlatformName(EnumMessage.getNameByCode(DeclarePlatformEnum.class,v.getDeclarePlatform()));
