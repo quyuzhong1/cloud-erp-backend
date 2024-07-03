@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 波次详情（PDA）
@@ -27,7 +28,10 @@ public class WaveListDetailPdaController extends BaseController {
      * 挂起波次
      */
     @PostMapping("/hangUp")
-    public ApiResult<Boolean> hangUp(@RequestBody WaveListDetailPdaDTO.HangUpParamDTO hangUpParamDTO){
+    public ApiResult<Boolean> hangUp(@RequestBody WaveListDetailPdaDTO.HangUpParamDTO hangUpDTO){
+        String waveId = hangUpDTO.getWaveId();
+        String waveCode = hangUpDTO.getWaveCode();
+        List<WaveListDetailPdaDTO.PickingLocationDTO> pickingLocationList = hangUpDTO.getLocationPickingDetailList();
         return null;
     }
 

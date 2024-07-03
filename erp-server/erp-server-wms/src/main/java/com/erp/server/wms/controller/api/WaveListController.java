@@ -4,17 +4,16 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.server.wms.query.WaveListAdvanceQueryHandler;
 import com.erp.server.wms.service.WaveListService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,7 +43,12 @@ public class WaveListController extends BaseController {
      */
     @PostMapping("/cancelWaveBatch")
     public ApiResult<List<BatchResultDTO>> cancelWaveBatch(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
-        return null;
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        for (String id : idsDTO.getIds()) {
+            BatchResultDTO dto = waveListService.cancelWave(id);
+            resultList.add(dto);
+        }
+        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
     }
 
     /**
@@ -52,15 +56,12 @@ public class WaveListController extends BaseController {
      */
     @PostMapping("/cancelPrintedBatch")
     public ApiResult<List<BatchResultDTO>> cancelPrintedBatch(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
-        return null;
-    }
-
-    /**
-     * 打印波次
-     */
-    @PostMapping("/print")
-    public ApiResult<?> print(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
-        return null;
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        for (String id : idsDTO.getIds()) {
+            BatchResultDTO dto = waveListService.cancelPrinted(id);
+            resultList.add(dto);
+        }
+        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
     }
 
     /**

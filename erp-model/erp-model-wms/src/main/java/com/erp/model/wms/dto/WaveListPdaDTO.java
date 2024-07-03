@@ -37,6 +37,11 @@ public class WaveListPdaDTO implements Serializable {
         private String status;
 
         /**
+         * 波次状态名称
+         */
+        private String statusName;
+
+        /**
          * 拣货车类型
          */
         private String pickingCartType;
@@ -49,7 +54,12 @@ public class WaveListPdaDTO implements Serializable {
         /**
          * 分拣方式
          */
-        private String pickingType;
+        private String pickType;
+
+        /**
+         * 分拣方式名称
+         */
+        private String pickingTypeName;
 
         /**
          * 订单数量
@@ -68,7 +78,7 @@ public class WaveListPdaDTO implements Serializable {
     }
 
     @Data
-    public static class DetailDTO{
+    public static class WaveBasicInfoDTO{
         /**
          * 波次ID
          */
@@ -109,9 +119,19 @@ public class WaveListPdaDTO implements Serializable {
         private String pickingType;
 
         /**
+         * 拣货方式名称
+         */
+        private String pickingTypeName;
+
+        /**
          * 状态
          */
         private String status;
+
+        /**
+         * 状态名称
+         */
+        private String statusName;
     }
 
     @Data
@@ -124,12 +144,12 @@ public class WaveListPdaDTO implements Serializable {
         /**
          * sku 编码
          */
-        private String skuCode;
+        private String skuNo;
 
         /**
-         * 产品ID
+         * 图片url
          */
-        private String productId;
+        private String imageUrl;
 
         /**
          * 产品名称
@@ -154,7 +174,7 @@ public class WaveListPdaDTO implements Serializable {
         /**
          *
          */
-        private Integer pickedQty;
+        private Integer pickedTotalQty;
     }
 
     @Data
@@ -168,5 +188,20 @@ public class WaveListPdaDTO implements Serializable {
          * 拣货车编码
          */
         private String pickingCartCode;
+
+        /**
+         * 拣货车类型
+         */
+        private String pickingCartType;
+
+        /**
+         * 拣货车名称
+         */
+        private String pickingCartName;
+
+        /**
+         * 分拣方式
+         */
+        private String pickingType;
     }
 }

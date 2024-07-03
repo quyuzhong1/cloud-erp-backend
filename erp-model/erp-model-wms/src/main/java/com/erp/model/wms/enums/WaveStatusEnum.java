@@ -20,4 +20,20 @@ public enum WaveStatusEnum implements EnumMessage {
 
     private String code;
     private String name;
+
+    public static String getNameByCode(String code){
+        if(WaveStatusEnum.AWAIT_PICK.getCode().equals(code)){
+            return WaveStatusEnum.AWAIT_PICK.getName();
+        }
+        if(WaveStatusEnum.PICK_ING.getCode().equals(code)){
+            return WaveStatusEnum.PICK_ING.getName();
+        }
+        if(WaveStatusEnum.HANG_UP.getCode().equals(code)){
+            return WaveStatusEnum.HANG_UP.getName();
+        }
+        if(WaveStatusEnum.FINISH.getCode().equals(code)){
+            return WaveStatusEnum.FINISH.getName();
+        }
+        return "";
+    }
 }

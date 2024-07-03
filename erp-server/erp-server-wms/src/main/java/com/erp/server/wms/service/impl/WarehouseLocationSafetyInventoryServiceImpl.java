@@ -92,6 +92,10 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
         //校验成功的数据
         List<WarehouseLocationSafetyInventoryDTO.importExcelDTO> successList = listener.getSuccessList();
+        if(successList.isEmpty()){
+            return exportErrorFile(errorList, response);
+        }
+
         List<String> warehouseNameList = successList.stream().map(item -> item.getWarehouseName()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(warehouseNameList);
         Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(item1 -> item1.getName(), item2 -> item2.getId()));
@@ -130,6 +134,11 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
         }
 
         //返回错误数据
+        Boolean exportResult = exportErrorFile(errorList, response);
+        return exportResult;
+    }
+
+    private Boolean exportErrorFile(List<WarehouseLocationSafetyInventoryDTO.importExcelDTO> errorList, HttpServletResponse response){
         try {
             String fileName = "仓位安全库存-导入错误" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             String excelPath = "excel/warehouseLocationSafetyInventoryExport.xlsx";
@@ -138,7 +147,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             log.error("仓位安全库存导出错误：{}", e);
             return Boolean.FALSE;
         }
-        return Boolean.FALSE;
+        return Boolean.TRUE;
     }
 
     @Override

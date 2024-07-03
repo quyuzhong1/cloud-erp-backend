@@ -43,17 +43,6 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
     Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response);
 
     /**
-     * 查询库区下SKU的数量
-     * @param warehouseId 仓库ID
-     * @param warehouseAreaCode 库区编码
-     * @param skuNo sku编码
-     * @return
-     * @date: 2024-06-25
-     * @author: tanmujin
-     */
-    List<WarehouseLocationReplenishDTO.LocationQtyDTO> listLocationQty(String warehouseId, String warehouseAreaCode, String skuNo);
-
-    /**
      * 保存补货信息
      * @param handleDTO
      * @return

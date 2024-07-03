@@ -320,4 +320,6 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * 查询库区下的仓位
      */
     List<WarehouseLocationEntity> listLocation(String warehouseId, String warehouseArea);
+
+    WarehouseLocationEntity findWarehouseArea(String warehouseId, String warehouseLocation);
 }

@@ -64,7 +64,7 @@ public class WaveListDetailDTO implements Serializable {
         /**
          * 发货单列表
          */
-        private List<WaveListDTO.DeliveryInfoDTO> deliveryInfoList;
+        private List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList;
     }
 
     @Data
@@ -76,8 +76,123 @@ public class WaveListDetailDTO implements Serializable {
         private String waveId;
 
         /**
+         * 发货单号Id
+         */
+        private String deliveryId;
+    }
+
+    @Data
+    public static class DeliveryInfoDTO {
+        private String id;
+
+        /**
+         * 框号
+         */
+        private String basketNo;
+
+        /**
+         * 销售订单ID
+         */
+        private String soId;
+        /**
+         * 销售订单编号
+         */
+        private String soCode;
+
+        /**
+         * 发货单ID
+         */
+        private String deliveryId;
+        /**
          * 发货单号
          */
-        private String soB2cDeliveryCode;
+        private String deliveryCode;
+
+        /**
+         * 拣货状态
+         */
+        private String pickingStatus;
+
+        /**
+         * 拣货状态名称
+         */
+        private String pickingStatusName;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelName;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku 编码
+         */
+        private String skuNo;
+
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+
+        /**
+         * 已拣数量汇总
+         */
+        private Integer pickedSumQty;
+
+        /**
+         * 拣货库区
+         */
+        private String warehouseArea;
+
+        /**
+         * 拣货库区名称
+         */
+        private String warehouseAreaName;
+
+        /**
+         * 拣货仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 应拣
+         */
+        private Integer shouldPickQty;
+
+        /**
+         * 已拣
+         */
+        private Integer pickedQty;
+
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
+    }
+
+    @Data
+    public static class SkuInfoDTO{
+        private String skuId;
+
+        private String skuNo;
+
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+
+        /**
+         * 已拣数量汇总
+         */
+        private Integer pickedSumQty;
+
+        /**
+         * 拣货仓位信息
+         */
+//        private List<WaveListDetailDTO.PickingLocationInfoDTO> pickingLocationInfoList;
     }
 }

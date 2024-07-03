@@ -1,6 +1,10 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.WaveListPdaDTO;
 import com.erp.model.wms.entity.WaveListEntity;
@@ -13,7 +17,16 @@ import java.util.List;
  * @author tanmujin
  */
 public interface WaveListPdaService extends SuperService<WaveListEntity> {
-//    List<WaveListPdaDTO.ViewDTO> list();
 
-    List<WaveListDetailPdaDTO.ViewDTO> startPicking(String waveId);
+    WaveListDetailPdaDTO.ViewDTO startPickingWithSideType(String waveId);
+
+    PagingVO<WaveListPdaDTO.ViewDTO> view(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO);
+
+    WaveListPdaDTO.WaveBasicInfoDTO waveInfo(String waveId);
+
+    List<WaveListPdaDTO.ProductDetailDTO> productDetail(String waveId);
+
+    ApiResult<?> bindPickingCart(WaveListPdaDTO.BindPickingCartDTO bindDTO);
+
+    WaveListDetailPdaDTO.ViewDTO startPickingWithSequenceType(String waveId);
 }

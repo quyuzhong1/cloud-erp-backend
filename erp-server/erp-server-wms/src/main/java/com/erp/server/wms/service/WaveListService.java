@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -8,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.WaveListEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface WaveListService extends SuperService<WaveListEntity> {
@@ -68,4 +70,14 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * tabList
      */
     List<WaveListDTO.TabDTO> tabList();
+
+    /**
+     * 取消波次
+     */
+    BatchResultDTO cancelWave(String id);
+
+    /**
+     * 取消已打印（修改波次状态为：待拣货）
+     */
+    BatchResultDTO cancelPrinted(String id);
 }
