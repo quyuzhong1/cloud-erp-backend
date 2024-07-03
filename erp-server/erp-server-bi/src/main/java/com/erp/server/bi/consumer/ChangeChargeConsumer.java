@@ -11,9 +11,9 @@ import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.model.dmp.entity.BiRefundInfoEntity;
 import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpRefundInfoService;
-import com.erp.server.bi.service.DmpReturnOrderInfoService;
+import com.erp.server.bi.service.BiOrderInfoService;
+import com.erp.server.bi.service.BiRefundInfoService;
+import com.erp.server.bi.service.BiReturnOrderInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,14 +38,14 @@ import java.util.List;
 public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
+    private BiRefundInfoService biRefundInfoService;
 
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    private BiReturnOrderInfoService biReturnOrderInfoService;
 
 
     @Override
@@ -72,7 +72,7 @@ public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
      */
     private void updateSaleCharge(String shopNo, LocalDate enableTime, String userId, String userName, String deptId, String deptName ) {
 
-        List<BiOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
+        List<BiOrderInfoEntity> list = biOrderInfoService.lambdaQuery()
                 .eq(BiOrderInfoEntity::getShopNo, shopNo)
                 .ge(BiOrderInfoEntity::getPlatformCreateTime, enableTime)
                 .list();
@@ -118,7 +118,7 @@ public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
      * 更新退款单负责人
      */
     private void updateRefundCharge(String shopNo, LocalDate enableTime, String userId, String userName) {
-        List<BiRefundInfoEntity> list = dmpRefundInfoService.lambdaQuery()
+        List<BiRefundInfoEntity> list = biRefundInfoService.lambdaQuery()
                 .eq(BiRefundInfoEntity::getShopNo, shopNo)
                 .ge(BiRefundInfoEntity::getOrderTime, enableTime)
                 .list();
@@ -137,7 +137,7 @@ public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
      * 更新退货单负责人
      */
     private void updateReturnOrderCharge(String shopNo, LocalDate enableTime, String userId, String userName) {
-        List<BiReturnOrderInfoEntity> list = dmpReturnOrderInfoService.lambdaQuery()
+        List<BiReturnOrderInfoEntity> list = biReturnOrderInfoService.lambdaQuery()
                 .eq(BiReturnOrderInfoEntity::getShopNo, shopNo)
                 .ge(BiReturnOrderInfoEntity::getOrderTime, enableTime)
                 .list();
@@ -158,15 +158,15 @@ public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
     private void updateList (List<T> collect ,Integer type) {
         if (MathUtil.ONE.equals(type)) {
             List<BiOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect), BiOrderInfoEntity.class);
-            dmpOrderInfoService.updateBatchById(list);
+            biOrderInfoService.updateBatchById(list);
         }
         if (MathUtil.TWO.equals(type)) {
             List<BiRefundInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect), BiRefundInfoEntity.class);
-            dmpRefundInfoService.updateBatchById(list);
+            biRefundInfoService.updateBatchById(list);
         }
         if (MathUtil.THREE.equals(type)) {
             List<BiReturnOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect), BiReturnOrderInfoEntity.class);
-            dmpReturnOrderInfoService.updateBatchById(list);
+            biReturnOrderInfoService.updateBatchById(list);
         }
     }
 

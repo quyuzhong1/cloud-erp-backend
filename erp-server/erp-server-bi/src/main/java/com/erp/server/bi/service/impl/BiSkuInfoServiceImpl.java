@@ -133,4 +133,20 @@ public class BiSkuInfoServiceImpl extends ServiceImpl<BiSkuInfoMapper, BiSkuInfo
                 .or().ne(BiSkuInfoEntity::getParentCategoryName, null);
         return this.list(queryWrapper);
     }
+
+    /**
+     * 根据sku查询商品信息
+     *
+     * @param skuNo     商品sku
+     * @param companyId
+     * @return com.erp.model.dmp.entity.DmpSkuInfoEntity
+     **/
+    @Override
+    public BiSkuInfoEntity getBySkuNo(String skuNo, String companyId) {
+        return lambdaQuery()
+                .eq(BiSkuInfoEntity::getSkuNo, skuNo)
+                .eq(org.apache.commons.lang.StringUtils.isNotBlank(companyId), BiSkuInfoEntity::getCompanyId, companyId)
+                .last(" LIMIT 1")
+                .one();
+    }
 }

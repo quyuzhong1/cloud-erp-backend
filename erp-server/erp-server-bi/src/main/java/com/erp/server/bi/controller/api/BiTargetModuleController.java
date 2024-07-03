@@ -7,7 +7,7 @@ import com.erp.model.bi.vo.QuarterMonthSalesVO;
 import com.erp.model.bi.vo.QuarterMonthSalesVolumeVO;
 import com.erp.model.bi.vo.SalesCompletionInfoVO;
 import com.erp.model.bi.vo.TargetAnalysisVO;
-import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.BiOrderInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,7 +28,7 @@ import java.util.List;
 public class BiTargetModuleController extends BaseController {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
     /**
      * 季度销售额完成情况
      */
@@ -39,7 +39,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVO>> quarterSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        TargetAnalysisVO<QuarterMonthSalesVO> vo = dmpOrderInfoService.sumQuarterSales(dto);
+        TargetAnalysisVO<QuarterMonthSalesVO> vo = biOrderInfoService.sumQuarterSales(dto);
         return success(vo);
     }
 
@@ -54,7 +54,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVolumeVO>> quarterSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = dmpOrderInfoService.sumQuarterSalesVolume(dto);
+        TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = biOrderInfoService.sumQuarterSalesVolume(dto);
         return success(vo);
     }
 
@@ -68,7 +68,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVO>> monthSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        TargetAnalysisVO<QuarterMonthSalesVO> vo = dmpOrderInfoService.sumMonthSales(dto);
+        TargetAnalysisVO<QuarterMonthSalesVO> vo = biOrderInfoService.sumMonthSales(dto);
         return success(vo);
     }
 
@@ -82,7 +82,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVolumeVO>> monthSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = dmpOrderInfoService.sumMonthSalesVolume(dto);
+        TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = biOrderInfoService.sumMonthSalesVolume(dto);
         return success(vo);
     }
 
@@ -102,7 +102,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> platformSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumPlatformSalesCompletion(dto);
+        List<SalesCompletionInfoVO> vo = biOrderInfoService.sumPlatformSalesCompletion(dto);
         return success(vo);
     }
     /**
@@ -125,7 +125,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> categorySalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumCategorySalesCompletion(dto);
+        List<SalesCompletionInfoVO> vo = biOrderInfoService.sumCategorySalesCompletion(dto);
         return success(vo);
     }
 
@@ -139,7 +139,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> newProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumNewProductSalesCompletion(dto, 1);
+        List<SalesCompletionInfoVO> vo = biOrderInfoService.sumNewProductSalesCompletion(dto, 1);
         return success(vo);
     }
 
@@ -153,7 +153,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> oldProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumNewProductSalesCompletion(dto, 0);
+        List<SalesCompletionInfoVO> vo = biOrderInfoService.sumNewProductSalesCompletion(dto, 0);
         return success(vo);
     }
 
@@ -167,7 +167,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> positionSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumProductPositionSalesCompletion(dto);
+        List<SalesCompletionInfoVO> vo = biOrderInfoService.sumProductPositionSalesCompletion(dto);
         return success(vo);
     }
 
@@ -184,7 +184,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> productTypeSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumProductTypeCompletion(dto);
+        List<SalesCompletionInfoVO> vo = biOrderInfoService.sumProductTypeCompletion(dto);
         return success(vo);
     }
 
@@ -198,7 +198,7 @@ public class BiTargetModuleController extends BaseController {
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> skuSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
-        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumNewProductSalesCompletion(dto, null);
+        List<SalesCompletionInfoVO> vo = biOrderInfoService.sumNewProductSalesCompletion(dto, null);
         return success(vo);
     }
     /**
