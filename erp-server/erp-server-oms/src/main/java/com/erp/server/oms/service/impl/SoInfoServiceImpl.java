@@ -2972,7 +2972,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<CustomerAddressEntity> customerAddressList = customerAddressService.listByMainIdList(customerIdList);
         //sku
         List<String> skuNoList = successList.stream().map(B2BSoImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuNoList);
+        List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
 
         // 供应商id集合
 //        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
