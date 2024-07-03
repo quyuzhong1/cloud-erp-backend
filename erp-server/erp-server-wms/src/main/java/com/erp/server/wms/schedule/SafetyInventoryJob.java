@@ -10,6 +10,7 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity;
+import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.TransactionFlowService;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
@@ -40,7 +41,7 @@ public class SafetyInventoryJob {
     @Resource
     private WarehouseLocationSafetyInventoryService safetyInventoryService;
     @Resource
-    private ProductDetailService productDetailService;
+    private ProductDetailFeign productDetailFeign;
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
@@ -56,7 +57,7 @@ public class SafetyInventoryJob {
                 .distinct()
                 .collect(Collectors.toList());
         List<String> skuIds = flowList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productList = productDetailService.listByIds(skuIds);
+        List<ProductDetailEntity> productList = productDetailFeign.listByIds(skuIds);
         Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
         List<WarehouseLocationSafetyInventoryEntity> saveList = new ArrayList<>();
