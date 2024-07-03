@@ -229,6 +229,12 @@ public class SkuVO implements Serializable {
     private BigDecimal netWeight;
 
     /**
+     * 属性
+     */
+    private PropertyDTO propertyDTO;
+
+
+    /**
      * 是否是捆绑商品:true=是，false=否
      * (可能字段为null，需添加查询)
      */
@@ -248,5 +254,43 @@ public class SkuVO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PropertyDTO {
+        /**
+         * 是否带电
+         */
+        private Boolean isElectric = false;
+        /**
+         * 是否带磁
+         */
+        private Boolean isMagnetism = false;
+
+        /**
+         * 是否液体
+         */
+        private Boolean isLiquid = false;
+        /**
+         * 是否木
+         */
+        private Boolean isWood = false;
+        /**
+         * 是否粉末
+         */
+        private Boolean isPowder = false;
+        /**
+         * 是否膏体
+         */
+        private Boolean isPlaster = false;
+        /**
+         * 是否刀具
+         */
+        private Boolean isCuttingTool = false;
+        /**
+         * 是否其他
+         */
+        private Boolean isOther = false;
     }
 }

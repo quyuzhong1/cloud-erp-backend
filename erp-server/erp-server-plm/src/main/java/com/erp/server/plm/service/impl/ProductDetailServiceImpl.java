@@ -5172,7 +5172,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         List<SkuVO> skuList = baseMapper.listSkuLogisticsByIds(skuIds);
+        this.handleProperty(skuList);
         return skuList;
+    }
+
+    private void handleProperty(List<SkuVO> skuList) {
+        List<BasicDictEntity> allBasicDictEntities = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+        skuList.forEach(v->{
+            SkuVO.PropertyDTO propertyDTO =new SkuVO.PropertyDTO();
+            v.setPropertyDTO(propertyDTO);
+            List<String> propertyIds = Arrays.asList(v.getProductPropertyId().split(","));
+            List<String> propertyNameList = allBasicDictEntities.stream().filter(t->propertyIds.contains(t.getId())).map(BasicDictEntity::getName).collect(Collectors.toList());
+            propertyDTO.setIsElectric(propertyNameList.stream().anyMatch(t->t.equals("电")));
+            propertyDTO.setIsMagnetism(propertyNameList.stream().anyMatch(t->t.equals("磁")));
+            propertyDTO.setIsLiquid(propertyNameList.stream().anyMatch(t->t.equals("液体")));
+            propertyDTO.setIsWood(propertyNameList.stream().anyMatch(t->t.equals("木")));
+            propertyDTO.setIsPowder(propertyNameList.stream().anyMatch(t->t.equals("粉末")));
+            propertyDTO.setIsPlaster(propertyNameList.stream().anyMatch(t->t.equals("膏体")));
+            propertyDTO.setIsCuttingTool(propertyNameList.stream().anyMatch(t->t.equals("刀具")));
+            propertyDTO.setIsOther(propertyNameList.stream().anyMatch(t->t.equals("电")));
+        });
     }
 
     @Override
