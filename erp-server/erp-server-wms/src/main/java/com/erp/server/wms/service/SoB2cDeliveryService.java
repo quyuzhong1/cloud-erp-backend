@@ -10,6 +10,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -235,4 +236,35 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO);
 
+    BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto);
+
+    BatchResultDTO clearException(String id);
+
+    BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto);
+
+    SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids);
+    /**
+     * 查询待处理发货单
+     * @author will
+     * @date 2024/6/25 18:07
+     * @return List<SoB2cDeliveryEntity>
+     */
+    List<SoB2cDeliveryEntity> listWaitHandle();
+
+    /**
+     *
+     * @param base64List base64
+     * @param printWayBillPdfDTO pdf
+     */
+    void customDistribute(List<String> base64List, PrintWayBillPdfDTO printWayBillPdfDTO);
+    /**
+     * 流水线称重回填
+     * @author will
+     * @date 2024/6/28 15:48
+     * @param dto
+     * @return String
+     */
+    String dimensionalWeightPipeline(DimensionalWeightDTO dto);
+
+    Boolean updateAbnormal(List<String> ids, AbnormalCauseEnum abnormalCauseEnum);
 }
