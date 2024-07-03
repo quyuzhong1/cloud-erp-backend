@@ -1,9 +1,16 @@
 package com.erp.server.wms.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
-import com.erp.server.wms.service.WaveListDetailPdaService;
+import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.server.wms.query.WaveListPdaAdvanceQueryHandler;
+import com.erp.server.wms.service.WaveListDetailService;
 import com.erp.server.wms.service.WaveListPdaService;
+import com.erp.server.wms.service.WaveListService;
 import org.springframework.web.bind.annotation.*;
 import com.erp.model.wms.dto.WaveListPdaDTO;
 
@@ -21,26 +28,49 @@ public class WaveListPdaController {
 
     @Resource
     private WaveListPdaService waveListPdaService;
+    @Resource
+    private WaveListService waveListService;
 
     /**
-     * 单据详情
+     * 波次列表
      */
-    @GetMapping("/detail")
-    public ApiResult<WaveListPdaDTO.DetailDTO> detail(@RequestParam String waveId){
-        return null;
+    @GetMapping("/view")
+    @WebAdvanceQuery(handler = WaveListPdaAdvanceQueryHandler.class)
+    public ApiResult<PagingVO<WaveListPdaDTO.ViewDTO>> view(@RequestBody PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO){
+        PagingVO<WaveListPdaDTO.ViewDTO> pagingVO = waveListPdaService.view(pagingDTO);
+        return ApiResult.success(pagingVO);
     }
 
     /**
-     * 开始拣货
+     * 单据详情
+     * @param id 波次ID
+     */
+    @GetMapping("/detail")
+    public ApiResult<WaveListPdaDTO.WaveBasicInfoDTO> detail(@RequestParam String id){
+        WaveListPdaDTO.WaveBasicInfoDTO dto = waveListPdaService.waveInfo(id);
+        return ApiResult.success(dto);
+    }
+
+    /**
+     * 开始拣货（边拣边分）
      * @param waveId 波次ID
      * @return 波次列表
      */
-    @PostMapping("/startPicking")
-    public ApiResult<List<WaveListDetailPdaDTO.ViewDTO>> startPicking(@RequestParam String waveId){
-        //修改波次状态
-        //返回波次详情
-        List<WaveListDetailPdaDTO.ViewDTO> list = waveListPdaService.startPicking(waveId);
-        return ApiResult.success(list);
+    @PostMapping("/startPickingWithSideType")
+    public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPickingWithSideType(@RequestParam String waveId){
+        WaveListDetailPdaDTO.ViewDTO dto = waveListPdaService.startPickingWithSideType(waveId);
+        return ApiResult.success(dto);
+    }
+
+    /**
+     * 开始拣货（先拣后分）
+     * @param waveId 波次ID
+     * @return 波次列表
+     */
+    @PostMapping("/startPickingWithSequenceType")
+    public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPickingWithSequenceType(@RequestParam String waveId){
+        WaveListDetailPdaDTO.ViewDTO dto = waveListPdaService.startPickingWithSequenceType(waveId);
+        return ApiResult.success(dto);
     }
 
     /**
@@ -49,7 +79,8 @@ public class WaveListPdaController {
      */
     @GetMapping("/productDetail")
     public ApiResult<List<WaveListPdaDTO.ProductDetailDTO>> productDetail(@RequestParam String id){
-        return null;
+        List<WaveListPdaDTO.ProductDetailDTO> list = waveListPdaService.productDetail(id);
+        return ApiResult.success(list);
     }
 
     /**
@@ -57,10 +88,7 @@ public class WaveListPdaController {
      */
     @PostMapping("/bindPickingCart")
     public ApiResult<?> bindPickingCart(@RequestBody WaveListPdaDTO.BindPickingCartDTO bindDTO){
-        //核对扫描的拣货车信息是否匹配
-        //核对成功返回拣货车信息
-        //核对失败返回错误
-        return null;
+        return waveListPdaService.bindPickingCart(bindDTO);
     }
 
 }

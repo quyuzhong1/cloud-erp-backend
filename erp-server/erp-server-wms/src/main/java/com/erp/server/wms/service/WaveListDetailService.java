@@ -1,6 +1,8 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 
 import java.util.List;
@@ -14,4 +16,8 @@ public interface WaveListDetailService extends SuperService<WaveListDetailEntity
     List<WaveListDetailEntity> listByMainId(String mainId);
 
     Map<String, String> getOrderBasketNoMap(List<String> soIds);
+
+    WaveListDetailDTO.ViewDTO view(String waveId);
+
+    ApiResult<?> moveOut(WaveListDetailDTO.MoveOutDTO moveOutDTO);
 }

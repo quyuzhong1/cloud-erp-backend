@@ -90,7 +90,8 @@ public enum ModuleTypeEnum {
     SO_MULTI_CHANNEL("75", "多渠道订单"),
 
     PICKING_LISTS("91", "拣货单"),
-    CFG_RULE_WAVE("92", "波次规则")
+    CFG_RULE_WAVE("92", "波次规则"),
+    WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
     ;
 
 

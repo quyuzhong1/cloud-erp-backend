@@ -3,11 +3,15 @@ package com.erp.server.wms.service.impl;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.server.wms.mapper.WaveListMapper;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WaveListDetailService;
 import com.erp.server.wms.service.WaveListFeignService;
 import org.springframework.stereotype.Service;
@@ -26,9 +30,12 @@ public class WaveListFeignServiceImpl extends SuperServiceImpl<WaveListMapper, W
 
     @Resource
     private WaveListDetailService waveListDetailService;
+    @Resource
+    private OperateLogService operateLogService;
 
     @Override
     public BatchResultDTO add(WaveListDTO.AddDTO dto) {
+        LoginUser user = UserContext.getNonLoginUser();
         WaveListEntity entity = new WaveListEntity();
         entity.setCode(dto.getCode());
         entity.setName("");
@@ -57,6 +64,7 @@ public class WaveListFeignServiceImpl extends SuperServiceImpl<WaveListMapper, W
         }
 
         waveListDetailService.saveBatch(detailList);
+        operateLogService.addModuleOperateLog(String.format("生成波次【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getId(), "新增操作", user.getUid(), user.getRealName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.ADD);
     }
 }

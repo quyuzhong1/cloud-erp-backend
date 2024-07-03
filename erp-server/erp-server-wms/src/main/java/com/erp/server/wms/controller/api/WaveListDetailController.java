@@ -19,22 +19,23 @@ import java.util.List;
 public class WaveListDetailController extends BaseController {
 
     @Resource
-    private WaveListDetailService waveListDetailService;
+    private WaveListDetailService waveDetailService;
 
     /**
      * 根据波次ID查询详情
      * @param id 波次ID
      */
     @GetMapping("/view")
-    public ApiResult<List<WaveListDetailDTO.ViewDTO>> view(@RequestParam String id){
-        return null;
+    public ApiResult<WaveListDetailDTO.ViewDTO> view(@RequestParam String id){
+        WaveListDetailDTO.ViewDTO viewDTO = waveDetailService.view(id);
+        return ApiResult.success(viewDTO);
     }
 
     /**
      * 移出波次
      */
     @PostMapping("/moveOut")
-    public ApiResult<Boolean> moveOut(@RequestBody WaveListDetailDTO.MoveOutDTO moveOutDTO){
-        return null;
+    public ApiResult<?> moveOut(@RequestBody WaveListDetailDTO.MoveOutDTO moveOutDTO){
+        return waveDetailService.moveOut(moveOutDTO);
     }
 }
