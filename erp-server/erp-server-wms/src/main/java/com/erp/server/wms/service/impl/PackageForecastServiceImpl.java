@@ -573,14 +573,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 entity.setUploadStatus(failure);
                 entity.setRemark("上传失败:" + PlatformDictEnum.getByCode(logisticsPlatform).getName()+"平台尚未对接上传");
                 this.updateById(entity);
-                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败");
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + PlatformDictEnum.getByCode(logisticsPlatform).getName()+"平台尚未对接上传");
             }
         } catch (Exception e) {
             entity.setUploadStatus(failure);
             entity.setRemark("上传失败:" + e.getMessage());
             this.updateById(entity);
             log.error("组包预报上传失败>>>>>{}", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
         }
 
 
