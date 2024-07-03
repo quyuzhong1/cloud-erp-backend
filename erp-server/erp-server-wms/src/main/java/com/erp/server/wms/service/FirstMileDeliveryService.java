@@ -311,4 +311,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FirstMileDeliveryEntity> advanceQuery(AdvanceQueryContainer advanceQueryContainer);
 
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO dto);
+
+    int countNotVoided(String id);
 }

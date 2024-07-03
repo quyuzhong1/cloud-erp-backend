@@ -83,6 +83,12 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     @TableField(exist = false)
     private Boolean invalidStatus;
 
+    /**
+     * 拣货数量
+     */
+    @TableField("picking_qty")
+    private Integer pickingQty;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

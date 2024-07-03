@@ -222,6 +222,14 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         }
         return Boolean.TRUE;
     }
+
+    @Override
+    public ProductPurchaseEntity getByEan(String ean) {
+        LambdaQueryWrapper<ProductPurchaseEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductPurchaseEntity::getEan, ean);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
 }
 
 

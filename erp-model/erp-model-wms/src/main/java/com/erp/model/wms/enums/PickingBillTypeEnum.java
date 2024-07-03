@@ -1,0 +1,33 @@
+package com.erp.model.wms.enums;
+
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
+import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+public enum PickingBillTypeEnum implements EnumMessage {
+    B2B("B2B", "B2B订单"),
+    B2C("B2C", "B2C订单"),
+    FBA("FBA", "FBA头程要货单"),
+    THIRD("THIRD", "三方仓头程要货单");
+    @EnumValue
+    @JsonValue
+    private final String code;
+    /**
+     * 名称
+     */
+    private final String name;
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+}

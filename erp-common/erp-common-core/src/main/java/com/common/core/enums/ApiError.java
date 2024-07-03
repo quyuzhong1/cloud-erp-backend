@@ -837,6 +837,28 @@ public enum ApiError implements Serializable {
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
     ERROR_99083(99083,"退货入库单不存在"),
     ERROR_99084(99084,"采购订单的执行状态是待确认，不允许新增收货单"),
+    ERROR_99085(99085,"只允许审核通过的销售订单下推销售出库单"),
+
+    ERROR_99086(99086,"要货申请下推发货单后，拣货单不允许修改和删除"),
+
+    ERROR_99087(99087,"销售通知单下推销售出库单后，拣货单不允许修改和删除"),
+    ERROR_99088(99088,"仓库对应默认暂存库位不存在，请联系管理员添加"),
+    ERROR_99100(99100,"暂无可用仓位"),
+
+    ERROR_99101(99101,"{}未生成拣货单，不允许下推销售出库单"),
+    ERROR_99102(99102,"存在拣货单，不允许作废、删除和撤销"),
+    ERROR_99103(99103,"sku【{}】的出库数量不能大于销售订单的销售数量"),
+    ERROR_99104(99104,"只有已处理的要货申请可以下推发货单，且只能下推一次"),
+    ERROR_99105(99105,"销售订单未审核不能下推出库"),
+    ERROR_99110(99110,"已有{},不能再生成拣货单"),
+
+    ERROR_99106(99106,"拣货数量总数不能为0"),
+    ERROR_99107(99107,"未找到销售订单【{}】对应明细"),
+
+    ERROR_99111(99111,"sku【{}】已分完货"),
+    ERROR_99112(99112,"生成波次缺货,无需手动处理"),
+    ERROR_99113(99113,"只有异常单状态才能异常单处理"),
+
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -1040,6 +1062,15 @@ public enum ApiError implements Serializable {
     ERROR_ALLOCATION_UNIQUE_ERROR(92221,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】”重复\n"),
     ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR(92222,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】- 调出虚拟仓【{}】”重复\n"),
     ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR(92223,"“SKU【{}】- 实体仓【{}】- 调出虚拟仓【{}】”重复\n"),
+    WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
+    POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除或禁用"),
+    WAREHOUSE_LOCATION_EXIST(92144, "仓位{}已存在"),
+
+    SKU_INVENTORY_SHORTAGE(92150, "【{}】仓位库存不足，无法生成拣货单"),
+
+    UNPICKED_QUANTITY_SHORTAGE(92151, "未拣货数量不足，无法生成拣货单，请重新操作"),
+    CFG_RULE_WAVE_ORDER_QTY_COMPARE(92152, "最小单数不能大于最大单数"),
+    CFG_RULE_WAVE_QTY_COMPARE(92153, "最少商品数量不能大于最大商品数量"),
 
     ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST(92219,"平台【{}】、实体仓【{}】下未找到对应虚拟仓库"),
     ERROR_VWSTOCK_NOTEMPRY(92230,"虚拟仓库存不为0，操作失败"),

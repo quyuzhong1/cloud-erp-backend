@@ -162,6 +162,34 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     @TableField("logistic_type")
     private String logisticType;
 
+    /**
+     * 异常原因
+     */
+    @TableField("abnormal_cause")
+    private String abnormalCause;
+
+    /**
+     * 是否自动出库
+     */
+    @TableField("is_auto_out")
+    private Boolean isAutoOut;
+
+    /**
+     * 长，cm
+     */
+    @TableField("length")
+    private BigDecimal length;
+    /**
+     * 宽，cm
+     */
+    @TableField("width")
+    private BigDecimal width;
+    /**
+     * 高，cm
+     */
+    @TableField("height")
+    private BigDecimal height;
+
     public static final String CODE = "code";
 
     public static final String STATUS = "status";

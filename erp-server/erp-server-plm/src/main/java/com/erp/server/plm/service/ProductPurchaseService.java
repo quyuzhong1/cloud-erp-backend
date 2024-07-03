@@ -96,4 +96,6 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      * @return
      */
     Boolean updateProductPlaceOrderTimeBatch(List<ProductPurchaseEntity> list);
+
+    ProductPurchaseEntity getByEan(String ean);
 }

@@ -3,9 +3,12 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -102,6 +105,10 @@ public class SoDeliveryNoticeDTO {
          * 销售单id
          */
         private String sourceId;
+        /**
+         * 类型
+         */
+        private String sourceType;
         /**
          * 销售单明细id
          */
@@ -335,6 +342,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String sourceCode;
         /**
+         * 类型
+         */
+        private String sourceType;
+        /**
          * 单据编号
          */
         private String code;
@@ -547,4 +558,43 @@ public class SoDeliveryNoticeDTO {
         private String code;
     }
 
+    @Getter
+    @Setter
+    public static class PickingViewDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+        /**
+         * 已拣数量
+         */
+        private Integer pickedQuantity;
+        /**
+         * 未拣数量
+         */
+        private Integer unpickedQuantity;
+    }
+
+    @Getter
+    @Setter
+    public static class GeneratePickingDTO {
+
+        @NotBlank(message = "要货申请不能为空")
+        private String id;
+
+        @Size(min = 1, message = "至少存在一条明细才可生成拣货单")
+        private List<String> detailIds;
+    }
 }
