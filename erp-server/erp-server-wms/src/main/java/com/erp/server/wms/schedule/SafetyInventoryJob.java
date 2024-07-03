@@ -49,7 +49,7 @@ public class SafetyInventoryJob {
      */
     @XxlJob("refreshSafetyInventory")
     public ReturnT<String> refreshSafetyInventory() {
-        DateTime dateTime = DateUtil.offsetHour(new Date(), -36);
+        DateTime dateTime = DateUtil.offsetHour(new Date(), -8);
         List<TransactionFlowEntity> flowList = flowService.getBaseMapper().selectList(new QueryWrapper<TransactionFlowEntity>().between("create_time", DateUtil.formatDateTime(dateTime), DateUtil.formatDateTime(new Date())));
         List<String> list = flowList.stream()
                 .map(item -> item.getWarehouseId() + "#" + item.getWarehouseLocation() + "#" + item.getSkuId())

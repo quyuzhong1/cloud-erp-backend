@@ -6,9 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
-import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.server.wms.query.WaveListPdaAdvanceQueryHandler;
-import com.erp.server.wms.service.WaveListDetailService;
 import com.erp.server.wms.service.WaveListPdaService;
 import com.erp.server.wms.service.WaveListService;
 import org.springframework.web.bind.annotation.*;
@@ -34,10 +32,10 @@ public class WaveListPdaController {
     /**
      * 波次列表
      */
-    @GetMapping("/view")
+    @PostMapping("/paging")
     @WebAdvanceQuery(handler = WaveListPdaAdvanceQueryHandler.class)
-    public ApiResult<PagingVO<WaveListPdaDTO.ViewDTO>> view(@RequestBody PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO){
-        PagingVO<WaveListPdaDTO.ViewDTO> pagingVO = waveListPdaService.view(pagingDTO);
+    public ApiResult<PagingVO<WaveListPdaDTO.ViewDTO>> paging(@RequestBody PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO){
+        PagingVO<WaveListPdaDTO.ViewDTO> pagingVO = waveListPdaService.paging(pagingDTO);
         return ApiResult.success(pagingVO);
     }
 

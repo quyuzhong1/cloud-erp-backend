@@ -20,7 +20,7 @@ public interface WaveListPdaService extends SuperService<WaveListEntity> {
 
     WaveListDetailPdaDTO.ViewDTO startPickingWithSideType(String waveId);
 
-    PagingVO<WaveListPdaDTO.ViewDTO> view(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO);
+    PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO);
 
     WaveListPdaDTO.WaveBasicInfoDTO waveInfo(String waveId);
 

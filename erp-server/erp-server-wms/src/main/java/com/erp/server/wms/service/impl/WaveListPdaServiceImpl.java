@@ -101,7 +101,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     }
 
     @Override
-    public PagingVO<WaveListPdaDTO.ViewDTO> view(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
+    public PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<WaveListEntity> result = this.baseMapper.paging(page, pagingDTO.getParams());
         List<WaveListPdaDTO.ViewDTO> viewDTOList = fillViewList(result.getRecords());
