@@ -1546,10 +1546,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             LogisticsProductVO productVO = B2cOrderConverter.INSTANCE.convertDeclareProductVOByEntity(soB2cDeclareProductEntity, soB2cDetail, productDTO);
             //速卖通重置参数
             if (isAliExpress) {
+                if(SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode().equalsIgnoreCase(soB2cDetail.getSourcePlatform())){
+                    productVOS.add(productVO);
+                }
                 productVO.setSkuId(soB2cDetail.getPlatformSpuNo());
                 productVO.setSkuNo(soB2cDetail.getPlatformSkuNo());
+            }else{
+                productVOS.add(productVO);
             }
-            productVOS.add(productVO);
         });
         //过滤产品sku信息
         List<LogisticsProductVO> productVOS2 = productVOS.stream().filter(e -> StringUtils.isNotBlank(e.getSkuId())).collect(Collectors.toList());
