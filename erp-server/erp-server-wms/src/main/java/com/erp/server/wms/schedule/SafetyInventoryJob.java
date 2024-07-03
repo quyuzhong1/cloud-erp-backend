@@ -18,6 +18,7 @@ import com.erp.server.wms.service.WarehouseService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.stereotype.Component;
 
@@ -48,15 +49,15 @@ public class SafetyInventoryJob {
      */
     @XxlJob("refreshSafetyInventory")
     public ReturnT<String> refreshSafetyInventory() {
-        DateTime dateTime = DateUtil.offsetHour(new Date(), -5);
-        List<TransactionFlowEntity> flowList = flowService.getBaseMapper().selectList(new QueryWrapper<TransactionFlowEntity>().between("createTime", DateUtil.formatDateTime(new Date()), DateUtil.formatDateTime(dateTime)));
+        DateTime dateTime = DateUtil.offsetHour(new Date(), -36);
+        List<TransactionFlowEntity> flowList = flowService.getBaseMapper().selectList(new QueryWrapper<TransactionFlowEntity>().between("create_time", DateUtil.formatDateTime(dateTime), DateUtil.formatDateTime(new Date())));
         List<String> list = flowList.stream()
                 .map(item -> item.getWarehouseId() + "#" + item.getWarehouseLocation() + "#" + item.getSkuId())
                 .distinct()
                 .collect(Collectors.toList());
         List<String> skuIds = flowList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-        Map<String, ProductDetailEntity> productMap = productDetailService.listByIds(skuIds).stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
-        List<String> warehouseIds = flowList.stream().map(item -> item.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productList = productDetailService.listByIds(skuIds);
+        Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
         List<WarehouseLocationSafetyInventoryEntity> saveList = new ArrayList<>();
         for (String str : list) {
@@ -64,6 +65,9 @@ public class SafetyInventoryJob {
             String warehouseId = split[0];
             String warehouseLocation = split[1];
             String skuId = split[2];
+            if(StringUtils.isBlank(warehouseId) || StringUtils.isBlank(warehouseLocation) || StringUtils.isBlank(skuId)){
+                continue;
+            }
             WarehouseLocationSafetyInventoryEntity one = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
                     .eq("warehouse_id", warehouseId)
                     .eq("warehouse_location", warehouseLocation)
