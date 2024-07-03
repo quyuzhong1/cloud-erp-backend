@@ -854,6 +854,9 @@ public enum ApiError implements Serializable {
     ERROR_99112(99112,"生成波次缺货,无需手动处理"),
     ERROR_99113(99113,"只有异常单状态才能异常单处理"),
 
+    ERROR_99114(99114,"待处理，异常单的数据不支持自动发货"),
+    ERROR_99115(99115,"销售订单【{}】的发货单存在待处理，异常单的数据不支持自动发货"),
+
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -963,7 +966,7 @@ public enum ApiError implements Serializable {
     GENERATE_INBOUND_NOT_UPDATE_PACKING(99150,"已下推海外仓入库单【{}】不能修改装箱信息"),
     IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
     B2C_SO_DELIVERY_NOT_EXISTS(99152,"b2c发货单不存在"),
-    IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
+    IS_NOT_MANUAL_DELIVERY(99152,"待处理、已发货、异常单、取消发货的数据不允许手动发货"),
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),

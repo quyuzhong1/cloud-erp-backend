@@ -32,6 +32,10 @@
                  LEFT JOIN wave_list_detail as pwd on pwd.main_id = pw.id and pwd.is_deleted = false
         WHERE pw.is_deleted = false
           and pw.status = 'await_pick'
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
     <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
         select id,
