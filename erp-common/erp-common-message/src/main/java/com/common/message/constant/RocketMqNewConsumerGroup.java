@@ -11,4 +11,9 @@ public class RocketMqNewConsumerGroup {
      * 新中台金蝶调拨单
      */
     public static final String DMP_KINGDEE_DIRECT_TRANSFER_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_direct_transfer_to_wms_group";
+    
+    /**
+     * 新中台金蝶调拨单
+     */
+    public static final String DMP_KINGDEE_ORDER_RETURN_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_order_return_to_wms_group";
 }

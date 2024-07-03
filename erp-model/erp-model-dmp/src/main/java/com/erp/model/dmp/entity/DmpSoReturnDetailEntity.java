@@ -100,6 +100,13 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     */
     @TableField("platform_order_code")
     private String platformOrderCode;
+    
+    /**
+     * so明细id
+     */
+     @TableField("so_entry_id")
+     private String soEntryId;
+    
     /**
     * 输入任务id
     */
