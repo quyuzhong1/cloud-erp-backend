@@ -107,6 +107,7 @@
              else sb2cl.actual_shipping_currency
         end
         as shippingCostCurrency,
+        sb2c.seller_order_code as sellerOrderCode,
         sb2c.platform_code as platformCode,
         sb2c.approve_status as approveStatus,
         sb2c.bill_status as billStatus,
