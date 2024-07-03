@@ -240,7 +240,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 for (InventoryEntity inventoryEntity : inventoryList) {
                     LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
                     inventoryResultDTO.setSkuId(detail.getSkuId());
-                    inventoryResultDTO.setSkuNO(detail.getSkuNo());
+                    inventoryResultDTO.setSkuNo(detail.getSkuNo());
                     WarehouseLocationEntity entity = locations.stream().filter(location -> location.getCode().equals(inventoryEntity.getWarehouseLocation()))
                             .findFirst().orElse(new WarehouseLocationEntity());
                     inventoryResultDTO.setWarehouseId(action.getWarehouseId());
