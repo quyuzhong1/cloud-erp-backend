@@ -50,7 +50,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         entity.setName("");
         entity.setType(dto.getWaveType());
         entity.setPickingCartCode(dto.getPickCartTypeId());
-        entity.setPickType(dto.getPickingType());
+        entity.setPickingType(dto.getPickingType());
         entity.setStatus(WaveStatusEnum.AWAIT_PICK.getCode());
         entity.setPrintStatus("未打印");
         this.save(entity);
@@ -135,7 +135,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             BeanMapper.copy(record, viewDTO);
             viewDTO.setPickingUserName(record.getUpdateUserName());
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
-            viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickType()));
+            viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(record.getPrintStatus()));
             viewDTOList.add(viewDTO);
         }

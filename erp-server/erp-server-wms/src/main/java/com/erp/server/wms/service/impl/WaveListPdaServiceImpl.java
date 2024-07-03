@@ -25,7 +25,6 @@ import com.erp.server.wms.mapper.WaveListPdaMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -176,7 +175,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         //核对成功返回拣货车信息
         bindDTO.setPickingCartName("");
         bindDTO.setPickingCartType(pickingCartType.getName());
-        bindDTO.setPickingType(waveEntity.getPickType());
+        bindDTO.setPickingType(waveEntity.getPickingType());
         return ApiResult.success(bindDTO);
     }
 

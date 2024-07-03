@@ -45,7 +45,7 @@
                status,
                picking_cart_type,
                picking_cart_code,
-               pick_type,
+               picking_type,
                print_status,
                picking_user,
                picking_time
