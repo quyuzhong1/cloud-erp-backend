@@ -51,5 +51,5 @@ public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
 
     List<SoB2cDeliveryDTO.CancelShipmentDTO> cancelShipmentView(@Param("ids") List<String> ids);
 
-    int countShipmentMark(@Param("params") PermissionsDTO param);
+    int countShipmentMark(@Param("params") PermissionsDTO params);
 }

@@ -33,13 +33,19 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
 import com.erp.model.wms.dto.CfgRuleWaveRecordDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.CfgRuleWaveMapper;
 import com.erp.server.wms.service.*;
@@ -50,6 +56,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -98,6 +105,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Resource
     private CfgRuleWaveRecordService cfgRuleWaveRecordService;
+
+
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -341,24 +352,30 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         addDTO.setWaveType(entity.getWaveType());
         addDTO.setPickingType(entity.getPickingType());
         addDTO.setName(entity.getName());
+        //需要更新发货单的异常状态
+        List<SoB2cDeliveryEntity> updateDeliveryList = new ArrayList<>();
+        //波次中的发货单
         List<String> deliveryIdList = new ArrayList<>();
         //需要新增的波次数据
         List<WaveListDTO.AddDTO> resultList = new ArrayList<>();
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
-            //发货明细
-            List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
-                    .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getDeliveryQty()))
-                    .collect(Collectors.toList());
-            //拣货规则
-            CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
-            executionData.setBillType("B2C");
-            executionData.setDetails(detailList);
-            List<LocationInventoryResultDTO> ruleOrderMatchResult = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+
+            List<LocationInventoryResultDTO> ruleOrderMatchResult = new ArrayList<>();
+            try {
+                //走拣货策略并且扣减库存
+                ruleOrderMatchResult = pickingInventory(deliveryEntity,allDetailList);
+            } catch (Exception e) {
+                //添加波次生成的缺货异常
+                deliveryEntity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getStatus());
+                deliveryEntity.setAbnormalCause(AbnormalCauseEnum.GENERATION_WAVE.getCode());
+                updateDeliveryList.add(deliveryEntity);
+                continue;
+            }
 
             //判断是否匹配仓位成功
             long count = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
             if (count > MathUtil.ZERO) {
-                String skuNos = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).map(LocationInventoryResultDTO::getSkuNO).collect(Collectors.joining(","));
+                String skuNos = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).map(LocationInventoryResultDTO::getSkuNo).collect(Collectors.joining(","));
                 log.warn("发货单【{}】SKU【{}】匹配仓卫不成功",deliveryEntity.getCode(),skuNos);
                 continue;
             }
@@ -390,6 +407,11 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //发货单订单数量
             orderQty++;
         }
+        //添加波次生成的缺货异常
+        if (CollectionUtil.isNotEmpty(updateDeliveryList)) {
+            soB2cDeliveryService.updateBatchById(updateDeliveryList);
+        }
+
         //添加最后一个波次
         if (CollectionUtil.isNotEmpty(deliveryIdList) && deliveryIdList.size() >= entity.getMinOrderQty()) {
             addDTO.setDeliveryIdList(deliveryIdList);
@@ -401,6 +423,56 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         for (WaveListDTO.AddDTO waveAddDTO : resultList) {
             waveListService.add(waveAddDTO);
         }
+    }
+
+    /**
+     * 走拣货策略并且扣减库存
+     * @author will
+     * @date 2024/7/3 18:49
+     * @param deliveryEntity
+     * @param allDetailList
+     * @return List<LocationInventoryResultDTO>
+     */
+    private List<LocationInventoryResultDTO> pickingInventory (SoB2cDeliveryEntity deliveryEntity,List<SoB2cDeliveryDetailEntity> allDetailList) {
+
+        //发货明细
+        List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
+                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getDeliveryQty()))
+                .collect(Collectors.toList());
+
+        //拣货规则
+        CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
+        executionData.setBillType("B2C");
+        executionData.setDetails(detailList);
+        List<LocationInventoryResultDTO> ruleOrderMatchResult = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+
+        List<InOutStockDTO> inOutStockList = new ArrayList<>();
+        for (LocationInventoryResultDTO resultDTO : ruleOrderMatchResult) {
+            //扣减库存
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+            inOutStockDTO.setSourceId(deliveryEntity.getId());
+            inOutStockDTO.setSourceCode(deliveryEntity.getCode());
+            //明细id，多个取第一个
+            String sourceDetailId = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()) && StrUtil.equals(obj.getSkuId(), resultDTO.getSkuId()))
+                    .map(SoB2cDeliveryDetailEntity::getId).findFirst().orElse("");
+            inOutStockDTO.setSourceDetailId(sourceDetailId);
+            inOutStockDTO.setSkuNo(resultDTO.getSkuNo());
+            inOutStockDTO.setBillDate(LocalDate.now());
+            inOutStockDTO.setSkuId(resultDTO.getSkuId());
+            inOutStockDTO.setQty(resultDTO.getQuantity());
+            inOutStockDTO.setWarehouseId(resultDTO.getWarehouseId());
+            inOutStockDTO.setWarehouseLocation(resultDTO.getWarehouseLocation());
+            inOutStockList.add(inOutStockDTO);
+        }
+        //添加冻结库存
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setParamList(inOutStockList);
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
+        //更新库存
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+
+        return ruleOrderMatchResult;
     }
 
     /**

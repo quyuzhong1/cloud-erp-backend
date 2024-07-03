@@ -36,7 +36,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -141,7 +140,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 PickingDetailEntity detail = new PickingDetailEntity();
                 detail.setMainId(entity.getId());
                 detail.setSkuId(resultDTO.getSkuId());
-                detail.setSkuNo(resultDTO.getSkuNO());
+                detail.setSkuNo(resultDTO.getSkuNo());
                 detail.setQty(resultDTO.getQuantity());
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setWarehouseLocation(resultDTO.getWarehouseLocation());
@@ -425,7 +424,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 PickingDetailEntity detail = new PickingDetailEntity();
                 detail.setSkuId(result.getSkuId());
                 detail.setMainId(entity.getId());
-                detail.setSkuNo(result.getSkuNO());
+                detail.setSkuNo(result.getSkuNo());
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setQty(result.getQuantity());
                 detail.setWarehouseLocation(result.getWarehouseLocation());
