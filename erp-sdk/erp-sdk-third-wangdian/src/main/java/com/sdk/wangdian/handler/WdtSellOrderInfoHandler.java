@@ -75,7 +75,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             //是否作废
             soOutStock.setInvalidStatus(false);
             //销售订单code
-            soOutStock.setSoCode(order.getSrcOrderNo());
+            soOutStock.setSoCode(order.getSrcTradeNo());
             //店铺id
             soOutStock.setShopId(order.getShopId());
             soOutStock.setShopName(order.getShopName());

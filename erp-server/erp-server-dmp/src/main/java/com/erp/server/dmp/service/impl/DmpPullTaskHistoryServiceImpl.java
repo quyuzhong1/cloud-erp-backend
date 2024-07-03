@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
@@ -33,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -150,25 +150,20 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
     }
 
     @Override
-    public void syncPullTaskHistory() {
+    public void syncPullTaskHistory(Integer month) {
+
+        LocalDateTime date = LocalDateTime.now().minusMonths(ObjectUtils.isEmpty(month) ? 3 : month);
         log.info("开始归档3个月前拉取成功的数据");
-        int count = dmpPullTaskService.count(Wrappers.<DmpPullTaskEntity>lambdaQuery()
-                .lt(DmpPullTaskEntity::getCreateTime, LocalDateTime.now().minusMonths(3))
-                .eq(DmpPullTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
-        );
+        int count = dmpPullTaskService.countMonth(date);
         int pageSize = 500;
-        int page = count / pageSize;
+        int page = count / pageSize + 1;
         List<CompletableFuture<List<String>>>  futures = new ArrayList<>();
         for (int i = 0; i <= page; i++) {
             int finalI = i;
             // 组装异步任务CompletableFuture
             CompletableFuture<List<String>> future = CompletableFuture.supplyAsync(() -> {
                 //获取到今天3个月前同步成功的数据
-                List<DmpPullTaskEntity> dmpPullTasks = dmpPullTaskService.list(Wrappers.<DmpPullTaskEntity>lambdaQuery()
-                        .lt(DmpPullTaskEntity::getCreateTime, LocalDateTime.now().minusMonths(3))
-                        .eq(DmpPullTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
-                        .last(String.format("LIMIT %s OFFSET %s", pageSize, finalI * pageSize))
-                );
+                List<DmpPullTaskEntity> dmpPullTasks = dmpPullTaskService.listMonth(date, pageSize, finalI * pageSize);
                 if (CollectionUtil.isEmpty(dmpPullTasks)) {
                     return new ArrayList<>();
                 }
