@@ -2,10 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -120,6 +117,11 @@ public class WaveListDTO implements Serializable {
         private String type;
 
         /**
+         * 波次类型名称
+         */
+        private String typeName;
+
+        /**
          * 拣货车类型
          */
         private String pickingCartTypeName;
@@ -196,12 +198,13 @@ public class WaveListDTO implements Serializable {
     }
 
     @Data
+    @NoArgsConstructor
     public static class TabDTO{
         /**
-         * tab页代码<br/>
-         * await_pick：待拣货<br/>
-         * pick_ing：拣货中<br/>
-         * hang_up：挂起<br/>
+         * tab页代码
+         * await_pick：待拣货
+         * pick_ing：拣货中
+         * hang_up：挂起
          * finish：已完成
          */
         private String tabFlag;
@@ -214,7 +217,12 @@ public class WaveListDTO implements Serializable {
         /**
          * 统计数量
          */
-        private  Integer count;
+        private Integer count;
+
+        public TabDTO(String tabFlag, Integer count){
+            this.tabFlag = tabFlag;
+            this.count = count;
+        }
     }
 
     @EqualsAndHashCode(callSuper = true)

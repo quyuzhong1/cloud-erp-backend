@@ -11,10 +11,14 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.enums.PackagePrintStatusEnum;
+import com.erp.model.wms.enums.PickingWaveTypeEnum;
+import com.erp.model.wms.enums.WavePickingTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.OperateLogService;
@@ -27,6 +31,8 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveListEntity> implements WaveListService {
@@ -120,12 +126,42 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     private List<WaveListDTO.ViewDTO> fillViewList(List<WaveListEntity> records) {
-        return null;
+        if (records.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<WaveListDTO.ViewDTO> viewDTOList = new ArrayList<>(records.size());
+        for (WaveListEntity record : records) {
+            WaveListDTO.ViewDTO viewDTO = new WaveListDTO.ViewDTO();
+            BeanMapper.copy(record, viewDTO);
+            viewDTO.setPickingUserName(record.getUpdateUserName());
+            viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
+            viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickType()));
+            viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(record.getPrintStatus()));
+            viewDTOList.add(viewDTO);
+        }
+        return viewDTOList;
     }
 
     @Override
     public List<WaveListDTO.TabDTO> tabList() {
-        return Collections.emptyList();
+        List<WaveListDTO.TabDTO> list = baseMapper.listTab();
+        Map<String, WaveListDTO.TabDTO> map = list.stream().collect(Collectors.toMap(item1 -> item1.getTabFlag(), item2 -> item2));
+        if(! map.containsKey(WaveStatusEnum.AWAIT_PICK.getCode())){
+            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.AWAIT_PICK.getCode(), 0));
+        }
+        if(! map.containsKey(WaveStatusEnum.PICK_ING.getCode())){
+            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.PICK_ING.getCode(), 0));
+        }
+        if(! map.containsKey(WaveStatusEnum.HANG_UP.getCode())){
+            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.HANG_UP.getCode(), 0));
+        }
+        if(! map.containsKey(WaveStatusEnum.FINISH.getCode())){
+            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.FINISH.getCode(), 0));
+        }
+        for (WaveListDTO.TabDTO dto : list) {
+            dto.setTabFlagName(WaveStatusEnum.getNameByCode(dto.getTabFlag()));
+        }
+        return list;
     }
 
     @Override
