@@ -91,10 +91,10 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         String maxLastId = allList.stream().map(ReportSuperMongoDTO::getId).max(String::compareTo).orElse("0");
         dmpMongoHandleTaskService.updateMaxLastIdAndNextTime(mongoHandleTaskEntity, maxLastId);
 
-        log.warn("亚马逊物流销售报告处理服务处理：转换前的数据={}", JSONUtil.toJsonStr(allList));
+//        log.warn("亚马逊物流销售报告处理服务处理：转换前的数据={}", JSONUtil.toJsonStr(allList));
         // 补充数据
         List<ReportFulfilledShipmentsMongoDTO> canHandleList = fillData(allList);
-        log.warn("亚马逊物流销售报告处理服务处理：转换后的数据={}", JSONUtil.toJsonStr(allList));
+//        log.warn("亚马逊物流销售报告处理服务处理：转换后的数据={}", JSONUtil.toJsonStr(allList));
 
         List<String> uniqueIds = canHandleList.stream()
                 .map(e -> StrUtil.format("{}_{}", e.getAmazonOrderId(), e.getShopId()))
@@ -138,9 +138,24 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
             // 不存在保存mongo等待重新触发
             directSaveMongo(existMainList, AmazonHandleStatusEnum.WAIT_HANDLE, DownloadStatusEnum.FINISH);
         }
+        // 按异常数据(无对应销售渠道无法解析到本地时区)分组
+        Map<Boolean, List<ReportFulfilledShipmentsMongoDTO>> groupList = existList.stream().collect(Collectors.groupingBy(e ->
+                null == e.getPaymentsDateLocale() ||
+                        null == e.getShipmentDateLocale() ||
+                        null == e.getPurchaseDateLocale()
+        ));
+        // 异常数据
+        List<ReportFulfilledShipmentsMongoDTO> errorList = groupList.get(true);
+        // 正常数据
+        List<ReportFulfilledShipmentsMongoDTO> canHandleExistList= groupList.get(false);
+        if (!CollectionUtils.isEmpty(errorList)) {
+            // 不存在保存mongo等待重新触发
+            directSaveMongo(existMainList, AmazonHandleStatusEnum.ERROR, DownloadStatusEnum.FINISH);
+        }
+
 
         // 存在的订单直接触发销售出库单
-        if (!CollectionUtils.isEmpty(existList)) {
+        if (!CollectionUtils.isEmpty(canHandleExistList)) {
             // 去重
             List<ReportFulfilledShipmentsMongoDTO> mqList = new ArrayList<>(
                     existList.stream().collect(Collectors.toMap(
