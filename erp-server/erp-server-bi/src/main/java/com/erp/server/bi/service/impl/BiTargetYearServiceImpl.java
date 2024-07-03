@@ -12,7 +12,7 @@ import com.erp.server.bi.mapper.BiTargetYearMapper;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import com.erp.server.bi.service.BiTargetYearService;
-import com.erp.server.bi.service.DmpRefundInfoService;
+import com.erp.server.bi.service.BiRefundInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +50,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
     private SalesOrderServiceMapper salesOrderServiceMapper;
 
     @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
+    private BiRefundInfoService biRefundInfoService;
 
 
     @Resource
@@ -139,12 +139,12 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     //销售额
                     BigDecimal yearOrderAmount = salesOrderServiceMapper.netSalesAmount(dto, settleRate);
                     //年退款金额
-                    BigDecimal yearRefundOrderAmount = dmpRefundInfoService.getRefundOrderAmount(dto);
+                    BigDecimal yearRefundOrderAmount = biRefundInfoService.getRefundOrderAmount(dto);
                     return MathUtil.subtract(yearOrderAmount, yearRefundOrderAmount);
                 } else {
                     setMonthDate(dto, yearMonth);
                     //退款金额
-                    BigDecimal refundOrderAmount = dmpRefundInfoService.getRefundOrderAmount(dto);
+                    BigDecimal refundOrderAmount = biRefundInfoService.getRefundOrderAmount(dto);
                     BigDecimal monthAmount = salesOrderServiceMapper.netSalesAmount(dto, settleRate);
                     if (Objects.isNull(monthAmount)) {
                         monthAmount = BigDecimal.ZERO;

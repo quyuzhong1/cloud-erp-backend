@@ -72,10 +72,10 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     private BiDictService biDictService;
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -325,7 +325,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             headList.add(value);
         }
         String head = "成本数据表";
-        String fileName = dmpOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
+        String fileName = biOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
         ExcelUtil.easyUtilStr(headList,head,list,fileName, response);
         return;
     }
@@ -391,7 +391,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
 
         //查询店铺数据
-        List<BiShopInfoEntity> shopList = dmpShopInfoService.list();
+        List<BiShopInfoEntity> shopList = biShopInfoService.list();
         //查人员数据
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //部门
@@ -408,7 +408,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             }
             List<String> headList = excelListenerUtil.getHead();
             String head = "成本数据表";
-            String fileName = dmpOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
+            String fileName = biOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
             ExcelUtil.easyUtil(headList,head,list,fileName, response);
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);
@@ -698,7 +698,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         Map<Integer, BigDecimal> monthCostMap = costSaleExpenses.stream()
                 .collect(Collectors.toMap(x -> x.getGroupDate().getMonthValue(), DateCostVO::getCostValue));
         // 时间分组销售额-月
-        Map<Integer, BigDecimal> monthSalesMap = dmpOrderInfoService.statisticsSalesByDate(dto, 0);
+        Map<Integer, BigDecimal> monthSalesMap = biOrderInfoService.statisticsSalesByDate(dto, 0);
 
         // 净利润
         HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>();
@@ -817,7 +817,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                         MathUtil.summingBigDecimal(DateCostVO::getCostValue)));
 
         // 时间分组销售额-季度
-        Map<Integer, BigDecimal> quarterSalesMap = dmpOrderInfoService.statisticsSalesByDate(dto, 1);
+        Map<Integer, BigDecimal> quarterSalesMap = biOrderInfoService.statisticsSalesByDate(dto, 1);
 
         // 净利润 TODO
         HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>(4);
@@ -859,7 +859,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                         MathUtil.summingBigDecimal(DateCostVO::getCostValue)));
 
         // 时间分组销售额-季度
-        Map<Integer, BigDecimal> yearSalesMap = dmpOrderInfoService.statisticsSalesByDate(dto, 2);
+        Map<Integer, BigDecimal> yearSalesMap = biOrderInfoService.statisticsSalesByDate(dto, 2);
 
         // 净利润 TODO
         HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>(4);
@@ -904,7 +904,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 部门销售额
         dto.setStartTime(LocalDateTime.of(LocalDate.from(deptCostVOS.get(0).getMonth().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN));
         dto.setEndTime(LocalDateTime.of(LocalDate.from(deptCostVOS.get(0).getMonth().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX));
-        Map<String, BigDecimal> deptSalesMap = dmpOrderInfoService.statisticsSalesByCondition(dto, saleGroupName);
+        Map<String, BigDecimal> deptSalesMap = biOrderInfoService.statisticsSalesByCondition(dto, saleGroupName);
         List<CostProfitAnalyzeRankVO> resultList = deptProfitMap.keySet().stream().map(x -> new CostProfitAnalyzeRankVO(x, deptProfitMap.getOrDefault(x, BigDecimal.ZERO),
                 deptCostMap.getOrDefault(x, BigDecimal.ZERO), deptSalesMap.getOrDefault(x, BigDecimal.ZERO),
                 deptMainMap.getOrDefault(x, BigDecimal.ZERO))).collect(Collectors.toList());
