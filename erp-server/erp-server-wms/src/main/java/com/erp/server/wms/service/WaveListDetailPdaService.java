@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 
@@ -12,9 +13,9 @@ import com.erp.model.wms.entity.WaveListDetailEntity;
 public interface WaveListDetailPdaService extends SuperService<WaveListDetailEntity> {
     Boolean hangUp(WaveListDetailPdaDTO.HangUpParamDTO hangUpDTO);
 
-    WaveListDetailPdaDTO.ViewDTO startPickingWithSideType(String waveId);
-
-    WaveListDetailPdaDTO.ViewDTO startPickingWithSequenceType(String waveId);
+    WaveListDetailPdaDTO.ViewDTO startPicking(String waveId);
 
     WaveListDetailPdaDTO.FinishResultDTO finish(WaveListDetailPdaDTO.FinishParamDTO finishParamDTO);
+
+    ApiResult<?> scanSkuOrEanCode(String skuId, String code);
 }

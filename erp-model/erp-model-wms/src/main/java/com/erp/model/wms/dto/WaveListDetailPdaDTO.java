@@ -29,6 +29,21 @@ public class WaveListDetailPdaDTO implements Serializable {
         private String waveCode;
 
         /**
+         * 应拣总数量
+         */
+        private Integer shouldPickTotalQty;
+
+        /**
+         * 已拣总数量
+         */
+        private Integer pickedTotalQty;
+
+        /**
+         * 拣货方式
+         */
+        private String pickingType;
+
+        /**
          * 仓位拣货列表
          */
         private List<WaveListDetailPdaDTO.PickingLocationDTO> locationPickingDetailList;
@@ -40,6 +55,11 @@ public class WaveListDetailPdaDTO implements Serializable {
          * 仓位编码
          */
         private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
 
         /**
          * sku id

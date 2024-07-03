@@ -1,11 +1,10 @@
 package com.erp.server.plm.controller.feign;
 
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.service.ProductDetailService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.erp.server.plm.service.ProductPurchaseService;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -21,9 +20,16 @@ public class ProductDetailFeignController {
 
     @Resource
     private ProductDetailService productDetailService;
+    @Resource
+    private ProductPurchaseService productPurchaseService;
 
     @PostMapping("/listByIds")
     public List<ProductDetailEntity> listByIds(@RequestBody List<String> ids){
         return productDetailService.listByIds(ids);
+    }
+
+    @GetMapping("feign/productDetail/getProductInfoBySkuId")
+    ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(String skuId){
+        return productPurchaseService.getProductInfoBySkuId(skuId);
     }
 }

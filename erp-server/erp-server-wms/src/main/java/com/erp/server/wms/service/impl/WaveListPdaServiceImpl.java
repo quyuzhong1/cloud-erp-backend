@@ -148,12 +148,12 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             dto.setSkuNo(product.getSkuNo());
             dto.setProductName(product.getName());
             if(salesQtyMap.containsKey(skuId)){
-                dto.setShouldPickQty(salesQtyMap.get(skuId));
+                dto.setShouldPickTotalQty(salesQtyMap.get(skuId));
             }
             if(pickedTotalQtyMap.containsKey(skuId)){
                 dto.setPickedTotalQty(pickedTotalQtyMap.get(skuId));
             }
-            dto.setColor(product.getVariantProperty());
+            dto.setVariantProperty(product.getVariantProperty());
             dto.setImageUrl(product.getImagesUrl());
             dto.setRemark("");
 

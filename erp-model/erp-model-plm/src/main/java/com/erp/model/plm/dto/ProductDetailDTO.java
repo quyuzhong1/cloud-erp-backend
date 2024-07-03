@@ -369,4 +369,37 @@ public class ProductDetailDTO implements Serializable {
 
     }
 
+    @Data
+    public static class ServiceToWavePickingDTO {
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku 编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品图片url
+         */
+        private String imageUrl;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 颜色
+         */
+        private String variantProperty;
+
+        /**
+         * 产品EAN码
+         */
+        private String eanNo;
+    }
+
 }

@@ -159,7 +159,7 @@ public class WaveListPdaDTO implements Serializable {
         /**
          * 颜色
          */
-        private String color;
+        private String variantProperty;
 
         /**
          * 备注信息
@@ -169,7 +169,7 @@ public class WaveListPdaDTO implements Serializable {
         /**
          *
          */
-        private Integer shouldPickQty;
+        private Integer shouldPickTotalQty;
 
         /**
          *
