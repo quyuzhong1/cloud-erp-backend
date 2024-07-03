@@ -21,10 +21,7 @@ import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
-import com.erp.model.wms.enums.PackagePrintStatusEnum;
-import com.erp.model.wms.enums.PickingWaveTypeEnum;
-import com.erp.model.wms.enums.WavePickingTypeEnum;
-import com.erp.model.wms.enums.WaveStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -70,6 +67,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
         List<String> deliveryIdList = dto.getDeliveryIdList();
         List<SoB2cDeliveryEntity> deliveryList = deliveryService.getBaseMapper().selectBatchIds(deliveryIdList);
+        Map<String, String> deliveryCodeMap = deliveryList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2.getCode()));
 
         List<WaveListDetailEntity> detailList = new ArrayList<>(deliveryIdList.size());
         for (int i = 0; i < deliveryIdList.size(); i++) {
@@ -78,10 +76,10 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             detailEntity.setBasketNo(String.valueOf(i + 1));
             detailEntity.setMainId(entity.getId());
             detailEntity.setDeliveryId(deliveryId);
-            detailEntity.setDeliveryCode("发货单号");
+            detailEntity.setDeliveryCode(deliveryCodeMap.get(deliveryId));
             detailEntity.setSoId("销售订单id");
             detailEntity.setSoCode("销售订单编号");
-            detailEntity.setPickingStatus("拣货状态");
+            detailEntity.setPickingStatus(PickingStatusEnum.NOT_START.getCode());
             detailEntity.setLogisticsChannelName("物流渠道");
 
             detailList.add(detailEntity);

@@ -38,6 +38,7 @@ public class WaveListDetailPdaController extends BaseController {
      */
     @PostMapping
     public ApiResult<WaveListDetailPdaDTO.FinishResultDTO> finish(@RequestBody WaveListDetailPdaDTO.FinishParamDTO finishParamDTO){
-        return null;
+        WaveListDetailPdaDTO.FinishResultDTO resultDTO = waveListDetailPdaService.finish(finishParamDTO);
+        return ApiResult.success(resultDTO);
     }
 }

@@ -15,4 +15,6 @@ public interface WaveListDetailPdaService extends SuperService<WaveListDetailEnt
     WaveListDetailPdaDTO.ViewDTO startPickingWithSideType(String waveId);
 
     WaveListDetailPdaDTO.ViewDTO startPickingWithSequenceType(String waveId);
+
+    WaveListDetailPdaDTO.FinishResultDTO finish(WaveListDetailPdaDTO.FinishParamDTO finishParamDTO);
 }
