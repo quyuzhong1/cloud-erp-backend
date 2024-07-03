@@ -2876,7 +2876,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //产品信息
         List<String> skuIdList = list.stream().flatMap(obj -> Stream.of(allDetailList.stream().map(SoB2cDetailEntity::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
         Map<String, SkuVO> skuVOMap = new HashMap<>();
-        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuLogisticsByIds(skuIdList);
         if (!CollectionUtils.isEmpty(skuList)) {
             skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         }
@@ -3044,6 +3044,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 SkuVO skuVO = skuVOMap.get(detailDTO.getSkuId());
                 detailDTO.setVariantProperty(null == skuVO ? "" : skuVO.getVariantProperty());
                 detailDTO.setProductName(null == skuVO ? "" : skuVO.getSkuName());
+                SkuVO.PropertyDTO skuPropertyDTO = null == skuVO?new SkuVO.PropertyDTO():null == skuVO.getPropertyDTO()?new SkuVO.PropertyDTO():skuVO.getPropertyDTO();
+                detailDTO.setPropertyDTO(BeanUtil.copyProperties(skuPropertyDTO, SoB2cDetailDTO.PropertyDTO.class));
                 //是否是组合SKU
                 if (CollectionUtils.isNotEmpty(bomChildrenList)) {
                     long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId()) && bomType.equals(e.getType())).count();

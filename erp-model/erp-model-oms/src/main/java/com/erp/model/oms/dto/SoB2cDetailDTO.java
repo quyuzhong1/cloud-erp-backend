@@ -138,6 +138,10 @@ public class SoB2cDetailDTO implements Serializable {
 
 
         /**
+         * 属性对象
+         */
+       private PropertyDTO propertyDTO;
+        /**
          * 目的国申报价
          */
         private BigDecimal toDeclarePrice;
@@ -182,6 +186,43 @@ public class SoB2cDetailDTO implements Serializable {
          * 当前明细是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class PropertyDTO {
+        /**
+         * 是否带电
+         */
+        private Boolean isElectric;
+        /**
+         * 是否带磁
+         */
+        private Boolean isMagnetism;
+
+        /**
+         * 是否液体
+         */
+        private Boolean isLiquid;
+        /**
+         * 是否木
+         */
+        private Boolean isWood;
+        /**
+         * 是否粉末
+         */
+        private Boolean iPowder;
+        /**
+         * 是否膏体
+         */
+        private Boolean isPlaster;
+        /**
+         * 是否刀具
+         */
+        private Boolean isCuttingTool;
+        /**
+         * 是否其他
+         */
+        private Boolean isOther;
     }
 
     @Data
