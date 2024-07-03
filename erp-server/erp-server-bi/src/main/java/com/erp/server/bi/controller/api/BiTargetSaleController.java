@@ -37,7 +37,7 @@ public class BiTargetSaleController extends BaseController {
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:module:content",
-//            tableAlias = "dmp_order_info"
+//            tableAlias = "bi_order_info"
 //    )
     public ApiResult<TargetSaleAndYoySumVO> countSales(@RequestBody @Validated BiFilterDTO dto){
         TargetSaleAndYoySumVO vo = dmpOrderInfoService.getSalesAndYoy(dto);
@@ -53,7 +53,7 @@ public class BiTargetSaleController extends BaseController {
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:module:content",
-//            tableAlias = "dmp_order_info"
+//            tableAlias = "bi_order_info"
 //    )
     public ApiResult<TargetSaleAndYoyCountVO> countSalesVolume(@RequestBody @Validated BiFilterDTO dto){
         TargetSaleAndYoyCountVO vo = dmpOrderInfoService.countSalesVolumeAndYoy(dto);
@@ -69,7 +69,7 @@ public class BiTargetSaleController extends BaseController {
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:module:content",
-//            tableAlias = "dmp_order_info"
+//            tableAlias = "bi_order_info"
 //    )
     public ApiResult<TargetSaleAndYoyCountVO> countOrderQuantity(@RequestBody @Validated BiFilterDTO dto){
         TargetSaleAndYoyCountVO vo = dmpOrderInfoService.countOrderQuantityAndYoy(dto);
@@ -85,7 +85,7 @@ public class BiTargetSaleController extends BaseController {
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:module:content",
-//            tableAlias = "dmp_order_info"
+//            tableAlias = "bi_order_info"
 //    )
     public ApiResult<TargetSaleAndYoySumVO> countRefundRate(@RequestBody @Validated BiFilterDTO dto){
         TargetSaleAndYoySumVO vo = dmpOrderInfoService.countRefundRateAndYoy(dto);
@@ -101,7 +101,7 @@ public class BiTargetSaleController extends BaseController {
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:module:content",
-//            tableAlias = "dmp_order_info"
+//            tableAlias = "bi_order_info"
 //    )
     public ApiResult<TargetSaleAndYoySumVO> countRefundAmount(@RequestBody @Validated BiFilterDTO dto){
         TargetSaleAndYoySumVO vo = dmpOrderInfoService.countRefundAmountAndYoy(dto);
@@ -117,7 +117,7 @@ public class BiTargetSaleController extends BaseController {
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:module:content",
-//            tableAlias = "dmp_order_info"
+//            tableAlias = "bi_order_info"
 //    )
     public ApiResult<TargetSaleAndYoyCountVO> countRefundOrderNumber(@RequestBody @Validated BiFilterDTO dto){
         TargetSaleAndYoyCountVO vo = dmpOrderInfoService.countRefundOrderNumAndYoy(dto);
@@ -133,7 +133,7 @@ public class BiTargetSaleController extends BaseController {
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:module:content",
-//            tableAlias = "dmp_order_info"
+//            tableAlias = "bi_order_info"
 //    )
     public ApiResult<TargetSaleSumVO> calculateCustomerPrice(@RequestBody @Validated BiFilterDTO dto){
         TargetSaleSumVO vo = dmpOrderInfoService.statisticsCustomerPrice(dto);
@@ -154,7 +154,7 @@ public class BiTargetSaleController extends BaseController {
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:module:content",
-//            tableAlias = "dmp_order_info"
+//            tableAlias = "bi_order_info"
 //    )
     public ApiResult<TargetSaleSumVO> domesticSalesRatio(@RequestBody @Validated BiFilterDTO dto){
         TargetSaleSumVO vo = dmpOrderInfoService.statisticsDomesticSalesRatio(dto);
@@ -170,7 +170,7 @@ public class BiTargetSaleController extends BaseController {
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:module:content",
-//            tableAlias = "dmp_order_info"
+//            tableAlias = "bi_order_info"
 //    )
     public ApiResult<TargetSaleSumVO> sumNewProductSales(@RequestBody @Validated BiFilterDTO dto){
         dto.setHasNewSign(true);

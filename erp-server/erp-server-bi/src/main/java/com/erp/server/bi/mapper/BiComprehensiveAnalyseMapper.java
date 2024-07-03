@@ -3,7 +3,7 @@ package com.erp.server.bi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper
-public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEntity> {
+public interface BiComprehensiveAnalyseMapper extends BaseMapper<BiOrderInfoEntity> {
 
     /**
      * SKU矩阵

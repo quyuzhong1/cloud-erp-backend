@@ -119,8 +119,8 @@
         dri.refund_status,
         dri.refund_time,
         dri.order_time
-        from dmp_refund_info dri
-        inner join dmp_refund_item drid on dri.id = drid.refund_id
+        from bi_refund_info dri
+        inner join bi_refund_item drid on dri.id = drid.refund_id
         <where>
             <if test="params.refundId != null and params.refundId != ''">
                 and dri.refund_code ILIKE concat('%',#{params.refundId}::text,'%')
@@ -169,8 +169,8 @@
         round(dri.refund_amount * dri.cny_settle_rate,2) as cny_settle_amount,
         dri.refund_status,
         dri.refund_time
-        from dmp_refund_info dri
-        inner join dmp_refund_item drid on dri.id = drid.refund_id
+        from bi_refund_info dri
+        inner join bi_refund_item drid on dri.id = drid.refund_id
         <where>
             <if test="params.refundId != null and params.refundId != ''">
                 and dri.refund_code ILIKE concat('%',#{params.refundId}::text,'%')
@@ -207,8 +207,8 @@
     <select id="getRefundOrderAmount" resultType="java.math.BigDecimal">
         SELECT
         coalesce(SUM(refund_amount*dri.currency_rate),0)
-        FROM dmp_refund_info dri
-        INNER JOIN dmp_order_info o
+        FROM bi_refund_info dri
+        INNER JOIN bi_order_info o
         ON dri.platform_order_id=o.platform_order_id
         WHERE   dri.refund_status=4
         <if test="params.startTime !=null">
@@ -254,11 +254,11 @@
     <select id="getYearRefundOrderAmount" resultType="java.math.BigDecimal">
         SELECT
         coalesce(SUM(refund_amount*dri.currency_rate),0)
-        FROM dmp_refund_info dri
+        FROM bi_refund_info dri
         INNER JOIN
         (
         SELECT o.platform_order_id FROM
-        dmp_order_info o INNER JOIN dmp_order_item_split i
+        bi_order_info o INNER JOIN bi_order_item_split i
         ON i.order_id = o.ID
         <where>
             <if test="params.timeType!=null and params.timeType==0">

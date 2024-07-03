@@ -4,12 +4,10 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -29,10 +27,9 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
@@ -65,8 +62,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -79,7 +74,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -496,7 +490,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //业务id
         resultMap.put("id", entity.getId());
         resultMap.put("operate", syncOperate);
-        DmpReturnOrderInfoEntity dmpOrderInfoEntity = this.returnOrderDataConvert(entity);
+        BiReturnOrderInfoEntity dmpOrderInfoEntity = this.returnOrderDataConvert(entity);
         resultMap.put("entity", dmpOrderInfoEntity);
 
         //添加推送任务
@@ -530,8 +524,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
      * @param soReturnEntity
      * @return
      */
-    private DmpReturnOrderInfoEntity returnOrderDataConvert(SoReturnEntity soReturnEntity) {
-        DmpReturnOrderInfoEntity entity = SoReturnConverter.INSTANCE.soReturnOrderToDmpReturn(soReturnEntity);
+    private BiReturnOrderInfoEntity returnOrderDataConvert(SoReturnEntity soReturnEntity) {
+        BiReturnOrderInfoEntity entity = SoReturnConverter.INSTANCE.soReturnOrderToDmpReturn(soReturnEntity);
         //原始订单
         SoInfoEntity soInfoEntity = null;
         Map<String, SoDetailEntity> soDetailEntityMap = null;
@@ -599,39 +593,39 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //明细字段转换
         if (CollectionUtil.isNotEmpty(details)) {
             //订单明细
-            List<DmpReturnOrderItemEntity> orderItemEntities = new ArrayList<>(details.size());
+            List<BiReturnOrderItemEntity> orderItemEntities = new ArrayList<>(details.size());
 
             Map<String, SoDetailEntity> finalSoDetailEntityMap = soDetailEntityMap;
             details.forEach(soReturnDetail -> {
-                DmpReturnOrderItemEntity dmpReturnOrderItemEntity = SoReturnConverter.INSTANCE.soReturnOrderToDmpReturnItem(soReturnDetail);
+                BiReturnOrderItemEntity biReturnOrderItemEntity = SoReturnConverter.INSTANCE.soReturnOrderToDmpReturnItem(soReturnDetail);
                 //保存时会重置主表id
-                dmpReturnOrderItemEntity.setReturnOrderId(entity.getId());
+                biReturnOrderItemEntity.setReturnOrderId(entity.getId());
                 if (com.alibaba.nacos.common.utils.StringUtils.isNotEmpty(soReturnDetail.getSkuId())) {
                     List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(Collections.singletonList(soReturnDetail.getSkuId()));
                     if (CollectionUtils.isNotEmpty(detailEntityList)) {
-                        dmpReturnOrderItemEntity.setItemName(detailEntityList.get(0).getName());
-                        dmpReturnOrderItemEntity.setProductUnit(detailEntityList.get(0).getUnitId());
-                        dmpReturnOrderItemEntity.setPictureUrl(detailEntityList.get(0).getImagesUrl());
-                        dmpReturnOrderItemEntity.setSpecifics(detailEntityList.get(0).getVariantProperty());
+                        biReturnOrderItemEntity.setItemName(detailEntityList.get(0).getName());
+                        biReturnOrderItemEntity.setProductUnit(detailEntityList.get(0).getUnitId());
+                        biReturnOrderItemEntity.setPictureUrl(detailEntityList.get(0).getImagesUrl());
+                        biReturnOrderItemEntity.setSpecifics(detailEntityList.get(0).getVariantProperty());
                     }
                 }
                 //获取订单详情表
                 if (com.alibaba.nacos.common.utils.StringUtils.isNotEmpty(soReturnDetail.getSourceDetailId())) {
                     SoDetailEntity soDetail = finalSoDetailEntityMap.get(soReturnDetail.getSourceDetailId());
                     if (Objects.nonNull(soDetail)) {
-                        dmpReturnOrderItemEntity.setSellPrice(soDetail.getAmount());
+                        biReturnOrderItemEntity.setSellPrice(soDetail.getAmount());
                         if (Objects.nonNull(soDetail.getTaxAmount()) && Objects.nonNull(soDetail.getQty()) && Objects.nonNull(soReturnDetail.getReturnQty())) {
-                            dmpReturnOrderItemEntity.setAmountAfter(soDetail.getTaxAmount().divide(BigDecimal.valueOf(soDetail.getQty())).multiply(BigDecimal.valueOf(soReturnDetail.getReturnQty())));
+                            biReturnOrderItemEntity.setAmountAfter(soDetail.getTaxAmount().divide(BigDecimal.valueOf(soDetail.getQty())).multiply(BigDecimal.valueOf(soReturnDetail.getReturnQty())));
                         }
-                        dmpReturnOrderItemEntity.setCleanCostPrice(soDetail.getSaleCost());
+                        biReturnOrderItemEntity.setCleanCostPrice(soDetail.getSaleCost());
                         if (Objects.nonNull(soDetail.getIsGift()) && soDetail.getIsGift()) {
-                            dmpReturnOrderItemEntity.setIsGift(1);
+                            biReturnOrderItemEntity.setIsGift(1);
                         } else {
-                            dmpReturnOrderItemEntity.setIsGift(2);
+                            biReturnOrderItemEntity.setIsGift(2);
                         }
                     }
                 }
-                orderItemEntities.add(dmpReturnOrderItemEntity);
+                orderItemEntities.add(biReturnOrderItemEntity);
             });
             entity.setItemList(orderItemEntities);
         }

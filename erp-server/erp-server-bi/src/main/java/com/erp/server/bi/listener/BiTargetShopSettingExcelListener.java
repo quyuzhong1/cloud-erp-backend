@@ -8,14 +8,11 @@ package com.erp.server.bi.listener;/**
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.business.dto.FindUserDTO;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.bi.dto.BiTargetShopSettingDTO;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.excel.TargetShopSettingImportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetStaffSettingImportExcelDTO;
 import com.erp.model.bi.enums.MetricsEnum;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
@@ -31,7 +28,7 @@ public class BiTargetShopSettingExcelListener extends AnalysisEventListener<Targ
 
     private List<String> metricsNameList;
 
-    private List<DmpShopInfoEntity> shopList;
+    private List<BiShopInfoEntity> shopList;
 
     /**
      * 导入错误数据
@@ -43,7 +40,7 @@ public class BiTargetShopSettingExcelListener extends AnalysisEventListener<Targ
      */
     private List<BiTargetShopSettingDTO.CommonDTO> successList = new ArrayList<>();
 
-    public BiTargetShopSettingExcelListener(List<String> metricsNameList, List<DmpShopInfoEntity> shopList) {
+    public BiTargetShopSettingExcelListener(List<String> metricsNameList, List<BiShopInfoEntity> shopList) {
         this.metricsNameList = metricsNameList;
         this.shopList = shopList;
     }
@@ -61,7 +58,7 @@ public class BiTargetShopSettingExcelListener extends AnalysisEventListener<Targ
             errorMsgList.add("考核指标不存在");
         }
         String shopName = excelDTO.getShopName();
-        DmpShopInfoEntity shop = shopList.stream().
+        BiShopInfoEntity shop = shopList.stream().
                 filter(u -> u.getName().equals(shopName)).
                 findFirst().orElse(null);
         if (Objects.isNull(shop)) {

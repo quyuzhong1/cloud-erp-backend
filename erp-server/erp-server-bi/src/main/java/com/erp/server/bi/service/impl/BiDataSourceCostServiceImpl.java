@@ -28,7 +28,7 @@ import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.*;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.BiDataSourceCostEnum;
@@ -391,7 +391,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
 
         //查询店铺数据
-        List<DmpShopInfoEntity> shopList = dmpShopInfoService.list();
+        List<BiShopInfoEntity> shopList = dmpShopInfoService.list();
         //查人员数据
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //部门

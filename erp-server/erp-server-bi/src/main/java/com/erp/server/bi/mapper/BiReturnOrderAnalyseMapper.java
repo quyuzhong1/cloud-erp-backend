@@ -1,19 +1,17 @@
 package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.DateReturnOrderVO;
 import com.erp.model.bi.vo.ReturnOrderAnalyseTableVO;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 @Mapper
-public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntity> {
+public interface BiReturnOrderAnalyseMapper extends BaseMapper<BiOrderInfoEntity> {
 
     /**
      * 退货分析-类别

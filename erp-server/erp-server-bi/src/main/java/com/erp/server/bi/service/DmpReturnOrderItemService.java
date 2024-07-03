@@ -2,7 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 中台订单退货服务类
  */
-public interface DmpReturnOrderItemService extends IService<DmpReturnOrderItemEntity> {
+public interface DmpReturnOrderItemService extends IService<BiReturnOrderItemEntity> {
 
     /**
      * 退货金额统计
@@ -25,5 +25,5 @@ public interface DmpReturnOrderItemService extends IService<DmpReturnOrderItemEn
      * @date: 2023/1/4 17:13
      * @param returnOrderId
      */
-    List<DmpReturnOrderItemEntity> listByReturnOrderId(String returnOrderId);
+    List<BiReturnOrderItemEntity> listByReturnOrderId(String returnOrderId);
 }

@@ -7,7 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -52,9 +52,9 @@ public class ChangeDeptConsumer implements RocketMQListener<JSONObject> {
     private void updateSaleCharge(String chargeId, LocalDate enableTime, String deptId, String deptName ) {
 
         //更新启动时间后的订单负责人部门
-        List<DmpOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
-                .eq(DmpOrderInfoEntity::getChargeId, chargeId)
-                .ge(DmpOrderInfoEntity::getPlatformCreateTime, enableTime)
+        List<BiOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
+                .eq(BiOrderInfoEntity::getChargeId, chargeId)
+                .ge(BiOrderInfoEntity::getPlatformCreateTime, enableTime)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return ;
@@ -94,7 +94,7 @@ public class ChangeDeptConsumer implements RocketMQListener<JSONObject> {
      * 更新订单
      */
     private void updateList (List<T> collect) {
-        List<DmpOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect),DmpOrderInfoEntity.class);
+        List<BiOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect), BiOrderInfoEntity.class);
         dmpOrderInfoService.updateBatchById(list);
     }
 

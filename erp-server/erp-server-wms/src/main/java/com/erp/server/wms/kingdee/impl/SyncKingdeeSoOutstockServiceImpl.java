@@ -3,7 +3,6 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -18,9 +17,8 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -47,7 +45,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.convert.SoOutstockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
-import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
@@ -55,8 +52,6 @@ import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,7 +64,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -770,11 +764,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //业务id
         resultMap.put("id", entity.getId());
         resultMap.put("operate", syncOperate);
-        DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity = this.outStockDataConvert(entity);
-        resultMap.put("entity", dmpDeliveryDetailInfoEntity);
+        BiDeliveryDetailInfoEntity biDeliveryDetailInfoEntity = this.outStockDataConvert(entity);
+        resultMap.put("entity", biDeliveryDetailInfoEntity);
 
         //无需推送
-        if (ObjectUtils.isEmpty(dmpDeliveryDetailInfoEntity)) {
+        if (ObjectUtils.isEmpty(biDeliveryDetailInfoEntity)) {
             return;
         }
 
@@ -809,14 +803,14 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      * @param soOutstockEntity
      * @return
      */
-    private DmpDeliveryDetailInfoEntity outStockDataConvert(SoOutstockEntity soOutstockEntity) {
+    private BiDeliveryDetailInfoEntity outStockDataConvert(SoOutstockEntity soOutstockEntity) {
         String soId = "";
         String soCode = "";
         String receiveAddress = "";
         String currency = "";
         String remark = "";
         BigDecimal shippingFee = BigDecimal.ZERO;
-        DmpDeliveryDetailInfoEntity entity = SoOutstockConverter.INSTANCE.soOutstockToDmpDelivery(soOutstockEntity);
+        BiDeliveryDetailInfoEntity entity = SoOutstockConverter.INSTANCE.soOutstockToDmpDelivery(soOutstockEntity);
         BigDecimal exchangeRate;
         entity.setDeliveryDate(Objects.nonNull(soOutstockEntity.getActualDeliveryDate()) ? soOutstockEntity.getActualDeliveryDate() : null);
 
@@ -934,7 +928,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             throw new ServiceException(ApiError.ERROR_92029);
         }
         //订单明细
-        List<DmpDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(details.size());
+        List<BiDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(details.size());
         String finalSoCode = soCode;
         String finalSoId = soId;
 
@@ -946,7 +940,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainIds(soDetailIds);
 
         details.forEach(soOutstockDetailEntity -> {
-            DmpDeliveryDetailItemEntity dmpOrderItemEntity = SoOutstockConverter.INSTANCE.soOutstockToDmpDeliveryItem(soOutstockDetailEntity);
+            BiDeliveryDetailItemEntity dmpOrderItemEntity = SoOutstockConverter.INSTANCE.soOutstockToDmpDeliveryItem(soOutstockDetailEntity);
             dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
             dmpOrderItemEntity.setSaleOrderNo(finalSoId);
             dmpOrderItemEntity.setPlatformOrderId(finalSoCode);

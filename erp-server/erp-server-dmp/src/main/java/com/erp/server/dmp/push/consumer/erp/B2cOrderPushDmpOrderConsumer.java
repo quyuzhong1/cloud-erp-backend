@@ -1,6 +1,5 @@
 package com.erp.server.dmp.push.consumer.erp;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -10,12 +9,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.convert.DmpOrderConverter;
-import com.erp.server.dmp.service.DmpOrderInfoService;
+import com.erp.server.dmp.service.BiOrderInfoService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -39,7 +38,7 @@ import java.util.Objects;
 public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandler<DmpSyncMqDTO> {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
     @Resource
     private DmpPushTaskService dmpPushTaskService;
 
@@ -75,32 +74,32 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
      * 清洗订单
      */
     private void cleanOrderField(SoB2cDTO.ViewDTO viewDTO, String operate) {
-        DmpOrderInfoEntity dmpOrderInfoEntity = DmpOrderConverter.INSTANCE.soB2cToDmpOrder(viewDTO);
+        BiOrderInfoEntity biOrderInfoEntity = DmpOrderConverter.INSTANCE.soB2cToDmpOrder(viewDTO);
         String billStatus = viewDTO.getBillStatus();
 
         //订单状态 1.待配货 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
         if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(billStatus)) {
-            dmpOrderInfoEntity.setOrderStatus(1);
+            biOrderInfoEntity.setOrderStatus(1);
         } else if (SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(billStatus)) {
-            dmpOrderInfoEntity.setOrderStatus(2);
+            biOrderInfoEntity.setOrderStatus(2);
         } else if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(billStatus)) {
-            dmpOrderInfoEntity.setOrderStatus(3);
+            biOrderInfoEntity.setOrderStatus(3);
         } else {
-            dmpOrderInfoEntity.setOrderStatus(1);
+            biOrderInfoEntity.setOrderStatus(1);
         }
 
-        List<DmpOrderItemSplitEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cToDmpOrderItem(viewDTO.getDetailList());
-        dmpOrderInfoEntity.setItemList(itemEntityList);
+        List<BiOrderItemSplitEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cToDmpOrderItem(viewDTO.getDetailList());
+        biOrderInfoEntity.setItemList(itemEntityList);
 
 
         //根据操作类型进行操作
         if (Objects.equals(operate, SyncOperateEnum.OPERATE_APPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_UPDATE.getCode())) {
             //审核
-            dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
+            biOrderInfoService.checkOrder(biOrderInfoEntity);
 
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
-            dmpOrderInfoService.removeOrderByCode(Collections.singletonList(dmpOrderInfoEntity.getPlatformOrderId()));
+            biOrderInfoService.removeOrderByCode(Collections.singletonList(biOrderInfoEntity.getPlatformOrderId()));
 
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_INVALID.getCode())) {
             //作废 不处理

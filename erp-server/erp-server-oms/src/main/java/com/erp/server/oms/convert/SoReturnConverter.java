@@ -1,7 +1,7 @@
 package com.erp.server.oms.convert;
 
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import org.mapstruct.Mapper;
@@ -37,7 +37,7 @@ public interface SoReturnConverter {
             @Mapping(target = "chargeName", source = "sellerName"),
             @Mapping(target = "platformReturnCode", source = "code")
     })
-    DmpReturnOrderInfoEntity soReturnOrderToDmpReturn(SoReturnEntity soReturnEntity);
+    BiReturnOrderInfoEntity soReturnOrderToDmpReturn(SoReturnEntity soReturnEntity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -46,5 +46,5 @@ public interface SoReturnConverter {
             @Mapping(target = "status", constant = "2"),
             @Mapping(target = "originalSkuNo", source = "skuNo")
     })
-    DmpReturnOrderItemEntity soReturnOrderToDmpReturnItem(SoReturnDetailEntity soReturnDetailEntity);
+    BiReturnOrderItemEntity soReturnOrderToDmpReturnItem(SoReturnDetailEntity soReturnDetailEntity);
 }

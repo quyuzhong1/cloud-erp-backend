@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.mapper.DmpOrderItemSplitMapper;
 import com.erp.server.bi.service.DmpOrderItemSplitService;
@@ -20,7 +20,7 @@ import java.util.List;
  * @author Cloud
  */
 @Service
-public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitMapper, DmpOrderItemSplitEntity>
+public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitMapper, BiOrderItemSplitEntity>
     implements DmpOrderItemSplitService {
 
 
@@ -46,8 +46,8 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
         query.in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
             .in(CollectionUtils.isNotEmpty(dto.getSku()), "sku_no", dto.getSku())
             .eq(null != flag, "new_sign", flag);
-        DmpOrderItemSplitEntity dmpOrderItemSplitEntity = baseMapper.selectOne(query);
-        return dmpOrderItemSplitEntity == null ? BigDecimal.ZERO : dmpOrderItemSplitEntity.getSellPrice();
+        BiOrderItemSplitEntity biOrderItemSplitEntity = baseMapper.selectOne(query);
+        return biOrderItemSplitEntity == null ? BigDecimal.ZERO : biOrderItemSplitEntity.getSellPrice();
     }
 
     @Override
@@ -56,38 +56,38 @@ public class DmpOrderItemSplitServiceImpl extends ServiceImpl<DmpOrderItemSplitM
         query.select("SUM(COALESCE(quantity, 0)) as quantity")
                 .in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
                 .in(CollectionUtils.isNotEmpty(sku), "sku_no", sku);
-        DmpOrderItemSplitEntity dmpOrderItemSplitEntity = baseMapper.selectOne(query);
-        return dmpOrderItemSplitEntity == null ? 0 : dmpOrderItemSplitEntity.getQuantity();
+        BiOrderItemSplitEntity biOrderItemSplitEntity = baseMapper.selectOne(query);
+        return biOrderItemSplitEntity == null ? 0 : biOrderItemSplitEntity.getQuantity();
     }
 
     @Override
     public Integer countOrderQuantityBySku(List<String> orderIds, List<String> sku) {
         Integer count = lambdaQuery()
-                .in(CollectionUtils.isNotEmpty(orderIds), DmpOrderItemSplitEntity::getOrderId, orderIds)
-                .in(CollectionUtils.isNotEmpty(sku), DmpOrderItemSplitEntity::getSkuNo, sku)
+                .in(CollectionUtils.isNotEmpty(orderIds), BiOrderItemSplitEntity::getOrderId, orderIds)
+                .in(CollectionUtils.isNotEmpty(sku), BiOrderItemSplitEntity::getSkuNo, sku)
                 .count();
         return count;
     }
 
     @Override
-    public List<DmpOrderItemSplitEntity> listByOrderInfoIds(List<String> orderInfoIds) {
+    public List<BiOrderItemSplitEntity> listByOrderInfoIds(List<String> orderInfoIds) {
         if (CollectionUtils.isEmpty(orderInfoIds)) {
             return new ArrayList<>();
         }
-        LambdaQueryWrapper<DmpOrderItemSplitEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(DmpOrderItemSplitEntity::getOrderId,orderInfoIds);
+        LambdaQueryWrapper<BiOrderItemSplitEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(BiOrderItemSplitEntity::getOrderId,orderInfoIds);
         return this.list(queryWrapper);
     }
 
     @Override
-    public List<DmpOrderItemSplitEntity> listByConditions(List<String> orderIds, Integer newSign, List<String> sku) {
+    public List<BiOrderItemSplitEntity> listByConditions(List<String> orderIds, Integer newSign, List<String> sku) {
         if (CollectionUtils.isEmpty(orderIds)) {
             return new ArrayList<>();
         }
-        List<DmpOrderItemSplitEntity> list = lambdaQuery()
-                .in(CollectionUtils.isNotEmpty(orderIds), DmpOrderItemSplitEntity::getOrderId, orderIds)
-                .in(CollectionUtils.isNotEmpty(sku), DmpOrderItemSplitEntity::getSkuNo, sku)
-                .eq(null != newSign, DmpOrderItemSplitEntity::getNewSign, newSign)
+        List<BiOrderItemSplitEntity> list = lambdaQuery()
+                .in(CollectionUtils.isNotEmpty(orderIds), BiOrderItemSplitEntity::getOrderId, orderIds)
+                .in(CollectionUtils.isNotEmpty(sku), BiOrderItemSplitEntity::getSkuNo, sku)
+                .eq(null != newSign, BiOrderItemSplitEntity::getNewSign, newSign)
                 .list();
         return list;
     }

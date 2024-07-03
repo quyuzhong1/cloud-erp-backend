@@ -18,7 +18,7 @@ import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoImportExcelDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.BiRefundInfoEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.enums.RefundStatusEnum;
 import com.erp.server.bi.listener.DmpRefundInfoExcelListener;
@@ -42,7 +42,7 @@ import java.util.List;
  * 退款列表服务类
  */
 @Service
-public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, DmpRefundInfoEntity>
+public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, BiRefundInfoEntity>
     implements DmpRefundInfoService {
 
     @Resource
@@ -88,9 +88,9 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
     }
 
     @Override
-    public DmpRefundInfoEntity getByRefundId(String refundId) {
-        LambdaQueryWrapper<DmpRefundInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DmpRefundInfoEntity::getRefundCode,refundId);
+    public BiRefundInfoEntity getByRefundId(String refundId) {
+        LambdaQueryWrapper<BiRefundInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiRefundInfoEntity::getRefundCode,refundId);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }
@@ -98,7 +98,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
     @Override
     public Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
         //系统中已存在的退款订单
-        List<DmpRefundInfoEntity> refundList = this.list();
+        List<BiRefundInfoEntity> refundList = this.list();
 
         DmpRefundInfoExcelListener excelListenerUtil = new DmpRefundInfoExcelListener(importType,refundList,dmpOrderInfoService, dmpRefundInfoService, dmpShopInfoService,dmpRefundItemService,plmTaskFeign);
         try {
