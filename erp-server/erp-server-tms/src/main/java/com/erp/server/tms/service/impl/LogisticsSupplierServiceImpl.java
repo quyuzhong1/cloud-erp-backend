@@ -237,7 +237,9 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                 channelEntity.setSyncSourceId(syncSourceId);
                 channelEntity.setCode(saleChannel.getCode());
                 channelEntity.setMainId(id);
-                channelEntity.setName(saleChannel.getCnName());
+                if (StringUtils.isBlank(channelEntity.getName())){
+                    channelEntity.setName(saleChannel.getCnName());
+                }
                 channelEntity.setEffectiveTime(saleChannel.getAging());
                 String channelId = channelEntity.getId();
                 //表示新增

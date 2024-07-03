@@ -11,6 +11,7 @@ import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -158,4 +159,8 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * 删除已归档数据
      */
     void deleteByIds(List<String> ids);
+
+    int countMonth(LocalDateTime date);
+
+    List<DmpPullTaskEntity> listMonth(LocalDateTime date, int pageSize, int effect);
 }

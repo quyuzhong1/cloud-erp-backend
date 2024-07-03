@@ -1548,11 +1548,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             productVOS.add(productVO);
         });
+        //过滤产品sku信息
+        List<LogisticsProductVO> productVOS2 = productVOS.stream().filter(e -> StringUtils.isNotBlank(e.getSkuId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(productVOS2)){
+            throw new ServiceException(ApiError.ERROR_92152, entity.getCode());
+        }
         //TODO 申报信息校验 测试现在没时间，后面使用再放开
 //        checkDeclareInfo(productVOS,entity);
-        result.setProductVOS(productVOS);
+        result.setProductVOS(productVOS2);
         LogisticsBillDTO.PackageDTO packageDTO = B2cOrderConverter.INSTANCE.convertPackage(soB2cLogisticsEntity);
-        packageDTO.setCurrency(productVOS.get(0).getDestCurrency());
+        packageDTO.setCurrency(productVOS2.get(0).getDestCurrency());
         result.setPackageInfo(packageDTO);
         return result;
     }
