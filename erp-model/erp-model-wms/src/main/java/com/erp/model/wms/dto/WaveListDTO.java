@@ -15,9 +15,9 @@ public class WaveListDTO implements Serializable {
     @Data
     public static class AddDTO {
         /**
-         * 波次编码
+         * 波次名称
          */
-        private String code;
+        private String name;
 
         /**
          * 发货单号集合

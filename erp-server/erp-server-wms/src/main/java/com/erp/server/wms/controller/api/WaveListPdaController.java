@@ -7,6 +7,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.server.wms.query.WaveListPdaAdvanceQueryHandler;
+import com.erp.server.wms.service.WaveListDetailPdaService;
 import com.erp.server.wms.service.WaveListPdaService;
 import com.erp.server.wms.service.WaveListService;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,8 @@ public class WaveListPdaController {
     private WaveListPdaService waveListPdaService;
     @Resource
     private WaveListService waveListService;
+    @Resource
+    private WaveListDetailPdaService waveListDetailPdaService;
 
     /**
      * 波次列表
@@ -56,7 +59,7 @@ public class WaveListPdaController {
      */
     @PostMapping("/startPickingWithSideType")
     public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPickingWithSideType(@RequestParam String waveId){
-        WaveListDetailPdaDTO.ViewDTO dto = waveListPdaService.startPickingWithSideType(waveId);
+        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPickingWithSideType(waveId);
         return ApiResult.success(dto);
     }
 
@@ -67,7 +70,7 @@ public class WaveListPdaController {
      */
     @PostMapping("/startPickingWithSequenceType")
     public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPickingWithSequenceType(@RequestParam String waveId){
-        WaveListDetailPdaDTO.ViewDTO dto = waveListPdaService.startPickingWithSequenceType(waveId);
+        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPickingWithSequenceType(waveId);
         return ApiResult.success(dto);
     }
 

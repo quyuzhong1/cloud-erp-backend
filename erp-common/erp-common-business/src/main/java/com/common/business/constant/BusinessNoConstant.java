@@ -139,4 +139,6 @@ public interface BusinessNoConstant {
 
     //拣货车
     String JHC = "JHC";
+    //拣货波次
+    String JHBC = "JHBC";
 }

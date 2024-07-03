@@ -28,11 +28,9 @@ public class WaveListDetailPdaController extends BaseController {
      * 挂起波次
      */
     @PostMapping("/hangUp")
-    public ApiResult<Boolean> hangUp(@RequestBody WaveListDetailPdaDTO.HangUpParamDTO hangUpDTO){
-        String waveId = hangUpDTO.getWaveId();
-        String waveCode = hangUpDTO.getWaveCode();
-        List<WaveListDetailPdaDTO.PickingLocationDTO> pickingLocationList = hangUpDTO.getLocationPickingDetailList();
-        return null;
+    public ApiResult<?> hangUp(@RequestBody WaveListDetailPdaDTO.HangUpParamDTO hangUpDTO){
+        Boolean flag = waveListDetailPdaService.hangUp(hangUpDTO);
+        return flag ? success() : failure();
     }
 
     /**
