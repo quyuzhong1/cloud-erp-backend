@@ -254,6 +254,11 @@ public class SoB2cDTO implements Serializable {
         private Boolean isOverseasProviderWarehouse;
 
         /**
+         * 买家自选物流
+         */
+        private String sellerLogisticName;
+
+        /**
          * 物流渠道id
          */
         private String logisticsChannelId;

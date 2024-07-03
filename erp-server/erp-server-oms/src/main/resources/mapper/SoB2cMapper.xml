@@ -88,6 +88,7 @@
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
         sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
         sb2cl.weight,
+        sb2cl.name as sellerLogisticName,
         sb2cl.code as logisticsCode,
         sb2cl.track_no as trackCode
     </sql>
