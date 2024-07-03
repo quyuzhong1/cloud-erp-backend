@@ -1091,6 +1091,10 @@ public class LogisticsProductDTO {
          * 是否带电
          */
         private Boolean isElectric;
+        /**
+         * 是否纯电
+         */
+        private Boolean onlyBattery;
 
         /**
          * 是否液体
