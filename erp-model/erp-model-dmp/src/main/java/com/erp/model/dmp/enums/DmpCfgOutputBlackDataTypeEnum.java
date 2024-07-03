@@ -6,19 +6,16 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 推送任务记录 推送状态 枚举
+ * 输出黑名单 数据类型 枚举
  * </p>
  *
  * @author shukai
- * @since 2024-06-11 09:37:12
+ * @since 2024-07-03 16:04:42
  */
-public enum DmpOutputTaskRecordStatusEnum implements EnumMessage {
-	INIT("init", "待推送"),
-	MQSUCCESS("mqsuccess", "mq推送成功"),
-	MQERROR("mqerror", "mq推送失败"),
-	COSUMERERROR("cosumererror", "消费失败"),
-	FINISH("finish", "推送成功"),
-	ERROR("error", "推送失败"),
+public enum DmpCfgOutputBlackDataTypeEnum implements EnumMessage {
+	INT("int", "数字"),
+	STRING("string", "字符"),
+	DATE("date", "日期"),
     ;
     /**
      * 类型
@@ -31,7 +28,7 @@ public enum DmpOutputTaskRecordStatusEnum implements EnumMessage {
      */
     private String name;
 
-    DmpOutputTaskRecordStatusEnum(String code, String name) {
+    DmpCfgOutputBlackDataTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -50,7 +47,7 @@ public enum DmpOutputTaskRecordStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpOutputTaskRecordStatusEnum statusEnum : DmpOutputTaskRecordStatusEnum.values()) {
+        for (DmpCfgOutputBlackDataTypeEnum statusEnum : DmpCfgOutputBlackDataTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

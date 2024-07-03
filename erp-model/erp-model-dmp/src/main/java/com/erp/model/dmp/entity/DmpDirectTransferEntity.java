@@ -119,6 +119,75 @@ RETURN：退货
     */
     @TableField("warehouse_keeper_name")
     private String warehouseKeeperName;
+    
+    /**
+     * 销售组织名称
+     */
+     @TableField("sale_org_name")
+     private String saleOrgName;
+     
+     /**
+      * 业务类型
+      */
+     @TableField("biz_type")
+     private String bizType;
+     
+     /**
+      * 调入库存组织id
+      */
+     @TableField("in_org_id")
+     private String inOrgId;
+     
+     /**
+      * 调出库存组织id
+      */
+     @TableField("out_org_id")
+     private String outOrgId;
+     
+     /**
+      * 创建人名称
+      */
+     @TableField("platform_create_user_name")
+     private String platformCreateUserName;
+     
+     /**
+      * 审核人名称
+      */
+     @TableField("approve_user_name")
+     private String approveUserName;
+     
+     /**
+      * 审核日期
+      */
+     @TableField("approve_time")
+     private LocalDateTime approveTime;
+     
+     /**
+      * 作废日期
+      */
+     @TableField("invalid_time")
+     private LocalDateTime invalidTime;
+     
+     /**
+      * 作废名称
+      */
+     @TableField("invalid_user_name")
+     private String invalidUserName;
+     
+     /**
+      * 最后更新时间
+      */
+     @TableField("last_updated_time")
+     private LocalDateTime lastUpdatedTime;
+     
+     /**
+      * 最后更新人
+      */
+     @TableField("last_updated_user_name")
+     private String lastUpdatedUserName;
+     
+     
+    
     /**
     * 备注
     */

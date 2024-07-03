@@ -58,7 +58,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         /**
         * 异常原因
         */
-        private String errorMessage;
+        private String responseData;
 
 
     }
@@ -92,26 +92,6 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 输入任务存储状态（冗余）
-        */
-        @NotBlank(message = "输入任务存储状态（冗余）不能为空")
-        @Size(max = 50,message = "输入任务存储状态（冗余）最大长度不能超过50位")
-        private String inputStatus;
-
-        /**
-        * 数据的存储名，fds为文件夹路径，mongo为集合名,pg为表名（冗余）
-        */
-        @NotBlank(message = "数据的存储名，fds为文件夹路径，mongo为集合名,pg为表名（冗余）不能为空")
-        @Size(max = 255,message = "数据的存储名，fds为文件夹路径，mongo为集合名,pg为表名（冗余）最大长度不能超过255位")
-        private String storageName;
-
-        /**
-        * 数据id
-        */
-        @NotBlank(message = "数据id不能为空")
-        @Size(max = 50,message = "数据id最大长度不能超过50位")
-        private String dataId;
 
         /**
         * 推送状态：init=待推送,finish=推送成功,error=推送失败
@@ -123,7 +103,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         /**
         * 异常原因
         */
-        private String errorMessage;
+        private String responseData;
 
 
     }

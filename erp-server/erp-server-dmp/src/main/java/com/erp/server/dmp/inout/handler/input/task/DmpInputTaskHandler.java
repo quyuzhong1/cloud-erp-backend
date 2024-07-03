@@ -216,6 +216,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 					DmpOutputInputCreateRequest dmpOutputInputCreateRequest = new DmpOutputInputCreateRequest();
 					dmpOutputInputCreateRequest.setCfgOutputId(dmpCfgOutputEntity.getId());
 					dmpOutputInputCreateRequest.setDmpCfgOutputDetailEntity(dmpCfgOutputDetailEntity);
+					dmpOutputInputCreateRequest.setInputTaskId(inputTaskId);
 					dmpOutputInputCreateRequestList.add(dmpOutputInputCreateRequest);
 				}
 			}

@@ -11,6 +11,8 @@ import lombok.Data;
  */
 @Data
 public class DmpOutputInputCreateRequest extends DmpOutputCreateRequest{
+	private String inputTaskId;
+	
 	private DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity;
 	
 	private DmpOutputTaskRequest dmpOutputTaskRequest;

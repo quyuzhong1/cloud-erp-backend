@@ -42,6 +42,7 @@ public class DmpOutputInputCreateHandler extends DmpOutputBaseCreateHandler{
 		dmpOutputTaskEntity.setNextLevelId(nextLevelId);
 		dmpOutputTaskEntity.setStatus(DmpOutputTaskStatusEnum.INIT.getCode());
 		dmpOutputTaskEntity.setTaskType(DmpOutputTaskTypeEnum.INPUT.getCode());
+		dmpOutputTaskEntity.setInputTaskId(dmpOutputInputCreateRequest.getInputTaskId());
 		
 		dmpOutputTaskService.save(dmpOutputTaskEntity);
 		return Collections.singletonList(dmpOutputTaskEntity);

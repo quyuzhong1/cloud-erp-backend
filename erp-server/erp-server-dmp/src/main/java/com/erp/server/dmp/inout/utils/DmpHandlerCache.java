@@ -9,6 +9,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -20,20 +23,30 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgMqEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
+import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
 import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
 import com.erp.server.dmp.service.DmpCfgInputConvertService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpCfgInputService;
+import com.erp.server.dmp.service.DmpCfgMqService;
+import com.erp.server.dmp.service.DmpCfgOutputBlackService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 public class DmpHandlerCache implements CommandLineRunner{
 	
 	@Value("${dmp.input.fresh.cache.time:5}")
     private int freshCacheTime;
+	
+	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 	
 	private volatile List<DmpBasicSystemEntity> dmpBasicSystemCache;
 	
@@ -46,6 +59,12 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private volatile List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingCache;
 	private volatile Map<String, Map<String, List<String>>> convertMappingCache;
 	
+	private volatile Map<String , RocketMQTemplate> rocketMQTemplateMap;
+	
+	private volatile Map<String , DmpCfgMqEntity> rocketMQDmpCfgMqCache;
+	
+	private volatile List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackCache;
+	
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
 	@Autowired
@@ -56,6 +75,10 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpCfgInputDetailService dmpCfgInputDetailService;
 	@Autowired
 	private DmpCfgInputConvertMappingService dmpCfgInputConvertMappingService;
+	@Autowired
+	private DmpCfgMqService dmpCfgMqService;
+	@Autowired
+	private DmpCfgOutputBlackService dmpCfgOutputBlackService;
 	
 	public List<DmpBasicSystemEntity> getDmpBasicSystemEntityList(Predicate<? super DmpBasicSystemEntity> paramPredicate) {
 		if(dmpBasicSystemCache == null) {
@@ -97,21 +120,58 @@ public class DmpHandlerCache implements CommandLineRunner{
 		return convertMappingCache.get(mainId);
 	}
 	
-	private void dealConvertMappingCache() {
-		convertMappingCache = new HashMap<>();
-		if(dmpCfgInputConvertMappingCache == null) {
-			dmpCfgInputConvertMappingCache = dmpCfgInputConvertMappingService.lambdaQuery()
-					.eq(DmpCfgInputConvertMappingEntity::getDisabled, false)
-					.list();
+	public DmpCfgMqEntity getRocketMQDmpCfgMqCache(String mqId){
+		if(rocketMQDmpCfgMqCache == null) {
+			this.initRocketMQTemplate();
 		}
-		Map<String, List<DmpCfgInputConvertMappingEntity>> mainEntityMap = dmpCfgInputConvertMappingCache.stream().collect(Collectors.groupingBy(DmpCfgInputConvertMappingEntity::getMainId));
-		for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> mainEntity : mainEntityMap.entrySet()) {
-			Map<String, List<String>> map = new HashMap<>();
-			Map<String, List<DmpCfgInputConvertMappingEntity>> mapping = mainEntity.getValue().stream().collect(Collectors.groupingBy(d -> d.getOriginalKey().replace(".", "")));
-			for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> m : mapping.entrySet()) {
-				map.put(m.getKey(), m.getValue().stream().map(d -> StrUtils.underlineToCamel(d.getConvertKey(), true)).collect(Collectors.toList()));
+		return rocketMQDmpCfgMqCache.get(mqId);
+	}
+	
+	public RocketMQTemplate getRocketMQTemplate(String mqId){
+		if(rocketMQTemplateMap == null) {
+			this.initRocketMQTemplate();
+		}
+		return rocketMQTemplateMap.get(mqId);
+	}
+	
+	public List<DmpCfgOutputBlackEntity> getDmpCfgOutputBlackEntityList(Predicate<? super DmpCfgOutputBlackEntity> paramPredicate) {
+		if(dmpCfgOutputBlackCache == null) {
+			dmpCfgOutputBlackCache = dmpCfgOutputBlackService.lambdaQuery()
+					.eq(DmpCfgOutputBlackEntity::getDisabled, false).list();
+		}
+		return dmpCfgOutputBlackCache.stream().filter(paramPredicate).collect(Collectors.toList());
+	}
+	
+	private void dealRocketMQTemplate(List<DmpCfgMqEntity> updateRocketMQDmpCfgMqEntity) {
+		if(CollUtil.isNotEmpty(updateRocketMQDmpCfgMqEntity)) {
+			List<DmpCfgMqEntity> disabledList = updateRocketMQDmpCfgMqEntity.stream().filter(d -> Boolean.TRUE.equals(d.getDisabled())).collect(Collectors.toList());
+			if(CollUtil.isNotEmpty(disabledList)) {
+				for(DmpCfgMqEntity dmpCfgMqEntity : disabledList) {
+					this.removeRocketMQTemplate(dmpCfgMqEntity.getId());
+				}
 			}
-			convertMappingCache.put(mainEntity.getKey(), map);
+			List<DmpCfgMqEntity> abledList = updateRocketMQDmpCfgMqEntity.stream().filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList());
+			if(CollUtil.isNotEmpty(abledList)) {
+				for(DmpCfgMqEntity dmpCfgMqEntity : abledList) {
+					String id = dmpCfgMqEntity.getId();
+					this.removeRocketMQTemplate(id);
+					
+					DefaultMQProducer producer = new DefaultMQProducer(dmpCfgMqEntity.getMqGroup());
+					producer.setNamesrvAddr(dmpCfgMqEntity.getHost() + ":" + dmpCfgMqEntity.getPort());
+					try {
+						producer.start();
+					} catch (MQClientException e) {
+						log.error("创建RocketMQTemplate失败，id={}" , id , e);
+					}
+					RocketMQTemplate rocketMQTemplate = new RocketMQTemplate();
+			        rocketMQTemplate.setProducer(producer);
+			        
+			        rocketMQTemplateMap.put(id, rocketMQTemplate);
+			        dmpCfgMqEntity.setTopic(namespace + "-" + dmpCfgMqEntity.getTopic());
+			        dmpCfgMqEntity.setTag(namespace + "-" + dmpCfgMqEntity.getTag());
+			        rocketMQDmpCfgMqCache.put(id, dmpCfgMqEntity);
+				}
+			}
 		}
 	}
 	
@@ -195,6 +255,70 @@ public class DmpHandlerCache implements CommandLineRunner{
 			}
 			
 		}, 4, freshCacheTime, TimeUnit.SECONDS);
+		
+		this.initRocketMQTemplate();
+		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+			this.dealRocketMQTemplate(dmpCfgMqService.lambdaQuery()
+					.eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
+					.gt(DmpCfgMqEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+					.list());
+		}, 5, freshCacheTime, TimeUnit.SECONDS);
+		
+		dmpCfgOutputBlackCache = dmpCfgOutputBlackService.lambdaQuery()
+				.eq(DmpCfgOutputBlackEntity::getDisabled, false).list();
+		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+			List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackEntityFreshList = dmpCfgOutputBlackService.lambdaQuery()
+					.gt(DmpCfgOutputBlackEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+					.list();
+			if(CollUtil.isNotEmpty(dmpCfgOutputBlackEntityFreshList)) {
+				List<String> newIds = dmpCfgOutputBlackEntityFreshList.stream().map(DmpCfgOutputBlackEntity::getId).collect(Collectors.toList());
+				dmpCfgOutputBlackCache.removeIf(d -> newIds.contains(d.getId()));
+				dmpCfgOutputBlackCache.addAll(dmpCfgOutputBlackEntityFreshList.stream()
+						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+			}
+			
+		}, 0, freshCacheTime, TimeUnit.SECONDS);
 	}
 
+	private void removeRocketMQTemplate(String mqId) {
+		rocketMQDmpCfgMqCache.remove(mqId);
+		RocketMQTemplate rocketMQTemplate = rocketMQTemplateMap.get(mqId);
+		if(rocketMQTemplate != null) {
+			DefaultMQProducer producer = rocketMQTemplate.getProducer();
+			if(producer != null) {
+				producer.shutdown();
+			}
+			rocketMQTemplateMap.remove(mqId);
+		}
+	}
+	
+	private void dealConvertMappingCache() {
+		convertMappingCache = new HashMap<>();
+		if(dmpCfgInputConvertMappingCache == null) {
+			dmpCfgInputConvertMappingCache = dmpCfgInputConvertMappingService.lambdaQuery()
+					.eq(DmpCfgInputConvertMappingEntity::getDisabled, false)
+					.list();
+		}
+		Map<String, List<DmpCfgInputConvertMappingEntity>> mainEntityMap = dmpCfgInputConvertMappingCache.stream().collect(Collectors.groupingBy(DmpCfgInputConvertMappingEntity::getMainId));
+		for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> mainEntity : mainEntityMap.entrySet()) {
+			Map<String, List<String>> map = new HashMap<>();
+			Map<String, List<DmpCfgInputConvertMappingEntity>> mapping = mainEntity.getValue().stream().collect(Collectors.groupingBy(d -> d.getOriginalKey().replace(".", "")));
+			for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> m : mapping.entrySet()) {
+				map.put(m.getKey(), m.getValue().stream().map(d -> StrUtils.underlineToCamel(d.getConvertKey(), true)).collect(Collectors.toList()));
+			}
+			convertMappingCache.put(mainEntity.getKey(), map);
+		}
+	}
+	
+	private void initRocketMQTemplate() {
+		if(rocketMQTemplateMap == null) {
+			rocketMQTemplateMap = new HashMap<>();
+		}
+		if(rocketMQDmpCfgMqCache == null) {
+			rocketMQDmpCfgMqCache = new HashMap<>();
+		}
+		this.dealRocketMQTemplate(dmpCfgMqService.lambdaQuery()
+					.eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
+					.eq(DmpCfgMqEntity::getDisabled, false).list());
+	}
 }

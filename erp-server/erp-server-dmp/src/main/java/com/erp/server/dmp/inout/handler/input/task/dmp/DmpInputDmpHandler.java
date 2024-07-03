@@ -136,6 +136,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		}
 		
 		dmpResponse.getConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputDmpBaseEntityList);
+		dmpResponse.getChangeConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, changeConvertInputDmpBaseEntityList);
 		this.afterToDoStatus(dmpRequest, dmpResponse);
 		
 		DmpOutputTaskRequest dmpOutputDmpRequest = new DmpOutputTaskRequest();
@@ -143,7 +144,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		dmpOutputDmpRequest.setConvertInputTaskFileEntityListMaps(dmpResponse.getConvertInputTaskFileEntityListMaps());
 		dmpOutputDmpRequest.setConvertInputMongoEntityListMaps(dmpResponse.getConvertInputMongoEntityListMaps());
 		dmpOutputDmpRequest.setConvertInputDmpBaseEntityListMaps(dmpResponse.getConvertInputDmpBaseEntityListMaps());
-		dmpOutputDmpRequest.getChangeConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, changeConvertInputDmpBaseEntityList);
+		dmpOutputDmpRequest.setChangeConvertInputDmpBaseEntityListMaps(dmpResponse.getChangeConvertInputDmpBaseEntityListMaps());
 		this.doBaseChain(dmpRequest, dmpResponse, chain, dmpOutputDmpRequest);
 	}
 	
@@ -304,6 +305,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	
 	protected void afterDmpInputDmpEntity(Map<String, Object> beanDmpInputDmpEntity) {
 		beanDmpInputDmpEntity.put(StrUtils.underlineToCamel(CONVERT_ID, true), convertId);
+		beanDmpInputDmpEntity.put(StrUtils.underlineToCamel(INPUT_TASK_ID, true), inputTaskId);
 		this.afterDmpInputMongoEntityFixedValue(beanDmpInputDmpEntity);
 	}
 	

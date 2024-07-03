@@ -6,19 +6,25 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 推送任务记录 推送状态 枚举
+ * 输出黑名单 比较符 枚举
  * </p>
  *
  * @author shukai
- * @since 2024-06-11 09:37:12
+ * @since 2024-07-03 16:04:42
  */
-public enum DmpOutputTaskRecordStatusEnum implements EnumMessage {
-	INIT("init", "待推送"),
-	MQSUCCESS("mqsuccess", "mq推送成功"),
-	MQERROR("mqerror", "mq推送失败"),
-	COSUMERERROR("cosumererror", "消费失败"),
-	FINISH("finish", "推送成功"),
-	ERROR("error", "推送失败"),
+public enum DmpCfgOutputBlackCompareSignEnum implements EnumMessage {
+	EQ("eq", "等于"),
+	NE("ne", "不等于"),
+	IN("in", "包含"),
+	GT("gt", "大于"),
+	GE("ge", "大于等于"),
+	LT("lt", "小于"),
+	LE("le", "小于等于"),
+	BE("be", "在之间"),
+	LIKE("like"  , "匹配"),
+    NOTLIKE("notlike"  , "不匹配"),
+	ISNULL("isnull" , "为空"),
+	ISNOTNULL("isnotnull" , "不为空"),
     ;
     /**
      * 类型
@@ -31,7 +37,7 @@ public enum DmpOutputTaskRecordStatusEnum implements EnumMessage {
      */
     private String name;
 
-    DmpOutputTaskRecordStatusEnum(String code, String name) {
+    DmpCfgOutputBlackCompareSignEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -50,7 +56,7 @@ public enum DmpOutputTaskRecordStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpOutputTaskRecordStatusEnum statusEnum : DmpOutputTaskRecordStatusEnum.values()) {
+        for (DmpCfgOutputBlackCompareSignEnum statusEnum : DmpCfgOutputBlackCompareSignEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

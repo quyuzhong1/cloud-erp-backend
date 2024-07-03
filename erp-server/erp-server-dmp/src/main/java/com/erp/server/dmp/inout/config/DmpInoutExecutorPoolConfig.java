@@ -18,8 +18,8 @@ public class DmpInoutExecutorPoolConfig {
         return service;
     }
     
-    @Bean(name = "dmpInputChildExecutorPool")
-    public ExecutorService dmpInputChildExecutorPool() {
+    @Bean(name = "dmpOutputExecutorPool")
+    public ExecutorService dmpOutputExecutorPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(30, 30,
                 0L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(10000));
