@@ -81,4 +81,6 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
     Integer countByStatus(@Param("statusCode") String statusCode);
 
     List<WarehouseLocationEntity> listLocation(@Param("warehouseId") String warehouseId, @Param("warehouseArea") String warehouseArea);
+
+    WarehouseLocationEntity findWarehouseArea(@Param("warehouseId") String warehouseId, @Param("warehouseLocation") String warehouseLocation);
 }

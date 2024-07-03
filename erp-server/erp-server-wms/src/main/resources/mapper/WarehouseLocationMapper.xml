@@ -390,4 +390,9 @@
                                                     wl.disabled = false and wa.disabled = false
         where wa.warehouse_id = #{warehouseId} and wa.code = #{warehouseArea}
     </select>
+    <select id="findWarehouseArea" resultType="com.erp.model.wms.entity.WarehouseLocationEntity">
+        select wa.* from warehouse_location wl left join warehouse_location wa on wl.parent_id = wa.id
+        where wa.is_deleted = false and wl.is_deleted = false
+        and wl.warehouse_id = #{warehouseId} and wl.code = #{warehouseLocation}
+    </select>
 </mapper>
