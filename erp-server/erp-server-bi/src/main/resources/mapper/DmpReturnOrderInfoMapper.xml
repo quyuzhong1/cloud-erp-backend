@@ -29,8 +29,8 @@
             droi.status,
             droi.return_create_time,
             droi.order_time
-        from dmp_return_order_info droi
-        inner join dmp_return_order_item droid on droi.id = droid.return_order_id
+        from bi_return_order_info droi
+        inner join bi_return_order_item droid on droi.id = droid.return_order_id
         <where>
             <if test="params.returnOrderId != null and params.returnOrderId != ''">
                 and droi.return_code ilike concat('%',#{params.returnOrderId}::text,'%')
@@ -78,8 +78,8 @@
         round(droi.order_fee * droi.cny_settle_rate,2) as cny_settle_amount,
         droi.status,
         droi.return_create_time
-        from dmp_return_order_info droi
-        inner join dmp_return_order_item droid on droi.id = droid.return_order_id
+        from bi_return_order_info droi
+        inner join bi_return_order_item droid on droi.id = droid.return_order_id
         <where>
             <if test="params.returnOrderId != null and params.returnOrderId != ''">
                 and droi.return_code ilike concat('%',#{params.returnOrderId}::text,'%')

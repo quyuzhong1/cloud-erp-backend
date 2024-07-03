@@ -18,7 +18,7 @@
            dsi.create_time,
            dsi.update_user_name,
            dsi.update_time
-        from dmp_shop_info dsi
+        from bi_shop_info dsi
         <where>
             <if test="params.shopName != null and params.shopName != ''">
                 and dsi.name ILIKE concat('%',#{params.shopName}::text,'%')
@@ -55,7 +55,7 @@
         dsi.create_time,
         dsi.update_user_name,
         dsi.update_time
-        from dmp_shop_info dsi
+        from bi_shop_info dsi
         <where>
             <if test="params.shopName != null and params.shopName != ''">
                 and dsi.name ILIKE concat('%',#{params.shopName}::text,'%')

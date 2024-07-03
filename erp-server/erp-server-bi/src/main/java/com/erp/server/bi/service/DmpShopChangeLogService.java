@@ -5,7 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.dmp.dto.DmpShopChangeLogDTO;
-import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
+import com.erp.model.dmp.entity.BiShopChangeLogEntity;
 
 /**
  * @author Will
@@ -13,6 +13,6 @@ import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
 
  * @date 2022/12/15 14:30
  */
-public interface DmpShopChangeLogService extends IService<DmpShopChangeLogEntity> {
+public interface DmpShopChangeLogService extends IService<BiShopChangeLogEntity> {
     PagingVO<DmpShopChangeLogDTO> paging(PagingDTO<AdvanceSearchDTO> dto);
 }

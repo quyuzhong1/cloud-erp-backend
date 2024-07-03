@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.dmp.dto.DmpShopChangeLogDTO;
-import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
+import com.erp.model.dmp.entity.BiShopChangeLogEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -16,7 +16,7 @@ import org.apache.ibatis.annotations.Param;
  * @date 2022/12/15 14:31
  */
 @Mapper
-public interface DmpShopChangeLogMapper extends BaseMapper<DmpShopChangeLogEntity> {
+public interface DmpShopChangeLogMapper extends BaseMapper<BiShopChangeLogEntity> {
 
     IPage<DmpShopChangeLogDTO> paging(Page query,@Param("params") AdvanceSearchDTO params);
 }

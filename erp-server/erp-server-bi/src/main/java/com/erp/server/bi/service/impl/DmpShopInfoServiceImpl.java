@@ -21,9 +21,9 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.bi.vo.ShopDropDownVO;
 import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.*;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiShopChangeLogEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
  * @date 2022/12/14 14:43
  */
 @Service
-public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpShopInfoEntity>
+public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, BiShopInfoEntity>
         implements DmpShopInfoService {
 
     @Resource
@@ -92,16 +92,16 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * @Date 2022/12/26 15:15
      **/
     @Override
-    public List<DmpShopInfoEntity> shopList() {
+    public List<BiShopInfoEntity> shopList() {
         return this.list();
     }
 
     @Override
     public DmpShopInfoDTO getDmpShopInfoById(String id) {
-        DmpShopInfoEntity dmpShopInfoEntity = this.getById(id);
+        BiShopInfoEntity biShopInfoEntity = this.getById(id);
         DmpShopInfoDTO dto = new DmpShopInfoDTO();
-        if (ObjectUtils.isNotEmpty(dmpShopInfoEntity)) {
-            BeanUtils.copyProperties(dmpShopInfoEntity, dto);
+        if (ObjectUtils.isNotEmpty(biShopInfoEntity)) {
+            BeanUtils.copyProperties(biShopInfoEntity, dto);
         }
         return dto;
     }
@@ -113,7 +113,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         FindUserDTO user = sysUserFeign.getUserByUserId(dto.getChargeId());
         dto.setChargeName(user.getUserName());
         //新增
-        DmpShopInfoEntity entity = new DmpShopInfoEntity();
+        BiShopInfoEntity entity = new BiShopInfoEntity();
         BeanUtils.copyProperties(dto, entity);
         return this.save(entity);
     }
@@ -127,37 +127,37 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             dto.setChargeName(user.getUserName());
         }
         //编辑
-        DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
-        BeanUtils.copyProperties(dto, dmpShopInfoEntity);
-        dmpShopInfoEntity.setId(dto.getId());
-        return this.updateById(dmpShopInfoEntity);
+        BiShopInfoEntity biShopInfoEntity = new BiShopInfoEntity();
+        BeanUtils.copyProperties(dto, biShopInfoEntity);
+        biShopInfoEntity.setId(dto.getId());
+        return this.updateById(biShopInfoEntity);
     }
 
     @Override
     @Transactional
     public Boolean changeChargeName(DmpShopInfoChangeDTO dto) {
-        DmpShopInfoEntity dmpShopInfoEntity = this.getById(dto.getId());
+        BiShopInfoEntity biShopInfoEntity = this.getById(dto.getId());
 
       /*  if (ObjectUtils.isNotEmpty(dmpShopInfoEntity.getEnableTime()) && ObjectUtils.isNotEmpty(dto.getEnableTime())) {
             if (dmpShopInfoEntity.getEnableTime().isAfter(dto.getEnableTime())) {
                 throw new ServiceException(ApiError.ERROR_97013);
             }
         }*/
-        DmpShopChangeLogEntity logEntity = new DmpShopChangeLogEntity();
+        BiShopChangeLogEntity logEntity = new BiShopChangeLogEntity();
         logEntity.setShopId(dto.getId());
-        logEntity.setChargeId(StringUtils.isBlank(dmpShopInfoEntity.getChargeId()) ? "-" : dmpShopInfoEntity.getChargeId());
-        logEntity.setChargeName(StringUtils.isBlank(dmpShopInfoEntity.getChargeId()) ? "-" : dmpShopInfoEntity.getChargeName());
-        logEntity.setEnableTimeBegin(null == dmpShopInfoEntity.getEnableTime() ? LocalDate.of(2022, 1, 1) : dmpShopInfoEntity.getEnableTime());
+        logEntity.setChargeId(StringUtils.isBlank(biShopInfoEntity.getChargeId()) ? "-" : biShopInfoEntity.getChargeId());
+        logEntity.setChargeName(StringUtils.isBlank(biShopInfoEntity.getChargeId()) ? "-" : biShopInfoEntity.getChargeName());
+        logEntity.setEnableTimeBegin(null == biShopInfoEntity.getEnableTime() ? LocalDate.of(2022, 1, 1) : biShopInfoEntity.getEnableTime());
         logEntity.setEnableTimeEnd(dto.getEnableTime().minusDays(1L));
 
 
-        dmpShopInfoEntity.setChargeId(dto.getChargeId());
+        biShopInfoEntity.setChargeId(dto.getChargeId());
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getChargeId());
         if (ObjectUtils.isEmpty(findUserDTO)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
-        dmpShopInfoEntity.setChargeName(findUserDTO.getUserName());
-        dmpShopInfoEntity.setEnableTime(dto.getEnableTime());
+        biShopInfoEntity.setChargeName(findUserDTO.getUserName());
+        biShopInfoEntity.setEnableTime(dto.getEnableTime());
         //新增变更记录
         boolean flag = dmpShopChangeLogService.save(logEntity);
         if (flag) {
@@ -167,10 +167,10 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
                 sysUserDeptDTO = userDeptList.stream().filter(obj -> dto.getChargeId().equals(obj.getUid())).findFirst().orElse(null);
             }
             //更新启用日期后的店铺业务负责人
-            updateCharge(dmpShopInfoEntity.getId(), dmpShopInfoEntity.getPlatformShopNo(), dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName(), sysUserDeptDTO);
+            updateCharge(biShopInfoEntity.getId(), biShopInfoEntity.getPlatformShopNo(), dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName(), sysUserDeptDTO);
 
         }
-        return this.updateById(dmpShopInfoEntity);
+        return this.updateById(biShopInfoEntity);
     }
 
     @Override
@@ -180,9 +180,9 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             throw new ServiceException(ApiError.ERROR_9029);
         }
         //更新启动时间后的订单负责人部门
-        List<DmpOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
-                .eq(DmpOrderInfoEntity::getChargeId, dto.getChargeId())
-                .ge(DmpOrderInfoEntity::getPlatformCreateTime, dto.getEnableTime())
+        List<BiOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
+                .eq(BiOrderInfoEntity::getChargeId, dto.getChargeId())
+                .ge(BiOrderInfoEntity::getPlatformCreateTime, dto.getEnableTime())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
@@ -213,15 +213,15 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
     @Override
     public Integer getDmpShopInfoByParam(String platform, String site, String shopName) {
-        LambdaQueryWrapper<DmpShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        LambdaQueryWrapper<BiShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         if (StringUtils.isNotBlank(platform)) {
-            queryWrapper.eq(DmpShopInfoEntity::getPlatformName, platform);
+            queryWrapper.eq(BiShopInfoEntity::getPlatformName, platform);
         }
         if (StringUtils.isNotBlank(site)) {
-            queryWrapper.eq(DmpShopInfoEntity::getSite, site);
+            queryWrapper.eq(BiShopInfoEntity::getSite, site);
         }
         if (StringUtils.isNotBlank(shopName)) {
-            queryWrapper.eq(DmpShopInfoEntity::getName, shopName);
+            queryWrapper.eq(BiShopInfoEntity::getName, shopName);
         }
         return this.count(queryWrapper);
     }
@@ -236,17 +236,17 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      */
     @Override
     public List<ShopSiteVO> getShopCategoryList() {
-        List<DmpShopInfoEntity> list = this.getSiteShopList();
-        Map<String, List<DmpShopInfoEntity>> groupMap = list.parallelStream().
-                collect(Collectors.groupingBy(DmpShopInfoEntity::getSite));
+        List<BiShopInfoEntity> list = this.getSiteShopList();
+        Map<String, List<BiShopInfoEntity>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(BiShopInfoEntity::getSite));
         List<ShopSiteVO> resultList = new ArrayList<>(groupMap.size());
-        for (Map.Entry<String, List<DmpShopInfoEntity>> item : groupMap.entrySet()) {
+        for (Map.Entry<String, List<BiShopInfoEntity>> item : groupMap.entrySet()) {
             ShopSiteVO vo = new ShopSiteVO();
-            List<DmpShopInfoEntity> shopInfoList = item.getValue();
+            List<BiShopInfoEntity> shopInfoList = item.getValue();
             String site = item.getKey();
             vo.setSite(site);
-            vo.setShopNo(shopInfoList.stream().map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
-            vo.setShopName(shopInfoList.stream().map(DmpShopInfoEntity::getName).collect(Collectors.toList()));
+            vo.setShopNo(shopInfoList.stream().map(BiShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
+            vo.setShopName(shopInfoList.stream().map(BiShopInfoEntity::getName).collect(Collectors.toList()));
             resultList.add(vo);
         }
         return resultList;
@@ -262,11 +262,11 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * @date 2023-04-18 10:14
      */
     @Override
-    public List<DmpShopInfoEntity> getByShopNoList(List<String> shopNoList) {
+    public List<BiShopInfoEntity> getByShopNoList(List<String> shopNoList) {
         if (CollectionUtils.isEmpty(shopNoList)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(DmpShopInfoEntity::getPlatformShopNo, shopNoList).list();
+        return lambdaQuery().in(BiShopInfoEntity::getPlatformShopNo, shopNoList).list();
     }
 
     /**
@@ -276,20 +276,20 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * @return
      */
     @Override
-    public List<DmpShopInfoEntity> listByNames(List<String> shopNameList) {
+    public List<BiShopInfoEntity> listByNames(List<String> shopNameList) {
         if (CollectionUtils.isEmpty(shopNameList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(DmpShopInfoEntity::getName,shopNameList).list();
+        return this.lambdaQuery().in(BiShopInfoEntity::getName,shopNameList).list();
     }
 
     @Override
     @Cacheable(cacheNames = "cache:bi:listShopDropDown",keyGenerator = "myKeyGenerator")
     public List<ShopDropDownVO.ShopDropDownNameVO> listShopDropDown(Integer status) {
-        List<DmpShopInfoEntity> list = this.lambdaQuery()
-                .eq(DmpShopInfoEntity::getIsVijim, Boolean.TRUE)
-                .eq(null != status, DmpShopInfoEntity::getStatus, status)
-                .orderByAsc(DmpShopInfoEntity::getName)
+        List<BiShopInfoEntity> list = this.lambdaQuery()
+                .eq(BiShopInfoEntity::getIsVijim, Boolean.TRUE)
+                .eq(null != status, BiShopInfoEntity::getStatus, status)
+                .orderByAsc(BiShopInfoEntity::getName)
                 .list();
         if (CollectionUtil.isEmpty(list)) {
             return Collections.emptyList();
@@ -304,8 +304,8 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     @Override
     @Cacheable(cacheNames = "cache:bi:listSiteDropDown",keyGenerator = "myKeyGenerator")
     public List<ShopDropDownVO.ShopDropDownNameVO> listSiteDropDown() {
-        List<DmpShopInfoEntity> list = this.lambdaQuery()
-                .eq(DmpShopInfoEntity::getStatus, 1)
+        List<BiShopInfoEntity> list = this.lambdaQuery()
+                .eq(BiShopInfoEntity::getStatus, 1)
                 .list();
         if (CollectionUtil.isEmpty(list)) {
             return Collections.emptyList();
@@ -318,10 +318,10 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         return result;
     }
 
-    private List<DmpShopInfoEntity> getSiteShopList() {
-        LambdaQueryWrapper<DmpShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.ne(DmpShopInfoEntity::getSite, "")
-                .or().ne(DmpShopInfoEntity::getSite, null);
+    private List<BiShopInfoEntity> getSiteShopList() {
+        LambdaQueryWrapper<BiShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ne(BiShopInfoEntity::getSite, "")
+                .or().ne(BiShopInfoEntity::getSite, null);
         return this.list(queryWrapper);
     }
 
@@ -382,19 +382,19 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * @date: 2022/12/15 14:41
      */
     private void checkShopName(DmpShopInfoDTO dto) {
-        LambdaQueryWrapper<DmpShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DmpShopInfoEntity::getPlatformName, dto.getPlatformName());
-        queryWrapper.eq(DmpShopInfoEntity::getSite, dto.getSite());
-        queryWrapper.eq(DmpShopInfoEntity::getName, dto.getName());
+        LambdaQueryWrapper<BiShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiShopInfoEntity::getPlatformName, dto.getPlatformName());
+        queryWrapper.eq(BiShopInfoEntity::getSite, dto.getSite());
+        queryWrapper.eq(BiShopInfoEntity::getName, dto.getName());
         queryWrapper.last("limit 1");
-        DmpShopInfoEntity dmpShopInfoEntity = this.getOne(queryWrapper);
-        if ((ObjectUtils.isEmpty(dto.getId()) && ObjectUtils.isNotEmpty(dmpShopInfoEntity))
-                || (ObjectUtils.isNotEmpty(dto.getId()) && ObjectUtils.isNotEmpty(dmpShopInfoEntity) && !dmpShopInfoEntity.getId().equals(dto.getId()))) {
+        BiShopInfoEntity biShopInfoEntity = this.getOne(queryWrapper);
+        if ((ObjectUtils.isEmpty(dto.getId()) && ObjectUtils.isNotEmpty(biShopInfoEntity))
+                || (ObjectUtils.isNotEmpty(dto.getId()) && ObjectUtils.isNotEmpty(biShopInfoEntity) && !biShopInfoEntity.getId().equals(dto.getId()))) {
             throw new ServiceException(ApiError.ERROR_97007);
         }
     }
     @Override
-    public List<DmpShopInfoEntity> listByStoreSign() {
-        return this.lambdaQuery().ne(DmpShopInfoEntity::getStoreSign, "").list();
+    public List<BiShopInfoEntity> listByStoreSign() {
+        return this.lambdaQuery().ne(BiShopInfoEntity::getStoreSign, "").list();
     }
 }

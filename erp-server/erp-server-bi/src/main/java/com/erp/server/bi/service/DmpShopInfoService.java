@@ -10,7 +10,7 @@ import com.erp.model.dmp.dto.DmpShopInfoDeptChangeDTO;
 import com.erp.model.dmp.dto.DmpShopInfoShowDTO;
 import com.erp.model.dmp.dto.DmpShopInfoSearchDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.List;
 
  * @date 2022/12/14 14:43
  */
-public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
+public interface DmpShopInfoService extends IService<BiShopInfoEntity> {
     /**
      * @description: 分页查询
      * @author Will
@@ -37,7 +37,7 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @Date 2022/12/26 15:15
      * @return com.erp.common.vo.PagingVO<com.erp.model.bi.dto.DmpShopInfoShowDTO>
      **/
-    List<DmpShopInfoEntity> shopList();
+    List<BiShopInfoEntity> shopList();
 
     /**
      * @description: 根据id查询店铺数据
@@ -118,14 +118,14 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @param shopNoList
      * @return java.util.List<com.erp.model.dmp.entity.DmpShopInfoEntity>
      */
-    List<DmpShopInfoEntity> getByShopNoList(List<String> shopNoList);
+    List<BiShopInfoEntity> getByShopNoList(List<String> shopNoList);
 
     /**
      * 根据店铺名查询数据
      * @param shopNameList
      * @return
      */
-    List<DmpShopInfoEntity> listByNames(List<String> shopNameList);
+    List<BiShopInfoEntity> listByNames(List<String> shopNameList);
 
     /**
      * 获取店铺下拉列表
@@ -147,5 +147,5 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      *@author yl
      *@date 2023-11-21
      */
-    List<DmpShopInfoEntity> listByStoreSign();
+    List<BiShopInfoEntity> listByStoreSign();
 }

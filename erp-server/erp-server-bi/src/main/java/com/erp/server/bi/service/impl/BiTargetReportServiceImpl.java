@@ -15,11 +15,10 @@ import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
 import com.erp.model.bi.enums.TargetFinishViewTypeEnum;
 import com.erp.model.bi.enums.TargetSearchTypeEnum;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiRefundInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.bi.enums.DateTypeEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.mapper.DmpRefundInfoMapper;
@@ -386,16 +385,16 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     * @param mainList
     * @return List<DmpReturnInfoEntity>
     */
-    private List<DmpRefundInfoEntity> listReturnOrderInfo (List<DmpOrderInfoEntity> mainList) {
+    private List<BiRefundInfoEntity> listReturnOrderInfo (List<BiOrderInfoEntity> mainList) {
         if (CollectionUtils.isEmpty(mainList)) {
             return Collections.EMPTY_LIST;
         }
-        List<String> platformOrderIdList = mainList.stream().map(DmpOrderInfoEntity::getPlatformOrderId).collect(Collectors.toList());
+        List<String> platformOrderIdList = mainList.stream().map(BiOrderInfoEntity::getPlatformOrderId).collect(Collectors.toList());
         //根据订单id查询退货数据
-        QueryWrapper<DmpRefundInfoEntity> qw = new QueryWrapper<>();
+        QueryWrapper<BiRefundInfoEntity> qw = new QueryWrapper<>();
         qw.select("platform_order_id","COALESCE(refund_amount, 0) * currency_rate as refund_amount")
           .in("platform_order_id",platformOrderIdList);
-        List<DmpRefundInfoEntity> entityList = dmpRefundInfoMapper.selectList(qw);
+        List<BiRefundInfoEntity> entityList = dmpRefundInfoMapper.selectList(qw);
         return entityList;
     }
 

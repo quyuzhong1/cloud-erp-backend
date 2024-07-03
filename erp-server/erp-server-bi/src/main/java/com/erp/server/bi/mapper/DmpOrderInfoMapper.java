@@ -11,7 +11,7 @@ import com.erp.model.bi.vo.SalesPriceRangeVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -22,7 +22,7 @@ import java.util.List;
  * @Entity com.erp.model.plm.entity.DmpOrderInfo
  */
 @Mapper
-public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
+public interface DmpOrderInfoMapper extends BaseMapper<BiOrderInfoEntity> {
     /**
      * @param query
      * @param params

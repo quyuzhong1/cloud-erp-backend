@@ -22,8 +22,8 @@
             <if test="settleMethod == 1">
                 SUM(droi.amount_after*dro.cny_settle_rate)
             </if>
-        from dmp_return_order_item as droi
-        LEFT JOIN dmp_return_order_info as dro on dro.return_order_id = droi."id"
+        from bi_return_order_item as droi
+        LEFT JOIN bi_return_order_info as dro on dro.return_order_id = droi."id"
         where dro.status = 4
         <if test="null != sku and sku.size() > 0">
             and droi.sku_no in

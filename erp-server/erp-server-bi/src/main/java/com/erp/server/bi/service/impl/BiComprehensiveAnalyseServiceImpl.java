@@ -14,8 +14,8 @@ import com.erp.model.bi.dto.excel.BiCountryRegionImportExcelDTO;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.vo.*;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.vo.ProductRefLabelVO;
@@ -45,7 +45,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensiveAnalyseMapper, DmpOrderInfoEntity> implements BiComprehensiveAnalyseService {
+public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensiveAnalyseMapper, BiOrderInfoEntity> implements BiComprehensiveAnalyseService {
     @Resource
     private DmpShopInfoService dmpShopInfoService;
 
@@ -132,7 +132,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     public List<List<Object>> shopContrastTrend(BiFilterDTO biFilterDTO) {
         List<ContrastTrendVO> contrastTrendVOList = baseMapper.shopContrastTrend(biFilterDTO);
 
-        List<DmpShopInfoEntity> dmpShopInfoEntities = dmpShopInfoService.shopList();
+        List<BiShopInfoEntity> dmpShopInfoEntities = dmpShopInfoService.shopList();
         if (CollectionUtil.isEmpty(dmpShopInfoEntities)) {
             return Collections.emptyList();
         }
@@ -147,14 +147,14 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 .collect(Collectors.groupingBy(ContrastTrendVO::getShopNo, Collectors.toMap(ContrastTrendVO::getYear, ContrastTrendVO::getSales)));
         String lastYearKey = String.valueOf(LocalDate.now().minusYears(1L).getYear());
         String thisYearKey = String.valueOf(LocalDate.now().minusYears(1L).getYear());
-        for (DmpShopInfoEntity dmpShopInfoEntity : dmpShopInfoEntities) {
-            Map<String, BigDecimal> yearMap = shopNoMap.get(dmpShopInfoEntity.getPlatformShopNo());
+        for (BiShopInfoEntity biShopInfoEntity : dmpShopInfoEntities) {
+            Map<String, BigDecimal> yearMap = shopNoMap.get(biShopInfoEntity.getPlatformShopNo());
             if (CollectionUtil.isEmpty(yearMap)) {
                 continue;
             }
             lastYearSales.add(yearMap.getOrDefault(lastYearKey, BigDecimal.ZERO));
             thisYearSales.add(yearMap.getOrDefault(thisYearKey, BigDecimal.ZERO));
-            shopName.add(dmpShopInfoEntity.getName());
+            shopName.add(biShopInfoEntity.getName());
         }
         result.add(shopName);
         result.add(lastYearSales);
@@ -639,7 +639,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
         // 各平台首单时间
         // Map<平台, 订单>
-        Map<String, DmpOrderInfoEntity> orderMap = dmpOrderInfoService.mapFirstOrderBySkuNo(dto.getSkuNo());
+        Map<String, BiOrderInfoEntity> orderMap = dmpOrderInfoService.mapFirstOrderBySkuNo(dto.getSkuNo());
 
         // 销售状态
         Integer scalesStatus = null;

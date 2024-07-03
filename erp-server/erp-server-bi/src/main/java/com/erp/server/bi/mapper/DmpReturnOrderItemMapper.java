@@ -1,7 +1,7 @@
 package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -12,7 +12,7 @@ import java.util.List;
  * @Entity com.erp.model.plm.entity.DmpReturnOrderItem
  */
 @Mapper
-public interface DmpReturnOrderItemMapper extends BaseMapper<DmpReturnOrderItemEntity> {
+public interface DmpReturnOrderItemMapper extends BaseMapper<BiReturnOrderItemEntity> {
 
     /**
      * 统计退货金额

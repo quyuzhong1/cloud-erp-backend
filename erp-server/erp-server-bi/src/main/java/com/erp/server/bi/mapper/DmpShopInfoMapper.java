@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.dmp.dto.DmpShopInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpShopInfoShowDTO;
 import com.erp.model.dmp.dto.DmpShopInfoSearchDTO;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -19,7 +19,7 @@ import java.util.List;
  * @date 2022/12/14 14:43
  */
 @Mapper
-public interface DmpShopInfoMapper extends BaseMapper<DmpShopInfoEntity> {
+public interface DmpShopInfoMapper extends BaseMapper<BiShopInfoEntity> {
     /**
      * @description: 分页查询
      * @author Will

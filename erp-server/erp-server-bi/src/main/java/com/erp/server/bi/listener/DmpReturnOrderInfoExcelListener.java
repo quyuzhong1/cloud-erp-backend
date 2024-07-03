@@ -9,9 +9,9 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.enums.ReturnOrderStatusEnum;
@@ -45,10 +45,10 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
 
     private List<DmpReturnOrderInfoImportExcelDTO> list;
 
-    private List<DmpReturnOrderInfoEntity> returnOrderList;
+    private List<BiReturnOrderInfoEntity> returnOrderList;
 
-    public DmpReturnOrderInfoExcelListener(Integer importType,List<DmpReturnOrderInfoEntity> returnOrderList, DmpOrderInfoService dmpOrderInfoService, DmpReturnOrderInfoService dmpReturnOrderInfoService
-            , DmpShopInfoService dmpShopInfoService, DmpReturnOrderItemService dmpReturnOrderItemService,PlmTaskFeign plmTaskFeign) {
+    public DmpReturnOrderInfoExcelListener(Integer importType, List<BiReturnOrderInfoEntity> returnOrderList, DmpOrderInfoService dmpOrderInfoService, DmpReturnOrderInfoService dmpReturnOrderInfoService
+            , DmpShopInfoService dmpShopInfoService, DmpReturnOrderItemService dmpReturnOrderItemService, PlmTaskFeign plmTaskFeign) {
         this.importType = importType;
         this.dmpOrderInfoService = dmpOrderInfoService;
         this.dmpShopInfoService = dmpShopInfoService;
@@ -70,7 +70,7 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
     @Transactional(rollbackFor = Exception.class)
     public void invoke(DmpReturnOrderInfoImportExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-        DmpReturnOrderInfoEntity entity = new DmpReturnOrderInfoEntity();
+        BiReturnOrderInfoEntity entity = new BiReturnOrderInfoEntity();
 
         //注解验证信息
         List<String> msgList = FieldValidUtil.fieldValid(dto);
@@ -118,8 +118,8 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
         }
 
         //查询订单
-        DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
-        if(ObjectUtils.isEmpty(dmpOrderInfoEntity)) {
+        BiOrderInfoEntity biOrderInfoEntity = dmpOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
+        if(ObjectUtils.isEmpty(biOrderInfoEntity)) {
             errorMsgList.add("订单号系统中不存在");
         }
 
@@ -143,17 +143,17 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
             return;
         }
         //查询退货
-        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getByReturnOrderId(dto.getReturnCode());
-        if (ObjectUtils.isEmpty(dmpReturnOrderInfoEntity)) {
+        BiReturnOrderInfoEntity biReturnOrderInfoEntity = dmpReturnOrderInfoService.getByReturnOrderId(dto.getReturnCode());
+        if (ObjectUtils.isEmpty(biReturnOrderInfoEntity)) {
             BeanUtils.copyProperties(dto,entity);
             entity.setStatus(ReturnOrderStatusEnum.getCodeByName(dto.getStatusName()));
-            entity.setOrderTime(dmpOrderInfoEntity.getPlatformCreateTime());
+            entity.setOrderTime(biOrderInfoEntity.getPlatformCreateTime());
             dmpReturnOrderInfoService.save(entity);
         }
         //同订单sku新增到同一订单下
-        DmpReturnOrderItemEntity itemEntity = new DmpReturnOrderItemEntity();
-        if (ObjectUtils.isNotEmpty(dmpReturnOrderInfoEntity)) {
-            itemEntity.setReturnOrderId(dmpReturnOrderInfoEntity.getId());
+        BiReturnOrderItemEntity itemEntity = new BiReturnOrderItemEntity();
+        if (ObjectUtils.isNotEmpty(biReturnOrderInfoEntity)) {
+            itemEntity.setReturnOrderId(biReturnOrderInfoEntity.getId());
         } else {
             itemEntity.setReturnOrderId(entity.getId());
         }

@@ -8,7 +8,7 @@ import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.dmp.dto.DmpOrderStateDTO;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * 订单服务类
  */
-public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
+public interface DmpOrderInfoService extends IService<BiOrderInfoEntity> {
 
     /**
      * @description: 分页查询
@@ -125,7 +125,7 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @param platformOrderId
      * @return DmpOrderInfoEntity
      */
-    DmpOrderInfoEntity getByPlatformOrderId(String platformOrderId);
+    BiOrderInfoEntity getByPlatformOrderId(String platformOrderId);
 
     /**
      * 季度销售额指标分析
@@ -264,10 +264,10 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
     /**
      * 通过SKU NO查询首单
      */
-    DmpOrderInfoEntity firstOrderBySkuNo(String skuNo);
+    BiOrderInfoEntity firstOrderBySkuNo(String skuNo);
 
     /**
      * 通过SKU NO查询各平台首单
      */
-    Map<String, DmpOrderInfoEntity> mapFirstOrderBySkuNo(String skuNo);
+    Map<String, BiOrderInfoEntity> mapFirstOrderBySkuNo(String skuNo);
 }

@@ -7,11 +7,9 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -42,7 +40,7 @@ import java.util.Map;
 public class DmpFeignController extends BaseController {
 
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -52,7 +50,7 @@ public class DmpFeignController extends BaseController {
 
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
     @Resource
     private DmpPushTaskService dmpPushTaskService;
 
@@ -80,7 +78,7 @@ public class DmpFeignController extends BaseController {
 
     @PostMapping("/getShopById")
     public DmpShopInfoDTO getShopById(@RequestBody String shopId) {
-        return dmpShopInfoService.getShopById(shopId);
+        return biShopInfoService.getShopById(shopId);
     }
 
     @PostMapping("/getByKingdeeId")
@@ -134,8 +132,8 @@ public class DmpFeignController extends BaseController {
      * @date 2023-07-06 12:26
      */
     @PostMapping("/listShop")
-    public List<DmpShopInfoEntity> listShop() {
-        return dmpShopInfoService.list();
+    public List<BiShopInfoEntity> listShop() {
+        return biShopInfoService.list();
     }
 
     /**
@@ -257,7 +255,7 @@ public class DmpFeignController extends BaseController {
      */
     @PostMapping("/remove/orderByIds")
     Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids) {
-        return dmpOrderInfoService.removeOrderByIds(ids);
+        return biOrderInfoService.removeOrderByIds(ids);
     }
 
     /**
