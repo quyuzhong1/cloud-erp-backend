@@ -36,24 +36,72 @@
     </sql>
     <select id="listTabCount" resultType="com.erp.model.wms.dto.PackingTaskDTO$TypeCountDTO">
         SELECT
-        packing_status,
-        COUNT(*) AS count_packing_status
+            packing_status as type,
+            COUNT(*) AS count
         FROM (
             SELECT
-            packing_task.id,
-            CASE
-            WHEN EXISTS (SELECT 1 FROM wms_carton WHERE wms_carton.packing_task_id = packing_task.id AND wms_carton.packing_status = 'completed') THEN 'completed'
-            WHEN EXISTS (SELECT 1 FROM wms_carton WHERE wms_carton.packing_task_id = packing_task.id AND wms_carton.packing_status = 'incomplete') THEN 'incomplete'
-            WHEN EXISTS (SELECT 1 FROM wms_carton WHERE wms_carton.packing_task_id = packing_task.id AND wms_carton.packing_status IN ('completed', 'incomplete')) THEN 'ing'
-            ELSE 'other' END AS packing_status
+                pt.id,
+                CASE WHEN EXISTS (SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE AND wc.packing_status = 'completed') THEN 'packed'
+                     WHEN EXISTS (SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE AND wc.packing_status IN ('completed', 'incomplete')) THEN 'packing'
+                     ELSE 'unpacked' END AS packing_status
             FROM
-                packing_task
-            WHERE si.is_deleted=FALSE
+                packing_task pt
             <if test="permissionSql!=null and permissionSql!=''">
                 ${permissionSql}
             </if>
         ) AS subquery
-        GROUP BY packing_status;
+        GROUP BY packing_status
+    </select>
+    <select id="paging" resultType="com.erp.model.wms.dto.PackingTaskDTO$PagingViewDTO">
+        select
+            pt.id,
+            pt.code,
+            pt.source_id,
+            pt.source_code,
+            pt.source_type,
+            pt.delivery_qty,
+            pt.warehouse_id,
+            pt.warehouse_name,
+            pt.create_user_name,
+            pt.create_time
+        from packing_task pt
+        where pt.is_deleted = FALSE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.defaultl != ''">
+            and ${params.sqlMap.default}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by pt.create_time DESC
+    </select>
+    <select id="selectPackingStatusByIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$StatusDTO">
+        SELECT
+            pt.ID,
+            CASE
+                WHEN EXISTS ( SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE AND wc.packing_status = 'completed' ) THEN
+                    'packed'
+                WHEN EXISTS ( SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE AND wc.packing_status IN ( 'completed', 'incomplete' ) ) THEN 'packing'
+                ELSE 'unpacked'
+                END AS packing_status,
+            CASE
+                WHEN EXISTS ( SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE AND wc.packing_status = 'success' ) THEN
+                    'weighed'
+                WHEN EXISTS ( SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE AND (wc.packing_status IN ( 'success', 'unweighed' ) or wc.packing_status IN ( 'success', 'fail' )) ) THEN
+                    'weighing' ELSE 'unweighted'
+                END AS weightingStatus ,
+            (SELECT error_msg FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE order by wc.create_time DESC limit 1) as eroorMsg,
+            (SELECT SUM(wcd.pack_qty) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) as packedQty,
+            (SELECT SUM(packing_weight) FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) as packingWeight,
+            (SELECT SUM(pd.picked_qty) FROM picking_lists pl LEFT JOIN picking_detail pd on pd.main_id = pl.id and pd.is_deleted = FALSE WHERE pl.source_id = pt.source_id AND pl.is_deleted = FALSE) as pickedQty
+        FROM
+            packing_task pt
+        where pt.is_deleted = FALSE
+        <if test="taskIds!= null and taskIds.size > 0">
+            AND pt.id IN
+            <foreach collection="taskIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
 

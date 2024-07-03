@@ -2,16 +2,20 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import com.erp.server.wms.convert.PackingConverter;
 import com.erp.server.wms.mapper.PackingTaskMapper;
@@ -20,15 +24,18 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackingTaskDTO;
+
+import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -176,8 +183,47 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     @Override
     public PagingVO<PackingTaskDTO.PagingViewDTO> paging(PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
-        return null;
+        Page<PackingTaskDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        PackingTaskDTO.PagingParamDTO params = dto.getParams();
+        IPage<PackingTaskDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
+        //补充数据
+        buildPackingTask(pageData.getRecords());
+        return new PagingVO<>(pageData);
     }
+
+    /**
+     * 补充数据
+     * @param records
+     */
+    private void buildPackingTask(List<PackingTaskDTO.PagingViewDTO> records) {
+        if (CollectionUtils.isEmpty(records)){
+            return;
+        }
+        List<String> taskIds = records.stream().map(PackingTaskDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+        //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
+        List<PackingTaskDTO.StatusDTO> statusDTOList = baseMapper.selectPackingStatusByIds(taskIds);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
+        records.forEach(pagingViewDTO -> {
+            PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(pagingViewDTO.getId());
+            if (Objects.nonNull(statusDTO)){
+                pagingViewDTO.setPackingStatus(StringUtils.isBlank(statusDTO.getPackingStatus())? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus());
+                pagingViewDTO.setPackingStatusName(PackingTaskStatusEnum.getName(pagingViewDTO.getPackingStatus()));
+                pagingViewDTO.setWeightingStatus(StringUtils.isBlank(statusDTO.getWeightingStatus())? PackingWeightStatusEnum.UNWEIGHTED.getCode() : statusDTO.getWeightingStatus());
+                pagingViewDTO.setWeightingStatusName(PackingTaskStatusEnum.getName(pagingViewDTO.getWeightingStatus()));
+                pagingViewDTO.setErrorMsg(statusDTO.getErrorMsg());
+                pagingViewDTO.setPackedQty(Objects.isNull(statusDTO.getPackedQty())? MathUtil.ZERO: statusDTO.getPackedQty());
+                pagingViewDTO.setPickedQty(statusDTO.getPickedQty());
+                pagingViewDTO.setPackageWeight(Objects.isNull(statusDTO.getPackingWeight())? BigDecimal.ZERO: MathUtil.divide(statusDTO.getPackingWeight(), MathUtil.BigDecimal_1000));
+            }else {
+                pagingViewDTO.setPackingStatus(PackingTaskStatusEnum.UNPACKED.getCode());
+                pagingViewDTO.setPackingStatusName(PackingTaskStatusEnum.UNPACKED.getName());
+                pagingViewDTO.setWeightingStatus(PackingWeightStatusEnum.UNWEIGHTED.getCode());
+                pagingViewDTO.setWeightingStatusName(PackingWeightStatusEnum.UNWEIGHTED.getName());
+                pagingViewDTO.setPackedQty(MathUtil.ZERO);
+            }
+        });
+    }
+
     /**
      * 按照分类进行统计
      * @param dto
@@ -186,7 +232,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public List<PackingTaskDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<PackingTaskDTO.TypeCountDTO> countList = baseMapper.listTabCount(dto.getPermissionSql());
-        return null;
+        //重构数据
+        List<PackingTaskDTO.TabListDTO> tabList = new ArrayList<>(3);
+        Integer unpackedCount = countList.stream().filter(e -> PackingTaskStatusEnum.UNPACKED.getCode().equals(e.getType())).map(PackingTaskDTO.TypeCountDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        tabList.add(new PackingTaskDTO.TabListDTO(PackingTaskStatusEnum.UNPACKED.getCode(),PackingTaskStatusEnum.UNPACKED.getName(), unpackedCount));
+        Integer packingCount = countList.stream().filter(e -> PackingTaskStatusEnum.PACKING.getCode().equals(e.getType())).map(PackingTaskDTO.TypeCountDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        tabList.add(new PackingTaskDTO.TabListDTO(PackingTaskStatusEnum.PACKING.getCode(),PackingTaskStatusEnum.PACKING.getName(), packingCount));
+        Integer packedCount = countList.stream().filter(e -> PackingTaskStatusEnum.PACKED.getCode().equals(e.getType())).map(PackingTaskDTO.TypeCountDTO::getCount).findFirst().orElse(MathUtil.ZERO);
+        tabList.add(new PackingTaskDTO.TabListDTO(PackingTaskStatusEnum.PACKED.getCode(),PackingTaskStatusEnum.PACKED.getName(), packedCount));
+        return tabList;
     }
 
 

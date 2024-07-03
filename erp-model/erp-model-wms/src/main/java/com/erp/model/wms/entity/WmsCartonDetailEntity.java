@@ -50,6 +50,16 @@ public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
     */
     @TableField("packing_task_detail_id")
     private String packingTaskDetailId;
+    /**
+     * 预计毛重（装箱更新时计算）
+     */
+    @TableField("gross_weight")
+    private String grossWeight;
+    /**
+     * 重量单位（g） 页面展示kg，数据库存储g
+     */
+    @TableField("weight_unit")
+    private String weightUnit;
 
     public static final String MAIN_ID = "main_id";
 

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -178,11 +179,53 @@ public class PackingTaskDTO implements Serializable {
          * PickingSourceTypeEnum
          */
         private String sourceType;
-
+        /**
+         * 单据类型名称
+         */
+        private String sourceTypeName;
+        /**
+         * 装箱状态 unpacked：待装箱，packing 装箱中，packed：已装箱
+         * 枚举：PackingTaskStatusEnum
+         */
+        private String packingStatus;
+        /**
+         * 装箱状态名称
+         */
+        private String packingStatusName;
+        /**
+         * 称重状态-全部(unweighed 未称重,success 称重成功,fail 称重失败 )
+         * PackingWeightStatusEnum
+         * 字典接口地址
+         */
+        private String weightingStatus;
+        /**
+         * 称重状态-全部 名称
+         */
+        private String weightingStatusName;
         /**
          * 发货数量
+         * 取值关联发货单/发货通知单的发货数量
          */
         private Integer deliveryQty;
+        /**
+         * 拣货数量
+         * 取值关联发货单的拣货单的拣货数量
+         */
+        private Integer pickedQty;
+        /**
+         * 已装箱数量
+         * 取值实际装箱数量，初始为0
+         */
+        private Integer packedQty;
+        /**
+         * 装箱总重（kg）
+         * 取值实际装箱更新重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 异常原因
+         */
+        private String errorMsg;
 
         /**
          * 发货仓库id
@@ -193,6 +236,15 @@ public class PackingTaskDTO implements Serializable {
          * 发货仓库名称
          */
         private String warehouseName;
+        /**
+         * 创建人
+         * 取值单据创建人，系统生成显示为system
+         */
+        private String createUserName;
+        /**
+         * 创建时间时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Data
@@ -247,5 +299,42 @@ public class PackingTaskDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+    /**
+     * 装箱状态汇总
+     */
+    @Data
+    @NoArgsConstructor
+    public static class StatusDTO {
+        private String id;
+        /**
+         * 装箱状态 unpacked：待装箱，packing 装箱中，packed：已装箱
+         * 枚举：PackingTaskStatusEnum
+         */
+        private String packingStatus;
+        /**
+         * 称重状态-全部(unweighed 未称重,weighing 部分称重,weighed 全部称重 )
+         * PackingWeightStatusEnum
+         * 字典接口地址
+         */
+        private String weightingStatus;
+
+        /**
+         * 异常原因
+         */
+        private String errorMsg;
+        /**
+         * 已装箱数量
+         */
+        private Integer packedQty;
+        /**
+         * 拣货数量
+         */
+        private Integer pickedQty;
+        /**
+         * 装箱重量（设备更新）
+         */
+        private BigDecimal packingWeight;
     }
 }

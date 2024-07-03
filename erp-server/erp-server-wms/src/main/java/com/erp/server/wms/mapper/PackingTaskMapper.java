@@ -1,5 +1,7 @@
 package com.erp.server.wms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -26,4 +28,19 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @return
      */
     List<PackingTaskDTO.TypeCountDTO> listTabCount(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<PackingTaskDTO.PagingViewDTO> paging(@Param("query") Page<PackingTaskDTO.PagingViewDTO> query, @Param("params") PackingTaskDTO.PagingParamDTO params);
+
+    /**
+     * 根据任务id汇总状态
+     * @param taskIds
+     * @return
+     */
+    List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(@Param("taskIds") List<String> taskIds);
 }
