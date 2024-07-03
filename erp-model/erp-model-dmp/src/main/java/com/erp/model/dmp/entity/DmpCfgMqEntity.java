@@ -75,6 +75,11 @@ public class DmpCfgMqEntity extends BaseEntity<DmpCfgMqEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
+    /**
+     * mq分组
+     */
+    @TableField("mq_group")
+    private String mqGroup;
 
     public static final String SYSTEM_ID = "system_id";
 

@@ -1,13 +1,15 @@
 package com.erp.model.dmp.entity;
 
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -94,6 +96,43 @@ public class DmpDirectTransferDetailEntity extends BaseEntity<DmpDirectTransferD
     */
     @TableField("in_warehouse_location")
     private String inWarehouseLocation;
+    
+    /**
+     * 物料名称
+     */
+     @TableField("product_name")
+     private String productName;
+     
+     /**
+      * 入库时间
+      */
+     @TableField("receive_time")
+     private LocalDateTime receiveTime;
+     
+     /**
+      * 入库库存状态编码
+      */
+     @TableField("in_stock_status_code")
+     private String inStockStatusCode;
+     
+     /**
+      * 入库库存状态名称
+      */
+     @TableField("in_stock_status_name")
+     private String inStockStatusName;
+     
+     /**
+      * 出库库存状态编码
+      */
+     @TableField("out_stock_status_code")
+     private String outStockStatusCode;
+     
+     /**
+      * 出库库存状态名称
+      */
+     @TableField("out_stock_status_name")
+     private String outStockStatusName;
+    
     /**
     * 备注
     */

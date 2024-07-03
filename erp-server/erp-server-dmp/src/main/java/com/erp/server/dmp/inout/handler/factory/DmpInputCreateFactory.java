@@ -47,9 +47,6 @@ public class DmpInputCreateFactory{
 	private DmpInputTaskStatusHandler dmpInputTaskStatusHandler;
 	@Autowired
 	private DmpInputTaskFactory dmpInputTaskFactory;
-	@Autowired
-	@Qualifier("dmpInputChildExecutorPool")
-	private ExecutorService dmpInputChildExecutorPool;
 	
 	/**
 	 * 创建正常任务

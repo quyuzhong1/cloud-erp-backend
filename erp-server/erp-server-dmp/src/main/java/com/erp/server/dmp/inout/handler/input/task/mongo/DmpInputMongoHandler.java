@@ -71,6 +71,7 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 	static {
 		mongoBaseFiledList.add(MONGO_BASE_ID);
 		mongoBaseFiledList.add(MONGO_BASE_CONVERTID);
+		mongoBaseFiledList.add(MONGO_BASE_INPUTTASKID);
 		mongoBaseFiledList.add(MONGO_BASE_ROWNUMBER);
 		mongoBaseFiledList.add(MONGO_BASE_UNIQUEENCRYPT);
 		mongoBaseFiledList.add(MONGO_BASE_DATAENCRYPT);
@@ -123,13 +124,14 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 		}
 		
 		dmpResponse.getConvertInputMongoEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputMongoBaseEntityList);
+		dmpResponse.getChangeConvertInputMongoEntityListMaps().put(dmpCfgInputConvertEntity, changeConvertInputMongoEntityList);
 		this.afterToDoStatus(dmpRequest, dmpResponse);
 		
 		DmpOutputTaskRequest dmpOutputMongoRequest = new DmpOutputTaskRequest();
 		dmpOutputMongoRequest.setConvertInputTaskInitDTOListMaps(dmpResponse.getConvertInputTaskInitDTOListMaps());
 		dmpOutputMongoRequest.setConvertInputTaskFileEntityListMaps(dmpResponse.getConvertInputTaskFileEntityListMaps());
 		dmpOutputMongoRequest.setConvertInputMongoEntityListMaps(dmpResponse.getConvertInputMongoEntityListMaps());
-		dmpOutputMongoRequest.getChangeConvertInputMongoEntityListMaps().put(dmpCfgInputConvertEntity, changeConvertInputMongoEntityList);
+		dmpOutputMongoRequest.setChangeConvertInputMongoEntityListMaps(dmpResponse.getChangeConvertInputMongoEntityListMaps());
 		this.doBaseChain(dmpRequest, dmpResponse, chain, dmpOutputMongoRequest);
 	}
 	

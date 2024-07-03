@@ -20,4 +20,9 @@ public class DmpInputDmpResponse extends DmpInputMongoResponse{
 	 * dmp业务信息
 	 */
 	private Map<DmpCfgInputConvertEntity , List<BaseEntity>> convertInputDmpBaseEntityListMaps = new HashMap<>();
+	
+	/**
+	 * 变动的dmp业务信息
+	 */
+	private Map<DmpCfgInputConvertEntity , List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = new HashMap<>();
 }

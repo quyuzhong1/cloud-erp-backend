@@ -50,16 +50,6 @@ public class DmpOutputTaskEntity extends BaseEntity<DmpOutputTaskEntity> {
     */
     @TableField("status")
     private String status;
-    /**
-    * 推送报文
-    */
-    @TableField("request_data")
-    private String requestData;
-    /**
-    * 响应报文
-    */
-    @TableField("response_data")
-    private String responseData;
 
     /**
      * 推送类型：  枚举：DmpOutputTaskTypeEnum

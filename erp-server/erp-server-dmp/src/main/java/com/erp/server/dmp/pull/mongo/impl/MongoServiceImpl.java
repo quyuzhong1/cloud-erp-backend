@@ -31,6 +31,7 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Service("mongoService")
@@ -283,8 +284,8 @@ public class MongoServiceImpl implements MongoService {
 		Criteria criteria = MongoUtil.mongoFilter_duplicateKey(paramDataList);
 		Query query = new Query(criteria);
 		List<Map> list = orderTemplate.find(query, Map.class, table);
-		if(list == null || list.size() <= 0) {
-			return null;
+		if(CollUtil.isEmpty(list)) {
+			return new ArrayList<Map<String,Object>>();
 		}else {
 			List<Map<String, Object>> resultList = new ArrayList<>();
 			for(Map l : list) {

@@ -24,16 +24,12 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("dmp_output_task_record")
 public class DmpOutputTaskRecordEntity extends BaseEntity<DmpOutputTaskRecordEntity> {
 
-    /**
-    * 输入任务存储状态（冗余）
+	/**
+    * 主id
     */
-    @TableField("input_status")
-    private String inputStatus;
-    /**
-    * 数据的存储名，fds为文件夹路径，mongo为集合名,pg为表名（冗余）
-    */
-    @TableField("storage_name")
-    private String storageName;
+    @TableField("main_id")
+    private String mainId;
+	
     /**
     * 数据id
     */
@@ -44,11 +40,23 @@ public class DmpOutputTaskRecordEntity extends BaseEntity<DmpOutputTaskRecordEnt
     */
     @TableField("status")
     private String status;
+    
     /**
-    * 异常原因
-    */
-    @TableField("error_message")
-    private String errorMessage;
+     * 推送报文
+     */
+     @TableField("request_data")
+     private String requestData;
+     /**
+     * 响应报文
+     */
+     @TableField("response_data")
+     private String responseData;
+     
+     /**
+      * 响应报文
+      */
+      @TableField("error_count")
+      private Integer errorCount;
 
 
     public static final String INPUT_STATUS = "input_status";
