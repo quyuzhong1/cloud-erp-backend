@@ -156,7 +156,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private LogisticsFeign logisticsFeign;
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
-
+    @Resource
+    private PackingTaskService packingTaskService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -190,6 +191,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //新增详情信息
         firstMileDeliveryDetailService.add(addDTO, firstMileDeliveryEntity.getId());
+        //新增装箱任务
+        packingTaskService.addPackingByFirstMileDelivery(firstMileDeliveryEntity);
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
     }
 

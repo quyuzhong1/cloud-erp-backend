@@ -1,8 +1,10 @@
 package com.erp.server.wms.service;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.FirstMileCartonBillDTO;
+import com.erp.model.wms.dto.CartonDTO;
 
 import java.util.List;
 
@@ -22,7 +24,15 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
     * @date: 2023-11-16
     * @param dto
     */
-    BaseResultDTO.AddDTO add(FirstMileCartonBillDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(CartonDTO.AddDTO dto);
+    /**
+     * 修改
+     * @author zdy
+     * @date: 2024-07-02
+     * @param dto
+     * @return
+     */
+    Boolean update(CartonDTO.UpdateDTO dto);
 
     /**
      * 根据装箱id删除箱子明细
@@ -51,5 +61,10 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      **/
     List<WmsCartonEntity> listBySourceIds(List<String> sourceIds);
 
-
+    /**
+     * 装箱任务分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<CartonDTO.PagingViewDTO> paging(PagingDTO<CartonDTO.PagingParamDTO> dto);
 }

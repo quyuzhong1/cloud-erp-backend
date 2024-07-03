@@ -1,11 +1,15 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -17,10 +21,34 @@ import java.io.Serializable;
 */
 @Data
 @NoArgsConstructor
-public class FirstMileCartonBillDTO implements Serializable {
+public class CartonDTO implements Serializable {
 
 
+    /**
+     * 列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+    }
+    /**
+     * 即时库存分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+
+    }
 
     /**
     * 详情

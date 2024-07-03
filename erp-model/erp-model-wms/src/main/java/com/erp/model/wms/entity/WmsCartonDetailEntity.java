@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -25,10 +26,10 @@ import java.io.Serializable;
 public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
 
     /**
-    * first_mile_carton表id
+    * 主表id
     */
-    @TableField("carton_id")
-    private String cartonId;
+    @TableField("main_id")
+    private String mainId;
     /**
     * 产品id
     */
@@ -45,17 +46,12 @@ public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
     @TableField("pack_qty")
     private Integer packQty;
     /**
-    * 来源类型
+    * 装箱任务明细id
     */
-    @TableField("source_type")
-    private String sourceType;
-    /**
-    * 来源id
-    */
-    @TableField("source_id")
-    private String sourceId;
+    @TableField("packing_task_detail_id")
+    private String packingTaskDetailId;
 
-    public static final String CARTON_ID = "carton_id";
+    public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
 

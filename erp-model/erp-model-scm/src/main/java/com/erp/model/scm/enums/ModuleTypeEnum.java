@@ -92,6 +92,7 @@ public enum ModuleTypeEnum {
 
     VIRTUAL_WAREHOUSE("80", "虚拟仓设置"),
     VIRTUAL_WAREHOUSE_ALLOCATION("81", "分货单"),
+    PACKING_TASK("82", "装箱任务"),
     ;
 
 

@@ -170,6 +170,11 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         return list;
     }
 
+    @Override
+    public List<FirstMileDeliveryDetailEntity> listDetailByMainId(String id) {
+        return null;
+    }
+
     /**
     * 新增修改处理数据
     */

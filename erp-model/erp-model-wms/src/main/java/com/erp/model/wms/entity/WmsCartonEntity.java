@@ -25,25 +25,49 @@ import java.io.Serializable;
 public class WmsCartonEntity extends BaseEntity<WmsCartonEntity> {
 
     /**
-    * first_mile_carton表id
+    * 箱规id
     */
-    @TableField("carton_id")
-    private String cartonId;
+    @TableField("spec_id")
+    private String specId;
     /**
     * 箱号
     */
-    @TableField("box_no")
-    private String boxNo;
+    @TableField("carton_no")
+    private String cartonNo;
     /**
-    * 描述（sku*qty+sku*qty+...）
+    * 异常原因
     */
-    @TableField("box_desc")
-    private String boxDesc;
+    @TableField("error_msg")
+    private String errorMsg;
     /**
-     * 来源id
+     * 任务表id
      */
-    @TableField("source_id")
-    private String sourceId;
+    @TableField("packing_task_id")
+    private String packingTaskId;
+    /**
+     * 单箱状态(incomplete 未完成,completed 已完成)
+     * PackingTaskStatusEnum
+     * 字典接口地址
+     */
+    @TableField("packing_status")
+    private String packingStatus;
+    /**
+     * 称重状态-单箱(unweighed 未称重,success 称重成功,fail 称重失败 )
+     * PackingWeightStatusEnum
+     * 字典接口地址
+     */
+    @TableField("weighting_status")
+    private String weightingStatus;
+    /**
+     * 装箱员id
+     */
+    @TableField("packing_user_id")
+    private String packingUserId;
+    /**
+     * 装箱员名称
+     */
+    @TableField("packing_user_name")
+    private String packingUserName;
 
     public static final String CARTON_ID = "carton_id";
 

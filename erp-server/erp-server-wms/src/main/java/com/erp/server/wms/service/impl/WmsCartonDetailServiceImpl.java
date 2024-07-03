@@ -7,7 +7,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.wms.dto.FirstMileCartonBillDTO;
+import com.erp.model.wms.dto.CartonDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.WmsCartonEntity;
@@ -76,7 +76,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         if (CollectionUtils.isEmpty(cartonIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(WmsCartonDetailEntity::getCartonId, cartonIds).list();
+        return lambdaQuery().in(WmsCartonDetailEntity::getMainId, cartonIds).list();
     }
 
     @Override
@@ -84,7 +84,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(WmsCartonDetailEntity::getSourceId, sourceIds).list();
+        return lambdaQuery().in(WmsCartonDetailEntity::getPackingTaskDetailId, sourceIds).list();
     }
 
     @Override
@@ -92,7 +92,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         if (CollectionUtils.isEmpty(cartonIds)) {
             return Boolean.TRUE;
         }
-        return lambdaUpdate().in(WmsCartonDetailEntity::getCartonId, cartonIds).remove();
+        return lambdaUpdate().in(WmsCartonDetailEntity::getMainId, cartonIds).remove();
     }
 
     @Override
@@ -100,7 +100,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Boolean.TRUE;
         }
-        return lambdaUpdate().in(WmsCartonDetailEntity::getSourceId, sourceIds).remove();
+        return lambdaUpdate().in(WmsCartonDetailEntity::getPackingTaskDetailId, sourceIds).remove();
     }
 
     @Override
@@ -113,9 +113,8 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     */
     private void handleData(List<WmsCartonDetailEntity> detailEntityList, String cartonId, String sourceId, String sourceType) {
         for (WmsCartonDetailEntity wmsCartonDetailEntity : detailEntityList) {
-            wmsCartonDetailEntity.setCartonId(cartonId);
-            wmsCartonDetailEntity.setSourceId(sourceId);
-            wmsCartonDetailEntity.setSourceType(sourceType);
+            wmsCartonDetailEntity.setMainId(cartonId);
+            wmsCartonDetailEntity.setPackingTaskDetailId(sourceId);
         }
     }
 
@@ -132,7 +131,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         List<WmsCartonEntity> firstMileCartonBillEntities = wmsCartonService.listBySourceIds(Arrays.asList(sourceId));
         Integer maxBoxNo = 0;
         if (CollectionUtils.isNotEmpty(firstMileCartonBillEntities)) {
-            maxBoxNo = firstMileCartonBillEntities.stream().max(Comparator.comparingInt(req -> Integer.valueOf(req.getBoxNo()))).map(req -> Integer.valueOf(req.getBoxNo())).get();
+            maxBoxNo = firstMileCartonBillEntities.stream().max(Comparator.comparingInt(req -> Integer.valueOf(req.getCartonNo()))).map(req -> Integer.valueOf(req.getCartonNo())).get();
         }
 
         StringBuffer sb = new StringBuffer();
@@ -144,7 +143,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         }
 
         for (Integer i = maxBoxNo+1; i <= maxBoxNo+boxQty; i++) {
-            FirstMileCartonBillDTO.AddDTO billAdd = new FirstMileCartonBillDTO.AddDTO();
+            CartonDTO.AddDTO billAdd = new CartonDTO.AddDTO();
             billAdd.setBoxDesc(sb.toString());
             billAdd.setBoxNo(String.valueOf(i));
             billAdd.setCartonId(cartonId);

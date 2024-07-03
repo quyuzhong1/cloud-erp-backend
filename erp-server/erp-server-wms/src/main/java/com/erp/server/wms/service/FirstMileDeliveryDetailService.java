@@ -78,5 +78,10 @@ public interface FirstMileDeliveryDetailService extends SuperService<FirstMileDe
      **/
     List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuByMainId(String mainId, Integer boxSpecNo);
 
-
+    /**
+     * 根据主表获取明细列表
+     * @param id
+     * @return
+     */
+    List<FirstMileDeliveryDetailEntity> listDetailByMainId(String id);
 }

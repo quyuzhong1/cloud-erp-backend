@@ -78,7 +78,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(WmsCartonSpecEntity::getSourceId, sourceIds)
+        return lambdaQuery().in(WmsCartonSpecEntity::getMainId, sourceIds)
                 .orderByAsc(WmsCartonSpecEntity::getCreateTime, WmsCartonSpecEntity::getId)
                 .list();
     }
@@ -93,7 +93,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         if (CollectionUtil.isEmpty(sourceIds)) {
             return Boolean.FALSE;
         }
-        return lambdaUpdate().in(WmsCartonSpecEntity::getSourceId, sourceIds).remove();
+        return lambdaUpdate().in(WmsCartonSpecEntity::getMainId, sourceIds).remove();
     }
 
     @Override
@@ -190,7 +190,6 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     * 新增修改处理数据
     */
     private void handleData(WmsCartonSpecEntity wmsCartonSpecEntity, String sourceId, String sourceType) {
-        wmsCartonSpecEntity.setSourceId(sourceId);
-        wmsCartonSpecEntity.setSourceType(sourceType);
+        wmsCartonSpecEntity.setMainId(sourceId);
     }
 }

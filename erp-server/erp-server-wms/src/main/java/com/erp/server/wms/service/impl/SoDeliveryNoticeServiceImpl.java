@@ -132,7 +132,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
-    
+
+    @Resource
+    private PackingTaskService packingTaskService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -276,6 +278,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId());
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
+        //生成装箱任务
+        packingTaskService.addPackingByB2BDelivery(soDeliveryNoticeEntity);
         return soDeliveryNoticeEntity.getId();
     }
 

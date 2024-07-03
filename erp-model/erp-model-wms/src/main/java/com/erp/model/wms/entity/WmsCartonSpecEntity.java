@@ -35,6 +35,11 @@ public class WmsCartonSpecEntity extends BaseEntity<WmsCartonSpecEntity> {
     @TableField("package_weight")
     private BigDecimal packageWeight;
     /**
+     * 重量单位
+     */
+    @TableField("weight_unit")
+    private String weightUnit;
+    /**
     * 箱子尺寸（长）
     */
     @TableField("box_length")
@@ -50,20 +55,27 @@ public class WmsCartonSpecEntity extends BaseEntity<WmsCartonSpecEntity> {
     @TableField("box_height")
     private BigDecimal boxHeight;
     /**
+     * 尺寸单位
+     */
+    @TableField("size_unit")
+    private String sizeUnit;
+    /**
     * 箱数
     */
     @TableField("box_qty")
     private Integer boxQty;
     /**
-     * 来源类型
+     * 主表id packing_task.id
      */
-    @TableField("source_type")
-    private String sourceType;
+    @TableField("main_id")
+    private String mainId;
     /**
-     * 来源Id
+     * 箱规来源(manual 手动, device 设备)
+     * MeasureSourceEnum
+     * 字典接口地址
      */
-    @TableField("source_id")
-    private String sourceId;
+    @TableField("measure_source")
+    private String measureSource;
 
 
     public static final String MAIN_ID = "main_id";
