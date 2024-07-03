@@ -49,8 +49,6 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cDataTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.FileTemplateDTO;
@@ -67,9 +65,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -204,46 +200,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "新增操作");
         // 新增明细
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
-        // 生成拣货单
-        generatePickingDetail(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
         return save;
-    }
-
-    private void generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities) {
-        List<String> skuIds = soB2cDeliveryDetailEntities.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        List<String> childSkuIds = bomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-        skuIds.addAll(childSkuIds);
-        List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = new ArrayList<>();
-        Map<String, String> sourceDetailMap = new HashMap<>();
-        Map<String, String> warehouseMap = soB2cDeliveryDetailEntities.stream().collect(Collectors.toMap(SoB2cDeliveryDetailEntity::getWarehouseId, SoB2cDeliveryDetailEntity::getWarehouseName, (o1, o2) -> o1));
-        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailEntities) {
-            //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
-                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
-                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
-                    ).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
-                    detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), bomChildrenSkuDTO.getSkuId(), bomChildrenSkuDTO.getSkuNo(),
-                            detailEntity.getDeliveryQty() * bomChildrenSkuDTO.getQuantity()));
-                    if (ObjectUtil.isEmpty(sourceDetailMap.get(bomChildrenSkuDTO.getSkuId()))) {
-                        sourceDetailMap.put(bomChildrenSkuDTO.getSkuId(), detailEntity.getId());
-                    }
-                }
-            } else {
-                detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), detailEntity.getSkuId(), detailEntity.getSkuNo(),
-                        detailEntity.getDeliveryQty()));
-                if (ObjectUtil.isEmpty(sourceDetailMap.get(detailEntity.getSkuId()))) {
-                    sourceDetailMap.put(detailEntity.getSkuId(), detailEntity.getId());
-                }
-            }
-        }
-        CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
-        executionData.setBillType(PickingBillTypeEnum.B2C.getCode());
-        executionData.setDetails(detailList);
-        pickingListsService.generateSoB2cPicking(soB2cDeliveryEntity, executionData, warehouseMap, sourceDetailMap);
     }
 
     @Override
