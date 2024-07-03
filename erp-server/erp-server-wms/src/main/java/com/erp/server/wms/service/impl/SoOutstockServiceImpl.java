@@ -2511,8 +2511,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 // 明细已存在
                 SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
                 SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
-
+                if (null == detailDTO.getPlatformDeliveryTime()){
+                    ServiceException.runError("仓储中心解析发货时间时区失败");
+                }
                 if (Objects.equals(detailEntity.getActualQty(), detailDTO.getQtyShipped()) && soOutstockEntity.getBillDate().isEqual(generateB2cDTO.getBillDate())){
+//                    if (Objects.equals(detailEntity.getActualQty(), detailDTO.getQtyShipped()) && soOutstockEntity.getBillDate().isEqual(detailDTO.getPlatformDeliveryTime().toLocalDate())){
                     // 3, 明细已存在且信息未变更
                     existSourceDetailList.add(detailDTO);
                 } else {
