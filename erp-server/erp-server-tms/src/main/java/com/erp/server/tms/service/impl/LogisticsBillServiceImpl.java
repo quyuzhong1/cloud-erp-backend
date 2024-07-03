@@ -1040,6 +1040,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return  lambdaQuery().in(LogisticsBillEntity::getOutstockId,outstockIdList).list();
     }
 
+    @Override
+    public LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(String logisticsCode) {
+        if (StringUtils.isBlank(logisticsCode)) {
+            return new LogisticsBillDTO.BaseDTO();
+        }
+        return baseMapper.getByTrackNoOrTransportNo(logisticsCode);
+    }
+
     /**
      * 初始化物流手机号信息
      * @param dto

@@ -111,6 +111,16 @@ public interface LogisticsBillFeign {
     ApiResult<InterceptResponseVO> interceptBill(@RequestBody LogisticsBillDTO.CancelBillDTO dto);
 
     /**
+     * 根据物流跟踪单号或运单号查询物流单详情
+     * @author will
+     * @date 2024/7/3 17:36
+     * @param logisticsCode
+     * @return BaseDTO
+     */
+    @GetMapping("/feign/logisticsBill/getByTrackNoOrTransportNo")
+    LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(@RequestParam(value = "logisticsCode") String logisticsCode);
+
+    /**
      * 根据物流跟踪单号查询物流单详情
      * @Author Luo_WG
      * @Date 2023/12/14 15:45
