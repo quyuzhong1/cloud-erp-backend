@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -53,4 +54,7 @@ public interface DmpPullTaskMapper extends BaseMapper<DmpPullTaskEntity> {
     void deleteByIds(List<String> ids);
     void updateStatus(@Param("noNeedSyncIds")List<String> noNeedSyncIds);
 
+    int countMonth(@Param("date") LocalDateTime date);
+
+    List<DmpPullTaskEntity> listMonth(@Param("date") LocalDateTime date, @Param("pageSize") int pageSize, @Param("effect") int effect);
 }
