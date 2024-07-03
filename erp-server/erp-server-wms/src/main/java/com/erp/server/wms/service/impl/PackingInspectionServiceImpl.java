@@ -22,6 +22,7 @@ import com.erp.model.wms.dto.PackingInspectionDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.PackingInspectionOperationEnum;
+import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -261,6 +262,10 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
         //直接出库
         if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList()) && dto.getIsAutoOut()  && entity.getIsInspection()) {
+            if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
+                    || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
+                throw new ServiceException(ApiError.ERROR_99114);
+            }
             //如果是待上传或上传失败则直接返回
             if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
@@ -273,6 +278,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //将发货状态更新为已发货
             entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
             entity.setDeliveryTime(deliveryTime);
+            entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }

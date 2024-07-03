@@ -14,6 +14,7 @@ import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
+import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -278,4 +279,10 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param response
      */
     void printLogisticsBillConfirmById(String id, HttpServletResponse response);
+
+    /**
+     * 查询id集合
+     * @param type 发货标记类型
+     */
+    List<String> listIdsByShipmentMark(ShipmentMarkTypeEnum type);
 }

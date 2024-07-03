@@ -15,6 +15,7 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.OperateLogService;
@@ -80,7 +81,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         //获取一个当前时间当作发货时间
         LocalDateTime deliveryTime = LocalDateTime.now();
         deliveryEntity.setDeliveryTime(deliveryTime);
-
+        deliveryEntity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
         //将发货状态更新为已发货
         if (!soB2cDeliveryService.updateById(deliveryEntity)) {
             throw new ServiceException("发货单更新失败");
