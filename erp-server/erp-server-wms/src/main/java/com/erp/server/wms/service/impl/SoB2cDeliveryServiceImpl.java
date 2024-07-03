@@ -795,13 +795,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cLogisticsEntity> logisticsList = soB2cDataDTO.getLogisticsList();
         if (CollectionUtils.isEmpty(soB2cDataDTO.getList()) || CollectionUtils.isEmpty(logisticsList)) {
             log.error("编码【{}】未查询到销售订单信息",soCode);
-            return "9";
+            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
         //发货单信息
         SoB2cDeliveryEntity entity = getBySoCode(soCode);
         if (ObjectUtil.isEmpty(entity)) {
             log.error("编码【{}】未查询到发货单信息",soCode);
-            return "9";
+            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
         entity.setLength(dto.getLength());
         entity.setWidth(dto.getWidth());
@@ -815,7 +815,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsList.get(0).getLogisticsChannelId());
         if (ObjectUtil.isEmpty(channelEntity)) {
             log.error("编码【{}】未查询到渠道信息",soCode);
-            return "9";
+            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
 
         //出库配置，TODO
@@ -834,7 +834,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .build();
         //返回分检口
         String sortingPort = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
-        Boolean isDeviation = Boolean.FALSE;
+        CfgRuleOutDTO.CommonDTO commonDTO = cfgRuleOutService.view();
+        Boolean isDeviation = cfgRuleOutService.handleB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations(),sortingPortRuleDTO);
 
         //自动出库
         if (!isDeviation && entity.getIsAutoOut()) {
