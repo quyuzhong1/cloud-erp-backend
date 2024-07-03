@@ -5,6 +5,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -784,6 +785,7 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class ListSkuParamDTO {
 
 
@@ -801,6 +803,16 @@ public class SkuMappingDTO implements Serializable {
          * 平台字典
          */
         private String dictPlatform;
+        /**
+         * 店铺Id
+         */
+        private String shopId;
+
+        public ListSkuParamDTO(String skuNo, String warehouseId, String dictPlatform) {
+            this.skuNo = skuNo;
+            this.warehouseId = warehouseId;
+            this.dictPlatform = dictPlatform;
+        }
     }
 
     @Data
