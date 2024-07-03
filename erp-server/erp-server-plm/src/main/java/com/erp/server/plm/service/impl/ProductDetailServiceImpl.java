@@ -5172,16 +5172,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         skuList.forEach(v->{
             SkuVO.PropertyDTO propertyDTO =new SkuVO.PropertyDTO();
             v.setPropertyDTO(propertyDTO);
+            if(StringUtils.isBlank(v.getProductPropertyId())){
+                return;
+            }
             List<String> propertyIds = Arrays.asList(v.getProductPropertyId().split(","));
             List<String> propertyNameList = allBasicDictEntities.stream().filter(t->propertyIds.contains(t.getId())).map(BasicDictEntity::getName).collect(Collectors.toList());
-            propertyDTO.setIsElectric(propertyNameList.stream().anyMatch(t->t.equals("电")));
-            propertyDTO.setIsMagnetism(propertyNameList.stream().anyMatch(t->t.equals("磁")));
-            propertyDTO.setIsLiquid(propertyNameList.stream().anyMatch(t->t.equals("液体")));
-            propertyDTO.setIsWood(propertyNameList.stream().anyMatch(t->t.equals("木")));
-            propertyDTO.setIsPowder(propertyNameList.stream().anyMatch(t->t.equals("粉末")));
-            propertyDTO.setIsPlaster(propertyNameList.stream().anyMatch(t->t.equals("膏体")));
-            propertyDTO.setIsCuttingTool(propertyNameList.stream().anyMatch(t->t.equals("刀具")));
-            propertyDTO.setIsOther(propertyNameList.stream().anyMatch(t->t.equals("电")));
+            propertyDTO.setIsElectric(propertyNameList.stream().anyMatch(t->t.contains("电")));
+            propertyDTO.setElectricName(propertyNameList.stream().filter(t->t.contains("电")).collect(Collectors.joining(",")));
+            propertyDTO.setIsMagnetism(propertyNameList.stream().anyMatch(t->t.contains("磁")));
+            propertyDTO.setMagnetismName(propertyNameList.stream().filter(t->t.contains("磁")).collect(Collectors.joining(",")));
+            propertyDTO.setIsLiquid(propertyNameList.stream().anyMatch(t->t.contains("液体")));
+            propertyDTO.setLiquidName(propertyNameList.stream().filter(t->t.contains("液体")).collect(Collectors.joining(",")));
+            propertyDTO.setIsWood(propertyNameList.stream().anyMatch(t->t.contains("木")));
+            propertyDTO.setWoodName(propertyNameList.stream().filter(t->t.contains("木")).collect(Collectors.joining(",")));
+            propertyDTO.setIsPowder(propertyNameList.stream().anyMatch(t->t.contains("粉末")));
+            propertyDTO.setPowderName(propertyNameList.stream().filter(t->t.contains("粉末")).collect(Collectors.joining(",")));
+            propertyDTO.setIsPlaster(propertyNameList.stream().anyMatch(t->t.contains("膏体")));
+            propertyDTO.setPlasterName(propertyNameList.stream().filter(t->t.contains("膏体")).collect(Collectors.joining(",")));
+            propertyDTO.setIsCuttingTool(propertyNameList.stream().anyMatch(t->t.contains("刀具")));
+            propertyDTO.setCuttingToolName(propertyNameList.stream().filter(t->t.contains("刀具")).collect(Collectors.joining(",")));
+            propertyDTO.setIsOther(propertyNameList.stream().anyMatch(t->t.contains("CCC")));
+            propertyDTO.setOtherName(propertyNameList.stream().filter(t->t.contains("CCC")).collect(Collectors.joining(",")));
         });
     }
 
