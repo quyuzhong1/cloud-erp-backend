@@ -367,7 +367,7 @@ public class BusinessServiceImpl {
         });
 
         List<R> collect = pushToMqList.stream().peek(msg -> {
-            SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, msg, msg.getUniqueId());
+            SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, JSONUtil.toJsonStr(msg), msg.getUniqueId());
             log.debug("发送业务模块 MQ数据结果：UniqueId={}, resultMsg={}", msg.getUniqueId(), JSONUtil.toJsonStr(cleanResult));
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
