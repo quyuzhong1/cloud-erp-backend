@@ -2506,23 +2506,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 判断明细处理
         if (CollectionUtils.isNotEmpty(detailEntityListMap.keySet())){
             for (PlatformSoOutStockDetailDTO detailDTO : dto.getDetailList()) {
-                if (!detailEntityListMap.containsKey(detailDTO.getPlatformDetailId())){
-                    // 1：明细不存在新增
-                    generateSourceDetailList.add(detailDTO);
-                }
-                // 明细已存在
-                SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
-                SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
                 if (null == detailDTO.getPlatformDeliveryTime()){
                     ServiceException.runError("仓储中心解析发货时间时区失败");
                 }
-                if (Objects.equals(detailEntity.getActualQty(), detailDTO.getQtyShipped()) && soOutstockEntity.getBillDate().isEqual(detailDTO.getPlatformDeliveryTime().toLocalDate())){
-                    // 3, 明细已存在且信息未变更
-                    existSourceDetailList.add(detailDTO);
-                } else {
-                    // 2，明细存在日期或数量变更
-                    updateGenerateSourceDetailList.add(detailDTO);
+                if (!detailEntityListMap.containsKey(detailDTO.getPlatformDetailId())){
+                    // 1：明细不存在新增
+                    generateSourceDetailList.add(detailDTO);
+                    continue;
                 }
+                // 明细已存在
+//                SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
+//                SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
+//                if (Objects.equals(detailEntity.getActualQty(), detailDTO.getQtyShipped()) && soOutstockEntity.getBillDate().isEqual(detailDTO.getPlatformDeliveryTime().toLocalDate())){
+//                    // 3, 明细已存在且信息未变更
+//                    existSourceDetailList.add(detailDTO);
+//                } else {
+//                    // 2，明细存在日期或数量变更
+//                    updateGenerateSourceDetailList.add(detailDTO);
+//                }
             }
 
         } else {
