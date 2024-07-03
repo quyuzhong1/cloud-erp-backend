@@ -1,6 +1,7 @@
 package com.erp.server.dmp.handler.mongo;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.MongoSuperDTO;
@@ -90,10 +91,10 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         String maxLastId = allList.stream().map(ReportSuperMongoDTO::getId).max(String::compareTo).orElse("0");
         dmpMongoHandleTaskService.updateMaxLastIdAndNextTime(mongoHandleTaskEntity, maxLastId);
 
+        log.warn("亚马逊物流销售报告处理服务处理：转换前的数据={}", JSONUtil.toJsonStr(allList));
         // 补充数据
         List<ReportFulfilledShipmentsMongoDTO> canHandleList = fillData(allList);
-
-//        log.debug("亚马逊物流销售报告处理服务处理：转换后的数据={}", JSONUtil.toJsonStr(allList));
+        log.warn("亚马逊物流销售报告处理服务处理：转换后的数据={}", JSONUtil.toJsonStr(allList));
 
         List<String> uniqueIds = canHandleList.stream()
                 .map(e -> StrUtil.format("{}_{}", e.getAmazonOrderId(), e.getShopId()))
