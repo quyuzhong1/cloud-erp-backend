@@ -2033,6 +2033,104 @@ public class SoInfoDTO implements Serializable {
     }
 
     /**
+     * 下推销售出库订单-列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateSoOutView {
+
+        /**
+         * 主表id
+         */
+        private String id;
+
+        /**
+         * 销售单号
+         */
+        private String code;
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户
+         */
+        private String customerName;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库组织id
+         */
+        private String warehouseOrgId;
+        /**
+         * 仓库组织名称
+         */
+        private String warehouseOrgName;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        private String warehouseLocation;
+
+        /**
+         * 单机日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+
+        /**
+         * 待发数量
+         */
+        private Integer waitDeliveryQty;
+
+        /**
+         * 实发数量
+         */
+        @NotNull(message = "实发数量不能为空")
+        private Integer actualDeliveryQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    /**
      * 下推退货订单-列表查询
      */
     @Data

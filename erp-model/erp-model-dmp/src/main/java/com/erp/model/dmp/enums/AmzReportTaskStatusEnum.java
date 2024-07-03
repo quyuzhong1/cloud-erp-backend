@@ -6,6 +6,8 @@ import lombok.Getter;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -61,5 +63,14 @@ public enum AmzReportTaskStatusEnum {
         return Arrays.stream(AmzReportTaskStatusEnum.values())
                 .filter(r -> r.getCode().equalsIgnoreCase(Code))
                 .findFirst().orElse(null);
+    }
+
+    /**
+     * 执行中的状态
+     */
+    public static List<String> getProcessStatus() {
+        return Stream.of(CREATED, QUERY, DOWNLOAD)
+                .map(AmzReportTaskStatusEnum::getCode)
+                .collect(Collectors.toList());
     }
 }

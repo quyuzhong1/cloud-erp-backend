@@ -1,36 +1,35 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.dto.base.BaseResultDTO;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
+import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationDetailMapper;
-import com.erp.server.wms.service.RequisitionApplicationDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.wms.service.RequisitionApplicationDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
-import java.util.*;
-import java.util.stream.Collectors;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 要货申请单明细表 服务实现类
@@ -101,14 +100,19 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
-    public Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id) {
-        return lambdaUpdate().set(RequisitionApplicationDetailEntity::getFromWarehouseId, fromWarehouseId)
+    public Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String fromVirtualWarehouseId,
+                                           String fromVirtualWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id) {
+        LambdaUpdateChainWrapper<RequisitionApplicationDetailEntity> eq = lambdaUpdate().set(RequisitionApplicationDetailEntity::getFromWarehouseId, fromWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getFromWarehouseName, fromWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
-                .eq(RequisitionApplicationDetailEntity::getId, id)
-                .update();
+                .eq(RequisitionApplicationDetailEntity::getId, id);
+        if (StringUtils.isNotBlank(fromVirtualWarehouseId)) {
+            eq.set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId, fromVirtualWarehouseId)
+                    .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName, fromVirtualWarehouseName);
+        }
+        return eq.update();
     }
 
     @Override
@@ -126,6 +130,14 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         return lambdaUpdate().in(RequisitionApplicationDetailEntity::getMainId,mainIds).remove();
     }
 
+    @Override
+    public void cleanVirtualWarehouseIdByMianId(String mainId) {
+        lambdaUpdate().eq(RequisitionApplicationDetailEntity::getMainId,mainId)
+                .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId,"")
+                .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName,"")
+                .update();
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -137,7 +149,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
 
         //获取sku信息
         List<String> skuIdList = list.stream().map(RequisitionApplicationDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : list) {
             requisitionApplicationDetailEntity.setMainId(mainId);
 

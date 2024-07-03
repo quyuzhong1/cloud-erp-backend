@@ -315,7 +315,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         //产品信息
         List<String> skuIds = detailList.stream().map(TransferApplicationDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         //组织
         InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
@@ -748,7 +748,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         //调拨数量校验（直接调拨数量+分步式调出数量+本次调拨数量 不能大于 拣货数量）
         if (transferInfoQty.intValue() + transferOutQty.intValue() + dto.getQty().intValue() > pickingQty.intValue()) {
-            throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg,dto.getSourceCode(), skuNo, pickingQty.intValue() - transferOutQty.intValue() - transferOutQty.intValue()));
+            throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg,dto.getSourceCode(), skuNo, pickingQty.intValue() - transferOutQty.intValue() -transferInfoQty.intValue()));
 
         }
     }
@@ -774,7 +774,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         //产品信息
         List<String> skuIds = list.stream().map(TransferApplicationDTO.ViewGenerateMachineInfo::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         //根据sku查询拥有的子sku
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         String combinationType = BomTypeEnum.COMBINATION.getType();

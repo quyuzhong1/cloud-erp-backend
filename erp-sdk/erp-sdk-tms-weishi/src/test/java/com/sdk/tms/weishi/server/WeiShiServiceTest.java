@@ -30,13 +30,13 @@ class WeiShiServiceTest {
         //http://track.360lion.com/api/service
         //*令牌：f8067aa0dc9ab7e927e03dfbce54ff4d
         //*令牌：*账户：f8067aa0dc9ab7e927e03dfbce54ff4d7b6fc31d87f0c7e913c112f8b33423ce
+//        authMap.put("url","http://track.360lion.com/api/service");
+//        authMap.put("clientId","f8067aa0dc9ab7e927e03dfbce54ff4d");
+//        authMap.put("clientSecret","f8067aa0dc9ab7e927e03dfbce54ff4d7b6fc31d87f0c7e913c112f8b33423ce");
         //测试
-        //http://218.17.123.141:81/prod-api/toms/service
-        //clientId dcfe81e2059c1f0e6e6263dbcb764885
-        //clientSecret dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53
-        authMap.put("url","http://track.360lion.com/api/service");
-        authMap.put("clientId","f8067aa0dc9ab7e927e03dfbce54ff4d");
-        authMap.put("clientSecret","f8067aa0dc9ab7e927e03dfbce54ff4d7b6fc31d87f0c7e913c112f8b33423ce");
+        authMap.put("url","http://218.17.123.141:18080/toms/service");
+        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
+        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
     }
 
     @Test
@@ -48,7 +48,7 @@ class WeiShiServiceTest {
     @Test
     void createOrder() {
         WeiShiCreateOrderRequest weiShiCreateOrderRequest = WeiShiCreateOrderRequest.builder()
-                .referenceNo("1736938321835200514")
+                .referenceNo("WJ20240521100")
                 .shippingMethod("MX1001")
                 .countryCode("MX")
                 .orderWeight(new BigDecimal("0.123"))
@@ -127,6 +127,17 @@ class WeiShiServiceTest {
                 .build()
                 ;
         WeiShiResponse<List<WeiShiGetTrackNumber>> response = weiShiService.getTrackNumber(weiShiCancelOrderRequest,authMap);
+        System.out.println(response);
+    }
+
+    @Test
+    void updateWeight() {
+        WeiShiUpdateWeightRequest weiShiCancelOrderRequest = WeiShiUpdateWeightRequest.builder()
+                .orderCode("WSHMX1424714556YQ")
+                .weight(new BigDecimal("1"))
+                .build()
+                ;
+        WeiShiResponse<String> response = weiShiService.updateWeight(Arrays.asList(weiShiCancelOrderRequest),authMap);
         System.out.println(response);
     }
 }

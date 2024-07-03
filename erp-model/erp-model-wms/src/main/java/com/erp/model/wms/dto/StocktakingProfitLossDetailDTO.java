@@ -72,6 +72,10 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
 
 
         /**

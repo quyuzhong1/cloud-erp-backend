@@ -42,7 +42,7 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String shopId) {
+    public Map<String, String> getLogisticsAuthConfigByShopId(String shopId) {
         //获取商铺配置信息
         Map<String, String> map = new HashMap<>();
         map.put("shopId", shopId);

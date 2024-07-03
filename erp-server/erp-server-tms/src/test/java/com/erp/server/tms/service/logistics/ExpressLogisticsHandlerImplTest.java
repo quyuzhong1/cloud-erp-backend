@@ -47,7 +47,7 @@ public class ExpressLogisticsHandlerImplTest {
     }
 
     public Map<String, String> getLogisticsAuthConfig() {
-        Map<String, String> logisticsAuthConfig = expressLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = expressLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
 

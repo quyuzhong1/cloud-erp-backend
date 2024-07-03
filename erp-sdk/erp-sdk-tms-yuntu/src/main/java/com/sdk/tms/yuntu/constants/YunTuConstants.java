@@ -12,5 +12,5 @@ public class YunTuConstants {
     public static final String METHOD_PRINT_LABEL = "/api/Label/Print";
     public static final String METHOD_INTERCEPT_ORDER = "/api/WayBill/Intercept";
     public static final String METHOD_CANCEL_ORDER = "/api/WayBill/Delete";
-
+    public static final String METHOD_UPDATE_WEIGHT = "/api/WayBill/UpdateWeight";
 }

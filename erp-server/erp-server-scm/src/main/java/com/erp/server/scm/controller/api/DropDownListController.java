@@ -1,8 +1,11 @@
 package com.erp.server.scm.controller.api;
 
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapperUtils;
@@ -12,10 +15,8 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.*;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -117,7 +118,14 @@ public class DropDownListController extends BaseController {
                 .collect(Collectors.toList());
         return success(result);
     }
-
+    /**
+     * 所有渠道下拉远程搜索
+     * @return
+     */
+    @PostMapping("/supplier/pagingSelect")
+    public ApiResult<PagingVO<BaseDropDownDTO.RemarkDTO>> pagingSelect(@RequestBody @Validated PagingDTO<BaseDropDownDTO.SelectDTO> dto){
+        return success(supplierService.pagingSelect(dto));
+    }
 
 
     /**

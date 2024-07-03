@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.VirtualInventoryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.VirtualInventoryEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="dict_inventory_status" property="dictInventoryStatus" />
+       <result column="qty" property="qty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        warehouse_id, virtual_warehouse_id, sku_id, sku_no, dict_inventory_status, qty
+    </sql>
+
+    <!-- 虚拟库存分页总数 -->
+    <select id="pagingCount" resultType="java.lang.Integer">
+        select
+            count(0)
+        from virtual_inventory vi
+        <where>
+            ${params.sqlMap.default}
+            and vi.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <!-- 虚拟库存分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListDTO">
+        select
+            string_agg(vi.id, ',') as indexId,
+            vi.sku_id as skuId,
+            vi.warehouse_id as warehouseId,
+            vi.virtual_warehouse_id as virtualWarehouseId
+        from virtual_inventory vi
+        left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and vi.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vi.sku_id
+    </select>
+
+    <!-- 根据SKU和虚拟仓库查询 -->
+    <select id="listVirtualWarehouseIdListAndSkuIdList"
+            resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListInventoryDTO">
+        select
+               vi.id,
+               vi.warehouse_id,
+               vi.sku_id,
+               vi.dict_inventory_status,
+               COALESCE(inv.qty,0) as qty,
+               COALESCE(vi.qty,0) as virtualQty,
+               vi.virtual_warehouse_id
+        from virtual_inventory vi
+        left join (
+            select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
+            group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
+        ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
+              and vi.dict_inventory_status = inv.dict_inventory_status
+        <where>
+            vi.is_deleted = false
+            and vi.sku_id in
+            <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            and vi.virtual_warehouse_id in
+            <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
+    <!-- 库存差异分页查询 -->
+    <select id="diffPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDTO">
+        select warehouseId,skuId,virtualQty,usableQty from (select
+            vi.warehouse_id as warehouseId,
+            vi.sku_id as skuId,
+            COALESCE(sum(vi.qty),0) as virtualQty,
+            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty
+        from virtual_inventory vi
+        <where>
+            ${params.sqlMap.default}
+            and vi.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by vi.sku_id,vi.warehouse_id
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vi.sku_id) diff
+        where 1 = 1
+        <if test="params.isDiff != null and params.isDiff == true">
+            and  virtualQty > usableQty
+        </if>
+        <if test="params.isDiff != null and params.isDiff == false">
+            and  usableQty >= virtualQty
+        </if>
+    </select>
+
+    <!-- 库存差异列表数量 -->
+    <select id="diffPagingCount" resultType="java.lang.Integer">
+        select count(0) from (
+            select
+            vi.sku_id,vi.warehouse_id,
+            COALESCE(sum(vi.qty),0) as virtualQty,
+            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty
+            from virtual_inventory vi
+            <where>
+               vi.is_deleted = false
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+            </where>
+            group by vi.sku_id,vi.warehouse_id
+            ) a where virtualQty > usableQty;
+    </select>
+
+    <!-- 库存差异明细分页查询 -->
+    <select id="diffDetailPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDetailQtyDTO">
+        select
+            vi.virtual_warehouse_id as virtualWarehouseId,
+            COALESCE(sum(vi.qty),0) as virtualQty,
+            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
+            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false
+            and vi.sku_id = #{params.skuId} and vi.warehouse_id = #{params.warehouseId}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by vi.virtual_warehouse_id,vi.sku_id,vi.warehouse_id
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vi.virtual_warehouse_id
+    </select>
+
+    <!-- 虚拟库存数据 -->
+    <select id="listDiffExportData" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDiffExportDataDTO">
+        select skuId,warehouseId,virtualWarehouseId,virtualQty,virtualUsableQty,virtualFrozenQty,usableQty,totalVirtualQty from (select
+        vi.sku_id as skuId,
+        vi.warehouse_id as warehouseId,
+        vi.virtual_warehouse_id as virtualWarehouseId,
+        COALESCE(sum(vi.qty),0) as virtualQty,
+        (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
+        (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty,
+        (select  COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id) as totalVirtualQty,
+        (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty
+        from virtual_inventory vi
+        <where>
+            ${params.sqlMap.default}
+            and vi.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id) diff where totalVirtualQty > usableQty
+    </select>
+
+
+    <select id="getUsableQty" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ViewQtyDTO">
+        SELECT vi.warehouse_id,
+               vi.sku_id,
+               vi.virtual_warehouse_id as toVirtualWarehouseId,
+               sum(case when vi.dict_inventory_status = 'usable' then vi.qty else 0 end) as toVirtualWarehouseUsableQty
+        FROM virtual_inventory vi
+        WHERE vi.is_deleted = FALSE
+        and vi.sku_id in
+        <foreach collection="params.skuIdList" item="skuId" open="(" close=")" separator=",">
+            #{skuId}
+        </foreach>
+        and vi.warehouse_id in
+        <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        and vi.virtual_warehouse_id in
+        <foreach collection="params.virtualWarehouseIdList" item="virtualWarehouseId" open="(" close=")" separator=",">
+            #{virtualWarehouseId}
+        </foreach>
+        GROUP BY vi.warehouse_id, vi.sku_id, vi.virtual_warehouse_id
+    </select>
+    <select id="getRealQty" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ViewQtyDTO">
+        select
+            vi.warehouse_id,
+            vi.sku_id,
+            sum(vi.qty) as toVirtualWarehouseRealQty
+        from  virtual_inventory vi
+        WHERE vi.is_deleted = FALSE
+        and vi.sku_id in
+        <foreach collection="params.skuIdList" item="skuId" open="(" close=")" separator=",">
+            #{skuId}
+        </foreach>
+        and vi.warehouse_id in
+        <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        GROUP BY vi.warehouse_id, vi.sku_id
+    </select>
+
+    <!-- 根据实体仓库id集合查询虚拟库存数量 -->
+    <select id="listInventoryQty"
+            resultType="com.erp.model.wms.dto.VirtualInventoryDTO$VirtualInventoryQtyDTO">
+        select
+               vi.sku_id,
+               vi.warehouse_id,
+               vi.virtual_warehouse_id,
+               vi.dict_inventory_status,
+               COALESCE(sum(vi.qty),0) as inventoryQty
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false and  vi.sku_id in
+            <foreach collection="params.skuIdList" item="item" separator=","  open="(" close=")">
+                #{item}
+            </foreach>
+            and vi.warehouse_id in
+            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            and vi.virtual_warehouse_id in
+            <foreach collection="params.virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            <if test="params.dictInventoryStatus != null and params.dictInventoryStatus != ''">
+                and vi.dict_inventory_status = #{params.dictInventoryStatus}
+            </if>
+        </where>
+        group by  vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id,vi.dict_inventory_status
+    </select>
+    <select id="findUsableQtyByQtyDto" resultType="java.lang.Integer"
+            parameterType="com.erp.model.wms.dto.VirtualInventoryDTO$VirtualInventoryQtyDTO">
+        select sum(case when vi.dict_inventory_status = 'usable' then vi.qty else 0 end)
+        FROM virtual_inventory vi
+        WHERE vi.is_deleted = FALSE
+        <if test="params.virtualWarehouseId != null and params.virtualWarehouseId != ''">
+            and vi.virtual_warehouse_id =#{params.virtualWarehouseId}
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and vi.warehouse_id =#{params.warehouseId}
+        </if>
+        GROUP BY vi.virtual_warehouse_id
+    </select>
+
+    <!-- 根据实体仓库查询虚拟库存数量 -->
+    <select id="getInventoryQtyByWarehouseId" resultType="java.lang.Integer">
+        select
+            COALESCE(sum(vi.qty),0) as qty
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false and vi.warehouse_id = #{warehouseId} and vi.sku_id = #{skuId}
+        </where>
+        group by vi.warehouse_id,vi.sku_id
+    </select>
+    <select id="getBySkuIdAndVwId" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$CommonDTO">
+        select <include refid="Base_Column_List"/>
+            from virtual_inventory
+        where sku_id=#{skuId} and virtual_warehouse_id=#{virtualWarehouseId}
+    </select>
+
+</mapper>

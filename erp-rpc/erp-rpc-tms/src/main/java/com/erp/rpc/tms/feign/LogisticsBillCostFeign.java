@@ -5,6 +5,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
+
 @FeignClient(name = "erp-tms", contextId = "logisticsBillCost")
 public interface LogisticsBillCostFeign {
 
@@ -17,4 +19,10 @@ public interface LogisticsBillCostFeign {
      */
     @PostMapping("/feign/logisticsBillCost/updateShopCharge")
     Boolean updateShopCharge(@RequestBody LogisticsBillCostDTO.UpdateShopChargeDTO dto);
+
+    /**
+     * @description: 查询订单实际物流运费
+     */
+    @PostMapping("/feign/logisticsBillCost/getActualLogisticCost")
+    BigDecimal getActualLogisticCost(@RequestBody String soId);
 }

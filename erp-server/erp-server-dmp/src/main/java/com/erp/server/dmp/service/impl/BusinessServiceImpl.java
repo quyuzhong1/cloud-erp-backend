@@ -1,7 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -15,6 +14,7 @@ import com.common.business.handler.BusinessHandlerRegistry;
 import com.common.business.handler.IBusinessHandler;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.Md5Util;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
@@ -35,8 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -214,6 +212,7 @@ public class BusinessServiceImpl {
             String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, sourceType.getCode(), targetPlatform, topic, tag, msg));
             msg.setDmpSyncTaskId(modelTaskId);
             SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, msg, msg.getUniqueId());
+            log.info("MQ消息发送成功：{} {} {} {}", topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
             }else {
@@ -337,17 +336,30 @@ public class BusinessServiceImpl {
         if (ObjectUtil.isEmpty(sourceType)){
             throw new ServiceException(StrUtil.format("来源类型business = {} 不存在", business));
         }
-        List<DmpPullTaskEntity> allList = pushToMqList.stream()
+        // 根据唯一规则去重
+        List<DmpPullTaskEntity> allList = new ArrayList<>(pushToMqList.stream()
                 .map(msg -> new DmpPullTaskEntity(platform, sourceType.getCode(), targetPlatform, topic, tag, msg))
-                .collect(Collectors.toList());
-        List<String> allUniqueIds = pushToMqList.stream().map(UniqueDto::getUniqueId).collect(Collectors.toList());
+                .collect(Collectors.toMap(
+                        DmpPullTaskEntity::uniqueKey,
+                        obj -> obj,
+                        (existing, replacement) -> existing
+                ))
+                .values());
 
         // 批量保存和更新
         List<DmpPullTaskEntity> allResultList = dmpPullTaskService.batchCheckSaveAndUpdate(allList, platform, sourceType.getCode(), targetPlatform, topic, tag);
-        Map<String, String> unqueIdAndTaskIdMap = allResultList.stream().collect(Collectors.toMap(DmpPullTaskEntity::getSourceId, DmpPullTaskEntity::getId));
+        Map<String, String> unqueIdAndTaskIdMap = allResultList.stream().collect(Collectors.toMap(DmpPullTaskEntity::uniqueKey, DmpPullTaskEntity::getId));
         // 设置taskId到消息体
-        pushToMqList.forEach(e-> {
-            String taskId = unqueIdAndTaskIdMap.get(e.getUniqueId());
+        pushToMqList.forEach(e -> {
+            String uniqueKey = StrUtil.format("{}_{}_{}_{}_{}_{}_{}",
+                    sourceType.getCode(),
+                    e.getUniqueId(),
+                    e.getUniqueId(),
+                    platform,
+                    targetPlatform,
+                    topic,
+                    tag);
+            String taskId = unqueIdAndTaskIdMap.get(uniqueKey);
             if (StringUtils.isBlank(taskId)){
                 throw new ServiceException("处理异常:未找到DmpPullTaskEntity的Id， sourceId=" + e.getUniqueId());
             }
@@ -362,5 +374,35 @@ public class BusinessServiceImpl {
             }
         }).collect(Collectors.toList());
         return pushToMqList;
+    }
+
+    /**
+     * 批量处理业务
+     *
+     * @param <T>             业务类型
+     * @param <R>             业务返回类型
+     * @param <>              业务数据类型
+     * @param category        业务类型
+     * @param platform        平台类型
+     * @param business        业务类型
+     * @param data            业务数据
+     * @param platformApiEnum
+     */
+//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
+    public <T extends CleanBaseDTO,R extends UniqueDto> void batchCheckAndInsert(String category, String platform, String business, JobTaskDTO data, PlatformApiEnum platformApiEnum, Integer batchSendMqSize) {
+        IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
+        if (handler != null) {
+            PlatformDataDTO<T, R> platformData = handler.pullHandle(data);
+
+            String targetPlatform = handler.getTargetPlatform();
+            Boolean isSendMq = handler.getIsSendMq();
+            // 保存mongo 并发送mq
+            List<R> toMqList = batchCompareAndSaveMongo(isSendMq, category, platform, business, targetPlatform, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC, platformApiEnum, batchSendMqSize);
+        } else {
+            // Handle the case when no handler is found
+            throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);
+        }
+
     }
 }

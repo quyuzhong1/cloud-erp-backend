@@ -4,16 +4,16 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.*;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -23,6 +23,7 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
@@ -162,11 +163,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, String name) {
+    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, LogisticsSupplierDTO.PagingParamDTO params) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, name);
+        List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, params);
 //        List<LogisticsChannelEntity> list = this.lambdaQuery().
 //                in(LogisticsChannelEntity::getMainId, mainIdList).
 //                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
@@ -476,6 +477,12 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(StringUtils.isBlank(channelId)){
             return result;
         }
+        if (StringUtils.isNotBlank(channelId)){
+            LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
+            if (Objects.nonNull(authEntity)){
+                result.setLogisticsPlatform(authEntity.getLogisticsPlatform());
+            }
+        }
         //先通过国家+渠道获取
         LogisticsChannelConstraintEntity logisticsChannelConstraintEntity = logisticsChannelConstraintService.getByChannelAndCountry(channelId,country);
         if(Objects.nonNull(logisticsChannelConstraintEntity)){
@@ -531,24 +538,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return new ArrayList<>();
         }
         return this.lambdaQuery().in(LogisticsChannelEntity::getName, channelNameList).list();
-    }
-
-    @Override
-    public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
-        LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
-        LogisticsChannelEntity channelEntity = this.getById(channelId);
-        String code = "";
-        if (Objects.nonNull(channelEntity)) {
-            signShipDTO.setLogisticsChannelId(channelEntity.getId());
-            code = channelEntity.getCode();
-            signShipDTO.setCode(code);
-        }
-        LogisticsSaleChannelEntity saleChannelEntity = logisticsSaleChannelService.getByCode(code);
-        if (Objects.nonNull(saleChannelEntity)) {
-            signShipDTO.setSaleChannelSupplierName(saleChannelEntity.getSupplierName());
-        }
-        return signShipDTO;
-
     }
 
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
@@ -626,7 +615,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
         }
-
     }
 
     @Override
@@ -651,5 +639,16 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             throw new ServiceException("对应销售平台物流渠道信息不存在");
         }
         return new LogisticsChannelDTO.SignShipDTO(entity.getId(),logisticsChannelId, entity.getCode(), entity.getCnName(), viewDTO.getOrderDeliveryMarkType());
+    }
+    @Override
+    public PagingVO<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsChannelDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        LogisticsChannelDTO.SelectDTO params = dto.getParams();
+        IPage<LogisticsChannelDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
+//        List<LogisticsChannelDTO.PagingSelectDTO> records = pagResult.getRecords();
+        //排序
+//        List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
+//        pagResult.setRecords(list);
+        return new PagingVO<>(pagResult);
     }
 }

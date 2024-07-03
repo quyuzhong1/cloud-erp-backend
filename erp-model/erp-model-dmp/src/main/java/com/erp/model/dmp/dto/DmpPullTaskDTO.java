@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -40,44 +42,15 @@ public class DmpPullTaskDTO {
     public static class ParamDTO extends PermissionsDTO{
 
         /**
-         * 导出ids查询
+         * 页面高级查询
          */
-        private List<String> ids;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 来源类型
+         * sqlMap 默认key default
          */
-        private List<String> sourceTypeList;
+        private Map<String,String> sqlMap;
 
-        /**
-         * 来源编号
-         */
-        private String sourceCode;
-
-        /**
-         * 目标平台
-         */
-        private String targetPlatformName;
-
-        /**
-         * 来源平台
-         */
-        private String sourcePlatformName;
-
-        /**
-         * 同步状态
-         */
-        private List<String> statusList;
-
-        /**
-         * 推送失败原因
-         */
-        private String returnMsg;
-
-        /**
-         * 同步时间
-         */
-        private List<LocalDate> lastSyncTime;
     }
 
     @Data

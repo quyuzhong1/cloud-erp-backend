@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.common.core.utils.StrUtils;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.server.wms.service.WarehouseLocationService;
 import lombok.AllArgsConstructor;
@@ -61,5 +62,13 @@ public class WarehouseLocationFeignController extends BaseController {
     public List<WarehouseLocationEntity> list() {
         return warehouseLocationService.list();
     }
-
+    /**
+     * 根据仓库id和库位查询仓位信息
+     * @param paramList
+     * @return
+     */
+    @PostMapping("/listByWarehouseIdAndCode")
+    public List<WarehouseLocationEntity> listByWarehouseIdAndCode(@RequestBody List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList){
+        return warehouseLocationService.listByWarehouseIdAndCode(paramList);
+    }
 }

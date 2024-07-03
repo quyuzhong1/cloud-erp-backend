@@ -2,6 +2,7 @@ package com.erp.oms.aliexpress.handler;
 
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -105,5 +106,15 @@ public class AliExpressListingHandler extends AbstractProductHandler<PlatformAli
     @Override
     public String getTargetPlatform() {
         return PlatformEnum.ERP.getDesc();
+    }
+
+    @Override
+    public Boolean getIsSendMq() {
+        return true;
+    }
+
+    @Override
+    public PlatformAliExpressListingDTO downloadDetail(PlatformAliExpressListingDTO dto, JSONObject extendObj) {
+        return super.downloadDetail(dto, extendObj);
     }
 }

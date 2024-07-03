@@ -180,8 +180,8 @@ public class DmpSyncTaskJob {
      * @return
      */
     @XxlJob("SyncPullTaskHistoryJob")
-    public ReturnT<String> syncPullTaskHistory() {
-        dmpPullTaskHistoryService.syncPullTaskHistory();
+    public ReturnT<String> syncPullTaskHistory(Integer month) {
+        dmpPullTaskHistoryService.syncPullTaskHistory(month);
         return ReturnT.SUCCESS;
     }
 

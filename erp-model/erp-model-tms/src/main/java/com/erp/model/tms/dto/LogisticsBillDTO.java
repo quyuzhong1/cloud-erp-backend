@@ -1,6 +1,8 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import lombok.AllArgsConstructor;
@@ -29,6 +31,19 @@ import java.util.List;
 @NoArgsConstructor
 public class LogisticsBillDTO implements Serializable {
 
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UpdateWeight {
+        @NotNull(message = "物流信息不能为空")
+        private SoB2cLogisticsEntity soB2cLogisticsEntity;
+        @NotNull(message = "订单信息不能为空")
+        private SoB2cEntity soB2cEntity;
+    }
 
     /**
      * tab
@@ -785,6 +800,10 @@ public class LogisticsBillDTO implements Serializable {
          *  订单id(erp 销售订单id)
          */
         private String orderId;
+        /**
+         * 店铺id
+         */
+        private String shopId;
 
         private String reason;
     }

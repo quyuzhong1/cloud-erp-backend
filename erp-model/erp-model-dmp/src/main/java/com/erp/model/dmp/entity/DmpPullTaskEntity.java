@@ -178,15 +178,15 @@ public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
     /**
      * 幂等唯一md5
      */
-    public String redissonKey(){
-        return Md5Util.md5(StrUtil.format("{}_{}_{}_{}_{}_{}_{}",
+    public String uniqueKey(){
+        return StrUtil.format("{}_{}_{}_{}_{}_{}_{}",
                         this.sourceType,
                         this.sourceId,
                         this.sourceCode,
                         this.sourcePlatformName,
                         this.targetPlatformName,
                         this.mqTopic,
-                        this.mqTag));
+                        this.mqTag);
     }
 
 }

@@ -1,17 +1,19 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.exception.ServiceException;
@@ -22,11 +24,14 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -118,7 +123,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         String accessoriesSkuId = entity.getAccessoriesSkuId();
         String accessoriesSkuNo = "";
         if (StringUtils.isNotBlank(accessoriesSkuId)) {
-            List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(entity.getAccessoriesSkuId()));
+            List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(Arrays.asList(entity.getAccessoriesSkuId()));
             if (CollectionUtils.isNotEmpty(skuList)) {
                 accessoriesSkuNo = skuList.get(0).getSkuNo();
             }
@@ -174,7 +179,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
                 set(SoB2cLogisticsEntity::getCode, transportNo).
                 set(SoB2cLogisticsEntity::getTrackNo, trackNo).
-                update(new SoB2cLogisticsEntity());
+                update();
     }
 
     @Override
@@ -189,11 +194,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (CollectionUtils.isEmpty(logisticsList)) {
             if (null == oldEntity) {
                 SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId(), allNetWeight, maxLength, maxWidth, totalHeight);
-                entity.setMainId(mainEntity.getId());
-                entity.setWeight(allNetWeight);
-                entity.setLength(maxLength);
-                entity.setWidth(maxWidth);
-                entity.setHeight(totalHeight);
                 handleLogisticsData(entity);
                 // 无信息新增空表
                 if (!this.save(entity)) {
@@ -383,15 +383,57 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
+        String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
         if(!MathUtil.isValidNumber(weightByG,12)){
             throw new ServiceException("重量过大，整数最大值不能超过12位");
         }
-        String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "【组包称重】");
         return lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)
                 .eq(SoB2cLogisticsEntity::getId, id)
                 .update();
+    }
+
+    @Override
+    public BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList) {
+        SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+        if(Objects.isNull(soB2cEntity)){
+            return BatchResultDTO.fail(id,id,"找不到销售订单");
+        }
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(v->v.getMainId().equals(id)).findFirst().orElse(null);
+        if(Objects.isNull(soB2cLogisticsEntity)){
+            return BatchResultDTO.fail(id,soB2cEntity.getCode(),"找不到物流单");
+        }
+        //已存在的渠道为空
+        if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+            return BatchResultDTO.fail(id,soB2cEntity.getCode(),"物流渠道为空");
+        }
+        if (StringUtils.isBlank(soB2cLogisticsEntity.getCode())) {
+            return BatchResultDTO.fail(id,soB2cEntity.getCode(),"未获取跟踪号，无法取消");
+        }
+        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())) {
+            return BatchResultDTO.fail(id,soB2cEntity.getCode(),"只有配货中的订单可以取消");
+        }
+        //取消物流单
+        LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
+                channelId(soB2cLogisticsEntity.getLogisticsChannelId())
+                .transportNo(soB2cLogisticsEntity.getCode())
+                .referenceNumber(soB2cEntity.getCode())
+                .shopId(soB2cEntity.getShopId())
+                .build();
+        ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+        //取消失败
+        if (!cancelResult.isSuccess() && cancelResult.getCode()!=-1) {
+            return BatchResultDTO.fail(id,soB2cEntity.getCode(),cancelResult.getMsg());
+        }else{
+            String msg = StrUtil.format("取消物流单单号成功,单号:【{}/{}】 ", soB2cLogisticsEntity.getCode(),soB2cLogisticsEntity.getTrackNo());
+            operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "取消物流单");
+            soB2cLogisticsEntity.setCode("");
+            soB2cLogisticsEntity.setTrackNo("");
+            this.updateById(soB2cLogisticsEntity);
+            return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
+        }
+
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

@@ -71,7 +71,7 @@ public enum ChargeSuperiorEnum {
     }
     public static ChargeSuperiorEnum getByDictValue(String dictValue) {
         return Arrays.stream(ChargeSuperiorEnum.values())
-                .filter(chargeSuperiorEnum -> dictValue.equals(chargeSuperiorEnum.getDictValue()))
+                .filter(chargeSuperiorEnum -> chargeSuperiorEnum.getDictValue().equals(dictValue))
                 .findFirst()
                 .orElse(null);
     }

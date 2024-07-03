@@ -26,10 +26,10 @@ public class OtherOutStockImportExcelDTO implements Serializable {
     private String detailId;
 
     /**
-     * 出库类型
+     * 业务类型
      */
-    @ExcelProperty(value = "*出库类型", index = 0)
-    @FieldValid(fieldName = "出库类型", isNotBlank = true, maxLength = 32, enumClass = OutstockTypeEnum.class)
+    @ExcelProperty(value = "*业务类型", index = 0)
+    @FieldValid(fieldName = "业务类型", isNotBlank = true, maxLength = 50)
     private String type;
 
     /**
@@ -115,6 +115,13 @@ public class OtherOutStockImportExcelDTO implements Serializable {
     @ExcelProperty(value = "*出库备注", index = 12)
     @FieldValid(fieldName = "出库备注", maxLength = 200)
     private String remark;
+
+    /**
+     * 出库类型
+     */
+    @ExcelProperty(value = "*出库类型", index = 13)
+    @FieldValid(fieldName = "出库类型", isNotBlank = true, maxLength = 50)
+    private String outType;
 
     /**
      * 错误数据

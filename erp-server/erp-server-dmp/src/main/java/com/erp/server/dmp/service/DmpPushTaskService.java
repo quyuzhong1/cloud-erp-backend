@@ -32,6 +32,13 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
     DmpPushTaskEntity saveTask(DmpPushTaskFeignDTO dto);
 
     /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
+
+    /**
      * 根据id推送任务
      * @author Will
      * @date: 2024/5/14 9:35
@@ -125,6 +132,14 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @date 2024/4/11 16:51
      */
     Boolean batchNoNeedSync(List<String> ids);
+    /**
+     * @param sourceIds
+     * @return Boolean
+     * @description: 根据sourceId批量修改无需同步
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    Boolean batchNoNeedSyncBySourceId(List<String> sourceIds);
 
     /**
      * @param syncTaskId
@@ -156,4 +171,16 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      */
     void deleteByIds(List<String> ids);
 
+    List<DmpPushTaskEntity> listByCodeParam(DmpSyncTaskDTO.ListCodeDTO listCodeDTO);
+
+    /**
+     * 批量保存旺店通任务!
+     */
+    List<DmpPushTaskEntity> saveWdtTaskList(List<DmpPushTaskFeignDTO> dtoList);
+    /**
+     * 根据sourceId重新同步
+     * @param sourceIds
+     * @return
+     */
+    Boolean batchSyncBySourceId(List<String> sourceIds);
 }

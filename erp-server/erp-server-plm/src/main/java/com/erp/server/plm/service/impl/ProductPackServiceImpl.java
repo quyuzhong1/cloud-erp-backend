@@ -76,6 +76,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     public Boolean saveOrUpdate(ProductPackDTO productPackDTO) {
         ProductPackEntity packEntity = new ProductPackEntity();
         BeanMapper.copy(productPackDTO, packEntity);
+        packEntity.handleData();
         return this.saveOrUpdate(packEntity);
     }
 
@@ -89,6 +90,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     @Override
     public Boolean saveOrUpdateBatch(List<ProductPackDTO> productPackList) {
         List<ProductPackEntity> list = BeanMapper.copyList(productPackList, ProductPackEntity.class);
+        list.forEach(ProductPackEntity::handleData);
         return this.saveOrUpdateBatch(list);
     }
 
@@ -131,7 +133,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
         List<ProductPackEntity> list = this.lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
         //产品详情信息
-        List<SkuVO> productDetailList = productDetailService.getSkuInfoBySkuIds(skuIds);
+        List<SkuVO> productDetailList = productDetailService.listSkuPackByIds(skuIds);
 
         List<ProductVO.ProductPackVO> resultList = new ArrayList<>(list.size());
         for (ProductPackEntity item : list) {

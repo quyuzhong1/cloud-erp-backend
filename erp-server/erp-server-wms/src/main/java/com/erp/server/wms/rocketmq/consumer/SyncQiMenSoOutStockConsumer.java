@@ -1,0 +1,88 @@
+package com.erp.server.wms.rocketmq.consumer;
+
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncTaskIdDTO;
+import com.common.business.dto.WdtSoOutStockDTO;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.PlatformCategoryEnum;
+import com.common.business.enums.SyncStatusEnum;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.erp.model.dmp.dto.MongoDBUpdateDTO;
+import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.util.Objects;
+
+/**
+ * 奇门销售出库单
+ */
+@Component
+@Slf4j
+@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
+        selectorExpression = "third_system_qimen_so_out_stock_tag",
+        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_qimen_so_out_stock_consumer",
+        consumeMode = ConsumeMode.ORDERLY)
+public class SyncQiMenSoOutStockConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+    @Resource
+    private SyncB2CSoOutstockService syncB2CSoOutstockService;
+    @Resource
+    private DmpMongoDbFeign dmpMongoDbFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
+    @Override
+    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
+        try {
+            dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+        }catch (Exception e){
+            throw new ServiceException("erp-dmp更新dmp_pull_task异常："+ e.getMessage());
+        }
+    }
+
+    @Override
+    public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
+        if (StringUtils.isEmpty(uniqueId) || StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
+            return;
+        }
+        MongoDBUpdateDTO dto = MongoDBUpdateDTO.builder()
+                .tableName(getTableName(platform))
+                .uniqueId(uniqueId)
+                .isClean(isClean)
+                .build();
+        dmpMongoDbFeign.updateMongoDbData(dto);
+    }
+
+    @Override
+    public void sendWarnMsg(String syncTaskId, String msg) {
+        dmpTaskFeign.sendWarnMsg(syncTaskId);
+    }
+
+    @Override
+    public ApiResult<?> handle(Object ext) {
+        log.info("监听到奇门销售出库单：{}", JSONUtil.toJsonStr(ext));
+        WdtSoOutStockDTO entity = JSONUtil.toBean(ext.toString(), WdtSoOutStockDTO.class);
+        syncB2CSoOutstockService.syncWdtSoOutStock(entity);
+        return ApiResult.success();
+    }
+
+    /**
+     * 根据平台组装表名
+     * @param platform 平台code
+     */
+    private String getTableName(String platform){
+        return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+                platform, BusinessTypeEnum.QIMEN_SO_OUT_STOCK.getCode());
+    }
+}

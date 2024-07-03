@@ -27,7 +27,6 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -40,9 +39,11 @@ import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.PackageForecastFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
@@ -59,6 +60,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -106,7 +109,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Autowired
     private LogisticsChannelService logisticsChannelService;
     @Autowired
-    private ShopInfoFeign shopInfoFeign;
+    private PackageForecastFeign packageForecastFeign;
     @Autowired
     private TransferDeclareProductService transferDeclareProductService;
     @Autowired
@@ -120,15 +123,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        //列表Tab查询状态处理
-        handleTableParam(pagingParamDTO.getParams());
-
         IPage<TransferDeclareDTO.ListDTO> pageData = baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
-        // 数据处理
-        fillList(pageData.getRecords());
+        //数据处理
+        fillList(pageData.getRecords(),pagingParamDTO.getParams());
         return new PagingVO(pageData);
     }
 
@@ -339,7 +339,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
-        fillList(list);
+        fillList(list, dto);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/transferDeclare.xlsx";
         String name = "中转报关单导出";
@@ -524,11 +524,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //查询报关单包含的订单信息
         List<String> soIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
-
+        List<PackageForecastDTO.ExportViewDTO> exportViewDTOS = packageForecastFeign.listPackageForecastBySoIdList(soIdList);
 
         //下单
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(null);
+            PackageForecastDTO.ExportViewDTO packageForecastDTO = exportViewDTOS.stream().filter(e -> e.getSoId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(new PackageForecastDTO.ExportViewDTO());
             if (Objects.nonNull(soB2cEntity) && StringUtils.isNotEmpty(soB2cEntity.getShippingOrderNo())){
                 BigDecimal maxWeight = BigDecimal.ONE;
                 if (transferDeclareDetailEntity.getWeightUnit().equals("g") && transferDeclareDetailEntity.getPackageWeight().compareTo(BigDecimal.ZERO) != 0) {
@@ -537,7 +538,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
                 TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
                         .orderCode(soB2cEntity.getShippingOrderNo())
-                        .packNum(transferDeclareEntity.getCode())
+                        .packNum(packageForecastDTO.getCode())
                         .grossWeight(maxWeight)
                         .build();
                 receiveItemList.add(receiveItem);
@@ -568,7 +569,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 .build();
         try {
             //下单
+            log.info("入库预报参数请求：{}", JSONObject.toJSON(request));
             ApiResult<String> result = service.createInbound(request, authEntity.getId());
+            log.info("入库预报参数响应：{}", JSONObject.toJSON(result));
             transferDeclareEntity.setInstockRefCode(referenceCode);
             transferDeclareEntity.setInstockForecastAsnCode(result.getData());
             transferDeclareEntity.setTotalQty(qtyDTO.getQty());
@@ -653,7 +656,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     private String getReferenceCode() {
-        StringBuffer stringBuffer = new StringBuffer();
+        StringBuilder stringBuffer = new StringBuilder();
         LocalDateTime localDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String format = localDateTime.format(formatter);
@@ -912,20 +915,25 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     /**
      * 分页列表字段处理
+     *
      * @param dateList
+     * @param params
      */
-    private void fillList(List<TransferDeclareDTO.ListDTO> dateList) {
+    private void fillList(List<TransferDeclareDTO.ListDTO> dateList, TransferDeclareDTO.PagingParamDTO params) {
+        if (CollectionUtils.isEmpty(dateList)){
+            return;
+        }
+        //主表记录ids
+        List<String> declareIds = dateList.stream().map(TransferDeclareDTO.ListDTO::getId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByCondition(declareIds,params);
         List<String> soIdList = dateList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
         List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIdList);
-
-        Map<String, List<TransferDeclareDTO.ListDTO>> dateListMap = dateList.stream().collect(Collectors.groupingBy(req -> req.getId()));
-        for (Map.Entry<String, List<TransferDeclareDTO.ListDTO>> stringListEntry : dateListMap.entrySet()) {
-            List<TransferDeclareDTO.ListDTO> stringListEntryValue = stringListEntry.getValue();
+        for (TransferDeclareDTO.ListDTO listDTO : dateList){
+            List<TransferDeclareDetailEntity> detailEntityList = transferDeclareDetailEntities.stream().filter(e -> e.getMainId().equals(listDTO.getId())).collect(Collectors.toList());
 
             //如果明细有移除需要根据明细上传状态修改主表上传状态
-            List<String> orderUploadStatusList = stringListEntryValue.stream().map(req -> req.getUploadOrderStatus()).distinct().collect(Collectors.toList());
+            List<String> orderUploadStatusList = detailEntityList.stream().map(TransferDeclareDetailEntity::getOrderUploadStatus).distinct().collect(Collectors.toList());
 
-            for (TransferDeclareDTO.ListDTO listDTO : stringListEntryValue) {
                 if (orderUploadStatusList.contains(TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                     //如果明细包含失败，主单据改为上传失败
                     listDTO.setUploadOrderStatus(TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode());
@@ -960,7 +968,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadOrderStatus()));
                 //入库预报状态
                 listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(listDTO.getInstockForecastStatus()));
-            }
+            detailEntityList.forEach(transferDeclareDetailEntity -> {
+                transferDeclareDetailEntity.setOrderUploadStatusName(TransferDeclareUploadStatusEnum.getName(transferDeclareDetailEntity.getOrderUploadStatus()));
+                transferDeclareDetailEntity.setOutstockStatusName(TransferOutstockStatusEnum.getName(transferDeclareDetailEntity.getOutstockStatus()));
+                transferDeclareDetailEntity.setTransferStatusName(TransferLogisticsStatusEnum.getName(transferDeclareDetailEntity.getTransferStatus()));
+            });
+            listDTO.setDetailEntityList(detailEntityList);
         }
     }
 

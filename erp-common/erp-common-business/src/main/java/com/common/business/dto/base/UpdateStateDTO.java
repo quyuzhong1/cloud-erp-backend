@@ -53,6 +53,12 @@ public class UpdateStateDTO implements Serializable {
          */
         @NotNull(message = "禁用状态不能为空")
         private Boolean disabled;
+        /**
+         * 禁用状态
+         * true 禁用
+         * false 启用
+         */
+        private String type;
     }
 
 

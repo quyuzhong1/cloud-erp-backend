@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.utils.StringUtils;
@@ -124,11 +125,11 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     /**
      * 速卖通  authId 需要是店铺 shopId
      *
-     * @param authId
+     * @param shopId
      * @return
      */
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
+    public Map<String, String> getLogisticsAuthConfigByShopId(String shopId) {
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_LOGISTICS;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
@@ -150,8 +151,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("url", cfgAppClient.getUrl());
         map.put("orderId", orderId);
         map.put("childOrderId",childOrderId);
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(authId)) {
-            ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(authId);
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(shopId)) {
+            ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(shopId);
             if (Objects.nonNull(shopAuth)) {
                 map.put("shopId", shopAuth.getShopId());
                 map.put("token", shopAuth.getAccessToken());
@@ -178,7 +179,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if (!Objects.isNull(response) && !Objects.isNull(response.getResultSuccess()) && response.getResultSuccess()) {
                 OrderResponse orderResponse = response.getResult();
                 responseVO.setDeliveryNo(orderResponse.getTradeOrderId());
-                responseVO.setTransportNo(orderResponse.getWarehouseOrderId());
+                responseVO.setTransportNo(orderResponse.getOutOrderCode());
                 responseVO.setTrackNo(orderResponse.getIntlTrackingNo());
                 success = true;
                 responseVO.success();
@@ -227,27 +228,26 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         if(Objects.isNull(addressDTO.getPickup())){
             Address sender = addressDTO.getSender();
-            sender.setMemberType("pickup");
             addressDTO.setPickup(sender);
+            addressDTO.getPickup().setMemberType("pickup");
         }
-        OrderRequest orderRequest = OrderRequest.builder()
+        return OrderRequest.builder()
                 .oaid(logisticsOrderVO.getOaid())
-                .pickup_type(logisticsOrderVO.getPickupType())
+                .pickup_type(logisticsOrderVO.getLogisticsChannelEntity().getDeliveryType())
                 .declareProducts(declareProducts)
-                .domestic_logistics_company(logisticsOrderVO.getLogisticsSaleChannel().getSupplierName())
+                .domestic_logistics_company("自送")
                 .domestic_logistics_company_id(-1L)
 //                .domestic_tracking_no(logisticsOrderVO.getDeliveryNo())
                 .package_num(logisticsOrderVO.getParceInfoVO().getTotalQuantity())
                 .trade_order_from(logisticsOrderVO.getOrderSource())
                 .trade_order_id(logisticsOrderVO.getDeliveryNo())
-                .undeliverable_decision("0")
-                .warehouse_carrier_service(logisticsOrderVO.getLogisticsSaleChannel().getCode())
+                .undeliverable_decision("1")
+                .warehouse_carrier_service(logisticsOrderVO.getLogisticsChannelEntity().getCode())
                 //托寄物信息
                 .address_d_t_os(addressDTO)
                 .is_agree_upgrade_reverse_parcel_insure(false)
                 .top_user_key(logisticsOrderVO.getTopUserKey())
                 .build();
-        return orderRequest;
     }
 
     /**
@@ -296,10 +296,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     if (CollectionUtils.isNotEmpty(responses)) {
                         responses.forEach(queryOrderResponse -> {
                             if (!StringUtils.isEmpty(logisticsQueryBaseVO.getTransportNo()) && !StringUtils.isEmpty(queryOrderResponse.getLogistics_order_id())){
-                                if (logisticsQueryBaseVO.getTransportNo().equalsIgnoreCase(queryOrderResponse.getLogistics_order_id())){
+                                if (logisticsQueryBaseVO.getDeliveryNo().equalsIgnoreCase(queryOrderResponse.getTrade_order_id())){
                                     LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                                            .transportNo(queryOrderResponse.getInternational_logistics_num())
-                                            .trackNo(queryOrderResponse.getLogistics_order_id())
+                                            .transportNo(queryOrderResponse.getOut_order_code())
+                                            .trackNo(queryOrderResponse.getInternational_logistics_num())
                                             .deliveryNo(queryOrderResponse.getTrade_order_id())
                                             .logisticsChannelNo(queryOrderResponse.getLogistics_service_list().get(0).getCode())
                                             .build();
@@ -310,8 +310,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                                 }
                             }else {
                                 LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                                        .transportNo(queryOrderResponse.getInternational_logistics_num())
-                                        .trackNo(queryOrderResponse.getLogistics_order_id())
+                                        .transportNo(queryOrderResponse.getOut_order_code())
+                                        .trackNo(queryOrderResponse.getInternational_logistics_num())
                                         .deliveryNo(queryOrderResponse.getTrade_order_id())
                                         .logisticsChannelNo(queryOrderResponse.getLogistics_service_list().get(0).getCode())
                                         .build();
@@ -353,17 +353,20 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .orderId(logisticsGetLabelVO.getOrderId())
                     .deliveryNo(logisticsGetLabelVO.getDeliveryNo())
                     .transportNo(logisticsGetLabelVO.getTransportNo())
+                    .trackNo(logisticsGetLabelVO.getTrackNo())
                     .build();
             logisticsQueryVOList.add(logisticsQueryBaseVO);
         });
         ApiResult<List<LogisticsOrderResponseVO>> queryOrderList = this.queryOrderList(logisticsQueryVOList);
         //根据查询结果进行打印
-        if (queryOrderList.isSuccess()){
+        if (queryOrderList.isSuccess() && CollectionUtils.isNotEmpty(queryOrderList.getData())){
             List<LogisticsOrderResponseVO> data = queryOrderList.getData();
-            Map<String, LogisticsOrderResponseVO> collect = data.stream().collect(Collectors.toMap(LogisticsOrderResponseVO::getDeliveryNo, Function.identity()));
             logisticsQueryVO.forEach(logisticsGetLabelVO -> {
-                LogisticsOrderResponseVO responseVO = collect.get(logisticsGetLabelVO.getDeliveryNo());
-                logisticsGetLabelVO.setTransportNo(responseVO.getTransportNo());
+                LogisticsOrderResponseVO logisticsOrderResponseVO = data.stream().filter(e -> e.getDeliveryNo().equals(logisticsGetLabelVO.getDeliveryNo())).findFirst().orElse(null);
+                if (Objects.nonNull(logisticsOrderResponseVO)){
+                    logisticsGetLabelVO.setTransportNo(logisticsOrderResponseVO.getTransportNo());
+                    logisticsGetLabelVO.setTrackNo(logisticsOrderResponseVO.getTrackNo());
+                }
             });
             ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
             return label;
@@ -402,7 +405,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<WarehouseOrderQuery> warehouseOrderQueries = new ArrayList<>(logisticsQueryVO.size());
         logisticsQueryVO.stream().forEach(logisticsGetLabelVO1 -> {
             WarehouseOrderQuery warehouseOrderQuery = new WarehouseOrderQuery();
-            warehouseOrderQuery.setInternational_logistics_id(logisticsGetLabelVO1.getTransportNo());
+            warehouseOrderQuery.setInternational_logistics_id(logisticsGetLabelVO1.getTrackNo());
             warehouseOrderQueries.add(warehouseOrderQuery);
         });
         LabelRequest labelRequest = LabelRequest.builder()

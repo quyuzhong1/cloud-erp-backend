@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -87,6 +86,12 @@ public class SoB2cDetailDTO implements Serializable {
          * 本位币别（默认人民币）
          */
        private String currency;
+
+       /**
+        * 虚拟仓id
+        */
+       private String virtualWarehouseId;
+
         /**
          * 出货仓库
          */
@@ -206,6 +211,11 @@ public class SoB2cDetailDTO implements Serializable {
        private Boolean isOutStock;
 
        /**
+        * 虚拟仓是否缺货
+        */
+       private Boolean isVirtualOutStock;
+
+       /**
         * 当前是否退款: true=退款, false=未退款
         */
        private Boolean isRefunded;
@@ -257,6 +267,28 @@ public class SoB2cDetailDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+        /**
+         * 产品尺寸（长）
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品尺寸（宽）
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品尺寸（高）
+         */
+        private BigDecimal productHeight;
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
 
         /**
         * 库存sku编号 http://172.16.100.11:3002/project/110/interface/api/19609

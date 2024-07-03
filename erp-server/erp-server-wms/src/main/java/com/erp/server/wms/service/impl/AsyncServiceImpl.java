@@ -52,16 +52,10 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Async("wmsErpExecutor")
     @Override
-    @DataIdempotent(keyIdName = "soId")
-    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
-        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-        platformShipOrderDTO.setSoB2cId(soId);
-        platformShipOrderDTO.setDictPlatform(dictPlatform);
-        platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
+    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
         try {
-            List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-            //更新销售明细标识
-            soB2cFeign.updateSignShippedByDetailId(detailIds);
+            // 根据提交平台唯一key幂等提交
+            submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey);
         } catch (Exception e) {
             log.error("【{}】销售单【{}】 标记发货失败 >>>错误信息{}", businessDesc, soCode, ExceptionUtil.stacktraceToString(e));
             // 独立异常
@@ -75,6 +69,27 @@ public class AsyncServiceImpl implements AsyncService {
             );
             soB2cFeign.addSoB2cError(addError);
             log.warn("【{}】销售单【{}】标记发货失败记录结束", businessDesc, soCode);
+            return;
         }
+        // 成功后删除历史(独立事务)
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setType(SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode());
+        deleteDTO.setMainId(soId);
+        soB2cFeign.deleteError(deleteDTO);
+    }
+
+
+    @Override
+    @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
+    public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey) {
+        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+        platformShipOrderDTO.setSoB2cId(soId);
+        platformShipOrderDTO.setDictPlatform(dictPlatform);
+        platformShipOrderDTO.setSubmitPlatformUniqueKey(submitPlatformUniqueKey);
+        platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
+        List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        //更新销售明细标识
+        soB2cFeign.updateSignShippedByDetailId(detailIds);
+        return detailIds;
     }
 }

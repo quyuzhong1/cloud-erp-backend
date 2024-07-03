@@ -13,8 +13,6 @@ import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
-import com.erp.model.plm.entity.ProductCustomsEntity;
-import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
@@ -22,10 +20,9 @@ import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -406,7 +403,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean checkPlatformShipOrder(String soB2cId);
 
     /**
-     * 虚假发货
+     * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/27 15:07
      * @param id
@@ -492,13 +489,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 物流规则
-     * @description
+     *
      * @param
-     * @author Lambda
+     * @param isCheckProductRegistration
      * @return
+     * @description
+     * @author Lambda
      * @create 2023-12-29 8:41
      */
-    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map);
+    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
 
     /**
      * 获取客户信息
@@ -773,12 +772,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 根据sku拆分订单
+     *
      * @param soB2cDetailEntities
      * @param skuIds
      * @param soCode
+     * @param judgeCombinationFlag
      * @return
      */
-    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities,List<String> skuIds, String soCode);
+    List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities, List<String> skuIds, String soCode, boolean judgeCombinationFlag);
 
     /**
      * 根据条件获取数据对比系统数据
@@ -840,7 +841,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO);
 
-    List<BatchResultDTO> deliveryWithNotOutbound(List<String> ids);
+    List<BatchResultDTO> deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO ids);
 
     /**
      * 申报信息规则信息整理
@@ -855,9 +856,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      *
      * @param detailList
      * @param soB2cEntity
+     * @param logisticsPlatform
      * @return
      */
-    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity);
+    List<LogisticsDeclareProductDTO> splitLogisticsBySoDetail(List<SoB2cDetailEntity> detailList, SoB2cEntity soB2cEntity, String logisticsPlatform);
 
     /**
      * 修复历史平均成本数据数据
@@ -909,4 +911,34 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 同步处理历史审核订单数据到订单表
      */
     void processOrderApproveData();
+
+    /**
+     * 添加赠品
+     * @param entity
+     * @param detailEntityList
+     * @param dtoList
+     * @param LogisticsEntity
+     * @return
+     */
+    BatchResultDTO addGift(SoB2cEntity entity,List<SoB2cDTO.GiftDTO> dtoList,SoB2cLogisticsEntity LogisticsEntity,List<SoB2cDetailEntity> detailEntityList);
+
+    /**
+     * 根据销售订单id获取买家信息
+     * @param ids
+     * @return
+     */
+    List<SoB2cReceiverDTO.ViewDTO> getReceiverInfo(List<String> ids);
+
+    /**
+     * 更新买家信息
+     * @param dto
+     * @return
+     */
+    BatchResultDTO updateReceiverInfo(SoB2cReceiverDTO.UpdateBaseDTO dto);
+
+    /**
+     * 根据订单创建时间查询订单
+     */
+    List<SoB2cEntity> listByCreateTime(LocalDateTime startTime, LocalDateTime endTime);
+
 }

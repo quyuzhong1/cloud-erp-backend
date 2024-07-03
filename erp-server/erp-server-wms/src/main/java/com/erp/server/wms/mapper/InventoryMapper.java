@@ -146,4 +146,6 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * @return
      */
     List<InventoryEntity> listByParam(@Param("params")InventoryDTO.ParamDTO params );
+
+    List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(@Param("params")InventoryDTO.ParamDTO params);
 }

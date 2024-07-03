@@ -3,10 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.oms.dto.PackageDTO;
-import com.erp.model.oms.dto.ReportDTO;
-import com.erp.model.oms.dto.SoB2cAbnormalDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
@@ -200,4 +197,6 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param updateList
      */
     void updateBatchApproveById(@Param("updateList") List<SoB2cEntity> updateList);
+
+    IPage<SoB2cForeignDTO.OrderDeliveryResp> getForeignOrderDeliveryInfo(Page query, @Param("params") SoB2cForeignDTO.OrderDeliveryReq orderDeliveryReq);
 }

@@ -21,6 +21,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -156,6 +157,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             v.setGiftReceiveQty(giftReceiveQty);
 
             v.setReceiptStatusName(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
+            v.setDetailReceiptStatusName(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getDetailReceiptStatus()));
             v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
             QcInfoDTO.QcReceiveResultDTO qcReceiveResultDTO = qcReceiveResultDTOList.stream().filter(t->t.getPurchaseDetailId().equals(v.getPurchaseDetailId()) && t.getReceiveCode().equals(v.getReceiveCode())).findFirst().orElse(null);
             if(Objects.nonNull(qcReceiveResultDTO)){
@@ -293,8 +295,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if(CollectionUtils.isEmpty(ids)){
             return true;
         }
-        List<DeliveryOrderEntity> deliveryOrderEntityList = this.lambdaQuery().in(DeliveryOrderEntity::getId, ids).list();
-        if(deliveryOrderEntityList.stream().anyMatch(v->StringUtils.isNotBlank(v.getReceiveCode()))){
+        List<DeliveryOrderDetailEntity> detailEntityList = detailService.listByMainIdList(ids);
+        if(detailEntityList.stream().anyMatch(v->StringUtils.isNotBlank(v.getReceiveCode()))){
             throw new ServiceException("已有送货单生成收货单，无法删除");
         }
         if(!this.removeByIds(ids)){
@@ -354,6 +356,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             v.setGiftReceiveQty(giftReceiveQty);
 
             v.setReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
+            v.setDetailReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getDetailReceiptStatus()));
             v.setPrintStatus(v.getIsPrint()?"已打印":"未打印");
             v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
             WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveEntityList.stream().filter(t->t.getSourceId().equals(v.getId())).findFirst().orElse(new WarehouseReceiveEntity());
@@ -373,6 +376,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             return new ArrayList<>();
         }
         List<DeliveryOrderDTO.GenerateReceiveListDTO> receiveListDTOList = baseMapper.listGenerateReceive(ids);
+        //过滤掉明细收货状态不是空的
+        receiveListDTOList = receiveListDTOList.stream().filter(v->StringUtils.isEmpty(v.getDetailReceiptStatus())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(receiveListDTOList)){
             Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(receiveListDTOList.stream().map(DeliveryOrderDTO.GenerateReceiveListDTO::getSupplierId).distinct().collect(Collectors.toList()));
             receiveListDTOList.forEach(v->{
@@ -636,7 +641,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         DeliveryOrderDTO.ViewDTO viewDTO = DeliveryOrderConverter.INSTANCE.viewConvert(entity,detailEntityList);
         viewDTO.setSupplierName(supplier.getName());
         List<DeliveryOrderDetailDTO.ViewDTO> detailList = viewDTO.getDetailList();
-        Map<String,SkuVO> skuVOMap = plmTaskFeign.getSkuInfoByIds(detailList.stream().map(DeliveryOrderDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList())).stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(),(v1, v2)->v1));
+        Map<String,SkuVO> skuVOMap = plmTaskFeign.listSkuProductByIds(detailList.stream().map(DeliveryOrderDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList())).stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(),(v1, v2)->v1));
         List<String> purchaseDetailIds = detailList.stream().map(DeliveryOrderDetailDTO.ViewDTO::getSourceDetailId).collect(Collectors.toList());
         //查询退货数据
         List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(purchaseDetailIds);
@@ -680,65 +685,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.IN_TWO_MONTH.getCode(),WaitDeliveryCycleEnum.IN_TWO_MONTH.getName(),waitDeliveryCountDTO.getInTwoMonthCount()));
         dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.TWO_MONTH_LATER.getCode(),WaitDeliveryCycleEnum.TWO_MONTH_LATER.getName(),waitDeliveryCountDTO.getTwoMonthLaterCount()));
         return dtos;
-    }
-
-    @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean confirmReceiveStatus(List<String> ids) {
-        if(CollectionUtils.isEmpty(ids)){
-            return true;
-        }
-        this.lambdaUpdate()
-                .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())
-                .set(DeliveryOrderEntity::getConfirmReceiveDate,LocalDate.now())
-                .in(DeliveryOrderEntity::getId,ids)
-                .update();
-
-        //收货单确认生成对账明细
-        this.addPoReconciliationDetail(ids);
-        return true;
-    }
-
-    @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean unConfirmReceiveStatus(List<String> ids) {
-        if(CollectionUtils.isEmpty(ids)){
-            return true;
-        }
-        this.lambdaUpdate()
-                .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())
-                .in(DeliveryOrderEntity::getId,ids)
-                .update();
-
-        //收货单反确认删除对账明细
-        removePoReconciliationDetail(ids);
-        return true;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean cancelReceive(List<String> ids) {
-        List<DeliveryOrderEntity> entityList = this.listByIds(ids);
-        if(CollectionUtils.isEmpty(entityList)){
-            return true;
-        }
-        List<DeliveryOrderDetailEntity> detailEntityList = detailService.listByMainIdList(ids);
-        entityList.forEach(v->{
-            v.setReceiptStatus("");
-            v.setReceiveCode("");
-        });
-        detailEntityList.forEach(v->{
-            v.setReceiveQty(0);
-            v.setGiftReceiveQty(0);
-        });
-
-        this.updateBatchById(entityList);
-        detailService.updateBatchById(detailEntityList);
-
-        return true;
     }
 
     @Override
@@ -858,8 +804,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 throw new ServiceException("仓库信息为空");
             }
             WarehouseDTO.UpdateDTO warehouseInfo = warehouseList.get(0);
-//            deliveryOrderEntity.setReceiveUserId(warehouseInfo.getChargeId());
-//            deliveryOrderEntity.setReceiveUserName(warehouseInfo.getContacts());
+            deliveryOrderEntity.setReceiveUserId(warehouseInfo.getChargeId());
+            deliveryOrderEntity.setReceiveUserName(warehouseInfo.getContacts());
             deliveryOrderEntity.setReceivePhone(warehouseInfo.getContactTelNumber());
             deliveryOrderEntity.setReceiveAddress(warehouseInfo.getAddress());
         }
@@ -904,7 +850,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             addDTO.setSourceDetailId(detailEntity.getId());
             addDTO.setSourceCode(deliveryOrderEntity.getCode());
             addDTO.setSourceType(SourceTypeEnum.DELIVERY_ORDER.getCode());
-            addDTO.setConfirmDate(deliveryOrderEntity.getConfirmReceiveDate());
+            addDTO.setConfirmDate(detailEntity.getConfirmReceiveDate());
             addDTO.setSkuId(detailEntity.getSkuId());
             addDTO.setDeliveryQty(detailEntity.getDeliveryQty());
             addDTO.setReceiveQty(detailEntity.getReceiveQty());
@@ -928,7 +874,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * @date: 2024/1/26 9:24
      * @param idList
      */
-    private void removePoReconciliationDetail (List<String> idList) {
+    @Override
+    public void removePoReconciliationDetail (List<String> idList) {
         if (CollectionUtils.isEmpty(idList)) {
             return;
         }
@@ -945,5 +892,45 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         List<String> detailIdList = deliveryOrderDetailList.stream().map(DeliveryOrderDetailEntity::getId).collect(Collectors.toList());
         poReconciliationDetailScmService.deleteDetailBySourceDetailIdList(detailIdList,true);
+    }
+
+    /**
+     * 更新主表状态
+     * @param ids
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateReceiveStatus(List<String> ids){
+        List<DeliveryOrderEntity> deliveryOrderEntityList = this.listByIds(ids);
+        if(CollectionUtils.isEmpty(deliveryOrderEntityList)){
+            return false;
+        }
+        List<DeliveryOrderDetailEntity> allDetailEntityList = detailService.listByMainIdList(ids);
+        if(CollectionUtils.isEmpty(allDetailEntityList)){
+            return false;
+        }
+        for (DeliveryOrderEntity orderEntity : deliveryOrderEntityList) {
+            List<DeliveryOrderDetailEntity> detailEntityList = allDetailEntityList.stream().filter(v->v.getMainId().equals(orderEntity.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(detailEntityList)){
+                continue;
+            }
+            if(detailEntityList.stream().allMatch(v->StringUtils.isBlank(v.getReceiptStatus()))){
+                orderEntity.setReceiptStatus("");
+            }else if(detailEntityList.stream().allMatch(v->DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode().equals(v.getReceiptStatus()))){
+                orderEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode());
+            }else if(detailEntityList.stream().allMatch(v->DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode().equals(v.getReceiptStatus()))){
+                orderEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());
+            }else if(detailEntityList.stream().anyMatch(v->DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode().equals(v.getReceiptStatus()))){
+                orderEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.PART_CONFIRMED.getCode());
+            }else if(detailEntityList.stream().anyMatch(v->DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode().equals(v.getReceiptStatus()))){
+                orderEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());
+            }
+        }
+        List<String> confirmIds = deliveryOrderEntityList.stream().filter(v->DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode().equals(v.getReceiptStatus())).map(BaseEntity::getId).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(confirmIds)){
+            this.addPoReconciliationDetail(confirmIds);
+        }
+        return this.updateBatchById(deliveryOrderEntityList);
     }
 }

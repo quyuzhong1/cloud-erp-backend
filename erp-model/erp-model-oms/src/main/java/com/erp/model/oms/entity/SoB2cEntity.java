@@ -2,7 +2,6 @@ package com.erp.model.oms.entity;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
@@ -281,13 +280,23 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("is_cancel")
     private Boolean isCancel;
-
+    /**
+     * 是否地址修改
+     */
+    @TableField("is_change_receiver_address")
+    private Boolean isChangeReceiverAddress;
 
     /**
      * 卖家订单编号
      */
     @TableField("seller_order_code")
     private String sellerOrderCode;
+
+    /**
+     * 冻结类型（manual手动冻结，automatic自动冻结）
+     */
+    @TableField("frozen_type")
+    private String frozenType;
 
     public static final String CODE = "code";
 
@@ -419,5 +428,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 SoB2cBillStatusEnum.ENUM_SHIPPED.getCode(),
                 SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode()
         ).contains(this.billStatus) && !this.hasPlatformWarehouseOrder() ;
+    }
+
+    /**
+     * 提交平台的唯一key:{平台代号}_{平台单号}_{店铺ID}
+     */
+    public String convertSubmitPlatformUniqueKey() {
+        return StrUtil.format("{}_{}_{}", this.dictPlatform, this.shopId, this.platformCode);
     }
 }

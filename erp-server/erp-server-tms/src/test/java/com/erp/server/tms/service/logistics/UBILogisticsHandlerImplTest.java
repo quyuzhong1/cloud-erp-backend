@@ -43,7 +43,7 @@ public class UBILogisticsHandlerImplTest {
 //        authMap.put("clientSecret","N1S3O3OlKKRDRfcfYFONqg");
     }
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = ubiLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = ubiLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){

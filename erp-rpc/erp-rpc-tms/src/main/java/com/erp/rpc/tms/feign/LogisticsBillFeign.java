@@ -1,14 +1,12 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
-import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -19,10 +17,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "erp-tms", contextId = "logisticsBill")
+@FeignClient(name = "erp-tms", contextId = "logisticsBill",configuration = {FeignErrorDecoder.class})
 public interface LogisticsBillFeign {
 
     /**
@@ -72,8 +71,8 @@ public interface LogisticsBillFeign {
      * @param query
      * @return
      */
-    @PostMapping("/feign/logisticsBill/getLogisticsBillDetails")
-    PagingVO<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query);
+    @PostMapping("/feign/logisticsBill/listTrackDto")
+    List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(@RequestBody LogisticsBillDetailQueryDTO query);
 
     /**
      * 删除物流单
@@ -197,4 +196,12 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/listBySoOutStockIdList")
     List<LogisticsBillEntity> listBySoOutStockIdList(@RequestBody List<String> outstockIdList);
+
+    /**
+     * 更新物流单重量
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/updateLogisticWeight")
+    ApiResult<String> updateLogisticWeight(@RequestBody LogisticsBillDTO.UpdateWeight dto);
 }

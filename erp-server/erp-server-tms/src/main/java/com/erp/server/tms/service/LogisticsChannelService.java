@@ -1,11 +1,10 @@
 package com.erp.server.tms.service;
 
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 
 import java.util.List;
@@ -49,10 +48,10 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     /**
      * 物流商id 获取渠道列表
      * @param mainIdList
-     * @param name
+     * @param params
      * @return
      */
-    List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList,String name);
+    List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, LogisticsSupplierDTO.PagingParamDTO params);
 
     /**
      * 详情
@@ -172,14 +171,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      **/
     List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(List<String> channelIds);
 
-    /** 
-     * @description 根据渠道id 获取到标记发货的信息
-     * @param channelId
-     * @author Lambda
-     * @return 
-     * @create 2023-12-25 10:59
-     */
-    LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId);
 
     /**
      * 根据名称匹配现在的渠道
@@ -213,4 +204,10 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     List<BaseDropDownDTO.Tree> tree();
 
     LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform);
+    /**
+     * 所有渠道下拉远程搜索
+     * @return PagingVO<BaseDropDownDTO.DisabledDTO>
+     */
+    PagingVO<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsChannelDTO.SelectDTO> dto);
+
 }

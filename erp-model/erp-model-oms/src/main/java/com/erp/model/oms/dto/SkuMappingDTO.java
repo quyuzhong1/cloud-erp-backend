@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -99,7 +100,11 @@ public class SkuMappingDTO implements Serializable {
 
         @NotBlank(message = "产品sku不能为空")
         private String productSkuId;
-
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效时间不能为空")
+        private LocalDateTime effectiveTime;
 //        /**
 //         * 平台类型: goodcang=谷仓，iml=艾姆勒
 //         */
@@ -344,11 +349,16 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotBlank(message = "产品sku不能为空")
         private String productSkuId;
-
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效时间不能为空")
+        private LocalDateTime effectiveTime;
         /**
          * 平台sku no
          */
-        @NotBlank(message = "平台sku不能为空")
+//        @NotBlank(message = "平台sku不能为空")
+        @NotNull(message = "平台sku不能为null")
         @Size(max=200,message = "平台SKU最大100字符")
         private String platformSkuNo;
 
@@ -426,7 +436,11 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotBlank(message = "产品sku不能为空")
         private String productSkuId;
-
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效时间不能为空")
+        private LocalDateTime effectiveTime;
 
     }
 
@@ -566,6 +580,14 @@ public class SkuMappingDTO implements Serializable {
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime updateTime;
+        /**
+         * 启用时间
+         */
+        private LocalDateTime effectiveTime;
+        /**
+         * 失效时间
+         */
+        private LocalDateTime expireTime;
 
         /**
          * 平台产品SPU编号
@@ -692,6 +714,14 @@ public class SkuMappingDTO implements Serializable {
          * 对照关系是否映射到改服务商所有仓库
          */
         private Boolean hasMappingAll;
+        /**
+         * 启用时间
+         */
+        private LocalDateTime effectiveTime;
+        /**
+         * 失效时间
+         */
+        private LocalDateTime expireTime;
     }
 
     @Data
@@ -865,6 +895,26 @@ public class SkuMappingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class WarehouseSkuDTO {
+        private String tableId;
+        private String dictPlatform;
+        private String productSkuId;
+        private String productSkuNo;
+        private String productName;
+        private String type;
+        private String warehouseId;
+        private String warehouseName;
+        private String isExpire;
+        private String listingId;
+        private String platformSkuNo;
+        private String platformSkuName;
+        private String platformSpuNo;
+        private String platformSpuName;
+        private String platformFnSku;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class ListSkuDTO {
        /**
         * 产品skuId
@@ -934,6 +984,29 @@ public class SkuMappingDTO implements Serializable {
          * 平台字典
          */
         private String dictPlatform;
+        /**
+         * 产品尺寸（长）
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品尺寸（宽）
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品尺寸（高）
+         */
+        private BigDecimal productHeight;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
     }
 
 

@@ -28,6 +28,7 @@ public class DictBasicDTO implements Serializable {
         private String value;
 
         private String type;
+        private String subType;
 
         private String name;
 

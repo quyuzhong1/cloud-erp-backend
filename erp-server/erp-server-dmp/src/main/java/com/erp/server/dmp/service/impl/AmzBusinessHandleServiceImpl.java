@@ -19,20 +19,19 @@ import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
-import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonFulfilledShipmentsHandler;
+import com.erp.server.dmp.enums.DownloadStatusEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.AmzBusinessHandleService;
 import com.erp.server.dmp.service.DmpPullTaskService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -42,8 +41,6 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +74,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
     @Resource
     private SoB2cFeign soB2cFeign;
     @Resource
-    private MQProducerService mQProducerService;
+    private AmzBusinessHandleService amzBusinessHandleService;
 
     @Override
 //    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -112,12 +109,14 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
         BusinessTypeEnum businessType = BusinessTypeEnum.getByCodeAndThrow(business);
 
         for (PlatformAmazonFulfilledShipmentsDTO currentDTO : list) {
-            singleHandlerConsumer(currentDTO, tableName, platform, businessType, topic, tag);
+            currentDTO.setDownloadStatus(DownloadStatusEnum.FINISH.getCode());
+            currentDTO.setHandleStatus(AmazonHandleStatusEnum.HANDLE.getCode());
+            amzBusinessHandleService.singleHandlerConsumer(currentDTO, tableName, platform, businessType, topic, tag);
         }
         return true;
     }
 
-
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void singleHandlerConsumer(PlatformAmazonFulfilledShipmentsDTO currentDTO, String tableName, String platform, BusinessTypeEnum businessType, String topic, String tag) {
         List<PlatformSoOutStockDTO> convertList = amazonFulfilledShipmentsHandler.convert(Collections.singletonList(currentDTO));
@@ -177,6 +176,9 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
 
         // 其他出库单生产者
         for (PlatformAmazonFulfilledShipmentsDTO currentDTO : list) {
+            currentDTO.setDownloadStatus(DownloadStatusEnum.FINISH.getCode());
+            currentDTO.setHandleStatus(AmazonHandleStatusEnum.HANDLE.getCode());
+
             MapUtil mapUtil = getMapParam();
             UniqueDto updateDto = UniqueDto.getUniqId(currentDTO.getUniqueId());
             finishClean(mapUtil, updateDto,tableName, PlatformAmazonFulfilledShipmentsDTO.class);

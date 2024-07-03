@@ -60,7 +60,7 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
         }
         List<PickingDetailDTO.ListDTO> resultList = BeanMapperUtils.copyList(PickingDetailDTO.ListDTO.class, list);
         List<String> skuIds = resultList.stream().map(PickingDetailDTO.ListDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         for (PickingDetailDTO.ListDTO listDTO : resultList) {
             //产品名称

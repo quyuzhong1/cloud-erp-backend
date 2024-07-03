@@ -152,22 +152,40 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 }
                 return entity;
             }else {
-                SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
-                BeanMapperUtils.copy(entity, entity2);
-                if (null != dictCountryEntity && StringUtils.isBlank(entity2.getCountryName())){
+                SoB2cReceiverEntity newReceiverEntity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(receiverDTO, mainEntity.getId());
+                if (null != dictCountryEntity && StringUtils.isBlank(entity.getCountryName())){
                     entity.setCountryName(dictCountryEntity.getNameCn());
                 }
                 // 指定有值不更新
-                ReflectUtils.updateSpecifiedFieldsIfNotValue(entity2, entity, SoB2cReceiverEntity.fieldsExistNotUpdate());
+                ReflectUtils.updateSpecifiedFieldsIfNotValue(entity, newReceiverEntity, SoB2cReceiverEntity.fieldsExistNotUpdate());
 
-                entity2.setId(entity.getId());
-                this.updateById(entity2);
+                this.updateById(entity);
 //                if (!this.updateById(entity2)){
 //                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
 //                }
-                return entity2;
+                return entity;
             }
 
+    }
+
+    @Override
+    public void updateFieldById(SoB2cReceiverEntity receiver) {
+        if (Objects.isNull(receiver) || StringUtils.isBlank(receiver.getId())){
+            return;
+        }
+        lambdaUpdate()
+                .set(SoB2cReceiverEntity::getCountry,receiver.getCountry())
+                .set(SoB2cReceiverEntity::getCountryName,receiver.getCountryName())
+                .set(SoB2cReceiverEntity::getProvinceName,receiver.getProvinceName())
+                .set(SoB2cReceiverEntity::getCityName,receiver.getCityName())
+                .set(SoB2cReceiverEntity::getPostCode,receiver.getPostCode())
+                .set(SoB2cReceiverEntity::getReceiverName,receiver.getReceiverName())
+                .set(SoB2cReceiverEntity::getReceiverTelNumber,receiver.getReceiverTelNumber())
+                .set(SoB2cReceiverEntity::getReceiverTaxNo,receiver.getReceiverTaxNo())
+                .set(SoB2cReceiverEntity::getFirstAddress,receiver.getFirstAddress())
+                .set(SoB2cReceiverEntity::getSecondAddress,receiver.getSecondAddress())
+                .set(SoB2cReceiverEntity::getFullAddress,receiver.getFullAddress())
+                .eq(SoB2cReceiverEntity::getId, receiver.getId()).eq(SoB2cReceiverEntity::getMainId,receiver.getMainId()).update();
     }
 
     /**
