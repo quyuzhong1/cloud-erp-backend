@@ -802,4 +802,31 @@
             </if>
         </where>
     </select>
+
+    <!-- 根据物流跟踪单号或运单号查询物流单详情 -->
+    <select id="getByTrackNoOrTransportNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$BaseDTO">
+        SELECT
+            lbd.id AS detailId,
+            lb.id,
+            lb.sales_platform AS salesPlatform,
+            lb.shop_id AS shopId,
+            lb.shop_name AS shopName,
+            lb.source_type AS sourceType,
+            lb.order_type AS orderType,
+            lb.source_id AS sourceId,
+            lb.source_code AS sourceCode,
+            lb.outstock_id AS outstockId,
+            lb.outstock_code AS outstockCode,
+            lb.channel_id AS channelId,
+            lb.order_time AS orderTime,
+            lb.delivery_time AS deliveryTime,
+            lb.transport_no AS transportNo,
+            lb.to_country AS toCountry,
+            lbd.track_no AS trackNo
+        FROM  logistics_bill_detail lbd
+        LEFT JOIN  logistics_bill lb
+        ON lbd.main_id=lb.id ANd lb.is_deleted = false
+        WHERE lbd.is_deleted = false  and lb.source_type = 'soB2c' AND (lbd.track_no = #{logisticsCode} or lb.transport_no = #{logisticsCode})
+        LIMIT 1
+    </select>
 </mapper>

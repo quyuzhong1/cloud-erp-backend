@@ -814,23 +814,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public String dimensionalWeightPipeline(DimensionalWeightDTO dto) {
-        //销售订单编码
-        String soCode = dto.getBarCode();
+        //物流单编码
+        String logisticsCode = dto.getBarCode();
+        //物流单信息
+        LogisticsBillDTO.BaseDTO baseDTO = logisticsBillFeign.getByTrackNoOrTransportNo(logisticsCode);
 
         SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO();
-        paramDTO.setB2cSoCodeList(Arrays.asList(dto.getBarCode()));
+        paramDTO.setB2cSoIdList(Arrays.asList(baseDTO.getSourceId()));
         paramDTO.setDataTypeList(Arrays.asList(SoB2cDataTypeEnum.LOGISTIC.getCode()));
         SoB2cDTO.SoB2cDataDTO soB2cDataDTO = soB2cFeign.listSoB2cData(paramDTO);
         //物流信息
         List<SoB2cLogisticsEntity> logisticsList = soB2cDataDTO.getLogisticsList();
         if (CollectionUtils.isEmpty(soB2cDataDTO.getList()) || CollectionUtils.isEmpty(logisticsList)) {
-            log.error("编码【{}】未查询到销售订单信息",soCode);
+            log.error("编码【{}】未查询到销售订单信息",baseDTO.getSourceCode());
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
         //发货单信息
-        SoB2cDeliveryEntity entity = getBySoCode(soCode);
+        SoB2cDeliveryEntity entity = getBySoCode(baseDTO.getSourceCode());
         if (ObjectUtil.isEmpty(entity)) {
-            log.error("编码【{}】未查询到发货单信息",soCode);
+            log.error("编码【{}】未查询到发货单信息",baseDTO.getSourceCode());
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
         entity.setLength(dto.getLength());
@@ -844,7 +846,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //查询渠道信息
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsList.get(0).getLogisticsChannelId());
         if (ObjectUtil.isEmpty(channelEntity)) {
-            log.error("编码【{}】未查询到渠道信息",soCode);
+            log.error("编码【{}】未查询到渠道信息",baseDTO.getSourceCode());
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
 
