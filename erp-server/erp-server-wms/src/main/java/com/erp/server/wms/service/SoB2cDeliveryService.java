@@ -285,4 +285,10 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param type 发货标记类型
      */
     List<String> listIdsByShipmentMark(ShipmentMarkTypeEnum type);
+    /**
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
+     */
+    void updateShipmentMark(List<String> ids, String code);
 }
