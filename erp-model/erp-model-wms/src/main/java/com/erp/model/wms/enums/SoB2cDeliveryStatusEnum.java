@@ -19,6 +19,7 @@ public enum SoB2cDeliveryStatusEnum implements EnumMessage {
     PICKING("picking", "拣货中"),
     FALSE_SHIPMENT("falseShipment", "手动标发"),
     SHIPPED("shipped", "已发货"),
+    EXCEPTION_ORDER("exceptionOrder","异常单"),
     CANCEL_DELIVERY("cancelDelivery", "取消发货");
 
     @EnumValue

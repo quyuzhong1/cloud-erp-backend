@@ -341,6 +341,8 @@ public class WarehouseDTO implements Serializable {
          */
         private List<String> warehouseIdList;
 
+        private Boolean isSupplier;
+
     }
 
 

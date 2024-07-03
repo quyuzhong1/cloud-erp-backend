@@ -2,30 +2,27 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
-import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.RequisitionApplicationService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
+import com.erp.server.wms.service.RequisitionApplicationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -330,6 +327,26 @@ public class RequisitionApplicationController extends BaseController {
     }
 
     /**
+     * 生成拣货单
+     * @param picking 参数
+     */
+    @PostMapping("/generatePickingList")
+    public ApiResult<String> generatePickingList(@RequestBody @Validated RequisitionApplicationDTO.GeneratePickingDTO picking) {
+        requisitionApplicationService.generatePickingList(picking);
+        return success();
+    }
+
+    /**
+     * 生成拣货单的弹窗
+     * @param id 要货单id
+     */
+    @GetMapping("/generatePickingView")
+    public ApiResult<List<RequisitionApplicationDTO.PickingViewDTO>> generatePickingView(@RequestParam("id") String id) {
+        List<RequisitionApplicationDTO.PickingViewDTO> result = requisitionApplicationService.generatePickingView(id);
+        return success(result);
+    }
+
+    /**
      * 查询子件sku
      * @Author Luo_WG
      * @Date 2023/11/29 19:26
@@ -355,6 +372,38 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult<List<BatchResultDTO>> bindShipment(@RequestBody @Validated List<RequisitionApplicationDTO.BindShipment> dto) {
         List<BatchResultDTO> resultDTOS = requisitionApplicationService.bindShipment(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 下推发货单列表查询
+     * @param dto dto
+     **/
+    @PostMapping("/generateDeliverView")
+    public ApiResult<List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> generateDeliverView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<RequisitionApplicationDTO.GenerateDeliverViewDTO> result = requisitionApplicationService.generateDeliverView(dto.getIds());
+        return success(result);
+    }
+
+    /**
+     * 下推发货单保存
+     * @param dto dto
+     **/
+    @PostMapping("/generateDeliverSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存")
+    public ApiResult<String> generateDeliverSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.GenerateDeliverViewDTO> dto) {
+        Boolean flag = requisitionApplicationService.generateDeliverSave(dto.getList());
+        return Boolean.TRUE.equals(flag) ? success() : failure();
+    }
+
+    /**
+     * 下推发货单保存并提交
+     * @param dto dto
+     **/
+    @PostMapping("/generateDeliverSaveAndSubmit")
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存并提交")
+    public ApiResult<String> generateDeliverSaveAndSubmit(@RequestBody @Validated ValidList<RequisitionApplicationDTO.GenerateDeliverViewDTO> dto) {
+        Boolean flag = requisitionApplicationService.generateDeliverSaveAndSubmit(dto.getList());
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
     /**
      * 远程分页下拉查询

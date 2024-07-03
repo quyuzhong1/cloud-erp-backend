@@ -216,4 +216,31 @@
         </if>
         ra.create_time desc
     </select>
+
+    <select id="generateDeliverView"
+            resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$GenerateDeliverViewDTO">
+        select ra.id AS sourceId,
+        rad.id AS sourceDetailId,
+        ra.code AS sourceCode,
+        rad.from_warehouse_id AS deliveryWarehouseId,
+        ra.requisition_warehouse_id AS toWarehouseId,
+        ra.requisition_warehouse_name AS toWarehouseName,
+        rad.sku_id,
+        rad.sku_no,
+        rad.approve_qty AS planQty,
+        rad.picking_qty AS deliveryQty,
+        ra.type,
+        rad.platform_sku as platformSku,
+        rad.platform_sku_name as platformSkuName,
+        ra.status as status
+        from requisition_application ra
+        inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
+        where ra.is_deleted = false
+        <if test="ids!=null and ids.size>0 ">
+            AND ra.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>

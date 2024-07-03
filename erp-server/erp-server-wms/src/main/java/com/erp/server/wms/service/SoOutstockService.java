@@ -565,4 +565,11 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 更新主表和明细
      */
     void updateMainAndDetail(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> list);
+    /**
+     * 根据来源id获取未作废且未删除的数据
+     *
+     * @param id id
+     * @return
+     */
+    int countNotVoided(String id);
 }

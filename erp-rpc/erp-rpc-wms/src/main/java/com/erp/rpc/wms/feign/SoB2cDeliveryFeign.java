@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -108,4 +109,13 @@ public interface SoB2cDeliveryFeign {
      */
     @PostMapping("/feign/soB2cDelivery/shipOrder")
     Boolean shipOrder(@RequestBody PlatformShipOrderDTO platformShipOrderDTO);
+
+    /**
+     * 流水线称重
+     * @author will
+     * @date 2024/6/28 15:20 
+     * @return String
+     */
+    @PostMapping("/feign/soB2cDelivery/dimensionalWeightPipeline")
+    String dimensionalWeightPipeline(@RequestBody DimensionalWeightDTO dto);
 }

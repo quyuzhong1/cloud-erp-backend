@@ -4,6 +4,7 @@
     <sql id="pageSql">
         SELECT
         sbd.id,
+        sbdd.id as detailId,
         sbd.code,
         sbd.source_id,
         sbd.dict_platform AS dictPlatform,
@@ -33,7 +34,8 @@
         sbd.weighing_time as weighingTime,
         sbd.platform_code as platformCode,
         sbl.code as logisticsCode,
-        sbl.track_no as trackCode
+        sbl.track_no as trackCode,
+        sbd.abnormal_cause as abnormalCause
         FROM so_b2c_delivery sbd
         LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
         left join so_b2c_logistics sbl on sbl.main_id = sbd.source_id and sbl.is_deleted = false
@@ -53,6 +55,26 @@
         </if>
         sbd.create_time desc
     </sql>
+    <select id="cancelShipmentView" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$CancelShipmentDTO">
+        SELECT sbd.id,
+               sbdd.id AS detailId,
+               sbd.code,
+               pd.sku_id,
+               pd.sku_no,
+               sbdd.warehouse_id,
+               pd.warehouse_location,
+               pd.qty as pickingQty
+        FROM so_b2c_delivery sbd
+                 LEFT JOIN so_b2c_delivery_detail sbdd ON sbdd.main_id = sbd.id
+            AND sbdd.is_deleted = FALSE
+                 LEFT JOIN picking_detail pd ON pd.source_detail_id = sbdd.id
+            AND pd.is_deleted = FALSE
+        where sbd.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
     <!--获取状态统计-->
     <select id="tabList" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$TabListDTO">
         SELECT

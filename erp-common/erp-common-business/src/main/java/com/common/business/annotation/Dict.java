@@ -66,4 +66,9 @@ public @interface Dict {
      */
     boolean dictDefaultOriginalValue() default false;
 
+    /**
+     * 翻译属性名称
+     * @return
+     */
+    String dictFieldName() default "";
 }

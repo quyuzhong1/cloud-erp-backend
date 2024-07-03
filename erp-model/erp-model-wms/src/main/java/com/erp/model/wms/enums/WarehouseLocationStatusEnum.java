@@ -20,7 +20,9 @@ import java.util.Optional;
  */
 public enum WarehouseLocationStatusEnum implements EnumMessage {
 
-    IDLE ("idle", "空闲"),
+    RECYCLABLE("recyclable", "可回收"),
+//    IDLE ("idle", "空闲"),
+    IDLE ("idle", "可分配"),
     OCCUPIED("occupied", "被占用"),
     STOP("stop", "停用");
     ;

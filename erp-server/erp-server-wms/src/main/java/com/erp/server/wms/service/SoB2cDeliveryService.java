@@ -1,12 +1,15 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -267,4 +270,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     String dimensionalWeightPipeline(DimensionalWeightDTO dto);
 
     Boolean updateAbnormal(List<String> ids, AbnormalCauseEnum abnormalCauseEnum);
+    /**
+     * 根据发货单大于物流面单
+     * @author will
+     * @date 2024/7/1 18:14
+     * @param id
+     * @param response
+     */
+    void printLogisticsBillConfirmById(String id, HttpServletResponse response);
 }

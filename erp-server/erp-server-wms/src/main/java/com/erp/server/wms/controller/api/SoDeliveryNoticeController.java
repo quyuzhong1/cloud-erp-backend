@@ -380,5 +380,25 @@ public class SoDeliveryNoticeController extends BaseController {
         List<SoDeliveryNoticeDTO.PagingView> list = soDeliveryNoticeService.listSoReturnDetailBySourceId(soId);
         return success(list);
     }
+
+    /**
+     * 生成拣货单
+     * @param picking 参数
+     */
+    @PostMapping("/generatePickingList")
+    public ApiResult<String> generatePickingList(@RequestBody @Validated SoDeliveryNoticeDTO.GeneratePickingDTO picking) {
+        soDeliveryNoticeService.generatePickingList(picking);
+        return success();
+    }
+
+    /**
+     * 生成拣货单的弹窗
+     * @param id 要货单id
+     */
+    @GetMapping("/generatePickingView")
+    public ApiResult<List<SoDeliveryNoticeDTO.PickingViewDTO>> generatePickingView(@RequestParam("id") String id) {
+        List<SoDeliveryNoticeDTO.PickingViewDTO> result = soDeliveryNoticeService.generatePickingView(id);
+        return success(result);
+    }
 }
 
