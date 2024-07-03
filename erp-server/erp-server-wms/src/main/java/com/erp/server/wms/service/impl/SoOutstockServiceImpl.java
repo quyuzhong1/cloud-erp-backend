@@ -755,42 +755,34 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(entity)) {
             return;
         }
+        //这个是销售出库单id
+        List<String> allList = Arrays.asList(entity.getId());
+        List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
+        InventorySourceTypeEnum inventorySourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
+        String sourceType = entity.getSourceType();
 
-        List<InOutStockDTO> members = new ArrayList<>();
+        //如果来源类型为b2c发货单就是扣冻结库存
+        String soB2cDelivery = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
-            List<SoOutstockDetailEntity> soOutstockDetails = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (soB2cDelivery.equals(sourceType)) {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
-            List<PickingListsDTO.SourceView> pickingLists = pickingListsService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
-            for (PickingListsDTO.SourceView detail : pickingLists) {
-                SoOutstockDetailEntity outstockDetail = soOutstockDetails.stream().filter(v -> v.getSourceDetailId().equals(detail.getSourceDetailId()))
-                        .findFirst()
-                        .orElse(new SoOutstockDetailEntity());
-                InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, outstockDetail.getId(), detail.getSkuId(),detail.getSkuNo(),detail.getWarehouseLocation(),detail.getQty());
-                members.add(stockDTO);
-            }
-        }else {
-            members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
+        } else {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
         }
         for (InOutStockDTO member : members) {
-            member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
+            member.setSourceType(inventorySourceTypeEnum);
         }
         if (CollectionUtils.isNotEmpty(members)) {
-            //无虚拟仓无需扣减库存
-            List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(virtualInOutStockList)) {
-                //虚拟出库扣库存
-                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-                List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
-                stockParamDTO.setParamList(outInStockDTOS);
-                if (soB2cDelivery.equals(sourceType)) {
-                    stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
-                } else {
-                    stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
-                }
-                virtualInventoryTransCoreService.approve(stockParamDTO);
+            //虚拟出库扣库存
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, members);
+            stockParamDTO.setParamList(outInStockDTOS);
+            if (soB2cDelivery.equals(sourceType)) {
+                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
+            } else {
+                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
             }
+            virtualInventoryTransCoreService.approve(stockParamDTO);
 
             //扣实体仓库存
             inventoryInOutStockDTO.setParamList(members);

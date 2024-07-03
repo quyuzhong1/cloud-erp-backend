@@ -97,8 +97,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private TransferInfoService transferInfoService;
     @Autowired
     private WarehouseService warehouseService;
-    @Autowired
-    private SysUserFeign sysUserFeign;
+
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
