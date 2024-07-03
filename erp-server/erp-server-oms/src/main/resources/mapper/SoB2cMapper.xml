@@ -882,7 +882,6 @@
         sb2c.code as erpOrderCode,
         sb2c.platform_code as platformOrderCode,
         sb2c.seller_order_code as sellerOrderCode,
-        sb2c.seller_order_code as sellerOrderCode,
         sb2c.source_type as orderSource,
         sb2c.bill_status as orderStatus,
         sb2c.approve_status as approveStatus,
