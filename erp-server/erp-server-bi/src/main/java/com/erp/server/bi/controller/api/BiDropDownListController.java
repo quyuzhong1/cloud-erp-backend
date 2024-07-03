@@ -17,8 +17,8 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.bi.enums.*;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import com.erp.server.bi.service.BiDictService;
-import com.erp.server.bi.service.DmpShopInfoService;
-import com.erp.server.bi.service.DmpSkuInfoService;
+import com.erp.server.bi.service.BiShopInfoService;
+import com.erp.server.bi.service.BiSkuInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,10 +49,10 @@ public class BiDropDownListController extends BaseController {
     private BiDataSourceCustomService biDataSourceCustomService;
 
     @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
+    private BiSkuInfoService dmpSkuInfoService;
 
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
     /**
      * 平台下拉列表
@@ -75,7 +75,7 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/site/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listSiteDropDown() {
-        List<ShopDropDownVO.ShopDropDownNameVO> list = dmpShopInfoService.listSiteDropDown();
+        List<ShopDropDownVO.ShopDropDownNameVO> list = biShopInfoService.listSiteDropDown();
         return success(list);
     }
 
@@ -284,7 +284,7 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/shop/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam(value = "status", required = false) Integer status) {
-        List<ShopDropDownVO.ShopDropDownNameVO> list = dmpShopInfoService.listShopDropDown(status);
+        List<ShopDropDownVO.ShopDropDownNameVO> list = biShopInfoService.listShopDropDown(status);
         return success(list);
     }
 
@@ -293,7 +293,7 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/shop/listAll")
     public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@RequestParam(value = "status", required = false) Integer status) {
-        List<BiShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
+        List<BiShopInfoEntity> list = biShopInfoService.lambdaQuery()
                 .eq(BiShopInfoEntity::getIsVijim, Boolean.TRUE)
                 .eq(null != status, BiShopInfoEntity::getStatus, status)
                 .list();

@@ -30,7 +30,7 @@ import com.erp.server.bi.listener.BiTargetShopSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetShopSettingMapper;
 import com.erp.server.bi.service.BiTargetShopSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
-import com.erp.server.bi.service.DmpShopInfoService;
+import com.erp.server.bi.service.BiShopInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -67,7 +67,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
     private BiTargetYearService biTargetYearService;
 
     @Autowired
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
     @Autowired
     private SysUserFeign sysUserFeign;
@@ -112,7 +112,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
             List<String> shopIdList = addList.stream().map(BiTargetShopSettingEntity::getShopId).
                     collect(Collectors.toList());
             //店铺信息
-            List<BiShopInfoEntity> shopList = CollectionUtils.isNotEmpty(shopIdList) ? dmpShopInfoService.listByIds(shopIdList) : Collections.emptyList();
+            List<BiShopInfoEntity> shopList = CollectionUtils.isNotEmpty(shopIdList) ? biShopInfoService.listByIds(shopIdList) : Collections.emptyList();
             for (BiTargetShopSettingEntity item : addList) {
                 item.setMainId(mainId);
                 String shopName = shopList.stream().filter(s -> s.getId().equals(item.getShopId())).
@@ -565,7 +565,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
     @Override
     public BiTargetShopSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
         List<String> metricsNameList = MetricsEnum.listName();
-        List<BiShopInfoEntity> shopInfoList = dmpShopInfoService.list();
+        List<BiShopInfoEntity> shopInfoList = biShopInfoService.list();
         BiTargetShopSettingExcelListener excelListenerUtil = new BiTargetShopSettingExcelListener(metricsNameList, shopInfoList);
         try {
             EasyExcel.read(excelFile.getInputStream(), TargetShopSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();

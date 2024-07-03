@@ -8,7 +8,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.entity.BiOrderInfoEntity;
-import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.BiOrderInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.poi.ss.formula.functions.T;
@@ -32,7 +32,7 @@ import java.util.List;
 public class ChangeDeptConsumer implements RocketMQListener<JSONObject> {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Override
     public void onMessage(JSONObject jsonObject) {
@@ -52,7 +52,7 @@ public class ChangeDeptConsumer implements RocketMQListener<JSONObject> {
     private void updateSaleCharge(String chargeId, LocalDate enableTime, String deptId, String deptName ) {
 
         //更新启动时间后的订单负责人部门
-        List<BiOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
+        List<BiOrderInfoEntity> list = biOrderInfoService.lambdaQuery()
                 .eq(BiOrderInfoEntity::getChargeId, chargeId)
                 .ge(BiOrderInfoEntity::getPlatformCreateTime, enableTime)
                 .list();
@@ -95,7 +95,7 @@ public class ChangeDeptConsumer implements RocketMQListener<JSONObject> {
      */
     private void updateList (List<T> collect) {
         List<BiOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect), BiOrderInfoEntity.class);
-        dmpOrderInfoService.updateBatchById(list);
+        biOrderInfoService.updateBatchById(list);
     }
 
 }

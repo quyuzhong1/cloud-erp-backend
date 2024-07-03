@@ -78,7 +78,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private BiProductDetailService productDetailService;
 
     @Resource
-    private DmpShopInfoService shopInfoService;
+    private BiShopInfoService shopInfoService;
 
     @Resource
     private SysUserFeign sysUserFeign;
