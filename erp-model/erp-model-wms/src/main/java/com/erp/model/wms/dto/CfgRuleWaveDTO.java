@@ -322,7 +322,7 @@ public class CfgRuleWaveDTO implements Serializable {
         /**
         * 规则描述
         */
-        @Size(max = 32,message = "规则描述最大长度不能超过32位")
+        @Size(max = 200,message = "规则描述最大长度不能超过200位")
         private String remark;
 
 
