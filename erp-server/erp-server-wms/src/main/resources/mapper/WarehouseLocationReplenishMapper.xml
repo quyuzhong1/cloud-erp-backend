@@ -63,7 +63,11 @@
                from_warehouse_location,
                to_warehouse_area,
                to_warehouse_location,
-               suggest_qty
+               suggest_qty,
+               create_user_name,
+               create_time,
+               update_user_name,
+               update_time
         from warehouse_location_replenish
         where is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">

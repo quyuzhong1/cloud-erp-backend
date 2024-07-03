@@ -187,7 +187,7 @@ public class CfgRuleWaveDTO implements Serializable {
         private String executionType;
 
         /**
-        * 分拣方式（边拣边分，先拣后分）
+        * 分拣方式（sameWave边拣边分，mixedWave先拣后分）
         */
         private String pickingType;
 

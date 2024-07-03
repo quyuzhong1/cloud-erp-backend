@@ -63,8 +63,8 @@ public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serial
     /**
      * 分拣方式
      */
-    @TableField("pick_type")
-    private String pickType;
+    @TableField("picking_type")
+    private String pickingType;
 
     /**
      * 打印状态

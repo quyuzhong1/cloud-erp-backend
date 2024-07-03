@@ -24,4 +24,14 @@ public enum PickingWaveTypeEnum implements EnumMessage {
     public String getName() {
         return name;
     }
+
+    public static String getName(String code){
+        if(code.equals(PickingWaveTypeEnum.MIXED_WAVE.getCode())){
+            return PickingWaveTypeEnum.MIXED_WAVE.getName();
+        }
+        if(code.equals(PickingWaveTypeEnum.SAME_WAVE.getCode())){
+            return PickingWaveTypeEnum.SAME_WAVE.getName();
+        }
+        return "";
+    }
 }

@@ -380,7 +380,13 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             List<WarehouseLocationEntity> locationList = warehouseLocationService.listLocation(param.getWarehouseId(), param.getWarehouseArea());
             List<String> locationCodeList = locationList.stream().map(item -> item.getCode()).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(locationCodeList)){
-                return resultList;
+                WarehouseLocationReplenishDTO.LocationQtyDTO locationQtyDTO = new WarehouseLocationReplenishDTO.LocationQtyDTO();
+                locationQtyDTO.setWarehouseId(param.getWarehouseId());
+                locationQtyDTO.setWarehouseArea(param.getWarehouseArea());
+                locationQtyDTO.setSkuId(param.getSkuId());
+                locationQtyDTO.setLocationQtyList(Collections.emptyList());
+                resultList.add(locationQtyDTO);
+                continue;
             }
             List<InventoryEntity> inventoryList = inventoryService.getBaseMapper().selectList(new QueryWrapper<InventoryEntity>()
                     .eq("warehouse_id", param.getWarehouseId())

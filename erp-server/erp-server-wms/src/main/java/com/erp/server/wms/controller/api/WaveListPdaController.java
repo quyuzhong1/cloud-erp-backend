@@ -6,9 +6,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
-import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.server.wms.query.WaveListPdaAdvanceQueryHandler;
-import com.erp.server.wms.service.WaveListDetailService;
+import com.erp.server.wms.service.WaveListDetailPdaService;
 import com.erp.server.wms.service.WaveListPdaService;
 import com.erp.server.wms.service.WaveListService;
 import org.springframework.web.bind.annotation.*;
@@ -30,14 +29,16 @@ public class WaveListPdaController {
     private WaveListPdaService waveListPdaService;
     @Resource
     private WaveListService waveListService;
+    @Resource
+    private WaveListDetailPdaService waveListDetailPdaService;
 
     /**
      * 波次列表
      */
-    @GetMapping("/view")
+    @PostMapping("/paging")
     @WebAdvanceQuery(handler = WaveListPdaAdvanceQueryHandler.class)
-    public ApiResult<PagingVO<WaveListPdaDTO.ViewDTO>> view(@RequestBody PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO){
-        PagingVO<WaveListPdaDTO.ViewDTO> pagingVO = waveListPdaService.view(pagingDTO);
+    public ApiResult<PagingVO<WaveListPdaDTO.ViewDTO>> paging(@RequestBody PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO){
+        PagingVO<WaveListPdaDTO.ViewDTO> pagingVO = waveListPdaService.paging(pagingDTO);
         return ApiResult.success(pagingVO);
     }
 
@@ -58,7 +59,7 @@ public class WaveListPdaController {
      */
     @PostMapping("/startPickingWithSideType")
     public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPickingWithSideType(@RequestParam String waveId){
-        WaveListDetailPdaDTO.ViewDTO dto = waveListPdaService.startPickingWithSideType(waveId);
+        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPickingWithSideType(waveId);
         return ApiResult.success(dto);
     }
 
@@ -69,7 +70,7 @@ public class WaveListPdaController {
      */
     @PostMapping("/startPickingWithSequenceType")
     public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPickingWithSequenceType(@RequestParam String waveId){
-        WaveListDetailPdaDTO.ViewDTO dto = waveListPdaService.startPickingWithSequenceType(waveId);
+        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPickingWithSequenceType(waveId);
         return ApiResult.success(dto);
     }
 

@@ -6,10 +6,12 @@ import com.common.business.query.AbstractQueryHandler;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WaveListService;
 import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -30,6 +32,9 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private WaveListService waveListService;
+
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
@@ -58,11 +63,6 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.PICKING.getStatus());
                 addDeliveryInterceptFilter();
             }
-            //手动标发
-            if (SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus().equals(searchType)) {
-                super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
-                addDeliveryInterceptFilter();
-            }
             //已发货
             if (SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
@@ -87,7 +87,15 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getStatus());
                 addDeliveryInterceptFilter();
             }
-
+            //虚假发货
+            if ("false_shipment".equals(searchType)) {
+                List<String> ids = soB2cDeliveryService.listIdsByShipmentMark(ShipmentMarkTypeEnum.MANUAL);
+                if (CollectionUtils.isEmpty(ids)) {
+                    return getQueryEmptySql();
+                }
+                super.buildDefaultDTO("sbd.id", ids);
+                addDeliveryInterceptFilter();
+            }
             if ("generation_waves".equals(searchType)) {
 
                 List<String> ids = waveListService.listDeliveryIdByStatus(WaveStatusEnum.AWAIT_PICK.getCode());

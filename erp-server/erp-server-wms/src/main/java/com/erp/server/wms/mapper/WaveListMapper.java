@@ -20,4 +20,6 @@ public interface WaveListMapper extends BaseMapper<WaveListEntity> {
     int countDelivery(PermissionsDTO param);
 
     IPage<WaveListEntity> paging(Page<Object> page, @Param("params") WaveListDTO.SearchParamDTO params);
+
+    List<WaveListDTO.TabDTO> listTab();
 }

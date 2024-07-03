@@ -356,7 +356,16 @@ public class PackageServiceImpl implements PackageService {
 
             //自动发货
             if (isAutoOut) {
-                List<String> soIdList = detailList.stream().map(req -> req.getSoId()).collect(Collectors.toList());
+                List<String> soIdList = detailList.stream().map(PackageDTO.ScanResultDTO::getSoId).collect(Collectors.toList());
+                //待处理和异常单不允许自动出库
+                List<SoB2cDeliveryEntity> entities = soB2cDeliveryService.listBySourceIds(soIdList);
+                String notShipmentSoCodes = entities.stream()
+                        .filter(e -> SoB2cDeliveryStatusEnum.notShipment().contains(e.getStatus()))
+                        .map(SoB2cDeliveryEntity::getSoCode)
+                        .collect(Collectors.joining(","));
+                if (StringUtils.isNotEmpty(notShipmentSoCodes)) {
+                    throw new ServiceException(ApiError.ERROR_99115, notShipmentSoCodes);
+                }
                 // 异步推送到MQ
                 soIdList.stream().peek(soId ->{
                     SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),

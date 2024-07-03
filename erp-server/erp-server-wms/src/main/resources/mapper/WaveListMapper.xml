@@ -32,6 +32,10 @@
                  LEFT JOIN wave_list_detail as pwd on pwd.main_id = pw.id and pwd.is_deleted = false
         WHERE pw.is_deleted = false
           and pw.status = 'await_pick'
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
     <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
         select id,
@@ -45,7 +49,7 @@
                status,
                picking_cart_type,
                picking_cart_code,
-               pick_type,
+               picking_type,
                print_status,
                picking_user,
                picking_time
@@ -54,5 +58,8 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
+    </select>
+    <select id="listTab" resultType="com.erp.model.wms.dto.WaveListDTO$TabDTO">
+        select status as tabFlag, count(1) as count from wave_list where is_deleted = false group by status
     </select>
 </mapper>

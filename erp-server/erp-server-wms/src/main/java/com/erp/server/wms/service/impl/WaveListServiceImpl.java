@@ -1,23 +1,33 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WaveListDTO;
+import com.erp.model.wms.dto.WaveListDetailDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.enums.PackagePrintStatusEnum;
+import com.erp.model.wms.enums.PickingWaveTypeEnum;
+import com.erp.model.wms.enums.WavePickingTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WaveListDetailService;
 import com.erp.server.wms.service.WaveListService;
 import org.springframework.stereotype.Service;
@@ -27,6 +37,8 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveListEntity> implements WaveListService {
@@ -35,21 +47,30 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     private WaveListDetailService waveListDetailService;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private SoB2cDeliveryService deliveryService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(WaveListDTO.AddDTO dto) {
+        String waveCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JHBC);
+
         LoginUser user = UserContext.getNonLoginUser();
         WaveListEntity entity = new WaveListEntity();
-        entity.setCode(dto.getCode());
-        entity.setName("");
+        entity.setCode(waveCode);
+        entity.setName(dto.getName());
         entity.setType(dto.getWaveType());
         entity.setPickingCartCode(dto.getPickCartTypeId());
-        entity.setPickType(dto.getPickingType());
+        entity.setPickingType(dto.getPickingType());
         entity.setStatus(WaveStatusEnum.AWAIT_PICK.getCode());
-        entity.setPrintStatus("未打印");
+        entity.setPrintStatus(PackagePrintStatusEnum.NOT.getCode());
         this.save(entity);
 
         List<String> deliveryIdList = dto.getDeliveryIdList();
+        List<SoB2cDeliveryEntity> deliveryList = deliveryService.getBaseMapper().selectBatchIds(deliveryIdList);
+
         List<WaveListDetailEntity> detailList = new ArrayList<>(deliveryIdList.size());
         for (int i = 0; i < deliveryIdList.size(); i++) {
             String deliveryId = deliveryIdList.get(i);
@@ -120,12 +141,43 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     private List<WaveListDTO.ViewDTO> fillViewList(List<WaveListEntity> records) {
-        return null;
+        if (records.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<WaveListDTO.ViewDTO> viewDTOList = new ArrayList<>(records.size());
+        for (WaveListEntity record : records) {
+            WaveListDTO.ViewDTO viewDTO = new WaveListDTO.ViewDTO();
+            BeanMapper.copy(record, viewDTO);
+            viewDTO.setPickingUserName(record.getUpdateUserName());
+            viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
+            viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
+            viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(record.getPrintStatus()));
+            viewDTO.setPickingCartTypeName(record.getPickingCartType());
+            viewDTOList.add(viewDTO);
+        }
+        return viewDTOList;
     }
 
     @Override
     public List<WaveListDTO.TabDTO> tabList() {
-        return Collections.emptyList();
+        List<WaveListDTO.TabDTO> list = baseMapper.listTab();
+        Map<String, WaveListDTO.TabDTO> map = list.stream().collect(Collectors.toMap(item1 -> item1.getTabFlag(), item2 -> item2));
+        if(! map.containsKey(WaveStatusEnum.AWAIT_PICK.getCode())){
+            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.AWAIT_PICK.getCode(), 0));
+        }
+        if(! map.containsKey(WaveStatusEnum.PICK_ING.getCode())){
+            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.PICK_ING.getCode(), 0));
+        }
+        if(! map.containsKey(WaveStatusEnum.HANG_UP.getCode())){
+            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.HANG_UP.getCode(), 0));
+        }
+        if(! map.containsKey(WaveStatusEnum.FINISH.getCode())){
+            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.FINISH.getCode(), 0));
+        }
+        for (WaveListDTO.TabDTO dto : list) {
+            dto.setTabFlagName(WaveStatusEnum.getNameByCode(dto.getTabFlag()));
+        }
+        return list;
     }
 
     @Override
@@ -141,9 +193,21 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public BatchResultDTO cancelPrinted(String id) {
+    public BatchResultDTO cancelPrinted(String waveId) {
+        WaveListDetailDTO.ViewDTO viewDTO = waveListDetailService.view(waveId);
+        for (WaveListDetailDTO.DeliveryInfoDTO deliveryDto : viewDTO.getDeliveryInfoList()) {
+            Integer pickedSumQty = deliveryDto.getPickedSumQty();
+            if(pickedSumQty != 0){
+                return BatchResultDTO.fail(waveId, viewDTO.getCode(), "已部分拣货，无法取消打印");
+            }
+        }
 
-//        return BatchResultDTO.success();
-        return null;
+        update(new UpdateWrapper<WaveListEntity>()
+                .eq("id", waveId)
+                .set("status", WaveStatusEnum.AWAIT_PICK.getCode())
+                .set("picking_user", "")
+                .set("print_time", "")
+        );
+        return BatchResultDTO.fail(waveId, viewDTO.getCode(), "成功");
     }
 }

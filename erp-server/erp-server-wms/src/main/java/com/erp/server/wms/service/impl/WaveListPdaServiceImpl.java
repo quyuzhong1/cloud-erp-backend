@@ -25,7 +25,6 @@ import com.erp.server.wms.mapper.WaveListPdaMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -101,7 +100,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     }
 
     @Override
-    public PagingVO<WaveListPdaDTO.ViewDTO> view(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
+    public PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<WaveListEntity> result = this.baseMapper.paging(page, pagingDTO.getParams());
         List<WaveListPdaDTO.ViewDTO> viewDTOList = fillViewList(result.getRecords());
@@ -176,7 +175,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         //核对成功返回拣货车信息
         bindDTO.setPickingCartName("");
         bindDTO.setPickingCartType(pickingCartType.getName());
-        bindDTO.setPickingType(waveEntity.getPickType());
+        bindDTO.setPickingType(waveEntity.getPickingType());
         return ApiResult.success(bindDTO);
     }
 
