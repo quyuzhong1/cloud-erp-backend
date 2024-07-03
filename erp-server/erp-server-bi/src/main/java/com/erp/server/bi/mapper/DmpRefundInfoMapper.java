@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.BiRefundInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,7 +17,7 @@ import java.util.List;
  * @Entity com.erp.model.plm.entity.DmpRefundInfo
  */
 @Mapper
-public interface DmpRefundInfoMapper extends BaseMapper<DmpRefundInfoEntity> {
+public interface DmpRefundInfoMapper extends BaseMapper<BiRefundInfoEntity> {
     /**
      * @description: 分页查询
      * @author Will

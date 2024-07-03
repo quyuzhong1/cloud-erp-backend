@@ -12,7 +12,7 @@
             dscl.charge_name,
             dscl.enable_time_begin,
             dscl.enable_time_end
-        from dmp_shop_change_log dscl
+        from bi_shop_change_log dscl
         <where>
             <if test="params.searchContent != null and params.searchContent != ''">
                 and dscl.shop_id ILIKE concat('%',#{params.searchContent}::text,'%')

@@ -22,8 +22,8 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.GyyRefundDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
-import com.erp.model.dmp.entity.DmpRefundItemEntity;
+import com.erp.model.dmp.entity.BiRefundInfoEntity;
+import com.erp.model.dmp.entity.BiRefundItemEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -60,7 +60,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
     private MongoService mongoService;
 
     @Autowired
-    private MQProducerService<DmpRefundInfoEntity> mqProducerService;
+    private MQProducerService<BiRefundInfoEntity> mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -134,7 +134,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
             return;
         }
         // 构造订单结构
-        List<DmpRefundInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiRefundInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -170,7 +170,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(RefundOrderEntity mongoDatum) {
-        DmpRefundInfoEntity refundInfo = initOrderInfoEntity(mongoDatum);
+        BiRefundInfoEntity refundInfo = initOrderInfoEntity(mongoDatum);
         GyyRefundDTO updateDto = new GyyRefundDTO(mongoDatum.getId());
         if(null == refundInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -206,37 +206,37 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public DmpRefundInfoEntity initOrderInfoEntity(RefundOrderEntity refundOrderEntity) {
-        DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
-        BeanUtil.copyProperties(refundOrderEntity, dmpRefundInfoEntity);
-        dmpRefundInfoEntity.setRefundCode(refundOrderEntity.getId());
+    public BiRefundInfoEntity initOrderInfoEntity(RefundOrderEntity refundOrderEntity) {
+        BiRefundInfoEntity biRefundInfoEntity = new BiRefundInfoEntity();
+        BeanUtil.copyProperties(refundOrderEntity, biRefundInfoEntity);
+        biRefundInfoEntity.setRefundCode(refundOrderEntity.getId());
         //币别编号
-        dmpRefundInfoEntity.setCurrencyCode(refundOrderEntity.getCurrencyId());
+        biRefundInfoEntity.setCurrencyCode(refundOrderEntity.getCurrencyId());
         //退款单号
-        dmpRefundInfoEntity.setPlatformRefundCode(refundOrderEntity.getRefundplatformOrderId());
-        dmpRefundInfoEntity.setPlatformOrderId(refundOrderEntity.getPlatformOrderId());
+        biRefundInfoEntity.setPlatformRefundCode(refundOrderEntity.getRefundplatformOrderId());
+        biRefundInfoEntity.setPlatformOrderId(refundOrderEntity.getPlatformOrderId());
         //退货金额
-        dmpRefundInfoEntity.setRefundAmount(refundOrderEntity.getApplyRefundMoney());
+        biRefundInfoEntity.setRefundAmount(refundOrderEntity.getApplyRefundMoney());
         //退款备注
-        dmpRefundInfoEntity.setRefundRemark(refundOrderEntity.getNote());
+        biRefundInfoEntity.setRefundRemark(refundOrderEntity.getNote());
         //退款状态：1、新建退款 2、审核中 3、财务审核 4、成功 5、失败 6、作废
-        dmpRefundInfoEntity.setRefundStatus(refundOrderEntity.getFlag());
+        biRefundInfoEntity.setRefundStatus(refundOrderEntity.getFlag());
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //申请时间
         if (!"null".equalsIgnoreCase(refundOrderEntity.getCreateTime()) && StrUtil.isNotBlank(refundOrderEntity.getCreateTime())) {
-            dmpRefundInfoEntity.setRefundCreateTime(LocalDateTime.parse(refundOrderEntity.getCreateTime(), sdf));
+            biRefundInfoEntity.setRefundCreateTime(LocalDateTime.parse(refundOrderEntity.getCreateTime(), sdf));
         }
         //店铺编号
-        dmpRefundInfoEntity.setShopNo(refundOrderEntity.getShopId());
+        biRefundInfoEntity.setShopNo(refundOrderEntity.getShopId());
         //平台最后修改时间
         if (!"null".equalsIgnoreCase(refundOrderEntity.getUpdateTime()) && StrUtil.isNotBlank(refundOrderEntity.getUpdateTime())) {
-            dmpRefundInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(refundOrderEntity.getUpdateTime(), sdf));
+            biRefundInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(refundOrderEntity.getUpdateTime(), sdf));
         }
         //平台标识
-        dmpRefundInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
-        dmpRefundInfoEntity.setCreateTime(LocalDateTime.now());
-        dmpRefundInfoEntity.setItemList(initOrderItem(refundOrderEntity));
-        return dmpRefundInfoEntity;
+        biRefundInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
+        biRefundInfoEntity.setCreateTime(LocalDateTime.now());
+        biRefundInfoEntity.setItemList(initOrderItem(refundOrderEntity));
+        return biRefundInfoEntity;
     }
 
     /**
@@ -246,26 +246,26 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public List<DmpRefundItemEntity> initOrderItem(RefundOrderEntity refundOrderEntity) {
-        List<DmpRefundItemEntity> orderItemList = new ArrayList<>();
+    public List<BiRefundItemEntity> initOrderItem(RefundOrderEntity refundOrderEntity) {
+        List<BiRefundItemEntity> orderItemList = new ArrayList<>();
         HashMap<String, Integer> skuCountMap = new HashMap<>();
         refundOrderEntity.getProductList().stream().forEach( refundOrderItemEntity -> {
-            DmpRefundItemEntity dmpRefundItemEntity = new DmpRefundItemEntity();
+            BiRefundItemEntity biRefundItemEntity = new BiRefundItemEntity();
             //sku编号
             String skuNo = refundOrderItemEntity.getRefundStock();
-            dmpRefundItemEntity.setSkuNo(skuNo);
+            biRefundItemEntity.setSkuNo(skuNo);
             //订单原始商品数量
-            dmpRefundItemEntity.setQuantity(refundOrderItemEntity.getStock_quantity());
+            biRefundItemEntity.setQuantity(refundOrderItemEntity.getStock_quantity());
             //退款商品数量
-            dmpRefundItemEntity.setRefundNum(refundOrderItemEntity.getRefund_num());
+            biRefundItemEntity.setRefundNum(refundOrderItemEntity.getRefund_num());
             //是否属于组合sku：0. 否 1. 是
-            dmpRefundItemEntity.setIsCombo(refundOrderItemEntity.getIsCombo());
-            dmpRefundItemEntity.setAmountAfter(BigDecimal.ZERO);
+            biRefundItemEntity.setIsCombo(refundOrderItemEntity.getIsCombo());
+            biRefundItemEntity.setAmountAfter(BigDecimal.ZERO);
             //erp平台商品id
             String erpOrderItemId = refundOrderEntity.getPlatformOrderId() + "_" + refundOrderEntity.getRefundplatformOrderId() + "_" + skuNo;
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap,skuNo,erpOrderItemId);
-            dmpRefundItemEntity.setErpOrderItemId(erpOrderItemId);
-            orderItemList.add(dmpRefundItemEntity);
+            biRefundItemEntity.setErpOrderItemId(erpOrderItemId);
+            orderItemList.add(biRefundItemEntity);
         });
        return orderItemList;
     }

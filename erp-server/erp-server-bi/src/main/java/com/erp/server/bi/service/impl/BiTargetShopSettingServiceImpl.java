@@ -15,22 +15,18 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.BiTargetShopSettingDTO;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.dto.excel.TargetShopSettingImportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetStaffSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetShopSettingEntity;
-import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.listener.BiTargetShopSettingExcelListener;
-import com.erp.server.bi.listener.BiTargetStaffSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetShopSettingMapper;
 import com.erp.server.bi.service.BiTargetShopSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
@@ -116,11 +112,11 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
             List<String> shopIdList = addList.stream().map(BiTargetShopSettingEntity::getShopId).
                     collect(Collectors.toList());
             //店铺信息
-            List<DmpShopInfoEntity> shopList = CollectionUtils.isNotEmpty(shopIdList) ? dmpShopInfoService.listByIds(shopIdList) : Collections.emptyList();
+            List<BiShopInfoEntity> shopList = CollectionUtils.isNotEmpty(shopIdList) ? dmpShopInfoService.listByIds(shopIdList) : Collections.emptyList();
             for (BiTargetShopSettingEntity item : addList) {
                 item.setMainId(mainId);
                 String shopName = shopList.stream().filter(s -> s.getId().equals(item.getShopId())).
-                        findFirst().map(DmpShopInfoEntity::getName).orElse("");
+                        findFirst().map(BiShopInfoEntity::getName).orElse("");
                 item.setShopName(shopName);
             }
             this.saveBatch(addList);
@@ -569,7 +565,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
     @Override
     public BiTargetShopSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
         List<String> metricsNameList = MetricsEnum.listName();
-        List<DmpShopInfoEntity> shopInfoList = dmpShopInfoService.list();
+        List<BiShopInfoEntity> shopInfoList = dmpShopInfoService.list();
         BiTargetShopSettingExcelListener excelListenerUtil = new BiTargetShopSettingExcelListener(metricsNameList, shopInfoList);
         try {
             EasyExcel.read(excelFile.getInputStream(), TargetShopSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();

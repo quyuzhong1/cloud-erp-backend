@@ -1,12 +1,12 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.dmp.entity.BiSkuInfoEntity;
 
 /**
  * 商品信息服务类
  */
-public interface DmpSkuInfoService extends IService<DmpSkuInfoEntity> {
+public interface DmpSkuInfoService extends IService<BiSkuInfoEntity> {
     /**
      * 根据sku查询商品信息
      *
@@ -14,5 +14,5 @@ public interface DmpSkuInfoService extends IService<DmpSkuInfoEntity> {
      * @param companyId
      * @return com.erp.model.dmp.entity.DmpSkuInfoEntity
      **/
-    DmpSkuInfoEntity getBySkuNo(String skuNo, String companyId);
+    BiSkuInfoEntity getBySkuNo(String skuNo, String companyId);
 }

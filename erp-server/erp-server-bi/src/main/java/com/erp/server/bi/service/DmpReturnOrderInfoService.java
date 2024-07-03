@@ -6,7 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * 退货订单服务类
  */
-public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEntity> {
+public interface DmpReturnOrderInfoService extends IService<BiReturnOrderInfoEntity> {
     /**
      * @description: 分页查询
      * @author Will
@@ -49,7 +49,7 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * @param returnOrderId
      * @return DmpReturnOrderInfoEntity
      */
-    DmpReturnOrderInfoEntity getByReturnOrderId(String returnOrderId);
+    BiReturnOrderInfoEntity getByReturnOrderId(String returnOrderId);
     /**
      * @description: 导入
      * @author Will

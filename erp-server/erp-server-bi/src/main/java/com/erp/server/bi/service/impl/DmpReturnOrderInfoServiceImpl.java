@@ -21,8 +21,8 @@ import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.enums.ReturnOrderStatusEnum;
 import com.erp.server.bi.listener.DmpReturnOrderInfoExcelListener;
@@ -46,7 +46,7 @@ import java.util.List;
  * 退货订单服务
  */
 @Service
-public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInfoMapper, DmpReturnOrderInfoEntity>
+public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInfoMapper, BiReturnOrderInfoEntity>
     implements DmpReturnOrderInfoService {
 
     @Resource
@@ -119,9 +119,9 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     }
 
     @Override
-    public DmpReturnOrderInfoEntity getByReturnOrderId(String returnOrderId) {
-        LambdaQueryWrapper<DmpReturnOrderInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DmpReturnOrderInfoEntity::getReturnCode,returnOrderId);
+    public BiReturnOrderInfoEntity getByReturnOrderId(String returnOrderId) {
+        LambdaQueryWrapper<BiReturnOrderInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiReturnOrderInfoEntity::getReturnCode,returnOrderId);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }
@@ -129,7 +129,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     @Override
     public Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
         //系统中已存在的退货订单
-        List<DmpReturnOrderInfoEntity> returnOrderList = this.list();
+        List<BiReturnOrderInfoEntity> returnOrderList = this.list();
 
         DmpReturnOrderInfoExcelListener excelListenerUtil = new DmpReturnOrderInfoExcelListener(importType,returnOrderList,dmpOrderInfoService, dmpReturnOrderInfoService, dmpShopInfoService,dmpReturnOrderItemService,plmTaskFeign);
         try {
@@ -153,15 +153,15 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
 
     @Override
     public void updateOrderFeeById(String returnOrderId) {
-        List<DmpReturnOrderItemEntity> dmpReturnOrderItemList = dmpReturnOrderItemService.listByReturnOrderId(returnOrderId);
+        List<BiReturnOrderItemEntity> dmpReturnOrderItemList = dmpReturnOrderItemService.listByReturnOrderId(returnOrderId);
         if (CollectionUtils.isNotEmpty(dmpReturnOrderItemList)) {
             //计算明细退货金额合计
             BigDecimal reduce = dmpReturnOrderItemList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getQuantity()) && ObjectUtils.isNotEmpty(obj.getSellPrice()))
                     .map(obj -> MathUtil.multiply(new BigDecimal(obj.getQuantity()), obj.getSellPrice())).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.set(DmpReturnOrderInfoEntity::getOrderFee,reduce);
-            updateWrapper.eq(DmpReturnOrderInfoEntity::getId,returnOrderId);
+            LambdaUpdateWrapper<BiReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.set(BiReturnOrderInfoEntity::getOrderFee,reduce);
+            updateWrapper.eq(BiReturnOrderInfoEntity::getId,returnOrderId);
             this.update(updateWrapper);
         }
     }

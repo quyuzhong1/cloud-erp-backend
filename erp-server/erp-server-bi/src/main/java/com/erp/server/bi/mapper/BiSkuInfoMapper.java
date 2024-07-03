@@ -1,7 +1,7 @@
 package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.dmp.entity.BiSkuInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -11,5 +11,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @Created by yl
  */
 @Mapper
-public interface BiSkuInfoMapper extends BaseMapper<DmpSkuInfoEntity> {
+public interface BiSkuInfoMapper extends BaseMapper<BiSkuInfoEntity> {
 }

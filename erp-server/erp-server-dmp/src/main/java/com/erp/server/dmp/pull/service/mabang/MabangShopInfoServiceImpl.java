@@ -18,7 +18,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -50,7 +50,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpShopInfoEntity> mqProducerService;
+    private MQProducerService<BiShopInfoEntity> mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -92,7 +92,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
             return;
         }
         // 构造订单结构
-        List<DmpShopInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiShopInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -127,7 +127,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ShopEntity mongoDatum) {
-        DmpShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
+        BiShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());
         if(null == shopInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -154,29 +154,29 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
     /**
      * 解析店铺数据
      **/
-    private DmpShopInfoEntity initOrderInfoEntity(ShopEntity shopEntity) {
-        DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
+    private BiShopInfoEntity initOrderInfoEntity(ShopEntity shopEntity) {
+        BiShopInfoEntity biShopInfoEntity = new BiShopInfoEntity();
         //平台店铺编号
-        dmpShopInfoEntity.setPlatformShopNo(shopEntity.getId());
+        biShopInfoEntity.setPlatformShopNo(shopEntity.getId());
         //平台店铺账户
-        dmpShopInfoEntity.setAccountUserName(shopEntity.getAccountUsername());
+        biShopInfoEntity.setAccountUserName(shopEntity.getAccountUsername());
         //平台店铺标识
-        dmpShopInfoEntity.setAccountStoreName(shopEntity.getAccountStoreName());
+        biShopInfoEntity.setAccountStoreName(shopEntity.getAccountStoreName());
         //店铺名称
-        dmpShopInfoEntity.setName(shopEntity.getName());
+        biShopInfoEntity.setName(shopEntity.getName());
         // 店铺站点
         if(StrUtil.isNotBlank(shopEntity.getAmazonsite())){
-            dmpShopInfoEntity.setSite(shopEntity.getAmazonsite());
+            biShopInfoEntity.setSite(shopEntity.getAmazonsite());
         }
         //店铺状态
-        dmpShopInfoEntity.setStatus(shopEntity.getStatus());
+        biShopInfoEntity.setStatus(shopEntity.getStatus());
         //平台名称
-        dmpShopInfoEntity.setPlatformName(shopEntity.getPlatformName());
+        biShopInfoEntity.setPlatformName(shopEntity.getPlatformName());
         // 财务编码
-        dmpShopInfoEntity.setFinanceCode(shopEntity.getFinanceCode());
+        biShopInfoEntity.setFinanceCode(shopEntity.getFinanceCode());
         //平台标识
-        dmpShopInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
-        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
-        return dmpShopInfoEntity;
+        biShopInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
+        biShopInfoEntity.setCreateTime(LocalDateTime.now());
+        return biShopInfoEntity;
     }
 }

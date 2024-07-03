@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -16,7 +16,7 @@ import java.util.List;
  * @Entity com.erp.model.plm.entity.DmpReturnOrderInfo
  */
 @Mapper
-public interface DmpReturnOrderInfoMapper extends BaseMapper<DmpReturnOrderInfoEntity> {
+public interface DmpReturnOrderInfoMapper extends BaseMapper<BiReturnOrderInfoEntity> {
     /**
      * @description: 分页查询
      * @author Will

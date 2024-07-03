@@ -9,9 +9,9 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpRefundInfoImportExcelDTO;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
-import com.erp.model.dmp.entity.DmpRefundItemEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiRefundInfoEntity;
+import com.erp.model.dmp.entity.BiRefundItemEntity;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.enums.RefundStatusEnum;
@@ -44,10 +44,10 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
 
     private List<DmpRefundInfoImportExcelDTO> list;
 
-    private List<DmpRefundInfoEntity> refundList;
+    private List<BiRefundInfoEntity> refundList;
 
-    public DmpRefundInfoExcelListener(Integer importType,List<DmpRefundInfoEntity> refundList, DmpOrderInfoService dmpOrderInfoService, DmpRefundInfoService dmpRefundInfoService
-            , DmpShopInfoService dmpShopInfoService,DmpRefundItemService dmpRefundItemService, PlmTaskFeign plmTaskFeign) {
+    public DmpRefundInfoExcelListener(Integer importType, List<BiRefundInfoEntity> refundList, DmpOrderInfoService dmpOrderInfoService, DmpRefundInfoService dmpRefundInfoService
+            , DmpShopInfoService dmpShopInfoService, DmpRefundItemService dmpRefundItemService, PlmTaskFeign plmTaskFeign) {
         this.importType = importType;
         this.dmpOrderInfoService = dmpOrderInfoService;
         this.dmpShopInfoService = dmpShopInfoService;
@@ -77,7 +77,7 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
             errorMsgList.addAll(msgList);
         }
 
-        DmpRefundInfoEntity entity = new DmpRefundInfoEntity();
+        BiRefundInfoEntity entity = new BiRefundInfoEntity();
         if (!StrUtils.isLetterDigitBar(dto.getRefundCode())) {
             errorMsgList.add("退款单号只能包含字母、数字、-");
         }
@@ -119,8 +119,8 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
             }
         }
         //查询订单
-        DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
-        if(ObjectUtils.isEmpty(dmpOrderInfoEntity)) {
+        BiOrderInfoEntity biOrderInfoEntity = dmpOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
+        if(ObjectUtils.isEmpty(biOrderInfoEntity)) {
             errorMsgList.add("订单号系统中不存在");
         }
 
@@ -142,17 +142,17 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
             list.add(dto);
             return;
         }
-        DmpRefundInfoEntity dmpRefundInfoEntity = dmpRefundInfoService.getByRefundId(dto.getRefundCode());
-        if (ObjectUtils.isEmpty(dmpRefundInfoEntity)) {
+        BiRefundInfoEntity biRefundInfoEntity = dmpRefundInfoService.getByRefundId(dto.getRefundCode());
+        if (ObjectUtils.isEmpty(biRefundInfoEntity)) {
             BeanUtils.copyProperties(dto,entity);
             entity.setRefundStatus(RefundStatusEnum.getCodeByName(dto.getRefundStatusName()));
-            entity.setOrderTime(dmpOrderInfoEntity.getPlatformCreateTime());
+            entity.setOrderTime(biOrderInfoEntity.getPlatformCreateTime());
             dmpRefundInfoService.save(entity);
         }
         //同订单sku新增到同一订单下
-        DmpRefundItemEntity itemEntity = new DmpRefundItemEntity();
-        if (ObjectUtils.isNotEmpty(dmpRefundInfoEntity)) {
-            itemEntity.setRefundId(dmpRefundInfoEntity.getId());
+        BiRefundItemEntity itemEntity = new BiRefundItemEntity();
+        if (ObjectUtils.isNotEmpty(biRefundInfoEntity)) {
+            itemEntity.setRefundId(biRefundInfoEntity.getId());
         } else {
             itemEntity.setRefundId(entity.getId());
         }

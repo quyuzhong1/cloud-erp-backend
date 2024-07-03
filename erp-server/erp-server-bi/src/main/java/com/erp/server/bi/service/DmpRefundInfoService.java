@@ -4,10 +4,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.BiRefundInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -16,7 +15,7 @@ import java.math.BigDecimal;
 /**
  * 退款列表服务类
  */
-public interface DmpRefundInfoService extends IService<DmpRefundInfoEntity> {
+public interface DmpRefundInfoService extends IService<BiRefundInfoEntity> {
     /**
      * @description: 分页查询
      * @author Will
@@ -41,7 +40,7 @@ public interface DmpRefundInfoService extends IService<DmpRefundInfoEntity> {
      * @param refundId
      * @return DmpRefundInfoEntity
      */
-    DmpRefundInfoEntity getByRefundId(String refundId);
+    BiRefundInfoEntity getByRefundId(String refundId);
 
     /**
      * @description: 导入

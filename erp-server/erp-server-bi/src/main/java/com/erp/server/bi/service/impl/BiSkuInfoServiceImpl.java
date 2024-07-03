@@ -3,7 +3,7 @@ package com.erp.server.bi.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.vo.SkuCategoryVO;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.dmp.entity.BiSkuInfoEntity;
 import com.erp.server.bi.mapper.BiSkuInfoMapper;
 import com.erp.server.bi.service.BiSkuInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * @Created by yl
  */
 @Service
-public class BiSkuInfoServiceImpl extends ServiceImpl<BiSkuInfoMapper, DmpSkuInfoEntity> implements BiSkuInfoService {
+public class BiSkuInfoServiceImpl extends ServiceImpl<BiSkuInfoMapper, BiSkuInfoEntity> implements BiSkuInfoService {
 
 
     /**
@@ -34,22 +34,22 @@ public class BiSkuInfoServiceImpl extends ServiceImpl<BiSkuInfoMapper, DmpSkuInf
      */
     @Override
     public List<SkuCategoryVO> getSkuCategoryList() {
-        List<DmpSkuInfoEntity> list = this.getCategoryList();
+        List<BiSkuInfoEntity> list = this.getCategoryList();
 
-        Map<String, List<DmpSkuInfoEntity>> groupMap = list.parallelStream().
-                collect(Collectors.groupingBy(DmpSkuInfoEntity::getParentCategoryName));
+        Map<String, List<BiSkuInfoEntity>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(BiSkuInfoEntity::getParentCategoryName));
         List<SkuCategoryVO> resultList = new ArrayList<>(groupMap.size());
         String defaultCategory = "无分类";
-        for (Map.Entry<String, List<DmpSkuInfoEntity>> item : groupMap.entrySet()) {
+        for (Map.Entry<String, List<BiSkuInfoEntity>> item : groupMap.entrySet()) {
             SkuCategoryVO vo = new SkuCategoryVO();
-            List<DmpSkuInfoEntity> skuInfoList = item.getValue();
+            List<BiSkuInfoEntity> skuInfoList = item.getValue();
             String category = item.getKey();
             if (StringUtils.isNotBlank(category)) {
                 vo.setName(category);
             } else {
                 vo.setName(defaultCategory);
             }
-            vo.setSkuList(skuInfoList.stream().map(DmpSkuInfoEntity::getSkuNo).collect(Collectors.toList()));
+            vo.setSkuList(skuInfoList.stream().map(BiSkuInfoEntity::getSkuNo).collect(Collectors.toList()));
             resultList.add(vo);
         }
 
@@ -63,21 +63,21 @@ public class BiSkuInfoServiceImpl extends ServiceImpl<BiSkuInfoMapper, DmpSkuInf
      */
     @Override
     public List<SkuCategoryVO> getSkuBrandList() {
-        List<DmpSkuInfoEntity> list = this.getBrandList();
-        Map<String, List<DmpSkuInfoEntity>> groupMap = list.parallelStream().
-                collect(Collectors.groupingBy(DmpSkuInfoEntity::getParentCategoryName));
+        List<BiSkuInfoEntity> list = this.getBrandList();
+        Map<String, List<BiSkuInfoEntity>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(BiSkuInfoEntity::getParentCategoryName));
         List<SkuCategoryVO> resultList = new ArrayList<>(groupMap.size());
         String defaultCategory = "无品牌";
-        for (Map.Entry<String, List<DmpSkuInfoEntity>> item : groupMap.entrySet()) {
+        for (Map.Entry<String, List<BiSkuInfoEntity>> item : groupMap.entrySet()) {
             SkuCategoryVO vo = new SkuCategoryVO();
-            List<DmpSkuInfoEntity> skuInfoList = item.getValue();
+            List<BiSkuInfoEntity> skuInfoList = item.getValue();
             String brand = item.getKey();
             if (StringUtils.isNotBlank(brand)) {
                 vo.setName(brand);
             } else {
                 vo.setName(defaultCategory);
             }
-            vo.setSkuList(skuInfoList.stream().map(DmpSkuInfoEntity::getSkuNo).collect(Collectors.toList()));
+            vo.setSkuList(skuInfoList.stream().map(BiSkuInfoEntity::getSkuNo).collect(Collectors.toList()));
             resultList.add(vo);
         }
         return resultList;
@@ -93,44 +93,44 @@ public class BiSkuInfoServiceImpl extends ServiceImpl<BiSkuInfoMapper, DmpSkuInf
      */
     @Override
     public List<SkuCategoryVO> getSkuPropertyList() {
-        List<DmpSkuInfoEntity> list = this.getPropertyList();
-        Map<String, List<DmpSkuInfoEntity>> groupMap = list.parallelStream().
-                collect(Collectors.groupingBy(DmpSkuInfoEntity::getItemProperty));
+        List<BiSkuInfoEntity> list = this.getPropertyList();
+        Map<String, List<BiSkuInfoEntity>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(BiSkuInfoEntity::getItemProperty));
         List<SkuCategoryVO> resultList = new ArrayList<>(groupMap.size());
         String defaultCategory = "无";
-        for (Map.Entry<String, List<DmpSkuInfoEntity>> item : groupMap.entrySet()) {
+        for (Map.Entry<String, List<BiSkuInfoEntity>> item : groupMap.entrySet()) {
             SkuCategoryVO vo = new SkuCategoryVO();
-            List<DmpSkuInfoEntity> skuInfoList = item.getValue();
+            List<BiSkuInfoEntity> skuInfoList = item.getValue();
             String itemProperty = item.getKey();
             if (StringUtils.isNotBlank(itemProperty)) {
                 vo.setName(itemProperty);
             } else {
                 vo.setName(defaultCategory);
             }
-            vo.setSkuList(skuInfoList.stream().map(DmpSkuInfoEntity::getSkuNo).collect(Collectors.toList()));
+            vo.setSkuList(skuInfoList.stream().map(BiSkuInfoEntity::getSkuNo).collect(Collectors.toList()));
             resultList.add(vo);
         }
         return resultList;
     }
 
-    private List<DmpSkuInfoEntity> getPropertyList() {
-        LambdaQueryWrapper<DmpSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.ne(DmpSkuInfoEntity::getItemProperty, "")
-                .or().ne(DmpSkuInfoEntity::getItemProperty, null);
+    private List<BiSkuInfoEntity> getPropertyList() {
+        LambdaQueryWrapper<BiSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ne(BiSkuInfoEntity::getItemProperty, "")
+                .or().ne(BiSkuInfoEntity::getItemProperty, null);
         return this.list(queryWrapper);
     }
 
-    private List<DmpSkuInfoEntity> getBrandList() {
-        LambdaQueryWrapper<DmpSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.ne(DmpSkuInfoEntity::getBrandName, "")
-                .or().ne(DmpSkuInfoEntity::getBrandName, null);
+    private List<BiSkuInfoEntity> getBrandList() {
+        LambdaQueryWrapper<BiSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ne(BiSkuInfoEntity::getBrandName, "")
+                .or().ne(BiSkuInfoEntity::getBrandName, null);
         return this.list(queryWrapper);
     }
 
-    private List<DmpSkuInfoEntity> getCategoryList() {
-        LambdaQueryWrapper<DmpSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.ne(DmpSkuInfoEntity::getParentCategoryName, "")
-                .or().ne(DmpSkuInfoEntity::getParentCategoryName, null);
+    private List<BiSkuInfoEntity> getCategoryList() {
+        LambdaQueryWrapper<BiSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ne(BiSkuInfoEntity::getParentCategoryName, "")
+                .or().ne(BiSkuInfoEntity::getParentCategoryName, null);
         return this.list(queryWrapper);
     }
 }
