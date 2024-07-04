@@ -1,10 +1,10 @@
 package com.erp.server.wms.convert;
 
 import com.common.business.dto.PlatformDeliveryDetailDTO;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -66,7 +66,7 @@ public interface SoOutstockConverter {
             @Mapping(target = "platformCreateTime", source = "platformOrderCreateTime"),
             @Mapping(target = "shippingFee", source = "viewDTO.shippingFee"),
     })
-    DmpOrderInfoEntity soB2cToDmpOrder(SoB2cDTO.ViewDTO viewDTO);
+    BiOrderInfoEntity soB2cToDmpOrder(SoB2cDTO.ViewDTO viewDTO);
 
 
     @Mappings({
@@ -94,8 +94,8 @@ public interface SoOutstockConverter {
             @Mapping(target = "cnySettleRate", source = "detailViewDTO.exchangeRate"),
             @Mapping(target = "sourceItemId", source = "id")
     })
-    DmpOrderItemSplitEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
-    List<DmpOrderItemSplitEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
+    BiOrderItemSplitEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
+    List<BiOrderItemSplitEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -115,7 +115,7 @@ public interface SoOutstockConverter {
 //            @Mapping(target = "deliveryDate", source = "actualDeliveryDate"),
             @Mapping(target = "platformOrderId", source = "code")
     })
-    DmpDeliveryDetailInfoEntity soOutstockToDmpDelivery(SoOutstockEntity soOutstockEntity);
+    BiDeliveryDetailInfoEntity soOutstockToDmpDelivery(SoOutstockEntity soOutstockEntity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -126,7 +126,7 @@ public interface SoOutstockConverter {
             @Mapping(target = "stockName", source = "warehouseName"),
             @Mapping(target = "warehouseLocation", source = "warehouseLocation")
     })
-    DmpDeliveryDetailItemEntity soOutstockToDmpDeliveryItem(SoOutstockDetailEntity detail);
+    BiDeliveryDetailItemEntity soOutstockToDmpDeliveryItem(SoOutstockDetailEntity detail);
 
     @Mappings({
             @Mapping(target = "skuId", source = "skuId"),

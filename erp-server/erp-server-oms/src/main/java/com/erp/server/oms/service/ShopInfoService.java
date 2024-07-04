@@ -330,4 +330,5 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
 
+
 }

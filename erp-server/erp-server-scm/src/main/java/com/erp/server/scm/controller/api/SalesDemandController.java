@@ -3,10 +3,7 @@ package com.erp.server.scm.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -22,7 +19,10 @@ import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
+import com.erp.model.scm.entity.SalesDemandEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.SalesDemandService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -36,7 +36,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 备货申请管理
@@ -44,6 +46,7 @@ import java.util.List;
  * @author will
  * @since 2023-03-15
  */
+@Slf4j
 @RestController
 @LogSystemModule("备货申请单")
 @RequestMapping("/salesDemand")
@@ -243,7 +246,7 @@ public class SalesDemandController extends BaseController {
      * 批量审核
      * @author Will
      * @date: 2023/3/15 17:54
-     * @param baseApproveParamDTO
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核备货申请单")
@@ -253,9 +256,23 @@ public class SalesDemandController extends BaseController {
             menuCode = "scm:salesDemand:approve",
             serviceClass = SalesDemandService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        salesDemandService.approve(baseApproveParamDTO);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SalesDemandEntity> entityList = salesDemandService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SalesDemandEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"备货申请单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(salesDemandService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("备货申请单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -272,9 +289,23 @@ public class SalesDemandController extends BaseController {
             menuCode = "scm:salesDemand:disApprove",
             serviceClass = SalesDemandService.class,
             keyIdName = "ids")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = salesDemandService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SalesDemandEntity> entityList = salesDemandService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SalesDemandEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"备货申请单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(salesDemandService.disApprove(entity));
+            }catch (Exception e){
+                log.error("备货申请单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

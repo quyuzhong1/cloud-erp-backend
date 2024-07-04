@@ -159,6 +159,32 @@ public class SpElServerImpl implements SpElServer {
 
     }
 
+    @Override
+    public  Object getByField(String fieldCode, List<Map<String, Object>> mapList) {
+        Set<Object> set = new HashSet<>(mapList.size());
+        for (Map<String, Object> map : mapList) {
+            Object obj = map.getOrDefault(fieldCode, "");
+            if (Objects.nonNull(obj)) {
+                set.add(obj);
+            }
+        }
+        if (CollectionUtils.isEmpty(set)){
+            return null;
+        }else if (set.size() == 1){
+            return set.stream().findFirst().get();
+        }else {
+            StringBuilder sb = new StringBuilder();
+            for (Object obj : set){
+                if (sb.length() > 0){
+                    sb.append(",");
+                }
+                sb.append(obj.toString());
+            }
+            return sb.toString();
+        }
+
+    }
+
     /**
      * 获取对应字段的值
      *

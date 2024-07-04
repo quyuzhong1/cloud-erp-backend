@@ -3,7 +3,6 @@ package com.erp.rpc.dmp.feign;
 
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;

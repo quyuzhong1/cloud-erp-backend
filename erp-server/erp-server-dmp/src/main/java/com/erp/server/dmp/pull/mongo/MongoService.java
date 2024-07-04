@@ -1,12 +1,13 @@
 package com.erp.server.dmp.pull.mongo;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.core.utils.MapUtil;
-import jnr.ffi.annotations.In;
-import org.springframework.data.domain.Sort.Direction;
-
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.data.domain.Sort.Direction;
+
+import com.common.business.dto.CleanBaseDTO;
+import com.common.core.anno.ParamData;
+import com.common.core.utils.MapUtil;
 
 public interface MongoService {
 	/**
@@ -164,7 +165,7 @@ public interface MongoService {
 	 * @param map:条件
 	 * @throws Exception
 	 */
-	<T> void upsertMongoDataBatch(List<Map<String,Object>> map, String table, Class<T> clazz);
+	<T> void upsertMongoDataBatch(List<Map<String,Object>> map, String table);
 
 	/**
 	 * 14 批量删除数据
@@ -178,4 +179,12 @@ public interface MongoService {
 	 * 根据uniqueIds批量更新isClear新据
 	 */
 	<T extends CleanBaseDTO> void updateIsClearByUniqueIds(List<String> uniqueIds, Integer isClear, String finalTableName, Class<T> tClass);
+	
+	/**
+	 * @param <T>
+	 * @param fieldValueMaps
+	 * @param table
+	 * @return
+	 */
+	List<Map<String, Object>> findMongoData(List<ParamData> paramDataList, String table);
 }

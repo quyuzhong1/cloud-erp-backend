@@ -2,15 +2,15 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
@@ -27,10 +27,9 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
@@ -63,8 +62,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -77,7 +74,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -439,15 +435,12 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
+    public BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO, SoReturnEntity entity) {
         List<String> ids = baseApproveParamDTO.getIds();
-        List<SoReturnEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(entityList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
-        }
+        List<SoReturnEntity> entityList = Arrays.asList(entity);
         //判断是否是审核中的状态
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
+        long count = entityList.stream().filter(v -> !v.getInvalidStatus()
+                && v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
 
         if (count != entityList.size()) {
@@ -474,7 +467,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货订单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
-        return Boolean.TRUE;
+        return BatchResultDTO.success();
     }
 
     /**
@@ -497,7 +490,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //业务id
         resultMap.put("id", entity.getId());
         resultMap.put("operate", syncOperate);
-        DmpReturnOrderInfoEntity dmpOrderInfoEntity = this.returnOrderDataConvert(entity);
+        BiReturnOrderInfoEntity dmpOrderInfoEntity = this.returnOrderDataConvert(entity);
         resultMap.put("entity", dmpOrderInfoEntity);
 
         //添加推送任务
@@ -531,8 +524,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
      * @param soReturnEntity
      * @return
      */
-    private DmpReturnOrderInfoEntity returnOrderDataConvert(SoReturnEntity soReturnEntity) {
-        DmpReturnOrderInfoEntity entity = SoReturnConverter.INSTANCE.soReturnOrderToDmpReturn(soReturnEntity);
+    private BiReturnOrderInfoEntity returnOrderDataConvert(SoReturnEntity soReturnEntity) {
+        BiReturnOrderInfoEntity entity = SoReturnConverter.INSTANCE.soReturnOrderToDmpReturn(soReturnEntity);
         //原始订单
         SoInfoEntity soInfoEntity = null;
         Map<String, SoDetailEntity> soDetailEntityMap = null;
@@ -600,39 +593,39 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //明细字段转换
         if (CollectionUtil.isNotEmpty(details)) {
             //订单明细
-            List<DmpReturnOrderItemEntity> orderItemEntities = new ArrayList<>(details.size());
+            List<BiReturnOrderItemEntity> orderItemEntities = new ArrayList<>(details.size());
 
             Map<String, SoDetailEntity> finalSoDetailEntityMap = soDetailEntityMap;
             details.forEach(soReturnDetail -> {
-                DmpReturnOrderItemEntity dmpReturnOrderItemEntity = SoReturnConverter.INSTANCE.soReturnOrderToDmpReturnItem(soReturnDetail);
+                BiReturnOrderItemEntity biReturnOrderItemEntity = SoReturnConverter.INSTANCE.soReturnOrderToDmpReturnItem(soReturnDetail);
                 //保存时会重置主表id
-                dmpReturnOrderItemEntity.setReturnOrderId(entity.getId());
+                biReturnOrderItemEntity.setReturnOrderId(entity.getId());
                 if (com.alibaba.nacos.common.utils.StringUtils.isNotEmpty(soReturnDetail.getSkuId())) {
                     List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(Collections.singletonList(soReturnDetail.getSkuId()));
                     if (CollectionUtils.isNotEmpty(detailEntityList)) {
-                        dmpReturnOrderItemEntity.setItemName(detailEntityList.get(0).getName());
-                        dmpReturnOrderItemEntity.setProductUnit(detailEntityList.get(0).getUnitId());
-                        dmpReturnOrderItemEntity.setPictureUrl(detailEntityList.get(0).getImagesUrl());
-                        dmpReturnOrderItemEntity.setSpecifics(detailEntityList.get(0).getVariantProperty());
+                        biReturnOrderItemEntity.setItemName(detailEntityList.get(0).getName());
+                        biReturnOrderItemEntity.setProductUnit(detailEntityList.get(0).getUnitId());
+                        biReturnOrderItemEntity.setPictureUrl(detailEntityList.get(0).getImagesUrl());
+                        biReturnOrderItemEntity.setSpecifics(detailEntityList.get(0).getVariantProperty());
                     }
                 }
                 //获取订单详情表
                 if (com.alibaba.nacos.common.utils.StringUtils.isNotEmpty(soReturnDetail.getSourceDetailId())) {
                     SoDetailEntity soDetail = finalSoDetailEntityMap.get(soReturnDetail.getSourceDetailId());
                     if (Objects.nonNull(soDetail)) {
-                        dmpReturnOrderItemEntity.setSellPrice(soDetail.getAmount());
+                        biReturnOrderItemEntity.setSellPrice(soDetail.getAmount());
                         if (Objects.nonNull(soDetail.getTaxAmount()) && Objects.nonNull(soDetail.getQty()) && Objects.nonNull(soReturnDetail.getReturnQty())) {
-                            dmpReturnOrderItemEntity.setAmountAfter(soDetail.getTaxAmount().divide(BigDecimal.valueOf(soDetail.getQty())).multiply(BigDecimal.valueOf(soReturnDetail.getReturnQty())));
+                            biReturnOrderItemEntity.setAmountAfter(soDetail.getTaxAmount().divide(BigDecimal.valueOf(soDetail.getQty())).multiply(BigDecimal.valueOf(soReturnDetail.getReturnQty())));
                         }
-                        dmpReturnOrderItemEntity.setCleanCostPrice(soDetail.getSaleCost());
+                        biReturnOrderItemEntity.setCleanCostPrice(soDetail.getSaleCost());
                         if (Objects.nonNull(soDetail.getIsGift()) && soDetail.getIsGift()) {
-                            dmpReturnOrderItemEntity.setIsGift(1);
+                            biReturnOrderItemEntity.setIsGift(1);
                         } else {
-                            dmpReturnOrderItemEntity.setIsGift(2);
+                            biReturnOrderItemEntity.setIsGift(2);
                         }
                     }
                 }
-                orderItemEntities.add(dmpReturnOrderItemEntity);
+                orderItemEntities.add(biReturnOrderItemEntity);
             });
             entity.setItemList(orderItemEntities);
         }
@@ -643,18 +636,12 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        List<SoReturnEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
-        }
+    public BatchResultDTO disApprove(SoReturnEntity entity) {
         //已审核支持反审核
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
-        ).count();
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_99003);
+        if(!entity.getInvalidStatus() && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
+        List<String> ids = Arrays.asList(entity.getId());
         //TODO 待加审核流程
 
         //有退货通知单不能反审核
@@ -672,11 +659,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 .in(SoReturnEntity::getId, ids)
                 .update(new SoReturnEntity());
         //推送到DMP
-        entityList.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        this.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         //操作日志
-        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个销售退货订单【%s】", ModuleTypeEnum.SO_RETURN.getCode(), pairList, "反审核操作");
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog("反审核销售退货订单", ModuleTypeEnum.SO_RETURN.getCode(),entity.getId(), "反审核操作");
+        return BatchResultDTO.success();
     }
 
     @Override

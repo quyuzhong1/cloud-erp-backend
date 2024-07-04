@@ -83,6 +83,10 @@ public enum ModuleTypeEnum {
     RULE_DECLARE("72", "申报规则"),
     CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
     SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
+
+    WAREHOUSE_AREA("80", "库区"),
+    PICKING_STRATEGY("81", "拣货策略"),
+    WAREHOUSE_LOCATION("90", "仓位"),
     SO_MULTI_CHANNEL("75", "多渠道订单"),
     DMP_THIRD_WAREHOUSE("76", "第三方仓库"),
     DMP_THIRD_SHOP("77", "第三方店铺"),
@@ -92,6 +96,9 @@ public enum ModuleTypeEnum {
 
     VIRTUAL_WAREHOUSE("80", "虚拟仓设置"),
     VIRTUAL_WAREHOUSE_ALLOCATION("81", "分货单"),
+    PICKING_LISTS("91", "拣货单"),
+    CFG_RULE_WAVE("92", "波次规则"),
+    WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
     ;
 
 

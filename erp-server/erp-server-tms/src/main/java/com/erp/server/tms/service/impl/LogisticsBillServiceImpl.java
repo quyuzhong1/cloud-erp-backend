@@ -1078,6 +1078,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return service.updateWeight(logisticsUpdateWeightVO);
     }
 
+    @Override
+    public LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(String logisticsCode) {
+        if (StringUtils.isBlank(logisticsCode)) {
+            return new LogisticsBillDTO.BaseDTO();
+        }
+        return baseMapper.getByTrackNoOrTransportNo(logisticsCode);
+    }
+
     /**
      * 初始化物流手机号信息
      * @param dto

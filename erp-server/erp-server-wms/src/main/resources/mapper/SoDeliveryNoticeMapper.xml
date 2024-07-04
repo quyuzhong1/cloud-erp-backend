@@ -6,6 +6,7 @@
             sdn.id,
             sdnd.id as detailId,
             sdn.source_id AS sourceId,
+            sdn.source_type AS sourceType,
             sdnd.source_detail_id AS sourceDetailId,
             sdn.code,
             sdn.source_code AS sourceCode,
@@ -133,7 +134,7 @@
       INNER JOIN so_delivery_notice_detail sdnd
       ON  sdn.id=sdnd.main_id AND  sdnd.is_deleted=FALSE
       INNER JOIN picking_detail pd
-      ON  pd.source_detail_id=sdnd.id AND  pd.is_deleted=FALSE AND pd.source_type=#{sourceType}
+      ON  pd.source_detail_id=sdnd.id AND  pd.is_deleted=FALSE
      WHERE sdn.is_deleted=FALSE
       <if test="idList !=null and idList.size>0">
           and sdn.id in

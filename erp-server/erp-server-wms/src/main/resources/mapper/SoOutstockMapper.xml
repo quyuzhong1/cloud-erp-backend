@@ -341,8 +341,8 @@
             fmcb.box_desc as boxDesc,
         (select string_agg(cd.sku_no , ',') from wms_carton_detail cd where cd.is_deleted = false and cd.carton_id = fmc.id) as sku
         FROM so_outstock so
-        INNER JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
-        INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        INNER JOIN wms_carton_spec fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
+        INNER JOIN wms_carton fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE so.is_deleted = FALSE
         AND so.id in
         <foreach collection="ids" item="id" open="(" close=")" separator=",">
@@ -362,8 +362,8 @@
         fmc.package_weight,
         fmcb.box_desc
         FROM so_outstock so
-        LEFT JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
-        LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        LEFT JOIN wms_carton_spec fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
+        LEFT JOIN wms_carton fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND so.is_deleted = FALSE
@@ -459,7 +459,18 @@
 			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id
 		<include refid="SoDataCompareByCondition"/>
     </select>
-
+    <select id="listApproveBySourceDetailIds" resultType="com.erp.model.wms.entity.SoOutstockDetailEntity">
+        select sod.sku_id,sod.sku_no,sod.actual_qty from so_outstock_detail as sod inner join public.so_outstock so on
+        so.id = sod.main_id
+        where
+            so.approve_status = 'approve'
+        <if test="ids != null and ids.size > 0">
+            AND sod.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 
 
     <sql id="SoDataCompareByCondition">

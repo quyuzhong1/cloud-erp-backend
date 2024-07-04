@@ -1,14 +1,12 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -17,12 +15,9 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Map;
 
 /**
  * <p>
@@ -119,6 +114,20 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 称重重量单位
          */
         private String weightUnit;
+
+        /**
+         * 长
+         */
+        private BigDecimal length;
+        /**
+         * 宽
+         */
+        private BigDecimal width;
+        /**
+         * 高
+         */
+        private BigDecimal height;
+
         /**
          * 详情
          */
@@ -318,9 +327,17 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String id;
         /**
+         * 明细id
+         */
+        private String detailId;
+        /**
          * 发货单号【可排序】
          */
         private String code;
+        /**
+         * 波次号
+         */
+        private String wavesCode;
         /**
          * 来源id
          */
@@ -498,7 +515,11 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 中转状态 not 不需要  wait 待中转   already 已经中转
          */
         private String transferStatus;
-
+        /**
+         * 异常原因
+         */
+        @Dict(enumClass = AbnormalCauseEnum.class)
+        private String abnormalCause;
 
     }
     /**
@@ -657,6 +678,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 物流类型
          */
         private String logisticType;
+        /**
+         * 打印排序
+         */
+        private Integer index;
     }
 
     /**
@@ -774,5 +799,98 @@ public class SoB2cDeliveryDTO implements Serializable {
         private String logisticsChannelId;
 
 
+    }
+
+    @Getter
+    @Setter
+    public static class GenerationWavesDTO {
+
+        /**
+         * 拣货方式
+         */
+        @NotBlank(message = "拣货方式不能为空")
+        private String pickingType;
+        /**
+         * 拣货车类型
+         */
+        @NotBlank(message = "拣货车类型不能为空")
+        private String pickingCartTypeId;
+        /**
+         * 发货单号
+         */
+        @Size(min = 1, message = "发货单不能为空")
+        private List<String> ids;
+
+    }
+
+    @Getter
+    @Setter
+    public static class CancelShipmentView {
+
+        /**
+         * 发货单
+         */
+        @Size(min = 1, message = "发货单不能为空")
+        @Valid
+        @Dict
+        private List<CancelShipmentDTO> cancelShipments;
+    }
+
+    @Getter
+    @Setter
+    public static class CancelShipmentDTO {
+        /**
+         * 发货单id
+         */
+        private String id;
+        /**
+         * 发货单明细id
+         */
+        private String detailId;
+        /**
+         * 发货单号
+         */
+        private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 仓库id
+         */
+        @Dict(queryFieldName = "id", tableName = "warehouse")
+        private String warehouseId;
+        /**
+         * 拣货仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 拣货仓位名称
+         */
+        private String warehouseLocationName;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty;
+        /**
+         * 返还仓位
+         */
+        private String returnWarehouseLocation;
+        /**
+         * 返还仓位
+         */
+        private String returnWarehouseLocationId;
+        /**
+         * 返还仓位名称
+         */
+        private String returnWarehouseLocationName;
+        /**
+         * 返还数量
+         */
+        private Integer returnQty;
     }
 }

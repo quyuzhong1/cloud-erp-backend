@@ -192,7 +192,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean fbaDeliveryGenerateMachineSubmitAndApprove(List<FirstMileDeliveryDTO.GenerateMachineView> list);
+    List<BatchResultDTO> fbaDeliveryGenerateMachineSubmitAndApprove(List<FirstMileDeliveryDTO.GenerateMachineView> list);
 
     /**
      * 打印子件明细查询
@@ -311,4 +311,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FirstMileDeliveryEntity> advanceQuery(AdvanceQueryContainer advanceQueryContainer);
 
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO dto);
+
+    int countNotVoided(String id);
 }

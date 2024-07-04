@@ -1,15 +1,20 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
+import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -235,4 +240,62 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO);
 
+    BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto);
+
+    BatchResultDTO clearException(String id);
+
+    BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto);
+
+    SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids);
+    /**
+     * 查询待处理发货单
+     * @author will
+     * @date 2024/6/25 18:07
+     * @return List<SoB2cDeliveryEntity>
+     */
+    List<SoB2cDeliveryEntity> listWaitHandle();
+
+    /**
+     *
+     * @param base64List base64
+     * @param printWayBillPdfDTO pdf
+     */
+    void customDistribute(List<String> base64List, PrintWayBillPdfDTO printWayBillPdfDTO);
+    /**
+     * 流水线称重回填
+     * @author will
+     * @date 2024/6/28 15:48
+     * @param dto
+     * @return String
+     */
+    String dimensionalWeightPipeline(DimensionalWeightDTO dto);
+
+    Boolean updateAbnormal(List<String> ids, AbnormalCauseEnum abnormalCauseEnum);
+    /**
+     * 根据发货单大于物流面单
+     * @author will
+     * @date 2024/7/1 18:14
+     * @param id
+     * @param response
+     */
+    void printLogisticsBillConfirmById(String id, HttpServletResponse response);
+
+    /**
+     * 查询id集合
+     * @param type 发货标记类型
+     */
+    List<String> listIdsByShipmentMark(ShipmentMarkTypeEnum type);
+    /**
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
+     */
+    void updateShipmentMark(List<String> ids, String code);
+    /**
+     * 更新发货单状态
+     * @author will
+     * @date 2024/7/4 9:31
+     * @param deliveryIdList
+     */
+    void updateDeliveryStatus(List<String> deliveryIdList,String status);
 }

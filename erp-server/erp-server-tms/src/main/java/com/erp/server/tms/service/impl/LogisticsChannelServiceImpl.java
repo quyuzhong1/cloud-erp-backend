@@ -500,9 +500,12 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<BaseDropDownDTO.Tree> tree() {
-        List<BaseDropDownDTO.DisabledDTO> supplierDTOList = logisticsSupplierService.listAll();
+    public List<BaseDropDownDTO.Tree> tree(Boolean filterDisabled) {
+        List<BaseDropDownDTO.DisabledDTO> supplierDTOList = logisticsSupplierService.listAll(false);
         List<BaseDropDownDTO.Tree> result = BeanUtil.copyToList(supplierDTOList,BaseDropDownDTO.Tree.class);
+        if(filterDisabled){
+            result = result.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
+        }
         if(CollectionUtils.isEmpty(result)){
             return new ArrayList<>();
         }
@@ -510,6 +513,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         Collections.sort(result, Comparator.comparing(BaseDropDownDTO.Tree::getDisabled));
         List<String> supplierList = result.stream().map(BaseDropDownDTO.Tree::getCode).collect(Collectors.toList());
         List<LogisticsChannelEntity> childrenList = this.listDbByMainIdList(supplierList);
+        if(filterDisabled){
+            childrenList = childrenList.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
+        }
         Map<String,List<LogisticsChannelEntity>> channelMap = childrenList.stream().collect(Collectors.groupingBy(LogisticsChannelEntity::getMainId));
         for (BaseDropDownDTO.Tree tree : result) {
             List<LogisticsChannelEntity> channelList = channelMap.get(tree.getCode());

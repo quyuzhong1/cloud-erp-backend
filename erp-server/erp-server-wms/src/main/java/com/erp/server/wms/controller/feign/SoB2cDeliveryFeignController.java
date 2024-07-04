@@ -5,6 +5,7 @@ import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -15,8 +16,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -133,5 +132,27 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/shipOrder")
     public Boolean shipOrder(@RequestBody @Validated PlatformShipOrderDTO platformShipOrderDTO) {
         return soB2cDeliveryService.shipOrder(platformShipOrderDTO);
+    }
+
+    /**
+     * 流水线称重
+     * @author will
+     * @date 2024/6/28 15:48
+     * @param dto
+     * @return String
+     */
+    @PostMapping("/dimensionalWeightPipeline")
+    public String dimensionalWeightPipeline(@RequestBody @Validated DimensionalWeightDTO dto) {
+        return soB2cDeliveryService.dimensionalWeightPipeline(dto);
+    }
+
+    /**
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
+     */
+    @PostMapping("/updateShipmentMark")
+    void updateShipmentMark(List<String> ids, String code) {
+        soB2cDeliveryService.updateShipmentMark(ids, code);
     }
 }

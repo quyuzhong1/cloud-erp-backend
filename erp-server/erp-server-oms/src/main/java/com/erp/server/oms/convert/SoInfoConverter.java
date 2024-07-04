@@ -1,7 +1,7 @@
 package com.erp.server.oms.convert;
 
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -51,7 +51,7 @@ public interface SoInfoConverter {
             @Mapping(target = "deptId", source = "salesDeptId"),
             @Mapping(target = "chargeId", source = "sellerId")
     })
-    DmpOrderInfoEntity soInfoToDmpOrder(SoInfoEntity soInfo);
+    BiOrderInfoEntity soInfoToDmpOrder(SoInfoEntity soInfo);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -73,7 +73,7 @@ public interface SoInfoConverter {
             @Mapping(target = "cnySettleRate", source = "exchangeRate"),
             @Mapping(target = "sourceItemId", source = "id")
     })
-    DmpOrderItemSplitEntity soDetailToDmpOrderItem(SoDetailEntity soDetailEntity);
+    BiOrderItemSplitEntity soDetailToDmpOrderItem(SoDetailEntity soDetailEntity);
 
     @Mappings({
             @Mapping(target = "id", source = "soInfoEntity.id"),

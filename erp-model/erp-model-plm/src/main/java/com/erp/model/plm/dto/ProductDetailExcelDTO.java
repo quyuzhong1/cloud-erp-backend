@@ -46,7 +46,7 @@ public class ProductDetailExcelDTO {
     /**
      * 销售方式
      */
-    @FieldValid(fieldName = "销售方式",enumClass = SaleMethodEnum.class)
+    @FieldValid(fieldName = "销售方式",isNotBlank = true,enumClass = SaleMethodEnum.class)
     private String saleMethod;
 
     /**

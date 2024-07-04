@@ -34,7 +34,7 @@ import java.util.Set;
 public interface LogisticsProductFeign {
 
     @PostMapping("feign/logistics/product/listLogisticsProduct")
-    List<LogisticsProductDTO.ProductDTO> listBySkuIdList(@RequestBody List<String> skuIdList);
+    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(@RequestBody List<String> skuIdList);
 
     @PostMapping("feign/logistics/product/listBySkuNoList")
     List<LogisticsProductDTO.ProductDTO> listBySkuNoList(@RequestBody List<String> skuNoList);

@@ -736,9 +736,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }else{
                 BigDecimal maxLength = bomChildrenSkuDTOList.stream().map(BomChildrenSkuDTO::getLength).filter(Objects::nonNull).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
                 BigDecimal maxWidth = bomChildrenSkuDTOList.stream().map(BomChildrenSkuDTO::getWidth).filter(Objects::nonNull).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-                BigDecimal totalHeight = bomChildrenSkuDTOList.stream().map(e -> e.getHeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                BigDecimal totalGrossWeight = bomChildrenSkuDTOList.stream().map(e -> e.getGrossWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                BigDecimal totalNetWeight = bomChildrenSkuDTOList.stream().map(e -> e.getNetWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal totalHeight = bomChildrenSkuDTOList.stream().filter(e->Objects.nonNull(e.getHeight())).map(e -> e.getHeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal totalGrossWeight = bomChildrenSkuDTOList.stream().filter(e->Objects.nonNull(e.getGrossWeight())).map(e -> e.getGrossWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal totalNetWeight = bomChildrenSkuDTOList.stream().filter(e->Objects.nonNull(e.getNetWeight())).map(e -> e.getNetWeight().multiply(new BigDecimal(e.getQuantity()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 listSkuDTO.setProductHeight(LengthConverterUtil.mmToCm(totalHeight));
                 listSkuDTO.setProductLength(LengthConverterUtil.mmToCm(maxLength));
                 listSkuDTO.setProductWidth(LengthConverterUtil.mmToCm(maxWidth));
@@ -787,6 +787,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     .filter(obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId())
                             && StringUtils.isEmpty(obj.getWarehouseId())
                             && obj.getDictPlatform().equals(listSkuParamDTO.getDictPlatform())
+                            && (StringUtils.isBlank(listSkuParamDTO.getShopId()) || obj.getShopId().equals(listSkuParamDTO.getShopId()))
                             && !warehouseType.equals(obj.getType())
                     ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformSkuMapping)) {

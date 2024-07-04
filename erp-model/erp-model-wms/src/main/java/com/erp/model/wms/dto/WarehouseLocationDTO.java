@@ -1,13 +1,19 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 仓位请求响应实体
@@ -134,6 +140,8 @@ public class WarehouseLocationDTO implements Serializable {
          */
         private Boolean canCheck;
 
+
+        private Integer usableQty;
     }
 
 
@@ -271,10 +279,331 @@ public class WarehouseLocationDTO implements Serializable {
         @NotBlank(message = "仓库ID不能为空")
         private String warehouseId;
 
+        private String warehouseAreaId;
+
+        private String skuNo;
+
+        private Boolean filterZero;
+
         /**
          * 关键词
          */
         private String searchKeyword;
 
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO extends SortDTO{
+        /**
+         * 仓位编码
+         */
+        private String code;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 所属库区编码
+         */
+        private String warehouseAreaCode;
+
+        /**
+         * 仓位状态：idle可分配，occupied被占用，recyclable可回收
+         */
+        private String status;
+
+        /**
+         * 启用状态：false启用，true禁用
+         */
+        private String disabled;
+
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDate updateTime;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
+    public static class updateDto extends AddDTO{
+
+        /**
+         * 仓位ID
+         */
+        @NotBlank(message = "仓位ID不能为空")
+        private String id;
+        /**
+         * recyclable可回收，idle空闲可分配，occupied被占用
+         */
+        private String status;
+
+        /**
+         * false启用，true禁用
+         */
+        private Boolean disabled;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO{
+        /**
+         * 仓库Id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+
+        /**
+         * 库区ID
+         */
+        @NotBlank(message = "库区ID不能为空")
+        private String warehouseAreaId;
+
+        /**
+         * 仓位编码
+         */
+        @NotBlank(message = "仓位编码不能为空")
+        private String code;
+
+        /**
+         * 仓位名称
+         */
+        @NotBlank(message = "仓位名称不能为空")
+        private String name;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class IdsDto{
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDto {
+        /**
+         * 仓位ID
+         */
+        private String id;
+
+        /**
+         * 仓位编码
+         */
+        private String code;
+
+        /**
+         * 仓位名称
+         */
+        private String name;
+
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库编码
+         */
+        private String warehouseCode;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 库区ID
+         */
+        private String warehouseAreaId;
+
+        /**
+         * 库区编码
+         */
+        private String warehouseAreaCode;
+        /**
+         * 库区名称
+         */
+        private String warehouseAreaName;
+
+        /**
+         * 仓位状态：idle可分配，occupied被占用，recyclable可回收
+         */
+        private String status;
+
+        /**
+         * 启用状态：false启用，true禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private String updateTime;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class exportParamDto extends PermissionsDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        private Boolean isHaveFieldPower;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class updateStatusDto{
+        /**
+         * 仓位ID
+         */
+        private String id;
+
+        /**
+         * 状态：false启用，true禁用
+         */
+        private String disabled;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class tabDto{
+        /**
+         * 类型：idle可分配，occupied被占用，recyclable可回收，all全部
+         */
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
+    @Data
+    public static class CoreDTO {
+        /**
+         * 类型，location-仓位;area-分区
+         */
+        private String type;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 父id
+         */
+        private String parentId;
+
+        /**
+         * 禁用状态，true表示禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 库区类型 warehouseAreaType
+         */
+        private String areaType;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 占用状态
+         */
+        private Boolean occupyStatus;
+    }
+
+    @Data
+    public static class ReplenishAreaDTO {
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
+
+        /**
+         * 备货区仓位汇总
+         */
+        private List<WarehouseAreaDTO> stockingAreaList;
+
+        /**
+         * 拣货区仓位汇总
+         */
+        private List<WarehouseAreaDTO> pickingAreaList;
+
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class WarehouseAreaDTO{
+            /**
+             * 库区编码
+             */
+            private String warehouseArea;
+
+            /**
+             * 库区名称
+             */
+            private String warehouseAreaName;
+        }
     }
 }

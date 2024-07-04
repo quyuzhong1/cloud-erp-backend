@@ -837,6 +837,31 @@ public enum ApiError implements Serializable {
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
     ERROR_99083(99083,"退货入库单不存在"),
     ERROR_99084(99084,"采购订单的执行状态是待确认，不允许新增收货单"),
+    ERROR_99085(99085,"只允许审核通过的销售订单下推销售出库单"),
+
+    ERROR_99086(99086,"要货申请下推发货单后，拣货单不允许修改和删除"),
+
+    ERROR_99087(99087,"销售通知单下推销售出库单后，拣货单不允许修改和删除"),
+    ERROR_99088(99088,"仓库对应默认暂存库位不存在，请联系管理员添加"),
+    ERROR_99100(99100,"暂无可用仓位"),
+
+    ERROR_99101(99101,"{}未生成拣货单，不允许下推销售出库单"),
+    ERROR_99102(99102,"存在拣货单，不允许作废、删除和撤销"),
+    ERROR_99103(99103,"sku【{}】的出库数量不能大于销售订单的销售数量"),
+    ERROR_99104(99104,"只有已处理的要货申请可以下推发货单，且只能下推一次"),
+    ERROR_99105(99105,"销售订单未审核不能下推出库"),
+    ERROR_99110(99110,"已有{},不能再生成拣货单"),
+
+    ERROR_99106(99106,"拣货数量总数不能为0"),
+    ERROR_99107(99107,"未找到销售订单【{}】对应明细"),
+
+    ERROR_99111(99111,"sku【{}】已分完货"),
+    ERROR_99112(99112,"生成波次缺货,无需手动处理"),
+    ERROR_99113(99113,"只有异常单状态才能异常单处理"),
+
+    ERROR_99114(99114,"待处理，异常单的数据不支持自动发货"),
+    ERROR_99115(99115,"销售订单【{}】的发货单存在待处理，异常单的数据不支持自动发货"),
+
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -946,7 +971,7 @@ public enum ApiError implements Serializable {
     GENERATE_INBOUND_NOT_UPDATE_PACKING(99150,"已下推海外仓入库单【{}】不能修改装箱信息"),
     IS_NOT_FALSE_SHIPMENT(99151,"手动标发，已发货，取消发货的数据不允许操作手动标发"),
     B2C_SO_DELIVERY_NOT_EXISTS(99152,"b2c发货单不存在"),
-    IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
+    IS_NOT_MANUAL_DELIVERY(99152,"待处理、已发货、异常单、取消发货的数据不允许手动发货"),
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
@@ -1047,6 +1072,17 @@ public enum ApiError implements Serializable {
     ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED(92232,"旺店通【{}】已与仓库【{}】关联"),
     ERROR_NO_SYNC(92232,"没有同步信息"),
     ERROR_CHECK_OUT_VIRTUAL_INVENTORY(92233,"虚拟仓库存已分配【{}】，出库数量不能超过【{}】"),
+    WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
+    POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除或禁用"),
+    WAREHOUSE_LOCATION_EXIST(92144, "仓位{}已存在"),
+
+    SKU_INVENTORY_SHORTAGE(92150, "【{}】仓位库存不足，无法生成拣货单"),
+
+    UNPICKED_QUANTITY_SHORTAGE(92151, "未拣货数量不足，无法生成拣货单，请重新操作"),
+    CFG_RULE_WAVE_ORDER_QTY_COMPARE(92152, "最小单数不能大于最大单数"),
+    CFG_RULE_WAVE_QTY_COMPARE(92153, "最少商品数量不能大于最大商品数量"),
+
+
     ERROR_VW_CHANNEL_ERROR(92234,"当前{}【{}】已经被虚拟仓【{}】绑定\n"),
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
     ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
@@ -1105,7 +1141,7 @@ public enum ApiError implements Serializable {
     ERROR_92044(92044,"存在已使用的的客户不能进行停用"),
     ERROR_92045(92045,"sku【{}】实退总数量不能大于签收单的签收数量"),
     ERROR_92046(92046,"存在被销售订单引用的地址不能删除"),
-    ERROR_92047(92047,"存在销售订单处于变更中,无法反审核"),
+    ERROR_92047(92047,"销售订单处于变更中,无法反审核"),
     ERROR_92048(92048,"开始日期需要按升序"),
     ERROR_92049(92049,"销售订单变更数量不能小于下推的发货通知单的发货数量"),
     ERROR_92050(92050,"销售订单变更数量不能小于发货通知单实发数量"),

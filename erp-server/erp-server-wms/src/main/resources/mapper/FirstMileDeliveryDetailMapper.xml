@@ -70,7 +70,7 @@
             fmcd.sku_id,
             fmcd.sku_no,
             SUM(fmdd.delivery_qty) AS deliveryQty
-        FROM wms_carton fmc
+        FROM wms_carton_spec fmc
         INNER JOIN wms_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
         LEFT JOIN wms_delivery_detail fmdd ON fmdd.source_id = fmcd.source_id AND fmdd.sku_id = fmcd.sku_id AND fmdd.is_deleted = FALSE
         WHERE fmc.is_deleted = FALSE

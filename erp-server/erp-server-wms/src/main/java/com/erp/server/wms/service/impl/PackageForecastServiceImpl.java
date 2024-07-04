@@ -573,14 +573,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 entity.setUploadStatus(failure);
                 entity.setRemark("上传失败:" + PlatformDictEnum.getByCode(logisticsPlatform).getName()+"平台尚未对接上传");
                 this.updateById(entity);
-                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败");
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + PlatformDictEnum.getByCode(logisticsPlatform).getName()+"平台尚未对接上传");
             }
         } catch (Exception e) {
             entity.setUploadStatus(failure);
             entity.setRemark("上传失败:" + e.getMessage());
             this.updateById(entity);
             log.error("组包预报上传失败>>>>>{}", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
         }
 
 
@@ -676,9 +676,12 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(shopIds)){
             throw new ServiceException("销售订单店铺未找到");
+        }
+        if (shopIds.size() > 1){
+            throw new ServiceException("速卖通不支持多店铺组包预报");
         }
         PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
 

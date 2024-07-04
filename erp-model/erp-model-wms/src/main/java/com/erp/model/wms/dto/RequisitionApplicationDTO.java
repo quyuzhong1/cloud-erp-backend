@@ -1,22 +1,18 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -785,7 +781,6 @@ public class RequisitionApplicationDTO implements Serializable {
          * 拣货数量
          */
         @NotNull(message = "拣货数量不能为空")
-        @Min(value = 1,message = "拣货数量最小值为1")
         @Max(value = 999999999,message = "拣货数量最大值为999999999")
         private Integer pickingQty;
 
@@ -921,6 +916,123 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer requisitionQty;
     }
+
+    @Getter
+    @Setter
+    public static class PickingViewDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+        /**
+         * 已拣数量
+         */
+        private Integer pickedQuantity;
+        /**
+         * 未拣数量
+         */
+        private Integer unpickedQuantity;
+    }
+
+    @Getter
+    @Setter
+    public static class GeneratePickingDTO {
+
+        @NotBlank(message = "要货申请不能为空")
+        private String id;
+
+        @Size(min = 1, message = "至少存在一条明细才可生成拣货单")
+        private List<String> detailIds;
+    }
+
+    /**
+     * 下推发货单列表查询
+     */
+    @Getter
+    @Setter
+    public static class GenerateDeliverViewDTO {
+
+        /**
+         * 主表id
+         */
+        private String sourceId;
+
+        /**
+         * 明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 要货申请
+         */
+        private String sourceCode;
+
+        /**
+         * 发货仓id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 目的仓id
+         */
+        private String toWarehouseId;
+
+        /**
+         * 目的仓名称
+         */
+        private String toWarehouseName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * ERP的SKU
+         */
+        private String skuNo;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        private String platformSku;
+
+        private String country;
+
+        private String type;
+
+        private String status;
+    }
+
     /**
      * 仓库列表
      */

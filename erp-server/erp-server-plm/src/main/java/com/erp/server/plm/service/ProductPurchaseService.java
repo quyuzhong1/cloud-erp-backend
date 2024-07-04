@@ -1,11 +1,11 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 
 import java.util.List;
 /**
@@ -96,4 +96,8 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      * @return
      */
     Boolean updateProductPlaceOrderTimeBatch(List<ProductPurchaseEntity> list);
+
+    ProductPurchaseEntity getByEan(String ean);
+
+    ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(String skuId);
 }
