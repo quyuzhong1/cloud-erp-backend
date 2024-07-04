@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public enum SoB2cDeliveryStatusEnum implements EnumMessage {
     WAIT_HANDLE("waitHandle", "待处理"),
     PICKING("picking", "拣货中"),
+    GENERATE_WAVE("generateWave", "生成波次"),
     SHIPPED("shipped", "已发货"),
     EXCEPTION_ORDER("exceptionOrder","异常单"),
     CANCEL_DELIVERY("cancelDelivery", "取消发货");

@@ -12,9 +12,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum WaveStatusEnum implements EnumMessage {
-    AWAIT_PICK("await_pick", "待拣货"),
-    PICK_ING("pick_ing", "拣货中"),
-    HANG_UP("hang_up", "挂起"),
+    AWAIT_PICK("awaitPick", "待拣货"),
+    PICK_ING("pickIng", "拣货中"),
+    HANG_UP("hangUp", "挂起"),
     FINISH("finish", "已完成"),
     ;
 

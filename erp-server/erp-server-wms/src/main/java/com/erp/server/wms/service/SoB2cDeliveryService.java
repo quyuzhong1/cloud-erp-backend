@@ -291,4 +291,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param code 类型
      */
     void updateShipmentMark(List<String> ids, String code);
+    /**
+     * 更新发货单状态
+     * @author will
+     * @date 2024/7/4 9:31
+     * @param deliveryIdList
+     */
+    void updateDeliveryStatus(List<String> deliveryIdList,String status);
 }

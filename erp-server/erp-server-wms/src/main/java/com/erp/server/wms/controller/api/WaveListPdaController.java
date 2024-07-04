@@ -53,24 +53,13 @@ public class WaveListPdaController {
     }
 
     /**
-     * 开始拣货（边拣边分）
+     * 开始拣货
      * @param waveId 波次ID
      * @return 波次列表
      */
-    @PostMapping("/startPickingWithSideType")
-    public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPickingWithSideType(@RequestParam String waveId){
-        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPickingWithSideType(waveId);
-        return ApiResult.success(dto);
-    }
-
-    /**
-     * 开始拣货（先拣后分）
-     * @param waveId 波次ID
-     * @return 波次列表
-     */
-    @PostMapping("/startPickingWithSequenceType")
-    public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPickingWithSequenceType(@RequestParam String waveId){
-        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPickingWithSequenceType(waveId);
+    @PostMapping("/startPicking")
+    public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPicking(@RequestParam String waveId){
+        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPicking(waveId);
         return ApiResult.success(dto);
     }
 

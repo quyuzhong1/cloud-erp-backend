@@ -942,6 +942,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .update();
     }
 
+    @Override
+    public void updateDeliveryStatus(List<String> deliveryIdList, String status) {
+        if (CollectionUtils.isEmpty(deliveryIdList)) {
+            return;
+        }
+        lambdaUpdate().in(SoB2cDeliveryEntity::getId,deliveryIdList)
+                .set(SoB2cDeliveryEntity::getStatus,status)
+                .update();
+    }
+
 
     @Override
     public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds) {
