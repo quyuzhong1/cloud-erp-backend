@@ -1158,7 +1158,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean approveEnd(BaseApproveParamDTO dto, List<SoInfoEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
