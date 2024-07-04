@@ -2462,6 +2462,10 @@ public class SoB2cDTO implements Serializable {
         private Boolean isOutStock;
 
         /**
+         * 卖家订单编号
+         */
+        private String sellerOrderCode;
+        /**
          * 订单分类名称
          */
         private String categoryNames;
