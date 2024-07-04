@@ -26,7 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_KINGDEE_ORDER_RETURN_TO_WMS_TOPIC, 
 selectorExpression = RocketMqNewTag.DMP_KINGDEE_ORDER_RETURN_TO_WMS_TAG, 
-consumerGroup = RocketMqNewConsumerGroup.DMP_KINGDEE_ORDER_RETURN_TO_WMS_GROUP)public class SyncNewKingdeeOrderReturnCustomer implements RocketMQListener<Object> {
+consumerGroup = RocketMqNewConsumerGroup.DMP_KINGDEE_ORDER_RETURN_TO_WMS_GROUP)
+public class SyncNewKingdeeOrderReturnCustomer implements RocketMQListener<Object> {
 
     @Resource
     private SyncSoReturnService syncSoReturnService;

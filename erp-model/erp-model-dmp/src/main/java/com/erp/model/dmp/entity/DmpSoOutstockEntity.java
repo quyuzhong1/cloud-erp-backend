@@ -1,15 +1,16 @@
 package com.erp.model.dmp.entity;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -136,6 +137,24 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
     */
     @TableField("subsidy_amount")
     private BigDecimal subsidyAmount;
+    
+    /**
+     * 第三方单号
+     */
+     @TableField("third_bill_no")
+     private String thirdBillNo;
+     
+     /**
+      * 仓管员
+      */
+     @TableField("stocker_name")
+     private String stockerName;
+     
+     /**
+      * 单据日期
+      */
+     @TableField("bill_date")
+     private LocalDateTime billDate;
     
     /**
      * 唯一字段md5值

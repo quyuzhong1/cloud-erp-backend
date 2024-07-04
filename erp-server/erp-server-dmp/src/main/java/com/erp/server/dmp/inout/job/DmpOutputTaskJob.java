@@ -29,7 +29,7 @@ public class DmpOutputTaskJob {
 	@XxlJob("doOutputErrorTask")
     public ReturnT doOutputErrorTask(){
 		String jobParam = XxlJobHelper.getJobParam();
-		String size = "1000";
+		String size = "2000";
 		List<String> mainIds = null;
 		List<String> ids = null;
 		if(StringUtils.isNotBlank(jobParam)) {

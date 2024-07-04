@@ -72,6 +72,7 @@ public class DmpOutputRocketMQPushUtils{
     	Map<String, String> outputTypeIdMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
     		.select(DmpCfgOutputEntity::getId , DmpCfgOutputEntity::getTypeId).list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, DmpCfgOutputEntity::getTypeId));
     	
+    	int i = 0;
 		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			dmpOutputExecutorPool.execute(() -> {
 				String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
@@ -111,19 +112,21 @@ public class DmpOutputRocketMQPushUtils{
 						}
 						this.updateStatus(id, status, responseData);
 					} catch (Exception e) {
-						dmpOutputTaskRecordService.lambdaUpdate()
-							.eq(DmpOutputTaskRecordEntity::getId, id)
-							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.MQERROR.getCode())
-							.set(DmpOutputTaskRecordEntity::getResponseData , "发送RocketMQ前失败" + ExceptionUtil.stacktraceToOneLineString(e))
-							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-							.update();
+						this.updateStatus(id, DmpOutputTaskRecordStatusEnum.MQERROR.getCode(), "发送RocketMQ前失败" + ExceptionUtil.stacktraceToOneLineString(e));
 					}finally {
 						redisTemplate.delete(redisKey);
 					}
 				}else {
 					log.error(redisKey + "任务正在执行中");
 				}
-			}); 
+			});
+			
+			i = i + 1;
+			if(i % 50 == 0) {
+				try {
+					Thread.sleep(i);
+				} catch (InterruptedException e) {}
+			}
     	}
 	}
 	
