@@ -9,16 +9,16 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.enums.ReturnOrderStatusEnum;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpReturnOrderInfoService;
-import com.erp.server.bi.service.DmpReturnOrderItemService;
-import com.erp.server.bi.service.DmpShopInfoService;
+import com.erp.server.bi.service.BiOrderInfoService;
+import com.erp.server.bi.service.BiReturnOrderInfoService;
+import com.erp.server.bi.service.BiReturnOrderItemService;
+import com.erp.server.bi.service.BiShopInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,27 +33,27 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
     private Integer importType;
 
 
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    private BiReturnOrderInfoService biReturnOrderInfoService;
 
-    private DmpReturnOrderItemService dmpReturnOrderItemService;
+    private BiReturnOrderItemService biReturnOrderItemService;
 
     private PlmTaskFeign plmTaskFeign;
 
     private List<DmpReturnOrderInfoImportExcelDTO> list;
 
-    private List<DmpReturnOrderInfoEntity> returnOrderList;
+    private List<BiReturnOrderInfoEntity> returnOrderList;
 
-    public DmpReturnOrderInfoExcelListener(Integer importType,List<DmpReturnOrderInfoEntity> returnOrderList, DmpOrderInfoService dmpOrderInfoService, DmpReturnOrderInfoService dmpReturnOrderInfoService
-            , DmpShopInfoService dmpShopInfoService, DmpReturnOrderItemService dmpReturnOrderItemService,PlmTaskFeign plmTaskFeign) {
+    public DmpReturnOrderInfoExcelListener(Integer importType, List<BiReturnOrderInfoEntity> returnOrderList, BiOrderInfoService biOrderInfoService, BiReturnOrderInfoService biReturnOrderInfoService
+            , BiShopInfoService biShopInfoService, BiReturnOrderItemService biReturnOrderItemService, PlmTaskFeign plmTaskFeign) {
         this.importType = importType;
-        this.dmpOrderInfoService = dmpOrderInfoService;
-        this.dmpShopInfoService = dmpShopInfoService;
-        this.dmpReturnOrderInfoService = dmpReturnOrderInfoService;
-        this.dmpReturnOrderItemService = dmpReturnOrderItemService;
+        this.biOrderInfoService = biOrderInfoService;
+        this.biShopInfoService = biShopInfoService;
+        this.biReturnOrderInfoService = biReturnOrderInfoService;
+        this.biReturnOrderItemService = biReturnOrderItemService;
         this.plmTaskFeign = plmTaskFeign;
         this.returnOrderList = returnOrderList;
         this.list = new ArrayList<>();
@@ -70,7 +70,7 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
     @Transactional(rollbackFor = Exception.class)
     public void invoke(DmpReturnOrderInfoImportExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-        DmpReturnOrderInfoEntity entity = new DmpReturnOrderInfoEntity();
+        BiReturnOrderInfoEntity entity = new BiReturnOrderInfoEntity();
 
         //注解验证信息
         List<String> msgList = FieldValidUtil.fieldValid(dto);
@@ -111,15 +111,15 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
             errorMsgList.add("系统中未发现该币种！");
         }
         if (StringUtils.isNotBlank(dto.getShopName())) {
-            Integer count = dmpShopInfoService.getDmpShopInfoByParam(dto.getPlatformName(),null, dto.getShopName());
+            Integer count = biShopInfoService.getDmpShopInfoByParam(dto.getPlatformName(),null, dto.getShopName());
             if (count == 0) {
                 errorMsgList.add("在平台站点中未找到该店铺");
             }
         }
 
         //查询订单
-        DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
-        if(ObjectUtils.isEmpty(dmpOrderInfoEntity)) {
+        BiOrderInfoEntity biOrderInfoEntity = biOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
+        if(ObjectUtils.isEmpty(biOrderInfoEntity)) {
             errorMsgList.add("订单号系统中不存在");
         }
 
@@ -143,27 +143,27 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
             return;
         }
         //查询退货
-        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getByReturnOrderId(dto.getReturnCode());
-        if (ObjectUtils.isEmpty(dmpReturnOrderInfoEntity)) {
+        BiReturnOrderInfoEntity biReturnOrderInfoEntity = biReturnOrderInfoService.getByReturnOrderId(dto.getReturnCode());
+        if (ObjectUtils.isEmpty(biReturnOrderInfoEntity)) {
             BeanUtils.copyProperties(dto,entity);
             entity.setStatus(ReturnOrderStatusEnum.getCodeByName(dto.getStatusName()));
-            entity.setOrderTime(dmpOrderInfoEntity.getPlatformCreateTime());
-            dmpReturnOrderInfoService.save(entity);
+            entity.setOrderTime(biOrderInfoEntity.getPlatformCreateTime());
+            biReturnOrderInfoService.save(entity);
         }
         //同订单sku新增到同一订单下
-        DmpReturnOrderItemEntity itemEntity = new DmpReturnOrderItemEntity();
-        if (ObjectUtils.isNotEmpty(dmpReturnOrderInfoEntity)) {
-            itemEntity.setReturnOrderId(dmpReturnOrderInfoEntity.getId());
+        BiReturnOrderItemEntity itemEntity = new BiReturnOrderItemEntity();
+        if (ObjectUtils.isNotEmpty(biReturnOrderInfoEntity)) {
+            itemEntity.setReturnOrderId(biReturnOrderInfoEntity.getId());
         } else {
             itemEntity.setReturnOrderId(entity.getId());
         }
         itemEntity.setQuantity(dto.getRefundNum());
         itemEntity.setSkuNo(dto.getSkuNo());
         itemEntity.setSellPrice(MathUtil.divide(dto.getOrderFee(),new BigDecimal(dto.getRefundNum())));
-        dmpReturnOrderItemService.save(itemEntity);
+        biReturnOrderItemService.save(itemEntity);
 
         //根据明细金额更新主表订单金额
-        dmpReturnOrderInfoService.updateOrderFeeById(itemEntity.getReturnOrderId());
+        biReturnOrderInfoService.updateOrderFeeById(itemEntity.getReturnOrderId());
     }
 
     public List<DmpReturnOrderInfoImportExcelDTO> getDateList(){

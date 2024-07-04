@@ -11,8 +11,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.server.dmp.service.DmpOrderInfoService;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.server.dmp.service.BiOrderInfoService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -40,7 +40,7 @@ public class B2bOrderPushDmpOrderConsumer <T extends DmpSyncTaskIdDTO> extends A
     private DmpPushTaskService dmpPushTaskService;
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
@@ -64,26 +64,26 @@ public class B2bOrderPushDmpOrderConsumer <T extends DmpSyncTaskIdDTO> extends A
         //操作项
         String operate = String.valueOf(map.get("operate"));
 
-        DmpOrderInfoEntity dmpOrderInfoEntity = JSON.parseObject(String.valueOf(map.get("entity")), DmpOrderInfoEntity.class);
-        this.cleanOrderField(dmpOrderInfoEntity, operate);
+        BiOrderInfoEntity biOrderInfoEntity = JSON.parseObject(String.valueOf(map.get("entity")), BiOrderInfoEntity.class);
+        this.cleanOrderField(biOrderInfoEntity, operate);
         return ApiResult.success();
     }
 
     /**
      * 清洗订单
      */
-    private void cleanOrderField(DmpOrderInfoEntity dmpOrderInfoEntity, String operate) {
-        if (ObjectUtil.isEmpty(dmpOrderInfoEntity)) {
+    private void cleanOrderField(BiOrderInfoEntity biOrderInfoEntity, String operate) {
+        if (ObjectUtil.isEmpty(biOrderInfoEntity)) {
             throw new RuntimeException("存储的对象dmpOrderInfoEntity不能为空！");
         }
         //根据操作类型进行操作
         if (Objects.equals(operate, SyncOperateEnum.OPERATE_APPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_UPDATE.getCode())) {
             //审核
-            dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
+            biOrderInfoService.checkOrder(biOrderInfoEntity);
 
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
-            dmpOrderInfoService.removeOrderByCode(Collections.singletonList(dmpOrderInfoEntity.getPlatformOrderId()));
+            biOrderInfoService.removeOrderByCode(Collections.singletonList(biOrderInfoEntity.getPlatformOrderId()));
 
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_INVALID.getCode())) {
             //作废 不处理

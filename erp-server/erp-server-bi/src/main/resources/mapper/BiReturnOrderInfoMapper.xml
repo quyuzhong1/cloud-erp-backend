@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.bi.mapper.BiReturnOrderInfoMapper">
+
+    <sql id="Base_Column_List">
+        id,platform_order_id,shop_no,
+        shop_name,paid_time,express_time,
+        status,sales_record_number,order_fee,
+        order_weight,platform_name,country_name_en,
+        country_name_cn,buyer_user_id,buyer_name,
+        employee_id,employee_name,remark,
+        return_create_time,refund_time,currency_code,
+        currency_rate
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpReturnOrderInfoDTO">
+        select
+            droi.return_code AS returnOrderId,
+            droi.platform_order_id,
+            droi.platform_name,
+            droi.shop_name,
+            droid.sku_no,
+            droid.quantity as returnNum,
+            droi.order_fee,
+            round(droi.order_fee * droi.currency_rate,2) as cnyRealTimeAmount,
+            round(droi.order_fee * droi.cny_settle_rate,2) as cny_settle_amount,
+            droi.status,
+            droi.return_create_time,
+            droi.order_time
+        from bi_return_order_info droi
+        inner join bi_return_order_item droid on droi.id = droid.return_order_id
+        <where>
+            <if test="params.returnOrderId != null and params.returnOrderId != ''">
+                and droi.return_code ilike concat('%',#{params.returnOrderId}::text,'%')
+            </if>
+            <if test="params.platformOrderId != null and params.platformOrderId != ''">
+                and droi.platform_order_id ILIKE concat('%',#{params.platformOrderId}::text,'%')
+            </if>
+            <if test="params.shopName != null and params.shopName != ''">
+                and droi.shop_name ILIKE concat('%',#{params.shopName}::text,'%')
+            </if>
+            <if test="params.platformName != null and params.platformName != ''">
+                and droi.platform_name ILIKE concat('%',#{params.platformName}::text,'%')
+            </if>
+            <if test="params.status != null and params.status != ''">
+                and droi.status = #{params.status}
+            </if>
+            <if test="params.returnCreateTime_begin != null ">
+                and droi.return_create_time &gt;= #{params.returnCreateTime_begin}::timestamp
+            </if>
+            <if test="params.returnCreateTime_end != null ">
+                and droi.return_create_time &lt;= #{params.returnCreateTime_end}::timestamp
+            </if>
+            <if test="params.orderTime_begin != null ">
+                and droi.order_time &gt;= #{params.orderTime_begin}::timestamp
+            </if>
+            <if test="params.orderTime_end != null ">
+                and droi.order_time &lt;= #{params.orderTime_end}::timestamp
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <select id="getAllDmpReturnOrderInfo" resultType="com.erp.model.dmp.dto.DmpReturnOrderInfoDTO">
+        select
+        droi.return_code AS returnOrderId,
+        droi.platform_order_id,
+        droi.platform_name,
+        droi.shop_name,
+        droid.sku_no,
+        0 as refundNum,
+        droi.order_fee,
+        round(droi.order_fee * droi.currency_rate,2) as cnyRealTimeAmount,
+        round(droi.order_fee * droi.cny_settle_rate,2) as cny_settle_amount,
+        droi.status,
+        droi.return_create_time
+        from bi_return_order_info droi
+        inner join bi_return_order_item droid on droi.id = droid.return_order_id
+        <where>
+            <if test="params.returnOrderId != null and params.returnOrderId != ''">
+                and droi.return_code ilike concat('%',#{params.returnOrderId}::text,'%')
+            </if>
+            <if test="params.platformOrderId != null and params.platformOrderId != ''">
+                and droi.platform_order_id ILIKE concat('%',#{params.platformOrderId}::text,'%')
+            </if>
+            <if test="params.shopName != null and params.shopName != ''">
+                and droi.shop_name ILIKE concat('%',#{params.shopName}::text,'%')
+            </if>
+            <if test="params.platformName != null and params.platformName != ''">
+                and droi.platform_name ILIKE concat('%',#{params.platformName}::text,'%')
+            </if>
+            <if test="params.status != null and params.status != ''">
+                and droi.status = #{params.status}
+            </if>
+            <if test="params.returnCreateTime_begin != null ">
+                and droi.return_create_time &gt;= #{params.returnCreateTime_begin}::timestamp
+            </if>
+            <if test="params.returnCreateTime_end != null ">
+                and droi.return_create_time &lt;= #{params.returnCreateTime_end}::timestamp
+            </if>
+            <if test="params.orderTime_begin != null ">
+                and droi.order_time &gt;= #{params.orderTime_begin}::timestamp
+            </if>
+            <if test="params.orderTime_end != null ">
+                and droi.order_time &lt;= #{params.orderTime_end}::timestamp
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>
