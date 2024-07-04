@@ -68,21 +68,23 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         entity.setPrintStatus(PackagePrintStatusEnum.NOT.getCode());
         this.save(entity);
 
-        List<String> deliveryIdList = dto.getDeliveryIdList();
-        List<SoB2cDeliveryEntity> deliveryList = deliveryService.getBaseMapper().selectBatchIds(deliveryIdList);
+        List<String> deliveryIds = dto.getDeliveryIdList();
+        List<SoB2cDeliveryEntity> deliveryList = deliveryService.getBaseMapper().selectBatchIds(deliveryIds);
+        Map<String, SoB2cDeliveryEntity> deliveryMap = deliveryList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
-        List<WaveListDetailEntity> detailList = new ArrayList<>(deliveryIdList.size());
-        for (int i = 0; i < deliveryIdList.size(); i++) {
-            String deliveryId = deliveryIdList.get(i);
+        List<WaveListDetailEntity> detailList = new ArrayList<>(deliveryIds.size());
+        for (int i = 0; i < deliveryIds.size(); i++) {
+            String deliveryId = deliveryIds.get(i);
+            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryMap.get(deliveryId);
             WaveListDetailEntity detailEntity = new WaveListDetailEntity();
             detailEntity.setBasketNo(String.valueOf(i + 1));
             detailEntity.setMainId(entity.getId());
             detailEntity.setDeliveryId(deliveryId);
-            detailEntity.setDeliveryCode("发货单号");
-            detailEntity.setSoId("销售订单id");
-            detailEntity.setSoCode("销售订单编号");
-            detailEntity.setPickingStatus("拣货状态");
-            detailEntity.setLogisticsChannelName("物流渠道");
+            detailEntity.setDeliveryCode(soB2cDeliveryEntity.getCode());
+            detailEntity.setSoId(soB2cDeliveryEntity.getSourceId());
+            detailEntity.setSoCode(soB2cDeliveryEntity.getSoCode());
+            detailEntity.setPickingStatus("");
+            detailEntity.setLogisticsChannelName(soB2cDeliveryEntity.getLogisticsChannelName());
 
             detailList.add(detailEntity);
         }
