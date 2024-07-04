@@ -41,6 +41,7 @@ public class DmpInputKingdeeApiInitHandler implements DmpInputApiInitHandler{
             log.info("获取金蝶销售订单数据第[{}]页 有{}条记录", pageIndex, result.size());
             dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
             dmpInputTaskInitDTO.setContentType(DmpInputTaskFileContentTypeEnum.JSON);
+            result.forEach(r -> r.put("formId", dmpInputKingdeeApiInitRequest.getFormId()));
             dmpInputTaskInitDTO.setMsg(JSON.toJSONString(result , SerializerFeature.WriteMapNullValue));
             dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
             if (result.size() < pageSize) {
