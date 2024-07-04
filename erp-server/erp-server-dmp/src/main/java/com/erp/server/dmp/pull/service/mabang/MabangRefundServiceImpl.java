@@ -96,7 +96,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<RefundOrderEntity> entityList = pullDate(dto);
 
@@ -168,7 +168,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(RefundOrderEntity mongoDatum) {
         BiRefundInfoEntity refundInfo = initOrderInfoEntity(mongoDatum);
         GyyRefundDTO updateDto = new GyyRefundDTO(mongoDatum.getId());

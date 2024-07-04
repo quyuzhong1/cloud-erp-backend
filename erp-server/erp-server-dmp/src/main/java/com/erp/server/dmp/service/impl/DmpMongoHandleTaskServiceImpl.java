@@ -71,7 +71,7 @@ public class DmpMongoHandleTaskServiceImpl extends SuperServiceImpl<DmpMongoHand
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public Long clearHistory(DmpMongoHandleTypeEnum handleTypeEnum, LocalDateTime historyDateTime, Integer size) {
         // 构建查询条件
         Criteria criteria = Criteria.where("downloadTime").gt(historyDateTime);

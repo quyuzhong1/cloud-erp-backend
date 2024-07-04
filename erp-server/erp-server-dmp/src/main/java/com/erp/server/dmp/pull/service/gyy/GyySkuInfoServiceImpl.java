@@ -85,7 +85,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<GyySkuInfoEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -139,7 +139,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(GyySkuInfoEntity mongoDatum) {
 //        DmpShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
 //        OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());

@@ -110,7 +110,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<GyyRefundEntity> gyyRefundEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(gyyRefundEntityList)) {
@@ -180,7 +180,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(GyyRefundEntity mongoDatum) {
         BiRefundInfoEntity refundInfo = initOrderInfoEntity(mongoDatum);
         GyyRefundDTO updateDto = new GyyRefundDTO(mongoDatum.get_id());
