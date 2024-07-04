@@ -20,6 +20,7 @@ import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
 import com.erp.server.dmp.inout.handler.input.all.DmpInputTaskStatusHandler;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputBaseTaskHandler;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -37,8 +38,6 @@ public class DmpInputTaskFactory{
 	
 	@Autowired
 	private DmpInputTaskService dmpInputTaskService;
-	@Autowired
-	private DmpInputBaseTaskHandler dmpInputBaseTaskHandler;
 	@Autowired
 	private DmpInputTaskStatusHandler dmpInputTaskStatusHandler;
 	@Resource
@@ -101,7 +100,7 @@ public class DmpInputTaskFactory{
 		try {
 			dmpInputFinishRequest.setDealTaskStatus(value);
 			DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
-			bean.addDmpHandler(dmpInputBaseTaskHandler);
+			bean.addDmpHandler(ApplicationContextUtils.getBean(DmpInputBaseTaskHandler.class));
 			bean.addDmpHandler(dmpInputTaskStatusHandler);
 			bean.doDmpHandler(dmpInputFinishRequest, dmpResponse);
 		} catch (Exception e) {
