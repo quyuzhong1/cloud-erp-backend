@@ -3,6 +3,9 @@ import com.erp.model.wms.entity.PackingTaskDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
+import com.erp.model.wms.entity.WmsCartonSpecEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +35,10 @@ public interface PackingTaskDetailService extends SuperService<PackingTaskDetail
     */
     Boolean update(PackingTaskDetailDTO.UpdateDTO dto);
 
-
+    /**
+     * 根据主表获取装箱任务明细
+     * @param mainIds
+     * @return
+     */
+    List<PackingTaskDetailEntity> listByMainIds(List<String> mainIds);
 }

@@ -75,7 +75,6 @@ import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -197,7 +196,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private SoB2cFeign soB2cFeign;
 
     @Resource
-    private ShopInfoFeign shopInfoFeign;
+    private PackingTaskService packingTaskService;
 
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
@@ -2744,9 +2743,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional
-    public String packingSave(WmsCartonDTO.WmsCartonAdd dto) {
+    public String packingSave(WmsCartonSpecDTO.WmsCartonAdd dto) {
         //待审核的数据可以上传装箱数据
-        SoOutstockEntity entity = this.getById(dto.getId());
+        SoOutstockEntity entity = this.getById(dto.getSourceId());
         if (!ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
         }
@@ -2761,15 +2760,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         //删除原装箱信息
-        wmsCartonSpecService.deleteCarton(dto.getId());
+        wmsCartonSpecService.deleteCarton(dto.getSourceId());
         if (CollectionUtils.isNotEmpty(dto.getWmsCartonList())) {
             //新增装箱信息
-            for (WmsCartonDTO.AddDTO addDTO : dto.getWmsCartonList()) {
+            for (WmsCartonSpecDTO.AddDTO addDTO : dto.getWmsCartonList()) {
                 //新增装箱信息
-                wmsCartonSpecService.add(addDTO, dto.getId(), SourceTypeEnum.SO_OUTSTOCK.getCode());
+                wmsCartonSpecService.add(addDTO, dto.getSourceId());
 
                 //根据主表id分组sku查询发货及待装箱数
-                List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateBySourceId(dto.getId());
+                List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateByPackingTaskId(dto.getSourceId());
                 List<String> ids = packDateDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
                 List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(ids);
 
@@ -2779,12 +2778,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         //根据主表id分组sku查询发货及待装箱数
-        List<SoOutstockDTO.GroupSkuDTO> groupSkuList = soOutstockDetailService.listGroupSkuByMainId(dto.getId());
+        List<SoOutstockDTO.GroupSkuDTO> groupSkuList = soOutstockDetailService.listGroupSkuByMainId(dto.getSourceId());
 
         //当所有产品待装箱数量为0时，状态自动变更为已装箱
         List<SoOutstockDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList)) {
-            updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
+            updatePackingStatus(dto.getSourceId(), PackingStatusEnum.PACKING.getCode());
             //走TMS自动生成报关单逻辑
             if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
                 //走TMS自动生成逻辑
@@ -2809,7 +2808,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             return PackingStatusEnum.PACKING.getCode();
         } else {
-            updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
+            updatePackingStatus(dto.getSourceId(), PackingStatusEnum.NOT_PACKING.getCode());
             return PackingStatusEnum.NOT_PACKING.getCode();
         }
     }
@@ -2819,8 +2818,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param packDateDTOS
      * @param soOutstockDetailEntities
      */
-    private void checkDeliveryQty(List<WmsCartonDTO.PackDateDTO> packDateDTOS, List<SoOutstockDetailEntity> soOutstockDetailEntities) {
-        for (WmsCartonDTO.PackDateDTO packDateDTO : packDateDTOS) {
+    private void checkDeliveryQty(List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS, List<SoOutstockDetailEntity> soOutstockDetailEntities) {
+        for (WmsCartonSpecDTO.PackDateDTO packDateDTO : packDateDTOS) {
             //发货数量
             int deliveryQty = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId()) && req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getActualQty()).sum();
             //待装箱数量=发货数量-所有已装箱数量
@@ -2832,34 +2831,49 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    public WmsCartonDTO.WmsCartonView packingView(String id) {
+    public WmsCartonSpecDTO.WmsCartonSpecView packingView(String id) {
         SoOutstockEntity entity = this.getById(id);
         //只允许B2B订单装箱
         if (!OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
             throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
         }
-        //查询装箱详情
-        WmsCartonDTO.WmsCartonView cartonView = wmsCartonSpecService.getCartonViewBySourceId(id);
+        //>仅可操作关联单号未审核通过时候可编辑修改
+        if(entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+            throw new ServiceException(ApiError.ERROR_92140, entity.getCode());
+        }
+//        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getSourceId()));
+//        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getSourceId()));
 
-        cartonView.setId(entity.getId());
-        cartonView.setCode(entity.getCode());
+        //装箱任务
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceIdAndSourceType(id, entity.getOrderType());
+        WmsCartonSpecDTO.WmsCartonSpecView cartonView = new WmsCartonSpecDTO.WmsCartonSpecView();
+        if (CollectionUtils.isNotEmpty(taskEntityList)){
+            PackingTaskEntity taskEntity = taskEntityList.get(0);
+            cartonView.setTaskId(taskEntity.getId());
+            cartonView = wmsCartonSpecService.getCartonViewByPackingTaskId(taskEntityList.get(0));
+        }
+//        查询装箱详情
+//        WmsCartonSpecDTO.WmsCartonSpecView cartonView = wmsCartonSpecService.getCartonViewByPackingTaskId(id);
+
+        cartonView.setSourceId(entity.getId());
+        cartonView.setSourceCode(entity.getCode());
         return cartonView;
     }
 
     @Override
-    public WmsCartonDTO.ListPackingDTO listPacking(String id) {
+    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
         SoOutstockEntity entity = this.getById(id);
         //只允许B2B订单装箱
         if (!OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
             throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
         }
 
-        WmsCartonDTO.ListPackingDTO listPackingDTO = new WmsCartonDTO.ListPackingDTO();
+        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
         listPackingDTO.setId(entity.getId());
         listPackingDTO.setCode(entity.getCode());
 
         //获取总箱数
-        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listBySourceIds(Arrays.asList(id));
+        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listByMainIds(Arrays.asList(id));
         int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
         listPackingDTO.setBoxQty(boxQty);
 
@@ -2871,7 +2885,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public void exportPacking(SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
-        List<WmsCartonDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
+        List<WmsCartonSpecDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
         if(CollUtil.isEmpty(list)) {
             return;
         }
@@ -2920,7 +2934,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-// 读取 Excel 文件
+        // 读取 Excel 文件
         SoOutstockPackingExcelListener listener = new SoOutstockPackingExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), SoOutstockPackingExcelDTO.class, listener).extraRead(CellExtraTypeEnum.MERGE).sheet(0).doRead();
@@ -2940,14 +2954,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             Map<String,List<SoOutstockPackingExcelDTO>> map = packingExcelDTOList.stream().collect(Collectors.groupingBy(SoOutstockPackingExcelDTO::getCode));
             map.forEach((key,value)->{
                 SoOutstockEntity entity = this.listByCodes(Collections.singletonList(key)).get(0);
-                WmsCartonDTO.WmsCartonAdd dto = new WmsCartonDTO.WmsCartonAdd();
-                dto.setId(entity.getId());
-                dto.setCode(key);
-                List<WmsCartonDTO.AddDTO> firstMileCartonList = new ArrayList<>();
+                WmsCartonSpecDTO.WmsCartonAdd dto = new WmsCartonSpecDTO.WmsCartonAdd();
+                dto.setSourceId(entity.getId());
+                dto.setSourceCode(key);
+                List<WmsCartonSpecDTO.AddDTO> firstMileCartonList = new ArrayList<>();
                 //根据箱号分组
                 Map<Integer,List<SoOutstockPackingExcelDTO>> boxMap = value.stream().collect(Collectors.groupingBy(SoOutstockPackingExcelDTO::getBoxNo));
                 boxMap.forEach((boxKey,valByBox)->{
-                    WmsCartonDTO.AddDTO addDTO = new WmsCartonDTO.AddDTO();
+                    WmsCartonSpecDTO.AddDTO addDTO = new WmsCartonSpecDTO.AddDTO();
                     addDTO.setBoxSpecNo(boxKey);
                     addDTO.setBoxLength(valByBox.get(0).getSingleBoxLength());
                     addDTO.setBoxWidth(valByBox.get(0).getSingleBoxWidth());
@@ -2973,19 +2987,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    public List<WmsCartonDTO.GroupSkuDTO> listGroupSkuById(String id) {
-        List<WmsCartonDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(id);
+    public List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id) {
+        List<WmsCartonSpecDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(id);
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         //查询已装箱数
-        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(id, null);
-        for (WmsCartonDTO.GroupSkuDTO groupSkuDTO : list) {
+        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(id, null);
+        for (WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             int usePackQty = packingQtyDTOS.stream()
                     .filter(req -> req.getSkuId().equals(groupSkuDTO.getId())
                             && req.getSkuId().equals(groupSkuDTO.getSkuId()))
-                    .mapToInt(req -> req.getUsePackQty()).sum();
+                    .mapToInt(req -> req.getPackQty()).sum();
             groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
             groupSkuDTO.setPackQty(usePackQty);
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
@@ -3247,7 +3261,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param packingStatus 发货状态
      * @return void
      **/
-    private void updatePackingStatus(String id, String packingStatus){
+    @Override
+    public void updatePackingStatus(String id, String packingStatus){
         lambdaUpdate().set(SoOutstockEntity::getPackingStatus, packingStatus)
                 .eq(SoOutstockEntity::getId, id)
                 .update();

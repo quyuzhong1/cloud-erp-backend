@@ -64,7 +64,6 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.listener.PackingExcelListener;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
@@ -1473,9 +1472,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean packingSave(WmsCartonDTO.WmsCartonAdd dto) {
+    public Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto) {
         //待审核的数据可以上传装箱数据
-        FirstMileDeliveryEntity entity = this.getById(dto.getId());
+        FirstMileDeliveryEntity entity = this.getById(dto.getSourceId());
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
         }
@@ -1484,7 +1483,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException("物流单/报关单已生成，不支持修改");
         }
         //已装箱的数据，如果未下推入库单，或者下推的入库单待提交时，可以再次修改装箱信息，否则提示：已下推海外仓入库单【单号】，不允许修改装箱数据（装箱页面保存时校验）
-        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(dto.getId()));
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(dto.getSourceId()));
         long count = overseasWarehouseInboundEntities.stream()
                 .filter(req -> !req.getInstockStatus().equals(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode())
                         && !req.getInstockStatus().equals(OverseasInstockStatusEnum.CANCELED.getCode())
@@ -1495,18 +1494,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //删除原装箱信息
-        wmsCartonSpecService.deleteCarton(dto.getId());
-
-
-
-
+        wmsCartonSpecService.deleteCarton(dto.getSourceId());
         //新增装箱信息
-        for (WmsCartonDTO.AddDTO addDTO : dto.getWmsCartonList()) {
+        for (WmsCartonSpecDTO.AddDTO addDTO : dto.getWmsCartonList()) {
             //新增装箱信息
-            wmsCartonSpecService.add(addDTO, dto.getId(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+            wmsCartonSpecService.add(addDTO, dto.getSourceId());
 
             //根据主表id分组sku查询发货及待装箱数
-            List<WmsCartonDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateBySourceId(dto.getId());
+            List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateByPackingTaskId(dto.getSourceId());
             List<String> ids = packDateDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
             List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(ids);
 
@@ -1515,15 +1510,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //根据主表id分组sku查询发货及待装箱数
-        List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listGroupSkuByMainId(dto.getId());
+        List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listGroupSkuByMainId(dto.getSourceId());
 
         //当所有产品待装箱数量为0时，状态自动变更为已装箱
         List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList)) {
-            updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
+            updatePackingStatus(dto.getSourceId(), PackingStatusEnum.PACKING.getCode());
             //走TMS自动生成物流单逻辑
             AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                    .id(dto.getId())
+                    .id(dto.getSourceId())
                     .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
                     .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
                     .firstMileDeliveryEntity(entity)
@@ -1558,7 +1553,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 throw new ServiceException(StrUtil.format("头程发货单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
             }
         } else {
-            updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
+            updatePackingStatus(dto.getSourceId(), PackingStatusEnum.NOT_PACKING.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1568,8 +1563,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      * @param packDateDTOS
      * @param firstMileDeliveryDetailEntities
      */
-    private void checkDeliveryQty(List<WmsCartonDTO.PackDateDTO> packDateDTOS, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities) {
-        for (WmsCartonDTO.PackDateDTO packDateDTO : packDateDTOS) {
+    private void checkDeliveryQty(List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities) {
+        for (WmsCartonSpecDTO.PackDateDTO packDateDTO : packDateDTOS) {
             //发货数量
             int deliveryQty = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId())).mapToInt(req -> req.getDeliveryQty()).sum();
             //待装箱数量=发货数量-所有已装箱数量
@@ -1581,32 +1576,43 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    public WmsCartonDTO.WmsCartonView packingView(String id) {
+    public WmsCartonSpecDTO.WmsCartonSpecView packingView(String id) {
+        WmsCartonSpecDTO.WmsCartonSpecView cartonView = new WmsCartonSpecDTO.WmsCartonSpecView();
         FirstMileDeliveryEntity entity = this.getById(id);
+        //>仅可操作关联单号未审核通过时候可编辑修改
+        if(entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+            throw new ServiceException(ApiError.ERROR_92140, entity.getCode());
+        }
         //已下推入库单，不允许修改装箱信息
         OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(entity.getId(),OverseasInstockStatusEnum.CANCELED.getCode());
         if (ObjectUtil.isNotEmpty(overseasWarehouseInbound) && !OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equals(overseasWarehouseInbound.getInstockStatus())) {
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInbound.getCode());
         }
+        //装箱任务
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceIdAndSourceType(id, entity.getSourceType());
+        if (CollectionUtils.isNotEmpty(taskEntityList)){
+            PackingTaskEntity taskEntity = taskEntityList.get(0);
+            cartonView.setTaskId(taskEntity.getId());
+            cartonView = wmsCartonSpecService.getCartonViewByPackingTaskId(taskEntity);
+        }
         //查询装箱详情
-        WmsCartonDTO.WmsCartonView cartonView = wmsCartonSpecService.getCartonViewBySourceId(id);
-        cartonView.setId(entity.getId());
-        cartonView.setCode(entity.getCode());
+        cartonView.setSourceId(entity.getId());
+        cartonView.setSourceCode(entity.getCode());
         return cartonView;
     }
 
     @Override
-    public WmsCartonDTO.ListPackingDTO listPacking(String id) {
+    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
         FirstMileDeliveryEntity entity = this.getById(id);
-/*        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
+    /*      if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
             throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
         }*/
-        WmsCartonDTO.ListPackingDTO listPackingDTO = new WmsCartonDTO.ListPackingDTO();
+        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
         listPackingDTO.setId(entity.getId());
         listPackingDTO.setCode(entity.getCode());
 
         //获取总箱数
-        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listBySourceIds(Arrays.asList(id));
+        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listByMainIds(Arrays.asList(id));
         int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
         listPackingDTO.setBoxQty(boxQty);
 
@@ -1622,7 +1628,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.ERROR_98004);
         }
 
-        List<WmsCartonDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
+        List<WmsCartonSpecDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
         if(CollUtil.isEmpty(list)) {
             return;
         }
@@ -1723,7 +1729,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         });
 
         //查询已装箱信息
-        List<WmsCartonDTO.PackDateDTO> packDateDTOList = wmsCartonSpecService.listPackDateBySourceId(entity.getId());
+        List<WmsCartonSpecDTO.PackDateDTO> packDateDTOList = wmsCartonSpecService.listPackDateByPackingTaskId(entity.getId());
 
         for (OverseasWarehouseInboundDetailDTO.ViewDTO dto : detailViewList) {
             //装箱数量
@@ -1784,7 +1790,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      * @param packingStatus 发货状态
      * @return void
      **/
-    private void updatePackingStatus(String id, String packingStatus){
+    @Override
+    public void updatePackingStatus(String id, String packingStatus){
         lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, packingStatus)
                 .eq(FirstMileDeliveryEntity::getId, id)
                 .update();
@@ -1813,14 +1820,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             Map<String,List<PackingExcelDTO>> map = packingExcelDTOList.stream().collect(Collectors.groupingBy(PackingExcelDTO::getCode));
             map.forEach((key,value)->{
                 FirstMileDeliveryEntity firstMileDeliveryEntity = this.listByCodes(Collections.singletonList(key)).get(0);
-                WmsCartonDTO.WmsCartonAdd dto = new WmsCartonDTO.WmsCartonAdd();
-                dto.setId(firstMileDeliveryEntity.getId());
-                dto.setCode(key);
-                List<WmsCartonDTO.AddDTO> firstMileCartonList = new ArrayList<>();
+                WmsCartonSpecDTO.WmsCartonAdd dto = new WmsCartonSpecDTO.WmsCartonAdd();
+                dto.setSourceId(firstMileDeliveryEntity.getId());
+                dto.setSourceCode(key);
+                List<WmsCartonSpecDTO.AddDTO> firstMileCartonList = new ArrayList<>();
                 //根据箱号分组
                 Map<Integer,List<PackingExcelDTO>> boxMap = value.stream().collect(Collectors.groupingBy(PackingExcelDTO::getBoxNo));
                 boxMap.forEach((boxKey,valByBox)->{
-                    WmsCartonDTO.AddDTO addDTO = new WmsCartonDTO.AddDTO();
+                    WmsCartonSpecDTO.AddDTO addDTO = new WmsCartonSpecDTO.AddDTO();
                     addDTO.setBoxSpecNo(boxKey);
                     addDTO.setBoxLength(valByBox.get(0).getSingleBoxLength());
                     addDTO.setBoxWidth(valByBox.get(0).getSingleBoxWidth());

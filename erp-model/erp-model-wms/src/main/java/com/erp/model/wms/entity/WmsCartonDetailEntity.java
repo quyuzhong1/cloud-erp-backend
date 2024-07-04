@@ -46,10 +46,10 @@ public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
     @TableField("pack_qty")
     private Integer packQty;
     /**
-    * 装箱任务明细id
+    * 发货数量
     */
-    @TableField("packing_task_detail_id")
-    private String packingTaskDetailId;
+    @TableField("delivery_qty")
+    private Integer deliveryQty;
     /**
      * 预计毛重（装箱更新时计算）
      */

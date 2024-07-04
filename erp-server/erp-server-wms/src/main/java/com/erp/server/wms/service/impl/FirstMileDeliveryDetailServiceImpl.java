@@ -12,16 +12,15 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDetailDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FirstMileDeliveryDetailMapper;
-import com.erp.server.wms.service.FirstMileDeliveryDetailService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.WmsCartonDetailService;
-import com.erp.server.wms.service.WmsCartonSpecService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,11 +47,11 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     @Autowired
     private PlmTaskFeign plmTaskFeign;
     @Autowired
-    private OmsListingInfoFeign omsListingInfoFeign;
+    private FirstMileDeliveryService firstMileDeliveryService;
     @Autowired
     private WmsCartonSpecService wmsCartonSpecService;
     @Autowired
-    private WmsCartonDetailService wmsCartonDetailService;
+    private PackingTaskService packingTaskService;
     @Autowired
     private SkuMappingFeign skuMappingFeign;
 
@@ -123,47 +122,25 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     public  List<FirstMileDeliveryDTO.GroupSkuDTO> listGroupSkuByMainId(String mainId) {
         List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(mainId);
-
+        FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(mainId);
         //查询产品信息
-        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(FirstMileDeliveryDTO.GroupSkuDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-
-        //查询已装箱数
-        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(mainId, null);
+        //装箱任务
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceIdAndSourceType(mainId, entity.getSourceType());
+        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(taskEntityList)){
+            PackingTaskEntity taskEntity = taskEntityList.get(0);
+            //查询已装箱数
+            packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(taskEntity.getId(), null);
+        }
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             int usePackQty = packingQtyDTOS.stream()
-                    .filter(req -> req.getSourceId().equals(groupSkuDTO.getId())
-                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
-                    .mapToInt(req -> req.getUsePackQty()).sum();
+                    .filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId()))
+                    .mapToInt(WmsCartonSpecDTO.PackingQtyDTO::getPackQty).sum();
             groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
             groupSkuDTO.setPackQty(usePackQty);
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
-            groupSkuDTO.setProductName(skuVO.getSkuName());
-        }
-        return list;
-    }
-
-    @Override
-    public List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuByMainId(String mainId , Integer boxSpecNo) {
-        List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listCartonGroupSkuBySourceId(mainId, boxSpecNo);
-
-        //查询产品信息
-        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-
-        //查询已装箱数
-        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(mainId, boxSpecNo);
-        for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
-            //待装箱数量=发货数量-已装箱数量
-            WmsCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()
-                    .filter(req -> req.getSourceId().equals(groupSkuDTO.getId())
-                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
-                    .findFirst().orElse(new WmsCartonDTO.PackingQtyDTO());
-            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - packingQtyDTO.getUsePackQty());
-            groupSkuDTO.setPackQty(packingQtyDTO.getPackQty());
-            groupSkuDTO.setCartonId(packingQtyDTO.getCartonId());
-
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
             groupSkuDTO.setProductName(skuVO.getSkuName());
         }

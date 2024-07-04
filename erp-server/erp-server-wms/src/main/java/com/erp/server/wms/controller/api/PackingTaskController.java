@@ -1,11 +1,18 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -21,7 +28,9 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.PackingTaskDTO;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 装箱任务表
@@ -100,6 +109,43 @@ public class PackingTaskController extends BaseController {
         return success();
     }
 
+    /**
+     * 装箱-详情(箱规+产品明细)
+     * @Author Luo_WG
+     * @Date 2023/11/28 17:44
+     * @param id 装箱任务id
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    @GetMapping("/packingView")
+    public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingView(@RequestParam("id") String id) {
+        WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = packingTaskService.packingView(id);
+        return success(wmsCartonSpecView);
+    }
+    /**
+     *
+     * 快粘贴查询sku
+     * @Author zdy
+     * @Date 2024/7/4 11:21
+     * @param id 装箱任务id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listGroupSkuById")
+    public ApiResult<List<WmsCartonSpecDTO.GroupSkuDTO>> listGroupSkuById(@RequestParam("id") String id) {
+        List<WmsCartonSpecDTO.GroupSkuDTO> result = packingTaskService.listGroupSkuById(id);
+        return success(result);
+    }
 
-
+    /**
+     * 装箱保存
+     * @Author zdy
+     * @Date 2024/7/4 11:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/packingSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "装箱任务装箱保存")
+    public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
+        Boolean flag = packingTaskService.packingSave(dto);
+        return flag ? success() : failure();
+    }
 }

@@ -70,15 +70,6 @@ public interface FirstMileDeliveryDetailService extends SuperService<FirstMileDe
     List<FirstMileDeliveryDTO.GroupSkuDTO> listGroupSkuByMainId(String mainId);
 
     /**
-     * 根据主表id分组查询发货单已包装发货及待装箱数
-     * @Author Luo_WG
-     * @Date 2023/11/28 18:41
-     * @param mainId
-     * @return java.util.List<com.erp.model.wms.dto.FirstMileDeliveryDTO.GroupSkuDTO>
-     **/
-    List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuByMainId(String mainId, Integer boxSpecNo);
-
-    /**
      * 根据主表获取明细列表
      * @param id
      * @return

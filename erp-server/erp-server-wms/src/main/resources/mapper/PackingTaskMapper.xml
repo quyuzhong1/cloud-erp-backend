@@ -56,14 +56,14 @@
         select
             pt.id,
             pt.code,
-            pt.source_id,
-            pt.source_code,
-            pt.source_type,
-            pt.delivery_qty,
-            pt.warehouse_id,
-            pt.warehouse_name,
-            pt.create_user_name,
-            pt.create_time
+            pt.source_id as sourceId,
+            pt.source_code as sourceCode,
+            pt.source_type as sourceType,
+            pt.delivery_qty as deliveryQty,
+            pt.warehouse_id as warehouseId,
+            pt.warehouse_name as warehouseName,
+            pt.create_user_name as createUserName,
+            pt.create_time as createTime
         from packing_task pt
         where pt.is_deleted = FALSE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.defaultl != ''">
@@ -102,6 +102,20 @@
                 #{item}
             </foreach>
         </if>
+    </select>
+    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
+        SELECT
+            pt.id,
+            ptd.sku_id,
+            ptd.sku_no,
+            SUM(ptd.delivery_qty) AS deliveryQty
+        FROM  packing_task_detail ptd
+                  LEFT JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted=FALSE
+        WHERE  ptd.is_deleted=FALSE
+          AND ptd.main_id = #{mainId}
+        GROUP BY pt.id,
+            ptd.sku_id,
+            ptd.sku_no
     </select>
 
 

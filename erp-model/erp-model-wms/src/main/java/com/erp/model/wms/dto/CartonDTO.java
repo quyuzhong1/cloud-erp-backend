@@ -115,11 +115,11 @@ public class CartonDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * first_mile_carton表id
+        * 箱子
         */
-        @NotBlank(message = "first_mile_carton表id不能为空")
-        @Size(max = 19,message = "first_mile_carton表id最大长度不能超过19位")
-        private String cartonId;
+        @NotBlank(message = "箱规id不能为空")
+        @Size(max = 19,message = "箱规id最大长度不能超过19位")
+        private String spec_id;
 
         /**
          * 来源id

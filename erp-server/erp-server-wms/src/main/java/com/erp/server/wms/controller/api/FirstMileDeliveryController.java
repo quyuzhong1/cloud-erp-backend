@@ -3,7 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
@@ -473,7 +473,7 @@ public class FirstMileDeliveryController extends BaseController {
      **/
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
-    public ApiResult packingSave(@RequestBody @Validated WmsCartonDTO.WmsCartonAdd dto) {
+    public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
         Boolean flag = firstMileDeliveryService.packingSave(dto);
         return flag ? success() : failure();
     }
@@ -486,9 +486,9 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
     @GetMapping("/packingView")
-    public ApiResult<WmsCartonDTO.WmsCartonView> packingView(@RequestParam("id") String id) {
-        WmsCartonDTO.WmsCartonView wmsCartonView = firstMileDeliveryService.packingView(id);
-        return success(wmsCartonView);
+    public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingView(@RequestParam("id") String id) {
+        WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = firstMileDeliveryService.packingView(id);
+        return success(wmsCartonSpecView);
     }
 
     /**
@@ -499,8 +499,8 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @GetMapping("/listPacking")
-    public ApiResult<WmsCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
-        WmsCartonDTO.ListPackingDTO result = firstMileDeliveryService.listPacking(id);
+    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+        WmsCartonSpecDTO.ListPackingDTO result = firstMileDeliveryService.listPacking(id);
         return success(result);
     }
 

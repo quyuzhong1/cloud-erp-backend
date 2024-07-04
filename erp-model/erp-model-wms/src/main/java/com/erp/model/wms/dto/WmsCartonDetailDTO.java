@@ -26,14 +26,14 @@ public class WmsCartonDetailDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-        * 主键id
+        * 主键id-箱规id
         */
         private String  id;
 
         /**
         * first_mile_carton表id
         */
-        private String cartonId;
+//        private String cartonId;
 
         /**
         * 产品id
@@ -66,9 +66,13 @@ public class WmsCartonDetailDTO implements Serializable {
         private Integer waitPackQty;
 
         /**
-        * 来源类型
+        * 箱规编号
         */
-        private String sourceType;
+        private String boxSpecNo;
+        /**
+         * 箱数
+         */
+        private Integer boxQty;
     }
 
     /**
@@ -83,12 +87,6 @@ public class WmsCartonDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
-        /**
-        * first_mile_carton表id
-        */
-        private String cartonId;
-
         /**
         * 产品id
         */
@@ -103,6 +101,10 @@ public class WmsCartonDetailDTO implements Serializable {
         * 装箱数量
         */
         private Integer packQty;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
     }
 
     /**

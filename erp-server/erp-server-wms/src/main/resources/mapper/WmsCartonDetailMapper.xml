@@ -18,7 +18,7 @@
        <result column="pack_qty" property="packQty" />
     </resultMap>
 
-    <select id="boxInfoBySourceId" resultType="com.erp.model.wms.dto.WmsCartonDTO$PackingItemDTO">
+    <select id="boxInfoBySourceId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingItemDTO">
         SELECT
             fmcd.source_Id,
             fmcd.carton_id,

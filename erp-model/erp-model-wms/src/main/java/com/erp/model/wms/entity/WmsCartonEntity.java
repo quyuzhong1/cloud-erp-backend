@@ -33,7 +33,7 @@ public class WmsCartonEntity extends BaseEntity<WmsCartonEntity> {
     * 箱号
     */
     @TableField("carton_no")
-    private String cartonNo;
+    private Integer cartonNo;
     /**
     * 异常原因
     */

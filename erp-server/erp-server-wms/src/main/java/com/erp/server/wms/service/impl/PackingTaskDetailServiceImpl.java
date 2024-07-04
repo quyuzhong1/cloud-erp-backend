@@ -11,6 +11,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,6 +85,14 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, packingTaskDetailEntity, null, packingTaskDetailEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PackingTaskDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(PackingTaskDetailEntity::getMainId, mainIds).list();
     }
 
 

@@ -1,10 +1,11 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.PackingTaskDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.CartonDTO;
+import com.erp.model.wms.entity.WmsCartonSpecEntity;
 
 import java.util.List;
 
@@ -56,10 +57,10 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * 根据发货单id查询箱子明细
      * @Author Luo_WG
      * @Date 2023/11/29 11:17
-     * @param sourceIds
+     * @param taskIds
      * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonBillEntity>
      **/
-    List<WmsCartonEntity> listBySourceIds(List<String> sourceIds);
+    List<WmsCartonEntity> listByTaskIds(List<String> taskIds);
 
     /**
      * 装箱任务分页查询
@@ -67,4 +68,12 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * @return
      */
     PagingVO<CartonDTO.PagingViewDTO> paging(PagingDTO<CartonDTO.PagingParamDTO> dto);
+
+    /**
+     * 生成装箱信息
+     * @param addDTO
+     * @param wmsCartonSpecEntity
+     * @param taskId
+     */
+    void add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity, String taskId);
 }

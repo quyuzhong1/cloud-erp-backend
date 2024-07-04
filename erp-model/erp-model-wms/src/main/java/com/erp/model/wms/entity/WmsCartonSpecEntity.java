@@ -60,7 +60,7 @@ public class WmsCartonSpecEntity extends BaseEntity<WmsCartonSpecEntity> {
     @TableField("size_unit")
     private String sizeUnit;
     /**
-    * 箱数
+    * 箱数(待装箱)
     */
     @TableField("box_qty")
     private Integer boxQty;

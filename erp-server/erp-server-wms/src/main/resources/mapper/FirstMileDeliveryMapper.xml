@@ -200,7 +200,7 @@
     </select>
 
     <!--导出装箱清单Excel-->
-    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonDTO$ExportPackingDTO">
+    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$ExportPackingDTO">
         SELECT
         DISTINCT
         fd.id,

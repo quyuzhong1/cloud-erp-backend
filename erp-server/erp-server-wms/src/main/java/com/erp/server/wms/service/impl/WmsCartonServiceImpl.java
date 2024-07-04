@@ -10,10 +10,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CartonDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.WmsCartonEntity;
+import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.erp.server.wms.mapper.WmsCartonMapper;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.WmsCartonDetailService;
 import com.erp.server.wms.service.WmsCartonService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +44,8 @@ import java.util.Optional;
 public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsCartonEntity> implements WmsCartonService {
     @Autowired
     private OperateLogService operateLogService;
+    @Resource
+    private WmsCartonDetailService wmsCartonDetailService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -101,16 +108,39 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     }
 
     @Override
-    public List<WmsCartonEntity> listBySourceIds(List<String> sourceIds) {
-        if (CollectionUtils.isEmpty(sourceIds)) {
+    public List<WmsCartonEntity> listByTaskIds(List<String> taskIds) {
+        if (CollectionUtils.isEmpty(taskIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(WmsCartonEntity::getPackingTaskId, sourceIds).list();
+        return lambdaQuery().in(WmsCartonEntity::getPackingTaskId, taskIds).list();
     }
 
     @Override
     public PagingVO<CartonDTO.PagingViewDTO> paging(PagingDTO<CartonDTO.PagingParamDTO> dto) {
         return null;
+    }
+
+    @Override
+    public void add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity, String taskId) {
+        Integer boxQty = addDTO.getBoxQty();
+        for (int i = 0; i < boxQty; i++) {
+            WmsCartonEntity wmsCartonEntity = new WmsCartonEntity();
+            addDTO.setSpecId(wmsCartonSpecEntity.getId());
+            addDTO.setPackingTaskId(taskId);
+            BeanMapperUtils.copy(addDTO, wmsCartonEntity);
+            // 数据处理
+            handleData(wmsCartonEntity);
+
+            log.info("开始新增发货单箱子信息明细单");
+            boolean save = super.save(wmsCartonEntity);
+            if(!save) {
+                throw new ServiceException("发货单箱子信息明细单保存失败");
+            }
+            String msg = StrUtil.format("用户【{}】新增【{}】单据ID为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱信息" , wmsCartonEntity.getId());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON.getCode(), taskId, "新增操作");
+            //新增详情信息
+            wmsCartonDetailService.add(addDTO.getDetailList(), wmsCartonEntity,wmsCartonSpecEntity);
+        }
     }
 
     /**

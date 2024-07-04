@@ -14,37 +14,32 @@ import java.util.stream.Collectors;
  */
 public enum PickingSourceTypeEnum implements EnumMessage {
     B2B("B2B", "B2B"),
-    FBA("FBA", "FBA"),
-    THIRD("third", "第三方仓"),
+    FBA("demandPlatformWarehouse", "FBA"),
+    THIRD("demandOverseasWarehouse", "第三方仓"),
     ;
 
     @EnumValue
     @JsonValue
-    private String status;
+    private String code;
     private String name;
 
-    PickingSourceTypeEnum(String status, String name) {
-        this.status = status;
+    PickingSourceTypeEnum(String code, String name) {
+        this.code = code;
         this.name = name;
-    }
-
-
-    public String getStatus() {
-        return status;
     }
     @Override
     public String getCode() {
-        return status;
+        return code;
     }
     @Override
     public String getName() {
         return name;
     }
 
-    public static String getName(String state) {
-        if (StringUtils.isNotBlank(state)) {
+    public static String getName(String code) {
+        if (StringUtils.isNotBlank(code)) {
             for (PickingSourceTypeEnum item : PickingSourceTypeEnum.values()) {
-                if (state.equals(item.getStatus())) {
+                if (code.equals(item.getCode())) {
                     return item.getName();
                 }
             }
@@ -52,12 +47,12 @@ public enum PickingSourceTypeEnum implements EnumMessage {
         return "";
     }
 
-    public static PickingSourceTypeEnum getByStatus(String status){
-        return Arrays.stream(values()).filter(a -> a.getStatus().equals(status))
+    public static PickingSourceTypeEnum getByStatus(String code){
+        return Arrays.stream(values()).filter(a -> a.getCode().equals(code))
                 .findFirst().orElse(null);
     }
 
-    public static List<String> getStatusList() {
-        return Arrays.stream(PickingSourceTypeEnum.values()).map(PickingSourceTypeEnum::getStatus).collect(Collectors.toList());
+    public static List<String> getCodeList() {
+        return Arrays.stream(PickingSourceTypeEnum.values()).map(PickingSourceTypeEnum::getCode).collect(Collectors.toList());
     }
 }

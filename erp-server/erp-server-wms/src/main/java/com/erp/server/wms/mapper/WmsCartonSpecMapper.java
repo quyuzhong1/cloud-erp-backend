@@ -1,5 +1,5 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -24,19 +24,19 @@ public interface WmsCartonSpecMapper extends BaseMapper<WmsCartonSpecEntity> {
      * 查询已装箱数量
      * @Author Luo_WG
      * @Date 2023/11/28 19:04
-     * @param sourceId
+     * @param mainId
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
-    List<WmsCartonDTO.PackingQtyDTO> listPackingQtyByMainId(@Param("sourceId") String sourceId, @Param("boxSpecNo") Integer boxSpecNo);
+    List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(@Param("mainId") String mainId, @Param("boxSpecNo") Integer boxSpecNo);
 
 
     /**
      * 根据来源Id查询包装信息
      * @Author Luo_WG
      * @Date 2024/3/21 14:24
-     * @param sourceId
-     * @return java.util.List<com.erp.model.wms.dto.WmsCartonDTO.PackingQtyDTO>
+     * @param mainId
+     * @return java.util.List<com.erp.model.wms.dto.WmsCartonSpecDTO.PackingQtyDTO>
      **/
-    List<WmsCartonDTO.PackDateDTO> listPackDateBySourceId(@Param("sourceId") String sourceId);
+    List<WmsCartonSpecDTO.PackDateDTO> listPackDateByMainId(@Param("mainId") String mainId);
 
 }

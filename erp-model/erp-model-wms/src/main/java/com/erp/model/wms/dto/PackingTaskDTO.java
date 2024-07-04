@@ -161,7 +161,7 @@ public class PackingTaskDTO implements Serializable {
          */
         private String id;
         /**
-         * 装箱任务编码
+         * 装箱任务编码【可排序】
          */
         private String code;
         /**
@@ -170,12 +170,12 @@ public class PackingTaskDTO implements Serializable {
         private String sourceId;
 
         /**
-         * 关联订单编号
+         * 关联订单编号【可排序】
          */
         private String sourceCode;
 
         /**
-         * 单据类型(B2B,FBA,third)
+         * 单据类型(B2B,FBA,third) 【可排序】
          * PickingSourceTypeEnum
          */
         private String sourceType;
@@ -203,7 +203,7 @@ public class PackingTaskDTO implements Serializable {
          */
         private String weightingStatusName;
         /**
-         * 发货数量
+         * 发货数量 【可排序】
          * 取值关联发货单/发货通知单的发货数量
          */
         private Integer deliveryQty;
@@ -223,6 +223,10 @@ public class PackingTaskDTO implements Serializable {
          */
         private BigDecimal packageWeight;
         /**
+         * 装箱总重（kg） [导出使用]
+         */
+        private String packageWeightStr;
+        /**
          * 异常原因
          */
         private String errorMsg;
@@ -233,16 +237,16 @@ public class PackingTaskDTO implements Serializable {
         private String warehouseId;
 
         /**
-         * 发货仓库名称
+         * 发货仓库名称 【可排序】
          */
         private String warehouseName;
         /**
-         * 创建人
+         * 创建人 【可排序】
          * 取值单据创建人，系统生成显示为system
          */
         private String createUserName;
         /**
-         * 创建时间时间
+         * 创建时间时间 【可排序】
          */
         private LocalDateTime createTime;
     }

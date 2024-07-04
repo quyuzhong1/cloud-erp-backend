@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,7 +22,7 @@ import java.util.List;
 */
 @Data
 @NoArgsConstructor
-public class WmsCartonDTO implements Serializable {
+public class WmsCartonSpecDTO implements Serializable {
 
     /**
     * 详情
@@ -36,9 +37,10 @@ public class WmsCartonDTO implements Serializable {
         private String  id;
 
         /**
-        * 来源id
+        * 来源id sourceId->mainId
+         * packing_task表id
         */
-        private String sourceId;
+        private String mainId;
 
         /**
         * 箱规编号
@@ -66,6 +68,12 @@ public class WmsCartonDTO implements Serializable {
         private BigDecimal boxHeight;
 
         /**
+         * 尺寸单位
+         */
+        @TableField("size_unit")
+        private String sizeUnit;
+
+        /**
         * 箱数
         */
         private Integer boxQty;
@@ -82,7 +90,14 @@ public class WmsCartonDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+        /**
+         * 箱规id
+         */
+        private String specId;
+        /**
+         * 装箱任务id
+         */
+        private String packingTaskId;
         /**
          * 详情
          */
@@ -107,6 +122,10 @@ public class WmsCartonDTO implements Serializable {
         * 包装重量
         */
         private BigDecimal packageWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
 
         /**
         * 箱子尺寸（长）
@@ -122,11 +141,21 @@ public class WmsCartonDTO implements Serializable {
         * 箱子尺寸（高）
         */
         private BigDecimal boxHeight;
+        /**
+         * 长度单位
+         */
+        private String sizeUnit;
 
         /**
         * 箱数
         */
         private Integer boxQty;
+        /**
+         * 箱规来源(manual 手动, device 设备)
+         * MeasureSourceEnum
+         * 字典接口地址
+         */
+        private String measureSource;
     }
 
 
@@ -202,19 +231,23 @@ public class WmsCartonDTO implements Serializable {
     @Data
     public static class PackingQtyDTO {
         /**
-         * 来源id
+         * 来源id -箱规id
          */
-        private String sourceId;
+        private String id;
 
         /**
          * 箱子id
          */
-        private String cartonId;
+//        private String cartonId;
 
         /**
          * 箱数
          */
         private Integer boxQty;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
 
         /**
          * 产品id
@@ -227,19 +260,13 @@ public class WmsCartonDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 装箱数量
-         */
-        private Integer packQty;
-
-        /**
          * 已装箱数量
          */
-        private Integer usePackQty;
+        private Integer packQty;
 
         public PackingQtyDTO() {
             this.boxQty = 0;
             this.packQty = 0;
-            this.usePackQty = 0;
         }
     }
 
@@ -252,18 +279,22 @@ public class WmsCartonDTO implements Serializable {
         /**
          * 单据id
          */
-        private String id;
+        private String sourceId;
 
         /**
          * 单据单号
          */
-        private String code;
+        private String sourceCode;
+        /**
+         * 装箱任务Id
+         */
+        private String taskId;
 
         /**
          * 装箱信息
          */
         @Valid
-        private List<WmsCartonDTO.AddDTO> wmsCartonList;
+        private List<WmsCartonSpecDTO.AddDTO> wmsCartonList;
     }
 
     /**
@@ -314,13 +345,13 @@ public class WmsCartonDTO implements Serializable {
     @Data
     public static class PackDateDTO {
         /**
-         * 来源id
+         * 来源id -箱规id
          */
         private String id;
         /**
-         * 箱子id
+         * 装箱任务id
          */
-        private String cartonId;
+        private String taskId;
         /**
          * 产品id
          */
@@ -361,11 +392,6 @@ public class WmsCartonDTO implements Serializable {
          */
         private Integer boxQty;
 
-        /**
-         * 来源类型
-         */
-        private String sourceType;
-
 
         public PackDateDTO() {
             this.deliveryQty = 0;
@@ -377,21 +403,25 @@ public class WmsCartonDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class WmsCartonView {
+    public static class WmsCartonSpecView {
         /**
          * 单据id
          */
-        private String id;
+        private String sourceId;
 
         /**
          * 单据单号
          */
-        private String code;
+        private String sourceCode;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
 
         /**
-         * 装箱信息
+         * 装箱信息-箱规
          */
-        private List<WmsCartonDTO.ViewDTO> wmsCartonList;
+        private List<WmsCartonSpecDTO.ViewDTO> wmsCartonSpecList;
     }
 
     @Data

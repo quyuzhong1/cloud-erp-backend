@@ -352,7 +352,7 @@
     </select>
 
     <!--导出装箱信息-->
-    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonDTO$ExportPackingDTO">
+    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$ExportPackingDTO">
         SELECT
         so.id,
         so.packing_status,
@@ -375,7 +375,7 @@
         CAST(fmcb.box_no AS INTEGER)
     </select>
     <!--根据销售出单单ID 查询sku 信息-->
-    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonDTO$GroupSkuDTO">
+    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
            SELECT
                so.id,
                sod.sku_id,

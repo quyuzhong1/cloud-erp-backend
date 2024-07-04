@@ -215,7 +215,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      * 构建请求参数
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
-                                                                     List<WmsCartonDTO.PackingItemDTO> itemDTOList,
+                                                                     List<WmsCartonSpecDTO.PackingItemDTO> itemDTOList,
                                                                      Map<SettingEnum, String> shipperInfo,
                                                                      String verifyCode,
                                                                      String code,
@@ -240,7 +240,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
-        for (WmsCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
+        for (WmsCartonSpecDTO.PackingItemDTO itemDTO : itemDTOList) {
             FirstMileDeliveryDetailEntity  firstMileDeliveryDetailEntity = deliveryDetailEntityList.stream().filter(v->v.getSkuId().equals(itemDTO.getSkuId())).findFirst().orElse(null);
             if (null == firstMileDeliveryDetailEntity) {
                 String msg = StrUtil.format("海外仓入库单明细中找不到skuId为【{}】的明细", itemDTO.getSkuId());
@@ -986,7 +986,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                                                                      String verityCode
     ) {
         // 查询包装信息
-        List<WmsCartonDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
+        List<WmsCartonSpecDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
         if (CollectionUtils.isEmpty(packingQtyDTOS)) {
             String format = StrUtil.format("【{}】发货单：未找到包装信息", mainEntity.getSourceCode());
             throw new ServiceException(format);

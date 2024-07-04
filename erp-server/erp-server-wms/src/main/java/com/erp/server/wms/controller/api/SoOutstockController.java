@@ -17,7 +17,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -455,12 +455,12 @@ public class SoOutstockController extends BaseController {
      **/
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
-    public ApiResult packingSave(@RequestBody @Validated WmsCartonDTO.WmsCartonAdd dto) {
+    public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
         String packingStatus = soOutstockService.packingSave(dto);
 
         if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
         } else {
-            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getId()));
+            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getSourceId()));
             List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
             if (CollectionUtil.isNotEmpty(ids)) {
                 TmsDeclareBillDTO.DeleteDTO deleteDTO = new TmsDeclareBillDTO.DeleteDTO();
@@ -479,9 +479,9 @@ public class SoOutstockController extends BaseController {
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
     @GetMapping("/packingView")
-    public ApiResult<WmsCartonDTO.WmsCartonView> packingView(@RequestParam("id") String id) {
-        WmsCartonDTO.WmsCartonView wmsCartonView = soOutstockService.packingView(id);
-        return success(wmsCartonView);
+    public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingView(@RequestParam("id") String id) {
+        WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = soOutstockService.packingView(id);
+        return success(wmsCartonSpecView);
     }
 
     /**
@@ -492,8 +492,8 @@ public class SoOutstockController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @GetMapping("/listPacking")
-    public ApiResult<WmsCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
-        WmsCartonDTO.ListPackingDTO result = soOutstockService.listPacking(id);
+    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+        WmsCartonSpecDTO.ListPackingDTO result = soOutstockService.listPacking(id);
         return success(result);
     }
 
@@ -549,8 +549,8 @@ public class SoOutstockController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @GetMapping("/listGroupSkuById")
-    public ApiResult<List<WmsCartonDTO.GroupSkuDTO>> listGroupSkuById(@RequestParam("id") String id) {
-        List<WmsCartonDTO.GroupSkuDTO> result = soOutstockService.listGroupSkuById(id);
+    public ApiResult<List<WmsCartonSpecDTO.GroupSkuDTO>> listGroupSkuById(@RequestParam("id") String id) {
+        List<WmsCartonSpecDTO.GroupSkuDTO> result = soOutstockService.listGroupSkuById(id);
         return success(result);
     }
 }

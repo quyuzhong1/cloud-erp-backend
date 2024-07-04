@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.common.business.service.SuperService;
@@ -64,4 +65,33 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     List<PackingTaskDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 根据数据来源查询任务列表
+     * @param sourceId
+     * @param sourceType
+     * @return
+     */
+    List<PackingTaskEntity> listBySourceIdAndSourceType(String sourceId, String sourceType);
+
+    /**
+     * 装箱-详情(箱规+产品明细)
+     * @param id
+     * @return
+     */
+    WmsCartonSpecDTO.WmsCartonSpecView packingView(String id);
+
+    /**
+     * 快粘贴查询sku
+     * @param id
+     * @return
+     */
+    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id);
+
+    /**
+     * 装箱保存
+     * @param dto
+     * @return
+     */
+    Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto);
 }
