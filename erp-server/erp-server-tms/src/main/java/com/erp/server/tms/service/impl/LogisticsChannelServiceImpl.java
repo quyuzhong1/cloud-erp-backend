@@ -277,7 +277,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             carrierList.stream()
                     .filter(e -> e.getSalesPlatform().equalsIgnoreCase(viewDTO.getSalesPlatform()) && e.getCode().equalsIgnoreCase(viewDTO.getCarrierCode()))
                     .findFirst()
-                    .ifPresent(carrierEntity -> viewDTO.setCarrierCode(carrierEntity.getName()));
+                    .ifPresent(carrierEntity -> viewDTO.setCarrierName(carrierEntity.getName()));
         }
 
     }
