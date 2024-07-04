@@ -296,8 +296,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     public void autoExecuteRule(String time) {
         if (StrUtil.isBlank(time)) {
             //当前时间
-            // time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
-            time = "02:00";
+            time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
         }
         List<CfgRuleWaveEntity> cfgRuleWaveList = baseMapper.listRuleWaveByTime(time);
         if (CollectionUtil.isEmpty(cfgRuleWaveList)) {
