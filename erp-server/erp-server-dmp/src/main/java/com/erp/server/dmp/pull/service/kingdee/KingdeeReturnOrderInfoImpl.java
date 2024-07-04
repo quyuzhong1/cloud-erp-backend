@@ -65,7 +65,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
     private CfgSettingService cfgSettingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeReturnOrderEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -156,7 +156,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeReturnOrderEntity mongoDatum) {
         BiReturnOrderInfoEntity returnOrderInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());

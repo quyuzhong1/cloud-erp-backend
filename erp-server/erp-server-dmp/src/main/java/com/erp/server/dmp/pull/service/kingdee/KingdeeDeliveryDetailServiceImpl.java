@@ -73,7 +73,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     private CfgSettingService settingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeDeliveryDetailEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -199,7 +199,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeDeliveryDetailEntity mongoDatum) {
         BiDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
