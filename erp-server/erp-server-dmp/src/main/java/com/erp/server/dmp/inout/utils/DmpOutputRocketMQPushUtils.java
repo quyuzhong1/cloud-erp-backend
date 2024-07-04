@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.utils;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +22,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
@@ -38,6 +40,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -148,15 +151,27 @@ public class DmpOutputRocketMQPushUtils{
 			.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
 			.update();
 		if(status.equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
-			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-	        warnMsgInfo.setBizName("新中台推送erp");
-	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-	        warnMsgInfo.setTitle("新中台推送erp失败，id=" + id);
-	        warnMsgInfo.setTableName("dmp_output_task_record");
-	        warnMsgInfo.setTableId(id);
-	        warnMsgInfo.setKeyInfo(responseData);
-	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-	        mqProducerService.sendWarnMsg(warnMsgInfo);
+//			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+//	        warnMsgInfo.setBizName("新中台推送erp");
+//	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+//	        warnMsgInfo.setTitle("新中台推送erp失败，id=" + id);
+//	        warnMsgInfo.setTableName("dmp_output_task_record");
+//	        warnMsgInfo.setTableId(id);
+//	        warnMsgInfo.setKeyInfo(responseData);
+//	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+//	        mqProducerService.sendWarnMsg(warnMsgInfo);
+	        
+	        Map<String, Object> bodyMap = new HashMap<String, Object>();
+			bodyMap.put("msg_type", "text");
+			Map<String, String> contentMap = new HashMap<String, String>();
+			
+			String env = "测试";
+			if(BusinessCommonConstants.hasProfile("prod")) {
+				env = "生产";
+			}
+			contentMap.put("text", "新中台"+ env +"环境告警：" + "任务id=" + id + "处理失败" + responseData);
+			bodyMap.put("content", contentMap);
+			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
 		}
 	}
 }
