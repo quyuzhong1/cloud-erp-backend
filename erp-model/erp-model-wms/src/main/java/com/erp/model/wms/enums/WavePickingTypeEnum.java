@@ -11,8 +11,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum WavePickingTypeEnum implements EnumMessage {
 
-    MIXED_WAVE("mixedWave", "先检后分"),
-    SAME_WAVE("sameWave", "边检边分"),
+    FIRST_PICK("firstPick", "先检后分"),
+    SAME_PICK("samePick", "边检边分"),
     ;
 
 
