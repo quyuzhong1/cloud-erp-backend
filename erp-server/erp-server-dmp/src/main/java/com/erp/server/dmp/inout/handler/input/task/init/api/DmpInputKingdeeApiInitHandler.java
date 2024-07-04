@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Service
 @Slf4j
+@Scope("prototype")
 public class DmpInputKingdeeApiInitHandler implements DmpInputApiInitHandler{
 
 	@Override
