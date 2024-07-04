@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
@@ -42,6 +43,8 @@ public class DmpInputTaskFactory{
 	private DmpInputTaskStatusHandler dmpInputTaskStatusHandler;
 	@Resource
     private RedisTemplate<String,Object> redisTemplate;
+	@Autowired
+	private DmpInputTaskFactory dmpInputTaskFactory;
 	
 	/**
 	 * 执行输入任务
@@ -76,31 +79,7 @@ public class DmpInputTaskFactory{
 			try {
 				for(DmpInputTaskStatusEnum value : values) {
 					if(value != DmpInputTaskStatusEnum.INIT && value != DmpInputTaskStatusEnum.ERROR) {
-						String code = value.getCode();
-						log.info("{}任务开始执行，执行状态{}" , inputTaskId , code);
-						try {
-							dmpInputFinishRequest.setDealTaskStatus(value);
-							DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
-							bean.addDmpHandler(dmpInputBaseTaskHandler);
-							bean.addDmpHandler(dmpInputTaskStatusHandler);
-							bean.doDmpHandler(dmpInputFinishRequest, dmpResponse);
-						} catch (Exception e) {
-							log.error("{}任务执行报错，执行状态{}" , inputTaskId , code, e);
-							Integer maxRetryCount = 3;
-							DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpResponse.getDmpCfgInputDetailEntity();
-							if(dmpCfgInputDetailEntity != null) {
-								maxRetryCount = dmpCfgInputDetailEntity.getMaxRetryCount();
-							}
-							List<DmpInputTaskEntity> beforeDmpInputTaskEntityList = dmpResponse.getBeforeDmpInputTaskEntityList();
-							if(CollUtil.isNotEmpty(beforeDmpInputTaskEntityList)) {
-								DmpInputTaskEntity dmpInputTaskEntity = beforeDmpInputTaskEntityList.get(0);
-								Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
-								boolean errorFlag = errorCount == maxRetryCount;
-								dmpInputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
-							}
-							throw e;
-						}
-						log.info("{}任务结束执行，执行状态{}" , inputTaskId , code);
+						dmpInputTaskFactory.innerDealInputTask(value, dmpInputFinishRequest, dmpResponse);
 					}
 				}
 			}catch (Exception e) {
@@ -114,4 +93,33 @@ public class DmpInputTaskFactory{
 		return dmpResponse;
 	}
 	
+	@Transactional(rollbackFor = Exception.class)
+	public void innerDealInputTask(DmpInputTaskStatusEnum value , DmpInputFinishRequest dmpInputFinishRequest , DmpInputFinishResponse dmpResponse) {
+		String inputTaskId = dmpInputFinishRequest.getInputTaskId();
+		String code = value.getCode();
+		log.info("{}任务开始执行，执行状态{}" , inputTaskId , code);
+		try {
+			dmpInputFinishRequest.setDealTaskStatus(value);
+			DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
+			bean.addDmpHandler(dmpInputBaseTaskHandler);
+			bean.addDmpHandler(dmpInputTaskStatusHandler);
+			bean.doDmpHandler(dmpInputFinishRequest, dmpResponse);
+		} catch (Exception e) {
+			log.error("{}任务执行报错，执行状态{}" , inputTaskId , code, e);
+			Integer maxRetryCount = 3;
+			DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpResponse.getDmpCfgInputDetailEntity();
+			if(dmpCfgInputDetailEntity != null) {
+				maxRetryCount = dmpCfgInputDetailEntity.getMaxRetryCount();
+			}
+			List<DmpInputTaskEntity> beforeDmpInputTaskEntityList = dmpResponse.getBeforeDmpInputTaskEntityList();
+			if(CollUtil.isNotEmpty(beforeDmpInputTaskEntityList)) {
+				DmpInputTaskEntity dmpInputTaskEntity = beforeDmpInputTaskEntityList.get(0);
+				Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
+				boolean errorFlag = errorCount == maxRetryCount;
+				dmpInputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
+			}
+			throw e;
+		}
+		log.info("{}任务结束执行，执行状态{}" , inputTaskId , code);
+	}
 }

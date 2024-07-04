@@ -17,6 +17,8 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 
+import cn.hutool.core.collection.CollUtil;
+
 @Component
 public class DmpOutputTaskJob {
 	@Autowired
@@ -47,8 +49,8 @@ public class DmpOutputTaskJob {
 		}
 		
 		List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
-			.in(ids != null ,DmpOutputTaskRecordEntity::getId, ids)
-			.in(mainIds != null ,DmpOutputTaskRecordEntity::getMainId, mainIds)
+			.in(CollUtil.isNotEmpty(ids) ,DmpOutputTaskRecordEntity::getId, ids)
+			.in(CollUtil.isNotEmpty(mainIds) ,DmpOutputTaskRecordEntity::getMainId, mainIds)
 			.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.INIT.getCode() , DmpOutputTaskRecordStatusEnum.MQERROR.getCode() , DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode()))
 			.last(" limit " + size)
 			.list();
