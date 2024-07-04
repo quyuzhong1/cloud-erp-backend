@@ -16,6 +16,8 @@ import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
@@ -97,7 +99,12 @@ public class DmpOutputRocketMQPushUtils{
 						
 						String status = DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode();
 						String responseData = "";
-						SendResult syncSend = rocketMQTemplate.syncSendOrderly(StrUtil.format("{}:{}" , dmpCfgMqEntity.getTopic(), dmpCfgMqEntity.getTag()), requestData , id);
+						
+						Message<String> rocketMQMessage = MessageBuilder.withPayload(requestData)
+				                .setHeader("KEYS", id)
+				                .build();
+						
+						SendResult syncSend = rocketMQTemplate.syncSend(StrUtil.format("{}:{}" , dmpCfgMqEntity.getTopic(), dmpCfgMqEntity.getTag()), rocketMQMessage);
 						if (!SendStatus.SEND_OK.equals(syncSend.getSendStatus())){
 							status = DmpOutputTaskRecordStatusEnum.MQERROR.getCode();
 							responseData = StrUtil.format("发送RocketMQ数据异常，id=：{}，mq信息：{}", id , JSON.toJSONString(dmpCfgMqEntity));
