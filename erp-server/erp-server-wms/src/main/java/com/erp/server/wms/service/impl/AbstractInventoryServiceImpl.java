@@ -181,7 +181,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             boolean isLock;
             try {
                 // 1，获取锁
-                isLock = rLock.tryLock(20,TimeUnit.SECONDS);
+                isLock = rLock.tryLock(5,TimeUnit.SECONDS);
                 if (!isLock) {
                     log.error("尝试获取锁[{}]失败,操作: 反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，单据编号：【{}】",
                             lockKey,txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuId(), txnFlow.getSkuNo(),  businessTypeEnum.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), txnFlow.getSourceId(), txnFlow.getSourceCode());
@@ -364,7 +364,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         boolean isLock;
         try {
             // 设置最大等待锁时间
-            isLock = rLock.tryLock(20, TimeUnit.SECONDS);
+            isLock = rLock.tryLock(5, TimeUnit.SECONDS);
             if (!isLock) {
                 log.error("单据：{},SKU:{},入库加锁失败,key={}",param.getSourceCode(),param.getSkuNo(), lockKey);
                 throw new ServiceException(ApiError.ERROR_1026);
@@ -422,7 +422,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         boolean isLock;
         try {
             // 设置最大等待锁时间
-            isLock = rLock.tryLock(20, TimeUnit.SECONDS);
+            isLock = rLock.tryLock(5, TimeUnit.SECONDS);
             if (!isLock) {
                 log.error("单据：{},SKU:{},入库加锁失败,key={}",param.getSourceCode(),param.getSkuNo(), lockKey);
                 throw new ServiceException(ApiError.ERROR_1026);
