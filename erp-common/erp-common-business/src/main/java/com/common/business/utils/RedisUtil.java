@@ -2,10 +2,14 @@ package com.common.business.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Collection;
 import java.util.List;
@@ -598,4 +602,109 @@ public class RedisUtil {
         return redisTemplate.opsForHash().multiGet(key, hKeys);
     }
 
+
+    /**
+     * @author nkk(kk.niu @ qq.com) @Date 2021年2月3日
+     * @Description 队列的redis return void
+     */
+    public boolean lockAutoUnlock(String lockKey, String lockValue, long lockSeconds, boolean blockAndGet) throws Exception {
+        return lockAutoUnlock(lockKey, lockValue, lockSeconds, blockAndGet, redisTemplate);
+    }
+
+    /**
+     * redis分布式锁
+     * @Author Luo_WG
+     * @Date 2024/7/4 16:25
+     * @param lockKey
+     * @param lockValue
+     * @param lockSeconds 锁的过期时间
+     * @param blockAndGet 没有获取到时是否阻塞再获取
+     * @return boolean
+     **/
+    private boolean lockAutoUnlock(String lockKey, String lockValue, long lockSeconds, boolean blockAndGet, RedisTemplate<String, String> redisTemplate) throws Exception {
+        if (ObjectUtils.isEmpty(lockKey) || ObjectUtils.isEmpty(lockValue)) {
+            return false;
+        }
+        String lockValue2 = redisTemplate.opsForValue().get(lockKey);
+        if (!ObjectUtils.isEmpty(lockValue2)) {
+            return false;
+        }
+        SessionCallback<Boolean> callback = new SessionCallback<Boolean>() {
+            @Override
+            public <K, V> Boolean execute(RedisOperations<K, V> operations) throws DataAccessException {
+                //开启redis事务
+                operations.multi();
+                redisTemplate.opsForValue().setIfAbsent(lockKey, lockValue);
+                //加锁成功,设置过期时间,防止死锁
+                redisTemplate.expire(lockKey, lockSeconds, TimeUnit.SECONDS);
+                //返回执行结果
+                List<Object> result = operations.exec();
+                if (result != null && result.size() > 0) {
+                    return (Boolean) result.get(0);
+                }
+                return false;
+            }
+        };
+        Boolean isLock = redisTemplate.execute(callback);
+        if (isLock) {
+            //加锁成功
+            return true;
+        } else {
+            if (blockAndGet) {
+                int failCount = 0;
+                boolean flag = false;
+                //再次尝试获取锁三次
+                while (failCount < 3) {
+                    Thread.sleep(lockSeconds / 3 * 1000);
+                    flag = redisTemplate.execute(callback);
+                    if (flag) {
+                        return true;
+                    }
+                    failCount++;
+                }
+                return false;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    public void unLock(String lockKey, String lockValue) {
+        unLock(lockKey, lockValue, redisTemplate);
+    }
+
+    /**
+     * 释放锁
+     * @Author Luo_WG
+     * @Date 2024/7/4 16:25
+     * @param lockKey
+     * @param lockValue
+     * @param redisTemplate
+     * @return void
+     **/
+    private void unLock(String lockKey, String lockValue, RedisTemplate<String, String> redisTemplate) {
+        try {
+            //锁剩余存活时间
+            long expireTimeOld = redisTemplate.getExpire(lockKey, TimeUnit.MILLISECONDS);
+            String value = redisTemplate.opsForValue().get(lockKey);
+            if (null != value && value.equals(lockValue)) {
+                //delete前锁剩余存活时间
+                long expireNew = redisTemplate.getExpire(lockKey, TimeUnit.MILLISECONDS);
+                if (expireTimeOld > 0 && expireNew > 0 && expireNew > expireTimeOld) {
+                    //说明是新获得锁的线程,不能删除
+                    return;
+                } else {
+                    if (expireNew < 1000) {
+                        Thread.sleep(1000);
+                    } else {
+                        //防止因锁过期,导致当前线程删除另一个线程获得的锁,预留1s删除响应时间
+                        redisTemplate.delete(lockKey);
+//						writelog(new Date()+":"+Thread.currentThread().getName()+": 删除,释放锁成功...");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            return;
+        }
+    }
 }
