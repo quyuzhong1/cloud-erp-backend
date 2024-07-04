@@ -7,6 +7,7 @@ import javax.annotation.Resource;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
+@Scope("prototype")
 public class DmpInputBaseTaskHandler extends DmpInputTaskHandler{
 	@Autowired
 	private DmpInputTaskService dmpInputTaskService;
