@@ -70,7 +70,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto){
         // 请求列表API获取更新订单列表
         List<GyyOrderEntity> gyyOrderEntityList = pullDate(dto);
@@ -127,7 +127,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(GyyOrderEntity gyyOrder) {
         BiOrderInfoEntity infoEntity = initOrderInfoEntity(gyyOrder);
 

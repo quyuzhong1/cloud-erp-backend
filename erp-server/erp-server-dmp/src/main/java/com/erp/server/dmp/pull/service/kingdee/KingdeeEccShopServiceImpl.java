@@ -84,7 +84,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeEccShopEntity> skuEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(skuEntityList)){
@@ -158,7 +158,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeEccShopEntity mongoDatum) {
         BiShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());

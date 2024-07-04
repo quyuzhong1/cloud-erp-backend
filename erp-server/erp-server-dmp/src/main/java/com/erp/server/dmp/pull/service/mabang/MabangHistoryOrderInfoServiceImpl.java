@@ -56,7 +56,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
      * @param dto 任务信息
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         List<OrderEntity> entityList = MabangApiUtils.queryHistorySalesList(dto.getPlatformApiEnum().getTaskName(), nextTime);
@@ -123,7 +123,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(OrderEntity mongoDatum) {
 
     }
