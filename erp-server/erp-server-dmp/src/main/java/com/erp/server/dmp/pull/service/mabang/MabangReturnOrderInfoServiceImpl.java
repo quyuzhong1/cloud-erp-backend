@@ -93,7 +93,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<ReturnOrderEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -165,7 +165,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ReturnOrderEntity mongoDatum) {
         DmpReturnOrderInfoEntity returnOrderInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());

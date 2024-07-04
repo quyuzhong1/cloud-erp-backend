@@ -98,7 +98,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
      * @param dto 任务信息
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<OrderEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -178,7 +178,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(OrderEntity mongoDatum) {
         DmpOrderInfoEntity orderInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());

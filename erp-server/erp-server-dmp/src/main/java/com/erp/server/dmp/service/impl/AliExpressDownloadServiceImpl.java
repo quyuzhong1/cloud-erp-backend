@@ -188,7 +188,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void singleHandlerSoDeliveryDownload(String shopId, String platform, String category, List<PlatformAliExpressOrderDTO> dtoList) {
         try {
             AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);

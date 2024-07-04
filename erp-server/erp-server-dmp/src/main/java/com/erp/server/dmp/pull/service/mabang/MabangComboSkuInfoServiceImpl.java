@@ -55,7 +55,7 @@ public class MabangComboSkuInfoServiceImpl implements IReportSaveService<ComboSk
     private MQProducerService<ComboSkuInfoEntity> mqProducerService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<ComboSkuInfoEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -126,7 +126,7 @@ public class MabangComboSkuInfoServiceImpl implements IReportSaveService<ComboSk
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ComboSkuInfoEntity mongoDatum) {
         ComboSkuInfoEntity comboSkuInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());

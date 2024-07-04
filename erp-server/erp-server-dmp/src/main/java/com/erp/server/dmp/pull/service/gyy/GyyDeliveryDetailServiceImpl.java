@@ -63,7 +63,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<GyyDeliveryDetailEntity> gyyDeliveryDetailEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(gyyDeliveryDetailEntityList)) {
@@ -120,7 +120,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(GyyDeliveryDetailEntity deliveryEntity) {
         DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(deliveryEntity);
         OrderMongoDTO updateDto = new OrderMongoDTO(deliveryEntity.get_id());

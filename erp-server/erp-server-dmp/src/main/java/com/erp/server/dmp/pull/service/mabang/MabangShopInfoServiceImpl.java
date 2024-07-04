@@ -55,7 +55,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
     private CfgSettingService cfgSettingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<ShopEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -125,7 +125,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ShopEntity mongoDatum) {
         DmpShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());
