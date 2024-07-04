@@ -62,6 +62,9 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 		if(!typeId.equals(dmpResponse.getDmpCfgInputEntity().getTypeId())) {
 			log.error("{}成员变量对象{}，参数对象{}" , inputTaskId , JSON.toJSONString(dmpCfgInputEntity) , JSON.toJSONString(dmpResponse.getDmpCfgInputEntity()));
 		}
+		if(!dmpCfgInputConvertEntity.getMainId().equals(dmpCfgInputEntity.getId())) {
+			log.error("基础成员变量不一致：{} ，{}" , JSON.toJSONString(dmpCfgInputConvertEntity) , JSON.toJSONString(dmpCfgInputEntity));
+		}
 		if(DmpCfgInputTypeEnum.API.getCode().equals(type)) {
 			DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
 			String apiClass = dmpCfgApiEntity.getApiClass();
