@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum WavePickingTypeEnum implements EnumMessage {
 
     FIRST_PICK("firstPick", "先拣后分"),
-    SAME_PICK("samePick", "边检边分"),
+    SAME_PICK("samePick", "边拣边分"),
     ;
 
 
