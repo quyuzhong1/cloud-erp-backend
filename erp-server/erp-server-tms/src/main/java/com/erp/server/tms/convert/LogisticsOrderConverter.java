@@ -507,7 +507,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "category_en_desc" ,source = "declareEnglishName"),
             @Mapping(target = "contains_battery" ,source = "isElectric"),
             @Mapping(target = "hs_code" ,source = "customsCode"),
-            @Mapping(target = "only_battery" ,source = "isElectric"),
+            @Mapping(target = "only_battery" ,source = "onlyBattery"),
             @Mapping(target = "product_declare_amount" ,source = "destDeclarePrice"),
             @Mapping(target = "product_id" ,source = "skuId", qualifiedByName = "strToLong"),
             @Mapping(target = "product_num" ,source = "quantity"),

@@ -12,6 +12,7 @@ import com.erp.tms.aliexpress.model.handover.request.*;
 import com.erp.tms.aliexpress.util.ApiException;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.Objects;
 /**
  * 速卖通交接服务层-菜鸟国际出口
  */
+@Slf4j
 @Component
 public class AliExpressHandoverService {
     /**
@@ -121,6 +123,8 @@ public class AliExpressHandoverService {
      * @throws ApiException
      */
     public IopResponse commit(Map<String, String> authMap, CommitRequest commitRequest) throws ApiException {
+        log.info("==========AliExpressHandoverService.commit==========start");
+        log.info("authMap:{}, commitRequest:{}",authMap, commitRequest);
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
@@ -167,6 +171,8 @@ public class AliExpressHandoverService {
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
+        log.info("==========AliExpressHandoverService.commit==========end");
+        log.info("response:{}",response);
         return response;
     }
 

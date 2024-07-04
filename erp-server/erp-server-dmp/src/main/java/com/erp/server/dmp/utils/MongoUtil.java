@@ -24,6 +24,15 @@ public class MongoUtil {
         return str;
     }
 	
+	public static Criteria mongoFilter_duplicateKey(List<ParamData> paramDataList) {
+		Criteria criteria = new Criteria();
+		Map<String, List<ParamData>> filterParam = new HashMap<>();
+		for(ParamData paramData : paramDataList) {
+			filterParam.put(paramData.getColum_name(), Arrays.asList(paramData));
+		}
+		return createCriteriaByMap(criteria, filterParam);
+	}
+	
 	public static Criteria mongoFilter_duplicateKey(Object obj) {
 		Criteria criteria = new Criteria();
 		Map<String, List<ParamData>> filterParam = getFilterParam(obj);

@@ -50,6 +50,16 @@ public class LogisticsMappingDTO implements Serializable {
          * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
          */
         private String orderDeliveryMarkType;
+
+        /**
+         * 承运商代号(部分速卖通物流渠道必填)
+         */
+        private String carrierCode;
+
+        /**
+         * 承运商代号名称
+         */
+        private String carrierName;
     }
 
     /**
@@ -102,6 +112,14 @@ public class LogisticsMappingDTO implements Serializable {
         @NotBlank(message = "标发订单类型不能为空")
         @Size(max = 30,message = "标发订单类型最大长度不能超过32位")
         private String orderDeliveryMarkType;
+
+
+        /**
+         * 承运商代号(部分速卖通物流渠道必填)
+         * <a href="http://172.16.100.11:3002/project/128/interface/api/cat_1635">来源：承运商列表</a>
+         */
+        @Size(max = 64,message = "承运商代号最大长度不能超过32位")
+        private String carrierCode;
     }
 
 

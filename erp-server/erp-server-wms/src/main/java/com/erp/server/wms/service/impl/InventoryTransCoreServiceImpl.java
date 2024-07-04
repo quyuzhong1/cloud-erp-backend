@@ -29,54 +29,53 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void approveByType(InventoryInOutStockDTO dto) {
-        ValidatorUtil.validateEntity(dto);
+    public void approveByType(InventoryInOutStockDTO busiParam) {
+        ValidatorUtil.validateEntity(busiParam);
         InventoryStockService inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        inventoryService.approve(dto.getParamList(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
+        inventoryService.approve(busiParam.getParamList(), null, InventoryBusinessTypeEnum.getByCode(busiParam.getBusinessType()), true);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void approveByType(InventoryTransferDTO dto) {
-        ValidatorUtil.validateEntity(dto);
+    public void approveByType(InventoryTransferDTO busiParam) {
+        ValidatorUtil.validateEntity(busiParam);
         InventoryStockService inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
-        inventoryService.approve(dto.getParamList(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
+        inventoryService.approve(busiParam.getParamList(), null, InventoryBusinessTypeEnum.getByCode(busiParam.getBusinessType()), true);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void approveByRule(InventoryTransferRuleDTO dto) {
-        ValidatorUtil.validateEntity(dto);
+    public void approveByRule(InventoryTransferRuleDTO busiParam) {
+        ValidatorUtil.validateEntity(busiParam);
         InventoryStockService inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
-        inventoryService.approve(dto.getParamList(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
+        inventoryService.approve(busiParam.getParamList(), busiParam.getRules(), InventoryBusinessTypeEnum.getByCode(busiParam.getBusinessType()), false);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void approveByRule(InventoryInOutStockRuleDTO dto) {
-        ValidatorUtil.validateEntity(dto, ValidGroup.Update.class);
+    public void approveByRule(InventoryInOutStockRuleDTO busiParam) {
+        ValidatorUtil.validateEntity(busiParam, ValidGroup.Update.class);
         InventoryStockService inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        inventoryService.approve(dto.getParamList(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
+        inventoryService.approve(busiParam.getParamList(), busiParam.getRules(), InventoryBusinessTypeEnum.getByCode(busiParam.getBusinessType()), false);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void unApprove(InventoryUnApproveDTO dto) {
-        ValidatorUtil.validateEntity(dto);
-        inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK)
-                .unApprove(dto);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void batchUnApprove(InventoryBatchUnApproveDTO dto) {
-        ValidatorUtil.validateEntity(dto);
+    public void unApprove(InventoryUnApproveDTO busiParam) {
+        ValidatorUtil.validateEntity(busiParam);
         InventoryStockService inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        dto.getBillIds().forEach(billId->{
+        inventoryService.unApprove(busiParam);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchUnApprove(InventoryBatchUnApproveDTO busiParam) {
+        ValidatorUtil.validateEntity(busiParam);
+        busiParam.getBillIds().forEach(billId->{
             InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
-            inventoryUnApproveDTO.setSourceType(dto.getSourceType());
+            inventoryUnApproveDTO.setSourceType(busiParam.getSourceType());
             inventoryUnApproveDTO.setBillId(billId);
-            inventoryService.unApprove(inventoryUnApproveDTO);
+            this.unApprove(inventoryUnApproveDTO);
         });
     }
 

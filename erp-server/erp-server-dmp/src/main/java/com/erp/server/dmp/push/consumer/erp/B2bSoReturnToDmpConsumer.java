@@ -11,9 +11,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import com.erp.server.dmp.service.DmpPushTaskService;
-import com.erp.server.dmp.service.DmpReturnOrderInfoService;
+import com.erp.server.dmp.service.BiReturnOrderInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -40,7 +40,7 @@ public class B2bSoReturnToDmpConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
     private DmpPushTaskService dmpPushTaskService;
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    private BiReturnOrderInfoService biReturnOrderInfoService;
 
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
@@ -64,7 +64,7 @@ public class B2bSoReturnToDmpConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
         //操作项
         String operate = String.valueOf(map.get("operate"));
 
-        DmpReturnOrderInfoEntity dmpOrderInfoEntity = JSON.parseObject(String.valueOf(map.get("entity")), DmpReturnOrderInfoEntity.class);
+        BiReturnOrderInfoEntity dmpOrderInfoEntity = JSON.parseObject(String.valueOf(map.get("entity")), BiReturnOrderInfoEntity.class);
         this.cleanOrderField(dmpOrderInfoEntity, operate);
         return ApiResult.success();
     }
@@ -72,18 +72,18 @@ public class B2bSoReturnToDmpConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
     /**
      * 清洗订单
      */
-    private void cleanOrderField(DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity, String operate) {
-        if (ObjectUtil.isEmpty(dmpReturnOrderInfoEntity)) {
+    private void cleanOrderField(BiReturnOrderInfoEntity biReturnOrderInfoEntity, String operate) {
+        if (ObjectUtil.isEmpty(biReturnOrderInfoEntity)) {
             throw new RuntimeException("存储的对象dmpReturnOrderInfoEntity不能为空！");
         }
         //根据操作类型进行操作
         if (Objects.equals(operate, SyncOperateEnum.OPERATE_APPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_UPDATE.getCode())) {
             //审核
-            dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);
+            biReturnOrderInfoService.checkOrder(biReturnOrderInfoEntity);
 
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
-            dmpReturnOrderInfoService.removeReturnOrderByCode(Collections.singletonList(String.valueOf(dmpReturnOrderInfoEntity.getPlatformOrderId())));
+            biReturnOrderInfoService.removeReturnOrderByCode(Collections.singletonList(String.valueOf(biReturnOrderInfoEntity.getPlatformOrderId())));
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_INVALID.getCode())) {
             //作废 不处理
             log.info("作废状态，直接忽略同步dmp订单操作");

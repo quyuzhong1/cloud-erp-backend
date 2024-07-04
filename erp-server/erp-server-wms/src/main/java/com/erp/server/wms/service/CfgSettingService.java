@@ -50,4 +50,11 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return PoReturnSettingDTO
      */
     CfgSettingValueDTO.PoReturnSettingDTO getPoReturnSetting();
+
+    /**
+     * 获取物流商配置
+     * @param logisticsSupplierId
+     * @return
+     */
+    Boolean getPackageSupplierSetting(String logisticsSupplierId);
 }

@@ -1,0 +1,36 @@
+package com.erp.server.dmp.service;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.common.business.service.SuperService;
+import com.common.business.dto.base.*;
+import com.erp.model.dmp.dto.DmpInputTaskDTO;
+
+/**
+ * <p>
+ * 拉取任务 服务类
+ * </p>
+ *
+ * @author shukai
+ * @since 2024-06-11
+ */
+public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
+
+    /**
+    * 新增
+    * @author shukai
+    * @date: 2024-06-11
+    * @param dto
+    * @return
+    */
+    BaseResultDTO.AddDTO add(DmpInputTaskDTO.AddDTO dto);
+
+    /**
+    * 修改
+    * @author shukai
+    * @date: 2024-06-11
+    * @param dto
+    * @return
+    */
+    Boolean update(DmpInputTaskDTO.UpdateDTO dto);
+
+    boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e);
+}
