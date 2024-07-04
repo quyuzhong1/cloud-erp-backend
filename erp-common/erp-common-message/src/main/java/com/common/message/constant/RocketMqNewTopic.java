@@ -16,4 +16,9 @@ public class RocketMqNewTopic {
      * 新中台金蝶退货单
      */
     public static final String DMP_KINGDEE_ORDER_RETURN_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_order_return_to_wms_topic";
+    
+    /**
+     * 新中台金蝶销售出库单
+     */
+    public static final String DMP_KINGDEE_SO_OUTSTOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_so_outstock_to_wms_topic";
 }

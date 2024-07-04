@@ -121,6 +121,11 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
     @TableField("platform_order_code")
     private String platformOrderCode;
     /**
+     * 备注
+     */
+     @TableField("remark")
+     private String remark;
+    /**
     * 输入任务id
     */
     @TableField("input_task_id")

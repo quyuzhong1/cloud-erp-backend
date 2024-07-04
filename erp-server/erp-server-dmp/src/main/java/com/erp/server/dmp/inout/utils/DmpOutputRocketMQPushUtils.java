@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.utils;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +22,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
@@ -38,6 +40,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -60,6 +64,8 @@ public class DmpOutputRocketMQPushUtils{
 	@Qualifier("dmpOutputExecutorPool")
 	private ExecutorService dmpOutputExecutorPool;
 	
+	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
+	
 	public void dealDmpOutputTaskRecordEntityList(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
     	if(CollUtil.isEmpty(dmpOutputTaskRecordEntityList)) {
     		return;
@@ -72,6 +78,7 @@ public class DmpOutputRocketMQPushUtils{
     	Map<String, String> outputTypeIdMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
     		.select(DmpCfgOutputEntity::getId , DmpCfgOutputEntity::getTypeId).list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, DmpCfgOutputEntity::getTypeId));
     	
+    	int i = 0;
 		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			dmpOutputExecutorPool.execute(() -> {
 				String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
@@ -111,19 +118,21 @@ public class DmpOutputRocketMQPushUtils{
 						}
 						this.updateStatus(id, status, responseData);
 					} catch (Exception e) {
-						dmpOutputTaskRecordService.lambdaUpdate()
-							.eq(DmpOutputTaskRecordEntity::getId, id)
-							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.MQERROR.getCode())
-							.set(DmpOutputTaskRecordEntity::getResponseData , "发送RocketMQ前失败" + ExceptionUtil.stacktraceToOneLineString(e))
-							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-							.update();
+						this.updateStatus(id, DmpOutputTaskRecordStatusEnum.MQERROR.getCode(), "发送RocketMQ前失败" + ExceptionUtil.stacktraceToOneLineString(e));
 					}finally {
 						redisTemplate.delete(redisKey);
 					}
 				}else {
 					log.error(redisKey + "任务正在执行中");
 				}
-			}); 
+			});
+			
+			i = i + 1;
+			if(i % 50 == 0) {
+				try {
+					Thread.sleep(i);
+				} catch (InterruptedException e) {}
+			}
     	}
 	}
 	
@@ -145,15 +154,23 @@ public class DmpOutputRocketMQPushUtils{
 			.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
 			.update();
 		if(status.equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
-			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-	        warnMsgInfo.setBizName("新中台推送erp");
-	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-	        warnMsgInfo.setTitle("新中台推送erp失败，id=" + id);
-	        warnMsgInfo.setTableName("dmp_output_task_record");
-	        warnMsgInfo.setTableId(id);
-	        warnMsgInfo.setKeyInfo(responseData);
-	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-	        mqProducerService.sendWarnMsg(warnMsgInfo);
+//			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+//	        warnMsgInfo.setBizName("新中台推送erp");
+//	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+//	        warnMsgInfo.setTitle("新中台推送erp失败，id=" + id);
+//	        warnMsgInfo.setTableName("dmp_output_task_record");
+//	        warnMsgInfo.setTableId(id);
+//	        warnMsgInfo.setKeyInfo(responseData);
+//	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+//	        mqProducerService.sendWarnMsg(warnMsgInfo);
+	        
+	        Map<String, Object> bodyMap = new HashMap<String, Object>();
+			bodyMap.put("msg_type", "text");
+			Map<String, String> contentMap = new HashMap<String, String>();
+			
+			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "任务id=" + id + "处理失败" + responseData);
+			bodyMap.put("content", contentMap);
+			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
 		}
 	}
 }
