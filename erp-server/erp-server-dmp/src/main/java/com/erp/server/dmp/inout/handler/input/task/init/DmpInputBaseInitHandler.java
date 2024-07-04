@@ -59,8 +59,8 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		String type = dmpCfgInputEntity.getType();
 		String typeId = dmpCfgInputEntity.getTypeId();
-		if(typeId.equals(dmpResponse.getDmpCfgInputEntity().getTypeId())) {
-			log.error("成员变量对象{}，参数对象{}" , JSON.toJSONString(dmpCfgInputEntity) , JSON.toJSONString(dmpResponse.getDmpCfgInputEntity()));
+		if(!typeId.equals(dmpResponse.getDmpCfgInputEntity().getTypeId())) {
+			log.error("{}成员变量对象{}，参数对象{}" , inputTaskId , JSON.toJSONString(dmpCfgInputEntity) , JSON.toJSONString(dmpResponse.getDmpCfgInputEntity()));
 		}
 		if(DmpCfgInputTypeEnum.API.getCode().equals(type)) {
 			DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
