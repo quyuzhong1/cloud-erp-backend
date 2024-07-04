@@ -4,8 +4,11 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
 
@@ -21,6 +24,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @TableName("tms_carrier")
 public class TmsCarrierEntity extends BaseEntity<TmsCarrierEntity> {
 
@@ -54,9 +59,11 @@ public class TmsCarrierEntity extends BaseEntity<TmsCarrierEntity> {
 
     public static final String SALES_PLATFORM = "sales_platform";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
+    public static TmsCarrierEntity init(String courierCode, String courierName, String salesPlatform, String logisticsTrackUrl) {
+        return new TmsCarrierEntity()
+                .setCode(courierCode)
+                .setName(courierName)
+                .setSalesPlatform(salesPlatform)
+                .setLogisticsTrackUrl(logisticsTrackUrl);
     }
-
 }
