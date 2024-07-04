@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.TmsCarrierDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,7 +52,7 @@ public class TmsCarrierServiceImpl extends SuperServiceImpl<TmsCarrierMapper, Tm
             return Collections.emptyList();
         }
         return list.stream()
-                .map(e-> new BaseDropDownDTO.CommonDTO(e.getCode(), e.getName()))
+                .map(e -> new BaseDropDownDTO.CommonDTO(e.getCode(), e.getName()))
                 .collect(Collectors.toList());
     }
 
@@ -61,5 +62,21 @@ public class TmsCarrierServiceImpl extends SuperServiceImpl<TmsCarrierMapper, Tm
                 .eq(TmsCarrierEntity::getCode, carrierCode)
                 .last("LIMIT 1")
                 .one();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkSaveOrUpdateBatch(List<TmsCarrierEntity> list) {
+        List<TmsCarrierEntity> alllist = this.list();
+
+        List<TmsCarrierEntity> saveOrUpdate = new LinkedList<>();
+
+        for (TmsCarrierEntity newEntity : list) {
+            alllist.stream()
+                    .filter(e -> e.getCode().equalsIgnoreCase(newEntity.getCode()) && e.getSalesPlatform().equalsIgnoreCase(newEntity.getSalesPlatform()))
+                    .findFirst().ifPresent(oldEntity -> newEntity.setId(oldEntity.getId()));
+            saveOrUpdate.add(newEntity);
+        }
+        this.saveOrUpdateBatch(saveOrUpdate);
     }
 }

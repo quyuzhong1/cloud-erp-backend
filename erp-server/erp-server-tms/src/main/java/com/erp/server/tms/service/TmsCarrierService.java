@@ -26,4 +26,8 @@ public interface TmsCarrierService extends SuperService<TmsCarrierEntity> {
      */
     TmsCarrierEntity getByCodeAndSalesPlatform(String carrierCode, String dictPlatform);
 
+    /**
+     * 根据销售平台和代号检查并更新
+     */
+    void checkSaveOrUpdateBatch(List<TmsCarrierEntity> list);
 }
