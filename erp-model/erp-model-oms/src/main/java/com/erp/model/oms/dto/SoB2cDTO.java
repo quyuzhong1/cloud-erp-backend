@@ -2015,6 +2015,10 @@ public class SoB2cDTO implements Serializable {
          */
         private boolean fromThirdWarehouseFlag = false ;
 
+        /**
+         * 是否记录日志
+         */
+        private boolean addOperationLog = true ;
 
     }
 

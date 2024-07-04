@@ -115,14 +115,16 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             // 都是全部发货
             String sendType = "all";
 
-            DeclareDeliverRequest request = DeclareDeliverRequest.builder().
-                    outRef(mainEntity.getPlatformCode()).
-                    logisticsNo(logisticsNo).
-                    shopId(mainEntity.getShopId()).
-                    shopName(mainEntity.getShopName()).
-                    serviceName(tmsSignShipDTO.getCode()).
-                    sendType(sendType).
-                    build();
+            DeclareDeliverRequest request = DeclareDeliverRequest.builder()
+                    .outRef(mainEntity.getPlatformCode())
+                    .logisticsNo(logisticsNo)
+                    .shopId(mainEntity.getShopId())
+                    .shopName(mainEntity.getShopName())
+                    .serviceName(tmsSignShipDTO.getCode())
+                    .sendType(sendType)
+                    .actualCarrier(tmsSignShipDTO.getCarrierCode())
+                    .trackingWebSite(tmsSignShipDTO.getLogisticsTrackUrl())
+                    .build();
 
             // 非线上环境需要指定订单ID
             if (!BusinessCommonConstants.hasProfile("prod")) {
@@ -145,7 +147,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                 aliExpressOrderService.subDeclareDeliver(request);
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (ApiException e) {
-                log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货失败 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(),ExceptionUtil.stacktraceToString(e));
+                log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货失败 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                 throw new ServiceException("速卖通标记发货失败:" + e.getMessage());
             }
         }
@@ -179,7 +181,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
      */
     private String convertSendType(List<SoB2cDetailEntity> detailEntityList, List<SoB2cDetailEntity> allSourceDetailEntityList) {
         // 多个明细一定是部分发货
-        if (allSourceDetailEntityList.size() > 1){
+        if (allSourceDetailEntityList.size() > 1) {
             return "part";
         }
         Map<String, Integer> shipMap = detailEntityList.stream()
