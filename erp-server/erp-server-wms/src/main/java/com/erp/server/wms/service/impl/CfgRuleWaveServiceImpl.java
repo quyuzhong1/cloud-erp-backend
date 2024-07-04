@@ -40,10 +40,7 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.AbnormalCauseEnum;
-import com.erp.model.wms.enums.ExecutionTypeEnum;
-import com.erp.model.wms.enums.RuleTypeEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -51,6 +48,7 @@ import com.erp.server.wms.mapper.CfgRuleWaveMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,7 +107,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
-
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -229,6 +226,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean executeRule(String id) {
         CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到波次规则数据"));
 
@@ -360,10 +358,15 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         List<WaveListDTO.AddDTO> resultList = new ArrayList<>();
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
 
-            List<LocationInventoryResultDTO> ruleOrderMatchResult = new ArrayList<>();
+            //发货明细商品数量合计
+            Integer detailTotalQty = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (MathUtil.compareTo(detailTotalQty,entity.getMaxQty()) > MathUtil.ZERO) {
+                log.warn("发货单【{}】下商品数量【{}】大于波次规则商品数量【{}】",deliveryEntity.getCode(),detailTotalQty,entity.getMaxQty());
+                continue;
+            }
+
             try {
-                //走拣货策略并且扣减库存
-                ruleOrderMatchResult = pickingInventory(deliveryEntity,allDetailList);
+                pickingInventory(deliveryEntity,allDetailList,updateDeliveryList);
             } catch (Exception e) {
                 //添加波次生成的缺货异常
                 deliveryEntity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getStatus());
@@ -372,26 +375,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 continue;
             }
 
-            //判断是否匹配仓位成功
-            long count = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
-            if (count > MathUtil.ZERO) {
-                String skuNos = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).map(LocationInventoryResultDTO::getSkuNo).collect(Collectors.joining(","));
-                log.warn("发货单【{}】SKU【{}】匹配仓卫不成功",deliveryEntity.getCode(),skuNos);
-                continue;
-            }
-            //发货明细商品数量合计
-            Integer detailTotalQty = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (MathUtil.compareTo(detailTotalQty,entity.getMaxQty()) > MathUtil.ZERO) {
-                log.warn("发货单【{}】下商品数量【{}】大于波次规则商品数量【{}】",deliveryEntity.getCode(),detailTotalQty,entity.getMaxQty());
-                continue;
-            }
-
-            //添加发货单
-            deliveryIdList.add(deliveryEntity.getId());
-
             //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
-            if ((ObjectUtil.isNotEmpty(entity.getMaxQty()) && MathUtil.compareTo(totalQty, entity.getMaxQty()) > MathUtil.ZERO)
-                    || (MathUtil.compareTo(orderQty, entity.getMaxOrderQty()) > MathUtil.ZERO)) {
+            if ((ObjectUtil.isNotEmpty(entity.getMaxQty()) && detailTotalQty + totalQty > entity.getMaxQty())
+                    || orderQty > entity.getMaxOrderQty()) {
                 addDTO.setDeliveryIdList(deliveryIdList);
                 resultList.add(addDTO);
 
@@ -399,7 +385,14 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 totalQty = MathUtil.ZERO;
                 orderQty = MathUtil.ZERO;
                 deliveryIdList = new ArrayList<>();
+                addDTO = new WaveListDTO.AddDTO();
+                addDTO.setWaveType(entity.getWaveType());
+                addDTO.setPickingType(entity.getPickingType());
+                addDTO.setName(entity.getName());
             }
+
+            //添加发货单
+            deliveryIdList.add(deliveryEntity.getId());
 
            //发货单商品数量
             totalQty = detailTotalQty + totalQty;
@@ -421,7 +414,12 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             return;
         }
         for (WaveListDTO.AddDTO waveAddDTO : resultList) {
-            waveListService.add(waveAddDTO);
+            BaseResultDTO.AddDTO add = waveListService.add(waveAddDTO);
+            //更新发货单状态
+            soB2cDeliveryService.updateDeliveryStatus(waveAddDTO.getDeliveryIdList(),SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus());
+            //发货单日志
+            List<Pair<String, String>> pairList = waveAddDTO.getDeliveryIdList().stream().map(obj -> new Pair<>(obj, "")).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(StrUtil.format("自动生成波次成功，波次号【{}】",add.getCode()), ModuleTypeEnum.DELIVERY_ORDER.getCode(), pairList, "自动生成波次");
         }
     }
 
@@ -433,7 +431,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
      * @param allDetailList
      * @return List<LocationInventoryResultDTO>
      */
-    private List<LocationInventoryResultDTO> pickingInventory (SoB2cDeliveryEntity deliveryEntity,List<SoB2cDeliveryDetailEntity> allDetailList) {
+    private void pickingInventory (SoB2cDeliveryEntity deliveryEntity,List<SoB2cDeliveryDetailEntity> allDetailList,List<SoB2cDeliveryEntity> updateDeliveryList) {
 
         //发货明细
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
@@ -442,9 +440,22 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         //拣货规则
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
-        executionData.setBillType("B2C");
+        executionData.setBillType(PickingBillTypeEnum.B2C.getCode());
         executionData.setDetails(detailList);
         List<LocationInventoryResultDTO> ruleOrderMatchResult = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+
+        //判断是否匹配仓位成功
+        long count = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        if (count > MathUtil.ZERO) {
+            String skuNos = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).map(LocationInventoryResultDTO::getSkuNo).collect(Collectors.joining(","));
+            log.warn("发货单【{}】SKU【{}】匹配仓位不成功",deliveryEntity.getCode(),skuNos);
+            //添加波次生成的缺货异常
+            deliveryEntity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getStatus());
+            deliveryEntity.setAbnormalCause(AbnormalCauseEnum.GENERATION_WAVE.getCode());
+            updateDeliveryList.add(deliveryEntity);
+           return;
+        }
+
 
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         for (LocationInventoryResultDTO resultDTO : ruleOrderMatchResult) {
@@ -471,8 +482,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
         //更新库存
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-
-        return ruleOrderMatchResult;
     }
 
     /**
