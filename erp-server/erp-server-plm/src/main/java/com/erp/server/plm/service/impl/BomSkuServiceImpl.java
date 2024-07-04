@@ -165,6 +165,22 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         return lambdaQuery().in(BomSkuEntity::getParentSkuNo,parentSkuNos)
                 .list();
     }
+    @Override
+    public List<BomSkuEntity> listByParentSkuIds(List<String> parentSkuIds) {
+        if (CollectionUtils.isEmpty(parentSkuIds)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(BomSkuEntity::getParentSkuId,parentSkuIds)
+                .list();
+    }
+    @Override
+    public List<BomSkuEntity> listByChildSkuIds(List<String> childSkuIds) {
+        if (CollectionUtils.isEmpty(childSkuIds)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(BomSkuEntity::getSkuId,childSkuIds)
+                .list();
+    }
 
     @Override
     public List<BomChildrenSkuDTO> listAllBomChildBySkuIds(List<String> parentSkuIds) {
