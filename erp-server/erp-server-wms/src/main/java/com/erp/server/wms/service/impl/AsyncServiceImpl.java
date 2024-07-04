@@ -82,6 +82,7 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
     public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey) {
+        log.info("【{}】销售单【{}】 标记发货开始 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soId);
         platformShipOrderDTO.setDictPlatform(dictPlatform);
