@@ -81,7 +81,9 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				dmpInputApiInitRequest = new DmpInputKingdeeApiInitRequest();
 				dmpInputApiInitRequest = (DmpInputKingdeeApiInitRequest) dmpInputApiInitRequest;
 				dmpInputApiInitRequest.setFormId(dmpCfgApiEntity.getApiType());
-				
+				if(dmpCfgInputConvertEntity.getId().equals("1801574477567136974") && !dmpCfgApiEntity.getApiType().equals("STK_TransferDirect")) {
+					log.error("调拨单成员变量不一致：{} ，{}" , JSON.toJSONString(dmpCfgInputConvertEntity) , JSON.toJSONString(dmpCfgApiEntity));
+				}
 				String extendJson = dmpCfgInputEntity.getExtendJson();
 				if(StringUtils.isNotBlank(extendJson)) {
 					DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
