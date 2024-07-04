@@ -83,4 +83,10 @@ public interface AliexpressConstants {
      */
     String ALIEXPRESS_MERCHANT_PROFILE_GET ="aliexpress.merchant.profile.get";
 
+
+    /**
+     * 查询所有的实际承运商
+     */
+    String ALIEXPRESS_CARRIER_QUERY_LIST = "cainiao.global.logistics.carrier.querylist";
+
 }

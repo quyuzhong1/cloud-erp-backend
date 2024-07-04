@@ -66,13 +66,13 @@ public class QueryShipmentOrder {
          * 实际承运商--物流方案为“卖家自定义-中国”(OTHER)时该字段为必填
          * （非必须）
          */
-//        private String actual_carrier;
+        private String actual_carrier;
 
         /**
          * 运单号轨迹查询地址-物流方案为自定义(OTHER开头)的时候必填
          * （非必须）
          */
-//        private String tracking_web_site;
+        private String tracking_web_site;
 
         /**
          * 货物跟踪编码/国际运单号
