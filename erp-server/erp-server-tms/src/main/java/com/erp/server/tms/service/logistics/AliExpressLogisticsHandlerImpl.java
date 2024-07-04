@@ -294,33 +294,19 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 } else {
                     List<QueryResult> responses = queryResponse.getResultList();
                     if (CollectionUtils.isNotEmpty(responses)) {
-                        responses.forEach(queryOrderResponse -> {
-                            if (!StringUtils.isEmpty(logisticsQueryBaseVO.getTransportNo()) && !StringUtils.isEmpty(queryOrderResponse.getLogistics_order_id())){
-                                if (logisticsQueryBaseVO.getDeliveryNo().equalsIgnoreCase(queryOrderResponse.getTrade_order_id())){
-                                    LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                                            .transportNo(queryOrderResponse.getOut_order_code())
-                                            .trackNo(queryOrderResponse.getInternational_logistics_num())
-                                            .deliveryNo(queryOrderResponse.getTrade_order_id())
-                                            .logisticsChannelNo(queryOrderResponse.getLogistics_service_list().get(0).getCode())
-                                            .build();
-                                    logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
-                                            logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
-                                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responses));
-                                    list.add(orderResponseVO);
-                                }
-                            }else {
-                                LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                                        .transportNo(queryOrderResponse.getOut_order_code())
-                                        .trackNo(queryOrderResponse.getInternational_logistics_num())
-                                        .deliveryNo(queryOrderResponse.getTrade_order_id())
-                                        .logisticsChannelNo(queryOrderResponse.getLogistics_service_list().get(0).getCode())
-                                        .build();
-                                logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
-                                        logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
-                                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responses));
-                                list.add(orderResponseVO);
-                            }
-                        });
+                        QueryResult queryResult = responses.stream().filter(e -> !StringUtils.isBlank(e.getLogistics_order_id()) && logisticsQueryBaseVO.getTransportNo().equals(e.getOut_order_code())).findFirst().orElse(null);
+                        if (Objects.nonNull(queryResult)){
+                            LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
+                                    .transportNo(queryResult.getOut_order_code())
+                                    .trackNo(queryResult.getInternational_logistics_num())
+                                    .deliveryNo(queryResult.getTrade_order_id())
+                                    .logisticsChannelNo(queryResult.getLogistics_service_list().get(0).getCode())
+                                    .build();
+                            logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
+                                    logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responses));
+                            list.add(orderResponseVO);
+                        }
                     }
                 }
             } catch (ApiException e) {
