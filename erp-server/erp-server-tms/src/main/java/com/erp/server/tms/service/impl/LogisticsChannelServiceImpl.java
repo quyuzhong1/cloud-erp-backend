@@ -23,7 +23,6 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
@@ -87,6 +86,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
 
     @Resource
     private LogisticsChannelWarehouseService logisticsChannelWarehouseService;
+
+    @Resource
+    private TmsCarrierService tmsCarrierService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -229,6 +231,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
          * 物流映射列表
          */
         List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(id);
+        mappingListFillData(mappingList);
 
         /**
          * 打印标签类型
@@ -257,6 +260,26 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         view.setPrintTypeList(printTypeList);
         view.setWarehouseDTO(warehouseDTO);
         return view;
+    }
+
+    /**
+     * mappingList 填充数据
+     */
+    private void mappingListFillData(List<LogisticsMappingDTO.ViewDTO> mappingList) {
+        if (mappingList.stream().allMatch(e-> StringUtils.isBlank(e.getCarrierCode()))){
+            return;
+        }
+        List<TmsCarrierEntity> carrierList = tmsCarrierService.list();
+        for (LogisticsMappingDTO.ViewDTO viewDTO : mappingList) {
+            if (StringUtils.isBlank(viewDTO.getCarrierCode())) {
+                continue;
+            }
+            carrierList.stream()
+                    .filter(e -> e.getSalesPlatform().equalsIgnoreCase(viewDTO.getSalesPlatform()) && e.getCode().equalsIgnoreCase(viewDTO.getCarrierCode()))
+                    .findFirst()
+                    .ifPresent(carrierEntity -> viewDTO.setCarrierName(carrierEntity.getName()));
+        }
+
     }
 
     @Override
@@ -638,7 +661,24 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (null == entity){
             throw new ServiceException("对应销售平台物流渠道信息不存在");
         }
-        return new LogisticsChannelDTO.SignShipDTO(entity.getId(),logisticsChannelId, entity.getCode(), entity.getCnName(), viewDTO.getOrderDeliveryMarkType());
+        // 承运商代号
+        String carrierCode = viewDTO.getCarrierCode();
+         // 承运商轨迹查询地址(部分速卖通物流渠道必填)
+        String logisticsTrackUrl = "";
+        if (StringUtils.isNotBlank(carrierCode)){
+            TmsCarrierEntity carrierEntity = tmsCarrierService.getByCodeAndSalesPlatform(carrierCode, dictPlatform);
+            if (null != carrierEntity){
+                logisticsTrackUrl = carrierEntity.getLogisticsTrackUrl();
+            }
+        }
+        return new LogisticsChannelDTO.SignShipDTO(entity.getId(),
+                logisticsChannelId,
+                entity.getCode(),
+                entity.getCnName(),
+                viewDTO.getOrderDeliveryMarkType(),
+                carrierCode,
+                logisticsTrackUrl
+        );
     }
     @Override
     public PagingVO<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsChannelDTO.SelectDTO> dto) {

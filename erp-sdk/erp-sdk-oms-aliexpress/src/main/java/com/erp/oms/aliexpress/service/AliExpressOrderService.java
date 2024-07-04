@@ -21,6 +21,7 @@ import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.dto.request.AddressRequest;
+import com.erp.oms.aliexpress.dto.request.CommonRequest;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.*;
@@ -471,6 +472,12 @@ public class AliExpressOrderService {
                 .logistics_no(declareDeliverRequest.getLogisticsNo())
                 .service_name(declareDeliverRequest.getServiceName())
                 .build();
+        if (StringUtils.isNotBlank(declareDeliverRequest.getActualCarrier())){
+            shipment.setActual_carrier(declareDeliverRequest.getActualCarrier());
+        }
+        if (StringUtils.isNotBlank(declareDeliverRequest.getTrackingWebSite())){
+            shipment.setTracking_web_site(declareDeliverRequest.getTrackingWebSite());
+        }
         QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
                 .send_type(declareDeliverRequest.getSendType())
                 .sub_trade_order_index("1")
@@ -507,6 +514,38 @@ public class AliExpressOrderService {
                 ServiceException.runError(JSONUtil.toJsonStr(body));
             }
         }
+    }
+
+    public List<JSONObject> carrierQuerylist(CommonRequest commonRequest) {
+        IopClient client = new IopClientImpl(commonRequest.getBaseUrl(), commonRequest.getClientId(), commonRequest.getClientSecret());
+        IopRequest request = new IopRequest();
+        request.setApiName(commonRequest.getApiName());
+        String token = commonRequest.getToken();
+        IopResponse response = null;
+        try {
+            response = client.execute(request, token, Protocol.TOP);
+        } catch (ApiException e) {
+            String jsonStr = JSONUtil.toJsonStr(response);
+            log.error("查询速卖通所有的实际承运商>>>>>>> response={}, error={}", jsonStr, ExceptionUtil.stacktraceToString(e));
+            String msg = StrUtil.format("查询速卖通发货单请求失败>>>>>>>response={}, error={}", jsonStr, ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException(msg);
+        }
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
+        JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_query_response");
+        JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
+        Boolean success = resultJson.getBool("success", Boolean.FALSE);
+        //失败
+        if (!success) {
+            log.error("查询速卖通所有的实际承运商失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
+            return Collections.emptyList();
+        }
+        return null;
+//        AliExpressAscpFfoQueryResponse result = JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
+//        DataListBean dataList = result.getAliexpressAscpFfoQueryResponse().getResult().getDataList();
+//        if (ObjectUtil.isEmpty(dataList) || CollectionUtils.isEmpty(dataList.getErpFulfillmentForwardDto())) {
+//            return Collections.emptyList();
+//        }
+//        return dataList.getErpFulfillmentForwardDto();
     }
 
 
