@@ -40,6 +40,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,6 +63,8 @@ public class DmpOutputRocketMQPushUtils{
 	@Autowired
 	@Qualifier("dmpOutputExecutorPool")
 	private ExecutorService dmpOutputExecutorPool;
+	
+	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 	
 	public void dealDmpOutputTaskRecordEntityList(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
     	if(CollUtil.isEmpty(dmpOutputTaskRecordEntityList)) {
@@ -165,11 +168,7 @@ public class DmpOutputRocketMQPushUtils{
 			bodyMap.put("msg_type", "text");
 			Map<String, String> contentMap = new HashMap<String, String>();
 			
-			String env = "测试";
-			if(BusinessCommonConstants.hasProfile("prod")) {
-				env = "生产";
-			}
-			contentMap.put("text", "新中台"+ env +"环境告警：" + "任务id=" + id + "处理失败" + responseData);
+			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "任务id=" + id + "处理失败" + responseData);
 			bodyMap.put("content", contentMap);
 			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
 		}
