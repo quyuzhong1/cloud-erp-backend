@@ -529,7 +529,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //国家
             detailMap.put("country", soB2cReceiverEntity.getCountry());
             //SKU
-            detailMap.put("skuId", detailEntity.getSkuId());
+            detailMap.put("skuNo", detailEntity.getSkuNo());
             //包装尺寸长（cm）
             detailMap.put("length", soB2cLogisticsEntity.getLength());
             //包装尺寸宽（cm）
@@ -539,11 +539,11 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //包装重量（g）
             detailMap.put("weight", soB2cLogisticsEntity.getWeight());
             //订单创建时间
-            detailMap.put("createTime", soB2cLogisticsEntity.getCreateTime());
+            detailMap.put("createTime", soB2cLogisticsEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             //发货单-拣货类型
             detailMap.put("pickingType", soB2cDeliveryEntity.getPickingType());
             //发货单-创建时间
-            detailMap.put("deliveryCreateTime", soB2cDeliveryEntity.getCreateTime());
+            detailMap.put("deliveryCreateTime", soB2cDeliveryEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             detailList.add(detailMap);
         }
         map.put("detailList", detailList);
@@ -561,8 +561,8 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         map.put("logisticsChannelId", logisticsChannelId);
         Object country = spElServer.getByField("country", detailList);
         map.put("country", country);
-        Object skuId = spElServer.getByField("skuId", detailList);
-        map.put("skuId", skuId);
+        Object skuNo = spElServer.getByField("skuNo", detailList);
+        map.put("skuNo", skuNo);
         Object length = spElServer.getByField("length", detailList);
         map.put("length", length);
         Object width = spElServer.getByField("width", detailList);

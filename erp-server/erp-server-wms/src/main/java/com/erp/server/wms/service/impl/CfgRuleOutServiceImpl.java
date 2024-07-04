@@ -30,6 +30,8 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.erp.model.wms.enums.CfgRuleOutEnum.AllowableDeviationsConditionEnum.*;
+
 /**
  * <p>
  * 出库配置规则 服务实现类
@@ -198,20 +200,20 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     private Map<String, Object> getConditionMap(CfgRuleOutDTO.SortingPortRuleDTO dto,boolean whenZeroNormalOutSwitch) {
         Map<String,Object> map = new HashMap<>();
         if(!whenZeroNormalOutSwitch || dto.getOrderWeight().compareTo(BigDecimal.ZERO) != 0){
-            map.put("weightVarianceRate",dto.getOrderWeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWeight().subtract(dto.getScanWeight()).abs().divide(dto.getOrderWeight(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
-            map.put("weightVarianceValue",dto.getOrderWeight().subtract(dto.getScanWeight()).abs());
+            map.put(WEIGHING_VARIANCE_RATE.getCode(),dto.getOrderWeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWeight().subtract(dto.getScanWeight()).abs().divide(dto.getOrderWeight(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
+            map.put(WEIGHING_VARIANCE_VALUE.getCode(),dto.getOrderWeight().subtract(dto.getScanWeight()).abs());
         }
         if(!whenZeroNormalOutSwitch || dto.getOrderLength().compareTo(BigDecimal.ZERO) != 0){
-            map.put("volumeDifferenceRateLength",dto.getOrderLength().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderLength().subtract(dto.getScanLength()).abs().divide(dto.getOrderLength(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
-            map.put("volumeDifferenceValueLength",dto.getOrderLength().subtract(dto.getScanLength()).abs());
+            map.put(VOLUME_DIFFERENCE_RATE_LONG.getCode(),dto.getOrderLength().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderLength().subtract(dto.getScanLength()).abs().divide(dto.getOrderLength(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
+            map.put(VOLUME_DIFFERENCE_VALUE_LONG.getCode(),dto.getOrderLength().subtract(dto.getScanLength()).abs());
         }
         if(!whenZeroNormalOutSwitch || dto.getOrderWidth().compareTo(BigDecimal.ZERO) != 0){
-            map.put("volumeDifferenceRateWidth",dto.getOrderWidth().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWidth().subtract(dto.getScanWidth()).abs().divide(dto.getOrderWidth(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
-            map.put("volumeDifferenceValueWidth",dto.getOrderWidth().subtract(dto.getScanWidth()).abs());
+            map.put(VOLUME_DIFFERENCE_RATE_WIDTH.getCode(),dto.getOrderWidth().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderWidth().subtract(dto.getScanWidth()).abs().divide(dto.getOrderWidth(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
+            map.put(VOLUME_DIFFERENCE_VALUE_WIDTH.getCode(),dto.getOrderWidth().subtract(dto.getScanWidth()).abs());
         }
         if(!whenZeroNormalOutSwitch || dto.getOrderHeight().compareTo(BigDecimal.ZERO) != 0){
-            map.put("volumeDifferenceRateHeight",dto.getOrderHeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderHeight().subtract(dto.getScanHeight()).abs().divide(dto.getOrderHeight(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
-            map.put("volumeDifferenceValueHeight",dto.getOrderHeight().subtract(dto.getScanHeight()).abs());
+            map.put(VOLUME_DIFFERENCE_RATE_HEIGHT.getCode(),dto.getOrderHeight().compareTo(BigDecimal.ZERO) == 0?100:dto.getOrderHeight().subtract(dto.getScanHeight()).abs().divide(dto.getOrderHeight(),4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)));
+            map.put(VOLUME_DIFFERENCE_VALUE_HEIGHT.getCode(),dto.getOrderHeight().subtract(dto.getScanHeight()).abs());
         }
         return map;
     }
