@@ -481,7 +481,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 biOrderItemSplitEntity.setOrderId(biOrderInfoEntity.getId());
                 if (StringUtils.isNotEmpty(soDetailEntity.getSkuId())) {
                     List<ProductDetailEntity> detailEntityList = productDetailService.getByIdList(Collections.singletonList(soDetailEntity.getSkuId()));
-                    if (Objects.nonNull(detailEntityList)) {
+                    if (CollectionUtils.isNotEmpty(detailEntityList)) {
                         biOrderItemSplitEntity.setItemName(detailEntityList.get(0).getName());
                         biOrderItemSplitEntity.setPictureUrl(detailEntityList.get(0).getImagesUrl());
                         biOrderItemSplitEntity.setSpecifics(detailEntityList.get(0).getVariantProperty());
