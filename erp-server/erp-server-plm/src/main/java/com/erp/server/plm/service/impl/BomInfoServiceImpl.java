@@ -119,6 +119,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Resource
     private DmpMqFeign dmpMqFeign;
 
+    @Resource
+    private ProductLogisticsService productLogisticsService;
 
     /**
      * 添加bom
@@ -168,6 +170,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //添加 bom的操作日志
             String operateContent = String.format(BomOperateContent.ADD, serialNumber);
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(), operateContent);
+            //更新父sku物流属性
+            List<String> parentSkuIds = bomSkuList.stream().map(BomSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+            productLogisticsService.saveOrUpdateParentPropertyId(parentSkuIds);
         }
         return bomId;
     }
@@ -546,6 +551,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             if (StringUtils.isNotBlank(operateContent)) {
                 bomOperateLogService.saveOperate(id, BomOperationTypeEnum.UPDATE.getType(), operateContent);
             }
+            //更新父sku物流属性
+            List<String> parentSkuIds = bomSkuList.stream().map(BomSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+            productLogisticsService.saveOrUpdateParentPropertyId(parentSkuIds);
         }
         return result;
     }
