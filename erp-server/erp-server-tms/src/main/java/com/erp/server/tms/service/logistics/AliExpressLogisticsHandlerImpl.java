@@ -348,7 +348,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if (queryOrderList.isSuccess() && CollectionUtils.isNotEmpty(queryOrderList.getData())){
             List<LogisticsOrderResponseVO> data = queryOrderList.getData();
             logisticsQueryVO.forEach(logisticsGetLabelVO -> {
-                LogisticsOrderResponseVO logisticsOrderResponseVO = data.stream().filter(e -> e.getDeliveryNo().equals(logisticsGetLabelVO.getDeliveryNo())).findFirst().orElse(null);
+                LogisticsOrderResponseVO logisticsOrderResponseVO = data.stream().filter(e -> e.getDeliveryNo().equals(logisticsGetLabelVO.getDeliveryNo()) &&  e.getTransportNo().equals(logisticsGetLabelVO.getTransportNo())).findFirst().orElse(null);
                 if (Objects.nonNull(logisticsOrderResponseVO)){
                     logisticsGetLabelVO.setTransportNo(logisticsOrderResponseVO.getTransportNo());
                     logisticsGetLabelVO.setTrackNo(logisticsOrderResponseVO.getTrackNo());
