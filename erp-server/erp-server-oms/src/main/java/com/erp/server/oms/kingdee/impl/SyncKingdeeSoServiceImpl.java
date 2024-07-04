@@ -1,9 +1,13 @@
 package com.erp.server.oms.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.stream.CollectorUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -14,8 +18,9 @@ import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.BiOrderInfoEntity;
-import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
+import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -43,6 +48,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +62,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -352,8 +360,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //业务id
         resultMap.put("id", entity.getId());
         resultMap.put("operate", syncOperate);
-        BiOrderInfoEntity biOrderInfoEntity = this.orderDataConvert(entity);
-        resultMap.put("entity", biOrderInfoEntity);
+        DmpOrderInfoEntity dmpOrderInfoEntity = this.orderDataConvert(entity);
+        resultMap.put("entity", dmpOrderInfoEntity);
 
 
         //添加推送任务
@@ -381,8 +389,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     }
 
 
-    private BiOrderInfoEntity orderDataConvert(SoInfoEntity soInfoEntity) {
-        BiOrderInfoEntity biOrderInfoEntity = SoInfoConverter.INSTANCE.soInfoToDmpOrder(soInfoEntity);
+    private DmpOrderInfoEntity orderDataConvert(SoInfoEntity soInfoEntity) {
+        DmpOrderInfoEntity dmpOrderInfoEntity = SoInfoConverter.INSTANCE.soInfoToDmpOrder(soInfoEntity);
         List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByMainId(soInfoEntity.getId());
         SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
         BigDecimal exchangeRate;
@@ -393,20 +401,20 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         }
         //订单业务字段设置
         if (Objects.nonNull(soInfoEntity.getInvalidStatus()) && soInfoEntity.getInvalidStatus()) {
-            biOrderInfoEntity.setOrderStatus(5);
+            dmpOrderInfoEntity.setOrderStatus(5);
         } else {
             //默认待配货
-            biOrderInfoEntity.setOrderStatus(1);
+            dmpOrderInfoEntity.setOrderStatus(1);
         }
-        biOrderInfoEntity.setPaidTime(Objects.nonNull(soInfoEntity.getReceiveDate()) ? soInfoEntity.getReceiveDate().atStartOfDay() : null);
+        dmpOrderInfoEntity.setPaidTime(Objects.nonNull(soInfoEntity.getReceiveDate()) ? soInfoEntity.getReceiveDate().atStartOfDay() : null);
         CustomerInfoEntity customerInfo = null;
         try {
             customerInfo = customerInfoService.getCustomerById(soInfoEntity.getCustomerId());
             if (Objects.nonNull(customerInfo)) {
-                biOrderInfoEntity.setBuyerName(customerInfo.getName());
-                biOrderInfoEntity.setBuyerUserId(customerInfo.getCode());
-                biOrderInfoEntity.setShopName(customerInfo.getName());
-                biOrderInfoEntity.setShopNo(customerInfo.getCode());
+                dmpOrderInfoEntity.setBuyerName(customerInfo.getName());
+                dmpOrderInfoEntity.setBuyerUserId(customerInfo.getCode());
+                dmpOrderInfoEntity.setShopName(customerInfo.getName());
+                dmpOrderInfoEntity.setShopNo(customerInfo.getCode());
             }
         } catch (Exception e) {
             log.error("请求erp-oms customerFeign.getCustomerById异常:{}", e.getMessage());
@@ -427,42 +435,42 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 }
         );
         //订单成本价
-        biOrderInfoEntity.setOrderCost(orderCost);
-        biOrderInfoEntity.setCurrencyRate(exchangeRate);
-        biOrderInfoEntity.setItemTotal(itemTotal);
+        dmpOrderInfoEntity.setOrderCost(orderCost);
+        dmpOrderInfoEntity.setCurrencyRate(exchangeRate);
+        dmpOrderInfoEntity.setItemTotal(itemTotal);
         //先计算运费收入（原币）
         if (Optional.ofNullable(soInfoEntity.getIsCollectShippingFee()).isPresent()) {
-            biOrderInfoEntity.setShippingTotalOrigin(soInfoEntity.getShippingFee());
+            dmpOrderInfoEntity.setShippingTotalOrigin(soInfoEntity.getShippingFee());
         } else {
-            biOrderInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);
+            dmpOrderInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);
         }
         //运费收入（本位币）
-        biOrderInfoEntity.setShippingFee(biOrderInfoEntity.getShippingTotalOrigin().multiply(exchangeRate));
+        dmpOrderInfoEntity.setShippingFee(dmpOrderInfoEntity.getShippingTotalOrigin().multiply(exchangeRate));
         //商品销售总金额(原币)
-        biOrderInfoEntity.setItemTotalOrigin(itemTotalOrigin);
+        dmpOrderInfoEntity.setItemTotalOrigin(itemTotalOrigin);
         //商品总成本(原币)
-        biOrderInfoEntity.setItemTotalCost(itemTotalCost);
+        dmpOrderInfoEntity.setItemTotalCost(itemTotalCost);
         //国家字典
         if (Objects.nonNull(customerInfo) && com.alibaba.nacos.common.utils.StringUtils.isNotEmpty(customerInfo.getCountryId())) {
             try {
                 DictCountryEntity country = sysUserFeign.getCountryById(customerInfo.getCountryId());
                 if (Objects.nonNull(country)) {
-                    biOrderInfoEntity.setCountryNameCn(country.getNameCn());
-                    biOrderInfoEntity.setCountryNameEn(country.getNameEn());
-                    biOrderInfoEntity.setSite(country.getId());
+                    dmpOrderInfoEntity.setCountryNameCn(country.getNameCn());
+                    dmpOrderInfoEntity.setCountryNameEn(country.getNameEn());
+                    dmpOrderInfoEntity.setSite(country.getId());
                 }
             } catch (Exception e) {
                 log.error("erp-sys sysUserFeign.getCountryById {}异常：{}", customerInfo.getCountryId(), e.getMessage());
             }
         }
         //平台创建时间
-        biOrderInfoEntity.setCreateTime(LocalDateTime.now());
+        dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
         //部门名称
         if (com.alibaba.nacos.common.utils.StringUtils.isNotEmpty(soInfoEntity.getSalesDeptId())) {
             try {
                 List<SysDepartmentEntity> dept = sysUserFeign.listDeptByIds(Collections.singletonList(soInfoEntity.getSalesDeptId()));
                 if (CollectionUtil.isNotEmpty(dept)) {
-                    biOrderInfoEntity.setDeptName(dept.get(0).getName());
+                    dmpOrderInfoEntity.setDeptName(dept.get(0).getName());
                 }
             } catch (Exception e) {
                 log.error("erp-sys sysUserFeign.listDeptByIds {}异常：{}", soInfoEntity.getSalesDeptId(), e.getMessage());
@@ -470,32 +478,32 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
         }
 
-        biOrderInfoEntity.setCnySettleRate(exchangeRate);
-        biOrderInfoEntity.setSourceId(soInfoEntity.getId());
+        dmpOrderInfoEntity.setCnySettleRate(exchangeRate);
+        dmpOrderInfoEntity.setSourceId(soInfoEntity.getId());
         //订单明细
-        List<BiOrderItemSplitEntity> orderItemEntities = new ArrayList<>(soDetailEntities.size());
+        List<DmpOrderItemSplitEntity> orderItemEntities = new ArrayList<>(soDetailEntities.size());
         //明细字段转换
         if (CollectionUtil.isNotEmpty(soDetailEntities)) {
             soDetailEntities.forEach(soDetailEntity -> {
-                BiOrderItemSplitEntity biOrderItemSplitEntity = SoInfoConverter.INSTANCE.soDetailToDmpOrderItem(soDetailEntity);
-                biOrderItemSplitEntity.setOrderId(biOrderInfoEntity.getId());
+                DmpOrderItemSplitEntity dmpOrderItemSplitEntity = SoInfoConverter.INSTANCE.soDetailToDmpOrderItem(soDetailEntity);
+                dmpOrderItemSplitEntity.setOrderId(dmpOrderInfoEntity.getId());
                 if (StringUtils.isNotEmpty(soDetailEntity.getSkuId())) {
                     List<ProductDetailEntity> detailEntityList = productDetailService.getByIdList(Collections.singletonList(soDetailEntity.getSkuId()));
                     if (CollectionUtils.isNotEmpty(detailEntityList)) {
-                        biOrderItemSplitEntity.setItemName(detailEntityList.get(0).getName());
-                        biOrderItemSplitEntity.setPictureUrl(detailEntityList.get(0).getImagesUrl());
-                        biOrderItemSplitEntity.setSpecifics(detailEntityList.get(0).getVariantProperty());
+                        dmpOrderItemSplitEntity.setItemName(detailEntityList.get(0).getName());
+                        dmpOrderItemSplitEntity.setPictureUrl(detailEntityList.get(0).getImagesUrl());
+                        dmpOrderItemSplitEntity.setSpecifics(detailEntityList.get(0).getVariantProperty());
                     }
                 }
-                biOrderItemSplitEntity.setCostPrice(Optional.ofNullable(soDetailEntity.getPurchasePrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
-                biOrderItemSplitEntity.setSellPrice(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
-                biOrderItemSplitEntity.setStockWarehouseId(soInfoEntity.getWarehouseId());
-                biOrderItemSplitEntity.setAmountAfter(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO).subtract(Optional.ofNullable(soDetailEntity.getDiscountAmount()).orElse(BigDecimal.ZERO)));
-                orderItemEntities.add(biOrderItemSplitEntity);
+                dmpOrderItemSplitEntity.setCostPrice(Optional.ofNullable(soDetailEntity.getPurchasePrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+                dmpOrderItemSplitEntity.setSellPrice(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+                dmpOrderItemSplitEntity.setStockWarehouseId(soInfoEntity.getWarehouseId());
+                dmpOrderItemSplitEntity.setAmountAfter(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO).subtract(Optional.ofNullable(soDetailEntity.getDiscountAmount()).orElse(BigDecimal.ZERO)));
+                orderItemEntities.add(dmpOrderItemSplitEntity);
             });
         }
-        biOrderInfoEntity.setItemList(orderItemEntities);
-        return biOrderInfoEntity;
+        dmpOrderInfoEntity.setItemList(orderItemEntities);
+        return dmpOrderInfoEntity;
     }
 
 }
