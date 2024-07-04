@@ -131,7 +131,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
             boolean update = update(new UpdateWrapper<WarehouseLocationSafetyInventoryEntity>()
                     .eq("warehouse_id", entity.getWarehouseId())
-                    .eq("warehouseLocation", entity.getWarehouseLocation())
+                    .eq("warehouse_location", entity.getWarehouseLocation())
                     .eq("sku_no", entity.getSkuNo())
                     .set("safety_qty", entity.getSafetyQty())
                     .set("max_qty", entity.getMaxQty()));
