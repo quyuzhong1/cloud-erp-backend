@@ -94,4 +94,11 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto);
+
+    /**
+     * 装箱详情
+     * @param id
+     * @return
+     */
+    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
 }

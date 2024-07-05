@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.PackingTaskDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -51,4 +52,11 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @return
      */
     List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String mainId);
+
+    /**
+     * 获取装箱清单
+     * @param taskIds
+     * @return
+     */
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("taskIds") List<String> taskIds);
 }

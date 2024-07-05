@@ -12,9 +12,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CartonDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.entity.PackingTaskDetailEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.server.wms.mapper.WmsCartonMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsCartonDetailService;
@@ -54,7 +57,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         BeanMapperUtils.copy(addDTO, wmsCartonEntity);
 
         // 数据处理
-        handleData(wmsCartonEntity);
+        handleData(wmsCartonEntity,null);
 
         log.info("开始新增发货单箱子信息明细单");
         boolean save = super.save(wmsCartonEntity);
@@ -75,7 +78,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         WmsCartonEntity entity =  BeanMapperUtils.map(WmsCartonEntity.class, updateDTO);
 
         // 数据处理
-        handleData(entity);
+        handleData(entity, null);
         log.info("编辑 开始修改装箱任务单数据，单号：【{}】", old.getId());
         boolean save = super.updateById(entity);
         if(!save) {
@@ -129,7 +132,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
             addDTO.setPackingTaskId(taskId);
             BeanMapperUtils.copy(addDTO, wmsCartonEntity);
             // 数据处理
-            handleData(wmsCartonEntity);
+            handleData(wmsCartonEntity,addDTO.getDetailList());
 
             log.info("开始新增发货单箱子信息明细单");
             boolean save = super.save(wmsCartonEntity);
@@ -146,7 +149,21 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     /**
     * 新增修改处理数据
     */
-    private void handleData(WmsCartonEntity wmsCartonEntity) {
-
+    private void handleData(WmsCartonEntity wmsCartonEntity,List<WmsCartonDetailDTO.AddDTO> detailList) {
+        //TODO 单箱状态判断
+        //发货数量
+        int deliveryQty = detailList.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getDeliveryQty).sum();
+        //待装箱数量=发货数量-所有已装箱数量
+        int packQtySum = detailList.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getPackQty).sum();
+        if (packQtySum >= 0 && packQtySum != deliveryQty){
+            wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.INCOMPLETE.getCode());
+        }else{
+            wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
+        }
+        //装箱人员填充
+        if (packQtySum > 0){
+            wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
+            wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
+        }
     }
 }

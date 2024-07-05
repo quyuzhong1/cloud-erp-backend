@@ -16,6 +16,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.MeasureSourceEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.WmsCartonSpecMapper;
 import com.erp.server.wms.service.*;
@@ -187,5 +188,6 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     */
     private void handleData(WmsCartonSpecEntity wmsCartonSpecEntity, String taskId) {
         wmsCartonSpecEntity.setMainId(taskId);
+        wmsCartonSpecEntity.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
     }
 }
