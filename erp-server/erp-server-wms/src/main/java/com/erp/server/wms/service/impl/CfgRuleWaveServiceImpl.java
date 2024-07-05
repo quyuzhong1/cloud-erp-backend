@@ -33,13 +33,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.CfgRuleWaveDTO;
 import com.erp.model.wms.dto.CfgRuleWaveRecordDTO;
+import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.AbnormalCauseEnum;
-import com.erp.model.wms.enums.ExecutionTypeEnum;
-import com.erp.model.wms.enums.RuleTypeEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.CfgRuleWaveMapper;
 import com.erp.server.wms.service.*;
@@ -103,6 +101,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+
+    @Resource
+    private WarehouseLocationReplenishService warehouseLocationReplenishService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -374,10 +376,16 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //发货明细
             List<SoB2cDeliveryDetailEntity> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
                     .collect(Collectors.toList());
+            if (CollectionUtil.isEmpty(detailList)) {
+                log.error("发货单【{}】未找到明细数据",deliveryEntity.getCode());
+                continue;
+            }
 
             try {
                 soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList);
             } catch (ServiceException e) {
+                //生成缺货补货数据
+                generateReplenish(detailList,deliveryEntity);
                 //添加波次生成的缺货异常
                 updateDeliveryList.add(deliveryEntity.getId());
                 continue;
@@ -428,6 +436,33 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //发货单日志
             List<Pair<String, String>> pairList = waveAddDTO.getDeliveryIdList().stream().map(obj -> new Pair<>(obj, "")).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(StrUtil.format("自动生成波次成功，波次号【{}】",add.getCode()), ModuleTypeEnum.DELIVERY_ORDER.getCode(), pairList, "自动生成波次");
+        }
+    }
+
+    /**
+     * 生成缺货补货数据
+     * @author will
+     * @date 2024/7/5 16:53
+     * @param detailList
+     * @param deliveryEntity
+     */
+    private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList,SoB2cDeliveryEntity deliveryEntity) {
+        //根据sku、仓库合并生成数据
+        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
+            SoB2cDeliveryDetailEntity detailEntity = entry.getValue().get(0);
+
+            WarehouseLocationReplenishDTO.AddDTO addReplenishDTO = new WarehouseLocationReplenishDTO.AddDTO();
+            addReplenishDTO.setSkuId(detailEntity.getSkuId());
+            addReplenishDTO.setSkuNo(detailEntity.getSkuNo());
+            addReplenishDTO.setSourceId(deliveryEntity.getId());
+            addReplenishDTO.setSourceCode(deliveryEntity.getCode());
+            addReplenishDTO.setWarehouseId(detailEntity.getWarehouseId());
+            addReplenishDTO.setSourceType(ReplenishTypeEnum.DELIVER_STOCK_OUT);
+            //合计数量
+            Integer qty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            addReplenishDTO.setQty(qty);
+            warehouseLocationReplenishService.add(addReplenishDTO);
         }
     }
 
