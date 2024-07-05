@@ -604,9 +604,15 @@ public class RedisUtil {
 
 
     /**
-     * @author nkk(kk.niu @ qq.com) @Date 2021年2月3日
-     * @Description 队列的redis return void
-     */
+     * redis分布式锁
+     * @Author Luo_WG
+     * @Date 2024/7/5 10:50
+     * @param lockKey
+     * @param lockValue
+     * @param lockSeconds 锁的过期时间
+     * @param blockAndGet 没有获取到时是否阻塞再获取
+     * @return boolean
+     **/
     public boolean lockAutoUnlock(String lockKey, String lockValue, long lockSeconds, boolean blockAndGet) throws Exception {
         return lockAutoUnlock(lockKey, lockValue, lockSeconds, blockAndGet, redisTemplate);
     }
@@ -669,6 +675,11 @@ public class RedisUtil {
         }
     }
 
+    /**
+     * 释放锁
+     * @param lockKey
+     * @param lockValue
+     */
     public void unLock(String lockKey, String lockValue) {
         unLock(lockKey, lockValue, redisTemplate);
     }
