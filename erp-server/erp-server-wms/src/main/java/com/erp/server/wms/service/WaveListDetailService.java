@@ -20,4 +20,6 @@ public interface WaveListDetailService extends SuperService<WaveListDetailEntity
     WaveListDetailDTO.ViewDTO view(String waveId);
 
     ApiResult<?> moveOut(WaveListDetailDTO.MoveOutDTO moveOutDTO);
+
+    List<WaveListDetailEntity> listByMainIds(List<String> waveIds);
 }

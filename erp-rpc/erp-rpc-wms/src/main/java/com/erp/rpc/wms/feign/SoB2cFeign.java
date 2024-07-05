@@ -12,9 +12,9 @@ import java.util.List;
  * @date 2024-07-02
  * @author tanmujin
  */
-@FeignClient(name = "erp-wms", contextId = "soB2cFeign")
+@FeignClient(name = "erp-oms", contextId = "soB2cFeign")
 public interface SoB2cFeign {
 
-    @PostMapping("/listDetailByMainIds")
+    @PostMapping("/feign/soB2c/listDetailByMainIds")
     List<SoB2cDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
 }
