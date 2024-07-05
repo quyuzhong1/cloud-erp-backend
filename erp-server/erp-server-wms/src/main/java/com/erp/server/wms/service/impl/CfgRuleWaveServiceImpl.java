@@ -257,6 +257,17 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         //符合规则的发货单数据
         List<SoB2cDeliveryEntity> compliantList = new ArrayList<>();
         for (SoB2cDeliveryEntity soB2cDeliveryEntity : soB2cDeliveryList) {
+            //销售订单
+            SoB2cEntity soB2cEntity = soB2cDataDTO.getList().stream().filter(obj -> StrUtil.equals(obj.getId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cEntity)) {
+                log.error("发货单【{}】未找到销售订单数据", soB2cDeliveryEntity.getCode());
+                continue;
+            }
+            if(ObjectUtil.isNotEmpty(soB2cEntity.getIsIntercept()) &&  soB2cEntity.getIsIntercept()) {
+                log.error("发货单【{}】未找到销售订单已拦截不支持生成波次", soB2cDeliveryEntity.getCode());
+                continue;
+            }
+
             //发货单明细数据
             List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getId())).collect(Collectors.toList());
             if (CollectionUtil.isEmpty(deliveryDetailList)) {
@@ -366,7 +377,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
             try {
                 soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList);
-            } catch (Exception e) {
+            } catch (ServiceException e) {
                 //添加波次生成的缺货异常
                 updateDeliveryList.add(deliveryEntity.getId());
                 continue;
