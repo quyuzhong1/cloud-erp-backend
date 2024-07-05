@@ -813,18 +813,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         entity.setIsWeigh(Boolean.TRUE);
 
         //查询渠道信息
+        if (StrUtil.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+            log.error("编码【{}】未查询到渠道id信息",soB2cEntity.getCode());
+            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+        }
+
+        //查询渠道信息
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
         if (ObjectUtil.isEmpty(channelEntity)) {
             log.error("编码【{}】未查询到渠道信息",soB2cEntity.getCode());
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
 
-        //出库配置，TODO
+        //出库配置
         CfgRuleOutDTO.SortingPortRuleDTO sortingPortRuleDTO = CfgRuleOutDTO.SortingPortRuleDTO.builder()
                 .scanLength(dto.getLength())
                 .scanWidth(dto.getWidth())
                 .scanHeight(dto.getHeight())
-                .orderWeight(dto.getWeight())
+                .scanWeight(dto.getWeight())
                 .orderLength(soB2cLogisticsEntity.getLength())
                 .orderWidth(soB2cLogisticsEntity.getWidth())
                 .orderHeight(soB2cLogisticsEntity.getHeight())
