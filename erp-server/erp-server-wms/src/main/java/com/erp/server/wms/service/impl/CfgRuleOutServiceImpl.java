@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
-import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -31,7 +30,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 
 /**
  * <p>
@@ -58,20 +56,64 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     @Override
     public BaseResultDTO.AddDTO addOrUpdate(CfgRuleOutDTO.CommonDTO commonDTO) {
         //处理规则详情
+        //设备分拣
         CfgRuleOutEntity equipmentSortingPortEntity = new CfgRuleOutEntity();
         equipmentSortingPortEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.EQUIPMENT_SORTING_PORT.getCode());
         Map<String, Object> equipmentSortingPortMap = BeanUtil.beanToMap(commonDTO.getEquipmentSortingPortDTO());
         this.checkEquipmentSortingPort(commonDTO.getEquipmentSortingPortDTO());
         equipmentSortingPortEntity.setRuleContent(equipmentSortingPortMap);
+
+        //称重量方允许偏差
         CfgRuleOutEntity b2cAllowableDeviationsEntity = new CfgRuleOutEntity();
         b2cAllowableDeviationsEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.B2C_ALLOWABLE_DEVIATIONS.getCode());
         Map<String, Object> b2cAllowableDeviationsMap = BeanUtil.beanToMap(commonDTO.getB2cAllowableDeviations());
         this.checkB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations());
         b2cAllowableDeviationsEntity.setRuleContent(b2cAllowableDeviationsMap);
+
+        //装箱超重配置
+        CfgRuleOutEntity cfgOverWeight = new CfgRuleOutEntity();
+        cfgOverWeight.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode());
+        Map<String, Object> cfgOverWeightMap = BeanUtil.beanToMap(commonDTO.getCfgOverweight());
+        this.checkCfgOverweight(commonDTO.getCfgOverweight());
+        cfgOverWeight.setRuleContent(cfgOverWeightMap);
+
+        //产品装箱配置
+        CfgRuleOutEntity cfgProductPacking = new CfgRuleOutEntity();
+        cfgProductPacking.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode());
+        Map<String, Object> cfgProductPackingMap = BeanUtil.beanToMap(commonDTO.getCfgProductPacking());
+        this.checkCfgProductPacking(commonDTO.getCfgProductPacking());
+        cfgProductPacking.setRuleContent(cfgProductPackingMap);
+
         //删除数据后再保存
         service.remove(new QueryWrapper<>());
-        service.saveBatch(Arrays.asList(equipmentSortingPortEntity, b2cAllowableDeviationsEntity));
+        service.saveBatch(Arrays.asList(equipmentSortingPortEntity, b2cAllowableDeviationsEntity,cfgOverWeight,cfgProductPacking));
         return new BaseResultDTO.AddDTO();
+    }
+
+    private void checkCfgOverweight(CfgRuleOutDTO.CfgOverweightDTO cfgOverweight) {
+        cfgOverweight.check();
+    }
+
+    private void checkCfgProductPacking(CfgRuleOutDTO.CfgProductPacking cfgProductPacking) {
+        List<CfgRuleOutDTO.CfgProductPackingDetail> cfgProductPackingDetailList = cfgProductPacking.getCfgProductPackingDetailList();
+        if(CollectionUtil.isEmpty(cfgProductPackingDetailList)){
+            return;
+        }
+        List<String> valueList = cfgProductPackingDetailList.stream().flatMap(v->v.getChannelIds().stream()).collect(Collectors.toList());
+        Set<String> values = new HashSet<>();
+        List<String> duplicates = valueList.stream()
+                .filter(v -> !values.add(v))
+                .collect(Collectors.toList());
+
+        if (!duplicates.isEmpty()) {
+            throw new ServiceException("产品装箱配置-存在相同渠道配置");
+        }
+        for (CfgRuleOutDTO.CfgProductPackingDetail cfgProductPackingDetail : cfgProductPackingDetailList) {
+            if(cfgProductPackingDetail.getCannotPackingPropertyIds().stream().anyMatch(v->cfgProductPackingDetail.getCanPackingPropertyIds().contains(v))){
+                throw new ServiceException("产品装箱配置-不可装入与可装入存在相同产品属性");
+            }
+        }
+
     }
 
     private void checkB2cAllowableDeviations(CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations) {
@@ -89,7 +131,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 .collect(Collectors.toList());
 
         if (!duplicates.isEmpty()) {
-            throw new ServiceException("B2C称重量方允许偏差条件存在物流商获渠道");
+            throw new ServiceException("B2C称重量方允许偏差条件存在相同物流商或渠道");
         }
 
         for (CfgRuleOutDTO.B2cAllowableDeviationsCondition b2cAllowableDeviationsConditionDetail : conditionDTOS) {
@@ -139,10 +181,14 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     public CfgRuleOutDTO.CommonDTO view() {
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity equipmentSortingPortEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.EQUIPMENT_SORTING_PORT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
-        CfgRuleOutEntity b2cAllowableDeviationsEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.B2C_ALLOWABLE_DEVIATIONS.getCode())).findFirst().orElse(new CfgRuleOutEntity()  );
+        CfgRuleOutEntity b2cAllowableDeviationsEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.B2C_ALLOWABLE_DEVIATIONS.getCode())).findFirst().orElse(new CfgRuleOutEntity());
+        CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
+        CfgRuleOutEntity cfgProductPacking = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutDTO.CommonDTO commonDTO = new CfgRuleOutDTO.CommonDTO();
-        commonDTO.setEquipmentSortingPortDTO(BeanUtil.mapToBean(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class,true));;
-        commonDTO.setB2cAllowableDeviations(BeanUtil.mapToBean(b2cAllowableDeviationsEntity.getRuleContent(), CfgRuleOutDTO.B2cAllowableDeviations.class,true));
+        commonDTO.setEquipmentSortingPortDTO(BeanUtil.toBeanIgnoreError(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class));
+        commonDTO.setB2cAllowableDeviations(BeanUtil.toBeanIgnoreError(b2cAllowableDeviationsEntity.getRuleContent(), CfgRuleOutDTO.B2cAllowableDeviations.class));
+        commonDTO.setCfgOverweight(BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgOverweightDTO.class));
+        commonDTO.setCfgProductPacking(BeanUtil.toBeanIgnoreError(cfgProductPacking.getRuleContent(), CfgRuleOutDTO.CfgProductPacking.class));
         return commonDTO;
     }
 
