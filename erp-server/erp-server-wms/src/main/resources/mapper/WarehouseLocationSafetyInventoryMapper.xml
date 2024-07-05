@@ -38,7 +38,7 @@
         <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
             and ${param.sqlMap.default}
         </if>
-        order by id
+        order by warehouse_id, sku_no
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity">
         select id,

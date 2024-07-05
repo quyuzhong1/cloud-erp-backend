@@ -209,4 +209,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         );
         return BatchResultDTO.fail(waveId, viewDTO.getCode(), "成功");
     }
+
+    @Override
+    public List<WaveListDTO.WaveDeliveryDTO> listByDeliverIds(List<String> ids) {
+        return baseMapper.listByDeliverIds(ids);
+    }
 }

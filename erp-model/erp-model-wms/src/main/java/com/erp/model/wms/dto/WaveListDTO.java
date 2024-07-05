@@ -230,4 +230,15 @@ public class WaveListDTO implements Serializable {
     public static class ExportParamDTO extends SearchParamDTO{
 
     }
+
+
+    @Getter
+    @Setter
+    public static class WaveDeliveryDTO {
+
+        private String waveCode;
+
+        private String deliveryId;
+
+    }
 }

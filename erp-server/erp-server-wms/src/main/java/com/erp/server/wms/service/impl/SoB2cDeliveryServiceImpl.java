@@ -818,7 +818,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String logisticsCode = dto.getBarCode();
         //物流单信息
         LogisticsBillDTO.BaseDTO baseDTO = logisticsBillFeign.getByTrackNoOrTransportNo(logisticsCode);
-
+        if (ObjectUtil.isEmpty(baseDTO)) {
+            log.error("编码【{}】未查询到物流单信息",baseDTO.getSourceCode());
+            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+        }
         SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO();
         paramDTO.setB2cSoIdList(Arrays.asList(baseDTO.getSourceId()));
         paramDTO.setDataTypeList(Arrays.asList(SoB2cDataTypeEnum.LOGISTIC.getCode()));
@@ -1686,14 +1689,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @param records
      */
     private void fillList(List<SoB2cDeliveryDTO.ListDTO> records) {
-        List<String> skuIds = records.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> skuIds = records.stream().map(SoB2cDeliveryDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         //查询订单
-        List<String> soIds = records.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<String> soIds = records.stream().map(SoB2cDeliveryDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
         List<String> ids = records.stream().map(SoB2cDeliveryDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(ids);
+        List<WaveListDTO.WaveDeliveryDTO> deliveryList = waveListService.listByDeliverIds(ids);
         for (SoB2cDeliveryDTO.ListDTO record : records) {
             //拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
@@ -1718,6 +1722,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 record.setSkuNo(skuVO.getSkuNo());
                 record.setProductName(skuVO.getSkuName());
             }
+            //波次号
+            WaveListDTO.WaveDeliveryDTO dto = deliveryList.stream()
+                    .filter(e -> e.getDeliveryId().equals(record.getId()))
+                    .findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
+            record.setWavesCode(dto.getWaveCode());
             String warehouseLocation = views.stream().filter(e -> e.getSourceDetailId().equals(record.getDetailId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
                     .distinct()
