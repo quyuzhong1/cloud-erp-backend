@@ -15,10 +15,12 @@ import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PickingStatusEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListDetailMapper;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -43,6 +45,9 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     private PickingDetailService pickingDetailService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    @Lazy
+    private SoB2cDeliveryService deliveryService;
 
     @Override
     public List<WaveListDetailEntity> listByMainId(String mainId) {
@@ -128,7 +133,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         if(detailList.isEmpty()){
             waveListService.getBaseMapper().deleteById(moveOutDTO.getWaveId());
         }
-
+        deliveryService.updateStatus(Collections.singletonList(moveOutDTO.getDeliveryId()) , SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode());
         operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
         return ApiResult.success();
     }

@@ -86,7 +86,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
             detailList.add(detailEntity);
         }
-
+        deliveryService.updateStatus(deliveryIdList, SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode());
         waveListDetailService.saveBatch(detailList);
         operateLogService.addModuleOperateLog(String.format("生成波次【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getId(), "新增操作", user.getUid(), user.getRealName());
         return new BaseResultDTO.AddDTO(entity.getId(), entity.getCode());
@@ -180,6 +180,10 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         if (! entity.getStatus().equals(WaveStatusEnum.AWAIT_PICK.getCode())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有待拣货的波次支持取消");
         }
+        List<WaveListDetailEntity> detailList = waveListDetailService.listByMainId(id);
+        List<String> deliveryIdList = detailList.stream().map(WaveListDetailEntity::getDeliveryId).collect(Collectors.toList());
+        deliveryService.updateStatus(deliveryIdList, SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode());
+
         //todo 释放冻结库存
         this.baseMapper.deleteById(entity);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "成功");

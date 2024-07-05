@@ -73,6 +73,11 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
                 addDeliveryInterceptFilter();
             }
+            //生成波次
+            if (SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus().equals(searchType)) {
+                super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus());
+                addDeliveryInterceptFilter();
+            }
 
             //拦截中
             if ("intercepting".equals(searchType)) {
@@ -90,15 +95,6 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
             //虚假发货
             if ("false_shipment".equals(searchType)) {
                 List<String> ids = soB2cDeliveryService.listIdsByShipmentMark(ShipmentMarkTypeEnum.MANUAL);
-                if (CollectionUtils.isEmpty(ids)) {
-                    return getQueryEmptySql();
-                }
-                super.buildDefaultDTO("sbd.id", ids);
-                addDeliveryInterceptFilter();
-            }
-            if ("generation_waves".equals(searchType)) {
-
-                List<String> ids = waveListService.listDeliveryIdByStatus(WaveStatusEnum.AWAIT_PICK.getCode());
                 if (CollectionUtils.isEmpty(ids)) {
                     return getQueryEmptySql();
                 }
