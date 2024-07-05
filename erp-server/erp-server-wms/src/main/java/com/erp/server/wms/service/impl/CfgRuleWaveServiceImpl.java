@@ -350,7 +350,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         //按创建时间录入波次
         List<SoB2cDeliveryEntity> sortedList = compliantList.stream().sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime)).collect(Collectors.toList());
         Integer totalQty = MathUtil.ZERO;
-        Integer orderQty = MathUtil.ZERO;
+        Integer orderQty = MathUtil.ONE;
 
         WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
         addDTO.setWaveType(entity.getWaveType());
@@ -391,7 +391,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
                 //清空合计数据
                 totalQty = MathUtil.ZERO;
-                orderQty = MathUtil.ZERO;
+                orderQty = MathUtil.ONE;
                 deliveryIdList = new ArrayList<>();
                 addDTO = new WaveListDTO.AddDTO();
                 addDTO.setWaveType(entity.getWaveType());
