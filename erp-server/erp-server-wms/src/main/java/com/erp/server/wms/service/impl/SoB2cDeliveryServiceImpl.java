@@ -908,6 +908,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         printLogisticsBillConfirm(dto,response);
     }
 
+    @Override
+    public String dimensionalWeightTob(DimensionalWeightDTO dto) {
+        return "";
+    }
+
 
     @Override
     public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds) {

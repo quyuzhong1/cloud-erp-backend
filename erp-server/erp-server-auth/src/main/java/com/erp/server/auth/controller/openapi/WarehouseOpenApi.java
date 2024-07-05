@@ -44,8 +44,9 @@ public class WarehouseOpenApi {
      */
     @OpenApi("dimensionalWeightTob")
     public ApiResult<String> dimensionalWeightTob(@Valid DimensionalWeightDTO dto) {
-
-        return ApiResult.success("");
+        //设备回传的称重量方信息
+        String msg = soB2cDeliveryFeign.dimensionalWeightTob(dto);
+        return ApiResult.success(msg);
     }
 
     /**

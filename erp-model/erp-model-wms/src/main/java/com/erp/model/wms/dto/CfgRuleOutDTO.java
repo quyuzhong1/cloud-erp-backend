@@ -275,9 +275,14 @@ public class CfgRuleOutDTO implements Serializable {
         private BigDecimal maxCirc;
 
         /**
-         * 超重/低于重量允许出库
+         * 超重允许出库
          */
-        private boolean weightNotPassCanOut;
+        private boolean greaterThanWeightCanOut;
+
+        /**
+         * 低于重量允许出库
+         */
+        private boolean lessThanWeightCanOut;
 
         /**
          * 超尺寸允许出库
