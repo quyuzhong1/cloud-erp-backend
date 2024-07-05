@@ -788,7 +788,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String logisticsCode = dto.getBarCode();
         //物流单信息
         LogisticsBillDTO.BaseDTO baseDTO = logisticsBillFeign.getByTrackNoOrTransportNo(logisticsCode);
-
+        if (ObjectUtil.isEmpty(baseDTO)) {
+            log.error("编码【{}】未查询到物流单信息",baseDTO.getSourceCode());
+            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+        }
         SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO();
         paramDTO.setB2cSoIdList(Arrays.asList(baseDTO.getSourceId()));
         paramDTO.setDataTypeList(Arrays.asList(SoB2cDataTypeEnum.LOGISTIC.getCode()));
