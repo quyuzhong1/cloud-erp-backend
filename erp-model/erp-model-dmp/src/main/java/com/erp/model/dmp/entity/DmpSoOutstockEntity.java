@@ -155,6 +155,18 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
       */
      @TableField("bill_date")
      private LocalDateTime billDate;
+     
+     /**
+      * 数据来源
+      */
+     @TableField("data_sources")
+     private String dataSources;
+     
+     /**
+      * 销售组织
+      */
+     @TableField("sale_org_id")
+     private String saleOrgId;
     
     /**
      * 唯一字段md5值

@@ -1,9 +1,12 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.annotation.Resource;
 
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
@@ -17,6 +20,7 @@ import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,6 +38,9 @@ public class SyncNewKingdeeOrderReturnCustomer implements RocketMQListener<Objec
 
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
+    
+    @Resource
+    private RedisTemplate<String,Object> redisTemplate;
 
     @Override
     public void onMessage(Object ext) {
@@ -46,6 +53,18 @@ public class SyncNewKingdeeOrderReturnCustomer implements RocketMQListener<Objec
         updateDTO.setStatus(DmpOutputTaskRecordStatusEnum.FINISH.getCode());
         log.info("监听到金蝶退货单需要同步：entity={}", jsonObject);
         KingdeeReturnOrderEntity entity = JSON.parseObject(ext.toString(),  KingdeeReturnOrderEntity.class);
+        
+        String billNo = entity.getFBillNo();
+        String redisKey = "dmp:wms:orderReturn:" + billNo;
+        int count = 1;
+        while(!redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.SECONDS)) {
+        	log.warn("同步退货单输出任务正在执行中：{}，重试获取锁次数：{}" , billNo , count);
+        	count = count + 1;
+        	try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+			}
+        }
         try {
         	syncSoReturnService.syncKingdeeReturnOrderToSoReturn(entity);
         } catch (Throwable e) {
