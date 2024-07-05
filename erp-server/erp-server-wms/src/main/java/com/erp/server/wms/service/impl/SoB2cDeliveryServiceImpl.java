@@ -110,6 +110,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -860,7 +861,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .scanLength(dto.getLength())
                 .scanWidth(dto.getWidth())
                 .scanHeight(dto.getHeight())
-                .scanWeight(dto.getWeight())
+                .scanWeight(MathUtil.multiply(dto.getWeight(),new BigDecimal(1000)))
                 .orderLength(soB2cLogisticsEntity.getLength())
                 .orderWidth(soB2cLogisticsEntity.getWidth())
                 .orderHeight(soB2cLogisticsEntity.getHeight())
