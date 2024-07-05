@@ -63,7 +63,7 @@
         select status as tabFlag, count(1) as count from wave_list where is_deleted = false and status is not null group by status
     </select>
     <select id="listByDeliverIds" resultType="com.erp.model.wms.dto.WaveListDTO$WaveDeliveryDTO">
-        select pw.id, pwd.delivery_id
+        select pw.code as waveCode, pwd.delivery_id
         from wave_list as pw
         left join wave_list_detail as pwd on pw.id = pwd.main_id and pwd.is_deleted = false
         where pw.is_deleted = false
