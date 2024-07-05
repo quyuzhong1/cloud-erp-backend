@@ -332,12 +332,12 @@ public class CfgRuleOutDTO implements Serializable {
         private List<String> channelIds = new ArrayList<>();
 
         /**
-         * 装入的产品属性id
+         * 装入的产品属性id /plm/dict/list?type=declareProperty
          */
         private List<String> canPackingPropertyIds = new ArrayList<>();
 
         /**
-         * 不可装入的产品属性id
+         * 不可装入的产品属性id /plm/dict/list?type=declareProperty
          */
         private List<String> cannotPackingPropertyIds = new ArrayList<>();
     }
