@@ -23,7 +23,7 @@ public class WangDianReturnOrderEntity extends CleanBaseDTO {
         this.orderInfoDto = orderInfoDto;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.WDT.getCode());
-        this.setUniqueId(orderInfoDto.getStockinId());
+        this.setUniqueId(orderInfoDto.getOrderNo());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }

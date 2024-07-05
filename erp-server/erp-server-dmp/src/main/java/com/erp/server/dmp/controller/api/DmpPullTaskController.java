@@ -40,8 +40,6 @@ public class DmpPullTaskController extends BaseController {
 
     @Autowired
     private DmpPullTaskService dmpPullTaskService;
-    @Resource
-    private TbTaskTypeService tbTaskTypeService;
 
     /**
      * 获取 tab列表
@@ -114,14 +112,4 @@ public class DmpPullTaskController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-    /**
-     * 根据时间段和间隔拆分多个任务
-     * @param dto
-     * @return
-     */
-    @PostMapping(value = "/createJob")
-    public ApiResult<String> createJob(@RequestBody CreateJobDTO dto) {
-        tbTaskTypeService.createJob(dto);
-        return success();
-    }
 }
