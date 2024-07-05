@@ -80,4 +80,11 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * 取消已打印（修改波次状态为：待拣货）
      */
     BatchResultDTO cancelPrinted(String id);
+
+    /**
+     * 通过发货单id查询波次
+     *
+     * @return
+     */
+    List<WaveListDTO.WaveDeliveryDTO> listByDeliverIds(List<String> ids);
 }
