@@ -355,7 +355,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
             //发货明细商品数量合计
             Integer detailTotalQty = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (MathUtil.compareTo(detailTotalQty,entity.getMaxQty()) > MathUtil.ZERO) {
+            if (MathUtil.compareTo(entity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO && MathUtil.compareTo(detailTotalQty,entity.getMaxQty()) > MathUtil.ZERO) {
                 log.warn("发货单【{}】下商品数量【{}】大于波次规则商品数量【{}】",deliveryEntity.getCode(),detailTotalQty,entity.getMaxQty());
                 continue;
             }
@@ -373,7 +373,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             }
 
             //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
-            if ((ObjectUtil.isNotEmpty(entity.getMaxQty()) && detailTotalQty + totalQty > entity.getMaxQty())
+            if ((MathUtil.compareTo(entity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO && detailTotalQty + totalQty > entity.getMaxQty())
                     || orderQty > entity.getMaxOrderQty()) {
                 addDTO.setDeliveryIdList(deliveryIdList);
                 resultList.add(addDTO);
