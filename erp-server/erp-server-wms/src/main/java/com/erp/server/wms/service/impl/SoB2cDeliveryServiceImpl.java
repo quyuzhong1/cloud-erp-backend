@@ -877,8 +877,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         CfgRuleOutDTO.CommonDTO commonDTO = cfgRuleOutService.view();
         Boolean isDeviation = cfgRuleOutService.handleB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations(),sortingPortRuleDTO);
 
+        //记录发货单异常
+        if (!isDeviation) {
+            entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
+            entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
+        }
+
         //自动出库
-        if (!isDeviation && entity.getIsAutoOut()) {
+        if (isDeviation && entity.getIsAutoOut()) {
             try {
                 packingInspectionService.soB2cDeliveryAutoOut(soB2cEntity,entity);
             } catch (Exception e) {
