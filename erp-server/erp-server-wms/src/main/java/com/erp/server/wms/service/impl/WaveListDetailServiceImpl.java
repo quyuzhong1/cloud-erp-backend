@@ -13,16 +13,20 @@ import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.model.wms.enums.PickingStatusEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WaveListDetailService;
 import com.erp.server.wms.service.WaveListService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,6 +40,9 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     private SoB2cFeign soB2cFeign;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    @Lazy
+    private SoB2cDeliveryService deliveryService;
 
     @Override
     public List<WaveListDetailEntity> listByMainId(String mainId) {
@@ -96,7 +103,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         if(detailList.isEmpty()){
             waveListService.getBaseMapper().deleteById(moveOutDTO.getWaveId());
         }
-
+        deliveryService.updateStatus(Collections.singletonList(moveOutDTO.getDeliveryId()) , SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode());
         operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
         return ApiResult.success();
     }
