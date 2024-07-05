@@ -21,6 +21,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputFileMongoRelationEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
 import com.erp.model.dmp.enums.DmpInputTaskFileContentTypeEnum;
+import com.erp.model.dmp.enums.DmpInputTaskFileParseStatusEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputMongoRequest;
@@ -101,11 +102,16 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 		updateTaskStatus = DmpInputTaskStatusEnum.MONGO;
 		this.beforeToDoStatus(dmpRequest, dmpResponse);
 		
-		List<ParamData> paramDataList = new ArrayList<>();
-		paramDataList.add(new ParamData(MONGO_BASE_INPUTTASKID, MONGO_BASE_INPUTTASKID, PannoEnum.EQ, inputTaskId));
-		paramDataList.add(new ParamData(MONGO_BASE_CONVERTID, MONGO_BASE_CONVERTID, PannoEnum.EQ, convertId));
-		List<Map<String, Object>> dmpInputMongoBaseEntityList = mongoService.findMongoData(paramDataList, mongoStorageName);
-		if(CollUtil.isNotEmpty(dmpInputMongoBaseEntityList)) {
+		List<Map<String, Object>> dmpInputMongoBaseEntityList = null;
+		Integer count = dmpInputTaskFileService.lambdaQuery()
+				.eq(DmpInputTaskFileEntity::getMainId, inputTaskId)
+				.eq(DmpInputTaskFileEntity::getParseStatus, DmpInputTaskFileParseStatusEnum.WAIT.getCode())
+				.count();
+		if(count == null || count == 0) {
+			List<ParamData> paramDataList = new ArrayList<>();
+			paramDataList.add(new ParamData(MONGO_BASE_INPUTTASKID, MONGO_BASE_INPUTTASKID, PannoEnum.EQ, inputTaskId));
+			paramDataList.add(new ParamData(MONGO_BASE_CONVERTID, MONGO_BASE_CONVERTID, PannoEnum.EQ, convertId));
+			dmpInputMongoBaseEntityList = mongoService.findMongoData(paramDataList, mongoStorageName);
 			this.isNextStatus(dmpResponse);
 		}else {
 			this.dealConvertInputTaskFileEntityListMaps(dmpResponse);
