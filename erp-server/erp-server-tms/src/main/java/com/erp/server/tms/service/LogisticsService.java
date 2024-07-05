@@ -26,7 +26,14 @@ public interface LogisticsService {
      * @param authId
      * @return
      */
-    Map<String, String> getLogisticsAuthConfig(String authId);
+    Map<String, String> getLogisticsAuthConfigByAuthId(String authId);
+    /**
+     * 获取授权信息
+     *
+     * @param shopId
+     * @return
+     */
+    Map<String, String> getLogisticsAuthConfigByShopId(String shopId);
 
     /**
      * 根据平台获取授权列表

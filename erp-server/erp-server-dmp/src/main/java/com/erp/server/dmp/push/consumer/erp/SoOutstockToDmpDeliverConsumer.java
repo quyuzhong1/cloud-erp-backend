@@ -8,13 +8,12 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
-import com.common.business.utils.CollectionUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.server.dmp.service.DmpDeliveryDetailInfoService;
+import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
+import com.erp.server.dmp.service.BiDeliveryDetailInfoService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -40,7 +39,7 @@ public class SoOutstockToDmpDeliverConsumer <T extends DmpSyncTaskIdDTO> extends
     private DmpPushTaskService dmpPushTaskService;
 
     @Resource
-    private DmpDeliveryDetailInfoService dmpDeliveryDetailInfoService;
+    private BiDeliveryDetailInfoService biDeliveryDetailInfoService;
 
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
@@ -64,30 +63,30 @@ public class SoOutstockToDmpDeliverConsumer <T extends DmpSyncTaskIdDTO> extends
         //操作项
         String operate = String.valueOf(map.get("operate"));
 
-        DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity = JSON.parseObject(String.valueOf(map.get("entity")), DmpDeliveryDetailInfoEntity.class);
+        BiDeliveryDetailInfoEntity biDeliveryDetailInfoEntity = JSON.parseObject(String.valueOf(map.get("entity")), BiDeliveryDetailInfoEntity.class);
 
-        if (CollectionUtil.isEmpty(dmpDeliveryDetailInfoEntity.getDetails())) {
+        if (CollectionUtil.isEmpty(biDeliveryDetailInfoEntity.getDetails())) {
             return ApiResult.success();
         }
-        this.cleanOrderField(dmpDeliveryDetailInfoEntity, operate);
+        this.cleanOrderField(biDeliveryDetailInfoEntity, operate);
         return ApiResult.success();
     }
 
     /**
      * 清洗订单
      */
-    private void cleanOrderField(DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity, String operate) {
-        if (ObjectUtil.isEmpty(dmpDeliveryDetailInfoEntity)) {
+    private void cleanOrderField(BiDeliveryDetailInfoEntity biDeliveryDetailInfoEntity, String operate) {
+        if (ObjectUtil.isEmpty(biDeliveryDetailInfoEntity)) {
             throw new RuntimeException("存储的对象dmpDeliveryDetailInfoEntity不能为空！");
         }
         //根据操作类型进行操作
         if (Objects.equals(operate, SyncOperateEnum.OPERATE_APPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_UPDATE.getCode())) {
             //审核
-            dmpDeliveryDetailInfoService.checkOrder(dmpDeliveryDetailInfoEntity);
+            biDeliveryDetailInfoService.checkOrder(biDeliveryDetailInfoEntity);
 
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
-            dmpDeliveryDetailInfoService.removeDeliveryByCodes(Collections.singletonList(dmpDeliveryDetailInfoEntity.getPlatformOrderId()));
+            biDeliveryDetailInfoService.removeDeliveryByCodes(Collections.singletonList(biDeliveryDetailInfoEntity.getPlatformOrderId()));
 
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_INVALID.getCode())) {
             //作废 不处理

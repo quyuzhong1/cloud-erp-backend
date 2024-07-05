@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.vo.PagingVO;
@@ -20,7 +21,7 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "erp-tms", contextId = "logisticsBill")
+@FeignClient(name = "erp-tms", contextId = "logisticsBill",configuration = {FeignErrorDecoder.class})
 public interface LogisticsBillFeign {
 
     /**

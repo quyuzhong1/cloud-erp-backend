@@ -112,7 +112,7 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
             return Collections.emptyList();
         }
         List<LogisticsPrintTypeEntity> list = lambdaQuery()
-                .ne(LogisticsPrintTypeEntity::getPrintType, "")
+//                .ne(LogisticsPrintTypeEntity::getPrintType, "")
                 .in(LogisticsPrintTypeEntity::getLogisticsChannelId, channelIdList)
                 .list();
 

@@ -18,11 +18,10 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -55,7 +54,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpShopInfoEntity> mqProducerService;
+    private MQProducerService<BiShopInfoEntity> mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -85,7 +84,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeEccShopEntity> skuEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(skuEntityList)){
@@ -124,7 +123,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
             return;
         }
         // 构造订单结构
-        List<DmpShopInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiShopInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -159,9 +158,9 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeEccShopEntity mongoDatum) {
-        DmpShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
+        BiShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());
         if(null == shopInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -178,33 +177,33 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
         }
     }
 
-    private DmpShopInfoEntity initOrderInfoEntity(KingdeeEccShopEntity shopEntity) {
-        DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
+    private BiShopInfoEntity initOrderInfoEntity(KingdeeEccShopEntity shopEntity) {
+        BiShopInfoEntity biShopInfoEntity = new BiShopInfoEntity();
         //平台店铺编号
-        dmpShopInfoEntity.setPlatformShopNo(shopEntity.getFNumber());
+        biShopInfoEntity.setPlatformShopNo(shopEntity.getFNumber());
         //平台店铺账户
-        dmpShopInfoEntity.setAccountUserName(shopEntity.getFShopName());
+        biShopInfoEntity.setAccountUserName(shopEntity.getFShopName());
         //平台店铺标识
-        dmpShopInfoEntity.setAccountStoreName(shopEntity.getFName());
+        biShopInfoEntity.setAccountStoreName(shopEntity.getFName());
         //店铺名称
-        dmpShopInfoEntity.setName(shopEntity.getFCustomerIdName());
+        biShopInfoEntity.setName(shopEntity.getFCustomerIdName());
         //平台名称
-        dmpShopInfoEntity.setPlatformName(shopEntity.getFGYShopType());
+        biShopInfoEntity.setPlatformName(shopEntity.getFGYShopType());
         String orgName = shopEntity.getFSaleOrgIdName();
         if(StrUtil.isNotBlank(orgName)){
-            dmpShopInfoEntity.setIsVijim(Boolean.TRUE);
+            biShopInfoEntity.setIsVijim(Boolean.TRUE);
             if (orgName.contains("优至胜") || orgName.contains("小隼")) {
-                dmpShopInfoEntity.setIsVijim(Boolean.FALSE);
+                biShopInfoEntity.setIsVijim(Boolean.FALSE);
             }
         }
-        dmpShopInfoEntity.setUseOrgId(Integer.parseInt(shopEntity.getFSaleOrgId()));
-        dmpShopInfoEntity.setUseOrgName(orgName);
-        dmpShopInfoEntity.setFinanceCode("");
+        biShopInfoEntity.setUseOrgId(Integer.parseInt(shopEntity.getFSaleOrgId()));
+        biShopInfoEntity.setUseOrgName(orgName);
+        biShopInfoEntity.setFinanceCode("");
         //平台标识
-        dmpShopInfoEntity.setPlatformSign(PlatformEnum.KINGDEE_ECC.getDesc());
-        dmpShopInfoEntity.setCustomerId(shopEntity.getFCustomerId());
-        dmpShopInfoEntity.setCreateUserId(shopEntity.getFCreateOrgId());
-        return dmpShopInfoEntity;
+        biShopInfoEntity.setPlatformSign(PlatformEnum.KINGDEE_ECC.getDesc());
+        biShopInfoEntity.setCustomerId(shopEntity.getFCustomerId());
+        biShopInfoEntity.setCreateUserId(shopEntity.getFCreateOrgId());
+        return biShopInfoEntity;
     }
     /**
      * 请求金蝶云星空客户列表接口

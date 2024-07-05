@@ -1267,6 +1267,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL(92150,"B2C销售订单【{}】物流下单平台不能为空"),
     ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】不能设置多个渠道"),
     ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
+    ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
     /**
      * TMS 错误
      * 从94000 开始

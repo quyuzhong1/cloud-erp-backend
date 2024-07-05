@@ -2592,7 +2592,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         Integer skuStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        return baseMapper.getSkuBySkuNos(skuNoList, skuStatus);
+        List<SkuVO> skuList = baseMapper.getSkuBySkuNos(skuNoList, skuStatus);
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
+        for (SkuVO skuVO : skuList) {
+            if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
+                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
+                skuVO.setNotTaxCostPrice(dmpSkuCost.getNotTaxCostPrice());
+            }
+        }
+        return skuList;
     }
 
     /**

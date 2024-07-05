@@ -21,8 +21,8 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -59,7 +59,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
     private MongoService mongoService;
 
     @Autowired
-    private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
+    private MQProducerService<BiReturnOrderInfoEntity> mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -93,7 +93,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<ReturnOrderEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -131,7 +131,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
             return;
         }
         // 构造订单结构
-        List<DmpReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -165,9 +165,9 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ReturnOrderEntity mongoDatum) {
-        DmpReturnOrderInfoEntity returnOrderInfo = initOrderInfoEntity(mongoDatum);
+        BiReturnOrderInfoEntity returnOrderInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
         if(null == returnOrderInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -198,70 +198,70 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
     /**
      * 解析订单数据
      **/
-    private DmpReturnOrderInfoEntity initOrderInfoEntity(ReturnOrderEntity returnOrderEntity) {
-        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
-        BeanUtil.copyProperties(returnOrderEntity, dmpReturnOrderInfoEntity);
+    private BiReturnOrderInfoEntity initOrderInfoEntity(ReturnOrderEntity returnOrderEntity) {
+        BiReturnOrderInfoEntity biReturnOrderInfoEntity = new BiReturnOrderInfoEntity();
+        BeanUtil.copyProperties(returnOrderEntity, biReturnOrderInfoEntity);
         //币种
-        dmpReturnOrderInfoEntity.setCurrencyCode(returnOrderEntity.getCurrencyId());
+        biReturnOrderInfoEntity.setCurrencyCode(returnOrderEntity.getCurrencyId());
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //退货信息创建时间
         if (!"null".equalsIgnoreCase(returnOrderEntity.getCreateDate()) && StrUtil.isNotBlank(returnOrderEntity.getCreateDate())) {
-            dmpReturnOrderInfoEntity.setReturnCreateTime(LocalDateTime.parse(returnOrderEntity.getCreateDate(), sdf));
+            biReturnOrderInfoEntity.setReturnCreateTime(LocalDateTime.parse(returnOrderEntity.getCreateDate(), sdf));
         }
         //国家英文名称
-        dmpReturnOrderInfoEntity.setCountryNameEn(returnOrderEntity.getCountryNameEN());
+        biReturnOrderInfoEntity.setCountryNameEn(returnOrderEntity.getCountryNameEN());
         //国家中文名称
-        dmpReturnOrderInfoEntity.setCountryNameCn(returnOrderEntity.getCountryNameCN());
+        biReturnOrderInfoEntity.setCountryNameCn(returnOrderEntity.getCountryNameCN());
         // 平台名称
-        dmpReturnOrderInfoEntity.setPlatformName(returnOrderEntity.getPlatformId());
+        biReturnOrderInfoEntity.setPlatformName(returnOrderEntity.getPlatformId());
         //退货单号
-        dmpReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getPlatformOrderId());
+        biReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getPlatformOrderId());
         // 平台退款单号
-        dmpReturnOrderInfoEntity.setPlatformReturnCode(returnOrderEntity.getPlatformReturnOrder());
+        biReturnOrderInfoEntity.setPlatformReturnCode(returnOrderEntity.getPlatformReturnOrder());
         // 马帮退款单号
-        dmpReturnOrderInfoEntity.setReturnCode(returnOrderEntity.getReturnOrderId());
+        biReturnOrderInfoEntity.setReturnCode(returnOrderEntity.getReturnOrderId());
         //店铺编号
-        dmpReturnOrderInfoEntity.setShopNo(returnOrderEntity.getShopId());
+        biReturnOrderInfoEntity.setShopNo(returnOrderEntity.getShopId());
         //平台标识
-        dmpReturnOrderInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
-        dmpReturnOrderInfoEntity.setIsDeleted(null != returnOrderEntity.getStatus() && 5 == returnOrderEntity.getStatus());
-        dmpReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
-        dmpReturnOrderInfoEntity.setItemList(initOrderItem(returnOrderEntity));
-        return dmpReturnOrderInfoEntity;
+        biReturnOrderInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
+        biReturnOrderInfoEntity.setIsDeleted(null != returnOrderEntity.getStatus() && 5 == returnOrderEntity.getStatus());
+        biReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
+        biReturnOrderInfoEntity.setItemList(initOrderItem(returnOrderEntity));
+        return biReturnOrderInfoEntity;
     }
 
     /**
      * 解析退货订单商品数据
      **/
-    public List<DmpReturnOrderItemEntity> initOrderItem(ReturnOrderEntity returnOrderEntity) {
-        List<DmpReturnOrderItemEntity> orderItemList = new ArrayList<>();
+    public List<BiReturnOrderItemEntity> initOrderItem(ReturnOrderEntity returnOrderEntity) {
+        List<BiReturnOrderItemEntity> orderItemList = new ArrayList<>();
         HashMap<String, Integer> skuCountMap = new HashMap<>();
         returnOrderEntity.getItem().stream().forEach(orderItemBean -> {
-            DmpReturnOrderItemEntity dmpReturnOrderItemEntity = new DmpReturnOrderItemEntity();
+            BiReturnOrderItemEntity biReturnOrderItemEntity = new BiReturnOrderItemEntity();
             //sku编号
             String skuNo = orderItemBean.getStockSku();
-            dmpReturnOrderItemEntity.setSkuNo(skuNo);
+            biReturnOrderItemEntity.setSkuNo(skuNo);
             //商品名称
-            dmpReturnOrderItemEntity.setItemName(orderItemBean.getTitle());
+            biReturnOrderItemEntity.setItemName(orderItemBean.getTitle());
             //买家购买数量
-            dmpReturnOrderItemEntity.setQuantity(orderItemBean.getQuantity());
+            biReturnOrderItemEntity.setQuantity(orderItemBean.getQuantity());
             //商品单位
-            dmpReturnOrderItemEntity.setProductUnit(orderItemBean.getProductUnit());
+            biReturnOrderItemEntity.setProductUnit(orderItemBean.getProductUnit());
             //商品图片地址
-            dmpReturnOrderItemEntity.setPictureUrl(orderItemBean.getPictureUrl());
+            biReturnOrderItemEntity.setPictureUrl(orderItemBean.getPictureUrl());
             //售价
-            dmpReturnOrderItemEntity.setSellPrice(orderItemBean.getSellPrice());
+            biReturnOrderItemEntity.setSellPrice(orderItemBean.getSellPrice());
             //物品属性
-            dmpReturnOrderItemEntity.setSpecifics(orderItemBean.getSpecifics());
+            biReturnOrderItemEntity.setSpecifics(orderItemBean.getSpecifics());
             //状态 1待处理 2验货入库 3自然耗损
-            dmpReturnOrderItemEntity.setStatus(orderItemBean.getStatus());
-            dmpReturnOrderItemEntity.setIsDeleted(null != returnOrderEntity.getStatus() && 5 == returnOrderEntity.getStatus());
+            biReturnOrderItemEntity.setStatus(orderItemBean.getStatus());
+            biReturnOrderItemEntity.setIsDeleted(null != returnOrderEntity.getStatus() && 5 == returnOrderEntity.getStatus());
             //erp平台商品id
             String erpOrderItemId = returnOrderEntity.getPlatformOrderId() + "_" + returnOrderEntity.getSalesRecordNumber() + "_" + skuNo;
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
-            dmpReturnOrderItemEntity.setErpOrderItemId(erpOrderItemId);
-            dmpReturnOrderItemEntity.setAmountAfter(orderItemBean.getSellPrice().multiply(new BigDecimal(orderItemBean.getQuantity())));
-            orderItemList.add(dmpReturnOrderItemEntity);
+            biReturnOrderItemEntity.setErpOrderItemId(erpOrderItemId);
+            biReturnOrderItemEntity.setAmountAfter(orderItemBean.getSellPrice().multiply(new BigDecimal(orderItemBean.getQuantity())));
+            orderItemList.add(biReturnOrderItemEntity);
         });
         return orderItemList;
     }

@@ -77,7 +77,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
     private AmzBusinessHandleService amzBusinessHandleService;
 
     @Override
-//    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+//    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public Boolean checkAndSendSoOutStock(DmpPullSoOutStockDTO dto) {
         // 查询来源明细ID
         List<SoB2cDetailEntity> detailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));

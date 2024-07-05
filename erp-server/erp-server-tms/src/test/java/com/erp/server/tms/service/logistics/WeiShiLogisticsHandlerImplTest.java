@@ -40,7 +40,7 @@ public class WeiShiLogisticsHandlerImplTest {
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = weiShiLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = weiShiLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){

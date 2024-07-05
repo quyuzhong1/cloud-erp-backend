@@ -57,7 +57,7 @@ public class AliExpressOrderHandlerImplTest {
     public AliExpressOrderHandlerImplTest(){
         String CLIENT_CODE = "502978";
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000200611rxCpJesCK9Oy14a48a06rR9gcm1HJQZTsE7ijPhNSVinjvo46ZN5WMNYv";
+        String token = "50000700312cJ4nYbrzErAqH159364aboXoPdAcJwjMuEzrGXEAudlrVcjGsjo4bIr30";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -65,7 +65,7 @@ public class AliExpressOrderHandlerImplTest {
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = aliExpressLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = aliExpressLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
@@ -197,7 +197,7 @@ public class AliExpressOrderHandlerImplTest {
     @Test
     public void queryOrder() throws com.erp.tms.aliexpress.util.ApiException {
         QueryOrderRequest queryOrderRequest = QueryOrderRequest.builder()
-                .trade_order_id("5391488178675036")
+                .trade_order_id("3037870854973191")
                 .current_page(1)
                 .page_size(20)
                 .build();

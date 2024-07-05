@@ -21,9 +21,9 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -98,7 +98,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
      * @param dto 任务信息
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<OrderEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -138,7 +138,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         }
 
         // 构造订单结构
-        List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(MabangOrderInfoServiceImpl::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -150,7 +150,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
-            DmpDeliveryDetailInfoEntity deliveryDetailInfo = MabangDeliveryDetailServiceImpl.initOrderInfoEntity(orderEntityMap.get(msg.getPlatformOrderId()));
+            BiDeliveryDetailInfoEntity deliveryDetailInfo = MabangDeliveryDetailServiceImpl.initOrderInfoEntity(orderEntityMap.get(msg.getPlatformOrderId()));
             SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
                     deliveryDetailInfo, StrUtil.format("{}_{}", deliveryDetailInfo.getPlatformOrderId(), deliveryDetailInfo.getBillNo()));
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
@@ -178,9 +178,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(OrderEntity mongoDatum) {
-        DmpOrderInfoEntity orderInfo = initOrderInfoEntity(mongoDatum);
+        BiOrderInfoEntity orderInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
         if(null == orderInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -213,7 +213,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     /**
      * 解析订单数据
      **/
-    public static DmpOrderInfoEntity initOrderInfoEntity(OrderEntity orderEntity){
+    public static BiOrderInfoEntity initOrderInfoEntity(OrderEntity orderEntity){
         if (orderEntity.getOrderFee().compareTo(BigDecimal.ZERO) <= 0) {
             return null;
         }
@@ -236,8 +236,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         if (orderEntity.getOrderStatus().equals(5) && (StringUtils.isBlank(orderEntity.getBeforeStatus()) || orderEntity.getBeforeStatus().equals(2))) {
             return null;
         }
-        DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
-        BeanUtil.copyProperties(orderEntity, dmpOrderInfoEntity);
+        BiOrderInfoEntity biOrderInfoEntity = new BiOrderInfoEntity();
+        BeanUtil.copyProperties(orderEntity, biOrderInfoEntity);
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
         Integer orderStatus = orderEntity.getOrderStatus();
         if (null !=  orderEntity.getIsReturned() && 1 == orderEntity.getIsReturned()) {
@@ -246,62 +246,62 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         if (null !=  orderEntity.getIsRefund() && 1 == orderEntity.getIsRefund()) {
             orderStatus = 7;
         }
-        dmpOrderInfoEntity.setOrderStatus(orderStatus);
+        biOrderInfoEntity.setOrderStatus(orderStatus);
         //店铺编号
-        dmpOrderInfoEntity.setShopNo(orderEntity.getShopId());
+        biOrderInfoEntity.setShopNo(orderEntity.getShopId());
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         // 平台订单时间
         if (!"null".equalsIgnoreCase(orderEntity.getCreateDate()) && StrUtil.isNotBlank(orderEntity.getCreateDate())) {
-            dmpOrderInfoEntity.setPlatformCreateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
+            biOrderInfoEntity.setPlatformCreateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
         }
         //订单来源平台
         MabangSourcePlatformEnum sourcePlatformEnum = MabangSourcePlatformEnum.getByCode(orderEntity.getPlatformId());
         if(StrUtil.isNotBlank(orderEntity.getPlatformId()) && orderEntity.getPlatformId().contains("亚马逊")){
             sourcePlatformEnum = MabangSourcePlatformEnum.AMAZON_FBA;
         }
-        dmpOrderInfoEntity.setSourcePlatform(null != sourcePlatformEnum ? sourcePlatformEnum.getDesc() : orderEntity.getPlatformId());
-        if (orderEntity.getOrderStatus().equals(2) && orderEntity.getCanSend().equals(2) && "Amazon".equals(dmpOrderInfoEntity.getSourcePlatform())) {
+        biOrderInfoEntity.setSourcePlatform(null != sourcePlatformEnum ? sourcePlatformEnum.getDesc() : orderEntity.getPlatformId());
+        if (orderEntity.getOrderStatus().equals(2) && orderEntity.getCanSend().equals(2) && "Amazon".equals(biOrderInfoEntity.getSourcePlatform())) {
             return null;
         }
         //买家地址1
-        dmpOrderInfoEntity.setManStreet(orderEntity.getStreet1());
+        biOrderInfoEntity.setManStreet(orderEntity.getStreet1());
         //买家地址2
-        dmpOrderInfoEntity.setSecondStreet(orderEntity.getStreet2());
+        biOrderInfoEntity.setSecondStreet(orderEntity.getStreet2());
         //买家电话1
-        dmpOrderInfoEntity.setManPhone(orderEntity.getPhone1());
+        biOrderInfoEntity.setManPhone(orderEntity.getPhone1());
         //买家电话2
-        dmpOrderInfoEntity.setSecondPhone(orderEntity.getPhone2());
+        biOrderInfoEntity.setSecondPhone(orderEntity.getPhone2());
         //币种
-        dmpOrderInfoEntity.setCurrencyCode(orderEntity.getCurrencyId());
+        biOrderInfoEntity.setCurrencyCode(orderEntity.getCurrencyId());
         //汇率
-        dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
+        biOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
         if (null != orderEntity.getCurrencyRate()
                 && BigDecimal.ZERO.compareTo(orderEntity.getCurrencyRate()) < 0) {
-            dmpOrderInfoEntity.setCurrencyRate(orderEntity.getCurrencyRate());
+            biOrderInfoEntity.setCurrencyRate(orderEntity.getCurrencyRate());
         }
         //国家英文名称
-        dmpOrderInfoEntity.setCountryNameEn(orderEntity.getCountryNameEN());
+        biOrderInfoEntity.setCountryNameEn(orderEntity.getCountryNameEN());
         //国家中文名称
-        dmpOrderInfoEntity.setCountryNameCn(orderEntity.getCountryNameCN());
+        biOrderInfoEntity.setCountryNameCn(orderEntity.getCountryNameCN());
         //平台标识
-        dmpOrderInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
+        biOrderInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
         //企业Id
 //        dmpOrderInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
         //企业名称
 //        dmpOrderInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
         //发货时间
         if (!"null".equalsIgnoreCase(orderEntity.getExpressTime()) && StrUtil.isNotBlank(orderEntity.getExpressTime())) {
-            dmpOrderInfoEntity.setDeliveryTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
+            biOrderInfoEntity.setDeliveryTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
         }
-        dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
-        dmpOrderInfoEntity.setItemList(initOrderItem(orderEntity));
-        return dmpOrderInfoEntity;
+        biOrderInfoEntity.setCreateTime(LocalDateTime.now());
+        biOrderInfoEntity.setItemList(initOrderItem(orderEntity));
+        return biOrderInfoEntity;
     }
 
     /**
      * 解析订单商品数据
      **/
-    public static List<DmpOrderItemSplitEntity> initOrderItem(OrderEntity orderEntity) {
+    public static List<BiOrderItemSplitEntity> initOrderItem(OrderEntity orderEntity) {
         List<OrderItemEntity> orderItems = orderEntity.getOrderItem();
         if(CollectionUtil.isEmpty(orderItems)){
             log.warn("MabangOrderInfoServiceImpl>>>initOrderItem>>>orderEntity 详情列表为空 {}", JSONUtil.toJsonStr(orderItems));
@@ -312,28 +312,28 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         BigDecimal itemTotal = orderEntity.getItemTotalOrigin();
         BigDecimal shareFeeAmount = BigDecimal.ZERO;
         HashMap<String, Integer> skuCountMap = new HashMap<>();
-        List<DmpOrderItemSplitEntity> items = new ArrayList<>();
+        List<BiOrderItemSplitEntity> items = new ArrayList<>();
         for (int i = 0; i < orderItems.size(); i++) {
             OrderItemEntity orderItemBean = orderItems.get(i);
-            DmpOrderItemSplitEntity dmpOrderItemSplitEntity = new DmpOrderItemSplitEntity();
-            BeanUtil.copyProperties(orderItemBean, dmpOrderItemSplitEntity);
+            BiOrderItemSplitEntity biOrderItemSplitEntity = new BiOrderItemSplitEntity();
+            BeanUtil.copyProperties(orderItemBean, biOrderItemSplitEntity);
             //商品名称
-            dmpOrderItemSplitEntity.setItemName(orderItemBean.getTitle());;
+            biOrderItemSplitEntity.setItemName(orderItemBean.getTitle());;
             //sku
             String skuNo = orderItemBean.getStockSku();
-            dmpOrderItemSplitEntity.setSkuNo(skuNo);
+            biOrderItemSplitEntity.setSkuNo(skuNo);
             //erp平台商品id
             String erpOrderItemId = orderEntity.getPlatformOrderId() + "_" + orderItemBean.getStockSku();
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap,skuNo,erpOrderItemId);
-            dmpOrderItemSplitEntity.setErpOrderItemId(erpOrderItemId);
+            biOrderItemSplitEntity.setErpOrderItemId(erpOrderItemId);
             //汇率
-            dmpOrderItemSplitEntity.setCurrencyRate(BigDecimal.ONE);
+            biOrderItemSplitEntity.setCurrencyRate(BigDecimal.ONE);
             if (orderEntity.getCurrencyRate() != null
                     && BigDecimal.ZERO.compareTo(orderEntity.getCurrencyRate()) < 0) {
-                dmpOrderItemSplitEntity.setCurrencyRate(orderEntity.getCurrencyRate());
+                biOrderItemSplitEntity.setCurrencyRate(orderEntity.getCurrencyRate());
             }
-            BigDecimal sellPriceOrigin = ObjectUtil.isNotEmpty(dmpOrderItemSplitEntity.getSellPriceOrigin()) ? dmpOrderItemSplitEntity.getSellPriceOrigin() : BigDecimal.ZERO;
-            Integer quantity = null != dmpOrderItemSplitEntity.getQuantity() ? dmpOrderItemSplitEntity.getQuantity() : 0;
+            BigDecimal sellPriceOrigin = ObjectUtil.isNotEmpty(biOrderItemSplitEntity.getSellPriceOrigin()) ? biOrderItemSplitEntity.getSellPriceOrigin() : BigDecimal.ZERO;
+            Integer quantity = null != biOrderItemSplitEntity.getQuantity() ? biOrderItemSplitEntity.getQuantity() : 0;
             BigDecimal amountAfter = sellPriceOrigin.multiply(new BigDecimal(quantity));
             // 运费分摊
             // 最后一笔订单 分摊剩余运费
@@ -345,9 +345,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
                 fee = shippingFee.multiply(amountAfter).divide(itemTotal, 4, RoundingMode.HALF_DOWN);
                 shareFeeAmount = shareFeeAmount.add(fee);
             }
-            dmpOrderItemSplitEntity.setShippingFee(fee);
-            dmpOrderItemSplitEntity.setAmountAfter(amountAfter.add(fee));
-            items.add(dmpOrderItemSplitEntity);
+            biOrderItemSplitEntity.setShippingFee(fee);
+            biOrderItemSplitEntity.setAmountAfter(amountAfter.add(fee));
+            items.add(biOrderItemSplitEntity);
         }
         return items;
     }

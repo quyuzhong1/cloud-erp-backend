@@ -1,6 +1,6 @@
 package com.sdk.third.qimen.handler;
 
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -18,18 +18,23 @@ import com.sdk.third.qimen.config.QiMenUtils;
 import com.sdk.third.qimen.entity.QiMenSoOutStockEntity;
 import com.taobao.api.ApiException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.common.core.enums.CountrySiteEnum.CHINA;
 
 /**
  * 奇门销售出库单处理器
@@ -58,14 +63,12 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
     private List<WdtWmsStockoutSalesQuerywithdetailResponse.Order> pullData(JobTaskDTO dto) {
         WdtWmsStockoutSalesQuerywithdetailRequest.Pager pager = new WdtWmsStockoutSalesQuerywithdetailRequest.Pager();
         Long pageSize = 200L;
-        pager.setPageNo(0L);
+        pager.setPageNo(1L);
         pager.setPageSize(pageSize);
 
         WdtWmsStockoutSalesQuerywithdetailRequest.Params params = new WdtWmsStockoutSalesQuerywithdetailRequest.Params();
         params.setStatus("110");
         params.setStatusType(3L);
-//        params.setStartTime("2023-03-03 13:00:00");
-//        params.setEndTime("2023-03-03 14:00:00");
         params.setStartTime(dto.getLastTime().minusMinutes(15).format(timeFormatter));
         params.setEndTime(dto.getNextTime().format(timeFormatter));
 
@@ -86,11 +89,15 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
             try {
                 response = qimenService.execute(request);
             } catch (ApiException e) {
-                log.error("拉取旺店通销售出库单失败，原因【{}】", e.getMessage(), e);
+                log.error("拉取奇门销售出库单异常：{}", e);
                 return result;
             }
 
-            if (ObjectUtil.isEmpty(response) || ObjectUtil.isEmpty(response.getData().getOrder())) {
+            if(response.getStatus() != 0L){
+                log.error("拉取奇门销售出库单失败，request：{}，response：{}", JSONUtil.toJsonStr(request), JSONUtil.toJsonStr(response));
+                return result;
+            }
+            if (response.getData().getTotalCount() == 0L) {
                 return result;
             }
 
@@ -125,7 +132,7 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
             //是否作废
             dto.setInvalidStatus(false);
             //销售订单code
-            dto.setSoCode(order.getSrcOrderNo());
+            dto.setSoCode(order.getSrcTradeNo());
             //店铺id
             dto.setShopId(String.valueOf(order.getShopId()));
             dto.setShopName(order.getShopName());
@@ -141,18 +148,19 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
             // 出库日期
             dto.setBillDate(outStockTime.toLocalDate());
             //优惠金额
-            dto.setTotalDiscountAmount(BigDecimal.valueOf(Long.parseLong(order.getDiscount())));
+            dto.setTotalDiscountAmount(BigDecimal.valueOf(Double.parseDouble(order.getDiscount())));
             //运输单号
             dto.setTrackNo(order.getLogisticsNo());
             //来源信息
             dto.setSourceId(String.valueOf(order.getStockoutId()));
-            dto.setSourceType(SourceTypeEnum.WDT_OUT_STOCK.getCode());
+            dto.setSourceType(SourceTypeEnum.QIMEN_SO_OUT_STOCK.getCode());
             dto.setSourceCode(order.getTradeNo());
             dto.setOrderType(OrderTypeEnum.B2C.getCode());
             //审核时间
             dto.setApproveTime(outStockTime);
-
-            dto.setCountry(String.valueOf(order.getReceiverCountry()));
+            dto.setCreated(LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(order.getCreated())), ZoneId.systemDefault()));
+            dto.setCreateUserName("qimen");
+            dto.setCountry(CHINA.getSite());
             //第三方单据编号
             dto.setThirdCode(order.getSrcOrderNo());
 
@@ -161,24 +169,34 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
                 WdtSoOutStockDetailDTO detail = new WdtSoOutStockDetailDTO();
                 detail.setSkuNo(detailItem.getSpecNo());
                 //实发
-                Integer actualQty = Integer.valueOf(detailItem.getNum());
+                String realQty = detailItem.getNum();
+                Integer actualQty = Double.valueOf(realQty).intValue();
                 detail.setActualQty(actualQty);
                 detail.setPlanQty(actualQty);
                 //单价
-                detail.setPrice(BigDecimal.valueOf(Long.parseLong(detailItem.getMarketPrice())));
+                detail.setPrice(BigDecimal.valueOf(Double.parseDouble(detailItem.getMarketPrice())));
                 //税率
-                detail.setTaxRate(BigDecimal.valueOf(Long.parseLong(detailItem.getTaxRate())));
+                detail.setTaxRate(BigDecimal.valueOf(Double.parseDouble(detailItem.getTaxRate())));
                 //成交价
-                detail.setAmount(BigDecimal.valueOf(Long.parseLong(detailItem.getSellPrice())));
+                detail.setAmount(BigDecimal.valueOf(Double.parseDouble(detailItem.getSellPrice())));
                 detail.setCurrency(CurrencyEnum.RMB.getCurrencyCode());
                 detail.setCurrencySymbol(CurrencyEnum.RMB.getCurrencySymbol());
-                detail.setAllAmountLocalCurrency(BigDecimal.valueOf(Long.parseLong(detailItem.getSellPrice())));
+                detail.setAllAmountLocalCurrency(BigDecimal.valueOf(Double.parseDouble(detailItem.getSellPrice())));
                 detail.setExchangeRate(new BigDecimal(1));
                 detail.setSoDetailId(String.valueOf(detailItem.getSrcOrderDetailId()));
                 detail.setRemark(detailItem.getRemark());
                 detail.setSourceDetailId(String.valueOf(detailItem.getSrcOrderDetailId()));
-                detail.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
                 detail.setInvalidStatus(false);
+
+                List<WdtWmsStockoutSalesQuerywithdetailResponse.PositionDetailsList> list = detailItem.getPositionDetailsList();
+                List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = list.stream()
+                        .map(v -> {
+                            WdtSoOutStockDetailDTO.PositionDetailsList detailDTO = new WdtSoOutStockDetailDTO.PositionDetailsList();
+                            BeanUtils.copyProperties(v, detailDTO);
+                            detailDTO.setPositionGoodsCount(Double.valueOf(v.getPositionGoodsCount()).intValue());
+                            return detailDTO;
+                        }).collect(Collectors.toList());
+                detail.setPositionDetailsList(detailsLists);
                 detailList.add(detail);
             }
             dto.setDetailList(detailList);

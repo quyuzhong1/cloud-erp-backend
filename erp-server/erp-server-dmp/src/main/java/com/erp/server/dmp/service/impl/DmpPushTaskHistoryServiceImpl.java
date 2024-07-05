@@ -272,7 +272,7 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
         log.info("开始归档3个月前同步成功的数据");
         int count = dmpPushTaskService.count(Wrappers.<DmpPushTaskEntity>lambdaQuery()
                 .lt(DmpPushTaskEntity::getCreateTime, LocalDateTime.now().minusMonths(3))
-                .eq(DmpPushTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+                .in(DmpPushTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode(), SyncStatusEnum.NO_NEED_SYNC.getCode())
         );
         int pageSize = 500;
         int page = count / pageSize;
@@ -284,7 +284,7 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
                 //获取到今天3个月前同步成功的数据
                 List<DmpPushTaskEntity> dmpPushTasks = dmpPushTaskService.list(Wrappers.<DmpPushTaskEntity>lambdaQuery()
                         .lt(DmpPushTaskEntity::getCreateTime, LocalDateTime.now().minusMonths(3))
-                        .eq(DmpPushTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+                        .in(DmpPushTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode(), SyncStatusEnum.NO_NEED_SYNC.getCode())
                         .last(String.format("LIMIT %s OFFSET %s", pageSize, finalI * pageSize))
                 );
                 log.info("获取数据为第{}开始，到{}条", finalI * pageSize, (finalI + 1) * pageSize);

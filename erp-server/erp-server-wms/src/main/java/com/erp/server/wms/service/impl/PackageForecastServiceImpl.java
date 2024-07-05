@@ -12,6 +12,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -74,6 +75,7 @@ import com.erp.tms.aliexpress.model.order.response.QueryResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -391,7 +393,15 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      */
     @GlobalTransactional(rollbackFor = Exception.class)
     public void aliExpressCancel(String logisticsPlatform, PackageForecastEntity entity) {
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
+        List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
+        List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shopIds)){
+            throw new ServiceException("销售订单店铺未找到");
+        }
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = this.getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
+//        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
         CancelRequest cancelRequest = CancelRequest.builder().
                 userInfo(base.getUserInfo()).client(base.getClient()).
                 handoverContentId(Long.valueOf(entity.getPlatformPackageNo())).
@@ -418,7 +428,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      * @return
      */
     @Override
-    public PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform) {
+    public PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform, String shopId) {
 
         PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBaseDTO = new PackageForecastDTO.AlExpressHandoverBaseDTO();
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
@@ -432,7 +442,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("获取店铺token失败");
         }
         String sellerIdFlag = PackageForecastConstant.SELLER_ID;
-        List<ShopAuthEntity> shopAuthList = shopAuthResult.getData().stream().filter(s -> s.getExtendData().contains(sellerIdFlag)).collect(Collectors.toList());
+        List<ShopAuthEntity> shopAuthList = shopAuthResult.getData().stream().filter(s -> s.getExtendData().contains(sellerIdFlag) && shopId.equals(s.getShopId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(shopAuthList)) {
             throw new ServiceException("获取店铺速卖通卖家id失败");
         }
@@ -462,7 +472,24 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
     @Override
-    public void queryAliExpressInfo(PackageForecastEntity packageForecastEntity, PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase) {
+    public void queryAliExpressInfo(PackageForecastEntity packageForecastEntity) {
+
+        PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase = null;
+        try {
+            List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(packageForecastEntity.getId());
+            List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+            List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+            List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(shopIds)){
+                throw new ServiceException("销售订单店铺未找到");
+            }
+            alExpressHandoverBase = this.getAlExpressHandoverBase(LogisticsPlatformEnum.ALI_EXPRESS.getCode(), shopIds.get(0));
+        }catch (Exception e){
+            log.error("syncPackageForecastInfo error : {}", e.getMessage());
+        }
+        if (Objects.isNull(alExpressHandoverBase)){
+            return;
+        }
         HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
                 .client(alExpressHandoverBase.getClient())
                 .locale("zh_CN")
@@ -546,14 +573,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 entity.setUploadStatus(failure);
                 entity.setRemark("上传失败:" + PlatformDictEnum.getByCode(logisticsPlatform).getName()+"平台尚未对接上传");
                 this.updateById(entity);
-                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败");
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + PlatformDictEnum.getByCode(logisticsPlatform).getName()+"平台尚未对接上传");
             }
         } catch (Exception e) {
             entity.setUploadStatus(failure);
             entity.setRemark("上传失败:" + e.getMessage());
             this.updateById(entity);
             log.error("组包预报上传失败>>>>>{}", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
         }
 
 
@@ -605,7 +632,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      * @param entity
      */
     public String aliExpressPrint(String logisticsPlatform, PackageForecastEntity entity) {
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
+        List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
+        List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shopIds)){
+            throw new ServiceException("销售订单店铺未找到");
+        }
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
         PdfRequest pdfRequest = PdfRequest.builder()
                 .client(base.getClient())
                 .handoverContentId(Long.valueOf(entity.getPlatformPackageNo()))
@@ -639,8 +673,18 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      * @param logisticsAddress
      */
     public void addBigPackage(String logisticsPlatform, PackageForecastEntity entity, LogisticsAddressEntity logisticsAddress) {
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
+        List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shopIds)){
+            throw new ServiceException("销售订单店铺未找到");
+        }
+        if (shopIds.size() > 1){
+            throw new ServiceException("速卖通不支持多店铺组包预报");
+        }
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
+
         List<String> soIdList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
         Map<String, String> authMap = base.getAuthMap();
         //根据销售订单获取销售物流信息
@@ -691,6 +735,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             if (Objects.nonNull(handoverCommitResult) && handoverCommitResult.getSuccess()) {
                 entity.setHandoverNo(handoverCommitResult.getResponse().getHandoverContentCode());
                 entity.setPlatformPackageNo(String.valueOf(handoverCommitResult.getResponse().getHandoverContentId()));
+                entity.setRemark("");
             }
         } catch (ApiException e) {
             log.error("创建交接单失败>>>>>>{}", e);

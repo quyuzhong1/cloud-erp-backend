@@ -65,7 +65,7 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
     private CfgSettingService cfgSettingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeExchangeRateEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -138,7 +138,7 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeExchangeRateEntity mongoDatum) {
         DmpExchangeRateDTO exchangeRateDTO = initExchangeRateEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());

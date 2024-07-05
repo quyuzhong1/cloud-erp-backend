@@ -55,9 +55,7 @@ public class AsyncServiceImpl implements AsyncService {
     public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
         try {
             // 根据提交平台唯一key幂等提交
-            List<String> detailIds = submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey);
-            //更新销售明细标识
-            soB2cFeign.updateSignShippedByDetailId(detailIds);
+            submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey);
         } catch (Exception e) {
             log.error("【{}】销售单【{}】 标记发货失败 >>>错误信息{}", businessDesc, soCode, ExceptionUtil.stacktraceToString(e));
             // 独立异常
@@ -84,11 +82,15 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
     public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey) {
+        log.info("【{}】销售单【{}】 标记发货开始 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soId);
         platformShipOrderDTO.setDictPlatform(dictPlatform);
         platformShipOrderDTO.setSubmitPlatformUniqueKey(submitPlatformUniqueKey);
         platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
-        return PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        //更新销售明细标识
+        soB2cFeign.updateSignShippedByDetailId(detailIds);
+        return detailIds;
     }
 }

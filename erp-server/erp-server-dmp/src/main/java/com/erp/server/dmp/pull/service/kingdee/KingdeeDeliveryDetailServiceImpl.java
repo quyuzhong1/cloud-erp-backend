@@ -22,8 +22,8 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.KingdeeOutStockDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -73,7 +73,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     private CfgSettingService settingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeDeliveryDetailEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -139,7 +139,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             pushToMqList = pushToMqList.stream().filter(e -> !CommonConstants.SYSTEM.equals(e.getDataSources())).collect(Collectors.toList());
         }
         // 构造订单结构
-        List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -199,9 +199,9 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeDeliveryDetailEntity mongoDatum) {
-        DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(mongoDatum);
+        BiDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
         if (null == deliveryDetailInfo) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -301,7 +301,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     /**
      * 解析出库订单数据
      **/
-    private DmpDeliveryDetailInfoEntity initOrderInfoEntity(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) {
+    private BiDeliveryDetailInfoEntity initOrderInfoEntity(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) {
         List<String> list = Arrays.asList("020", "021", "3003");
         Map<SettingEnum, String> map = settingService.getMap(SettingEnum.KD_TO_ERP_FILTER);
         // 标准销售出库单
@@ -324,7 +324,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         if (ObjectUtil.isNotEmpty(kingdeeOutStockEntity.getFIsGenForIos()) && kingdeeOutStockEntity.getFIsGenForIos()) {
             return null;
         }
-        DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
+        BiDeliveryDetailInfoEntity deliveryDetailInfoEntity = new BiDeliveryDetailInfoEntity();
         //单据编号
         deliveryDetailInfoEntity.setBillNo(kingdeeOutStockEntity.getFBillNo());
         //订单编号
@@ -427,11 +427,11 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     /**
      * 解析出库详情商品数据
      **/
-    private List<DmpDeliveryDetailItemEntity> initOrderItem(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) {
-        List<DmpDeliveryDetailItemEntity> orderItemList = new ArrayList<>();
+    private List<BiDeliveryDetailItemEntity> initOrderItem(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) {
+        List<BiDeliveryDetailItemEntity> orderItemList = new ArrayList<>();
         kingdeeOutStockEntity.getKingdeeOutStockItemEntityList().stream()
                 .forEach(itemEntity -> {
-                    DmpDeliveryDetailItemEntity dmpReturnOrderItemEntity = new DmpDeliveryDetailItemEntity();
+                    BiDeliveryDetailItemEntity dmpReturnOrderItemEntity = new BiDeliveryDetailItemEntity();
                     //商品id
                     dmpReturnOrderItemEntity.setItemId(itemEntity.getFMaterialID());
                     dmpReturnOrderItemEntity.setSaleOrderNo(itemEntity.getFSrcBillNo());

@@ -2013,6 +2013,10 @@ public class SoB2cDTO implements Serializable {
          */
         private boolean fromThirdWarehouseFlag = false ;
 
+        /**
+         * 是否记录日志
+         */
+        private boolean addOperationLog = true ;
 
     }
 
@@ -2461,6 +2465,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isOutStock;
 
+        /**
+         * 卖家订单编号
+         */
+        private String sellerOrderCode;
         /**
          * 订单分类名称
          */

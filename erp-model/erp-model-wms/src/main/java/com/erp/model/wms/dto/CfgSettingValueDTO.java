@@ -134,5 +134,15 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private Boolean b2cDeliveryIntercept;
     }
-
+    /**
+     * 飞书质检通知DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackageSettingDTO{
+        /**
+         * 发货物流商Id
+         */
+        private List<String> supplierIds;
+    }
 }

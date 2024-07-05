@@ -48,14 +48,16 @@ public class LogisticsMappingEntity extends BaseEntity<LogisticsMappingEntity> {
     @TableField("order_delivery_mark_type")
     private String orderDeliveryMarkType;
 
+    /**
+     * 承运商代号
+     */
+    @TableField("carrier_code")
+    private String carrierCode;
+
 
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
 
     public static final String SALES_PLATFORM = "sales_platform";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
 }

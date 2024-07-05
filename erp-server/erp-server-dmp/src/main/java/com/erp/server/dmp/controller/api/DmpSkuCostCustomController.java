@@ -10,9 +10,9 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.DmpSkuCostCustomDTO;
-import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.server.dmp.service.DmpOrderItemSplitService;
+import com.erp.server.dmp.service.BiOrderItemSplitService;
 import com.erp.server.dmp.service.DmpSkuCostCustomService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -37,7 +37,7 @@ public class DmpSkuCostCustomController extends BaseController {
     @Resource
     private DmpSkuCostCustomService dmpSkuCostCustomService;
     @Resource
-    private DmpOrderItemSplitService dmpOrderItemSplitService;
+    private BiOrderItemSplitService biOrderItemSplitService;
 
     /**
     * 新增
@@ -74,8 +74,8 @@ public class DmpSkuCostCustomController extends BaseController {
 
     @GetMapping("/test")
     public void test(@RequestParam String id){
-        List<DmpOrderItemSplitEntity> itemEntityList = dmpOrderItemSplitService.listByIds(Arrays.asList(id));
-        List<DmpOrderItemSplitEntity> itemEntityList1 = dmpOrderItemSplitService.splitOrderItem(itemEntityList, PlatformEnum.MABANG.getDesc());
+        List<BiOrderItemSplitEntity> itemEntityList = biOrderItemSplitService.listByIds(Arrays.asList(id));
+        List<BiOrderItemSplitEntity> itemEntityList1 = biOrderItemSplitService.splitOrderItem(itemEntityList, PlatformEnum.MABANG.getDesc());
         System.out.println(itemEntityList1);
     }
 

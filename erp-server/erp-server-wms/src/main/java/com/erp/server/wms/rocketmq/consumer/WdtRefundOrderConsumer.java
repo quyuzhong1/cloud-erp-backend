@@ -28,7 +28,7 @@ import java.util.Objects;
 @Component
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_wdt_return_order_tag || third_system_qimen_return_order_tag",
+        selectorExpression = "third_system_wdt_return_order_tag",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_return_order_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class WdtRefundOrderConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {

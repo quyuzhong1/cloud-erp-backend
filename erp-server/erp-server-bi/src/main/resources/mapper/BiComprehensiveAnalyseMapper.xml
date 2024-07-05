@@ -7,12 +7,12 @@
             CONCAT(sku.sku_no,'[', sku.name_cn, ']') AS name,
             COALESCE(SUM(doit.amount_after), 0) AS sales,
             COALESCE(SUM(droi.order_fee) + SUM(dri.refund_amount), 0)as amount
-        FROM dmp_sku_info sku
-        LEFT JOIN dmp_order_item_split doit ON sku.sku_no = doit.sku_no
-        LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
-        LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
+        FROM bi_sku_info sku
+        LEFT JOIN bi_order_item_split doit ON sku.sku_no = doit.sku_no
+        LEFT JOIN bi_order_info doi ON doi.id = doit.order_id
+        LEFT JOIN bi_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
         where  ( (doit.sell_price > 0 and doit.quantity > 0) OR dri.refund_amount > 0 OR droi.order_fee > 0 )
         <if test="params.timeType == 0">
                 <if test="params.startTime != null">
@@ -157,12 +157,12 @@
             sku.parent_category_name AS name,
             COALESCE(SUM(doit.amount_after), 0) AS sales,
             COALESCE(SUM(droi.order_fee) + SUM(dri.refund_amount), 0) as amount
-            FROM dmp_sku_info sku
-        LEFT JOIN dmp_order_item_split doit ON sku.sku_no = doit.sku_no
-        LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
-        LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
+            FROM bi_sku_info sku
+        LEFT JOIN bi_order_item_split doit ON sku.sku_no = doit.sku_no
+        LEFT JOIN bi_order_info doi ON doi.id = doit.order_id
+        LEFT JOIN bi_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
         where ( (doit.sell_price > 0 and doit.quantity > 0) OR dri.refund_amount > 0 OR droi.order_fee > 0 )
         <if test="params.timeType == 0">
                 <if test="params.startTime != null">
@@ -257,12 +257,12 @@
             COALESCE(SUM(droi.order_fee),0) AS returnOrderAmount,
             COALESCE(SUM(dri.refund_amount),0) AS refundAmount,
             count(dri.platform_order_id) refundOrderQty
-        FROM dmp_sku_info sku
-        LEFT JOIN dmp_order_item_split doit ON sku.sku_no = doit.sku_no
-        LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
-        LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
+        FROM bi_sku_info sku
+        LEFT JOIN bi_order_item_split doit ON sku.sku_no = doit.sku_no
+        LEFT JOIN bi_order_info doi ON doi.id = doit.order_id
+        LEFT JOIN bi_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
 
         <where>
             <if test="params.timeType == 0">
@@ -379,10 +379,10 @@
         SELECT
             sku.sku_no AS name,
             SUM(droi.order_fee) AS amount
-        FROM dmp_sku_info sku
-        LEFT JOIN dmp_order_item_split doit ON sku.sku_no = doit.sku_no
-        LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
-        LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
+        FROM bi_sku_info sku
+        LEFT JOIN bi_order_item_split doit ON sku.sku_no = doit.sku_no
+        LEFT JOIN bi_order_info doi ON doi.id = doit.order_id
+        LEFT JOIN bi_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         <where>
             <if test="startTime != '' and startTime != null">
                 AND to_char(doi.platform_create_time, 'YYYY-MM-dd HH:mm:ss') >= #{startTime}
@@ -402,12 +402,12 @@
         SUM(droi.order_fee) AS returnOrderAmount,
         SUM(dri.refund_amount) AS refundAmount,
         count(dri.platform_order_id) refundOrderQty
-        FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
-        LEFT JOIN dmp_order_item_split doit ON doi.id = doit.order_id
-        LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
+        FROM bi_shop_info dsi
+        LEFT JOIN bi_order_info doi ON dsi.platform_shop_no = doi.shop_no
+        LEFT JOIN bi_order_item_split doit ON doi.id = doit.order_id
+        LEFT JOIN bi_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">
                 <if test="params.startTime != null">
@@ -515,12 +515,12 @@
             COALESCE(SUM(droi.order_fee), 0) AS returnOrderAmount,
             COALESCE(SUM(dri.refund_amount), 0) AS refundAmount,
             count(dri.platform_order_id) refundOrderQty
-        FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
-        LEFT JOIN dmp_order_item_split doit ON doi.id = doit.order_id
-        LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
+        FROM bi_shop_info dsi
+        LEFT JOIN bi_order_info doi ON dsi.platform_shop_no = doi.shop_no
+        LEFT JOIN bi_order_item_split doit ON doi.id = doit.order_id
+        LEFT JOIN bi_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN bi_sku_info sku ON sku.sku_no = doit.sku_no
         WHERE dsi.charge_name IS NOT NULL
         <if test="params.timeType == 0">
             <if test="params.startTime != null">
@@ -890,9 +890,9 @@
             COALESCE(SUM(droi.order_fee * COALESCE(droi.cny_settle_rate, 0)), 0)
         </if>
         AS amount
-        FROM dmp_order_info  AS doi
-        LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
-        left join dmp_order_item_split AS doit on doi.id = doit.order_id
+        FROM bi_order_info  AS doi
+        LEFT JOIN bi_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
+        left join bi_order_item_split AS doit on doi.id = doit.order_id
         left join product_detail AS pd on doit.sku_no = pd.sku_no
         left join product_info AS pi on pi.id = pd.product_id
         <where>
@@ -988,8 +988,8 @@
             COALESCE(SUM(droitem.amount_after * COALESCE(droi.cny_settle_rate, 0)), 0)
         </if>
         AS amount
-        FROM dmp_return_order_item  AS droitem
-        left join dmp_return_order_info AS droi on droi.id = droitem.return_order_id
+        FROM bi_return_order_item  AS droitem
+        left join bi_return_order_info AS droi on droi.id = droitem.return_order_id
         <where>
             <if test="null != params.startTime">
                 and droi.return_create_time &gt;= #{params.startTime}::timestamp
@@ -1020,8 +1020,8 @@
         </if>
         AS refundAmount,
         count(distinct dri.platform_order_id) AS refundOrderQty
-        FROM dmp_refund_item  AS dritem
-        left join dmp_refund_info AS dri on dri.id = dritem.refund_id
+        FROM bi_refund_item  AS dritem
+        left join bi_refund_info AS dri on dri.id = dritem.refund_id
         <where>
             <if test="null != params.startTime">
                 and dri.refund_create_time &gt;= #{params.startTime}::timestamp

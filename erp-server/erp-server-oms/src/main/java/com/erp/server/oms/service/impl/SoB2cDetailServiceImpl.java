@@ -392,8 +392,18 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
-            // 映射关系
-            List<ListingInfoWithSkuMappingDTO> mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList;
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform()) && StringUtils.isBlank(detailDTO.getPlatformSkuNo()) ){
+                // 速卖通明细SKU为空按platformSpuNo匹配
+                mappingDTOList = listingInfoWithSkuMappingDTOMap.values()
+                        .stream()
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList());;
+            } else {
+                // 映射关系
+                mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
+            }
+
             // 检查和获取映射关系
             ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform());
 

@@ -1040,7 +1040,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean disApprove(BaseIdsDTO.IdsDTO dto, Boolean isPushKingDee) {
         List<String> ids = dto.getIds();
         List<SoOutstockEntity> list = this.listByIds(ids);
-        String b2cType = OrderTypeEnum.B2C.getCode();
 //        List<SoOutstockEntity> b2cList = list.stream().filter(o -> b2cType.equals(o.getOrderType())).collect(Collectors.toList());
 //        if (CollectionUtils.isNotEmpty(b2cList)) {
 //            String code = b2cList.stream().map(SoOutstockEntity::getCode).collect(Collectors.joining(","));
@@ -1088,7 +1087,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             virtualInventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
             //扣实体仓库存
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
-            List<SoOutstockEntity> haveSoIdList = list.stream().filter(h -> StringUtils.isNotBlank(h.getSoId())).collect(Collectors.toList());
+            List<SoOutstockEntity> haveSoIdList = list.stream()
+                    .filter(h -> StringUtils.isNotBlank(h.getSoId()))
+                    .filter(h -> OrderTypeEnum.B2B.getCode().equalsIgnoreCase(h.getOrderType()))
+                    .collect(Collectors.toList());
             handleDisApproveData(haveSoIdList);
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
@@ -2504,21 +2506,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 判断明细处理
         if (CollectionUtils.isNotEmpty(detailEntityListMap.keySet())){
             for (PlatformSoOutStockDetailDTO detailDTO : dto.getDetailList()) {
+                if (null == detailDTO.getPlatformDeliveryTime()){
+                    ServiceException.runError("仓储中心解析发货时间时区失败");
+                }
                 if (!detailEntityListMap.containsKey(detailDTO.getPlatformDetailId())){
                     // 1：明细不存在新增
                     generateSourceDetailList.add(detailDTO);
+                    continue;
                 }
                 // 明细已存在
-                SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
-                SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
-
-                if (Objects.equals(detailEntity.getActualQty(), detailDTO.getQtyShipped()) && soOutstockEntity.getBillDate().isEqual(generateB2cDTO.getBillDate())){
-                    // 3, 明细已存在且信息未变更
-                    existSourceDetailList.add(detailDTO);
-                } else {
-                    // 2，明细存在日期或数量变更
-                    updateGenerateSourceDetailList.add(detailDTO);
-                }
+//                SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
+//                SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
+//                if (Objects.equals(detailEntity.getActualQty(), detailDTO.getQtyShipped()) && soOutstockEntity.getBillDate().isEqual(detailDTO.getPlatformDeliveryTime().toLocalDate())){
+//                    // 3, 明细已存在且信息未变更
+//                    existSourceDetailList.add(detailDTO);
+//                } else {
+//                    // 2，明细存在日期或数量变更
+//                    updateGenerateSourceDetailList.add(detailDTO);
+//                }
             }
 
         } else {
