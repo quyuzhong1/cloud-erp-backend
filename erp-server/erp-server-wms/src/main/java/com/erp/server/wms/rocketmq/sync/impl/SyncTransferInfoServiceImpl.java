@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -62,6 +63,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "entity.code", leaseTime = 30, waitTime = 20)
     public void syncKingdeeTransferInfo(DmpTransferInfoDTO entity) {
 
         TransferInfoDTO.ViewDTO oldTransferInfo = transferInfoService.viewTransferInfoByCode(entity.getCode());
