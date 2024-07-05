@@ -44,9 +44,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 
-	@Autowired
-	private DmpInputTaskFileService dmpInputTaskFileService;
-	
 	@Override
 	public List<Map<String, Object>> parseFdsToMongo(DmpInputMongoRequest dmpRequest,
 			DmpInputFdsResponse dmpResponse) {
