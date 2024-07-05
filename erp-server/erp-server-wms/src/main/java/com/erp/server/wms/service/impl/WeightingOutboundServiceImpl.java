@@ -69,6 +69,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WeightingOutboundDTO.ViewDTO scan(WeightingOutboundDTO.ScanDTO dto) {
@@ -163,10 +164,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                         .soB2cEntity(soB2cEntity)
                         .soB2cLogisticsEntity(soB2cLogisticsEntity)
                         .build();
-                ApiResult<String> updateLogisticResult = logisticsBillFeign.updateLogisticWeight(updateWeight);
-                if(!updateLogisticResult.isSuccess() && updateLogisticResult.getCode() != -1){
-                    throw new ServiceException(StrUtil.format("向物流商更新重量异常:{}",updateLogisticResult.getMsg()));
-                }
+                asyncService.updateLogisticWeight(updateWeight);
             }
 
             //更新B2c物流订单重量

@@ -187,7 +187,6 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
                 detail.setRemark(detailItem.getRemark());
                 detail.setSourceDetailId(String.valueOf(detailItem.getSrcOrderDetailId()));
                 detail.setInvalidStatus(false);
-                detailList.add(detail);
 
                 List<WdtWmsStockoutSalesQuerywithdetailResponse.PositionDetailsList> list = detailItem.getPositionDetailsList();
                 List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = list.stream()

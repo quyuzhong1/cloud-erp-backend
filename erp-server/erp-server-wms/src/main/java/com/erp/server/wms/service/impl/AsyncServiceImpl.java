@@ -8,7 +8,9 @@ import com.common.business.handler.PlatformSaveHandler;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.wms.service.AsyncService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -32,6 +34,9 @@ public class AsyncServiceImpl implements AsyncService {
     @Resource
     private SoB2cFeign soB2cFeign;
 
+    @Resource
+    private LogisticsBillFeign logisticsBillFeign;
+
     @Async("wmsErpExecutor")
     @Override
     public void asyncBatchQueryAndUpdateOrderStatus(List<SoB2cEntity> soB2cEntityList) {
@@ -47,6 +52,13 @@ public class AsyncServiceImpl implements AsyncService {
             List<PlatformOrderQueryDTO> curOrderList = e.getValue();
             PlatformSaveHandler.batchQueryAndUpdateOrderStatus(dictPlatform, curOrderList);
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    @Async("wmsErpExecutor")
+    public void updateLogisticWeight(LogisticsBillDTO.UpdateWeight updateWeight) {
+
+        logisticsBillFeign.updateLogisticWeight(updateWeight);
     }
 
 
