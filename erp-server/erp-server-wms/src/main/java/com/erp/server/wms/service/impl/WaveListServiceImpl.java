@@ -221,4 +221,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam printLogisticsBillConfirmParam = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam(param.getPrintType(), deliveryIds);
         return deliveryService.printLogisticsWaybillPreview(printLogisticsBillConfirmParam);
     }
+
+    @Override
+    public List<String> listDeliveryIdBySql(String compareCodeSplicingValueSql) {
+        return baseMapper.listDeliveryIdBySql(compareCodeSplicingValueSql);
+    }
 }

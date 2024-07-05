@@ -164,6 +164,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private PackingInspectionService packingInspectionService;
 
+    @Resource
+    @Lazy
+    private WarehouseLocationReplenishService warehouseLocationReplenishService;
+
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
@@ -384,10 +388,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
         List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
 
-        //已发货和取消发货单 状态，不允许在打印拣货单
+        //待处理、已发货和取消发货单 状态，不允许在打印拣货单
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
         List<String> codeList = deliveryEntityList.stream()
-                .filter(req -> SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(req.getStatus()))
+                .filter(req -> SoB2cDeliveryStatusEnum.notPrint().contains(req.getStatus()))
                 .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, StrUtil.join(",", codeList));
@@ -474,7 +478,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
             throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
         }
-        if (!StrUtil.equals(soB2cDeliveryEntity.getStatus(),SoB2cDeliveryStatusEnum.PICKING.getCode())) {
+        if (SoB2cDeliveryStatusEnum.notPrint().contains(soB2cDeliveryEntity.getStatus())) {
             throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_FINISH_PRINT,soB2cDeliveryEntity.getCode());
         }
 
@@ -1028,7 +1032,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
             throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
         }
-        if (!StrUtil.equals(soB2cDeliveryEntity.getStatus(),SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())) {
+        if (SoB2cDeliveryStatusEnum.notPrint().contains(soB2cDeliveryEntity.getStatus())) {
             throw new ServiceException(ApiError.B2C_SO_DELIVERY_FINISH_PRINT,soB2cDeliveryEntity.getCode());
         }
 
@@ -1417,6 +1421,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             try {
                 generatePickingDetail(entity, detailEntities);
             } catch (Exception e) {
+                generateReplenish(detailEntities, entity);
                 //生成拣货单失败，发货单生成异常
                 updateAbnormal(Collections.singletonList(entity.getId()), AbnormalCauseEnum.GENERATION_WAVE);
             }
@@ -1428,6 +1433,26 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         addDTO.setName("手动生成波次");
         addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
         return waveListService.add(addDTO);
+    }
+
+    private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList,SoB2cDeliveryEntity deliveryEntity) {
+        //根据sku、仓库合并生成数据
+        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
+            SoB2cDeliveryDetailEntity detailEntity = entry.getValue().get(0);
+
+            WarehouseLocationReplenishDTO.AddDTO addReplenishDTO = new WarehouseLocationReplenishDTO.AddDTO();
+            addReplenishDTO.setSkuId(detailEntity.getSkuId());
+            addReplenishDTO.setSkuNo(detailEntity.getSkuNo());
+            addReplenishDTO.setSourceId(deliveryEntity.getId());
+            addReplenishDTO.setSourceCode(deliveryEntity.getCode());
+            addReplenishDTO.setWarehouseId(detailEntity.getWarehouseId());
+            addReplenishDTO.setSourceType(ReplenishTypeEnum.DELIVER_STOCK_OUT);
+            //合计数量
+            Integer qty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            addReplenishDTO.setQty(qty);
+            warehouseLocationReplenishService.add(addReplenishDTO);
+        }
     }
 
     @Override

@@ -10,7 +10,6 @@ import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.WaveListEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface WaveListService extends SuperService<WaveListEntity> {
@@ -90,4 +89,10 @@ public interface WaveListService extends SuperService<WaveListEntity> {
     List<WaveListDTO.WaveDeliveryDTO> listByDeliverIds(List<String> ids);
 
     List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param);
+
+    /**
+     * 高级查询查波次表的发货单id
+     * @param compareCodeSplicingValueSql 拼好的sql
+     */
+    List<String> listDeliveryIdBySql(String compareCodeSplicingValueSql);
 }
