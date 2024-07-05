@@ -88,6 +88,7 @@
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
         sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
         sb2cl.weight,
+        sb2cl.name as sellerLogisticName,
         sb2cl.code as logisticsCode,
         sb2cl.track_no as trackCode
     </sql>
@@ -880,7 +881,6 @@
             sb2c.invalid_status as invalidStatus,
         sb2c.code as erpOrderCode,
         sb2c.platform_code as platformOrderCode,
-        sb2c.seller_order_code as sellerOrderCode,
         sb2c.seller_order_code as sellerOrderCode,
         sb2c.source_type as orderSource,
         sb2c.bill_status as orderStatus,

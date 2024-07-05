@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.annotation.DataIdempotent;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 
 import java.util.List;
 
@@ -21,7 +22,10 @@ public interface AsyncService {
      */
     void asyncBatchQueryAndUpdateOrderStatus(List<SoB2cEntity> soB2cEntityList);
 
-
+    /**
+     * 向物流商更新重量
+     */
+    void updateLogisticWeight(LogisticsBillDTO.UpdateWeight updateWeight);
     /**
      * 异步标记发货
      *

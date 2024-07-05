@@ -34,15 +34,13 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
-import com.erp.server.wms.service.CfgSettingService;
-import com.erp.server.wms.service.PackageForecastService;
-import com.erp.server.wms.service.PackageService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -84,7 +82,9 @@ public class PackageServiceImpl implements PackageService {
     private LogisticsBillFeign logisticsBillFeign;
     @Resource
     private CfgSettingService cfgSettingService;
-
+    @Lazy
+    @Resource
+    private AsyncService asyncService;
     @Override
     public PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO) {
         PackageDTO.ScanResultDTO scanResult = soB2cFeign.packageScanByCode(scanDTO.getCode());
@@ -191,10 +191,7 @@ public class PackageServiceImpl implements PackageService {
                         .soB2cEntity(entity)
                         .soB2cLogisticsEntity(soB2cLogisticsEntity)
                         .build();
-                ApiResult<String> updateLogisticResult = logisticsBillFeign.updateLogisticWeight(updateWeight);
-                if(!updateLogisticResult.isSuccess() && updateLogisticResult.getCode() != -1){
-                    throw new ServiceException(StrUtil.format("向物流商更新重量异常:{}",updateLogisticResult.getMsg()));
-                }
+                asyncService.updateLogisticWeight(updateWeight);
             }
         }
 
