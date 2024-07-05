@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 @AllArgsConstructor
 public enum PackingTaskStatusEnum implements EnumMessage {
+    WAIT("wait","未生成"),
     UNPACKED("unpacked", "待装箱"),
     PACKING("packing", "装箱中"),
     PACKED("packed", "已装箱"),

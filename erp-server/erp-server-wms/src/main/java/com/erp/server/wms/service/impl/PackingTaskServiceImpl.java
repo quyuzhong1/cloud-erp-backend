@@ -15,9 +15,9 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
-import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
@@ -74,7 +74,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Resource
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
     @Resource
-    private SoOutstockService soOutstockService;
+    private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
     private WmsCartonSpecService wmsCartonSpecService;
     @Resource
@@ -184,17 +184,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(ApiError.ERROR_92141);
         }
         if (PickingSourceTypeEnum.B2B.getCode().equals(taskEntity.getSourceType())){
-            SoOutstockEntity soOutstock = soOutstockService.getById(id);
-            if (Objects.isNull(soOutstock)){
-                throw new ServiceException(ApiError.ERROR_92143);
-            }
-            //只允许B2B订单装箱
-            if (!OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())) {
-                throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(id);
+            if (Objects.isNull(soDeliveryNoticeEntity)){
+                throw new ServiceException(ApiError.ERROR_92144);
             }
             //>仅可操作关联单号未审核通过时候可编辑修改
-            if(ApproveStatusEnum.APPROVE.equals(soOutstock.getApproveStatus())){
-                throw new ServiceException(ApiError.ERROR_92140, soOutstock.getCode());
+            if(ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())){
+                throw new ServiceException(ApiError.ERROR_92140, soDeliveryNoticeEntity.getCode());
             }
         }else {
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getById(id);
@@ -246,12 +242,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto) {
         PackingTaskEntity packingTask = this.getById(dto.getTaskId());
-        SoOutstockEntity soOutstock = null;
+        if (Objects.isNull(packingTask)){
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = null;
         FirstMileDeliveryEntity firstMileDeliveryEntity = null;
         if (PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())){
             //待审核的数据可以上传装箱数据
-            soOutstock = soOutstockService.getById(dto.getSourceId());
-            checkSoOutStockStatus(soOutstock);
+            soDeliveryNoticeEntity = soDeliveryNoticeService.getById(dto.getSourceId());
+            checkSoDeliveryNoticeStatus(soDeliveryNoticeEntity);
         }else {
             //待审核的数据可以上传装箱数据
             firstMileDeliveryEntity = firstMileDeliveryService.getById(dto.getSourceId());
@@ -265,7 +264,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonSpecService.add(addDTO, dto.getTaskId());
             //根据主表id分组sku查询发货及待装箱数
             List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateByPackingTaskId(dto.getTaskId());
-            List<String> ids = packDateDTOS.stream().map(WmsCartonSpecDTO.PackDateDTO::getId).distinct().collect(Collectors.toList());
+//            List<String> ids = packDateDTOS.stream().map(WmsCartonSpecDTO.PackDateDTO::getId).distinct().collect(Collectors.toList());
             List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(dto.getTaskId()));
             //校验打包数量
             checkDeliveryQty(packDateDTOS, taskDetailEntityList);
@@ -275,13 +274,46 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //当所有产品待装箱数量为0时，状态自动变更为已装箱
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList) && PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())) {
-            autoGenerateSoOutstock(packingTask,soOutstock);
+            autoGenerateSoDeliveryNotice(packingTask,soDeliveryNoticeEntity);
         }else if (CollectionUtils.isEmpty(groupSkuDTOList) && (PickingSourceTypeEnum.FBA.getCode().equals(packingTask.getSourceType()) || PickingSourceTypeEnum.THIRD.getCode().equals(packingTask.getSourceType()))){
             autoGenerateFirstMileDelivery(packingTask,firstMileDeliveryEntity);
         } else {
             updatePackingStatus(packingTask.getSourceId(),packingTask.getSourceType(), PackingStatusEnum.NOT_PACKING.getCode());
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
+        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
+        PackingTaskEntity packingTask = this.getById(id);
+        if (Objects.isNull(packingTask)){
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        if (PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())){
+            SoDeliveryNoticeEntity soOutstock = soDeliveryNoticeService.getById(packingTask.getSourceId());
+            if (Objects.isNull(soOutstock)){
+                throw new ServiceException(ApiError.ERROR_92143);
+            }
+            listPackingDTO.setId(soOutstock.getId());
+            listPackingDTO.setCode(soOutstock.getCode());
+        }else {
+            FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getById(packingTask.getSourceId());
+            if (Objects.isNull(firstMileDelivery)){
+                throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单");
+            }
+            listPackingDTO.setId(firstMileDelivery.getId());
+            listPackingDTO.setCode(firstMileDelivery.getCode());
+        }
+        //获取总箱数
+        List<WmsCartonSpecEntity> cartonSpecEntityList = wmsCartonSpecService.listByMainIds(Collections.singletonList(id));
+        int boxQty = cartonSpecEntityList.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
+        listPackingDTO.setBoxQty(boxQty);
+
+        //箱子明细信息
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Collections.singletonList(id));
+        listPackingDTO.setDetailList(detailList);
+        return listPackingDTO;
     }
 
     private void autoGenerateFirstMileDelivery(PackingTaskEntity packingTask, FirstMileDeliveryEntity firstMileDeliveryEntity) {
@@ -324,30 +356,30 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
     }
 
-    private void autoGenerateSoOutstock(PackingTaskEntity packingTask, SoOutstockEntity soOutstock) {
-        updatePackingStatus(packingTask.getSourceId(),packingTask.getSourceType(), PackingStatusEnum.PACKING.getCode());
-        //走TMS自动生成报关单逻辑
-        if (!"CN".equalsIgnoreCase(soOutstock.getCountry()) && soOutstock.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && soOutstock.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
-            //走TMS自动生成逻辑
-            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                    .id(soOutstock.getId())
-                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
-                    .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
-                    .soOutstockEntity(soOutstock)
-                    .build();
-            try {
-                Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
-                if(autoGenerateResult){
-                    TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
-                    updateStatusDTO.setIds(Collections.singletonList(soOutstock.getId()));
-                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                    soOutstockService.updateStatus(updateStatusDTO);
-                }
-            }catch (Exception e){
-                log.error("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", soOutstock.getCode(), e.getMessage());
-                throw new ServiceException(StrUtil.format("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", soOutstock.getCode(), e.getMessage()));
-            }
-        }
+    private void autoGenerateSoDeliveryNotice(PackingTaskEntity packingTask, SoDeliveryNoticeEntity soDeliveryNoticeEntity) {
+//        updatePackingStatus(packingTask.getSourceId(),packingTask.getSourceType(), PackingStatusEnum.PACKING.getCode());
+//        //走TMS自动生成报关单逻辑
+//        if (!"CN".equalsIgnoreCase(soOutstock.getCountry()) && soOutstock.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && soOutstock.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
+//            //走TMS自动生成逻辑
+//            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+//                    .id(soOutstock.getId())
+//                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+//                    .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
+//                    .soOutstockEntity(soOutstock)
+//                    .build();
+//            try {
+//                Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+//                if(autoGenerateResult){
+//                    TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
+//                    updateStatusDTO.setIds(Collections.singletonList(soOutstock.getId()));
+//                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+//                    soOutstockService.updateStatus(updateStatusDTO);
+//                }
+//            }catch (Exception e){
+//                log.error("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", soOutstock.getCode(), e.getMessage());
+//                throw new ServiceException(StrUtil.format("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", soOutstock.getCode(), e.getMessage()));
+//            }
+//        }
     }
 
     private void checkFirstMileStatus(FirstMileDeliveryEntity firstMileDeliveryEntity) {
@@ -374,22 +406,22 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
     }
 
-    private void checkSoOutStockStatus(SoOutstockEntity soOutstock) {
-        if (Objects.isNull(soOutstock)){
-            throw new ServiceException(ApiError.ERROR_92143);
+    private void checkSoDeliveryNoticeStatus(SoDeliveryNoticeEntity soDeliveryNoticeEntity) {
+        if (Objects.isNull(soDeliveryNoticeEntity)){
+            throw new ServiceException(ApiError.ERROR_92144);
         }
-        if (!ApproveStatusEnum.APPROVE_ING.equals(soOutstock.getApproveStatus())) {
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
         }
-        //已装箱状态并且已报关不允许再次修改装箱数据
-        if (PackingStatusEnum.PACKING.getCode().equals(soOutstock.getPackingStatus()) && WmsDeclareStatusEnum.FINISH.getCode().equals(soOutstock.getDeclareStatus())) {
-            throw new ServiceException(ApiError.SO_OUTSTOCK_NOT_PACKING);
-        }
-
-        //只允许B2B订单装箱
-        if (!OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())) {
-            throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
-        }
+//        //已装箱状态并且已报关不允许再次修改装箱数据
+//        if (PackingStatusEnum.PACKING.getCode().equals(soOutstock.getPackingStatus()) && WmsDeclareStatusEnum.FINISH.getCode().equals(soOutstock.getDeclareStatus())) {
+//            throw new ServiceException(ApiError.SO_OUTSTOCK_NOT_PACKING);
+//        }
+//
+//        //只允许B2B订单装箱
+//        if (!OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())) {
+//            throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
+//        }
     }
 
     /**
@@ -400,7 +432,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     private void updatePackingStatus(String sourceId, String sourceType, String status) {
         if (PickingSourceTypeEnum.B2B.getCode().equals(sourceType)){
-            soOutstockService.updatePackingStatus(sourceId,status);
+            soDeliveryNoticeService.updatePackingStatus(sourceId,status);
         }else {
             firstMileDeliveryService.updatePackingStatus(sourceId,status);
         }

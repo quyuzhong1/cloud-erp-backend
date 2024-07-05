@@ -148,7 +148,8 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
     @TableField("delivery_status")
     private String deliveryStatus;
     /**
-    * 装箱状态
+    * 装箱状态 wait:未生成;unpacked:待装箱;packing:装箱中;packed:已装箱
+     * PackingTaskStatusEnum
     */
     @TableField("packing_status")
     private String packingStatus;

@@ -148,4 +148,17 @@ public class PackingTaskController extends BaseController {
         Boolean flag = packingTaskService.packingSave(dto);
         return flag ? success() : failure();
     }
+
+    /**
+     * 装箱清单
+     * @Author zdy
+     * @Date 2024/7/4 11:21
+     * @param id -装箱任务id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listPacking")
+    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+        WmsCartonSpecDTO.ListPackingDTO result = packingTaskService.listPacking(id);
+        return success(result);
+    }
 }

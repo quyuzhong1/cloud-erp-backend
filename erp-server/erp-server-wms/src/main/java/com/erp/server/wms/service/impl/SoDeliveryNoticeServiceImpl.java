@@ -1120,4 +1120,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         soDeliveryNoticeDetailService.updateBatchById(detailEntities);
     }
+
+    @Override
+    public void updatePackingStatus(String id, String packingStatus) {
+        lambdaUpdate().set(SoDeliveryNoticeEntity::getPackingStatus, packingStatus)
+                .eq(SoDeliveryNoticeEntity::getId, id)
+                .update();
+    }
 }
