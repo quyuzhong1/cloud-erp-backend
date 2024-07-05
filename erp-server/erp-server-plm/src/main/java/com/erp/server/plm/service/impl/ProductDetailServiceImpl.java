@@ -5172,8 +5172,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             List<String> propertyIds = Arrays.asList(v.getProductPropertyId().split(","));
             List<String> propertyNameList = allBasicDictEntities.stream().filter(t->propertyIds.contains(t.getId())).map(BasicDictEntity::getName).collect(Collectors.toList());
-            propertyDTO.setIsElectric(propertyNameList.stream().anyMatch(t->t.contains("电")));
-            propertyDTO.setElectricName(propertyNameList.stream().filter(t->t.contains("电")).collect(Collectors.joining(",")));
+            propertyDTO.setIsElectric(propertyNameList.stream().anyMatch(t->t.contains("电") && !t.contains("充电盒")));
+            propertyDTO.setElectricName(propertyNameList.stream().filter(t->t.contains("电") && !t.contains("充电盒")).collect(Collectors.joining(",")));
             propertyDTO.setIsMagnetism(propertyNameList.stream().anyMatch(t->t.contains("磁")));
             propertyDTO.setMagnetismName(propertyNameList.stream().filter(t->t.contains("磁")).collect(Collectors.joining(",")));
             propertyDTO.setIsLiquid(propertyNameList.stream().anyMatch(t->t.contains("液体")));
