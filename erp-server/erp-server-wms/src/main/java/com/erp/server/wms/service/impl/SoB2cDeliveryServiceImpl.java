@@ -846,7 +846,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Boolean isDeviation = cfgRuleOutService.handleB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations(),sortingPortRuleDTO);
 
         //自动出库
-        if (!isDeviation && entity.getIsAutoOut()) {
+        if (isDeviation && entity.getIsAutoOut()) {
             try {
                 packingInspectionService.soB2cDeliveryAutoOut(soB2cEntity,entity);
             } catch (Exception e) {
