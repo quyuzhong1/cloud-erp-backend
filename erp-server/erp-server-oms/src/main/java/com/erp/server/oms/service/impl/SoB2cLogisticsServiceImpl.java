@@ -1,15 +1,10 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.UnitEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -387,6 +382,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)
                 .eq(SoB2cLogisticsEntity::getId, id)
                 .update();
+    }
+
+    @Override
+    public SoB2cLogisticsEntity getByTrackNoOrTransportNo(String logisticsCode) {
+        return baseMapper.getByTrackNoOrTransportNo(logisticsCode);
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

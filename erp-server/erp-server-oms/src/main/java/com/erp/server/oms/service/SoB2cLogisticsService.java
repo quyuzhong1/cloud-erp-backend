@@ -136,4 +136,12 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
    Boolean clearB2cLogisticsCode(List<String> soIdList);
 
    Boolean updateWeight(String soId,String logisticsId, BigDecimal weightByG);
+    /**
+     * 根据物流跟踪号或运单好查询订单物流信息
+     * @author will
+     * @date 2024/7/5 10:28
+     * @param logisticsCode
+     * @return SoB2cLogisticsEntity
+     */
+    SoB2cLogisticsEntity getByTrackNoOrTransportNo(String logisticsCode);
 }

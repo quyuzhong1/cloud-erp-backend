@@ -28,6 +28,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -46,7 +47,6 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cDataTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -787,25 +787,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //物流单编码
         String logisticsCode = dto.getBarCode();
         //物流单信息
-        LogisticsBillDTO.BaseDTO baseDTO = logisticsBillFeign.getByTrackNoOrTransportNo(logisticsCode);
-        if (ObjectUtil.isEmpty(baseDTO)) {
-            log.error("编码【{}】未查询到物流单信息",baseDTO.getSourceCode());
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.getByTrackNoOrTransportNo(logisticsCode);
+        if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
+            log.error("物流编码【{}】未查询到物流单信息",logisticsCode);
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
-        SoB2cDTO.SoB2cDataParamDTO paramDTO = new SoB2cDTO.SoB2cDataParamDTO();
-        paramDTO.setB2cSoIdList(Arrays.asList(baseDTO.getSourceId()));
-        paramDTO.setDataTypeList(Arrays.asList(SoB2cDataTypeEnum.LOGISTIC.getCode()));
-        SoB2cDTO.SoB2cDataDTO soB2cDataDTO = soB2cFeign.listSoB2cData(paramDTO);
-        //物流信息
-        List<SoB2cLogisticsEntity> logisticsList = soB2cDataDTO.getLogisticsList();
-        if (CollectionUtils.isEmpty(soB2cDataDTO.getList()) || CollectionUtils.isEmpty(logisticsList)) {
-            log.error("编码【{}】未查询到销售订单信息",baseDTO.getSourceCode());
+        SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class,soB2cLogisticsEntity.getMainId());
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            log.error("物流编码【{}】未查询到销售单信息",logisticsCode);
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
+
         //发货单信息
-        SoB2cDeliveryEntity entity = getBySoCode(baseDTO.getSourceCode());
+        SoB2cDeliveryEntity entity = getBySoCode(soB2cEntity.getCode());
         if (ObjectUtil.isEmpty(entity)) {
-            log.error("编码【{}】未查询到发货单信息",baseDTO.getSourceCode());
+            log.error("编码【{}】未查询到发货单信息",soB2cEntity.getCode());
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
         entity.setLength(dto.getLength());
@@ -817,9 +813,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         entity.setIsWeigh(Boolean.TRUE);
 
         //查询渠道信息
-        LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsList.get(0).getLogisticsChannelId());
+        LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
         if (ObjectUtil.isEmpty(channelEntity)) {
-            log.error("编码【{}】未查询到渠道信息",baseDTO.getSourceCode());
+            log.error("编码【{}】未查询到渠道信息",soB2cEntity.getCode());
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
 
@@ -829,12 +825,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .scanWidth(dto.getWidth())
                 .scanHeight(dto.getHeight())
                 .orderWeight(dto.getWeight())
-                .orderLength(logisticsList.get(0).getLength())
-                .orderWidth(logisticsList.get(0).getWidth())
-                .orderHeight(logisticsList.get(0).getHeight())
-                .orderWeight(logisticsList.get(0).getWeight())
+                .orderLength(soB2cLogisticsEntity.getLength())
+                .orderWidth(soB2cLogisticsEntity.getWidth())
+                .orderHeight(soB2cLogisticsEntity.getHeight())
+                .orderWeight(soB2cLogisticsEntity.getWeight())
                 .logisticsSupplierId(channelEntity.getMainId())
-                .channelId(logisticsList.get(0).getLogisticsChannelId())
+                .channelId(soB2cLogisticsEntity.getLogisticsChannelId())
                 .deliveryOrderId(entity.getId())
                 .build();
         //返回分检口
@@ -844,8 +840,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //自动出库
         if (!isDeviation && entity.getIsAutoOut()) {
-            //发货单自动出库
-            SoB2cEntity soB2cEntity = soB2cDataDTO.getList().get(0);
             try {
                 packingInspectionService.soB2cDeliveryAutoOut(soB2cEntity,entity);
             } catch (Exception e) {

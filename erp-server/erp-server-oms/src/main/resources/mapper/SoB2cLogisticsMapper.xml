@@ -44,7 +44,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, code, name, logistics_channel_name, delivery_time, estimated_shipping_cost, estimated_shipping_currency, actual_shipping_cost, actual_shipping_currency, weight, accessories_sku_id, accessories_sku_no, accessories_qty, accessories_nw, accessories_cost, accessories_cost_currency, length, width, height
+        main_id, code,track_no, name, logistics_channel_name, delivery_time, estimated_shipping_cost, estimated_shipping_currency, actual_shipping_cost, actual_shipping_currency, weight, accessories_sku_id, accessories_sku_no, accessories_qty, accessories_nw, accessories_cost, accessories_cost_currency, length, width, height
     </sql>
     <select id="listTrackNoEmptyList" resultType="com.erp.model.oms.dto.SoB2cLogisticsDTO$TrackNoDTO">
        SELECT
@@ -65,6 +65,16 @@
        AND sb2cl.code!=''
        AND sb2cl.logistics_channel_id!=''
        AND sa.token !=''
+    </select>
+
+    <!-- 根据物流单号或者运单号查询 -->
+    <select id="getByTrackNoOrTransportNo" resultType="com.erp.model.oms.entity.SoB2cLogisticsEntity">
+        select
+               <include refid="Base_Column_List" />
+        from  so_b2c_logistics
+        <where>
+            is_deleted = false and (code = #{logisticsCode}  or (string_to_array(track_no, ',') &amp;&amp;  string_to_array(#{logisticsCode}, ',')))
+        </where>
     </select>
 
 
