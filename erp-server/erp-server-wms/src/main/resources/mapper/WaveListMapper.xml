@@ -72,4 +72,10 @@
             #{item}
         </foreach>
     </select>
+    <select id="listDeliveryIdBySql" resultType="java.lang.String">
+        select pwd.delivery_id
+        from wave_list as pw
+                 left join wave_list_detail as pwd on pw.id = pwd.main_id and pwd.is_deleted = false
+        where pw.is_deleted = false and pw.code ${sql}
+    </select>
 </mapper>
