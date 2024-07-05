@@ -16,6 +16,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -67,20 +68,21 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
         List<String> deliveryIdList = dto.getDeliveryIdList();
         List<SoB2cDeliveryEntity> deliveryList = deliveryService.getBaseMapper().selectBatchIds(deliveryIdList);
-        Map<String, String> deliveryCodeMap = deliveryList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2.getCode()));
+        Map<String, SoB2cDeliveryEntity> deliveryMap = deliveryList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
         List<WaveListDetailEntity> detailList = new ArrayList<>(deliveryIdList.size());
         for (int i = 0; i < deliveryIdList.size(); i++) {
             String deliveryId = deliveryIdList.get(i);
+            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryMap.get(deliveryId);
             WaveListDetailEntity detailEntity = new WaveListDetailEntity();
             detailEntity.setBasketNo(String.valueOf(i + 1));
             detailEntity.setMainId(entity.getId());
             detailEntity.setDeliveryId(deliveryId);
-            detailEntity.setDeliveryCode(deliveryCodeMap.get(deliveryId));
-            detailEntity.setSoId("销售订单id");
-            detailEntity.setSoCode("销售订单编号");
+            detailEntity.setDeliveryCode(soB2cDeliveryEntity.getCode());
+            detailEntity.setSoId(soB2cDeliveryEntity.getSourceId());
+            detailEntity.setSoCode(soB2cDeliveryEntity.getSoCode());
             detailEntity.setPickingStatus(PickingStatusEnum.NOT_START.getCode());
-            detailEntity.setLogisticsChannelName("物流渠道");
+            detailEntity.setLogisticsChannelName(soB2cDeliveryEntity.getLogisticsChannelName());
 
             detailList.add(detailEntity);
         }
@@ -160,17 +162,10 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     public List<WaveListDTO.TabDTO> tabList() {
         List<WaveListDTO.TabDTO> list = baseMapper.listTab();
         Map<String, WaveListDTO.TabDTO> map = list.stream().collect(Collectors.toMap(item1 -> item1.getTabFlag(), item2 -> item2));
-        if(! map.containsKey(WaveStatusEnum.AWAIT_PICK.getCode())){
-            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.AWAIT_PICK.getCode(), 0));
-        }
-        if(! map.containsKey(WaveStatusEnum.PICK_ING.getCode())){
-            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.PICK_ING.getCode(), 0));
-        }
-        if(! map.containsKey(WaveStatusEnum.HANG_UP.getCode())){
-            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.HANG_UP.getCode(), 0));
-        }
-        if(! map.containsKey(WaveStatusEnum.FINISH.getCode())){
-            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.FINISH.getCode(), 0));
+        for (WaveStatusEnum statusEnum : WaveStatusEnum.values()) {
+            if(!map.containsKey(statusEnum.getCode())){
+                list.add(new WaveListDTO.TabDTO(statusEnum.getCode(), 0));
+            }
         }
         for (WaveListDTO.TabDTO dto : list) {
             dto.setTabFlagName(WaveStatusEnum.getNameByCode(dto.getTabFlag()));
@@ -212,5 +207,14 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public List<WaveListDTO.WaveDeliveryDTO> listByDeliverIds(List<String> ids) {
         return baseMapper.listByDeliverIds(ids);
+    }
+
+    @Override
+    public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
+        List<String> waveIds = param.getIds();
+        List<WaveListDetailEntity> detailList = waveListDetailService.listByMainIds(waveIds);
+        List<String> deliveryIds = detailList.stream().map(item -> item.getDeliveryId()).distinct().collect(Collectors.toList());
+        SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam printLogisticsBillConfirmParam = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam(param.getPrintType(), deliveryIds);
+        return deliveryService.printLogisticsWaybillPreview(printLogisticsBillConfirmParam);
     }
 }

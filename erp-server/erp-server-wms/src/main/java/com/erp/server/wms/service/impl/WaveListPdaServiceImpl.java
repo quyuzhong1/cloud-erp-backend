@@ -19,6 +19,7 @@ import com.erp.model.wms.entity.PickingCartEntity;
 import com.erp.model.wms.entity.PickingCartTypeEntity;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.enums.PickingTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListPdaMapper;
@@ -181,7 +182,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
     private void fillWaveInfo(WaveListPdaDTO.WaveBasicInfoDTO viewDTO) {
         //todo
-        viewDTO.setPickingTypeName("");
+        viewDTO.setPickingTypeName(PickingTypeEnum.getName(viewDTO.getPickingType()));
         viewDTO.setWarehouseId("");
         viewDTO.setWarehouseName("");
         viewDTO.setStatusName(WaveStatusEnum.getNameByCode(viewDTO.getStatus()));
