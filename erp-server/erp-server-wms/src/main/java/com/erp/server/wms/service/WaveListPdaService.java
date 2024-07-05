@@ -18,8 +18,6 @@ import java.util.List;
  */
 public interface WaveListPdaService extends SuperService<WaveListEntity> {
 
-    WaveListDetailPdaDTO.ViewDTO startPickingWithSideType(String waveId);
-
     PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO);
 
     WaveListPdaDTO.WaveBasicInfoDTO waveInfo(String waveId);
@@ -27,6 +25,4 @@ public interface WaveListPdaService extends SuperService<WaveListEntity> {
     List<WaveListPdaDTO.ProductDetailDTO> productDetail(String waveId);
 
     ApiResult<?> bindPickingCart(WaveListPdaDTO.BindPickingCartDTO bindDTO);
-
-    WaveListDetailPdaDTO.ViewDTO startPickingWithSequenceType(String waveId);
 }

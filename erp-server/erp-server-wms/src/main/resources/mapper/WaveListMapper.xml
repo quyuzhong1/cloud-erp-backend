@@ -64,8 +64,8 @@
     </select>
     <select id="listByDeliverIds" resultType="com.erp.model.wms.dto.WaveListDTO$WaveDeliveryDTO">
         select id, delivery_id
-        from picking_wave as pw
-        left join picking_wave_detail as pwd on pw.id = pwd.main_id and pwd.is_deleted = false
+        from wave_list as pw
+        left join wave_list_detail as pwd on pw.id = pwd.main_id and pwd.is_deleted = false
         where pw.is_deleted = false
         AND pwd.delivery_id IN
         <foreach collection="ids" item="item" open="(" separator="," close=")">

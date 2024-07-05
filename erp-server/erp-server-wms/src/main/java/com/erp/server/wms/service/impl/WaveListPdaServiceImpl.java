@@ -19,6 +19,7 @@ import com.erp.model.wms.entity.PickingCartEntity;
 import com.erp.model.wms.entity.PickingCartTypeEntity;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.enums.PickingTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListPdaMapper;
@@ -50,7 +51,6 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     @Resource
     private PickingCartTypeService pickingCartTypeService;
 
-    @Override
     public WaveListDetailPdaDTO.ViewDTO startPickingWithSideType(String waveId) {
         //返回波次详情列表
         WaveListDetailDTO.ViewDTO viewDTO = waveDetailService.view(waveId);
@@ -91,12 +91,6 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         //最后更新波次状态
         waveListService.update(new UpdateWrapper<WaveListEntity>().eq("id", waveId).set("status", WaveStatusEnum.PICK_ING.getCode()));
         return resultViewDTO;
-    }
-
-    @Override
-    public WaveListDetailPdaDTO.ViewDTO startPickingWithSequenceType(String waveId) {
-
-        return null;
     }
 
     @Override
@@ -181,7 +175,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
     private void fillWaveInfo(WaveListPdaDTO.WaveBasicInfoDTO viewDTO) {
         //todo
-        viewDTO.setPickingTypeName("");
+        viewDTO.setPickingTypeName(PickingTypeEnum.getName(viewDTO.getPickingType()));
         viewDTO.setWarehouseId("");
         viewDTO.setWarehouseName("");
         viewDTO.setStatusName(WaveStatusEnum.getNameByCode(viewDTO.getStatus()));

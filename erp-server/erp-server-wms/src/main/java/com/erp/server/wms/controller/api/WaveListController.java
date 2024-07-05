@@ -7,9 +7,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.server.wms.query.WaveListAdvanceQueryHandler;
 import com.erp.server.wms.service.WaveListService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -73,19 +75,12 @@ public class WaveListController extends BaseController {
     }
 
     /**
-     * 打印物流单
+     * 打印物流单/配货单
      */
-    @PostMapping("/printLogisticsBill")
-    public ApiResult<?> printLogisticsBill(){
-        return null;
-    }
-
-    /**
-     * 打印配货单
-     */
-    @PostMapping("/printAllocateCargoBill")
-    public ApiResult<?> printAllocateCargoBill(){
-        return null;
+    @PostMapping("/printLogisticsWaybillPreview")
+    public ApiResult<List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>> printLogisticsWaybillPreview(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> list = waveListService.printLogisticsWaybillPreview(param);
+        return ApiResult.success(list);
     }
 
     /**
