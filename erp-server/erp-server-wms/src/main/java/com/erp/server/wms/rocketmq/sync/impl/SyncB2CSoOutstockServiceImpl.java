@@ -133,7 +133,11 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             //当是审核通过的时候
             if ("C".equals(entity.getFDocumentStatus())) {
                 //当已存在 就删除以前的  并回滚库存
-                soOutstockService.handleKingdeeToErp(soOutstock, detailList, flagId);
+            	if(entity != null && entity.getIsNew()) {
+            		soOutstockService.handleNewKingdeeToErp(soOutstock, detailList, flagId);
+            	}else {
+            		soOutstockService.handleKingdeeToErp(soOutstock, detailList, flagId);
+            	}
                 InventoryInOutStockRuleDTO inventoryInOutStockDTO = info.getInventoryInOutStockRuleDTO();
                 if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
                     //无虚拟仓则不扣减虚拟库存
