@@ -95,4 +95,10 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * @param compareCodeSplicingValueSql 拼好的sql
      */
     List<String> listDeliveryIdBySql(String compareCodeSplicingValueSql);
+
+    /**
+     * 打印拣货单
+     * @param ids 波次号
+     */
+    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids);
 }
