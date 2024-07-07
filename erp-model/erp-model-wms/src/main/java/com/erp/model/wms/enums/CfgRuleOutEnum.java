@@ -13,7 +13,9 @@ public enum CfgRuleOutEnum {
     @Getter
     public enum CfgRuleOutTypeEnum implements EnumMessage  {
         EQUIPMENT_SORTING_PORT("equipmentSortingPort", "设备分拣口"),
-        B2C_ALLOWABLE_DEVIATIONS("b2cAllowableDeviations", "B2C称重量方允许偏差");
+        B2C_ALLOWABLE_DEVIATIONS("b2cAllowableDeviations", "B2C称重量方允许偏差"),
+        CFG_PACKING_OVER_WEIGHT("cfgPackingOverWeight", "装箱超重配置"),
+        CFG_PRODUCT_PACKING("cfgProductPacking", "产品装箱配置");
         private String code;
         private String name;
         CfgRuleOutTypeEnum(String code, String name) {

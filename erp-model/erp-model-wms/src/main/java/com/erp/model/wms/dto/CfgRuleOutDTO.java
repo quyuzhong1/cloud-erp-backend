@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.validation.Valid;
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -237,6 +240,125 @@ public class CfgRuleOutDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CfgOverweightDetailDTO {
+        /**
+         * 单箱超重重量（kg）
+         */
+        @DecimalMin(value = "0.00", message = "单箱超重重量不能为负数")
+        private BigDecimal maxWeight;
+        /**
+         * 单箱最低重量（kg）
+         */
+        @DecimalMin(value = "0.00", message = "单箱最低重量不能为负数")
+        private BigDecimal minWeight;
+        /**
+         * 单箱最大尺寸长(cm)
+         */
+        @DecimalMin(value = "0.00", message = "单箱最大尺寸长不能为负数")
+        private BigDecimal maxLength;
+        /**
+         * 单箱最大尺寸宽(cm)
+         */
+        @DecimalMin(value = "0.00", message = "单箱最大尺寸宽不能为负数")
+        private BigDecimal maxWidth;
+        /**
+         * 单箱最大尺寸高(cm)
+         */
+        @DecimalMin(value = "0.00", message = "单箱最大尺寸高不能为负数")
+        private BigDecimal maxHeight;
+        /**
+         * 单箱最大周长(cm)
+         */
+        @DecimalMin(value = "0.00", message = "单箱最大周长不能为负数")
+        private BigDecimal maxCirc;
+
+        /**
+         * 超重允许出库
+         */
+        private boolean greaterThanWeightCanOut;
+
+        /**
+         * 低于重量允许出库
+         */
+        private boolean lessThanWeightCanOut;
+
+        /**
+         * 超尺寸允许出库
+         */
+        private boolean sizeNotPassCanOut;
+
+        public void check(){
+            if(Objects.nonNull(maxWeight) && Objects.nonNull(minWeight) && maxWeight.compareTo(minWeight)<0){
+                throw new ServiceException("单箱超重重量不可大于最高重量");
+            }
+        }
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CfgOverweightDTO {
+
+        /**
+         * 装箱超重配置-FBA
+         */
+        @Valid
+        private CfgOverweightDetailDTO fbaOverweight = new CfgOverweightDetailDTO();
+
+        /**
+         * 装箱超重配置-第三方仓
+         */
+        @Valid
+        private CfgOverweightDetailDTO thirdWarehouseOverweight = new CfgOverweightDetailDTO();
+        /**
+         * 装箱超重配置-B2B
+         */
+        @Valid
+        private CfgOverweightDetailDTO b2BOverweight = new CfgOverweightDetailDTO();
+
+        public void check(){
+            fbaOverweight.check();
+            thirdWarehouseOverweight.check();
+            b2BOverweight.check();
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CfgProductPackingDetail {
+
+        /**
+         * 渠道id
+         */
+        private List<String> channelIds = new ArrayList<>();
+
+        /**
+         * 装入的产品属性id /plm/dict/list?type=declareProperty
+         */
+        private List<String> canPackingPropertyIds = new ArrayList<>();
+
+        /**
+         * 不可装入的产品属性id /plm/dict/list?type=declareProperty
+         */
+        private List<String> cannotPackingPropertyIds = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CfgProductPacking {
+        /**
+         * 产品装箱配置详情
+         */
+        private List<CfgProductPackingDetail> cfgProductPackingDetailList = new ArrayList<>();
+    }
+    @Data
+    @NoArgsConstructor
     public static class CommonDTO {
 
         /**
@@ -248,6 +370,18 @@ public class CfgRuleOutDTO implements Serializable {
          * B2c称重量方允许偏差
          */
         private B2cAllowableDeviations b2cAllowableDeviations = new B2cAllowableDeviations();
+
+        /**
+         * 装箱超重配置
+         */
+        @Valid
+        private CfgOverweightDTO cfgOverweight = new CfgOverweightDTO();
+
+        /**
+         * 产品装箱配置
+         */
+        private CfgProductPacking cfgProductPacking = new CfgProductPacking();
+
     }
 
 

@@ -278,4 +278,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param response
      */
     void printLogisticsBillConfirmById(String id, HttpServletResponse response);
+
+    String dimensionalWeightTob(DimensionalWeightDTO dto);
 }
