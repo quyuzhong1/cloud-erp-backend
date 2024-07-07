@@ -4,16 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.*;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
@@ -224,6 +222,13 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<String> deliveryIds = detailList.stream().map(item -> item.getDeliveryId()).distinct().collect(Collectors.toList());
         SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam printLogisticsBillConfirmParam = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam(param.getPrintType(), deliveryIds);
         return deliveryService.printLogisticsWaybillPreview(printLogisticsBillConfirmParam);
+    }
+
+    @Override
+    public ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO) {
+        //修改波次打印状态为已打印
+        update(new UpdateWrapper<WaveListEntity>().set("print_status", PrintStatusEnum.PRINT_FINISH).in("id", idsDTO.getIds()));
+        return ApiResult.success();
     }
 
     @Override

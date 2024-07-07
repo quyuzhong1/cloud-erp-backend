@@ -101,6 +101,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
                     rowDTO.setSalesQty(skuLevel.getQty());
 
                     rowDTO.setWarehouseLocation(locationLevel.getWarehouseLocation());
+                    rowDTO.setWarehouseLocationName("");
                     rowDTO.setWarehouseArea(areaDTO.getWarehouseAreaCode());
                     rowDTO.setWarehouseAreaName(areaDTO.getWarehouseAreaName());
                     rowDTO.setShouldPickQty(locationLevel.getQty());
