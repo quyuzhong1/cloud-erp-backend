@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
  * @date 2024-05-24
  * @author tanmujin
  */
+@Slf4j
 @Service
 @Slf4j
 public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
@@ -57,10 +58,15 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
             response = stockinAPI.createOtherOrder(request);
         } catch (WdtErpException e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", e.getMessage()));
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单异常: %s", e.getMessage()));
         }
         if(response.getStatus() != 0){
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", response.getMessage()));
+            log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockinRequest, response);
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s, %s, %s", stockinRequest.getOuterNo(), response.getStatus(), response.getMessage()));
+        }
+        if(response.getData().getStatus() != 0){
+            log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockinRequest, response);
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单审核失败: %s, %s", response.getData().getStatus(), response.getData().getMessage()));
         }
     }
 
