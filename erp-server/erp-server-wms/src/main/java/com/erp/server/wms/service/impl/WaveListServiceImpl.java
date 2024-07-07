@@ -153,6 +153,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(record.getPrintStatus()));
             viewDTO.setPickingCartTypeName(record.getPickingCartType());
+            viewDTO.setStatusName(WaveStatusEnum.getNameByCode(record.getStatus()));
             viewDTOList.add(viewDTO);
         }
         return viewDTOList;
@@ -228,5 +229,12 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public List<String> listDeliveryIdBySql(String compareCodeSplicingValueSql) {
         return baseMapper.listDeliveryIdBySql(compareCodeSplicingValueSql);
+    }
+
+    @Override
+    public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids) {
+        List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(ids);
+        List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        return deliveryService.printPickingView(deliveryIds);
     }
 }

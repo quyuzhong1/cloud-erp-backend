@@ -70,8 +70,8 @@ public class WaveListController extends BaseController {
      * 打印拣货单
      */
     @PostMapping("/printPickingBill")
-    public ApiResult<?> printPickingBill(){
-        return null;
+    public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingBill(@RequestBody BaseIdsDTO.IdsDTO dto){
+        return success(waveListService.printPickingBill(dto.getIds()));
     }
 
     /**
