@@ -183,8 +183,11 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<WaveListDetailEntity> detailList = waveListDetailService.listByMainId(id);
         List<String> deliveryIdList = detailList.stream().map(WaveListDetailEntity::getDeliveryId).collect(Collectors.toList());
 
-        //todo 释放冻结库存
+        //删除波次
         this.baseMapper.deleteById(entity);
+        //释放冻结库存
+        deliveryService.rollbackInventory(deliveryIdList);
+        //修改发货单状态
         deliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>().in("id", deliveryIdList).set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode()));
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "成功");
     }
