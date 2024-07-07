@@ -32,8 +32,8 @@ public class WmsCartonEntity extends BaseEntity<WmsCartonEntity> {
     /**
     * 箱号
     */
-    @TableField("carton_no")
-    private Integer cartonNo;
+    @TableField("box_no")
+    private Integer boxNo;
     /**
     * 异常原因
     */
@@ -68,16 +68,6 @@ public class WmsCartonEntity extends BaseEntity<WmsCartonEntity> {
      */
     @TableField("packing_user_name")
     private String packingUserName;
-    /**
-     * 实际箱重（设备更新）
-     */
-    @TableField("packing_weight")
-    private String packingWeight;
-    /**
-     * 重量单位（g） 页面展示kg，数据库存储g
-     */
-    @TableField("weight_unit")
-    private String weightUnit;
 
     public static final String CARTON_ID = "carton_id";
 

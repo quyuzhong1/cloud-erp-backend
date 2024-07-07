@@ -246,7 +246,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto);
+//    Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto);
 
     /**
      * 装箱详情
@@ -293,7 +293,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
 
     void downloadPackingTemplate(HttpServletResponse response);
 
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+//    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 生成状态更新为无需生成

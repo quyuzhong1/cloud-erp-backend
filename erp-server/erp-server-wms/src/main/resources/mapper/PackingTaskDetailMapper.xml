@@ -35,6 +35,28 @@
         is_deleted,
         main_id, sku_id, sku_no, product_name, delivery_qty, source_detail_id, fn_sku, source_code
     </sql>
+    <select id="listDetailByMainIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$DetailDTO">
+        SELECT
+            pt.id as taskId,
+            ptd.sku_id,
+            ptd.sku_no,
+            SUM(ptd.delivery_qty) as deliveryQty
+        FROM
+            packing_task pt
+                LEFT JOIN packing_task_detail ptd ON pt.id = ptd.main_id AND ptd.is_deleted = FALSE
+        where pt.is_deleted = FALSE
+        and pt.id in
+        <foreach collection="mainIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY
+            pt.id,
+            ptd.sku_id,
+            ptd.sku_no
+    </select>
+    <select id="countDeliveryQty">
+        select count(delivery_qty) FROM packing_task_detail where main_id = #{taskId}
+    </select>
 
 
 </mapper>

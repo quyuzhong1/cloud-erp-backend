@@ -14,7 +14,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CartonDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
-import com.erp.model.wms.entity.PackingTaskDetailEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
@@ -115,7 +114,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         if (CollectionUtils.isEmpty(taskIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(WmsCartonEntity::getPackingTaskId, taskIds).list();
+        return lambdaQuery().in(WmsCartonEntity::getPackingTaskId, taskIds).orderByAsc(WmsCartonEntity::getBoxNo).list();
     }
 
     @Override
@@ -165,5 +164,8 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
             wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
             wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
         }
+        //根据已装箱清单计算待装箱号
+        int boxNo = baseMapper.getBoxNoByTaskId(wmsCartonEntity.getPackingTaskId());
+        wmsCartonEntity.setBoxNo(boxNo + 1);
     }
 }

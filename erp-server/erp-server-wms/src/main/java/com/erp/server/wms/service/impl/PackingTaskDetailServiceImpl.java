@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.PackingTaskDetailEntity;
 import com.erp.server.wms.mapper.PackingTaskDetailMapper;
 import com.erp.server.wms.service.PackingTaskDetailService;
@@ -93,6 +94,33 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
             return Collections.emptyList();
         }
         return lambdaQuery().in(PackingTaskDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    public void removeByMainId(String mainId) {
+        if (StrUtil.isNotBlank(mainId)){
+            lambdaUpdate().eq(PackingTaskDetailEntity::getMainId, mainId).remove();
+        }
+    }
+    /**
+     * 根据主表id进行sku分组统计
+     * @param mainIds
+     * @return
+     */
+    @Override
+    public List<PackingTaskDTO.DetailDTO> listDetailByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listDetailByMainIds(mainIds);
+    }
+
+    @Override
+    public int countDeliveryQty(String id) {
+        if (StrUtil.isNotBlank(id)){
+            baseMapper.countDeliveryQty(id);
+        }
+        return 0;
     }
 
 

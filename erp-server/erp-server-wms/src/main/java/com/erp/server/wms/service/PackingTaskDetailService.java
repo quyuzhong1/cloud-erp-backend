@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.PackingTaskDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -41,4 +42,24 @@ public interface PackingTaskDetailService extends SuperService<PackingTaskDetail
      * @return
      */
     List<PackingTaskDetailEntity> listByMainIds(List<String> mainIds);
+
+    /**
+     * 根据主表id删除明细
+     * @param mainId
+     */
+    void removeByMainId(String mainId);
+
+    /**
+     * 根据主表id进行sku分组统计
+     * @param mainIds
+     * @return
+     */
+    List<PackingTaskDTO.DetailDTO> listDetailByMainIds(List<String> mainIds);
+
+    /**
+     * 统计发货数量总和
+     * @param id
+     * @return
+     */
+    int countDeliveryQty(String id);
 }

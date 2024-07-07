@@ -3,15 +3,23 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.enums.CellExtraTypeEnum;
+import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
@@ -19,18 +27,25 @@ import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.dto.excel.PackingExcelDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
+import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.convert.PackingConverter;
+import com.erp.server.wms.listener.PackingExcelListener;
 import com.erp.server.wms.mapper.PackingTaskMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +53,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackingTaskDTO;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
@@ -45,8 +62,10 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -78,11 +97,19 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Resource
     private WmsCartonSpecService wmsCartonSpecService;
     @Resource
+    private WmsCartonService wmsCartonService;
+    @Resource
+    private WmsCartonDetailService wmsCartonDetailService;
+    @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private TmsFirstMileLogisticFeign tmsFirstMileLogisticFeign;
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private PickingListsService pickingListsService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -184,7 +211,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(ApiError.ERROR_92141);
         }
         if (PickingSourceTypeEnum.B2B.getCode().equals(taskEntity.getSourceType())){
-            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(id);
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(taskEntity.getSourceId());
             if (Objects.isNull(soDeliveryNoticeEntity)){
                 throw new ServiceException(ApiError.ERROR_92144);
             }
@@ -193,7 +220,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 throw new ServiceException(ApiError.ERROR_92140, soDeliveryNoticeEntity.getCode());
             }
         }else {
-            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getById(id);
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getById(taskEntity.getSourceId());
             if (Objects.isNull(firstMileDeliveryEntity)){
                 throw new ServiceException(ApiError.ERROR_92142, taskEntity.getSourceCode());
             }
@@ -314,6 +341,303 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Collections.singletonList(id));
         listPackingDTO.setDetailList(detailList);
         return listPackingDTO;
+    }
+
+    @Override
+    public void downloadPackingTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/packing.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("packing downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        // 读取 Excel 文件
+        PackingExcelListener listener = new PackingExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), PackingExcelDTO.class, listener).extraRead(CellExtraTypeEnum.MERGE).sheet(0).doRead();
+        }catch (ExcelAnalysisException excelAnalysisException){
+            throw new ServiceException(excelAnalysisException.getMessage());
+        } catch (Exception e) {
+            log.error("excel导入错误", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<PackingExcelDTO> packingExcelDTOList = listener.getPackingExcelDTOList();
+        List<PackingExcelDTO> errorList = listener.getErrorList();
+        //过滤掉错误数据
+        Set<String> errorCodeSet = errorList.stream().map(PackingExcelDTO::getCode).collect(Collectors.toSet());
+        packingExcelDTOList = packingExcelDTOList.stream().filter(v->!errorCodeSet.contains(v.getCode())).collect(Collectors.toList());
+        if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(packingExcelDTOList)){
+            //根据发货单分组
+            Map<String,List<PackingExcelDTO>> map = packingExcelDTOList.stream().collect(Collectors.groupingBy(PackingExcelDTO::getCode));
+            map.forEach((key,value)->{
+                PackingTaskEntity packingTask = this.listBySourceCodes(Collections.singletonList(key)).get(0);
+                WmsCartonSpecDTO.WmsCartonAdd dto = new WmsCartonSpecDTO.WmsCartonAdd();
+                dto.setTaskId(packingTask.getId());
+                dto.setSourceId(packingTask.getSourceId());
+                dto.setSourceCode(key);
+                List<WmsCartonSpecDTO.AddDTO> wmsCartonList = new ArrayList<>();
+                //根据箱号分组
+                Map<Integer,List<PackingExcelDTO>> boxMap = value.stream().collect(Collectors.groupingBy(PackingExcelDTO::getBoxNo));
+                boxMap.forEach((boxKey,valByBox)->{
+                    WmsCartonSpecDTO.AddDTO addDTO = new WmsCartonSpecDTO.AddDTO();
+                    addDTO.setBoxSpecNo(boxKey);
+                    addDTO.setBoxLength(valByBox.get(0).getSingleBoxLength());
+                    addDTO.setBoxWidth(valByBox.get(0).getSingleBoxWidth());
+                    addDTO.setBoxHeight(valByBox.get(0).getSingleBoxHeight());
+                    addDTO.setPackageWeight(valByBox.get(0).getSingleBoxWeight());
+                    addDTO.setBoxQty(1);
+                    List<WmsCartonDetailDTO.AddDTO> detailList = FirstMileDeliveryConverter.INSTANCE.importToPackingSku(valByBox);
+                    addDTO.setDetailList(detailList);
+                    wmsCartonList.add(addDTO);
+                });
+                dto.setWmsCartonList(wmsCartonList);
+                if(!this.packingSave(dto)){
+                    throw new ServiceException("保存装箱信息失败");
+                }
+                if (PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())){
+
+                }else {
+                    //如果已下推海外仓入库单，需要更新海外仓的数据
+                    //查询是否下推了入库单
+                    FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getById(packingTask.getSourceId());
+                    OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(packingTask.getSourceId(), OverseasInstockStatusEnum.CANCELED.getCode());
+                    if (Objects.nonNull(inboundEntity)) {
+                        //用目的仓查询是否绑定第三方仓
+                        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(firstMileDeliveryEntity.getDestWarehouseId()));
+
+                        //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
+                        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities)) {
+                            // 查询发货目的仓平台
+                            OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(firstMileDeliveryEntity.getDestWarehouseId());
+                            //查询发货详情
+                            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(firstMileDeliveryEntity.getId()));
+                            ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.INIT.getCode());
+                            if (200 != resultInfo.getCode()) {
+                                log.error("改第三方仓库装箱信息失败:msg={}", JSONUtil.toJsonStr(resultInfo));
+                                throw new ServiceException("修改第三方仓库装箱信息失败:" + resultInfo.getMsg());
+                            }
+
+                        }
+                    }
+                }
+            });
+        }
+        if (!errorList.isEmpty()) {
+            String fileName = "装箱错误数据";
+            ExcelUtil.export(fileName, "error", errorList, PackingExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return true;
+    }
+
+    @Override
+    public List<PackingTaskEntity> listBySourceCodes(List<String> sourceCodes) {
+        if (CollectionUtils.isEmpty(sourceCodes)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(PackingTaskEntity::getSourceCode, sourceCodes).list();
+    }
+
+    @Override
+    public void exportPacking(PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<PackingTaskDTO.PagingViewDTO> list = baseMapper.pagingList(dto);
+        //补充数据
+        buildPackingTask(list);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/packingTaskExport.xlsx";
+        String name = "装箱任务导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    @Override
+    public void exportPackingDetail(PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<PackingTaskDTO.PagingViewDTO> list = baseMapper.pagingList(dto);
+        //补充数据
+        buildPackingTask(list);
+        //TODO 切换为装箱清单
+
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/packingDetailExport.xlsx";
+        String name = "装箱清单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(PackingTaskEntity entity) {
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = null;
+        FirstMileDeliveryEntity firstMileDeliveryEntity = null;
+        if (PickingSourceTypeEnum.B2B.getCode().equals(entity.getSourceType())){
+            //待审核的数据可以上传装箱数据
+            soDeliveryNoticeEntity = soDeliveryNoticeService.getById(entity.getSourceId());
+            checkSoDeliveryNoticeStatus(soDeliveryNoticeEntity);
+        }else {
+            //待审核的数据可以上传装箱数据
+            firstMileDeliveryEntity = firstMileDeliveryService.getById(entity.getSourceId());
+            checkFirstMileStatus(firstMileDeliveryEntity);
+        }
+        //删除装箱任务及清单
+        lambdaUpdate().eq(PackingTaskEntity::getId,entity.getId()).remove();
+        packingTaskDetailService.removeByMainId(entity.getId());
+        //删除原装箱信息
+        wmsCartonSpecService.deleteCarton(entity.getId());
+        return BatchResultDTO.success(entity.getId(),entity.getCode(), "删除装箱任务成功");
+    }
+
+    @Override
+    public WmsCartonSpecDTO.NoPackingView notPackingDetailView(String id) {
+        WmsCartonSpecDTO.NoPackingView view = new WmsCartonSpecDTO.NoPackingView();
+        PackingTaskEntity packingTaskEntity = this.getById(id);
+        if (Objects.isNull(packingTaskEntity)){
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        view.setTaskId(id);
+        view.setSourceCode(packingTaskEntity.getSourceCode());
+        view.setSourceId(packingTaskEntity.getSourceId());
+        //发货数量
+        List<PackingTaskDTO.DetailDTO> detailDTOList = packingTaskDetailService.listDetailByMainIds(Collections.singletonList(id));
+        //装箱数
+        List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateByPackingTaskId(id);
+        //拣货数量
+        List<PickingListsDTO.DetailPickDTO> pickeDTOList = pickingListsService.listDetailBySourceIds(Collections.singletonList(packingTaskEntity.getSourceId()));
+        view.setDetailList(buildNoPackingDetailList(detailDTOList,packDateDTOS, pickeDTOList));
+        return view;
+    }
+
+    @Override
+    public WmsCartonSpecDTO.PackedView packedDetailView(String id) {
+        WmsCartonSpecDTO.PackedView packedView = new WmsCartonSpecDTO.PackedView();
+        PackingTaskEntity packingTaskEntity = this.getById(id);
+        if (Objects.isNull(packingTaskEntity)){
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        //发货数量
+        packedView.setDeliveryQty(packingTaskDetailService.countDeliveryQty(id));
+        //已装箱数量
+        int packedQty = 0;
+        List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(id));
+        packedView.setBoxQty(cartonEntityList.size());
+        if (CollectionUtils.isNotEmpty(cartonEntityList)){
+            List<String> cartonIds = cartonEntityList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
+            List<WmsCartonDetailDTO.BoxDTO> wmsCartonDetailEntities = wmsCartonDetailService.listCartonDetailByMainIds(cartonIds);
+            packedQty = wmsCartonDetailEntities.stream().map(WmsCartonDetailDTO.BoxDTO::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
+            packedView.setCartonDetailList(buildCartonDTOList(cartonEntityList, wmsCartonDetailEntities));
+        }
+        packedView.setPackedQty(packedQty);
+        return packedView;
+    }
+
+    /**
+     * 构建装箱信息
+     * @param cartonEntityList
+     * @param wmsCartonDetailEntities
+     * @return
+     */
+    private List<WmsCartonSpecDTO.CartonDTO> buildCartonDTOList(List<WmsCartonEntity> cartonEntityList, List<WmsCartonDetailDTO.BoxDTO> wmsCartonDetailEntities) {
+        List<WmsCartonSpecDTO.CartonDTO> list = new ArrayList<>(cartonEntityList.size());
+        Map<String, List<WmsCartonDetailDTO.BoxDTO>> boxMap = wmsCartonDetailEntities.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.BoxDTO::getMainId));
+        if (CollectionUtils.isNotEmpty(cartonEntityList)){
+            for (WmsCartonEntity carton : cartonEntityList){
+                List<WmsCartonDetailDTO.BoxDTO> boxDTOList = boxMap.get(carton.getId());
+                BigDecimal grossWeight = boxDTOList.stream().map(WmsCartonDetailDTO.BoxDTO::getGrossWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
+                Integer packQty = boxDTOList.stream().map(WmsCartonDetailDTO.BoxDTO::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
+                list.add(WmsCartonSpecDTO.CartonDTO.builder()
+                        .boxNo(carton.getBoxNo())
+                        .cartonId(carton.getId())
+                        .packingStatus(carton.getPackingStatus())
+                        .packingStatusName(PackingStatusEnum.getName(carton.getPackingStatus()))
+                        .packingUserName(carton.getPackingUserName())
+                        .weightingStatus(carton.getWeightingStatus())
+                        .weightingStatusName(PackingWeightStatusEnum.getName(carton.getWeightingStatus()))
+                        .grossWeight(grossWeight)
+                        .packQty(packQty)
+                        .cartonDetailDTOList(PackingConverter.INSTANCE.cartonDetailToDTO(boxDTOList))
+                        .build());
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 构建未装箱明细
+     * @param detailDTOList 发货数量
+     * @param packDateDTOS 装箱数
+     * @param pickeDTOList 拣货数量
+     * @return
+     */
+    private List<WmsCartonSpecDTO.NoPackingViewDTO> buildNoPackingDetailList(List<PackingTaskDTO.DetailDTO> detailDTOList,
+                                                                             List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS,
+                                                                             List<PickingListsDTO.DetailPickDTO> pickeDTOList) {
+        Map<String, WmsCartonSpecDTO.PackDateDTO> packedMap = packDateDTOS.stream().collect(Collectors.toMap(WmsCartonSpecDTO.PackDateDTO::getSkuId, Function.identity()));
+        Map<String, PickingListsDTO.DetailPickDTO> pickMap = pickeDTOList.stream().collect(Collectors.toMap(PickingListsDTO.DetailPickDTO::getSkuId, Function.identity()));
+        List<WmsCartonSpecDTO.NoPackingViewDTO> list = new ArrayList<>();
+        for (PackingTaskDTO.DetailDTO dto : detailDTOList){
+            int deliveryQty = 0;
+            if (Objects.nonNull(dto.getDeliveryQty())){
+                deliveryQty = dto.getDeliveryQty();
+            }
+            String skuId = dto.getSkuId();
+            int packQty = 0;
+            WmsCartonSpecDTO.PackDateDTO packDateDTO = packedMap.get(skuId);
+            if (Objects.nonNull(packDateDTO)){
+                packQty = packDateDTO.getPackQty();
+            }
+            int pickedQty = 0;
+            PickingListsDTO.DetailPickDTO detailPickDTO = pickMap.get(skuId);
+            if (Objects.nonNull(detailPickDTO)){
+                pickedQty = detailPickDTO.getPickedQty();
+            }
+            //已装=发货 则排除
+            if (deliveryQty == packQty){
+                continue;
+            }
+            list.add(WmsCartonSpecDTO.NoPackingViewDTO.builder()
+                            .skuId(skuId)
+                            .skuNo(dto.getSkuNo())
+                            .deliveryQty(deliveryQty)
+                            .packedQty(packQty)
+                            .pickingQty(pickedQty)
+                            .unpackedQty(deliveryQty - packQty)
+                    .build());
+        }
+        return list;
     }
 
     private void autoGenerateFirstMileDelivery(PackingTaskEntity packingTask, FirstMileDeliveryEntity firstMileDeliveryEntity) {

@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
@@ -340,5 +341,30 @@ public class PackingTaskDTO implements Serializable {
          * 装箱重量（设备更新）
          */
         private BigDecimal packingWeight;
+    }
+
+    /**
+     * 导出Excel
+     */
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends FirstMileDeliveryDTO.PagingParamDTO {
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO {
+        private String taskId;
+        private String skuId;
+        private String skuNo;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
     }
 }

@@ -97,4 +97,7 @@ public interface PackingConverter {
     })
     PackingTaskDetailEntity firstMileDeliveryDetailToPackingTaskDetail(FirstMileDeliveryDetailEntity detailEntity);
     List<PackingTaskDetailEntity> firstMileDeliveryDetailToPackingTaskDetail(List<FirstMileDeliveryDetailEntity> detailEntityList);
+
+    WmsCartonSpecDTO.CartonDetailDTO cartonDetailToDTO(WmsCartonDetailDTO.BoxDTO boxDTO);
+    List<WmsCartonSpecDTO.CartonDetailDTO> cartonDetailToDTO(List<WmsCartonDetailDTO.BoxDTO> boxDTOList);
 }

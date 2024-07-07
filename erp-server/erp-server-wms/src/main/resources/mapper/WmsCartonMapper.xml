@@ -16,6 +16,15 @@
        <result column="box_no" property="boxNo" />
        <result column="box_desc" property="boxDesc" />
     </resultMap>
+    <select id="getBoxNoByTaskId" resultType="java.lang.Integer">
+        SELECT
+            MAX( wc.box_no )
+        FROM
+            wms_carton wc
+        WHERE
+            wc.is_deleted = FALSE
+          AND wc.packing_task_id = #{packingTaskId}
+    </select>
 
 
 </mapper>

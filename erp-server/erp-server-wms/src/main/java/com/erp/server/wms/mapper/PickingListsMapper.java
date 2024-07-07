@@ -26,4 +26,11 @@ public interface PickingListsMapper extends BaseMapper<PickingListsEntity> {
     List<PickingListsDTO.ExportInfoDTO> exportInfo(@Param("params") PickingListsDTO.ExportDTO params);
 
     List<PickingListsDTO.SourceView> listBySourceIds(@Param("sourceIds") List<String> sourceIds);
+
+    /**
+     * 根据来源单汇总sku拣货数量
+     * @param sourceIds
+     * @return
+     */
+    List<PickingListsDTO.DetailPickDTO> listDetailBySourceIds(@Param("sourceIds") List<String> sourceIds);
 }

@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -21,4 +22,11 @@ import java.util.List;
 public interface WmsCartonDetailMapper extends BaseMapper<WmsCartonDetailEntity> {
 
     List<WmsCartonSpecDTO.PackingItemDTO> boxInfoBySourceId(@Param("sourceId") String sourceId);
+
+    /**
+     * 根据箱子id获取装箱明细
+     * @param mainIds
+     * @return
+     */
+    List<WmsCartonDetailDTO.BoxDTO> listCartonDetailByMainIds(@Param("mainIds") List<String> mainIds);
 }

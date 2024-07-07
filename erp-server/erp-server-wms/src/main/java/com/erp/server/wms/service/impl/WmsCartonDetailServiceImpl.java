@@ -129,6 +129,14 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
 //        this.firstMileCartonBillSave(addDTO.getBoxQty(), detailEntityList, cartonId, sourceId);
     }
 
+    @Override
+    public List<WmsCartonDetailDTO.BoxDTO> listCartonDetailByMainIds(List<String> cartonIds) {
+        if (CollectionUtils.isEmpty(cartonIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listCartonDetailByMainIds(cartonIds);
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -151,7 +159,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         List<WmsCartonEntity> firstMileCartonBillEntities = wmsCartonService.listByTaskIds(Arrays.asList(sourceId));
         Integer maxBoxNo = 0;
         if (CollectionUtils.isNotEmpty(firstMileCartonBillEntities)) {
-            maxBoxNo = firstMileCartonBillEntities.stream().max(Comparator.comparingInt(WmsCartonEntity::getCartonNo)).map(WmsCartonEntity::getCartonNo).get();
+            maxBoxNo = firstMileCartonBillEntities.stream().max(Comparator.comparingInt(WmsCartonEntity::getBoxNo)).map(WmsCartonEntity::getBoxNo).get();
         }
 
         StringBuffer sb = new StringBuffer();

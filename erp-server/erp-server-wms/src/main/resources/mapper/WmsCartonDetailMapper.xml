@@ -33,4 +33,19 @@
             fmcd.is_deleted = FALSE AND fmcb.is_deleted = FALSE
           and fmcd.source_Id = #{sourceId};
     </select>
+    <select id="listCartonDetailByMainIds" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$BoxDTO">
+        SELECT
+            wcd.main_id,
+            wcd.sku_id,
+            wcd.sku_no,
+            wcd.pack_qty,
+            wcd.gross_weight,
+            wcd.weight_unit
+        FROM wms_carton_detail wcd
+        where wcd.is_deleted = FALSE
+        AND wcd.main_id in
+        <foreach collection="mainIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
 </mapper>

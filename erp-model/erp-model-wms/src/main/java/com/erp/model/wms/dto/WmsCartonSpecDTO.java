@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -166,12 +168,12 @@ public class WmsCartonSpecDTO implements Serializable {
     @NoArgsConstructor
     public static class ListPackingDTO {
         /**
-         * 主键id
+         * 主键id 源订单
          */
         private String id;
 
         /**
-         * 发货单号
+         * 发货单号 源订单
          */
         private String code;
 
@@ -424,6 +426,30 @@ public class WmsCartonSpecDTO implements Serializable {
         private List<WmsCartonSpecDTO.ViewDTO> wmsCartonSpecList;
     }
 
+    /**
+     * 未装箱明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class NoPackingView {
+        /**
+         * 单据id
+         */
+        private String sourceId;
+
+        /**
+         * 单据单号
+         */
+        private String sourceCode;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 装箱明细
+         */
+        private List<WmsCartonSpecDTO.NoPackingViewDTO> detailList;
+    }
     @Data
     @NoArgsConstructor
     public static class GroupSkuDTO{
@@ -466,5 +492,152 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private Integer packQty;
 
+    }
+
+    /**
+     * 未装箱明细实体
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NoPackingViewDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty;
+        /**
+         * 已装箱数量
+         */
+        private Integer packedQty;
+        /**
+         * 未装箱数量
+         */
+        private Integer unpackedQty;
+    }
+
+    /**
+     * 已装箱明细
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PackedView {
+        /**
+         * 单据id
+         */
+        private String sourceId;
+
+        /**
+         * 单据单号
+         */
+        private String sourceCode;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 已装箱（箱数）
+         */
+        private Integer boxQty;
+        /**
+         * 已装箱数量
+         */
+        private Integer packedQty;
+        /**
+         * 待装箱总数（发货数量）
+         */
+        private Integer deliveryQty;
+        /**
+         * 装箱信息
+         */
+        private List<CartonDTO> cartonDetailList;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CartonDTO {
+        /**
+         * 箱号
+         */
+        private Integer boxNo;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        private String skuId;
+        private String skuNo;
+        /**
+         * 装箱员名称
+         */
+        private String packingUserName;
+        /**
+         * 单箱-装箱数量(总数)
+         */
+        private Integer packQty;
+        /**
+         * 预计毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
+        /**
+         * 单箱状态(incomplete 未完成,completed 已完成)
+         * PackingTaskStatusEnum
+         * 字典接口地址
+         */
+        private String packingStatus;
+        /**
+         * 单箱状态名称
+         */
+        private String packingStatusName;
+        /**
+         * 称重状态-单箱(unweighed 未称重,success 称重成功,fail 称重失败 )
+         * PackingWeightStatusEnum
+         * 字典接口地址
+         */
+        private String weightingStatus;
+        /**
+         * 称重状态-单箱 名称
+         */
+        private String weightingStatusName;
+        /**
+         * 装箱明细
+         */
+        private List<CartonDetailDTO> cartonDetailDTOList;
+    }
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CartonDetailDTO{
+        private String skuId;
+        private String skuNo;
+        /**
+         * 预计毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
     }
 }

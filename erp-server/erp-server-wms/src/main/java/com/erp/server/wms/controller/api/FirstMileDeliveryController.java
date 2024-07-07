@@ -464,19 +464,19 @@ public class FirstMileDeliveryController extends BaseController {
         return success(result);
     }
 
-    /**
-     * 装箱
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:21
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping("/packingSave")
-    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
-    public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
-        Boolean flag = firstMileDeliveryService.packingSave(dto);
-        return flag ? success() : failure();
-    }
+//    /**
+//     * 装箱
+//     * @Author Luo_WG
+//     * @Date 2023/11/17 11:21
+//     * @param dto
+//     * @return com.common.core.controller.vo.ApiResult
+//     **/
+//    @PostMapping("/packingSave")
+//    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
+//    public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
+//        Boolean flag = firstMileDeliveryService.packingSave(dto);
+//        return flag ? success() : failure();
+//    }
 
     /**
      * 装箱详情
@@ -562,15 +562,15 @@ public class FirstMileDeliveryController extends BaseController {
     }
 
 
-    /**
-     * 导入装箱数据
-     */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
-    @PostMapping("/importPacking")
-    public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = firstMileDeliveryService.importFile(excelFile, response);
-        return result == true ? success() : failure();
-    }
+//    /**
+//     * 导入装箱数据
+//     */
+//    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
+//    @PostMapping("/importPacking")
+//    public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+//        Boolean result = firstMileDeliveryService.importFile(excelFile, response);
+//        return result == true ? success() : failure();
+//    }
 
 
     /**

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -7,7 +8,9 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -101,4 +104,55 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
+
+    /**
+     * 装箱模板
+     * @param response
+     */
+    void downloadPackingTemplate(HttpServletResponse response);
+
+    /**
+     * 导入装箱
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    List<PackingTaskEntity> listBySourceCodes(List<String> sourceCodes);
+
+    /**
+     * 导出装箱任务
+     * @param dto
+     * @param response
+     */
+    void exportPacking(PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 导出装箱清单
+     * @param dto
+     * @param response
+     */
+    void exportPackingDetail(PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 删除装箱任务
+     * @param entity
+     * @return
+     */
+    BatchResultDTO delete(PackingTaskEntity entity);
+
+    /**
+     * 未装箱明细
+     * @param id
+     * @return
+     */
+    WmsCartonSpecDTO.NoPackingView notPackingDetailView(String id);
+
+    /**
+     * 已装箱明细
+     * @param id
+     * @return
+     */
+    WmsCartonSpecDTO.PackedView packedDetailView(String id);
 }
