@@ -5,6 +5,7 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -61,4 +62,9 @@ public class DeclareDeliverRequest implements Serializable {
      * （非必须）
      */
     private String trackingWebSite;
+
+    /**
+     * 子订单下标
+     */
+    private List<String> subTradeOrderIndexList;
 }
