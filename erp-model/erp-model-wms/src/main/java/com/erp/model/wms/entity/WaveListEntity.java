@@ -49,7 +49,7 @@ public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serial
     private String status;
 
     /**
-     * 拣货车类型
+     * 拣货车类型(ID)
      */
     @TableField("picking_cart_type")
     private String pickingCartType;

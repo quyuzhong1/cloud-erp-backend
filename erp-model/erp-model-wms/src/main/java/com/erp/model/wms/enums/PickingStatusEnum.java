@@ -19,4 +19,13 @@ public enum PickingStatusEnum implements EnumMessage {
 
     private String code;
     private String name;
+
+    public static String getName(String code){
+        for (PickingStatusEnum statusEnum : PickingStatusEnum.values()) {
+            if(statusEnum.getCode().equals(code)){
+                return statusEnum.getName();
+            }
+        }
+        return "";
+    }
 }

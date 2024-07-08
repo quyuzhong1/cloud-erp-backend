@@ -165,4 +165,14 @@ public class PickingCartController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 远程搜索
+     * 通过拣货车编号模糊查询
+     */
+    @GetMapping("/searchByKeyword")
+    public ApiResult<List<PickingCartDTO.ViewDTO>> searchByKeyword(@RequestParam String code){
+        List<PickingCartDTO.ViewDTO> list = pickingCartService.searchByKeyword(code);
+        return success(list);
+    }
+
 }

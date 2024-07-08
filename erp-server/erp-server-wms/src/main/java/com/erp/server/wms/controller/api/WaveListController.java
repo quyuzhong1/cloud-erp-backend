@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -70,8 +71,8 @@ public class WaveListController extends BaseController {
      * 打印拣货单
      */
     @PostMapping("/printPickingBill")
-    public ApiResult<?> printPickingBill(){
-        return null;
+    public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingBill(@RequestBody BaseIdsDTO.IdsDTO dto){
+        return success(waveListService.printPickingBill(dto.getIds()));
     }
 
     /**
@@ -90,5 +91,13 @@ public class WaveListController extends BaseController {
     public ApiResult<List<WaveListDTO.TabDTO>> tabList() {
         List<WaveListDTO.TabDTO> list = waveListService.tabList();
         return ApiResult.success(list);
+    }
+
+    /**
+     * 完成打印（物流面单）
+     */
+    @PostMapping("/printFinish")
+    public ApiResult<?> printFinish(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
+        return waveListService.printFinish(idsDTO);
     }
 }

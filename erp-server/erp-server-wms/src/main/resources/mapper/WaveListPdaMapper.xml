@@ -11,7 +11,7 @@
                 status,
                 picking_cart_type,
                 picking_cart_code,
-                pick_type
+                picking_type
         from wave_list
         where is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
