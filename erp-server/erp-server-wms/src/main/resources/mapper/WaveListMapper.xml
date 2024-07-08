@@ -24,8 +24,17 @@
                 AND sbdd.main_id = pwd.delivery_id
                 LEFT JOIN picking_detail AS pd ON pd.is_deleted = FALSE
                 AND pd.source_detail_id = sbdd.ID
-
+        <if test="waveId != null and waveId != ''">
+            and pwd.main_id = #{waveId}
+        </if>
+        <if test="basketNo != null and basketNo != ''">
+            and pwd.basket_no = #{basketNo}
+        </if>
+        <if test="skuId != null and skuId != ''">
+            and pd.sku_id = #{skuId}
+        </if>
     </select>
+
     <select id="countDelivery" resultType="java.lang.Integer">
         select count(pwd.delivery_id)
         FROM wave_list as pw
