@@ -111,8 +111,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public List<WaveListDTO.PickingWaveDetailDTO> listDetailByMainId(String waveId, String skuId) {
-        return listDetailByMainId(waveId, null, skuId);
+    public List<WaveListDTO.PickingWaveDetailDTO> listDetailByMainId(String waveId, String basketNo) {
+        return listDetailByMainId(waveId, basketNo, null);
     }
 
     @Override
