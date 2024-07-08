@@ -278,6 +278,13 @@ public class CfgRuleOutDTO implements Serializable {
     @AllArgsConstructor
     @Builder
     public static class CfgOverweightDetailDTO {
+
+        /**
+         * 分类  wms/common/enumDropDown?type=OverweightType
+         */
+        @NotBlank(message = "装箱超重配置-分类不能为空")
+        private String overweightType;
+
         /**
          * 单箱超重重量（kg）
          */
@@ -337,27 +344,11 @@ public class CfgRuleOutDTO implements Serializable {
     public static class CfgOverweightDTO {
 
         /**
-         * 装箱超重配置-FBA
+         * 装箱配置明细
          */
         @Valid
-        private CfgOverweightDetailDTO fbaOverweight = new CfgOverweightDetailDTO();
+        private List<CfgOverweightDetailDTO> cfgOverweightDetailDTOList = new ArrayList<>();
 
-        /**
-         * 装箱超重配置-第三方仓
-         */
-        @Valid
-        private CfgOverweightDetailDTO thirdWarehouseOverweight = new CfgOverweightDetailDTO();
-        /**
-         * 装箱超重配置-B2B
-         */
-        @Valid
-        private CfgOverweightDetailDTO b2BOverweight = new CfgOverweightDetailDTO();
-
-        public void check(){
-            fbaOverweight.check();
-            thirdWarehouseOverweight.check();
-            b2BOverweight.check();
-        }
     }
 
     @Data

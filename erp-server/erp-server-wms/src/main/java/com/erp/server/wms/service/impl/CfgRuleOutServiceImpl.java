@@ -93,7 +93,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     private void checkCfgOverweight(CfgRuleOutDTO.CfgOverweightDTO cfgOverweight) {
-        cfgOverweight.check();
+        cfgOverweight.getCfgOverweightDetailDTOList().forEach(CfgRuleOutDTO.CfgOverweightDetailDTO::check);
     }
 
     private void checkCfgProductPacking(CfgRuleOutDTO.CfgProductPacking cfgProductPacking) {
@@ -219,14 +219,12 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutDTO.CfgOverweightDTO cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgOverweightDTO.class);
-        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO;
-        if(dto.getType().equals(CfgRuleOutEnum.OverweightTypeEnum.B2B)){
-            cfgOverweightDetailDTO = cfgOverweightDTO.getB2BOverweight();
-        }else if (dto.getType().equals(CfgRuleOutEnum.OverweightTypeEnum.FBA)){
-            cfgOverweightDetailDTO = cfgOverweightDTO.getFbaOverweight();
-        }else if (dto.getType().equals(CfgRuleOutEnum.OverweightTypeEnum.THIRD_WAREHOUSE)){
-            cfgOverweightDetailDTO = cfgOverweightDTO.getThirdWarehouseOverweight();
-        }else{
+        List<CfgRuleOutDTO.CfgOverweightDetailDTO> cfgOverweightDetailDTOList = cfgOverweightDTO.getCfgOverweightDetailDTOList();
+        if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
+            return new CfgRuleOutDTO.CheckDTO(true,"");
+        }
+        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(CfgRuleOutEnum.OverweightTypeEnum.B2B.getCode())).findFirst().orElse(null);
+        if(Objects.isNull(cfgOverweightDetailDTO)){
             return new CfgRuleOutDTO.CheckDTO(true,"");
         }
         boolean result = true;
