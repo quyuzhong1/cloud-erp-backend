@@ -21,11 +21,14 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
+import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
+import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.service.DictBasicService;
+import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesBean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -105,6 +108,33 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             if (StrUtil.isBlank(logisticsNo)) {
                 throw new ServiceException("【速卖通标记发货】操作失败，渠道标发单号为空");
             }
+            // 查询订单详情(获取子声明下标)
+            AliExpressOrderDetail orderDetail = aliExpressOrderService.getOrderDetailByOrderIdAndShopId(mainEntity.getPlatformCode(), mainEntity.getShopId());
+            if (null == orderDetail){
+                log.error("【速卖通标记发货】订单【{}】查询订单详情为空", mainEntity.getPlatformCode());
+                throw new ServiceException("查询订单详情为空");
+            }
+            List<OrderItemDetail> childOrderList = orderDetail.getChildOrderList();
+            if (CollectionUtils.isEmpty(childOrderList)){
+                log.error("【速卖通标记发货】订单【{}】订单明细列表为空", mainEntity.getPlatformCode());
+                throw new ServiceException("订单明细列表为空");
+            }
+            // 得到当前标记的子订单下标
+            List<String> sourceDetailIds = detailEntityList.stream().map(SoB2cDetailEntity::getSourceDetailId).collect(Collectors.toList());
+            List<String> subOrderIndexList = childOrderList.stream()
+                    .filter(e -> sourceDetailIds.contains(e.getChildOrderId()))
+                    .map(OrderItemDetail::getOrderSortId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(subOrderIndexList)){
+                log.error("【速卖通标记发货】订单【{}】数据异常未匹配到有效子订单下标: 需要标记的sourceDetailIds={}, 子订单={}",
+                        mainEntity.getPlatformCode(),
+                        sourceDetailIds,
+                        subOrderIndexList
+                );
+                throw new ServiceException("【速卖通标记发货】订单【{}】数据异常未匹配到有效子订单下标");
+            }
+
             // 源单信息明细
 //            List<SoB2cDetailEntity> allSourceDetailEntityList = sourceDetailEntityMap.get(mainEntity.getPlatformCode());
 //            if (CollectionUtils.isEmpty(allSourceDetailEntityList)){
@@ -124,6 +154,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                     .sendType(sendType)
                     .actualCarrier(tmsSignShipDTO.getCarrierCode())
                     .trackingWebSite(tmsSignShipDTO.getLogisticsTrackUrl())
+                    .subTradeOrderIndexList(subOrderIndexList)
                     .build();
 
             // 非线上环境需要指定订单ID
@@ -146,7 +177,14 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             try {
                 aliExpressOrderService.subDeclareDeliver(request);
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
-            } catch (ApiException e) {
+            } catch (ServiceException e){
+                if (-353 == e.getCode()) {
+                    log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+                    return signShippedDetailList;
+                }
+                log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+                throw new ServiceException("速卖通API标记发货失败:" + e.getMessage());
+            } catch (Exception e) {
                 log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货失败 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                 throw new ServiceException("速卖通标记发货失败:" + e.getMessage());
             }
