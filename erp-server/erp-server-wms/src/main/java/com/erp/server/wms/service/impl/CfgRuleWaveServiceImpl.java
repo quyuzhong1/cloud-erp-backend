@@ -394,9 +394,12 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
             if ((MathUtil.compareTo(entity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO && detailTotalQty + totalQty > entity.getMaxQty())
                     || orderQty > entity.getMaxOrderQty()) {
-                addDTO.setDeliveryIdList(deliveryIdList);
-                resultList.add(addDTO);
 
+                //原波次数量和单数必须大于等于最小数量
+                if ((MathUtil.compareTo(entity.getMinQty(),MathUtil.ZERO) != MathUtil.ZERO && totalQty >= entity.getMinQty()) &&  orderQty > entity.getMinOrderQty()) {
+                    addDTO.setDeliveryIdList(deliveryIdList);
+                    resultList.add(addDTO);
+                }
                 //清空合计数据
                 totalQty = MathUtil.ZERO;
                 orderQty = MathUtil.ONE;
