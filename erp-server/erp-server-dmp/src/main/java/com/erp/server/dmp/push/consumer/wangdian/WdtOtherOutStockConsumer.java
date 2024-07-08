@@ -21,9 +21,11 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.dmp.enums.WdtWarehouseTypeEnum;
 import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
 import com.erp.server.dmp.service.DmpPushTaskService;
+import com.sdk.wangdian.enums.WdtOutStockStatusEnum;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdWarehouseService;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutOtherQueryResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -113,6 +115,25 @@ public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
             return ApiResult.error(ApiError.ERROR_WDT_CANCEL_PUSH.code, String.format("前序任务未完成, 跳过本次推送: %s", request));
         }
 
+        limiter.acquire();
+        //查询其他出库单
+
+        StockoutOtherQueryResponse queryResponse = wdtService.queryWithDetail(request);
+        List<StockoutOtherQueryResponse.OrderItem> order = queryResponse.getOrder();
+        //旺店通已经存在这个单据
+        if(! order.isEmpty()){
+            StockoutOtherQueryResponse.OrderItem orderInfoDto = order.get(0);
+            if (orderInfoDto.getStatus().equals(110)) {
+                return ApiResult.success();
+            }else {
+                //修改任务的错误消息
+                String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtOutStockStatusEnum.getName(String.valueOf(orderInfoDto.getStatus())));
+                return ApiResult.error(format);
+            }
+        }
+
+        //推送其他出库单
+        wdtService.executeConsumer(request);
         ThirdMappingEntity thirdMapping = thirdMappingService.getByThirdCodeAndType(request.getWarehouseNo(), ThirdSysTypeEnum.WDT.getCode(), ThirdSysTypeEnum.WAREHOUSE.getCode());
         if (ObjectUtils.isEmpty(thirdMapping)) {
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: 三方仓库%s未映射", request.getWarehouseNo()));
