@@ -99,6 +99,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
                     rowDTO.setSkuId(skuLevel.getSkuId());
                     rowDTO.setSkuNo(skuLevel.getSkuNo());
                     rowDTO.setSalesQty(skuLevel.getQty());
+                    rowDTO.setPickedSumQty(0);
                     rowDTO.setPickingStatusName(PickingStatusEnum.getName(deliveryLevel.getPickingStatus()));
 
                     rowDTO.setWarehouseLocation(locationLevel.getWarehouseLocation());
