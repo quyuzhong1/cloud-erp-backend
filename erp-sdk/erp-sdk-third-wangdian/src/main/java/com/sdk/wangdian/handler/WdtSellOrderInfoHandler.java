@@ -11,7 +11,6 @@ import com.common.business.dto.WdtSoOutStockDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractSoOutStockHandler;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.wangdian.dto.WangDianOrderEntity;
@@ -187,10 +186,10 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             }
             result.addAll(response.getOrderList());
             Integer totalCount = response.getTotal();
-            pager.setPageNo(pager.getPageNo() + 1);
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
+            pager.setPageNo(pager.getPageNo() + 1);
         }
         return result;
     }

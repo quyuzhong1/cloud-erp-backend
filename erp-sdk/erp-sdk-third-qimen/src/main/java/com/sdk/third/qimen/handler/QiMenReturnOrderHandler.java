@@ -9,7 +9,6 @@ import com.common.business.dto.WdtReturnOrderDTO;
 import com.common.business.dto.WdtReturnOrderDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractSoOutStockHandler;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.qimencloud.api.scene3ldsmu02o9.request.WdtWmsStockinRefundQuerywithdetailRequest;
 import com.qimencloud.api.scene3ldsmu02o9.response.WdtWmsStockinRefundQuerywithdetailResponse;
@@ -73,13 +72,13 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
         request.setTargetAppKey(qimenService.getTargetAppKey());
         request.setWdtAppkey(qimenService.getWdtAppKey());
         request.setWdtSalt(qimenService.getWdtSalt());
-        request.setDatetime(qimenService.format(new Date()));
         request.putOtherTextParam(qimenService.getCustomerIdKey(), qimenService.getCustomerIdValue());
-        request.setWdtSign(QiMenUtils.getQimenCustomWdtSign(request, qimenService.getWdtSecret()));
 
         List<WdtWmsStockinRefundQuerywithdetailResponse.Order> result = new ArrayList<>();
         boolean hasNext = true;
         while (hasNext) {
+            request.setDatetime(qimenService.format(new Date()));
+            request.setWdtSign(QiMenUtils.getQimenCustomWdtSign(request, qimenService.getWdtSecret()));
             WdtWmsStockinRefundQuerywithdetailResponse response;
             try {
                 response = qimenService.execute(request);
@@ -96,10 +95,11 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
             }
             result.addAll(response.getData().getOrder());
             Long totalCount = response.getData().getTotalCount();
-            pager.setPageNo(pager.getPageNo() + 1);
-            if (totalCount <= (pager.getPageNo() + 1) * pageSize) {
+            if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
+            pager.setPageNo(pager.getPageNo() + 1);
+            request.setPager(pager);
         }
         return result;
     }

@@ -17,4 +17,9 @@ public interface WdtOtherOutStockService {
      * @author: tanmujin
      */
     void executeConsumer(CreateOtherStockoutRequest stockoutRequest);
+
+    /**
+     * 自留转仓调用外部出库单创建
+     */
+    void executeSelfConsumer(CreateOtherStockoutRequest request);
 }

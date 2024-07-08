@@ -177,109 +177,118 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	@Override
 	public void run(String... args) throws Exception {
+		this.initCache(true);
+	}
+
+	public void initCache(boolean isCreateTask) {
 		dmpBasicSystemCache = dmpBasicSystemService.lambdaQuery()
 				.eq(DmpBasicSystemEntity::getDisabled, false).list();
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-			List<DmpBasicSystemEntity> dmpBasicSystemEntityFreshList = dmpBasicSystemService.lambdaQuery()
-					.gt(DmpBasicSystemEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
-					.list();
-			if(CollUtil.isNotEmpty(dmpBasicSystemEntityFreshList)) {
-				List<String> newIds = dmpBasicSystemEntityFreshList.stream().map(DmpBasicSystemEntity::getId).collect(Collectors.toList());
-				dmpBasicSystemCache.removeIf(d -> newIds.contains(d.getId()));
-				dmpBasicSystemCache.addAll(dmpBasicSystemEntityFreshList.stream()
-						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
-			}
-			
-		}, 0, freshCacheTime, TimeUnit.SECONDS);
-		
 		dmpCfgInputCache = dmpCfgInputService.lambdaQuery()
 				.eq(DmpCfgInputEntity::getDisabled, false).list();
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-			List<DmpCfgInputEntity> dmpCfgInputEntityFreshList = dmpCfgInputService.lambdaQuery()
-					.gt(DmpCfgInputEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
-					.list();
-			if(CollUtil.isNotEmpty(dmpCfgInputEntityFreshList)) {
-				List<String> newIds = dmpCfgInputEntityFreshList.stream().map(DmpCfgInputEntity::getId).collect(Collectors.toList());
-				dmpCfgInputCache.removeIf(d -> newIds.contains(d.getId()));
-				dmpCfgInputCache.addAll(dmpCfgInputEntityFreshList.stream()
-						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
-			}
-			
-		}, 1, freshCacheTime, TimeUnit.SECONDS);
-		
 		dmpCfgInputConvertCache = dmpCfgInputConvertService.lambdaQuery()
 				.eq(DmpCfgInputConvertEntity::getDisabled, false).list();
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityFreshList = dmpCfgInputConvertService.lambdaQuery()
-					.gt(DmpCfgInputConvertEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
-					.list();
-			if(CollUtil.isNotEmpty(dmpCfgInputConvertEntityFreshList)) {
-				List<String> newIds = dmpCfgInputConvertEntityFreshList.stream().map(DmpCfgInputConvertEntity::getId).collect(Collectors.toList());
-				dmpCfgInputConvertCache.removeIf(d -> newIds.contains(d.getId()));
-				dmpCfgInputConvertCache.addAll(dmpCfgInputConvertEntityFreshList.stream()
-						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
-			}
-			
-		}, 2, freshCacheTime, TimeUnit.SECONDS);
-		
-		
 		dmpCfgInputDetailCache = dmpCfgInputDetailService.lambdaQuery()
 				.eq(DmpCfgInputDetailEntity::getDisabled, false).list();
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-			List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityFreshList = dmpCfgInputDetailService.lambdaQuery()
-					.gt(DmpCfgInputDetailEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
-					.list();
-			if(CollUtil.isNotEmpty(dmpCfgInputDetailEntityFreshList)) {
-				List<String> newIds = dmpCfgInputDetailEntityFreshList.stream().map(DmpCfgInputDetailEntity::getId).collect(Collectors.toList());
-				dmpCfgInputDetailCache.removeIf(d -> newIds.contains(d.getId()));
-				dmpCfgInputDetailCache.addAll(dmpCfgInputDetailEntityFreshList.stream()
-						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
-			}
-			
-		}, 3, freshCacheTime, TimeUnit.SECONDS);
-		
 		dmpCfgInputConvertMappingCache = dmpCfgInputConvertMappingService.lambdaQuery()
 				.eq(DmpCfgInputConvertMappingEntity::getDisabled, false)
 				.list();
 		this.dealConvertMappingCache();
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-			List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityFreshList = dmpCfgInputConvertMappingService.lambdaQuery()
-					.gt(DmpCfgInputConvertMappingEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
-					.list();
-			if(CollUtil.isNotEmpty(dmpCfgInputConvertMappingEntityFreshList)) {
-				List<String> newIds = dmpCfgInputConvertMappingEntityFreshList.stream().map(DmpCfgInputConvertMappingEntity::getId).collect(Collectors.toList());
-				dmpCfgInputConvertMappingCache.removeIf(d -> newIds.contains(d.getId()));
-				dmpCfgInputConvertMappingCache.addAll(dmpCfgInputConvertMappingEntityFreshList.stream()
-						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
-				this.dealConvertMappingCache();
-			}
-			
-		}, 4, freshCacheTime, TimeUnit.SECONDS);
 		
 		this.initRocketMQTemplate();
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-			this.dealRocketMQTemplate(dmpCfgMqService.lambdaQuery()
-					.eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
-					.gt(DmpCfgMqEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
-					.list());
-		}, 5, freshCacheTime, TimeUnit.SECONDS);
 		
 		dmpCfgOutputBlackCache = dmpCfgOutputBlackService.lambdaQuery()
 				.eq(DmpCfgOutputBlackEntity::getDisabled, false).list();
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-			List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackEntityFreshList = dmpCfgOutputBlackService.lambdaQuery()
-					.gt(DmpCfgOutputBlackEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
-					.list();
-			if(CollUtil.isNotEmpty(dmpCfgOutputBlackEntityFreshList)) {
-				List<String> newIds = dmpCfgOutputBlackEntityFreshList.stream().map(DmpCfgOutputBlackEntity::getId).collect(Collectors.toList());
-				dmpCfgOutputBlackCache.removeIf(d -> newIds.contains(d.getId()));
-				dmpCfgOutputBlackCache.addAll(dmpCfgOutputBlackEntityFreshList.stream()
-						.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
-			}
+		
+		if(isCreateTask) {
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpBasicSystemEntity> dmpBasicSystemEntityFreshList = dmpBasicSystemService.lambdaQuery()
+						.gt(DmpBasicSystemEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpBasicSystemEntityFreshList)) {
+					List<String> newIds = dmpBasicSystemEntityFreshList.stream().map(DmpBasicSystemEntity::getId).collect(Collectors.toList());
+					dmpBasicSystemCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpBasicSystemCache.addAll(dmpBasicSystemEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				}
+				
+			}, 0, freshCacheTime, TimeUnit.SECONDS);
 			
-		}, 0, freshCacheTime, TimeUnit.SECONDS);
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgInputEntity> dmpCfgInputEntityFreshList = dmpCfgInputService.lambdaQuery()
+						.gt(DmpCfgInputEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpCfgInputEntityFreshList)) {
+					List<String> newIds = dmpCfgInputEntityFreshList.stream().map(DmpCfgInputEntity::getId).collect(Collectors.toList());
+					dmpCfgInputCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgInputCache.addAll(dmpCfgInputEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				}
+				
+			}, 1, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityFreshList = dmpCfgInputConvertService.lambdaQuery()
+						.gt(DmpCfgInputConvertEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpCfgInputConvertEntityFreshList)) {
+					List<String> newIds = dmpCfgInputConvertEntityFreshList.stream().map(DmpCfgInputConvertEntity::getId).collect(Collectors.toList());
+					dmpCfgInputConvertCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgInputConvertCache.addAll(dmpCfgInputConvertEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				}
+				
+			}, 2, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityFreshList = dmpCfgInputDetailService.lambdaQuery()
+						.gt(DmpCfgInputDetailEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpCfgInputDetailEntityFreshList)) {
+					List<String> newIds = dmpCfgInputDetailEntityFreshList.stream().map(DmpCfgInputDetailEntity::getId).collect(Collectors.toList());
+					dmpCfgInputDetailCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgInputDetailCache.addAll(dmpCfgInputDetailEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				}
+				
+			}, 3, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityFreshList = dmpCfgInputConvertMappingService.lambdaQuery()
+						.gt(DmpCfgInputConvertMappingEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpCfgInputConvertMappingEntityFreshList)) {
+					List<String> newIds = dmpCfgInputConvertMappingEntityFreshList.stream().map(DmpCfgInputConvertMappingEntity::getId).collect(Collectors.toList());
+					dmpCfgInputConvertMappingCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgInputConvertMappingCache.addAll(dmpCfgInputConvertMappingEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+					this.dealConvertMappingCache();
+				}
+				
+			}, 4, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				this.dealRocketMQTemplate(dmpCfgMqService.lambdaQuery()
+						.eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
+						.gt(DmpCfgMqEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list());
+			}, 5, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackEntityFreshList = dmpCfgOutputBlackService.lambdaQuery()
+						.gt(DmpCfgOutputBlackEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpCfgOutputBlackEntityFreshList)) {
+					List<String> newIds = dmpCfgOutputBlackEntityFreshList.stream().map(DmpCfgOutputBlackEntity::getId).collect(Collectors.toList());
+					dmpCfgOutputBlackCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgOutputBlackCache.addAll(dmpCfgOutputBlackEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				}
+				
+			}, 0, freshCacheTime, TimeUnit.SECONDS);
+		
+		}
 	}
-
+	
 	private void removeRocketMQTemplate(String mqId) {
 		rocketMQDmpCfgMqCache.remove(mqId);
 		RocketMQTemplate rocketMQTemplate = rocketMQTemplateMap.get(mqId);

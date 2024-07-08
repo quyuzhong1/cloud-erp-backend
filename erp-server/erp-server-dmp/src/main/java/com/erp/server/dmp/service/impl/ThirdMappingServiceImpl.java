@@ -4,11 +4,16 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.constant.EnumMessage;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
@@ -22,27 +27,17 @@ import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.dmp.mapper.ThirdMappingMapper;
 import com.erp.server.dmp.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sdk.wangdian.dto.ErpWarehouseDto;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
@@ -887,6 +882,16 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
            return Collections.emptyList();
         }
         return this.baseMapper.listMappingBySysIds(warehouseIdList, sysType);
+    }
+
+    @Override
+    public ThirdMappingEntity getByThirdCodeAndType(String warehouseNo, String sysType, String type) {
+        return getOne(Wrappers.<ThirdMappingEntity>lambdaQuery()
+                .eq(ThirdMappingEntity::getThirdCode, warehouseNo)
+                .eq(ThirdMappingEntity::getThirdSysType, sysType)
+                .eq(ThirdMappingEntity::getType, type)
+                .last(" limit 1")
+        );
     }
 
 

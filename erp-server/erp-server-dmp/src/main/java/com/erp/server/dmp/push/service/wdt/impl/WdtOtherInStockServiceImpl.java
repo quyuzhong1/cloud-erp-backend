@@ -12,14 +12,20 @@ import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
 import com.sdk.wangdian.sdk.WdtErpException;
+import com.sdk.wangdian.sdk.api.wms.external.in.CreateStockExternalInRequest;
+import com.sdk.wangdian.sdk.api.wms.external.in.CreateStockExternalInResponse;
+import com.sdk.wangdian.sdk.api.wms.external.in.StockExternalInAPI;
 import com.sdk.wangdian.sdk.api.wms.stockin.StockinAPI;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinResponse;
 import com.sdk.wangdian.server.WangDianClientService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 旺店通其他入库单消费
@@ -27,6 +33,7 @@ import java.util.Map;
  * @author tanmujin
  */
 @Service
+@Slf4j
 public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -53,6 +60,47 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", e.getMessage()));
         }
         if(response.getStatus() != 0){
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", response.getMessage()));
+        }
+    }
+
+    @Override
+    public void executeSelfConsumer(CreateOtherStockinRequest request) {
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
+        if (ObjectUtils.isEmpty(platformEntity)) {
+            return;
+        }
+        StockExternalInAPI stockExternalInAPI = wangDianClientService.get(StockExternalInAPI.class);
+        CreateStockExternalInRequest externalInRequest = new CreateStockExternalInRequest();
+        externalInRequest.setIsCheck(true);
+        CreateStockExternalInRequest.Order order = new CreateStockExternalInRequest.Order();
+        order.setOrderNo(request.getOuterNo());
+        order.setWarehouseNo(request.getWarehouseNo());
+        order.setRemark(request.getRemark());
+        order.setSrcOrderType("0");
+        order.setReason(request.getReason());
+        externalInRequest.setOrder(order);
+        List<CreateStockExternalInRequest.OrderDetail> orderDetails = request.getGoodsList().stream()
+                .map(v -> {
+                    CreateStockExternalInRequest.OrderDetail orderDetail = new CreateStockExternalInRequest.OrderDetail();
+                    orderDetail.setSpecNo(v.getSpecNo());
+                    orderDetail.setNum(v.getNum());
+                    orderDetail.setRemark(v.getRemark());
+                    return orderDetail;
+                })
+                .collect(Collectors.toList());
+        externalInRequest.setOrderDetails(orderDetails);
+        Map<String, Object> requestMap = JSON.parseObject(JSON.toJSONString(externalInRequest), new TypeReference<Map<String, Object>>() {});
+        Map<String, Object> requestBody = commonService.makeApiFieldMap(requestMap, platformEntity.getId(), ApiModuleTypeEnum.WDT_EXT_IN_STOCK.getCode());
+        CreateStockExternalInResponse response = null;
+        try {
+            response = stockExternalInAPI.createOrder(requestBody);
+        } catch (WdtErpException e) {
+            log.error("推送旺店通其他出库单失败:{}", e.getMessage(), e);
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", e.getMessage()));
+        }
+        if(response.getStatus() != 0){
+            log.error("推送旺店通其他出库单失败:{}", response.getMessage());
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", response.getMessage()));
         }
     }
