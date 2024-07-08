@@ -195,7 +195,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         List<TransactionFlowEntity> result = Lists.newArrayList();
         QueryWrapper<TransactionFlowEntity> wrapper = new QueryWrapper<>();
         wrapper.lambda().eq(TransactionFlowEntity::getSourceType, sourceType.getCode())
-                .eq(TransactionFlowEntity::getSourceId, billId);
+                .eq(TransactionFlowEntity::getSourceId, billId)
+                .eq(TransactionFlowEntity::getIsUnapproved, false);
         result.addAll(transactionFlowService.list(wrapper));
         return result;
     }
@@ -219,6 +220,11 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             for(TransactionRuleDTO rule : rules) {
                 InventoryTransactionDTO transactionDTO = new InventoryTransactionDTO();
 
+                // 交易头部信息
+//                transactionDTO.setId(flow.getId());
+                transactionDTO.setTransactionNo(transactionNo);
+                transactionDTO.setTransactionRuleId(rule.getId());
+
                 // 库存基础信息
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
                 stockBaseDTO.setSkuId(flow.getSkuId());
@@ -229,23 +235,18 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
                 transactionDTO.setInventoryId(getSavedInventoryId(stockBaseDTO));
 
-                // 交易头部信息
-//                transactionDTO.setId(flow.getId());
-                transactionDTO.setTransactionNo(transactionNo);
-                transactionDTO.setTransactionRuleId(rule.getId());
-
                 // 交易明细信息
-                transactionDTO.setSkuId(flow.getSkuId());
-                transactionDTO.setSkuNo(flow.getSkuNo());
-                transactionDTO.setOrgId(flow.getOrgId());
-                transactionDTO.setWarehouseId(flow.getWarehouseId());
-                transactionDTO.setWarehouseLocation(flow.getWarehouseLocation());
-                transactionDTO.setInventoryStatus(rule.getInventoryStatus().getCode());
-
-                transactionDTO.setOrgName(getOrgName(orgList,flow.getOrgId()));
-                transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,flow.getWarehouseId()).getName());
-                transactionDTO.setWarehouseLocationName(getWarehouseLocationName(flow.getWarehouseId(),flow.getWarehouseLocation()));
-                transactionDTO.setInventoryStatusName(rule.getInventoryStatus().getName());
+                transactionDTO.setSkuId(stockBaseDTO.getSkuId());
+                transactionDTO.setSkuNo(stockBaseDTO.getSkuNo());
+                transactionDTO.setOrgId(stockBaseDTO.getOrgId());
+                transactionDTO.setWarehouseId(stockBaseDTO.getWarehouseId());
+                transactionDTO.setWarehouseLocation(stockBaseDTO.getWarehouseLocation());
+                transactionDTO.setInventoryStatus(stockBaseDTO.getInventoryStatus().getCode());
+                // 设置冗余信息部分
+                transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
+                transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
+                transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),stockBaseDTO.getWarehouseLocation()));
+                transactionDTO.setInventoryStatusName(stockBaseDTO.getInventoryStatus().getName());
 
                 // 交易时间 & 单据类型
                 transactionDTO.setBillDate(flow.getBillDate());
@@ -292,6 +293,11 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             for(TransactionRuleDTO rule : rules) {
                 InventoryTransactionDTO transactionDTO = new InventoryTransactionDTO();
 
+                // 交易头部信息
+                transactionDTO.setTransactionNo(transactionNo);
+                transactionDTO.setTransactionRuleId(rule.getId());
+
+                // 库存基础信息
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
                 stockBaseDTO.setSkuId(flow.getSkuId());
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
@@ -309,18 +315,14 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 }
                 transactionDTO.setInventoryId(getSavedInventoryId(stockBaseDTO));
 
-                // 交易头部信息
-                transactionDTO.setTransactionNo(transactionNo);
-                transactionDTO.setTransactionRuleId(rule.getId());
-
                 // 交易明细信息
-                transactionDTO.setSkuId(flow.getSkuId());
-                transactionDTO.setSkuNo(flow.getSkuNo());
+                transactionDTO.setSkuId(stockBaseDTO.getSkuId());
+                transactionDTO.setSkuNo(stockBaseDTO.getSkuNo());
                 transactionDTO.setOrgId(stockBaseDTO.getOrgId());
                 transactionDTO.setWarehouseId(stockBaseDTO.getWarehouseId());
                 transactionDTO.setWarehouseLocation(stockBaseDTO.getWarehouseLocation());
                 transactionDTO.setInventoryStatus(stockBaseDTO.getInventoryStatus().getCode());
-
+                // 设置冗余信息部分
                 transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
                 transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),flow.getWarehouseLocation()));
@@ -403,6 +405,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             result.add(transactionDTO);
         });
 
+        // 更新交易数据 是否忽略交易|是否允许负库存
+        this.fillTransactionIgnoreOptions(result);
         return result;
     }
 

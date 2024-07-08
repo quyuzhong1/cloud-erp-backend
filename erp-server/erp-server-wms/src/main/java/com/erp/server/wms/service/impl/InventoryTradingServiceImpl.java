@@ -112,6 +112,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         QueryWrapper<TransactionFlowEntity> wrapper = new QueryWrapper<>();
         wrapper.lambda().eq(TransactionFlowEntity::getSourceType, transactionDTO.getSourceType())
                 .eq(TransactionFlowEntity::getSourceId, transactionDTO.getSourceId())
+                .eq(TransactionFlowEntity::getIsUnapproved, false)
                 .select(TransactionFlowEntity::getId)
                 .last("limit 1");
         transactionFlow = transactionFlowService.getOne(wrapper);
@@ -370,12 +371,14 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         }
 
         UpdateWrapper<InventoryEntity> wrapper = new UpdateWrapper<>();
-        wrapper.setSql("qty = qty + #{transactionDTO.getQty()}" +
-                ",update_time = now()" +
-                ",update_user_id = #{transactionDTO.getUserId()}" +
-                ",update_user_name = #{transactionDTO.getUserName");
+        wrapper.setSql("qty = qty + " +transactionDTO.getQty())
+                .lambda()
+                .set(InventoryEntity::getUpdateTime, LocalDateTime.now())
+                .set(InventoryEntity::getUpdateUserId, transactionDTO.getUserId())
+                .set(InventoryEntity::getUpdateUserName, transactionDTO.getUserName())
+                //条件
+                .eq(InventoryEntity::getId, transactionDTO.getInventoryId());
 
-        wrapper.lambda().eq(InventoryEntity::getId, transactionDTO.getInventoryId());
         inventoryService.update(wrapper);
     }
 
@@ -390,13 +393,15 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         }
 
         UpdateWrapper<InventoryHisEntity> wrapper = new UpdateWrapper<>();
-        wrapper.setSql("qty = qty + #{transactionDTO.getQty()}" +
-                ",update_time = now()" +
-                ",update_user_id = #{transactionDTO.getUserId()}" +
-                ",update_user_name = #{transactionDTO.getUserName");
-
-        wrapper.lambda().eq(InventoryHisEntity::getInfoId, transactionDTO.getInventoryId())
+        wrapper.setSql("qty = qty + " + transactionDTO.getQty())
+                .lambda()
+                .set(InventoryHisEntity::getUpdateTime, LocalDateTime.now())
+                .set(InventoryHisEntity::getUpdateUserId, transactionDTO.getUserId())
+                .set(InventoryHisEntity::getUpdateUserName, transactionDTO.getUserName())
+                //条件
+                .eq(InventoryHisEntity::getInfoId, transactionDTO.getInventoryId())
                 .gt(InventoryHisEntity::getBillDate, transactionDTO.getBillDate());
+
         inventoryHisService.update(wrapper);
     }
 
@@ -411,12 +416,15 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         }
 
         UpdateWrapper<TransactionFlowEntity> wrapper = new UpdateWrapper<>();
-        wrapper.setSql("cur_inventory_qty = cur_inventory_qty + #{transactionDTO.getQty()} " +
-                ",update_time = now()" +
-                ",update_user_id = #{transactionDTO.getUserId()}" +
-                ",update_user_name = #{transactionDTO.getUserName");
-        wrapper.lambda().eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
+        wrapper.setSql("cur_inventory_qty = cur_inventory_qty + " + transactionDTO.getQty())
+                .lambda()
+                .set(TransactionFlowEntity::getUpdateTime, LocalDateTime.now())
+                .set(TransactionFlowEntity::getUpdateUserId, transactionDTO.getUserId())
+                .set(TransactionFlowEntity::getUpdateUserName, transactionDTO.getUserName())
+                //条件
+                .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
                 .gt(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate());
+
         transactionFlowService.update(wrapper);
 
     }
