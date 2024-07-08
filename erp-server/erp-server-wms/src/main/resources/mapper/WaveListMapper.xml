@@ -20,9 +20,9 @@
             pd.allocated_qty
         FROM
             wave_list_detail AS pwd
-                LEFT JOIN so_b2c_delivery_detail AS sbdd ON sbdd.is_deleted = FALSE
+                inner JOIN so_b2c_delivery_detail AS sbdd ON sbdd.is_deleted = FALSE
                 AND sbdd.main_id = pwd.delivery_id
-                LEFT JOIN picking_detail AS pd ON pd.is_deleted = FALSE
+                inner JOIN picking_detail AS pd ON pd.is_deleted = FALSE
                 AND pd.source_detail_id = sbdd.ID
         <if test="waveId != null and waveId != ''">
             and pwd.main_id = #{waveId}
