@@ -7,13 +7,18 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.ObjectUtils;
-import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.TaskChargeDistributionDTO;
+import com.erp.model.plm.dto.TemplateTaskDTO;
+import com.erp.model.plm.dto.TmeplateDocsNameDTO;
 import com.erp.model.plm.dto.excel.TemplateTaskExcelDTO;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.TemplatePhaseEntity;
+import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.service.*;
+import com.erp.server.plm.service.TemplatePhaseService;
+import com.erp.server.plm.service.TemplateTaskDocsNameService;
+import com.erp.server.plm.service.TemplateTaskService;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -34,6 +39,21 @@ public class TemplateTaskExcelListener extends AnalysisEventListener<TemplateTas
     private List<TemplateTaskExcelDTO> list;
 
     private List<TemplateTaskExcelDTO> dataList = new ArrayList<>();
+
+    /**
+     * 导入数据，用于判断导入是否为空
+     */
+    private List<TemplateTaskExcelDTO> allList = new ArrayList<>();
+
+    /**
+     * 导入错误数据
+     */
+    private List<TemplateTaskExcelDTO> errorList = new ArrayList<>();
+
+    /**
+     * 导入正确数据
+     */
+    private List<TemplateTaskExcelDTO> successList = new ArrayList<>();
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
@@ -222,11 +242,15 @@ public class TemplateTaskExcelListener extends AnalysisEventListener<TemplateTas
 
     }
 
-    public List<TemplateTaskExcelDTO> getDateList(){
-        return list;
+    public List<TemplateTaskExcelDTO> getAllList() {
+        return allList;
     }
 
-    public List<TemplateTaskExcelDTO> getExcelDateList(){
-        return dataList;
+    public List<TemplateTaskExcelDTO> getErrorList(){
+        return errorList;
+    }
+
+    public List<TemplateTaskExcelDTO> getSuccessList() {
+        return successList;
     }
 }

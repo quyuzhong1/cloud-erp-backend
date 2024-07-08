@@ -1,27 +1,18 @@
 package com.erp.server.plm.controller.api;
 
-import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.dto.excel.ProjectTaskExcelDTO;
-import com.erp.model.plm.dto.excel.TemplateTaskExcelDTO;
 import com.erp.model.plm.vo.TemplateTaskVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.listener.TemplateTaskExcelListener;
 import com.erp.server.plm.service.TemplatePhaseService;
 import com.erp.server.plm.service.TemplateTaskDocsNameService;
 import com.erp.server.plm.service.TemplateTaskService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -33,10 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -149,34 +138,8 @@ public class TemplateTaskController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入模板任务")
     @PostMapping("/importTemplateTaskFile")
-    public ApiResult importTemplateTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "templateId") String templateId, HttpServletResponse response) {
-        TemplateTaskExcelListener excelListenerUtil = new TemplateTaskExcelListener(templateId, sysUserFeign, templatePhaseService, templateTaskService, templateTaskDocsNameService);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), TemplateTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95124);
-        }
-        List<TemplateTaskExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
-        List<TemplateTaskExcelDTO> list = excelListenerUtil.getDateList();
-        if (list.size() > 0) {
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/templateTaskError.xlsx";
-            String name = "templateTaskError";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
-            }
-
-            return failure();
-        }
-        return success();
+    public void importTemplateTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "templateId") String templateId, HttpServletResponse response) {
+        templateTaskService.importTemplateTaskFile(excelFile,templateId,response);
     }
 
 
