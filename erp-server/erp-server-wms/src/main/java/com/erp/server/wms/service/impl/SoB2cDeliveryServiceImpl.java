@@ -809,6 +809,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             log.error("编码【{}】未查询到发货单信息",soB2cEntity.getCode());
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
+        if (!StrUtil.equals(entity.getStatus(),SoB2cDeliveryStatusEnum.PICKING.getCode())) {
+            log.error("编码【{}】非已拣货不支持更新",soB2cEntity.getCode());
+            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+        }
+
         entity.setLength(dto.getLength());
         entity.setWidth(dto.getWidth());
         entity.setHeight(dto.getHeight());
