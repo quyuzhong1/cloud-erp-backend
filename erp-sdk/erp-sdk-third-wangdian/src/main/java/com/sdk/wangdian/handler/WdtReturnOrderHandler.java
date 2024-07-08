@@ -88,10 +88,10 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
             }
             result.addAll(response.getOrders());
             Integer totalCount = response.getTotal();
-            pager.setPageNo(pager.getPageNo() + 1);
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
+            pager.setPageNo(pager.getPageNo() + 1);
         }
         return result;
     }
