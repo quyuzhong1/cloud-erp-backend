@@ -17,12 +17,12 @@ public interface PackingTaskFeign {
      * @param dto
      * @return
      */
-    @PostMapping("/feign/soB2cDelivery/dimensionalWeightTob")
+    @PostMapping("/feign/packingTask/dimensionalWeightTob")
     ApiResult<String> dimensionalWeightTob(@RequestBody DimensionalWeightDTO dto);
 
-    @PostMapping("/feign/soB2cDelivery/dimensionalWeightFba")
+    @PostMapping("/feign/packingTask/dimensionalWeightFba")
     ApiResult<String> dimensionalWeightFba(@RequestBody DimensionalWeightDTO dto);
 
-    @PostMapping("/feign/soB2cDelivery/dimensionalWeightThird")
+    @PostMapping("/feign/packingTask/dimensionalWeightThird")
     ApiResult<String> dimensionalWeightThird(@RequestBody DimensionalWeightDTO dto);
 }

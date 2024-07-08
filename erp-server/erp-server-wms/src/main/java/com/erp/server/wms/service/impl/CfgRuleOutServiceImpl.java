@@ -223,11 +223,14 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutDTO.CfgOverweightDTO cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgOverweightDTO.class);
+        if(Objects.isNull(cfgOverweightDTO)){
+            return new CfgRuleOutDTO.CheckDTO(true,"");
+        }
         List<CfgRuleOutDTO.CfgOverweightDetailDTO> cfgOverweightDetailDTOList = cfgOverweightDTO.getCfgOverweightDetailDTOList();
         if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
             return new CfgRuleOutDTO.CheckDTO(true,"");
         }
-        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(CfgRuleOutEnum.OverweightTypeEnum.B2B.getCode())).findFirst().orElse(null);
+        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(dto.getType().getCode())).findFirst().orElse(null);
         if(Objects.isNull(cfgOverweightDetailDTO)){
             return new CfgRuleOutDTO.CheckDTO(true,"");
         }
@@ -279,7 +282,9 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 sizeLog = sizeLog + StrUtil.format("-高{}cm",dto.getScanHeight().subtract(cfgOverweightDetailDTO.getMaxHeight()));
             }
         }
-        logMsg = StringUtils.isBlank(logMsg)?sizeLog:logMsg+"/"+sizeLog;
+        if(StringUtils.isNotBlank(sizeLog)){
+            logMsg = StringUtils.isBlank(logMsg)?sizeLog:logMsg+"/"+sizeLog;
+        }
         //校验周长
         if(Objects.nonNull(dto.getScanLength()) && Objects.nonNull(dto.getScanWidth()) && Objects.nonNull(dto.getScanHeight())){
             //计算公式:(宽+高)*2+长(最大尺寸)=周长。
@@ -288,9 +293,9 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
                     result = false;
                 }
+                String circLog = StrUtil.format("周长超{}cm",circ.subtract(cfgOverweightDetailDTO.getMaxCirc()));
+                logMsg = StringUtils.isBlank(logMsg)?circLog:logMsg+"/"+circLog;
             }
-            String circLog = StrUtil.format("周长超{}cm",circ.subtract(cfgOverweightDetailDTO.getMaxCirc()));
-            logMsg = StringUtils.isBlank(logMsg)?circLog:logMsg+"/"+circLog;
         }
         return new CfgRuleOutDTO.CheckDTO(result,logMsg);
     }
