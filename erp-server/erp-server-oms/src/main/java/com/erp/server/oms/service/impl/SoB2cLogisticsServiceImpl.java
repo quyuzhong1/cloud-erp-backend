@@ -11,6 +11,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.enums.*;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.controller.vo.ApiResult;
@@ -434,6 +435,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
 
+    }
+
+    @Override
+    public SoB2cLogisticsEntity getByTrackNoOrTransportNo(String logisticsCode) {
+        return baseMapper.getByTrackNoOrTransportNo(logisticsCode);
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

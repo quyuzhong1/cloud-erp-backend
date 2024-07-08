@@ -29,6 +29,15 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      * 根据出库配置返回分拣口
      */
     String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto);
+    /**
+     * 处理偏差
+     * @author will
+     * @date 2024/7/3 14:22
+     * @param b2cAllowableDeviations
+     * @param dto
+     * @return Boolean
+     */
+    Boolean handleB2cAllowableDeviations(CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations, CfgRuleOutDTO.SortingPortRuleDTO dto);
 
     /**
      * 校验装箱超重

@@ -402,11 +402,17 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             //回滚冻结库存
             List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
-                List<String> ids = soB2cDeliveryEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
-                soB2cDeliveryService.rollbackInventory(ids);
+                List<String> ids = soB2cDeliveryEntities.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
                 soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-                //删除拣货单
-                pickingListsService.deleteBySourceId(ids);
+                // 待处理和异常状态中的生成波次异常无需回滚库存
+                List<String> rollbackInventoryIds = soB2cDeliveryEntities.stream().filter(e -> !SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(e.getStatus()))
+                        .filter(e -> !AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(e.getAbnormalCause()))
+                        .map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(rollbackInventoryIds)) {
+                    soB2cDeliveryService.rollbackInventory(rollbackInventoryIds);
+                    //删除拣货单
+                    pickingListsService.deleteBySourceId(rollbackInventoryIds);
+                }
             }
         } else {
             //拦截失败的订单正常自动出库流程

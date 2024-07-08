@@ -6,12 +6,13 @@ import com.common.business.query.AbstractQueryHandler;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.enums.WaveStatusEnum;
+import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.service.WaveListService;
 import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.WaveListService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,9 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
     @Resource
     private WaveListService waveListService;
 
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
+
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("sbd.logistic_type".equals(field)) {
@@ -40,6 +44,14 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
             } else {
                 super.buildDefaultDTO("sbd.logistic_type", searchType);
             }
+        }
+        if ("waveCode".equals(field)) {
+            List<String> ids = waveListService.listDeliveryIdBySql(compareCodeSplicingValueSql);
+            if (CollectionUtils.isEmpty(ids)) {
+                return getQueryEmptySql();
+            }
+            super.buildDefaultDTO("sbd.id", ids);
+            addDeliveryInterceptFilter();
         }
 
         if ("sbd.tab".equals(field)) {
@@ -73,6 +85,11 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
                 addDeliveryInterceptFilter();
             }
+            //生成波次
+            if (SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus().equals(searchType)) {
+                super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus());
+                addDeliveryInterceptFilter();
+            }
 
             //拦截中
             if ("intercepting".equals(searchType)) {
@@ -87,10 +104,9 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getStatus());
                 addDeliveryInterceptFilter();
             }
-
-            if ("generation_waves".equals(searchType)) {
-
-                List<String> ids = waveListService.listDeliveryIdByStatus(WaveStatusEnum.AWAIT_PICK.getCode());
+            //虚假发货
+            if ("false_shipment".equals(searchType)) {
+                List<String> ids = soB2cDeliveryService.listIdsByShipmentMark(ShipmentMarkTypeEnum.MANUAL);
                 if (CollectionUtils.isEmpty(ids)) {
                     return getQueryEmptySql();
                 }
@@ -98,6 +114,7 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 addDeliveryInterceptFilter();
             }
         }
+
         if ("isIntercept".equals(field)) {
             List<SoB2cEntity> soB2cEntities = soB2cFeign.listWithIsIntercept();
             if (CollectionUtils.isEmpty(soB2cEntities)) {

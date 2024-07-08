@@ -159,6 +159,11 @@ public class WaveListDetailDTO implements Serializable {
         private String warehouseLocation;
 
         /**
+         * 拣货仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 应拣
          */
         private Integer shouldPickQty;

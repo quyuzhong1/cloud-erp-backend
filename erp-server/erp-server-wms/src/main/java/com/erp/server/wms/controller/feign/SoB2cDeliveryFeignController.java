@@ -146,4 +146,13 @@ public class SoB2cDeliveryFeignController extends BaseController {
         return soB2cDeliveryService.dimensionalWeightPipeline(dto);
     }
 
+    /**
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
+     */
+    @PostMapping("/updateShipmentMark")
+    void updateShipmentMark(List<String> ids, String code) {
+        soB2cDeliveryService.updateShipmentMark(ids, code);
+    }
 }

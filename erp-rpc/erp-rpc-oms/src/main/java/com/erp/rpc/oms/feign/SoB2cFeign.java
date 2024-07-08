@@ -40,6 +40,16 @@ public interface SoB2cFeign {
     SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(@RequestBody String trackNo);
 
     /**
+     * 根据跟踪单号查询订单物流信息
+     * @author will
+     * @date 2024/7/5 10:26
+     * @param logisticsCode
+     * @return SoB2cLogisticsEntity
+     */
+    @PostMapping("/feign/soB2c/getByTrackNoOrTransportNo")
+    SoB2cLogisticsEntity getByTrackNoOrTransportNo(@RequestBody String logisticsCode);
+
+    /**
      * 根据订单id 获取到运费估算的参数值
      *
      * @param orderId
@@ -571,4 +581,5 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/listSoB2cData")
     SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO);
+
 }

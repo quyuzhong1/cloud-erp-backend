@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryDTO;
@@ -27,6 +28,7 @@ import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -113,6 +115,11 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
             //填充仓库ID
             String warehouseId = warehouseMap.get(importExcelDto.getWarehouseName());
+            if(StringUtils.isBlank(warehouseId)){
+                importExcelDto.setErrorInfo(importExcelDto.getErrorInfo() + ", 仓库不存在");
+                errorList.add(importExcelDto);
+                continue;
+            }
             entity.setWarehouseId(warehouseId);
 
             //填充库区编码
@@ -122,11 +129,12 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
                     .orElse(new WarehouseLocationEntity());
             entity.setWarehouseArea(areaEntity.getCode() == null ? "" : areaEntity.getCode());
 
-            int insertResult = this.baseMapper.insert(entity);
-            if(insertResult == 0) {
-                importExcelDto.setErrorInfo(importExcelDto.getErrorInfo() + ", 保存失败");
-                errorList.add(importExcelDto);
-            }
+            boolean update = update(new UpdateWrapper<WarehouseLocationSafetyInventoryEntity>()
+                    .eq("warehouse_id", entity.getWarehouseId())
+                    .eq("warehouse_location", entity.getWarehouseLocation())
+                    .eq("sku_no", entity.getSkuNo())
+                    .set("safety_qty", entity.getSafetyQty())
+                    .set("max_qty", entity.getMaxQty()));
         }
 
         if(errorList.isEmpty()){
@@ -207,9 +215,8 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
         List<WarehouseEntity> warehouseList = warehouseService.getBaseMapper().selectBatchIds(warehouseIds);
         Map<String, String> idNameMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
         List<WarehouseLocationEntity> areaList = warehouseLocationService.getBaseMapper().selectList(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("warehouse_id", warehouseIds.get(0))
+                .in("warehouse_id", warehouseIds)
                 .eq("type", "area")
-                .eq("is_deleted", false)
         );
         List<DictBasicEntity> dictEntityList = dictBasicService.getBaseMapper().selectList(new QueryWrapper<DictBasicEntity>().eq("type", "warehouseAreaType"));
         Map<String, String> dictValueNameMap = dictEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
@@ -218,7 +225,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
         emptyAreaEntity.setName("");
         for (WarehouseLocationSafetyInventoryDTO.ViewDTO dto : records) {
             String warehouseArea = dto.getWarehouseArea();
-            WarehouseLocationEntity areaEntity = areaList.stream().filter(item -> item.getCode().equals(warehouseArea)).findFirst().orElse(emptyAreaEntity);
+            WarehouseLocationEntity areaEntity = areaList.stream().filter(item -> item.getWarehouseId().equals(dto.getWarehouseId()) && item.getCode().equals(warehouseArea)).findFirst().orElse(emptyAreaEntity);
             dto.setWarehouseAreaName(areaEntity.getName());
 
             String warehouseId = dto.getWarehouseId();

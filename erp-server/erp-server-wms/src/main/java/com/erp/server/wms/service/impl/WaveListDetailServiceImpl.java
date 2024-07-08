@@ -6,23 +6,26 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
-import com.erp.model.wms.entity.WaveListDetailEntity;
-import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PickingStatusEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.WaveListDetailService;
-import com.erp.server.wms.service.WaveListService;
+import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,6 +39,15 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     private SoB2cFeign soB2cFeign;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private PickingListsService pickingListsService;
+    @Resource
+    private PickingDetailService pickingDetailService;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+    @Resource
+    @Lazy
+    private SoB2cDeliveryService deliveryService;
 
     @Override
     public List<WaveListDetailEntity> listByMainId(String mainId) {
@@ -50,32 +62,60 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
 
     @Override
     public WaveListDetailDTO.ViewDTO view(String waveId) {
-        WaveListEntity waveListEntity = waveListService.getById(waveId);
+        WaveListEntity waveEntity = waveListService.getById(waveId);
         WaveListDetailDTO.ViewDTO viewDTO = new WaveListDetailDTO.ViewDTO();
-        BeanMapper.copy(waveListEntity, viewDTO);
+        BeanMapper.copy(waveEntity, viewDTO);
         List<WaveListDetailEntity> waveDetailList = list(Wrappers.<WaveListDetailEntity>lambdaQuery().eq(WaveListDetailEntity::getMainId, waveId));
-        List<WaveListDetailDTO.DeliveryInfoDTO> deliveryList = new ArrayList<>(waveDetailList.size());
+
+        List<String> deliveryCodes = waveDetailList.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.toList());
+        List<PickingListsEntity> pickingList = pickingListsService.list(new QueryWrapper<PickingListsEntity>().in("source_code", deliveryCodes));
+        if(pickingList.isEmpty()){
+            throw new ServiceException("没有找到拣货单");
+        }
+        Map<String, String> deliveryCode2IdMap = pickingList.stream().collect(Collectors.toMap(item1 -> item1.getSourceCode(), item2 -> item2.getId()));
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("main_id", deliveryCode2IdMap.values()));
+
         List<String> soIds = waveDetailList.stream().map(WaveListDetailEntity::getSoId).collect(Collectors.toList());
-        List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(soIds);
-        //发货单明细
-        for (WaveListDetailEntity waveDetailEntity : waveDetailList) {
-            List<SoB2cDetailEntity> soList = soDetailList.stream().filter(item -> item.getMainId().equals(waveDetailEntity.getSoId())).collect(Collectors.toList());
-            //销售订单明细
-            for (SoB2cDetailEntity soEntity : soList) {
-                WaveListDetailDTO.DeliveryInfoDTO deliveryDTO = new WaveListDetailDTO.DeliveryInfoDTO();
-                BeanMapper.copy(waveDetailEntity, deliveryDTO);
+        List<SoB2cDetailEntity> soDetailTotalList = soB2cFeign.listDetailByMainIds(soIds);
+        String warehouseId = soDetailTotalList.get(0).getWarehouseId();
+        String warehouseName = soDetailTotalList.get(0).getWarehouseName();
 
-                deliveryDTO.setSkuId(soEntity.getSkuId());
-                deliveryDTO.setSkuNo(soEntity.getSkuNo());
-                deliveryDTO.setSalesQty(soEntity.getQty());
+        List<WarehouseLocationDTO.MappingDTO> locationMappingList = warehouseLocationService.listArea2LocationMapping(warehouseId);
+        Map<String, WarehouseLocationDTO.MappingDTO> locationMap = locationMappingList.stream().collect(Collectors.toMap(item -> item.getLocationCode(), item2 -> item2));
 
-                //todo 补充仓位信息
-                deliveryList.add(deliveryDTO);
+        List<WaveListDetailDTO.DeliveryInfoDTO> rowList = new ArrayList<>(waveDetailList.size());
+        //发货单列表
+        for (WaveListDetailEntity deliveryLevel : waveDetailList) {
+            List<SoB2cDetailEntity> soDetailList = soDetailTotalList.stream().filter(item -> item.getMainId().equals(deliveryLevel.getSoId())).collect(Collectors.toList());
+            List<PickingDetailEntity> pickingDetailGroup = pickingDetailList.stream().filter(item -> item.getMainId().equals(deliveryCode2IdMap.get(deliveryLevel.getDeliveryCode()))).collect(Collectors.toList());
+            //发货单下sku列表
+            for (SoB2cDetailEntity skuLevel : soDetailList) {
+                List<PickingDetailEntity> groupBySkuPickingDetail = pickingDetailGroup.stream().filter(item -> item.getSkuId().equals(skuLevel.getSkuId())).collect(Collectors.toList());
+                //sku下仓位列表
+                for (PickingDetailEntity locationLevel : groupBySkuPickingDetail) {
+                    WarehouseLocationDTO.MappingDTO mappingDTO = locationMap.get(locationLevel.getWarehouseLocation());
+                    WaveListDetailDTO.DeliveryInfoDTO rowDTO = new WaveListDetailDTO.DeliveryInfoDTO();
+                    BeanMapper.copy(deliveryLevel, rowDTO);  //拷贝基本信息：篮筐号，销售订单编号，发货单号，拣货状态，物流渠道
+                    rowDTO.setSkuId(skuLevel.getSkuId());
+                    rowDTO.setSkuNo(skuLevel.getSkuNo());
+                    rowDTO.setSalesQty(skuLevel.getQty());
+                    rowDTO.setPickedSumQty(0);
+                    rowDTO.setPickingStatusName(PickingStatusEnum.getName(deliveryLevel.getPickingStatus()));
+
+                    rowDTO.setWarehouseLocation(locationLevel.getWarehouseLocation());
+                    rowDTO.setWarehouseLocationName(mappingDTO.getLocationName());
+                    rowDTO.setWarehouseArea(mappingDTO.getAreaCode());
+                    rowDTO.setWarehouseAreaName(mappingDTO.getAreaName());
+                    rowDTO.setShouldPickQty(locationLevel.getQty());
+                    rowDTO.setPickedQty(locationLevel.getPickedQty());
+                    rowDTO.setIsOutStock(locationLevel.getIsOutStock());
+                    rowList.add(rowDTO);
+                }
             }
         }
-        viewDTO.setDeliveryInfoList(deliveryList);
-        viewDTO.setWarehouseId(soDetailList.get(0).getWarehouseId());
-        viewDTO.setWarehouseName(soDetailList.get(0).getWarehouseName());
+        viewDTO.setDeliveryInfoList(rowList);
+        viewDTO.setWarehouseId(warehouseId);
+        viewDTO.setWarehouseName(warehouseName);
 
         return viewDTO;
     }
@@ -96,8 +136,13 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         if(detailList.isEmpty()){
             waveListService.getBaseMapper().deleteById(moveOutDTO.getWaveId());
         }
-
+        deliveryService.updateStatus(Collections.singletonList(moveOutDTO.getDeliveryId()) , SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode());
         operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
         return ApiResult.success();
+    }
+
+    @Override
+    public List<WaveListDetailEntity> listByMainIds(List<String> waveIds) {
+        return list(Wrappers.<WaveListDetailEntity>lambdaQuery().in(WaveListDetailEntity::getMainId, waveIds));
     }
 }

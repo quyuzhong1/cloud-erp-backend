@@ -83,4 +83,6 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
     List<WarehouseLocationEntity> listLocation(@Param("warehouseId") String warehouseId, @Param("warehouseArea") String warehouseArea);
 
     WarehouseLocationEntity findWarehouseArea(@Param("warehouseId") String warehouseId, @Param("warehouseLocation") String warehouseLocation);
+
+    List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(@Param("warehouseId") String warehouseId);
 }
