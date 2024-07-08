@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.annotation.DistributeLocker;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.enums.inventory.InventoryBizTypeEnum;
 
@@ -11,6 +12,8 @@ import com.erp.model.wms.enums.inventory.InventoryBizTypeEnum;
  * Update by：Edison 2024-06-28
  */
 public interface InventoryTransCoreService {
+    public static final String BUSINESS_TYPE = "INVENTORY_TRANS_CORE_SERVICE";
+
 
     /**
      * 按业务类型审核: 入库/出库， 自动匹配库存规则
