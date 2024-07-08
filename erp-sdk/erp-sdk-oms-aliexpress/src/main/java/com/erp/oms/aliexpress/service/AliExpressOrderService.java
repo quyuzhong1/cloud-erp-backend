@@ -478,14 +478,22 @@ public class AliExpressOrderService {
         if (StringUtils.isNotBlank(declareDeliverRequest.getTrackingWebSite())){
             shipment.setTracking_web_site(declareDeliverRequest.getTrackingWebSite());
         }
-        QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
-                .send_type(declareDeliverRequest.getSendType())
-                .sub_trade_order_index("1")
-                .shipment_list(Collections.singletonList(shipment))
-                .build();
+        if (CollectionUtils.isEmpty(declareDeliverRequest.getSubTradeOrderIndexList())){
+            ServiceException.runError("提交的子订单小标不能为空");
+        }
+        List<QueryShipmentOrder.SubTradeOrder> subTradeOrders = new LinkedList<>();
+        for (String subOrderIndex : declareDeliverRequest.getSubTradeOrderIndexList()) {
+            QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
+                    .send_type(declareDeliverRequest.getSendType())
+                    .sub_trade_order_index(subOrderIndex)
+                    .shipment_list(Collections.singletonList(shipment))
+                    .build();
+            subTradeOrders.add(tradeOrder);
+        }
+
         QueryShipmentOrder requestParams = QueryShipmentOrder.builder()
                 .trade_order_id(declareDeliverRequest.getOutRef())
-                .sub_trade_order_list(Collections.singletonList(tradeOrder))
+                .sub_trade_order_list(subTradeOrders)
                 .build();
 
         String appKey = shopInfoDTO.getClientId();
@@ -508,10 +516,11 @@ public class AliExpressOrderService {
         boolean success = resultJson.getBool("success", Boolean.FALSE);
         if (!success){
             String errorMsg = resultJson.getStr("error_msg", "");
+            Integer errorCode = resultJson.getInt("error_code", -1000000);
             if (StringUtils.isNotBlank(errorMsg)){
-                ServiceException.runError(errorMsg);
+                ServiceException.runError(errorCode, errorMsg);
             } else {
-                ServiceException.runError(JSONUtil.toJsonStr(body));
+                ServiceException.runError(errorCode, JSONUtil.toJsonStr(body));
             }
         }
     }
@@ -599,24 +608,23 @@ public class AliExpressOrderService {
         System.out.println("数量" + aliExpressOrders.size());
     }
 
-//    public static void main(String[] args) throws Exception{
-//        String orderId = "8188116597867872";
-//        String oaid = "bmDgBQHJPDmDInmawpwirA";
-//
-//        AddressRequest request=AddressRequest.builder()
-//                .clientId("502978")
-//                .clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY")
-//                .baseUrl("https://api-sg.aliexpress.com")
-//                .token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG")
-//                .oaid(oaid).
-//                orderId(orderId).build();
-//
-//        AliExpressOrderService aliExpressOrderService = new AliExpressOrderService();
-//        try {
-//            BuyerTradeAddress address=aliExpressOrderService.getBuyerTradeAddress(request);
-//            System.out.println(JSONUtil.toJsonStr(address));
-//        }catch (Exception e){
-//            throw new ServiceException("查询速卖通订单地址失败"+ JSONUtil.toJsonStr(e));
-//        }
-//    }
+
+    /**
+     * 根据店铺ID和订单ID查询订单详情
+     */
+    public AliExpressOrderDetail getOrderDetailByOrderIdAndShopId(String platformCode, String shopId) {
+        String apiName = AliexpressConstants.LIST_ORDER;
+        AliExpressShopInfoDTO shopInfoDTO = getShopInfoByShopId(shopId);
+        if (null == shopInfoDTO) {
+            log.error("[速卖通订单明细下载]  获取 token 失败: shopId={}", shopId);
+            String msg = StrUtil.format("[速卖通订单下载]  获取 token 失败: shopId={}", shopId);
+            throw new ServiceException(msg);
+        }
+        OrderRequest orderRequest = OrderRequest.builderByShopInfo(apiName, shopInfoDTO);
+        try {
+            return getOrderDetail(platformCode, orderRequest);
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
