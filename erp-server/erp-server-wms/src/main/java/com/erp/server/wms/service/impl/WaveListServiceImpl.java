@@ -17,6 +17,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
+import com.erp.model.wms.entity.PickingCartTypeEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
@@ -44,6 +45,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private SoB2cDeliveryService deliveryService;
+    @Resource
+    private PickingCartTypeService pickingCartTypeService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -136,6 +139,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     private List<WaveListDTO.ViewDTO> fillViewList(List<WaveListEntity> records) {
+        List<PickingCartTypeEntity> cartTypeList = pickingCartTypeService.list();
+        Map<String, String> typeMap = cartTypeList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getName()));
+
         if (records.isEmpty()){
             return Collections.emptyList();
         }
@@ -147,7 +153,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(record.getPrintStatus()));
-            viewDTO.setPickingCartTypeName(record.getPickingCartType());
+            viewDTO.setPickingCartTypeName(typeMap.get(record.getPickingCartType()));
             viewDTO.setStatusName(WaveStatusEnum.getNameByCode(record.getStatus()));
             viewDTOList.add(viewDTO);
         }
