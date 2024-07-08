@@ -369,7 +369,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 分类  wms/common/enumDropDown?type=OverweightType
          */
-        private List<String> channelIds = new ArrayList<>();
+        private String overweightType;
 
         /**
          * 装入的产品属性id /plm/dict/list?type=declareProperty
