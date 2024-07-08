@@ -70,11 +70,6 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.PICKING.getStatus());
                 addDeliveryInterceptFilter();
             }
-            //手动标发
-            if (SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus().equals(searchType)) {
-                super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
-                addDeliveryInterceptFilter();
-            }
             //已发货
             if (SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("sbd.status", SoB2cDeliveryStatusEnum.SHIPPED.getStatus());

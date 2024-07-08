@@ -586,7 +586,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(this.getBySourceCode(sourceCode)).orElseThrow(() -> new ServiceException("未生成装箱任务"));
         WmsCartonEntity wmsCartonEntity = Optional.ofNullable(wmsCartonService.getByTaskIdAndBoxNo(packingTaskEntity.getId(),boxNo)).orElseThrow(() -> new ServiceException("未找到该箱号装箱信息"));
-        WmsCartonSpecEntity wmsCartonSpecEntity = Optional.ofNullable(wmsCartonSpecService.getByTaskIdAndBoxNo(packingTaskEntity.getId(),boxNo)).orElseThrow(() -> new ServiceException("未找到该箱号箱规信息"));
+        WmsCartonSpecEntity wmsCartonSpecEntity = Optional.ofNullable(wmsCartonSpecService.getById(wmsCartonEntity.getSpecId())).orElseThrow(() -> new ServiceException("未找到该箱号箱规信息"));
         CfgRuleOutDTO.OverweightDTO overweightDTO = CfgRuleOutDTO.OverweightDTO.builder()
                 .type(type)
                 .scanWeight(dto.getWeight())
@@ -602,6 +602,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonSpecEntity.setBoxLength(dto.getLength());
             wmsCartonSpecEntity.setBoxWidth(dto.getWidth());
             wmsCartonSpecEntity.setBoxHeight(dto.getHeight());
+            wmsCartonSpecEntity.setMeasureSource(MeasureSourceEnum.DEVICE.getCode());
             wmsCartonSpecService.updateById(wmsCartonSpecEntity);
             wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.SUCCESS.getCode());
             wmsCartonService.updateById(wmsCartonEntity);
