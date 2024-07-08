@@ -19,4 +19,10 @@ public interface PackingTaskFeign {
      */
     @PostMapping("/feign/soB2cDelivery/dimensionalWeightTob")
     ApiResult<String> dimensionalWeightTob(@RequestBody DimensionalWeightDTO dto);
+
+    @PostMapping("/feign/soB2cDelivery/dimensionalWeightFba")
+    ApiResult<String> dimensionalWeightFba(@RequestBody DimensionalWeightDTO dto);
+
+    @PostMapping("/feign/soB2cDelivery/dimensionalWeightThird")
+    ApiResult<String> dimensionalWeightThird(@RequestBody DimensionalWeightDTO dto);
 }

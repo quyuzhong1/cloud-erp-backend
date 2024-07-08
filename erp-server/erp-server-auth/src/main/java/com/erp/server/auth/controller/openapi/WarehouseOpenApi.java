@@ -58,8 +58,18 @@ public class WarehouseOpenApi {
      */
     @OpenApi("dimensionalWeightFba")
     public ApiResult<String> dimensionalWeightFba(@Valid DimensionalWeightDTO dto) {
+        //设备回传的称重量方信息
+        return packingTaskFeign.dimensionalWeightFba(dto);
+    }
 
-        return ApiResult.success("");
+    /**
+     * 第三方仓称重
+     * @param dto 参数
+     */
+    @OpenApi("dimensionalWeightThird")
+    public ApiResult<String> dimensionalWeightThird(@Valid DimensionalWeightDTO dto) {
+        //设备回传的称重量方信息
+        return packingTaskFeign.dimensionalWeightThird(dto);
     }
 
     /**

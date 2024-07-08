@@ -29,4 +29,15 @@ public class PackingTaskFeignController extends BaseController {
     public ApiResult<String> dimensionalWeightTob(@RequestBody @Validated DimensionalWeightDTO dto) {
         return packingTaskService.dimensionalWeight(dto, CfgRuleOutEnum.OverweightTypeEnum.B2B);
     }
+
+
+    @PostMapping("/dimensionalWeightFba")
+    public ApiResult<String> dimensionalWeightFba(@RequestBody @Validated DimensionalWeightDTO dto) {
+        return packingTaskService.dimensionalWeight(dto, CfgRuleOutEnum.OverweightTypeEnum.FBA);
+    }
+
+    @PostMapping("/dimensionalWeightThird")
+    public ApiResult<String> dimensionalWeightThird(@RequestBody @Validated DimensionalWeightDTO dto) {
+        return packingTaskService.dimensionalWeight(dto, CfgRuleOutEnum.OverweightTypeEnum.THIRD_WAREHOUSE);
+    }
 }
