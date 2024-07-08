@@ -5,6 +5,7 @@ import com.erp.model.sys.openapi.CollectorPacksDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.ReturnTrackingDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.PackingTaskFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.server.auth.config.OpenApi;
 
@@ -23,6 +24,9 @@ public class WarehouseOpenApi {
 
     @Resource
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
+
+    @Resource
+    private PackingTaskFeign packingTaskFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -45,8 +49,7 @@ public class WarehouseOpenApi {
     @OpenApi("dimensionalWeightTob")
     public ApiResult<String> dimensionalWeightTob(@Valid DimensionalWeightDTO dto) {
         //设备回传的称重量方信息
-        String msg = soB2cDeliveryFeign.dimensionalWeightTob(dto);
-        return ApiResult.success(msg);
+        return packingTaskFeign.dimensionalWeightTob(dto);
     }
 
     /**

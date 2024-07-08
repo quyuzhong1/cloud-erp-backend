@@ -29,4 +29,10 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      * 根据出库配置返回分拣口
      */
     String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto);
+
+    /**
+     * 校验装箱超重
+     * @return true可以出库，false 不可以出库
+     */
+    CfgRuleOutDTO.CheckDTO handleOverweight(CfgRuleOutDTO.OverweightDTO dto);
 }

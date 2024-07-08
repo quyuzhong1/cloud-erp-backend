@@ -119,11 +119,4 @@ public interface SoB2cDeliveryFeign {
     @PostMapping("/feign/soB2cDelivery/dimensionalWeightPipeline")
     String dimensionalWeightPipeline(@RequestBody DimensionalWeightDTO dto);
 
-    /**
-     * B2B称重
-     * @param dto
-     * @return
-     */
-    @PostMapping("/feign/soB2cDelivery/dimensionalWeightTob")
-    String dimensionalWeightTob(@RequestBody DimensionalWeightDTO dto);
 }

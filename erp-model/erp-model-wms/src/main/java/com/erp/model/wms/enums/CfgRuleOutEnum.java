@@ -123,4 +123,18 @@ public enum CfgRuleOutEnum {
             this.name = name;
         }
     }
+
+
+    @Getter
+    public enum OverweightTypeEnum implements EnumMessage  {
+        FBA("fba", "FBA"),
+        THIRD_WAREHOUSE("thirdWarehouse", "第三方仓"),
+        B2B("b2b", "B2B");
+        private String code;
+        private String name;
+        OverweightTypeEnum(String code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    }
 }

@@ -76,4 +76,6 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * @param taskId
      */
     void add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity, String taskId);
+
+    WmsCartonEntity getByTaskIdAndBoxNo(String id, String boxNo);
 }

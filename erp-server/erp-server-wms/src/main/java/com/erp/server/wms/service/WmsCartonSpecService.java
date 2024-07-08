@@ -81,4 +81,6 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      * @param taskId
      */
     void deleteCarton(String taskId);
+
+    WmsCartonSpecEntity getByTaskIdAndBoxNo(String packingTaskId, String boxNo);
 }

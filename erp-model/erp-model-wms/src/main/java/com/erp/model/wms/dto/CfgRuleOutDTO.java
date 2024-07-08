@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -160,6 +161,40 @@ public class CfgRuleOutDTO implements Serializable {
         private boolean whenZeroNormalOutSwitch;
     }
 
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class OverweightDTO {
+
+        /**
+         * 类型
+         */
+        private CfgRuleOutEnum.OverweightTypeEnum type;
+
+        /**
+         * 称重重量（kg）
+         */
+        private BigDecimal scanWeight;
+
+        /**
+         * 扫描长(cm)
+         */
+        private BigDecimal scanLength;
+
+        /**
+         * 扫描宽(cm)
+         */
+        private BigDecimal scanWidth;
+
+        /**
+         * 扫描高(cm)
+         */
+        private BigDecimal scanHeight;
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -332,7 +367,7 @@ public class CfgRuleOutDTO implements Serializable {
     public static class CfgProductPackingDetail {
 
         /**
-         * 渠道id
+         * 分类  wms/common/enumDropDown?type=OverweightType
          */
         private List<String> channelIds = new ArrayList<>();
 
@@ -356,6 +391,17 @@ public class CfgRuleOutDTO implements Serializable {
          * 产品装箱配置详情
          */
         private List<CfgProductPackingDetail> cfgProductPackingDetailList = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @Builder
+    @AllArgsConstructor
+    public static class CheckDTO {
+
+        private Boolean result;
+
+        private String msg;
     }
     @Data
     @NoArgsConstructor

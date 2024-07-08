@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -8,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -155,4 +157,8 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     WmsCartonSpecDTO.PackedView packedDetailView(String id);
+
+    PackingTaskEntity getBySourceCode(String sourceCode);
+
+    ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto, CfgRuleOutEnum.OverweightTypeEnum type);
 }

@@ -146,11 +146,4 @@ public class SoB2cDeliveryFeignController extends BaseController {
         return soB2cDeliveryService.dimensionalWeightPipeline(dto);
     }
 
-    /**
-     * B2B称重
-     */
-    @PostMapping("/dimensionalWeightTob")
-    public String dimensionalWeightTob(@RequestBody @Validated DimensionalWeightDTO dto) {
-        return soB2cDeliveryService.dimensionalWeightTob(dto);
-    }
 }

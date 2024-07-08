@@ -3,7 +3,9 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
@@ -106,7 +108,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 .collect(Collectors.toList());
 
         if (!duplicates.isEmpty()) {
-            throw new ServiceException("产品装箱配置-存在相同渠道配置");
+            throw new ServiceException("产品装箱配置-存在相同分类配置");
         }
         for (CfgRuleOutDTO.CfgProductPackingDetail cfgProductPackingDetail : cfgProductPackingDetailList) {
             if(cfgProductPackingDetail.getCannotPackingPropertyIds().stream().anyMatch(v->cfgProductPackingDetail.getCanPackingPropertyIds().contains(v))){
@@ -202,6 +204,85 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             soB2cDeliveryService.updateAbnormal(Arrays.asList(dto.getDeliveryOrderId()), AbnormalCauseEnum.EQUIPMENT_SORTING);
         }
         return sortingPort;
+    }
+
+    @Override
+    public CfgRuleOutDTO.CheckDTO handleOverweight(CfgRuleOutDTO.OverweightDTO dto) {
+        List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
+        CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
+        CfgRuleOutDTO.CfgOverweightDTO cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgOverweightDTO.class);
+        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO;
+        if(dto.getType().equals(CfgRuleOutEnum.OverweightTypeEnum.B2B)){
+            cfgOverweightDetailDTO = cfgOverweightDTO.getB2BOverweight();
+        }else if (dto.getType().equals(CfgRuleOutEnum.OverweightTypeEnum.FBA)){
+            cfgOverweightDetailDTO = cfgOverweightDTO.getFbaOverweight();
+        }else if (dto.getType().equals(CfgRuleOutEnum.OverweightTypeEnum.THIRD_WAREHOUSE)){
+            cfgOverweightDetailDTO = cfgOverweightDTO.getThirdWarehouseOverweight();
+        }else{
+            return new CfgRuleOutDTO.CheckDTO(true,"");
+        }
+        boolean result = true;
+        String logMsg = "";
+        //校验重量
+        if(Objects.nonNull(dto.getScanWeight())){
+            if(Objects.nonNull(cfgOverweightDetailDTO.getMaxWeight()) && dto.getScanWeight().compareTo(cfgOverweightDetailDTO.getMaxWeight())>0){
+                if(!cfgOverweightDetailDTO.isGreaterThanWeightCanOut()){
+                    result = false;
+                }
+                logMsg = StrUtil.format("超重{}kg",dto.getScanWeight().subtract(cfgOverweightDetailDTO.getMaxWeight()));
+            }
+            if(Objects.nonNull(cfgOverweightDetailDTO.getMinWeight()) && dto.getScanWeight().compareTo(cfgOverweightDetailDTO.getMinWeight())<0){
+                if(!cfgOverweightDetailDTO.isLessThanWeightCanOut()){
+                    result = false;
+                }
+                logMsg = StrUtil.format("重量低于最低重量{}kg",cfgOverweightDetailDTO.getMinWeight().subtract(dto.getScanWeight()));
+            }
+        }
+        //校验尺寸
+        String sizeLog = "";
+        if(Objects.nonNull(dto.getScanLength())){
+            if(Objects.nonNull(cfgOverweightDetailDTO.getMaxLength()) && dto.getScanLength().compareTo(cfgOverweightDetailDTO.getMaxLength())>0){
+                if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
+                    result = false;
+                }
+                sizeLog = StringUtils.isBlank(sizeLog)?"超尺寸":sizeLog;
+                sizeLog = sizeLog + StrUtil.format("-长{}cm",dto.getScanLength().subtract(cfgOverweightDetailDTO.getMaxLength()));
+            }
+
+
+        }
+        if(Objects.nonNull(dto.getScanWidth())){
+            if(Objects.nonNull(cfgOverweightDetailDTO.getMaxWidth()) && dto.getScanWidth().compareTo(cfgOverweightDetailDTO.getMaxWidth())>0){
+                if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
+                    result = false;
+                }
+                sizeLog = StringUtils.isBlank(sizeLog)?"超尺寸":sizeLog;
+                sizeLog = sizeLog + StrUtil.format("-宽{}cm",dto.getScanWidth().subtract(cfgOverweightDetailDTO.getMaxWidth()));
+            }
+        }
+        if(Objects.nonNull(dto.getScanHeight())){
+            if(Objects.nonNull(cfgOverweightDetailDTO.getMaxHeight()) && dto.getScanHeight().compareTo(cfgOverweightDetailDTO.getMaxHeight())>0){
+                if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
+                    result = false;
+                }
+                sizeLog = StringUtils.isBlank(sizeLog)?"超尺寸":sizeLog;
+                sizeLog = sizeLog + StrUtil.format("-高{}cm",dto.getScanHeight().subtract(cfgOverweightDetailDTO.getMaxHeight()));
+            }
+        }
+        logMsg = StringUtils.isBlank(logMsg)?sizeLog:logMsg+"/"+sizeLog;
+        //校验周长
+        if(Objects.nonNull(dto.getScanLength()) && Objects.nonNull(dto.getScanWidth()) && Objects.nonNull(dto.getScanHeight())){
+            //计算公式:(宽+高)*2+长(最大尺寸)=周长。
+            BigDecimal circ = dto.getScanWidth().add(dto.getScanHeight()).multiply(new BigDecimal("2")).add(dto.getScanLength());
+            if(Objects.nonNull(cfgOverweightDetailDTO.getMaxCirc()) && circ.compareTo(cfgOverweightDetailDTO.getMaxCirc())>0){
+                if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
+                    result = false;
+                }
+            }
+            String circLog = StrUtil.format("周长超{}cm",circ.subtract(cfgOverweightDetailDTO.getMaxCirc()));
+            logMsg = StringUtils.isBlank(logMsg)?circLog:logMsg+"/"+circLog;
+        }
+        return new CfgRuleOutDTO.CheckDTO(result,logMsg);
     }
 
     public String getSortingPort(CfgRuleOutDTO.CommonDTO commonDTO,CfgRuleOutDTO.SortingPortRuleDTO dto) {

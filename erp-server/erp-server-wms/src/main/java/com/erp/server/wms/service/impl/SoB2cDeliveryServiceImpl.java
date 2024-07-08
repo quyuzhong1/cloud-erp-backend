@@ -18,10 +18,6 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.PrintWayBillPdfDetailDTO;
-import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.PrintWayBillPdfDetailDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -32,6 +28,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -175,6 +172,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private PackingInspectionService packingInspectionService;
 
+    @Resource
+    private PackingTaskService packingTaskService;
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
@@ -907,12 +906,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         dto.setDetailList(detailList);
         printLogisticsBillConfirm(dto,response);
     }
-
-    @Override
-    public String dimensionalWeightTob(DimensionalWeightDTO dto) {
-        return "";
-    }
-
 
     @Override
     public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds) {

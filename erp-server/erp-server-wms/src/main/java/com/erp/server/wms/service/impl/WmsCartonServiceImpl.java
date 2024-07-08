@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -143,6 +144,14 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
             //新增详情信息
             wmsCartonDetailService.add(addDTO.getDetailList(), wmsCartonEntity,wmsCartonSpecEntity);
         }
+    }
+
+    @Override
+    public WmsCartonEntity getByTaskIdAndBoxNo(String packingTaskId, String boxNo) {
+        if(StringUtils.isBlank(packingTaskId) ||StringUtils.isBlank(boxNo)){
+            return null;
+        }
+        return lambdaQuery().eq(WmsCartonEntity::getPackingTaskId,packingTaskId).eq(WmsCartonEntity::getBoxNo,boxNo).last("limit 1").one();
     }
 
     /**
