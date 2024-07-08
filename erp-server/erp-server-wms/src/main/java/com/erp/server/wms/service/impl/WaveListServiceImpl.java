@@ -22,10 +22,7 @@ import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.server.wms.mapper.WaveListMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
-import com.erp.server.wms.service.WaveListDetailService;
-import com.erp.server.wms.service.WaveListService;
+import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +55,6 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         entity.setCode(waveCode);
         entity.setName(dto.getName());
         entity.setType(dto.getWaveType());
-        entity.setPickingCartCode(dto.getPickCartTypeId());
         entity.setPickingType(dto.getPickingType());
         entity.setStatus(WaveStatusEnum.AWAIT_PICK.getCode());
         entity.setPrintStatus(PackagePrintStatusEnum.NOT.getCode());
