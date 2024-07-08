@@ -227,7 +227,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO) {
         //修改波次打印状态为已打印
-        update(new UpdateWrapper<WaveListEntity>().set("print_status", PrintStatusEnum.PRINT_FINISH).in("id", idsDTO.getIds()));
+        update(new UpdateWrapper<WaveListEntity>().set("print_status", PrintStatusEnum.PRINT_FINISH.getCode()).in("id", idsDTO.getIds()));
         return ApiResult.success();
     }
 

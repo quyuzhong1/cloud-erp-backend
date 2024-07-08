@@ -310,14 +310,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         //获取一个当前时间当作发货时间
         LocalDateTime deliveryTime = LocalDateTime.now();
 
-        //将发货状态更新为已发货
-        entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
-        entity.setDeliveryTime(deliveryTime);
-        entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
-        if (!soB2cDeliveryService.updateById(entity)) {
-            throw new ServiceException("发货单更新失败");
-        }
-
         //修改订单状态待发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
         updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
@@ -348,6 +340,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         //将发货状态更新为已发货
         entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
         entity.setDeliveryTime(deliveryTime);
+        entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
     }
 
     private void deleteViewDTO(String id) {
