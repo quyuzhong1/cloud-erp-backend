@@ -101,7 +101,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         if(CollectionUtil.isEmpty(cfgProductPackingDetailList)){
             return;
         }
-        List<String> valueList = cfgProductPackingDetailList.stream().flatMap(v->v.getChannelIds().stream()).collect(Collectors.toList());
+        List<String> valueList = cfgProductPackingDetailList.stream().map(CfgRuleOutDTO.CfgProductPackingDetail::getOverweightType).collect(Collectors.toList());
         Set<String> values = new HashSet<>();
         List<String> duplicates = valueList.stream()
                 .filter(v -> !values.add(v))
