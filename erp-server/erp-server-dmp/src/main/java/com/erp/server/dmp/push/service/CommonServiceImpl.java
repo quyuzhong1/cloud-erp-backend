@@ -145,7 +145,13 @@ public class CommonServiceImpl implements CommonService {
                 LocalTime value1 = (LocalTime) value;
                 format = value1.format(DateTimeFormatter.ofPattern(DateUtil.fmt_hms));
             }
-            resultMap.put(cfgApiFieldMapDTO.getApiField(), CharSequenceUtil.isNotBlank(format) ? format : value);
+            if (cfgApiFieldMapDTO.getApiField().contains(".")) {
+                String[] split = cfgApiFieldMapDTO.getApiField().split("\\.");
+                Map<String, Object> o = (Map<String, Object>) map.get(split[0]);
+                buildObject(resultMap, cfgApiFieldMapDTO.getApiField(), o.get(cfgApiFieldMapDTO.getSelfField()));
+            }else {
+                resultMap.put(cfgApiFieldMapDTO.getApiField(), CharSequenceUtil.isNotBlank(format) ? format : value);
+            }
             return;
         }
         if (ApiFieldTypeEnum.FIELD_VALUE_MAP.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
@@ -153,13 +159,37 @@ public class CommonServiceImpl implements CommonService {
             if (CollectionUtils.isEmpty(cfgApiFieldMapValueList)) {
                 return;
             }
-            //根据值映射转换
-            String apiValue = cfgApiFieldMapValueList.stream()
-                    .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(String.valueOf(map.get(cfgApiFieldMapDTO.getSelfField()))))
-                    .map(CfgApiFieldMapValueEntity::getApiValue)
-                    .findFirst()
-                    .orElse("");
-            resultMap.put(cfgApiFieldMapDTO.getApiField(), apiValue);
+            if (cfgApiFieldMapDTO.getApiField().contains(".")) {
+                String[] split = cfgApiFieldMapDTO.getApiField().split("\\.");
+                Map<String, Object> o = (Map<String, Object>) map.get(split[0]);
+                String apiValue = cfgApiFieldMapValueList.stream()
+                        .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(String.valueOf(o.get(cfgApiFieldMapDTO.getSelfField()))))
+                        .map(CfgApiFieldMapValueEntity::getApiValue)
+                        .findFirst()
+                        .orElse("");
+                buildObject(resultMap, cfgApiFieldMapDTO.getApiField(), apiValue);
+            }else {
+                //根据值映射转换
+                String apiValue = cfgApiFieldMapValueList.stream()
+                        .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(String.valueOf(map.get(cfgApiFieldMapDTO.getSelfField()))))
+                        .map(CfgApiFieldMapValueEntity::getApiValue)
+                        .findFirst()
+                        .orElse("");
+                resultMap.put(cfgApiFieldMapDTO.getApiField(), apiValue);
+            }
+
+        }
+    }
+
+    private static void buildObject(Map<String, Object> resultMap, String apiField, Object apiValue) {
+        String[] split = apiField.split("\\.");
+        if (split.length > 1) {
+            Map<String, Object> map = new HashMap<>();
+            if (ObjectUtils.isNotEmpty(resultMap.get(split[0]))) {
+                map = (Map<String, Object>) resultMap.get(split[0]);
+            }
+            map.put(split[1], apiValue);
+            resultMap.put(split[0], map);
         }
     }
 
