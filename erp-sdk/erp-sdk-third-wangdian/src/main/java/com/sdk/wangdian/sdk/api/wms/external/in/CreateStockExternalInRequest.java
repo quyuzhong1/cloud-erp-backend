@@ -22,6 +22,7 @@ public class CreateStockExternalInRequest {
     @Getter
     @Setter
     public static class Order {
+        @SerializedName("warehouse_no")
         private String warehouseNo;
         private String remark;
         @SerializedName("order_no")
