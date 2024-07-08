@@ -804,11 +804,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         //发货单信息
-        SoB2cDeliveryEntity entity = getBySoCode(soB2cEntity.getCode());
-        if (ObjectUtil.isEmpty(entity)) {
+        SoB2cDeliveryEntity old = getBySoCode(soB2cEntity.getCode());
+        if (ObjectUtil.isEmpty(old)) {
             log.error("编码【{}】未查询到发货单信息",soB2cEntity.getCode());
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         }
+        //现发货单
+        SoB2cDeliveryEntity entity = new SoB2cDeliveryEntity();
+        BeanMapperUtils.copy(old,entity);
         if (!StrUtil.equals(entity.getStatus(),SoB2cDeliveryStatusEnum.PICKING.getCode())) {
             log.error("编码【{}】非已拣货不支持更新",soB2cEntity.getCode());
             return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
@@ -870,6 +873,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         //更新发货单
         this.updateById(entity);
+
+        //发货单操作日志
+        //操作日志
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "", "");
         return sortingPort;
     }
 
