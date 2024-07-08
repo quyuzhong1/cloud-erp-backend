@@ -122,7 +122,7 @@ public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: 三方仓库%s不存在", request.getWarehouseNo()));
         }
         //根据旺店通仓库类型，决定调用的API
-        if (WdtWarehouseTypeEnum.SELF_TRANSFER.equals(thirdWarehouse.getType())) {
+        if (WdtWarehouseTypeEnum.SELF_TRANSFER.getCode().equals(thirdWarehouse.getType())) {
             limiter.acquire();
             wdtService.executeSelfConsumer(request);
         }else {
