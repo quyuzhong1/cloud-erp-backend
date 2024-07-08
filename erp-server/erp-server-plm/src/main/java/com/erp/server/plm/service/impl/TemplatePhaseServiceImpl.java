@@ -315,17 +315,6 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }
-
-    @Override
-    public List<TemplatePhaseEntity> listProductPhaseByNameList(String templateId, List<String> phaseNameList) {
-        if (CollectionUtils.isEmpty(phaseNameList)) {
-            return Collections.EMPTY_LIST;
-        }
-        List<TemplatePhaseEntity> list = lambdaQuery().eq(TemplatePhaseEntity::getTemplateId, templateId)
-                .in(TemplatePhaseEntity::getName, phaseNameList)
-                .list();
-        return list;
-    }
 }
 
 

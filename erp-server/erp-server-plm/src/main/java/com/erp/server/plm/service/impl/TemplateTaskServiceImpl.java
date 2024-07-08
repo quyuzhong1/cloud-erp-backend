@@ -1,9 +1,6 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,15 +14,11 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.dto.excel.TemplateTaskExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.DistributionTypeEnum;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
@@ -36,7 +29,6 @@ import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.listener.TemplateTaskExcelListener;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -45,12 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -269,222 +256,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 .eq(TemplateTaskEntity::getTemplateId, templateId)
                 .set(TemplateTaskEntity::getIsDeleted, Boolean.TRUE)
                 .update();
-    }
-
-    @Override
-    public void importTemplateTaskFile(MultipartFile excelFile, String templateId, HttpServletResponse response) {
-        TemplateTaskExcelListener excelListenerUtil = new TemplateTaskExcelListener(templateId, sysUserFeign, templatePhaseService, templateTaskService, templateTaskDocsNameService);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), TemplateTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95124);
-        }
-        List<TemplateTaskExcelDTO> excelDateList = excelListenerUtil.getAllList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
-        //导入数据处理
-        List<TemplateTaskExcelDTO> successList = excelListenerUtil.getSuccessList();
-        //导出错误数据
-        List<TemplateTaskExcelDTO> errorList = excelListenerUtil.getErrorList();
-        //处理导入数据
-        doOpHandleImport(templateId,successList, errorList);
-
-        List<TemplateTaskExcelDTO> list = excelListenerUtil.getErrorList();
-        if (list.size() > 0) {
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/templateTaskError.xlsx";
-            String name = "templateTaskError";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
-            }
-        }
-    }
-
-    /**
-     * 导入数据处理
-     * @author will
-     * @date 2024/7/4 15:39
-     * @param successList
-     * @param errorList
-     */
-    private void doOpHandleImport (String templateId,List<TemplateTaskExcelDTO> successList,List<TemplateTaskExcelDTO> errorList) {
-        if (CollectionUtils.isEmpty(successList)) {
-            return;
-        }
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
-
-        //查询模板任务
-        List<TemplateTaskEntity> templateTaskEntityList = templateTaskService.listByTemplateId(templateId);
-
-        //用户
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-
-        //阶段
-        List<String> phaseNameList = successList.stream().map(TemplateTaskExcelDTO::getPhaseName).distinct().collect(Collectors.toList());
-        List<TemplatePhaseEntity> templatePhaseList = templatePhaseService.listProductPhaseByNameList(templateId, phaseNameList);
-
-        //交付物文档
-        List<DocsDTO> docsList = templateTaskDocsNameService.getDocsNameList(templateId);
-
-        for (TemplateTaskExcelDTO templateTaskExcelDTO : successList) {
-            List<String> errorMsgList = new ArrayList<>();
-            TemplateTaskDTO templateTaskDTO = new TemplateTaskDTO();
-
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(templateTaskExcelDTO.getType())) {
-                if (!templateTaskExcelDTO.getType().equals("一般任务") && !templateTaskExcelDTO.getType().equals("评审任务")) {
-                    errorMsgList.add("[任务类型]请输入'一般任务'或'评审任务'");
-                }
-
-                if (templateTaskExcelDTO.getType().equals("一般任务")){
-                    templateTaskDTO.setType(0);
-                } else {
-                    templateTaskDTO.setType(1);
-                }
-            }
-            List<TaskChargeDistributionDTO> TaskChargeDistributionlist = new ArrayList<>();
-            //模板任务
-            TemplateTaskEntity templateTaskEntity  = templateTaskEntityList.stream().filter(obj -> StrUtil.equals(obj.getName(),templateTaskExcelDTO.getName()))
-                    .findFirst().orElse(null);
-
-            if (ObjectUtil.isNotEmpty(templateTaskEntity)) {
-                templateTaskDTO.setId(templateTaskEntity.getId());
-            }
-
-            List<String> chargeNameList = new ArrayList<>();
-            String chargeName = templateTaskExcelDTO.getChargeName();
-            String[] chargeNames = chargeName.split(",");
-            for (String name : chargeNames) {
-                FindUserDTO findUserDTO = userList.stream().filter(u -> name.equals(u.getUserName())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(findUserDTO)) {
-                    errorMsgList.add("[任务负责人]在系统中未找到，多个负责人请用英文逗号','隔开");
-                } else {
-                    chargeNameList.add(findUserDTO.getUserId());
-                }
-            }
-
-            TemplatePhaseEntity templatePhaseEntity = templatePhaseList.stream().filter(obj -> StrUtil.equals(obj.getName(), templateTaskExcelDTO.getPhaseName())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(templatePhaseEntity)) {
-                errorMsgList.add("[阶段名称]在这个[所属产品]下不存在");
-            }
-
-            String preTask = templateTaskExcelDTO.getPreTask();
-            List<String> preTaskList = new ArrayList<>();
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(preTask)) {
-                String[] split = preTask.split(",");
-                for (String task : split) {
-                    TemplateTaskEntity taskEntity = templateTaskEntityList.stream().filter(t -> t.getName().equals(task)).findFirst().orElse(null);
-                    if (ObjectUtil.isEmpty(taskEntity)) {
-                        errorMsgList.add("[前置任务]在这个[所属产品]下不存在，多个前置任务请用英文逗号','隔开");
-                    } else {
-                        preTaskList.add(taskEntity.getId());
-                    }
-                }
-            }
-
-            String priority = templateTaskExcelDTO.getPriority();
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(priority)) {
-                if (!priority.equals("高") && !priority.equals("中") && !priority.equals("低")) {
-                    errorMsgList.add("[任务优先级]请输入'高'或'中''低'");
-                }
-            }
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(templateTaskExcelDTO.getIsFixed())) {
-                if (!templateTaskExcelDTO.getIsFixed().equals("是") && !templateTaskExcelDTO.getIsFixed().equals("否")) {
-                    errorMsgList.add("[是否是固定任务]请输入'是'或'否'");
-                }
-            }
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(templateTaskExcelDTO.getRefSku())) {
-                if (!templateTaskExcelDTO.getRefSku().equals("关联") && !templateTaskExcelDTO.getRefSku().equals("不关联")) {
-                    errorMsgList.add("[SKU关联]请输入'关联'或'不关联'");
-                }
-            }
-
-            //目标交付文档
-            String docsName = templateTaskExcelDTO.getDocsName();
-            List<DocsDTO> docsNameList = new ArrayList<>();
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(docsName)) {
-                String[] split = docsName.split(",");
-                for (String docs : split) {
-                    DocsDTO docsDTO = docsList.stream().filter(t -> t.getName().equals(docs)).findFirst().orElse(null);
-                    if (ObjectUtil.isEmpty(docsDTO)) {
-                        TmeplateDocsNameDTO docsNameDTO = new TmeplateDocsNameDTO();
-                        docsNameDTO.setName(docs);
-                        docsNameDTO.setTemplateId(templateId);
-                        String id = templateTaskDocsNameService.saveDocs(docsNameDTO);
-                        DocsDTO dto = new DocsDTO();
-                        dto.setId(id);
-                        dto.setName(docs);
-                        dto.setState(false);
-                        docsNameList.add(dto);
-                    } else {
-                        docsNameList.add(docsDTO);
-                    }
-                }
-            }
-
-            //存在错误数据则直接返回
-            if (errorMsgList.size() > 0) {
-                templateTaskExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                errorList.add(templateTaskExcelDTO);
-                return;
-            }
-            templateTaskDTO.setTemplateId(templateId);
-            templateTaskDTO.setName(templateTaskExcelDTO.getName());
-
-            templateTaskDTO.setChargeIds(chargeNameList);
-            templateTaskDTO.setPreTaskIdList(preTaskList);
-
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(templateTaskExcelDTO.getPlanStartTime())) {
-                templateTaskDTO.setPlanStartTime(LocalDate.parse(templateTaskExcelDTO.getPlanStartTime(), dateTimeFormatter));
-            }
-
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(templateTaskExcelDTO.getPlanEndTime())) {
-                templateTaskDTO.setPlanEndTime(LocalDate.parse(templateTaskExcelDTO.getPlanEndTime(), dateTimeFormatter));
-            }
-
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(templateTaskExcelDTO.getPriority())) {
-                if (templateTaskExcelDTO.getPriority().equals("高")) {
-                    templateTaskDTO.setPriority(3);
-                } else if (templateTaskExcelDTO.getPriority().equals("中")) {
-                    templateTaskDTO.setPriority(2);
-                } else {
-                    templateTaskDTO.setPriority(1);
-                }
-            }
-            templateTaskDTO.setPhaseId(templatePhaseEntity.getId());
-            templateTaskDTO.setPhaseName(templatePhaseEntity.getName());
-            templateTaskDTO.setDescription(templateTaskExcelDTO.getDescription());
-            templateTaskDTO.setApprovalList(TaskChargeDistributionlist);
-            templateTaskDTO.setDeliveryDocsList(docsNameList);
-            templateTaskDTO.setDistributionType(1);
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(templateTaskExcelDTO.getRefSku())) {
-                if (templateTaskExcelDTO.getRefSku().equals("关联")) {
-                    templateTaskDTO.setRelatedSkuType(RelatedSkuTypeEnum.ALL_RELATED.getCode());
-                } else {
-                    templateTaskDTO.setRelatedSkuType(RelatedSkuTypeEnum.NOT_RELATED.getCode());
-                }
-            } else {
-                if (ObjectUtil.isNotEmpty(templateTaskEntity)) {
-                    templateTaskDTO.setRelatedSkuType(templateTaskEntity.getRelatedSkuType());
-                } else {
-                    templateTaskDTO.setRelatedSkuType(RelatedSkuTypeEnum.NOT_RELATED.getCode());
-                }
-            }
-            templateTaskDTO.setWorkPeriod(templateTaskExcelDTO.getWorkPeriod());
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(templateTaskExcelDTO.getIsFixed())) {
-                if (templateTaskExcelDTO.getIsFixed().equals("是")) {
-                    templateTaskDTO.setIsFixed(1);
-                } else {
-                    templateTaskDTO.setIsFixed(0);
-                }
-            }
-            templateTaskService.saveOrUpdate(templateTaskDTO);
-        }
     }
 
     /**
