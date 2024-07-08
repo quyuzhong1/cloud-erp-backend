@@ -187,10 +187,18 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutEntity cfgProductPacking = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutDTO.CommonDTO commonDTO = new CfgRuleOutDTO.CommonDTO();
-        commonDTO.setEquipmentSortingPortDTO(BeanUtil.toBeanIgnoreError(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class));
-        commonDTO.setB2cAllowableDeviations(BeanUtil.toBeanIgnoreError(b2cAllowableDeviationsEntity.getRuleContent(), CfgRuleOutDTO.B2cAllowableDeviations.class));
-        commonDTO.setCfgOverweight(BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgOverweightDTO.class));
-        commonDTO.setCfgProductPacking(BeanUtil.toBeanIgnoreError(cfgProductPacking.getRuleContent(), CfgRuleOutDTO.CfgProductPacking.class));
+        if(Objects.nonNull(equipmentSortingPortEntity.getRuleContent())){
+            commonDTO.setEquipmentSortingPortDTO(BeanUtil.toBeanIgnoreError(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class));
+        }
+        if(Objects.nonNull(b2cAllowableDeviationsEntity.getRuleContent())){
+            commonDTO.setB2cAllowableDeviations(BeanUtil.toBeanIgnoreError(b2cAllowableDeviationsEntity.getRuleContent(), CfgRuleOutDTO.B2cAllowableDeviations.class));
+        }
+        if(Objects.nonNull(cfgOverWeight.getRuleContent())){
+            commonDTO.setCfgOverweight(BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgOverweightDTO.class));
+        }
+        if(Objects.nonNull(cfgProductPacking.getRuleContent())){
+            commonDTO.setCfgProductPacking(BeanUtil.toBeanIgnoreError(cfgProductPacking.getRuleContent(), CfgRuleOutDTO.CfgProductPacking.class));
+        }
         return commonDTO;
     }
 
