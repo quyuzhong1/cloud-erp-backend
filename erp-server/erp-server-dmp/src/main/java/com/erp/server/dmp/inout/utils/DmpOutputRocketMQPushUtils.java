@@ -154,15 +154,15 @@ public class DmpOutputRocketMQPushUtils{
 			.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
 			.update();
 		if(status.equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
-//			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-//	        warnMsgInfo.setBizName("新中台推送erp");
-//	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-//	        warnMsgInfo.setTitle("新中台推送erp失败，id=" + id);
-//	        warnMsgInfo.setTableName("dmp_output_task_record");
-//	        warnMsgInfo.setTableId(id);
-//	        warnMsgInfo.setKeyInfo(responseData);
-//	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-//	        mqProducerService.sendWarnMsg(warnMsgInfo);
+			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+	        warnMsgInfo.setBizName("新中台推送erp");
+	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+	        warnMsgInfo.setTitle("新中台推送erp失败，id=" + id);
+	        warnMsgInfo.setTableName("dmp_output_task_record");
+	        warnMsgInfo.setTableId(id);
+	        warnMsgInfo.setKeyInfo(responseData);
+	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+	        mqProducerService.sendWarnMsg(warnMsgInfo);
 	        
 	        Map<String, Object> bodyMap = new HashMap<String, Object>();
 			bodyMap.put("msg_type", "text");
