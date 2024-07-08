@@ -20,7 +20,7 @@ import javax.annotation.Resource;
  * @Author: zhangchunlin
  * Update By Edison.Qu  2023-09-28
  */
-@Service
+//@Service
 public class InventoryTransCoreServiceImplOld implements InventoryTransCoreService {
 
 
