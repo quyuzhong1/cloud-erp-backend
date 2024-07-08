@@ -1987,6 +1987,36 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //保存销售出库单详情
         soOutstockDetailService.saveBatch(detailList);
     }
+    
+    /**
+     * 金蝶同步到系统，不单独事务
+     *
+     * @param soOutstock 销售出库单
+     * @param detailList 销售出库详情
+     * @param flagId     已存在的flagId
+     * @return void
+     * @author yl
+     * @date 2023-07-21 14:44
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleNewKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId) {
+    	if (StringUtils.isNotBlank(flagId)) {
+    		//回滚库存
+    		InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Arrays.asList(flagId));
+    		//回滚虚拟库存
+    		virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+    		
+    		inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+    		this.removeById(flagId);
+    		soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
+    	}
+    	
+    	//保存销售出库单
+    	this.save(soOutstock);
+    	//保存销售出库单详情
+    	soOutstockDetailService.saveBatch(detailList);
+    }
 
 
     @Override

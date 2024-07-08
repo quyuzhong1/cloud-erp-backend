@@ -100,6 +100,7 @@ public class DmpOutputKingdeeSoOutstockRocketMQTaskHandler extends DmpOutputRock
     	resultEntity.setFStockerName(entity.getStockerName());
     	resultEntity.setFDocumentStatus(entity.getStatus());
     	resultEntity.setFDate(LocalDateUtil.formatTime(entity.getBillDate(), "yyyy-MM-dd'T'HH:mm:ss"));
+    	resultEntity.setIsNew(Boolean.TRUE);
         return resultEntity;
     }
 
