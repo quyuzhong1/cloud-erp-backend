@@ -52,7 +52,7 @@ public class DmpOutputTaskJob {
 			.in(CollUtil.isNotEmpty(ids) ,DmpOutputTaskRecordEntity::getId, ids)
 			.in(CollUtil.isNotEmpty(mainIds) ,DmpOutputTaskRecordEntity::getMainId, mainIds)
 			.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.INIT.getCode() , DmpOutputTaskRecordStatusEnum.MQERROR.getCode() , DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode()))
-			.last(" limit " + size)
+			.last(" order by update_time limit " + size)
 			.list();
 		
 		dmpOutputRocketMQPushUtils.dealDmpOutputTaskRecordEntityList(dmpOutputTaskRecordEntityList);
