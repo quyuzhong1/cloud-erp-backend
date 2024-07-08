@@ -7,7 +7,9 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TaskChargeDistributionEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.model.plm.vo.TemplateTaskVO;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -138,6 +140,7 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
      **/
     TemplateTaskEntity getTaskByName(String templateId, String taskName);
 
+
     /**
      * 根据模板id查询任务
      * @Author Luo_WG
@@ -156,4 +159,14 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
      * @return java.lang.Boolean
      **/
     Boolean removeTaskBatch(List<String> ids, String templateId);
+    /**
+     * 导入模板任务
+     * @author will
+     * @date 2024/7/8 9:39
+     * @param excelFile
+     * @param templateId
+     * @param response
+     * @return java.lang.Boolean
+     */
+    void importTemplateTaskFile(MultipartFile excelFile, String templateId, HttpServletResponse response);
 }
