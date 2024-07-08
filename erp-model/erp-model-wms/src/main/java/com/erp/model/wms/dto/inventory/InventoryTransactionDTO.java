@@ -30,9 +30,9 @@ public class InventoryTransactionDTO implements Serializable {
     private String id;
 
     // 是否忽略交易（冗余字段）
-    private boolean isIgnoreTransaction;
+    private boolean isIgnoreTransaction = false;
     // 是否允许负库存（冗余字段）
-    private boolean allowNegativeInventory;
+    private boolean allowNegativeInventory = false;
 
     /**
      * 交易批次号

@@ -9,6 +9,7 @@ import com.common.business.validator.ValidGroup;
 import com.common.business.vo.LoginUser;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Classname: InventoryTransCoreServiceImpl
@@ -241,7 +243,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 transactionDTO.setInventoryStatus(rule.getInventoryStatus().getCode());
 
                 transactionDTO.setOrgName(getOrgName(orgList,flow.getOrgId()));
-                transactionDTO.setWarehouseName(getWarehouseName(warehouseEntityList,flow.getWarehouseId()));
+                transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,flow.getWarehouseId()).getName());
                 transactionDTO.setWarehouseLocationName(getWarehouseLocationName(flow.getWarehouseId(),flow.getWarehouseLocation()));
                 transactionDTO.setInventoryStatusName(rule.getInventoryStatus().getName());
 
@@ -265,6 +267,9 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 result.add(transactionDTO);
             }
         }
+
+        // 更新交易数据 是否忽略交易|是否允许负库存
+        this.fillTransactionIgnoreOptions(result);
         return result;
     }
 
@@ -317,7 +322,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 transactionDTO.setInventoryStatus(stockBaseDTO.getInventoryStatus().getCode());
 
                 transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
-                transactionDTO.setWarehouseName(getWarehouseName(warehouseEntityList,stockBaseDTO.getWarehouseId()));
+                transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
                 transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),flow.getWarehouseLocation()));
                 transactionDTO.setInventoryStatusName(stockBaseDTO.getInventoryStatus().getName());
 
@@ -340,6 +345,9 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 result.add(transactionDTO);
             }
         }
+
+        // 更新交易数据 是否忽略交易|是否允许负库存
+        this.fillTransactionIgnoreOptions(result);
         return result;
     }
 
@@ -372,7 +380,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             transactionDTO.setInventoryStatus(flow.getDictInventoryStatus());
 
             transactionDTO.setOrgName(getOrgName(orgList,flow.getOrgId()));
-            transactionDTO.setWarehouseName(getWarehouseName(warehouseEntityList,flow.getWarehouseId()));
+            transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,flow.getWarehouseId()).getName());
             transactionDTO.setWarehouseLocationName(getWarehouseLocationName(flow.getWarehouseId(),flow.getWarehouseLocation()));
             transactionDTO.setInventoryStatusName(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus()).getName());
 
@@ -396,6 +404,35 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         });
 
         return result;
+    }
+
+
+    /**
+     * 更新交易数据：是否忽略交易|是否允许负库存
+     * @param  paramList   交易数据
+     */
+    private void fillTransactionIgnoreOptions(List<InventoryTransactionDTO> paramList) {
+        if(CollUtil.isEmpty(paramList)) {
+            return;
+        }
+        // 查询仓库信息
+        List<WarehouseEntity> warehouseEntityList = warehouseService.list();
+        // 查询忽略库存的sku
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+        List<String> finalIgnoreInventorySkuIds = ignoreInventorySkuIds;
+
+        // 更新交易数据
+        paramList.forEach(transactionDTO-> {
+            // 是否允许负库存
+            transactionDTO.setAllowNegativeInventory(this.getWarehouseInfo(warehouseEntityList, transactionDTO.getWarehouseId()).getAllowNegativeInventory());
+
+            // 是否忽略交易
+            transactionDTO.setIgnoreTransaction(finalIgnoreInventorySkuIds.contains(transactionDTO.getSkuId()));
+        });
     }
 
     /**
@@ -453,12 +490,12 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     }
 
     /**
-     * 过滤并获取仓库名称
+     * 过滤并获取仓库信息
      * @param warehouseList 仓库列表
      * @param warehouseId   仓库id
      * @return  仓库名称
      */
-    private String getWarehouseName(List<WarehouseEntity> warehouseList,String warehouseId) {
+    private WarehouseEntity getWarehouseInfo(List<WarehouseEntity> warehouseList, String warehouseId) {
         if(CollectionUtils.isEmpty(warehouseList)) {
             ServiceException.runError("查询仓库列表为空");
         }
@@ -466,7 +503,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         if(null == warehouseEntity) {
             ServiceException.runError("仓库信息(ID={})不存在", warehouseId);
         }
-        return warehouseEntity.getName();
+
+        return warehouseEntity;
     }
 
     /**
