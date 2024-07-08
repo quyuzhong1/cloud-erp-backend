@@ -64,7 +64,7 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
             log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockoutRequest, response);
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: %s, %s, %s", stockoutRequest.getOuterNo(), response.getStatus(), response.getMessage()));
         }
-        if(response.getData().getStatus() != 0){
+        if(null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()){
             log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockoutRequest, response);
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单审核失败: %s, %s", response.getData().getStatus(), response.getData().getMessage()));
         }

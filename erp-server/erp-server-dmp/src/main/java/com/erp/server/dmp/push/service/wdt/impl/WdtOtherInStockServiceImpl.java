@@ -68,7 +68,7 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
         }
         if(null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()){
             log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockinRequest, response);
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单审核失败: %s, %s", response.getData().getStatus(), response.getData().getMessage()));
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单审核失败: %s, %s, %s", stockinRequest.getOuterNo(), response.getStatus(), response.getMessage()));
         }
     }
 
