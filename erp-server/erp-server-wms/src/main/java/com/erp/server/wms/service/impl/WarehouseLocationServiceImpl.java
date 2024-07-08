@@ -946,4 +946,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public WarehouseLocationEntity findWarehouseArea(String warehouseId, String warehouseLocation) {
         return warehouseLocationMapper.findWarehouseArea(warehouseId, warehouseLocation);
     }
+
+    @Override
+    public List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(String warehouseId) {
+        return warehouseLocationMapper.listArea2LocationMapping(warehouseId);
+    }
 }

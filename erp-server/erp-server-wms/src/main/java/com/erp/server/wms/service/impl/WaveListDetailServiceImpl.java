@@ -80,8 +80,8 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         String warehouseId = soDetailTotalList.get(0).getWarehouseId();
         String warehouseName = soDetailTotalList.get(0).getWarehouseName();
 
-        List<WarehouseLocationDTO.ViewDto> viewList = warehouseLocationService.listAreaByWarehouseId(warehouseId);
-        Map<String, WarehouseLocationDTO.ViewDto> areaMap = viewList.stream().collect(Collectors.toMap(item1 -> item1.getCode(), item2 -> item2));
+        List<WarehouseLocationDTO.MappingDTO> locationMappingList = warehouseLocationService.listArea2LocationMapping(warehouseId);
+        Map<String, WarehouseLocationDTO.MappingDTO> locationMap = locationMappingList.stream().collect(Collectors.toMap(item -> item.getLocationCode(), item2 -> item2));
 
         List<WaveListDetailDTO.DeliveryInfoDTO> rowList = new ArrayList<>(waveDetailList.size());
         //发货单列表
@@ -93,17 +93,18 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
                 List<PickingDetailEntity> groupBySkuPickingDetail = pickingDetailGroup.stream().filter(item -> item.getSkuId().equals(skuLevel.getSkuId())).collect(Collectors.toList());
                 //sku下仓位列表
                 for (PickingDetailEntity locationLevel : groupBySkuPickingDetail) {
-                    WarehouseLocationDTO.ViewDto areaDTO = areaMap.get(locationLevel.getWarehouseLocation());
+                    WarehouseLocationDTO.MappingDTO mappingDTO = locationMap.get(locationLevel.getWarehouseLocation());
                     WaveListDetailDTO.DeliveryInfoDTO rowDTO = new WaveListDetailDTO.DeliveryInfoDTO();
                     BeanMapper.copy(deliveryLevel, rowDTO);  //拷贝基本信息：篮筐号，销售订单编号，发货单号，拣货状态，物流渠道
                     rowDTO.setSkuId(skuLevel.getSkuId());
                     rowDTO.setSkuNo(skuLevel.getSkuNo());
                     rowDTO.setSalesQty(skuLevel.getQty());
+                    rowDTO.setPickingStatusName(PickingStatusEnum.getName(deliveryLevel.getPickingStatus()));
 
                     rowDTO.setWarehouseLocation(locationLevel.getWarehouseLocation());
-                    rowDTO.setWarehouseLocationName("");
-                    rowDTO.setWarehouseArea(areaDTO.getWarehouseAreaCode());
-                    rowDTO.setWarehouseAreaName(areaDTO.getWarehouseAreaName());
+                    rowDTO.setWarehouseLocationName(mappingDTO.getLocationName());
+                    rowDTO.setWarehouseArea(mappingDTO.getAreaCode());
+                    rowDTO.setWarehouseAreaName(mappingDTO.getAreaName());
                     rowDTO.setShouldPickQty(locationLevel.getQty());
                     rowDTO.setPickedQty(locationLevel.getPickedQty());
                     rowDTO.setIsOutStock(locationLevel.getIsOutStock());

@@ -17,16 +17,8 @@ import javax.annotation.Resource;
 @Component
 public class WaveListAdvanceQueryHandler extends AbstractQueryHandler {
 
-    @Resource
-    private PickingCartTypeService pickingCartTypeService;
-
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if(field.equals("picking_cart_type")){
-            PickingCartTypeEntity entity = pickingCartTypeService.getById((String) value);
-            super.buildDefaultDTO("picking_cart_type", entity.getName());
-            return super.getSplicingSQL();
-        }
         if(field.equals("status")){
             for (WaveStatusEnum statusEnum : WaveStatusEnum.values()) {
                 if(value.equals(statusEnum.getCode())){

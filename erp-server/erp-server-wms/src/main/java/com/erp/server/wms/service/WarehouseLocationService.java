@@ -304,4 +304,6 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationEntity> listLocation(String warehouseId, String warehouseArea);
 
     WarehouseLocationEntity findWarehouseArea(String warehouseId, String warehouseLocation);
+
+    List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(String warehouseId);
 }
