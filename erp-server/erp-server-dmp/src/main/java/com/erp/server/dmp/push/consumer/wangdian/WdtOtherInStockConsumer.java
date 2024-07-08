@@ -77,7 +77,10 @@ public class WdtOtherInStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        CreateOtherStockinRequest request = JSON.parseObject(JSONUtil.toJsonStr(ext), CreateOtherStockinRequest.class);
+        String requestStr = JSONUtil.toJsonStr(ext);
+        // 处理参数中存在null字符串的数据
+        requestStr = requestStr.replace("null","");
+        CreateOtherStockinRequest request = JSON.parseObject(requestStr, CreateOtherStockinRequest.class);
 
         //查询同一个来源单据下的推送任务
         List<String> sourceCodeList = Collections.singletonList(request.getSourceId());
