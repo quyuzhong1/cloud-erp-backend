@@ -57,7 +57,7 @@ public class WaveListPdaController {
      * @param waveId 波次ID
      * @return 波次列表
      */
-    @PostMapping("/startPicking")
+    @GetMapping("/startPicking")
     public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPicking(@RequestParam String waveId){
         WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPicking(waveId);
         return ApiResult.success(dto);
