@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -12,15 +13,18 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
-import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.model.wms.entity.PickingListsEntity;
+import com.erp.model.wms.entity.WaveListDetailEntity;
+import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.model.wms.enums.PickingStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListDetailMapper;
 import com.erp.server.wms.service.*;
-import org.springframework.stereotype.Service;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -68,12 +72,15 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         List<WaveListDetailEntity> waveDetailList = list(Wrappers.<WaveListDetailEntity>lambdaQuery().eq(WaveListDetailEntity::getMainId, waveId));
 
         List<String> deliveryCodes = waveDetailList.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(deliveryCodes)) {
+            throw new ServiceException("未找到发货单信息");
+        }
         List<PickingListsEntity> pickingList = pickingListsService.list(new QueryWrapper<PickingListsEntity>().in("source_code", deliveryCodes));
         if(pickingList.isEmpty()){
             throw new ServiceException("没有找到拣货单");
         }
-        Map<String, String> deliveryCode2IdMap = pickingList.stream().collect(Collectors.toMap(item1 -> item1.getSourceCode(), item2 -> item2.getId()));
-        List<PickingDetailEntity> pickingDetailList = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("main_id", deliveryCode2IdMap.values()));
+        List<String> pickingIdList = pickingList.stream().map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("main_id", pickingIdList));
 
         List<String> soIds = waveDetailList.stream().map(WaveListDetailEntity::getSoId).collect(Collectors.toList());
         List<SoB2cDetailEntity> soDetailTotalList = soB2cFeign.listDetailByMainIds(soIds);
@@ -87,7 +94,9 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         //发货单列表
         for (WaveListDetailEntity deliveryLevel : waveDetailList) {
             List<SoB2cDetailEntity> soDetailList = soDetailTotalList.stream().filter(item -> item.getMainId().equals(deliveryLevel.getSoId())).collect(Collectors.toList());
-            List<PickingDetailEntity> pickingDetailGroup = pickingDetailList.stream().filter(item -> item.getMainId().equals(deliveryCode2IdMap.get(deliveryLevel.getDeliveryCode()))).collect(Collectors.toList());
+
+            List<String> deliveryIdList = pickingList.stream().filter(obj -> StrUtil.equals(obj.getSourceCode(), deliveryLevel.getDeliveryCode())).map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
+            List<PickingDetailEntity> pickingDetailGroup = pickingDetailList.stream().filter(item -> deliveryIdList.contains(item.getMainId())).collect(Collectors.toList());
             //发货单下sku列表
             for (SoB2cDetailEntity skuLevel : soDetailList) {
                 List<PickingDetailEntity> groupBySkuPickingDetail = pickingDetailGroup.stream().filter(item -> item.getSkuId().equals(skuLevel.getSkuId())).collect(Collectors.toList());

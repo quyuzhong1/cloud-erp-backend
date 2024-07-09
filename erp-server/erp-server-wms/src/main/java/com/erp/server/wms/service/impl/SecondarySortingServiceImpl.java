@@ -84,7 +84,9 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SecondarySortingDTO.ScanSkuView scanSku(String waveId, String skuCode) {
-
+        if (ObjectUtils.isEmpty(waveId) || ObjectUtils.isEmpty(skuCode)) {
+            throw new ServiceException(ApiError.ERROR_99117);
+        }
         ProductDetailEntity productDetail = plmTaskFeign.getBySkuNoOrEan(skuCode);
         SecondarySortingDTO.ScanSkuView view = new SecondarySortingDTO.ScanSkuView();
         List<WaveListDTO.PickingWaveDetailDTO> waveDetailList = waveListService.listDetailByMainId(waveId, null, productDetail.getId());

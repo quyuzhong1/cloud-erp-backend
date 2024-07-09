@@ -7,12 +7,12 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
+import com.erp.model.wms.dto.WaveListPdaDTO;
 import com.erp.server.wms.query.WaveListPdaAdvanceQueryHandler;
 import com.erp.server.wms.service.WaveListDetailPdaService;
 import com.erp.server.wms.service.WaveListPdaService;
 import com.erp.server.wms.service.WaveListService;
 import org.springframework.web.bind.annotation.*;
-import com.erp.model.wms.dto.WaveListPdaDTO;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -55,12 +55,12 @@ public class WaveListPdaController {
 
     /**
      * 开始拣货
-     * @param idDTO 波次ID
+     * @param startPickingDTO 波次ID
      * @return 波次列表
      */
     @PostMapping("/startPicking")
-    public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPicking(@RequestBody BaseIdDTO idDTO){
-        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPicking(idDTO.getId());
+    public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPicking(@RequestBody WaveListDetailPdaDTO.StartPickingDTO startPickingDTO){
+        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPicking(startPickingDTO.getWaveId());
         return ApiResult.success(dto);
     }
 
