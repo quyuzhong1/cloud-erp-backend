@@ -28,6 +28,7 @@ public interface AliExpressDownloadService {
                                                             Integer downloadAddressStatus,
                                                             Integer downloadDeliveryStatus,
                                                             Integer downloadDeliveryDetailStatus,
+                                                            Boolean hasPlatformWarehouseOrder,
                                                             int currentPage,
                                                             int pageSize);
 
