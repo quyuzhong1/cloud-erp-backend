@@ -8,7 +8,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.text.Bidi;
 import java.util.List;
@@ -51,7 +53,7 @@ public class WmsCartonDTO {
         private String productNo;
         /**
          * 调整装箱类型
-         *
+         * 接口地址： http://172.16.100.11:3002/project/92/interface/api/13147 type=packingAdjustType
          */
         @StateEnumValue(strValues = {"load","pretend","repacking"},message = "调整装箱类型有误")
         private String adjustType;
@@ -61,13 +63,51 @@ public class WmsCartonDTO {
     @NoArgsConstructor
     public static class AdjustSaveDTO{
         /**
+         * 箱子id
+         */
+        @NotBlank(message = "箱子id不能为空")
+        private String cartonId;
+        /**
+         * 装箱任务id
+         */
+        @NotBlank(message = "装箱任务id不能为空")
+        private String taskId;
+        /**
+         * 箱规id
+         */
+        private String specId;
+        /**
          * 调整装箱类型
-         *
+         * 接口地址： http://172.16.100.11:3002/project/92/interface/api/13147 type=packingAdjustType
          */
         @StateEnumValue(strValues = {"load","pretend","repacking"},message = "调整装箱类型有误")
         private String adjustType;
-
+        /**
+         * 调整装箱详情
+         */
+        private List<AdjustDetailDTO> adjustDetailDTOList;
     }
+    @Data
+    @NoArgsConstructor
+    public static class AdjustDetailDTO{
+        private String skuId;
+        private String skuNo;
+        /**
+         * 装箱数量（调整装箱数量）
+         */
+        @NotNull(message = "装箱数量不能为空")
+        @Min(value = 1,message = "装箱数量最小值为1")
+        private Integer packQty;
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 重量单位 kg
+         */
+        private String weightUnit;
+    }
+
     /**
      * 调整装箱扫码
      */

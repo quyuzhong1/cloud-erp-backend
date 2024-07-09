@@ -10,6 +10,7 @@ import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -839,8 +840,90 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String adjustPackingSave(WmsCartonDTO.AdjustSaveDTO dto) {
-        return null;
+        PackingTaskEntity packingTaskEntity = this.getById(dto.getTaskId());
+        if (ObjectUtils.isEmpty(packingTaskEntity)) {
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        String adjustType = dto.getAdjustType();
+        if (AdjustTypeEnum.REPACKING.getCode().equals(adjustType)){
+            //重新装箱 先删除装箱详情
+            wmsCartonDetailService.deleteByCartonIds(Collections.singletonList(dto.getCartonId()));
+        }
+        //校验数量
+        checkAdjustData(dto);
+        //更新调整数量
+        Integer boxNo = updateAdjustData(dto);
+        return packingTaskEntity.getSourceCode() + "-" + boxNo;
+    }
+
+    private Integer updateAdjustData(WmsCartonDTO.AdjustSaveDTO dto) {
+        String cartonId = dto.getCartonId();
+        WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
+        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonId));
+        List<WmsCartonDTO.AdjustDetailDTO> adjustDetailDTOList = dto.getAdjustDetailDTOList();
+        for (WmsCartonDTO.AdjustDetailDTO adjustDetailDTO : adjustDetailDTOList){
+            WmsCartonDetailEntity wmsCartonDetailEntity = detailEntityList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
+            if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType())){
+                if (Objects.isNull(wmsCartonDetailEntity)){
+                    wmsCartonDetailEntity = PackingConverter.INSTANCE.cartonDtoToDetail(adjustDetailDTO, cartonId);
+                }else {
+                    wmsCartonDetailEntity.setPackQty(wmsCartonDetailEntity.getPackQty() + adjustDetailDTO.getPackQty());
+                    wmsCartonDetailEntity.setGrossWeight(adjustDetailDTO.getGrossWeight());
+                    wmsCartonDetailEntity.setWeightUnit(adjustDetailDTO.getWeightUnit());
+                }
+            }else if (AdjustTypeEnum.PRETEND.getCode().equals(dto.getAdjustType())){
+                if (Objects.isNull(wmsCartonDetailEntity)){
+                    throw new ServiceException(ApiError.ERROR_92150,adjustDetailDTO.getSkuNo());
+                }else {
+                    wmsCartonDetailEntity.setPackQty(wmsCartonDetailEntity.getPackQty() - adjustDetailDTO.getPackQty());
+                    wmsCartonDetailEntity.setGrossWeight(adjustDetailDTO.getGrossWeight());
+                    wmsCartonDetailEntity.setWeightUnit(adjustDetailDTO.getWeightUnit());
+                }
+            }else if (AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
+                wmsCartonDetailEntity = PackingConverter.INSTANCE.cartonDtoToDetail(adjustDetailDTO, cartonId);
+            }
+            wmsCartonDetailService.saveOrUpdate(wmsCartonDetailEntity);
+        }
+        wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
+        wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
+        wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
+        if (wmsCartonEntity.getBoxNo() == 0){
+            Integer boxNo = wmsCartonService.getBoxNoByTaskId(dto.getTaskId());
+            wmsCartonEntity.setBoxNo(Objects.isNull(boxNo)? 1 : boxNo + 1);
+        }
+        this.wmsCartonService.updateById(wmsCartonEntity);
+        return wmsCartonEntity.getBoxNo();
+    }
+
+    private void checkAdjustData(WmsCartonDTO.AdjustSaveDTO dto) {
+        //调整前装箱情况
+        List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = this.listGroupSkuById(dto.getTaskId());
+        if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType()) || AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
+            dto.getAdjustDetailDTOList().forEach(adjustDetailDTO -> {
+                WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO = groupSkuDTOList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
+                if (Objects.isNull(groupSkuDTO)){
+                    throw new ServiceException(ApiError.ERROR_92149,adjustDetailDTO.getSkuNo());
+                }
+                if (groupSkuDTO.getWaitPackQty() < adjustDetailDTO.getPackQty()){
+                    throw new ServiceException(ApiError.ERROR_92147,adjustDetailDTO.getSkuNo(), groupSkuDTO.getWaitPackQty());
+                }
+            });
+
+        }else if (AdjustTypeEnum.PRETEND.getCode().equals(dto.getAdjustType())){
+            List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(dto.getCartonId()));
+            dto.getAdjustDetailDTOList().forEach(adjustDetailDTO -> {
+                WmsCartonDetailEntity wmsCartonDetailEntity = detailEntityList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
+                if (Objects.isNull(wmsCartonDetailEntity)){
+                    throw new ServiceException(ApiError.ERROR_92150,adjustDetailDTO.getSkuNo());
+                }
+                int packQty = detailEntityList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (Objects.isNull(adjustDetailDTO.getPackQty()) || packQty < adjustDetailDTO.getPackQty()){
+                    throw new ServiceException(ApiError.ERROR_92148,adjustDetailDTO.getSkuNo(), packQty);
+                }
+            });
+        }
     }
 
     @Override

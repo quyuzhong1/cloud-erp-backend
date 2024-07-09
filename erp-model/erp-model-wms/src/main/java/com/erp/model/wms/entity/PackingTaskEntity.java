@@ -42,6 +42,7 @@ public class PackingTaskEntity extends BaseEntity<PackingTaskEntity> {
     /**
     * 单据类型(B2B,FBA,third)
      * PickingSourceTypeEnum
+     * 字典地址 http://172.16.100.11:3002/project/92/interface/api/13147  type = packingSourceType
      *
     */
     @TableField("source_type")
