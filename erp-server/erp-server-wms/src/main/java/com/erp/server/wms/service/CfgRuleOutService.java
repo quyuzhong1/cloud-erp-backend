@@ -3,6 +3,7 @@ import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 
 /**
  * <p>
@@ -44,4 +45,18 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      * @return true可以出库，false 不可以出库
      */
     CfgRuleOutDTO.CheckDTO handleOverweight(CfgRuleOutDTO.OverweightDTO dto);
+
+    /**
+     * 获取装箱超重配置
+     * @param type
+     * @return
+     */
+    CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(CfgRuleOutEnum.OverweightTypeEnum type);
+
+    /**
+     * 获取产品装箱配置
+     * @param type
+     * @return
+     */
+    CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(CfgRuleOutEnum.OverweightTypeEnum type);
 }

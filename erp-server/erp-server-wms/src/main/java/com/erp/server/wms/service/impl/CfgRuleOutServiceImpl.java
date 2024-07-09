@@ -292,6 +292,36 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         return new CfgRuleOutDTO.CheckDTO(result,logMsg);
     }
 
+    @Override
+    public CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(CfgRuleOutEnum.OverweightTypeEnum type) {
+        List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
+        CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
+        CfgRuleOutDTO.CfgOverweightDTO cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgOverweightDTO.class);
+        if(Objects.isNull(cfgOverweightDTO)){
+            return new CfgRuleOutDTO.CfgOverweightDetailDTO();
+        }
+        List<CfgRuleOutDTO.CfgOverweightDetailDTO> cfgOverweightDetailDTOList = cfgOverweightDTO.getCfgOverweightDetailDTOList();
+        if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
+            return new CfgRuleOutDTO.CfgOverweightDetailDTO();
+        }
+        return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(type.getCode())).findFirst().orElse(new CfgRuleOutDTO.CfgOverweightDetailDTO());
+    }
+
+    @Override
+    public CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(CfgRuleOutEnum.OverweightTypeEnum type) {
+        List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
+        CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode())).findFirst().orElse(new CfgRuleOutEntity());
+        CfgRuleOutDTO.CfgProductPacking cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgProductPacking.class);
+        if(Objects.isNull(cfgOverweightDTO)){
+            return new CfgRuleOutDTO.CfgProductPackingDetail();
+        }
+        List<CfgRuleOutDTO.CfgProductPackingDetail> cfgOverweightDetailDTOList = cfgOverweightDTO.getCfgProductPackingDetailList();
+        if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
+            return new CfgRuleOutDTO.CfgProductPackingDetail();
+        }
+        return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(type.getCode())).findFirst().orElse(new CfgRuleOutDTO.CfgProductPackingDetail());
+    }
+
     public String getSortingPort(CfgRuleOutDTO.CommonDTO commonDTO,CfgRuleOutDTO.SortingPortRuleDTO dto) {
         //校验称重量方规则，通过走设备分拣口规则
         CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations = commonDTO.getB2cAllowableDeviations();
