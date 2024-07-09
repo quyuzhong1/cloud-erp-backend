@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -12,10 +13,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.PickingDetailEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.entity.WaveListDetailEntity;
-import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.WaveListDetailPdaMapper;
@@ -29,6 +27,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -57,6 +56,11 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean hangUp(WaveListDetailPdaDTO.HangUpParamDTO hangUpDTO) {
+        WaveListEntity old = waveListService.getById(hangUpDTO.getWaveId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "波次列表"));
+        if (!StrUtil.equals(old.getStatus(),WaveStatusEnum.PICK_ING.getCode())) {
+            throw new ServiceException(StrUtil.format("波次【{}】非拣货中，不支持挂起。",old.getCode()));
+        }
         List<PickingDetailEntity> updateList = getPickingDetailEntities(hangUpDTO.getWaveId(), hangUpDTO.getLocationPickingDetailList());
         pickingDetailService.updateBatchById(updateList);
 
