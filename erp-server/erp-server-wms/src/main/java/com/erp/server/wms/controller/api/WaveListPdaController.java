@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -54,12 +55,12 @@ public class WaveListPdaController {
 
     /**
      * 开始拣货
-     * @param waveId 波次ID
+     * @param idDTO 波次ID
      * @return 波次列表
      */
     @PostMapping("/startPicking")
-    public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPicking(@RequestParam String waveId){
-        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPicking(waveId);
+    public ApiResult<WaveListDetailPdaDTO.ViewDTO> startPicking(@RequestBody BaseIdDTO idDTO){
+        WaveListDetailPdaDTO.ViewDTO dto = waveListDetailPdaService.startPicking(idDTO.getId());
         return ApiResult.success(dto);
     }
 
