@@ -26,7 +26,7 @@ public interface StockinAPI {
     CreateOtherStockinResponse createOtherOrder(Map<String, Object> request) throws WdtErpException;
     
     @Api(value = "wms.stockin.Other.queryWithDetail", paged = true)
-    OtherStockinResponse queryWithDetail(OtherStockinRequest request, Pager pager);
+    OtherStockinResponse.DataInfoDto queryWithDetail(OtherStockinRequest request, Pager pager);
 
     @Api(value = "wms.stockin.Process.queryWithDetail", paged = true)
     ProcessStockinResponse searchProcess(ProcessStockinRequest request, Pager pager);

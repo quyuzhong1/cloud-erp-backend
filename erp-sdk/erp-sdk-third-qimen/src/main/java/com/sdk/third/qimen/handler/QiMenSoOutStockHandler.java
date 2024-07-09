@@ -69,7 +69,7 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
         WdtWmsStockoutSalesQuerywithdetailRequest.Params params = new WdtWmsStockoutSalesQuerywithdetailRequest.Params();
         params.setStatus("110");
         params.setStatusType(3L);
-        params.setStartTime(dto.getLastTime().minusMinutes(15).format(timeFormatter));
+        params.setStartTime(dto.getLastTime().minusMinutes(5).format(timeFormatter));
         params.setEndTime(dto.getNextTime().format(timeFormatter));
 
         WdtWmsStockoutSalesQuerywithdetailRequest request = new WdtWmsStockoutSalesQuerywithdetailRequest();

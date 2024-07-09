@@ -3,36 +3,27 @@ package com.sdk.wangdian.sdk.api.wms.stockout.dto;
 import java.math.BigDecimal;
 import java.util.List;
 
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
+@Data
 public class StockoutOtherQueryResponse
 {
 	@SerializedName("total_count")
 	private Integer totalCount;
 
+	public void setTotalCount(String totalCount) {
+		this.totalCount = StringUtils.isBlank(totalCount)? 0 : Integer.parseInt(totalCount);
+	}
+
 	@SerializedName("order")
 	private List<OrderItem> order;
 
-	public Integer getTotalCount()
-	{
-		return totalCount;
-	}
-
-	public void setTotalCount(Integer totalCount)
-	{
-		this.totalCount = totalCount;
-	}
-
-	public List<OrderItem> getOrder()
-	{
-		return order;
-	}
-
-	public void setOrder(List<OrderItem> order)
-	{
-		this.order = order;
-	}
-
+	@Data
 	public static class DetailListItem
 	{
 		@SerializedName("goods_name")
@@ -57,16 +48,18 @@ public class StockoutOtherQueryResponse
 		private String brandName;
 
 		@SerializedName("goods_count")
-		private Integer goodsCount;
+		private BigDecimal goodsCount;
 
 		@SerializedName("rec_id")
-		private Integer recId;
+		private String recId;
+
 
 		@SerializedName("spec_no")
 		private String specNo;
 
 		@SerializedName("stockout_id")
-		private Integer stockoutId;
+		private String stockoutId;
+
 
 		@SerializedName("defect")
 		private Boolean defect;
@@ -77,197 +70,26 @@ public class StockoutOtherQueryResponse
 		@SerializedName("sell_price")
 		private BigDecimal sellPrice;
 
+		public void setSellPrice(String sellPrice) {
+			if(sellPrice == null || StringUtils.isBlank(sellPrice)){
+				this.sellPrice = new BigDecimal(0);
+			}else {
+				this.sellPrice = BigDecimal.valueOf(Long.parseLong(sellPrice));
+			}
+
+		}
+
 		@SerializedName("total_amount")
 		private BigDecimal totalAmount;
 
 		@SerializedName("goods_type")
-		private Byte goodsType;
+		private Integer goodsType;
 
 		@SerializedName("spec_name")
 		private String specName;
 
 		@SerializedName("cost_price")
 		private BigDecimal costPrice;
-
-		public String getGoodsName()
-		{
-			return goodsName;
-		}
-
-		public void setGoodsName(String goodsName)
-		{
-			this.goodsName = goodsName;
-		}
-
-		public String getSpecCode()
-		{
-			return specCode;
-		}
-
-		public void setSpecCode(String specCode)
-		{
-			this.specCode = specCode;
-		}
-
-		public String getBrandNo()
-		{
-			return brandNo;
-		}
-
-		public void setBrandNo(String brandNo)
-		{
-			this.brandNo = brandNo;
-		}
-
-		public String getGoodsNo()
-		{
-			return goodsNo;
-		}
-
-		public void setGoodsNo(String goodsNo)
-		{
-			this.goodsNo = goodsNo;
-		}
-
-		public BigDecimal getWeight()
-		{
-			return weight;
-		}
-
-		public void setWeight(BigDecimal weight)
-		{
-			this.weight = weight;
-		}
-
-		public String getRemark()
-		{
-			return remark;
-		}
-
-		public void setRemark(String remark)
-		{
-			this.remark = remark;
-		}
-
-		public String getBrandName()
-		{
-			return brandName;
-		}
-
-		public void setBrandName(String brandName)
-		{
-			this.brandName = brandName;
-		}
-
-		public Integer getGoodsCount()
-		{
-			return goodsCount;
-		}
-
-		public void setGoodsCount(Integer goodsCount)
-		{
-			this.goodsCount = goodsCount;
-		}
-
-		public Integer getRecId()
-		{
-			return recId;
-		}
-
-		public void setRecId(Integer recId)
-		{
-			this.recId = recId;
-		}
-
-		public String getSpecNo()
-		{
-			return specNo;
-		}
-
-		public void setSpecNo(String specNo)
-		{
-			this.specNo = specNo;
-		}
-
-		public Integer getStockoutId()
-		{
-			return stockoutId;
-		}
-
-		public void setStockoutId(Integer stockoutId)
-		{
-			this.stockoutId = stockoutId;
-		}
-
-		public Boolean getDefect()
-		{
-			return defect;
-		}
-
-		public void setDefect(Boolean defect)
-		{
-			this.defect = defect;
-		}
-
-		public String getExpireDate()
-		{
-			return expireDate;
-		}
-
-		public void setExpireDate(String expireDate)
-		{
-			this.expireDate = expireDate;
-		}
-
-		public BigDecimal getSellPrice()
-		{
-			return sellPrice;
-		}
-
-		public void setSellPrice(BigDecimal sellPrice)
-		{
-			this.sellPrice = sellPrice;
-		}
-
-		public BigDecimal getTotalAmount()
-		{
-			return totalAmount;
-		}
-
-		public void setTotalAmount(BigDecimal totalAmount)
-		{
-			this.totalAmount = totalAmount;
-		}
-
-		public Byte getGoodsType()
-		{
-			return goodsType;
-		}
-
-		public void setGoodsType(Byte goodsType)
-		{
-			this.goodsType = goodsType;
-		}
-
-		public String getSpecName()
-		{
-			return specName;
-		}
-
-		public void setSpecName(String specName)
-		{
-			this.specName = specName;
-		}
-
-		public BigDecimal getCostPrice()
-		{
-			return costPrice;
-		}
-
-		public void setCostPrice(BigDecimal costPrice)
-		{
-			this.costPrice = costPrice;
-		}
 
 		@Override
 		public String toString()
@@ -282,6 +104,7 @@ public class StockoutOtherQueryResponse
 		}
 	}
 
+	@Data
 	public static class OrderItem
 	{
 		@SerializedName("order_no")
@@ -294,13 +117,17 @@ public class StockoutOtherQueryResponse
 		private BigDecimal postFee;
 
 		@SerializedName("receiver_city")
-		private Integer receiverCity;
+		private String receiverCity;
 
 		@SerializedName("detail_list")
 		private List<DetailListItem> detailList;
 
 		@SerializedName("status")
 		private Integer status;
+
+		public void setStatus(String status) {
+			this.status = StringUtils.isBlank(status) ? 0 : Integer.parseInt(status);
+		}
 
 		@SerializedName("remark")
 		private String remark;
@@ -309,10 +136,13 @@ public class StockoutOtherQueryResponse
 		private BigDecimal goodsCount;
 
 		@SerializedName("stockout_id")
-		private Integer stockoutId;
+		private String stockoutId;
+
+
 
 		@SerializedName("receiver_province")
-		private Integer receiverProvince;
+		private String receiverProvince;
+
 
 		@SerializedName("src_order_no")
 		private String srcOrderNo;
@@ -330,25 +160,33 @@ public class StockoutOtherQueryResponse
 		private String receiverName;
 
 		@SerializedName("receiver_country")
-		private Integer receiverCountry;
+		private String receiverCountry;
 
 		@SerializedName("order_type")
 		private Integer orderType;
 
+		public void setOrderType(String orderType) {
+			this.orderType = StringUtils.isBlank(orderType) ? 0 : Integer.parseInt(orderType);
+		}
+
 		@SerializedName("consign_time")
-		private Long consignTime;
+		private String consignTime;
 
 		@SerializedName("logistics_no")
 		private String logisticsNo;
 
 		@SerializedName("receiver_district")
-		private BigDecimal receiverDistrict;
+		private String receiverDistrict;
 
 		@SerializedName("weight")
 		private BigDecimal weight;
 
 		@SerializedName("goods_total_amount")
 		private BigDecimal goodsTotalAmount;
+
+		public void setGoodsTotalAmount(String goodsTotalAmount) {
+			this.goodsTotalAmount = StringUtils.isBlank(goodsTotalAmount) ? new BigDecimal(0) : BigDecimal.valueOf(Long.parseLong(goodsTotalAmount));
+		}
 
 		@SerializedName("receiver_mobile")
 		private String receiverMobile;
@@ -361,266 +199,6 @@ public class StockoutOtherQueryResponse
 
 		@SerializedName("receiver_address")
 		private String receiverAddress;
-
-		public String getOrderNo()
-		{
-			return orderNo;
-		}
-
-		public void setOrderNo(String orderNo)
-		{
-			this.orderNo = orderNo;
-		}
-
-		public String getReason()
-		{
-			return reason;
-		}
-
-		public void setReason(String reason)
-		{
-			this.reason = reason;
-		}
-
-		public BigDecimal getPostFee()
-		{
-			return postFee;
-		}
-
-		public void setPostFee(BigDecimal postFee)
-		{
-			this.postFee = postFee;
-		}
-
-		public Integer getReceiverCity()
-		{
-			return receiverCity;
-		}
-
-		public void setReceiverCity(Integer receiverCity)
-		{
-			this.receiverCity = receiverCity;
-		}
-
-		public List<DetailListItem> getDetailList()
-		{
-			return detailList;
-		}
-
-		public void setDetailList(List<DetailListItem> detailList)
-		{
-			this.detailList = detailList;
-		}
-
-		public Integer getStatus()
-		{
-			return status;
-		}
-
-		public void setStatus(Integer status)
-		{
-			this.status = status;
-		}
-
-		public String getRemark()
-		{
-			return remark;
-		}
-
-		public void setRemark(String remark)
-		{
-			this.remark = remark;
-		}
-
-		public BigDecimal getGoodsCount()
-		{
-			return goodsCount;
-		}
-
-		public void setGoodsCount(BigDecimal goodsCount)
-		{
-			this.goodsCount = goodsCount;
-		}
-
-		public Integer getStockoutId()
-		{
-			return stockoutId;
-		}
-
-		public void setStockoutId(Integer stockoutId)
-		{
-			this.stockoutId = stockoutId;
-		}
-
-		public Integer getReceiverProvince()
-		{
-			return receiverProvince;
-		}
-
-		public void setReceiverProvince(Integer receiverProvince)
-		{
-			this.receiverProvince = receiverProvince;
-		}
-
-		public String getSrcOrderNo()
-		{
-			return srcOrderNo;
-		}
-
-		public void setSrcOrderNo(String srcOrderNo)
-		{
-			this.srcOrderNo = srcOrderNo;
-		}
-
-		public String getWarehouseNo()
-		{
-			return warehouseNo;
-		}
-
-		public void setWarehouseNo(String warehouseNo)
-		{
-			this.warehouseNo = warehouseNo;
-		}
-
-		public String getReceiverTelno()
-		{
-			return receiverTelno;
-		}
-
-		public void setReceiverTelno(String receiverTelno)
-		{
-			this.receiverTelno = receiverTelno;
-		}
-
-		public String getReceiverZip()
-		{
-			return receiverZip;
-		}
-
-		public void setReceiverZip(String receiverZip)
-		{
-			this.receiverZip = receiverZip;
-		}
-
-		public String getReceiverName()
-		{
-			return receiverName;
-		}
-
-		public void setReceiverName(String receiverName)
-		{
-			this.receiverName = receiverName;
-		}
-
-		public Integer getReceiverCountry()
-		{
-			return receiverCountry;
-		}
-
-		public void setReceiverCountry(Integer receiverCountry)
-		{
-			this.receiverCountry = receiverCountry;
-		}
-
-		public Integer getOrderType()
-		{
-			return orderType;
-		}
-
-		public void setOrderType(Integer orderType)
-		{
-			this.orderType = orderType;
-		}
-
-		public Long getConsignTime()
-		{
-			return consignTime;
-		}
-
-		public void setConsignTime(Long consignTime)
-		{
-			this.consignTime = consignTime;
-		}
-
-		public String getLogisticsNo()
-		{
-			return logisticsNo;
-		}
-
-		public void setLogisticsNo(String logisticsNo)
-		{
-			this.logisticsNo = logisticsNo;
-		}
-
-		public BigDecimal getReceiverDistrict()
-		{
-			return receiverDistrict;
-		}
-
-		public void setReceiverDistrict(BigDecimal receiverDistrict)
-		{
-			this.receiverDistrict = receiverDistrict;
-		}
-
-		public BigDecimal getWeight()
-		{
-			return weight;
-		}
-
-		public void setWeight(BigDecimal weight)
-		{
-			this.weight = weight;
-		}
-
-		public BigDecimal getGoodsTotalAmount()
-		{
-			return goodsTotalAmount;
-		}
-
-		public void setGoodsTotalAmount(BigDecimal goodsTotalAmount)
-		{
-			this.goodsTotalAmount = goodsTotalAmount;
-		}
-
-		public String getReceiverMobile()
-		{
-			return receiverMobile;
-		}
-
-		public void setReceiverMobile(String receiverMobile)
-		{
-			this.receiverMobile = receiverMobile;
-		}
-
-		public String getOperatorName()
-		{
-			return operatorName;
-		}
-
-		public void setOperatorName(String operatorName)
-		{
-			this.operatorName = operatorName;
-		}
-
-		public String getGoodsTotalCost()
-		{
-			return goodsTotalCost;
-		}
-
-		public void setGoodsTotalCost(String goodsTotalCost)
-		{
-			this.goodsTotalCost = goodsTotalCost;
-		}
-
-		public String getReceiverAddress()
-		{
-			return receiverAddress;
-		}
-
-		public void setReceiverAddress(String receiverAddress)
-		{
-			this.receiverAddress = receiverAddress;
-		}
 
 		@Override
 		public String toString()

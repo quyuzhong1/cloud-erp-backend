@@ -165,7 +165,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
         SalesStockoutRequest request = new SalesStockoutRequest();
         request.setStatusType(SalesStockoutRequest.STATUS_TYPE_CONSIGNED);
         request.setStatus("110");
-        request.setStartTime(dto.getLastTime().minusMinutes(15).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        request.setStartTime(dto.getLastTime().minusMinutes(5).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         request.setEndTime(dto.getNextTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         Pager pager = new Pager();
         int pageSize = 200;

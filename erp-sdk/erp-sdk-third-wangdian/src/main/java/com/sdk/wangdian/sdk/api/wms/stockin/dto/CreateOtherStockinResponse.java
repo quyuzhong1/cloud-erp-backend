@@ -1,7 +1,9 @@
 package com.sdk.wangdian.sdk.api.wms.stockin.dto;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class CreateOtherStockinResponse
 {
 	/*
@@ -13,51 +15,11 @@ public class CreateOtherStockinResponse
 	@SerializedName("data")
 	private DataDto data;
 
-	public String getMessage()
-	{
-		return message;
-	}
-
-	public void setMessage(String message)
-	{
-		this.message = message;
-	}
-
-	public Integer getStatus()
-	{
-		return status;
-	}
-
-	public void setStatus(Integer status)
-	{
-		this.status = status;
-	}
-
+	@Data
 	public static class DataDto
 	{
 		private String message;
 		private Integer status;
-
-		public String getMessage()
-		{
-			return message;
-		}
-
-		public void setMessage(String message)
-		{
-			this.message = message;
-		}
-
-		public Integer getStatus()
-		{
-			return status;
-		}
-
-		public void setStatus(Integer status)
-		{
-			this.status = status;
-		}
-
 	}
 
 	@Override

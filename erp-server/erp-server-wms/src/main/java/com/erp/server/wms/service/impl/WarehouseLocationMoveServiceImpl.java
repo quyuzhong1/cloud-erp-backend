@@ -576,7 +576,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
             inGoods.setSpecNo(moveDetailEntity.getSkuNo());
             inGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
-            inGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)?moveDetailEntity.getInWarehouseLocation():moveDetailEntity.getOutWarehouseLocation());
+            inGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)?
+                    (ObjectUtils.isEmpty(moveDetailEntity.getInWarehouseLocation()) ? "" : moveDetailEntity.getInWarehouseLocation()) : ObjectUtils.isEmpty(moveDetailEntity.getOutWarehouseLocation()) ? "" : moveDetailEntity.getOutWarehouseLocation());
 
             String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
             String inWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
