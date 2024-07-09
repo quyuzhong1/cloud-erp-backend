@@ -858,6 +858,8 @@ public enum ApiError implements Serializable {
     ERROR_99115(99115,"销售订单【{}】的发货单存在待处理，异常单的数据不支持自动发货"),
     ERROR_99116(99116,"非待处理的数据不能操作生成波次"),
 
+    ERROR_99117(99117,"波次号和sku不能为空"),
+
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
