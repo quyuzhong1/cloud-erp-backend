@@ -313,6 +313,7 @@ public class PackingTaskDTO implements Serializable {
     @NoArgsConstructor
     public static class StatusDTO {
         private String id;
+        private String sourceCode;
         /**
          * 装箱状态 unpacked：待装箱，packing 装箱中，packed：已装箱
          * 枚举：PackingTaskStatusEnum

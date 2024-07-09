@@ -48,6 +48,7 @@ import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -76,6 +77,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -168,8 +170,21 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        List<String> sourceCodeList = records.stream().map(SoDeliveryNoticeDTO.PagingView::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(null, sourceCodeList);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getSourceCode, Function.identity(),(v1, v2)->v1));
+
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+                PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(obj.getCode());
+                if (Objects.nonNull(statusDTO)) {
+                    String packingStatus = StringUtils.isBlank(statusDTO.getPackingStatus()) ? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus();
+                    obj.setPackingStatus(packingStatus);
+                    obj.setPackingStatusName(PackingTaskStatusEnum.getName(packingStatus));
+                }else{
+                    obj.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
+                    obj.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
+                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 if (obj.getDeliveryStatus() != null && obj.getDeliveryStatus()) {

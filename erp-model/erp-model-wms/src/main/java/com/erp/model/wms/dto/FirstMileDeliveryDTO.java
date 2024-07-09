@@ -159,6 +159,7 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 物流单状态中文
          */
         private String logisticsStatusName;
+
         /**
          * 报关单状态编码
          */

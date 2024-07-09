@@ -1342,8 +1342,21 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
 
         String bomType = BomTypeEnum.COMBINATION.getType();
+
+        List<String> sourceCodeList = list.stream().map(FirstMileDeliveryDTO.ListDTO::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(null, sourceCodeList);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getSourceCode, Function.identity(),(v1,v2)->v1));
         // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {
+            PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(data.getCode());
+            if (Objects.nonNull(statusDTO)) {
+                String packingStatus = StringUtils.isBlank(statusDTO.getPackingStatus()) ? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus();
+                data.setPackingStatus(packingStatus);
+                data.setPackingStatusName(PackingTaskStatusEnum.getName(packingStatus));
+            }else{
+                data.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
+                data.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
+            }
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
 
             //库存sku
@@ -1364,8 +1377,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             data.setDemandTypeName(FbaDemandTypeEnum.getName(data.getDemandType()));
             //作废状态名称
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            //装箱状态名称
-            data.setPackingStatusName(PackingStatusEnum.getName(data.getPackingStatus()));
             //物流方式名称
             data.setLogisticsMethodName(LogisticsMethodEnum.getName(data.getLogisticsMethod()));
             //物流单状态中文
