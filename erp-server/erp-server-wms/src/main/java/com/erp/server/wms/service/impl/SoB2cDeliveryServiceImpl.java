@@ -1517,6 +1517,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cDeliveryEntity entity = getById(id);
         checkDelivery(entity);
         entity.setStatus(SoB2cDeliveryStatusEnum.PICKING.getStatus());
+        entity.setAbnormalCause("");
         updateById(entity);
         // 操作日志
         operateLogService.addModuleOperateLog("仓库清除异常", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "清除异常");

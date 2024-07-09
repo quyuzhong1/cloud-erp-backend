@@ -37,7 +37,6 @@ public class CfgRuleConditionDTO {
         private String field;
         @NotBlank(message = "比较符不能为空")
         private String compare;
-        @NotBlank(message = "值不能为空")
         private String value;
         private String rightBracket;
         private String logic;
