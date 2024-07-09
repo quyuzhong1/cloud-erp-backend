@@ -5,10 +5,11 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import org.springframework.web.multipart.MultipartFile;
+import com.erp.model.wms.entity.PackingTaskEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -120,16 +121,19 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     * @param id
     * @return
     */
-    BatchResultDTO delete(String id);
+    BatchResultDTO delete(FirstMileDeliveryEntity entity, PackingTaskDTO.StatusDTO packingStatusDTO, PackingTaskEntity packingTask);
     /**
-    * 作废
-    * @author Luo_WG
-    * @date: 2023-10-30
-    * @param id
-    * @param remark
-    * @return
-    */
-    BatchResultDTO invalid(String id, String remark);
+     * 作废
+     *
+     * @param entity
+     * @param remark
+     * @param packingStatusDTO
+     * @param packingTask
+     * @return
+     * @author Luo_WG
+     * @date: 2023-10-30
+     */
+    BatchResultDTO invalid(FirstMileDeliveryEntity entity, String remark, PackingTaskDTO.StatusDTO packingStatusDTO, PackingTaskEntity packingTask);
 
     /**
     * 撤销
