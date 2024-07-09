@@ -1142,4 +1142,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 .eq(SoDeliveryNoticeEntity::getId, id)
                 .update();
     }
+
+    @Override
+    public BatchResultDTO generatePackingTask(SoDeliveryNoticeEntity entity) {
+        packingTaskService.addPackingByB2BDelivery(entity);
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"");
+    }
 }

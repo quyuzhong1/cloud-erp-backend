@@ -1808,6 +1808,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .update();
     }
 
+    @Override
+    public BatchResultDTO generatePackingTask(FirstMileDeliveryEntity entity) {
+        packingTaskService.addPackingByFirstMileDelivery(entity);
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
+    }
+
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
 //    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {

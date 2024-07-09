@@ -6,8 +6,10 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
+import com.erp.server.wms.service.PackingTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -28,8 +30,10 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 头程发货单
@@ -48,6 +52,9 @@ public class FirstMileDeliveryController extends BaseController {
 
     @Autowired
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
+
+    @Resource
+    private PackingTaskService packingTaskService;
 
     /**
     * 新增
@@ -384,6 +391,36 @@ public class FirstMileDeliveryController extends BaseController {
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public void exportList(@RequestBody @Validated FirstMileDeliveryDTO.PagingParamDTO dto, HttpServletResponse response) {
         firstMileDeliveryService.exportList(dto, response);
+    }
+
+    /**
+     * 下推装箱任务
+     **/
+    @PostMapping("/generatePackingTask")
+    public ApiResult<List<BatchResultDTO>> generatePackingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(dto.getIds());
+        List<String> sourceCodes = entityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
+        List<BatchResultDTO> result = new ArrayList<>();
+        for (String id : dto.getIds()) {
+            FirstMileDeliveryEntity firstMileDeliveryEntity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity)){
+                result.add(BatchResultDTO.fail(id,id,"发货单为空"));
+                continue;
+            }
+            try {
+                PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(firstMileDeliveryEntity.getCode())).findFirst().orElse(null);
+                if(Objects.nonNull(packingTaskEntity)){
+                    result.add(BatchResultDTO.fail(id,id,"已生成装箱任务不可重复生成"));
+                    continue;
+                }
+                result.add(firstMileDeliveryService.generatePackingTask(firstMileDeliveryEntity));
+            }catch (Exception e){
+                log.error("头程发货单下推装箱任务失败>>>>>", e);
+                result.add(BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),e.getMessage()));
+            }
+        }
+        return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
     }
 
     /**

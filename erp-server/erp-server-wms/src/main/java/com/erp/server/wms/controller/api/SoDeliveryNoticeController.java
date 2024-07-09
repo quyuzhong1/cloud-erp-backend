@@ -15,8 +15,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.query.SoDeliveryNoticeQueryHandler;
+import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +30,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 销售发货通知单
@@ -40,6 +45,9 @@ import java.util.List;
 public class SoDeliveryNoticeController extends BaseController {
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
+
+    @Resource
+    private PackingTaskService packingTaskService;
 
     /**
      * 列表查询
@@ -399,6 +407,36 @@ public class SoDeliveryNoticeController extends BaseController {
     public ApiResult<List<SoDeliveryNoticeDTO.PickingViewDTO>> generatePickingView(@RequestParam("id") String id) {
         List<SoDeliveryNoticeDTO.PickingViewDTO> result = soDeliveryNoticeService.generatePickingView(id);
         return success(result);
+    }
+
+    /**
+     * 下推装箱任务
+     **/
+    @PostMapping("/generatePackingTask")
+    public ApiResult<List<BatchResultDTO>> generatePackingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(dto.getIds());
+        List<String> sourceCodes = entityList.stream().map(SoDeliveryNoticeEntity::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
+        List<BatchResultDTO> result = new ArrayList<>();
+        for (String id : dto.getIds()) {
+            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                result.add(BatchResultDTO.fail(id,id,"发货通知单为空"));
+                continue;
+            }
+            try {
+                PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
+                if(Objects.nonNull(packingTaskEntity)){
+                    result.add(BatchResultDTO.fail(id,id,"已生成装箱任务不可重复生成"));
+                    continue;
+                }
+                result.add(soDeliveryNoticeService.generatePackingTask(entity));
+            }catch (Exception e){
+                log.error("发货通知单下推装箱任务失败>>>>>", e);
+                result.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),e.getMessage()));
+            }
+        }
+        return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
     }
 }
 
