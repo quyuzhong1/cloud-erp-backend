@@ -136,7 +136,7 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @param dto
      * @param response
      */
-    void exportPackingDetail(PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportPackingDetail(PackingTaskDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 删除装箱任务

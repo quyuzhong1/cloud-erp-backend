@@ -3077,7 +3077,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             deliveryDTO.setBoxQty(list.size());
             deliveryDTO.setGrossWeight(list.stream()
                     .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
-                    .map(BigDecimal::new)
                     .reduce(BigDecimal.ZERO, BigDecimal::add));
         }
         //合并相同的sku
