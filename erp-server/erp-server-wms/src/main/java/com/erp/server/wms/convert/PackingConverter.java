@@ -100,4 +100,29 @@ public interface PackingConverter {
 
     WmsCartonSpecDTO.CartonDetailDTO cartonDetailToDTO(WmsCartonDetailEntity detailEntity);
     List<WmsCartonSpecDTO.CartonDetailDTO> cartonDetailToDTO(List<WmsCartonDetailEntity> detailEntityList);
+
+    /**
+     * 调整装箱
+     * @param adjustDetailDTO
+     * @param cartonId
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "mainId", source = "cartonId"),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "skuId", source = "adjustDetailDTO.skuId"),
+            @Mapping(target = "skuNo", source = "adjustDetailDTO.skuNo"),
+            @Mapping(target = "packQty", source = "adjustDetailDTO.packQty"),
+            @Mapping(target = "grossWeight", source = "adjustDetailDTO.grossWeight"),
+            @Mapping(target = "deliveryQty", ignore = true)
+    })
+    WmsCartonDetailEntity cartonDtoToDetail(WmsCartonDTO.AdjustDetailDTO adjustDetailDTO, String cartonId);
 }

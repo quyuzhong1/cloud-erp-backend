@@ -47,14 +47,14 @@ public class WmsCartonEntity extends BaseEntity<WmsCartonEntity> {
     /**
      * 单箱状态(incomplete 未完成,completed 已完成)
      * PackingTaskStatusEnum
-     * 字典接口地址
+     * 字典接口地址  http://172.16.100.11:3002/project/92/interface/api/13147  type = packingStatusSingle 单箱 / packingStatus总
      */
     @TableField("packing_status")
     private String packingStatus;
     /**
      * 称重状态-单箱(unweighed 未称重,success 称重成功,fail 称重失败 )
      * PackingWeightStatusEnum
-     * 字典接口地址
+     * 字典接口地址  http://172.16.100.11:3002/project/92/interface/api/13147 type= weightingStatusSingle单箱 /  weightingStatus 总
      */
     @TableField("weighting_status")
     private String weightingStatus;
