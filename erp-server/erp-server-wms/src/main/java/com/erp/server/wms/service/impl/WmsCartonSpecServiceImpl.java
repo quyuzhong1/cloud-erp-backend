@@ -17,7 +17,9 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.model.wms.enums.MeasureSourceEnum;
+import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.WmsCartonSpecMapper;
 import com.erp.server.wms.service.*;
@@ -58,6 +60,8 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private PackingTaskDetailService packingTaskDetailService;
+    @Resource
+    private CfgRuleOutService cfgRuleOutService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -185,7 +189,9 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         return view;
     }
 
-
+//    private WmsCartonSpecDTO.WeightRuleDTO getWarnMsg(String sourceType,BigDecimal grossWeight){
+//        cfgRuleOutService.getCfgOverweightDetailDTOByType(PickingSourceTypeEnum.FBA)
+//    }
     /**
      * 删除原装箱信息
      * @param taskId

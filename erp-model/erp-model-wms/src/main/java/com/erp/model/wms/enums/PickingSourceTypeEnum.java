@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
  * 装箱任务-单据类型
  */
 public enum PickingSourceTypeEnum implements EnumMessage {
-    B2B("B2B", "B2B"),
-    FBA("demandPlatformWarehouse", "FBA"),
-    THIRD("demandOverseasWarehouse", "第三方仓"),
+    FBA("FBA", "FBA"),
+    THIRD("thirdWarehouse", "第三方仓"),
+    B2B("B2B", "B2B");
     ;
 
     @EnumValue

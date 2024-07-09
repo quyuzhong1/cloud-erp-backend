@@ -848,4 +848,10 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String productNo;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class WeightRuleDTO {
+
+    }
 }
