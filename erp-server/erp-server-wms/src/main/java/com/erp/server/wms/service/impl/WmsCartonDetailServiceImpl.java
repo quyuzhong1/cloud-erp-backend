@@ -47,35 +47,6 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     private WmsCartonService wmsCartonService;
     @Autowired
     private OperateLogService operateLogService;
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void add(WmsCartonSpecDTO.AddDTO addDTO, String cartonId, String sourceId, String sourceType) {
-        //校验必填
-        for (WmsCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
-            if (StringUtils.isBlank(detail.getSkuId()) || StringUtils.isBlank(detail.getSkuNo())) {
-                throw new ServiceException(ApiError.PACKING_SKU_IS_NOT_NULL, addDTO.getBoxSpecNo());
-            }
-            if (detail.getPackQty() == null || detail.getPackQty() <= 0) {
-                throw new ServiceException(ApiError.PACKING_SKU_PACK_QTY_IS_NOT_NULL, addDTO.getBoxSpecNo(), detail.getSkuNo());
-            }
-            if (addDTO.getBoxQty() == null || addDTO.getBoxQty() <= 0) {
-                throw new ServiceException(ApiError.PACKING_SKU_BOX_QTY_IS_NOT_NULL, addDTO.getBoxSpecNo());
-            }
-        }
-
-        List<WmsCartonDetailEntity> detailEntityList = BeanMapper.copyList(addDTO.getDetailList(), WmsCartonDetailEntity.class);
-        // 数据处理
-        handleData(detailEntityList, cartonId);
-
-        log.info("开始新增发货单箱子信息单");
-        boolean save = super.saveOrUpdateBatch(detailEntityList);
-        if(!save) {
-            throw new ServiceException("发货单箱子信息单保存失败");
-        }
-        //箱子信息明细
-        this.firstMileCartonBillSave(addDTO.getBoxQty(), detailEntityList, cartonId, sourceId);
-    }
 
     @Override
     public List<WmsCartonDetailEntity> listByMainIds(List<String> mainIds) {

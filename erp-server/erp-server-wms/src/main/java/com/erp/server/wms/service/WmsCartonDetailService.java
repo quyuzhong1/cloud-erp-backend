@@ -18,16 +18,6 @@ import java.util.List;
  */
 public interface WmsCartonDetailService extends SuperService<WmsCartonDetailEntity> {
 
-    /**
-     * 新增
-     * @Author Luo_WG
-     * @Date 2023/11/29 10:39
-     * @param dto
-     * @param cartonId 规格表id
-     * @param sourceId 来源id
-     * @param sourceType 来源id
-     **/
-    void add(WmsCartonSpecDTO.AddDTO dto, String cartonId, String sourceId, String sourceType);
 
     /**
      * 根据装箱id查询箱子产品信息
