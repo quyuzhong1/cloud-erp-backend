@@ -160,7 +160,7 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
         WdtReturnOrderDetailDTO detail = new WdtReturnOrderDetailDTO();
         detail.setSkuNo(detailDto.getSpecNo());
         detail.setMustQty(new BigDecimal(detailDto.getExpectNum()).intValue());
-        detail.setReceiveQty(Integer.valueOf(detailDto.getNum()));
+        detail.setReceiveQty(new BigDecimal(detailDto.getNum()).intValue());
         detail.setReturnReasonDict(orderEntity.getReason());
         detail.setWarehouseLocation(detailDto.getPositionNo());
         detail.setIsSubContract(false);
