@@ -94,7 +94,7 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
         Map<String, Object> requestBody = commonService.makeApiFieldMap(requestMap, platformEntity.getId(), ApiModuleTypeEnum.WDT_EXT_IN_STOCK.getCode());
         CreateStockExternalInResponse response = null;
         try {
-            response = stockExternalInAPI.createOrder(requestBody);
+            response = stockExternalInAPI.createOrder(requestBody.get("order"), requestBody.get("order_details"), requestBody.get("is_check"));
         } catch (WdtErpException e) {
             log.error("推送旺店通其他出库单失败:{}", e.getMessage(), e);
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", e.getMessage()));
