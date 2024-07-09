@@ -114,10 +114,6 @@ public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
         if(count > 0){
             return ApiResult.error(ApiError.ERROR_WDT_CANCEL_PUSH.code, String.format("前序任务未完成, 跳过本次推送: %s", request));
         }
-
-        limiter.acquire();
-        //查询其他出库单
-
         StockoutOtherQueryResponse queryResponse = wdtService.queryWithDetail(request);
         List<StockoutOtherQueryResponse.OrderItem> order = queryResponse.getOrder();
         //旺店通已经存在这个单据
@@ -131,9 +127,6 @@ public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
                 return ApiResult.error(format);
             }
         }
-
-        //推送其他出库单
-        wdtService.executeConsumer(request);
         ThirdMappingEntity thirdMapping = thirdMappingService.getByThirdCodeAndType(request.getWarehouseNo(), ThirdSysTypeEnum.WDT.getCode(), ThirdSysTypeEnum.WAREHOUSE.getCode());
         if (ObjectUtils.isEmpty(thirdMapping)) {
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: 三方仓库%s未映射", request.getWarehouseNo()));
