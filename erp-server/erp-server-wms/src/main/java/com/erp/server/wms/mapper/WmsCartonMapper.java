@@ -1,8 +1,10 @@
 package com.erp.server.wms.mapper;
+
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -15,5 +17,10 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface WmsCartonMapper extends BaseMapper<WmsCartonEntity> {
-
+    /**
+     * 获取任务中最大装箱号
+     * @param packingTaskId
+     * @return
+     */
+    Integer getBoxNoByTaskId(@Param("packingTaskId") String packingTaskId);
 }

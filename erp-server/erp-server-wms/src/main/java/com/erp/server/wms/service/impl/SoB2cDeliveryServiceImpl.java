@@ -29,6 +29,7 @@ import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -73,6 +74,10 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.dto.WaveListDTO;
@@ -234,6 +239,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return save;
     }
 
+
     @Override
     public List<SoB2cDeliveryDTO.TabListDTO> tabList(PermissionsDTO param) {
         SoB2cDeliveryDTO.PagingParamDTO searchParam = new SoB2cDeliveryDTO.PagingParamDTO();
@@ -317,7 +323,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         }
 
-        //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
+        //如果是手动标发不用再次调用第三方SDK标记发货，因为手动标发已经调用过了
         if (ShipmentMarkTypeEnum.MANUAL.getCode().equals(entity.getShipmentMark())) {
 //            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
 //                //调用第三方平台SDK发货
@@ -389,7 +395,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
         }
 
-        //修改状态为虚假发货
+        //修改状态为手动标发
         update(Wrappers.<SoB2cDeliveryEntity>lambdaUpdate()
                 .set(SoB2cDeliveryEntity::getShipmentMark, ShipmentMarkTypeEnum.MANUAL.getCode())
                 .eq(SoB2cDeliveryEntity::getId, id));

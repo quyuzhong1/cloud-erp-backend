@@ -942,13 +942,12 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //查询已装箱数
-        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(mainId, null);
+        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(mainId, null);
         for (SoOutstockDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             int usePackQty = packingQtyDTOS.stream()
-                    .filter(req -> req.getSourceId().equals(groupSkuDTO.getId())
-                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
-                    .mapToInt(req -> req.getUsePackQty()).sum();
+                    .filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId()))
+                    .mapToInt(WmsCartonSpecDTO.PackingQtyDTO::getPackQty).sum();
             groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
             groupSkuDTO.setPackQty(usePackQty);
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());

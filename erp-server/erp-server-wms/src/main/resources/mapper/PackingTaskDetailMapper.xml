@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.PackingTaskDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.PackingTaskDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="fn_sku" property="fnSku" />
+       <result column="source_code" property="sourceCode" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, sku_id, sku_no, product_name, delivery_qty, source_detail_id, fn_sku, source_code
+    </sql>
+    <select id="listDetailByMainIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$DetailDTO">
+        SELECT
+            pt.id as taskId,
+            ptd.sku_id,
+            ptd.sku_no,
+            SUM(ptd.delivery_qty) as deliveryQty
+        FROM
+            packing_task pt
+                LEFT JOIN packing_task_detail ptd ON pt.id = ptd.main_id AND ptd.is_deleted = FALSE
+        where pt.is_deleted = FALSE
+        and pt.id in
+        <foreach collection="mainIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY
+            pt.id,
+            ptd.sku_id,
+            ptd.sku_no
+    </select>
+    <select id="countDeliveryQty" resultType="java.lang.Integer">
+        select count(delivery_qty) FROM packing_task_detail where main_id = #{taskId}
+    </select>
+    <select id="searchProductBySearchKey" resultType="com.erp.model.wms.dto.PackingTaskDetailDTO$ViewDTO">
+        SELECT
+            ptd.id,
+            ptd.main_id,
+            ptd.sku_id,
+            ptd.sku_no,
+            ptd.fn_sku,
+            ptd.source_detail_id
+        FROM
+            packing_task_detail ptd
+                LEFT JOIN product_purchase pp ON ptd.sku_id = pp.sku_id AND pp.is_deleted = FALSE
+        where ptd.is_deleted = FALSE
+          AND (COALESCE(ptd.sku_no, '') || ' ' || COALESCE(ptd.fn_sku, '') || ' ' || COALESCE(pp.ean, '')) ILIKE CONCAT('%', #{searchKey}::text,'%')
+        <if test="taskId != null and taskId != ''">
+            AND ptd.main_id = #{taskId}
+        </if>
+    </select>
+
+
+</mapper>

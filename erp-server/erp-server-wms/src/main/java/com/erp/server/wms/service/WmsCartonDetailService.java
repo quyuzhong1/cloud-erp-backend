@@ -1,7 +1,10 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.entity.WmsCartonEntity;
+import com.erp.model.wms.entity.WmsCartonSpecEntity;
 
 import java.util.List;
 
@@ -24,25 +27,16 @@ public interface WmsCartonDetailService extends SuperService<WmsCartonDetailEnti
      * @param sourceId 来源id
      * @param sourceType 来源id
      **/
-    void add(WmsCartonDTO.AddDTO dto, String cartonId, String sourceId, String sourceType);
+    void add(WmsCartonSpecDTO.AddDTO dto, String cartonId, String sourceId, String sourceType);
 
     /**
      * 根据装箱id查询箱子产品信息
      * @Author Luo_WG
      * @Date 2023/11/28 18:55
-     * @param cartonIds
-     * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonDetailEntity>
-     **/
-    List<WmsCartonDetailEntity> listByCartonIds(List<String> cartonIds);
-
-    /**
-     * 根据发货单id查询箱子产品信息
-     * @Author Luo_WG
-     * @Date 2023/11/29 11:15
      * @param mainIds
      * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonDetailEntity>
      **/
-    List<WmsCartonDetailEntity> listBySourceIds(List<String> mainIds);
+    List<WmsCartonDetailEntity> listByMainIds(List<String> mainIds);
 
     /**
      * 根据箱规id删除箱子产品信息
@@ -53,20 +47,26 @@ public interface WmsCartonDetailService extends SuperService<WmsCartonDetailEnti
      **/
     Boolean deleteByCartonIds(List<String> cartonIds);
 
-    /**
-     * 根据发货单id删除箱子产品信息
-     * @Author Luo_WG
-     * @Date 2023/11/29 10:35
-     * @param mainIds
-     * @return java.lang.Boolean
-     **/
-    Boolean deleteBySourceIds(List<String> mainIds);
-
 
     /**
      * 装箱详情清单(以箱号和SKU号维度)
      * @param mainId
      * @return
      */
-    List<WmsCartonDTO.PackingItemDTO> boxInfoBySourceId(String mainId);
+    List<WmsCartonSpecDTO.PackingItemDTO> boxInfoBySourceId(String mainId);
+
+    /**
+     * 新增箱子明细
+     * @param detailList
+     * @param wmsCartonEntity
+     * @param wmsCartonSpecEntity
+     */
+    void add(List<WmsCartonDetailDTO.AddDTO> detailList, WmsCartonEntity wmsCartonEntity, WmsCartonSpecEntity wmsCartonSpecEntity);
+
+    /**
+     * 根据箱子获取装箱明细列表
+     * @param cartonIds
+     * @return
+     */
+    List<WmsCartonDetailDTO.BoxDTO> listCartonDetailByMainIds(List<String> cartonIds);
 }

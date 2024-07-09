@@ -5,7 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -246,7 +246,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean packingSave(WmsCartonDTO.WmsCartonAdd dto);
+//    Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto);
 
     /**
      * 装箱详情
@@ -255,7 +255,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param id
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
-    WmsCartonDTO.WmsCartonView packingView(String id);
+    WmsCartonSpecDTO.WmsCartonSpecView packingView(String id);
 
     /**
      * 装箱清单
@@ -264,7 +264,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param id
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
      **/
-    WmsCartonDTO.ListPackingDTO listPacking(String id);
+    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
 
     /**
      * 导出装箱清单Excel
@@ -293,7 +293,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
 
     void downloadPackingTemplate(HttpServletResponse response);
 
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+//    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 生成状态更新为无需生成
@@ -313,4 +313,13 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO dto);
 
     int countNotVoided(String id);
+
+    /**
+     * 更新记录状态
+     * @param id
+     * @param packingStatus
+     */
+    void updatePackingStatus(String id, String packingStatus);
+
+    BatchResultDTO generatePackingTask(FirstMileDeliveryEntity firstMileDeliveryEntity);
 }

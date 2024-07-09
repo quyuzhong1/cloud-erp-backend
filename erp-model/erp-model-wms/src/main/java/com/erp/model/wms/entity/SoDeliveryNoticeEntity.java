@@ -240,7 +240,12 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
      */
     @TableField("delivery_status")
     private Boolean deliveryStatus;
-
+    /**
+     * 装箱状态 wait:未生成;unpacked:待装箱;packing:装箱中;packed:已装箱
+     * PackingTaskStatusEnum
+     */
+    @TableField("packing_status")
+    private String packingStatus;
 
     public static final String APPROVE_STATUS = "approve_status";
 

@@ -146,6 +146,15 @@ public class SoDeliveryNoticeDTO {
          */
         private String approveStatusName;
         /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 装箱状态名称
+         */
+        private String packingStatusName;
+        /**
          * 作废状态
          */
         private Boolean invalidStatus;

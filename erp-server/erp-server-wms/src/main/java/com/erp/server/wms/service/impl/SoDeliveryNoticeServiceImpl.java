@@ -13,6 +13,8 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -39,12 +41,16 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
@@ -72,6 +78,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -141,6 +148,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
+    @Resource
+    private PackingTaskService packingTaskService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -162,8 +171,21 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        List<String> sourceCodeList = records.stream().map(SoDeliveryNoticeDTO.PagingView::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(null, sourceCodeList);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getSourceCode, Function.identity(),(v1, v2)->v1));
+
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+                PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(obj.getCode());
+                if (Objects.nonNull(statusDTO)) {
+                    String packingStatus = StringUtils.isBlank(statusDTO.getPackingStatus()) ? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus();
+                    obj.setPackingStatus(packingStatus);
+                    obj.setPackingStatusName(PackingTaskStatusEnum.getName(packingStatus));
+                }else{
+                    obj.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
+                    obj.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
+                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 if (obj.getDeliveryStatus() != null && obj.getDeliveryStatus()) {
@@ -284,6 +306,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId());
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
+        //生成装箱任务
+        packingTaskService.addPackingByB2BDelivery(soDeliveryNoticeEntity);
         return soDeliveryNoticeEntity.getId();
     }
 
@@ -1183,5 +1207,18 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
         }
         soDeliveryNoticeDetailService.updateBatchById(detailEntities);
+    }
+
+    @Override
+    public void updatePackingStatus(String id, String packingStatus) {
+        lambdaUpdate().set(SoDeliveryNoticeEntity::getPackingStatus, packingStatus)
+                .eq(SoDeliveryNoticeEntity::getId, id)
+                .update();
+    }
+
+    @Override
+    public BatchResultDTO generatePackingTask(SoDeliveryNoticeEntity entity) {
+        packingTaskService.addPackingByB2BDelivery(entity);
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"");
     }
 }

@@ -1,11 +1,15 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -17,10 +21,34 @@ import java.io.Serializable;
 */
 @Data
 @NoArgsConstructor
-public class FirstMileCartonBillDTO implements Serializable {
+public class CartonDTO implements Serializable {
 
 
+    /**
+     * 列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+    }
+    /**
+     * 即时库存分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+
+    }
 
     /**
     * 详情
@@ -87,11 +115,11 @@ public class FirstMileCartonBillDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * first_mile_carton表id
+        * 箱子
         */
-        @NotBlank(message = "first_mile_carton表id不能为空")
-        @Size(max = 19,message = "first_mile_carton表id最大长度不能超过19位")
-        private String cartonId;
+        @NotBlank(message = "箱规id不能为空")
+        @Size(max = 19,message = "箱规id最大长度不能超过19位")
+        private String specId;
 
         /**
          * 来源id

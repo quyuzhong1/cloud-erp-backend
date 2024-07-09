@@ -763,6 +763,7 @@
         ) t
         WHERE t.realQty > 0
     </select>
+
     <select id="listInventoryWarehouseLocationByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">
         SELECT
             t.warehouse_id,
@@ -865,6 +866,23 @@
         inv.sku_id,
         inv.sku_no,
         inv.dict_inventory_status
+    </select>
+    <select id="getUsableQtyBySkuIdsAndWarehouseIds"
+            resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InventoryViewQtyDTO">
+        SELECT it.warehouse_id,
+        it.sku_id,
+        sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty
+        FROM "inventory" it
+        WHERE it.is_deleted = FALSE
+        and it.sku_id in
+        <foreach collection="params.skuIdList" item="skuId" open="(" close=")" separator=",">
+            #{skuId}
+        </foreach>
+        and it.warehouse_id in
+        <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        GROUP BY it.warehouse_id, it.sku_id
     </select>
     <select id="pageByArea" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
         select t.warehouse_id    AS warehouseId,

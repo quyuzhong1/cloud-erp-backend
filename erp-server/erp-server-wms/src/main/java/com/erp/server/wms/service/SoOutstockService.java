@@ -16,7 +16,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -287,7 +287,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return void
      */
     void handleKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId);
-    
+
     /**
      * 金蝶同步到系统，不单独事务
      * @author yl
@@ -461,7 +461,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return java.lang.Boolean
      **/
-    String packingSave(WmsCartonDTO.WmsCartonAdd dto);
+    String packingSave(WmsCartonSpecDTO.WmsCartonAdd dto);
 
     /**
      * 装箱详情
@@ -470,7 +470,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param id
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
-    WmsCartonDTO.WmsCartonView packingView(String id);
+    WmsCartonSpecDTO.WmsCartonSpecView packingView(String id);
 
     /**
      * 装箱清单
@@ -479,7 +479,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param id
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
      **/
-    WmsCartonDTO.ListPackingDTO listPacking(String id);
+    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
 
     /**
      * 导出装箱清单Excel
@@ -510,7 +510,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @date 2024-03-26 14:10
      * @author Lambda
      */
-    List<WmsCartonDTO.GroupSkuDTO> listGroupSkuById(String id);
+    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id);
 
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
@@ -546,13 +546,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto);
 
-    /**
-     * 根据来源id获取未作废且未删除的数据
-     *
-     * @param id id
-     * @return
-     */
-    int countNotVoided(String id);
 
     /**
      * 新增平台仓B2C销售出库单
@@ -585,4 +578,18 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 更新主表和明细
      */
     void updateMainAndDetail(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> list);
+    /**
+     * 根据来源id获取未作废且未删除的数据
+     *
+     * @param id id
+     * @return
+     */
+    int countNotVoided(String id);
+
+    /**
+     * 根据记录更新状态
+     * @param id
+     * @param packingStatus
+     */
+    void updatePackingStatus(String id, String packingStatus);
 }

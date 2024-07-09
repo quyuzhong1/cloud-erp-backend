@@ -38,4 +38,10 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      * @return Boolean
      */
     Boolean handleB2cAllowableDeviations(CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations, CfgRuleOutDTO.SortingPortRuleDTO dto);
+
+    /**
+     * 校验装箱超重
+     * @return true可以出库，false 不可以出库
+     */
+    CfgRuleOutDTO.CheckDTO handleOverweight(CfgRuleOutDTO.OverweightDTO dto);
 }

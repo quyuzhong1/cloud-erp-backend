@@ -55,13 +55,14 @@ public class AliExpressOrderHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public AliExpressOrderHandlerImplTest(){
-        String CLIENT_CODE = "502978";
-        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000700312cJ4nYbrzErAqH159364aboXoPdAcJwjMuEzrGXEAudlrVcjGsjo4bIr30";
+        String CLIENT_CODE = "503630";
+        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
+        String token = "50000700423zHPZZqMly9iku4MQdb7h0hqR18ff9902ExugZffT7nzxEiFwFyWHdZKNC";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
         authMap.put("url","https://api-sg.aliexpress.com");
+//        authMap.put("url","https://open.aliexpress.com");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -197,7 +198,7 @@ public class AliExpressOrderHandlerImplTest {
     @Test
     public void queryOrder() throws com.erp.tms.aliexpress.util.ApiException {
         QueryOrderRequest queryOrderRequest = QueryOrderRequest.builder()
-                .trade_order_id("3037870854973191")
+                .trade_order_id("3037838269760227")
                 .current_page(1)
                 .page_size(20)
                 .build();

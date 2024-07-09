@@ -11,7 +11,6 @@
         fd.demand_type AS demandType,
         fd.approve_status AS approveStatus,
         fd.invalid_status AS invalidStatus,
-        fd.packing_status AS packingStatus,
         fd.shop_id AS shopId,
         fd.shop_name AS shopName,
         fd.country_id AS countryId,
@@ -70,7 +69,6 @@
         fd.demand_type AS demandType,
         fd.approve_status AS approveStatus,
         fd.invalid_status AS invalidStatus,
-        fd.packing_status AS packingStatus,
         fd.shop_id AS shopId,
         fd.shop_name AS shopName,
         fd.country_id AS countryId,
@@ -200,7 +198,7 @@
     </select>
 
     <!--导出装箱清单Excel-->
-    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonDTO$ExportPackingDTO">
+    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$ExportPackingDTO">
         SELECT
         DISTINCT
         fd.id,

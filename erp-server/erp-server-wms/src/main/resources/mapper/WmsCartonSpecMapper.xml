@@ -22,52 +22,63 @@
     </resultMap>
 
     <!--查询已装箱数量-->
-    <select id="listPackingQtyByMainId" resultType="com.erp.model.wms.dto.WmsCartonDTO$PackingQtyDTO">
+    <select id="listPackingQtyByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingQtyDTO">
         SELECT
-            fmc.source_id,
-            fmcd.carton_id,
-            SUM(fmc.box_qty) AS boxQty,
-            fmcd.sku_id,
-            fmcd.sku_no,
-            SUM(fmcd.pack_qty) AS packQty,
-            SUM(fmc.box_qty) * SUM(fmcd.pack_qty) AS usePackQty
-        FROM wms_carton_spec fmc
-        INNER JOIN wms_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
-        WHERE fmc.is_deleted = FALSE
-        <if test="sourceId != null and sourceId != ''">
-            AND fmc.source_id = #{sourceId}
+        wcs.id,
+        wcd.sku_id,
+        wcd.sku_no,
+        SUM(wcd.pack_qty) AS packQty,
+        SUM(wcd.delivery_qty) AS deliveryQty,
+        SUM(wcs.box_qty) AS boxQty
+        FROM wms_carton_spec wcs
+        LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+        LEFT JOIN wms_carton_detail wcd ON wc.id = wcd.main_id AND wcd.is_deleted = FALSE
+        WHERE wcs.is_deleted = FALSE
+        <if test="mainId != null and mainId != ''">
+            AND wcs.main_id = #{mainId}
         </if>
         <if test="boxSpecNo != null and boxSpecNo != ''">
-            AND fmc.box_spec_no = #{boxSpecNo}
+            AND wcs.box_spec_no = #{boxSpecNo}
         </if>
-        GROUP BY fmc.source_id,
-        fmcd.carton_id,
-        fmcd.sku_id,
-        fmcd.sku_no
+        GROUP BY wcs.id,
+        wcd.sku_id,
+        wcd.sku_no
     </select>
 
     <!--根据来源Id查询包装信息-->
-    <select id="listPackDateBySourceId" resultType="com.erp.model.wms.dto.WmsCartonDTO$PackDateDTO">
+    <select id="listPackDateByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackDateDTO">
         SELECT
-        fmcd.source_id AS id,
-        fmcd.carton_id,
-        fmcd.sku_id,
-        fmcd.sku_no,
-        SUM(fmcd.pack_qty) AS packQty,
-        SUM(fmc.box_qty) AS boxQty,
-        fmc.box_spec_no,
-        fmc.source_type
-        FROM wms_carton_spec fmc
-        INNER JOIN wms_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
-        WHERE fmc.is_deleted = FALSE
-        <if test="sourceId != null and sourceId != ''">
-            AND fmcd.source_id = #{sourceId}
-        </if>
-        GROUP BY fmcd.source_id,
-        fmcd.carton_id,
-        fmcd.sku_id,
-        fmcd.sku_no,
-        fmc.box_spec_no,
-        fmc.source_type
+            wcs.id,
+            wcs.main_id as taskId,
+            wcd.sku_id,
+            wcd.sku_no,
+            SUM(wcd.pack_qty) AS packQty,
+            SUM(wcd.delivery_qty) AS deliveryQty,
+            SUM(wcd.gross_weight) AS grossWeight,
+            SUM(wcs.box_qty) AS boxQty,
+            wcs.box_spec_no,
+            wc.box_no
+        FROM wms_carton_spec wcs
+        LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+        LEFT JOIN wms_carton_detail wcd ON wc.id = wcd.main_id AND wcd.is_deleted = FALSE
+        WHERE wcs.is_deleted = FALSE
+            <if test="mainId != null and mainId != ''">
+                AND wcs.main_id = #{mainId}
+            </if>
+        GROUP BY wcs.id,
+            wcs.main_id,
+            wcd.sku_id,
+            wcd.sku_no,
+            wcs.box_spec_no,
+            wc.box_no
+    </select>
+    <select id="selectBoxSpecNo" resultType="java.lang.Integer">
+        SELECT
+            MAX( wcs.box_spec_no )
+        FROM
+            wms_carton_spec wcs
+        WHERE
+            wcs.is_deleted = FALSE
+          AND wcs.main_id = #{taskId}
     </select>
 </mapper>

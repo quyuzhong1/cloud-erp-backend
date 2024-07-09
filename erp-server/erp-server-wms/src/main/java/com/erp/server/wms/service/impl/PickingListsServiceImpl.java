@@ -454,6 +454,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         }
     }
 
+    @Override
+    public List<PickingListsDTO.DetailPickDTO> listDetailBySourceIds(List<String> sourceIds) {
+        return baseMapper.listDetailBySourceIds(sourceIds);
+    }
+
     /**
      * 处理编辑的数据
      *
