@@ -154,21 +154,21 @@ public class DmpOutputRocketMQPushUtils{
 			.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
 			.update();
 		if(status.equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
-//			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-//	        warnMsgInfo.setBizName("新中台推送erp");
-//	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-//	        warnMsgInfo.setTitle("新中台推送erp失败，id=" + id);
-//	        warnMsgInfo.setTableName("dmp_output_task_record");
-//	        warnMsgInfo.setTableId(id);
-//	        warnMsgInfo.setKeyInfo(responseData);
-//	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-//	        mqProducerService.sendWarnMsg(warnMsgInfo);
+			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+	        warnMsgInfo.setBizName("新中台推送erp");
+	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+	        warnMsgInfo.setTitle("新中台推送erp失败，id=" + id);
+	        warnMsgInfo.setTableName("dmp_output_task_record");
+	        warnMsgInfo.setTableId(id);
+	        warnMsgInfo.setKeyInfo(responseData);
+	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+	        mqProducerService.sendWarnMsg(warnMsgInfo);
 	        
 	        Map<String, Object> bodyMap = new HashMap<String, Object>();
 			bodyMap.put("msg_type", "text");
 			Map<String, String> contentMap = new HashMap<String, String>();
 			
-			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "任务id=" + id + "处理失败" + responseData);
+			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "输出任务记录id=" + id + "处理失败" + responseData);
 			bodyMap.put("content", contentMap);
 			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
 		}

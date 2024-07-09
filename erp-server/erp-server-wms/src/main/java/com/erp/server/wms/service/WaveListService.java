@@ -1,15 +1,13 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.entity.WaveListEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface WaveListService extends SuperService<WaveListEntity> {
@@ -80,4 +78,30 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * 取消已打印（修改波次状态为：待拣货）
      */
     BatchResultDTO cancelPrinted(String id);
+
+    /**
+     * 通过发货单id查询波次
+     *
+     * @return
+     */
+    List<WaveListDTO.WaveDeliveryDTO> listByDeliverIds(List<String> ids);
+
+    List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param);
+
+    /**
+     * 完成打印
+     */
+    ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO);
+
+    /**
+     * 高级查询查波次表的发货单id
+     * @param compareCodeSplicingValueSql 拼好的sql
+     */
+    List<String> listDeliveryIdBySql(String compareCodeSplicingValueSql);
+
+    /**
+     * 打印拣货单
+     * @param ids 波次号
+     */
+    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids);
 }

@@ -144,22 +144,6 @@ public class TbTaskTypeService {
     }
 
 
-    public void createJob(CreateJobDTO dto) {
-
-        PlatformApiTaskEntity entity = platformApiTaskService.getOne(Wrappers.<PlatformApiTaskEntity>lambdaQuery()
-                .eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform())
-                .eq(PlatformApiTaskEntity::getBillType, dto.getBillType()));
-        List<LocalDateTime> times = splitTimeRange(dto.getStartTime(), dto.getEndTime(), Duration.ofSeconds(entity.getIntervalTime()));
-        List<JobTaskDTO> list = times.stream().map(time ->{
-            JobTaskDTO taskDTO = new JobTaskDTO();
-            BeanUtils.copyProperties(entity, taskDTO);
-            taskDTO.setLastTime(time);
-            taskDTO.setNextTime(time.plusSeconds(entity.getIntervalTime()));
-            return taskDTO;
-        }).collect(Collectors.toList());
-        createRequestReportTaskService.addTaskToQueue(list);
-    }
-
     public List<LocalDateTime> splitTimeRange(LocalDateTime startTime, LocalDateTime endTime, Duration interval) {
         List<LocalDateTime> timeList = new ArrayList<>();
         LocalDateTime current = startTime;

@@ -131,7 +131,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
             boolean update = update(new UpdateWrapper<WarehouseLocationSafetyInventoryEntity>()
                     .eq("warehouse_id", entity.getWarehouseId())
-                    .eq("warehouseLocation", entity.getWarehouseLocation())
+                    .eq("warehouse_location", entity.getWarehouseLocation())
                     .eq("sku_no", entity.getSkuNo())
                     .set("safety_qty", entity.getSafetyQty())
                     .set("max_qty", entity.getMaxQty()));
@@ -215,9 +215,8 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
         List<WarehouseEntity> warehouseList = warehouseService.getBaseMapper().selectBatchIds(warehouseIds);
         Map<String, String> idNameMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
         List<WarehouseLocationEntity> areaList = warehouseLocationService.getBaseMapper().selectList(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("warehouse_id", warehouseIds.get(0))
+                .in("warehouse_id", warehouseIds)
                 .eq("type", "area")
-                .eq("is_deleted", false)
         );
         List<DictBasicEntity> dictEntityList = dictBasicService.getBaseMapper().selectList(new QueryWrapper<DictBasicEntity>().eq("type", "warehouseAreaType"));
         Map<String, String> dictValueNameMap = dictEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
@@ -226,7 +225,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
         emptyAreaEntity.setName("");
         for (WarehouseLocationSafetyInventoryDTO.ViewDTO dto : records) {
             String warehouseArea = dto.getWarehouseArea();
-            WarehouseLocationEntity areaEntity = areaList.stream().filter(item -> item.getCode().equals(warehouseArea)).findFirst().orElse(emptyAreaEntity);
+            WarehouseLocationEntity areaEntity = areaList.stream().filter(item -> item.getWarehouseId().equals(dto.getWarehouseId()) && item.getCode().equals(warehouseArea)).findFirst().orElse(emptyAreaEntity);
             dto.setWarehouseAreaName(areaEntity.getName());
 
             String warehouseId = dto.getWarehouseId();

@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,6 +18,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.PickingCartDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
@@ -33,6 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 拣货车管理 服务实现类
@@ -160,5 +164,12 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
+    }
+
+    @Override
+    public List<PickingCartDTO.ViewDTO> searchByKeyword(String code) {
+        List<PickingCartEntity> entityList = this.list(new QueryWrapper<PickingCartEntity>().like("code", code));
+        List<PickingCartDTO.ViewDTO> viewDTOS = BeanMapper.copyList(entityList, PickingCartDTO.ViewDTO.class);
+        return viewDTOS;
     }
 }

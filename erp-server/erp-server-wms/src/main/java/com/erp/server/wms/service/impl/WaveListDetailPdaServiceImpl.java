@@ -75,7 +75,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         Map<String, String> warehouseLocationCode2NameMap = warehouseLocationList.stream().collect(Collectors.toMap(item1 -> item1.getCode(), item2 -> item2.getName()));
         Map<String, List<WaveListDetailDTO.DeliveryInfoDTO>> map = deliveryList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseLocation()));
         List<String> skuIds = deliveryList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productList = productDetailService.listByIds(skuIds);     //todo 待优化
+        List<ProductDetailEntity> productList = productDetailFeign.listByIds(skuIds);
         Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
         WaveListDetailPdaDTO.ViewDTO resultViewDTO = new WaveListDetailPdaDTO.ViewDTO();

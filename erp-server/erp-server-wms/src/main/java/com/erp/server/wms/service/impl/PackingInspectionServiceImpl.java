@@ -259,57 +259,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
         viewDTO.setTransferStatus(soB2cEntity.getTransferStatus());
         viewDTO.setOrderUploadStatus(declareDetailEntity.getOrderUploadStatus());
-
-        //直接出库
-        if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList()) && dto.getIsAutoOut()  && entity.getIsInspection()) {
-            if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
-                    || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
-                throw new ServiceException(ApiError.ERROR_99114);
-            }
-            //如果是待上传或上传失败则直接返回
-            if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
-                    StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
-                return viewDTO;
-            }
-
-            //获取一个当前时间当作发货时间
-            LocalDateTime deliveryTime = LocalDateTime.now();
-
-            //将发货状态更新为已发货
-            entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
-            entity.setDeliveryTime(deliveryTime);
-            entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
-            if (!soB2cDeliveryService.updateById(entity)) {
-                throw new ServiceException("发货单更新失败");
-            }
-
-            //修改订单状态待发货
-            SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
-            updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
-            updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
-            updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
-            soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
-
-            //出库
-            soB2cDeliveryService.generateB2cSoOutstock(entity);
-
-            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "包装验货", entity.getCode());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
-
-            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                // 调用第三方平台SDK标记发货(独立事务)
-                String businessDesc = "包装验货";
-                asyncService.asyncShipOrder(soB2cEntity.getId(),
-                        soB2cEntity.getCode(),
-                        soB2cEntity.getDictPlatform(),
-                        soB2cEntity.convertSubmitPlatformUniqueKey(),
-                        JSONUtil.toJsonStr(dto),
-                        businessDesc, false);
-            } else {
-                log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
-            }
-        }
         return viewDTO;
     }
 
@@ -344,6 +293,11 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     @GlobalTransactional(rollbackFor = Exception.class)
     public void soB2cDeliveryAutoOut (SoB2cEntity soB2cEntity,SoB2cDeliveryEntity entity) {
 
+        if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
+                || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
+            throw new ServiceException(ApiError.ERROR_99114);
+        }
+
         TransferDeclareDetailEntity declareDetailEntity = transferDeclareFeign.getBySoId(soB2cEntity.getId());
         if (ObjectUtil.isEmpty(declareDetailEntity)) {
             declareDetailEntity = new TransferDeclareDetailEntity();
@@ -359,6 +313,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         //修改订单状态待发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
         updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
@@ -385,6 +340,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         //将发货状态更新为已发货
         entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
         entity.setDeliveryTime(deliveryTime);
+        entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
     }
 
     private void deleteViewDTO(String id) {

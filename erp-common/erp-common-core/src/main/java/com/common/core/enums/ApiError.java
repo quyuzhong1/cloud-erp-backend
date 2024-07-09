@@ -861,6 +861,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99114(99114,"待处理，异常单的数据不支持自动发货"),
     ERROR_99115(99115,"销售订单【{}】的发货单存在待处理，异常单的数据不支持自动发货"),
+    ERROR_99116(99116,"非待处理的数据不能操作生成波次"),
 
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
@@ -982,7 +983,7 @@ public enum ApiError implements Serializable {
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货，取消发货的数据不允许操作手动标发"),
     APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许手动标发"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
-    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】已发货和取消发货单状态，不允许再打印拣货单"),
+    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】待处理、已发货和取消发货单状态，不允许再打印拣货单"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
@@ -1019,8 +1020,8 @@ public enum ApiError implements Serializable {
     PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
     CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
     RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
-    B2C_SO_DELIVERY_FINISH_PRINT(92131,"发货单【{}】非待处理不支持完成打印"),
-    B2C_SO_DELIVERY_NOT_FINISH_PRINT(92132,"发货单【{}】非拣货中不支持取消完成拣货"),
+    B2C_SO_DELIVERY_FINISH_PRINT(92131,"发货单【{}】非生成波次/拣货中不支持完成打印"),
+    B2C_SO_DELIVERY_NOT_FINISH_PRINT(92132,"发货单【{}】非生成波次/拣货中不支持取消完成拣货"),
     PLEASE_KEEP_LEAST_ONE_DATA(92133,"请至少保留一条明细，或者整单删除！"),
 
     NOT_PACKAGE_NO_APPROVE(92133,"单号{}尚未完成装箱信息，请完成后审核"),

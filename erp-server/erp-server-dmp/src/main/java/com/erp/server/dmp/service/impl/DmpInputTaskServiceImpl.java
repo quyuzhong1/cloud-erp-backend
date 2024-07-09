@@ -2,27 +2,38 @@ package com.erp.server.dmp.service.impl;
 
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+
+import javax.annotation.Resource;
 
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpInputTaskDTO;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.mapper.DmpInputTaskMapper;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.http.HttpUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -36,7 +47,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper, DmpInputTaskEntity> implements DmpInputTaskService {
-    @GlobalTransactional(rollbackFor = Exception.class)
+	@Resource
+    private MQProducerService mqProducerService;
+	
+	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
+	
+	@GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpInputTaskDTO.AddDTO addDTO) {
@@ -100,11 +116,34 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     	if(errorFlag) {
     		errorBeforeStatus = getById(id).getStatus() + "@@";
     	}
-    	return lambdaUpdate().eq(DmpInputTaskEntity::getId, id)
+    	String errorMessage = errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e);
+		boolean update = lambdaUpdate().eq(DmpInputTaskEntity::getId, id)
 				.set(DmpInputTaskEntity::getErrorCount, errorCount)
 				.set(errorFlag , DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
 				.set(DmpInputTaskEntity::getUpdateTime, LocalDateTime.now())
-				.set(DmpInputTaskEntity::getErrorMessage,  errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e))
+				.set(DmpInputTaskEntity::getErrorMessage,  errorMessage)
 				.update();
+    	
+		if(errorFlag) {
+			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+	        warnMsgInfo.setBizName("新中台拉取");
+	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+	        warnMsgInfo.setTitle("新中台拉取失败，id=" + id);
+	        warnMsgInfo.setTableName("dmp_input_task");
+	        warnMsgInfo.setTableId(id);
+	        warnMsgInfo.setKeyInfo(errorMessage);
+	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+	        mqProducerService.sendWarnMsg(warnMsgInfo);
+	        
+	        Map<String, Object> bodyMap = new HashMap<String, Object>();
+			bodyMap.put("msg_type", "text");
+			Map<String, String> contentMap = new HashMap<String, String>();
+			
+			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "输入任务记录id=" + id + "处理失败" + errorMessage);
+			bodyMap.put("content", contentMap);
+			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
+		}
+    	
+		return update;
 	}
 }

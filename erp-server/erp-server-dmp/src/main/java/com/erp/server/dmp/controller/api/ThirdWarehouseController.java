@@ -1,27 +1,28 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.ThirdShopDTO;
-import com.erp.server.dmp.service.ThirdShopService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.ThirdWarehouseService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
+import com.erp.server.dmp.service.ThirdShopService;
+import com.erp.server.dmp.service.ThirdWarehouseService;
+import com.sdk.third.qimen.handler.QiMenSoOutStockHandler;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * 第三方系统仓库表
@@ -37,6 +38,9 @@ public class ThirdWarehouseController extends BaseController {
 
     @Resource
     private ThirdWarehouseService thirdWarehouseService;
+
+    @Resource
+    private QiMenSoOutStockHandler qiMenSoOutStockHandler;
 
     /**
     * 新增
@@ -96,6 +100,15 @@ public class ThirdWarehouseController extends BaseController {
     @PostMapping("/pagingSelect")
     public ApiResult<PagingVO<ThirdWarehouseDTO.PageSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ThirdWarehouseDTO.SelectDTO> dto) {
         return success(thirdWarehouseService.pagingSelect(dto));
+    }
+
+    @GetMapping("/test")
+    public void test(@RequestParam String str){
+        LocalDateTime startTime = LocalDateTime.parse(str, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        JobTaskDTO dto = new JobTaskDTO();
+        dto.setLastTime(startTime);
+        dto.setNextTime(startTime.plusMinutes(30));
+        qiMenSoOutStockHandler.download(dto);
     }
 
 }

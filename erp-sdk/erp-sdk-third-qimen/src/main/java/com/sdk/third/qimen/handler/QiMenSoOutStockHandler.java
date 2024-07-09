@@ -78,16 +78,17 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
         request.setTargetAppKey(qimenService.getTargetAppKey());
         request.setWdtAppkey(qimenService.getWdtAppKey());
         request.setWdtSalt(qimenService.getWdtSalt());
-        request.setDatetime(qimenService.format(new Date()));
         request.putOtherTextParam(qimenService.getCustomerIdKey(), qimenService.getCustomerIdValue());
-        request.setWdtSign(QiMenUtils.getQimenCustomWdtSign(request, qimenService.getWdtSecret()));
 
         List<WdtWmsStockoutSalesQuerywithdetailResponse.Order> result = new ArrayList<>();
         boolean hasNext = true;
         while (hasNext) {
+            request.setDatetime(qimenService.format(new Date()));
+            request.setWdtSign(QiMenUtils.getQimenCustomWdtSign(request, qimenService.getWdtSecret()));
             WdtWmsStockoutSalesQuerywithdetailResponse response;
             try {
                 response = qimenService.execute(request);
+                log.info("奇门销售出库单响应参数：{}", JSONUtil.toJsonStr(response));
             } catch (ApiException e) {
                 log.error("拉取奇门销售出库单异常：{}", e);
                 return result;
@@ -103,10 +104,11 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
 
             result.addAll(response.getData().getOrder());
             Long totalCount = response.getData().getTotalCount();
-            pager.setPageNo(pager.getPageNo() + 1);
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
+            pager.setPageNo(pager.getPageNo() + 1);
+            request.setPager(pager);
         }
 
         return result;
@@ -187,7 +189,6 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
                 detail.setRemark(detailItem.getRemark());
                 detail.setSourceDetailId(String.valueOf(detailItem.getSrcOrderDetailId()));
                 detail.setInvalidStatus(false);
-                detailList.add(detail);
 
                 List<WdtWmsStockoutSalesQuerywithdetailResponse.PositionDetailsList> list = detailItem.getPositionDetailsList();
                 List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = list.stream()

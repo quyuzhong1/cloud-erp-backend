@@ -395,4 +395,19 @@
         where wa.is_deleted = false and wl.is_deleted = false
         and wl.warehouse_id = #{warehouseId} and wl.code = #{warehouseLocation}
     </select>
+    <select id="listArea2LocationMapping" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$MappingDTO">
+        select wa.id        as areaId,
+               wa.code      as areaCode,
+               wa.name      as areaName,
+               wa.area_type as areaType,
+               wl.id        as locationId,
+               wl.code      as locationCode,
+               wl.name      as locationName
+        from warehouse_location wa
+                 left join warehouse_location wl on wl.parent_id = wa.id
+        where wa.type = 'area'
+          and wa.is_deleted = false
+          and wl.is_deleted = false
+          and wa.warehouse_id = #{warehouseId}
+    </select>
 </mapper>

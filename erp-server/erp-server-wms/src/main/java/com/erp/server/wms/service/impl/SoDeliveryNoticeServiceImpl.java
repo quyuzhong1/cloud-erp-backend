@@ -645,7 +645,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //回滚库存
         InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE, entity.getId());
         //删除拣货详情
-        pickingDetailService.deleteBySourceId(Collections.singletonList(entity.getId()));
+        pickingListsService.deleteBySourceId(Collections.singletonList(entity.getId()));
         //回滚虚拟库存
         virtualInventoryTransCoreService.unApprove(inventoryUnApproveDTO);
 

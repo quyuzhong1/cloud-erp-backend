@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.consumer.wangdian;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -9,12 +10,19 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.dmp.entity.ThirdWarehouseEntity;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.dmp.enums.WdtWarehouseTypeEnum;
 import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
 import com.erp.server.dmp.service.DmpPushTaskService;
+import com.erp.server.dmp.service.ThirdMappingService;
+import com.erp.server.dmp.service.ThirdWarehouseService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +54,10 @@ public class WdtOtherInStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
 
     @Resource
     private WdtOtherInStockService wdtPushOtherInStockService;
+    @Resource
+    private ThirdMappingService thirdMappingService;
+    @Resource
+    private ThirdWarehouseService thirdWarehouseService;
     private final RateLimiter limiter = RateLimiter.create(1, 1, TimeUnit.SECONDS);
 
     @Override
@@ -97,11 +109,23 @@ public class WdtOtherInStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
             return ApiResult.error(ApiError.ERROR_WDT_CANCEL_PUSH.code, String.format("前序任务未完成, 跳过本次推送: %s", request));
         }
 
-        //请求旺店通
-        limiter.acquire();
-        wdtPushOtherInStockService.executeConsumer(request);
-
-
+        ThirdMappingEntity thirdMapping = thirdMappingService.getByThirdCodeAndType(request.getWarehouseNo(), ThirdSysTypeEnum.WDT.getCode(), ThirdSysTypeEnum.WAREHOUSE.getCode());
+        if (ObjectUtils.isEmpty(thirdMapping)) {
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: 三方仓库%s未映射", request.getWarehouseNo()));
+        }
+        ThirdWarehouseEntity thirdWarehouse = thirdWarehouseService.getById(thirdMapping.getThirdInfoId());
+        if (ObjectUtils.isEmpty(thirdWarehouse)) {
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: 三方仓库%s不存在", request.getWarehouseNo()));
+        }
+        //根据旺店通仓库类型，决定调用的API
+        if (WdtWarehouseTypeEnum.SELF_TRANSFER.equals(thirdWarehouse.getType())) {
+            limiter.acquire();
+            wdtPushOtherInStockService.executeSelfConsumer(request);
+        }else {
+            //请求旺店通
+            limiter.acquire();
+            wdtPushOtherInStockService.executeConsumer(request);
+        }
         return ApiResult.success();
     }
 }

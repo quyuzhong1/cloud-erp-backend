@@ -4,29 +4,26 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.*;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
+import com.erp.model.wms.entity.PickingCartTypeEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.server.wms.mapper.WaveListMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
-import com.erp.server.wms.service.WaveListDetailService;
-import com.erp.server.wms.service.WaveListService;
+import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +45,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private SoB2cDeliveryService deliveryService;
+    @Resource
+    private PickingCartTypeService pickingCartTypeService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -59,19 +58,19 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         entity.setCode(waveCode);
         entity.setName(dto.getName());
         entity.setType(dto.getWaveType());
-        entity.setPickingCartCode(dto.getPickCartTypeId());
         entity.setPickingType(dto.getPickingType());
         entity.setStatus(WaveStatusEnum.AWAIT_PICK.getCode());
         entity.setPrintStatus(PackagePrintStatusEnum.NOT.getCode());
+        entity.setPickingCartType(dto.getPickCartTypeId());
         this.save(entity);
 
-        List<String> deliveryIds = dto.getDeliveryIdList();
-        List<SoB2cDeliveryEntity> deliveryList = deliveryService.getBaseMapper().selectBatchIds(deliveryIds);
+        List<String> deliveryIdList = dto.getDeliveryIdList();
+        List<SoB2cDeliveryEntity> deliveryList = deliveryService.getBaseMapper().selectBatchIds(deliveryIdList);
         Map<String, SoB2cDeliveryEntity> deliveryMap = deliveryList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
-        List<WaveListDetailEntity> detailList = new ArrayList<>(deliveryIds.size());
-        for (int i = 0; i < deliveryIds.size(); i++) {
-            String deliveryId = deliveryIds.get(i);
+        List<WaveListDetailEntity> detailList = new ArrayList<>(deliveryIdList.size());
+        for (int i = 0; i < deliveryIdList.size(); i++) {
+            String deliveryId = deliveryIdList.get(i);
             SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryMap.get(deliveryId);
             WaveListDetailEntity detailEntity = new WaveListDetailEntity();
             detailEntity.setBasketNo(String.valueOf(i + 1));
@@ -80,12 +79,12 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             detailEntity.setDeliveryCode(soB2cDeliveryEntity.getCode());
             detailEntity.setSoId(soB2cDeliveryEntity.getSourceId());
             detailEntity.setSoCode(soB2cDeliveryEntity.getSoCode());
-            detailEntity.setPickingStatus("");
+            detailEntity.setPickingStatus(PickingStatusEnum.NOT_START.getCode());
             detailEntity.setLogisticsChannelName(soB2cDeliveryEntity.getLogisticsChannelName());
 
             detailList.add(detailEntity);
         }
-
+        deliveryService.updateStatus(deliveryIdList, SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode());
         waveListDetailService.saveBatch(detailList);
         operateLogService.addModuleOperateLog(String.format("生成波次【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getId(), "新增操作", user.getUid(), user.getRealName());
         return new BaseResultDTO.AddDTO(entity.getId(), entity.getCode());
@@ -112,8 +111,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public List<WaveListDTO.PickingWaveDetailDTO> listDetailByMainId(String waveId, String skuId) {
-        return listDetailByMainId(waveId, null, skuId);
+    public List<WaveListDTO.PickingWaveDetailDTO> listDetailByMainId(String waveId, String basketNo) {
+        return listDetailByMainId(waveId, basketNo, null);
     }
 
     @Override
@@ -140,6 +139,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     private List<WaveListDTO.ViewDTO> fillViewList(List<WaveListEntity> records) {
+        List<PickingCartTypeEntity> cartTypeList = pickingCartTypeService.list();
+        Map<String, String> typeMap = cartTypeList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getName()));
+
         if (records.isEmpty()){
             return Collections.emptyList();
         }
@@ -151,7 +153,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(record.getPrintStatus()));
-            viewDTO.setPickingCartTypeName(record.getPickingCartType());
+            viewDTO.setPickingCartTypeName(typeMap.get(record.getPickingCartType()));
+            viewDTO.setStatusName(WaveStatusEnum.getNameByCode(record.getStatus()));
             viewDTOList.add(viewDTO);
         }
         return viewDTOList;
@@ -161,22 +164,24 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     public List<WaveListDTO.TabDTO> tabList() {
         List<WaveListDTO.TabDTO> list = baseMapper.listTab();
         Map<String, WaveListDTO.TabDTO> map = list.stream().collect(Collectors.toMap(item1 -> item1.getTabFlag(), item2 -> item2));
-        if(! map.containsKey(WaveStatusEnum.AWAIT_PICK.getCode())){
-            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.AWAIT_PICK.getCode(), 0));
-        }
-        if(! map.containsKey(WaveStatusEnum.PICK_ING.getCode())){
-            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.PICK_ING.getCode(), 0));
-        }
-        if(! map.containsKey(WaveStatusEnum.HANG_UP.getCode())){
-            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.HANG_UP.getCode(), 0));
-        }
-        if(! map.containsKey(WaveStatusEnum.FINISH.getCode())){
-            list.add(new WaveListDTO.TabDTO(WaveStatusEnum.FINISH.getCode(), 0));
-        }
-        for (WaveListDTO.TabDTO dto : list) {
+
+        List<WaveListDTO.TabDTO> resultList = new ArrayList<>();
+        WaveListDTO.TabDTO tab_wait = map.get(WaveStatusEnum.AWAIT_PICK.getCode());
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.AWAIT_PICK.getCode(), tab_wait != null ? tab_wait.getCount() : 0));
+
+        WaveListDTO.TabDTO tab_ing = map.get(WaveStatusEnum.PICK_ING.getCode());
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.PICK_ING.getCode(), tab_ing != null ? tab_ing.getCount() : 0));
+
+        WaveListDTO.TabDTO tab_hang = map.get(WaveStatusEnum.HANG_UP.getCode());
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.HANG_UP.getCode(), tab_hang != null ? tab_hang.getCount() : 0));
+
+        WaveListDTO.TabDTO tab_finish = map.get(WaveStatusEnum.FINISH.getCode());
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.FINISH.getCode(), tab_finish != null ? tab_finish.getCount() : 0));
+
+        for (WaveListDTO.TabDTO dto : resultList) {
             dto.setTabFlagName(WaveStatusEnum.getNameByCode(dto.getTabFlag()));
         }
-        return list;
+        return resultList;
     }
 
     @Override
@@ -186,8 +191,15 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         if (! entity.getStatus().equals(WaveStatusEnum.AWAIT_PICK.getCode())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有待拣货的波次支持取消");
         }
-        //todo 释放冻结库存
+        List<WaveListDetailEntity> detailList = waveListDetailService.listByMainId(id);
+        List<String> deliveryIdList = detailList.stream().map(WaveListDetailEntity::getDeliveryId).collect(Collectors.toList());
+
+        //删除波次
         this.baseMapper.deleteById(entity);
+        //释放冻结库存
+        deliveryService.rollbackInventory(deliveryIdList);
+        //修改发货单状态
+        deliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>().in("id", deliveryIdList).set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode()));
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "成功");
     }
 
@@ -208,5 +220,38 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
                 .set("print_time", "")
         );
         return BatchResultDTO.fail(waveId, viewDTO.getCode(), "成功");
+    }
+
+    @Override
+    public List<WaveListDTO.WaveDeliveryDTO> listByDeliverIds(List<String> ids) {
+        return baseMapper.listByDeliverIds(ids);
+    }
+
+    @Override
+    public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
+        List<String> waveIds = param.getIds();
+        List<WaveListDetailEntity> detailList = waveListDetailService.listByMainIds(waveIds);
+        List<String> deliveryIds = detailList.stream().map(item -> item.getDeliveryId()).distinct().collect(Collectors.toList());
+        SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam printLogisticsBillConfirmParam = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam(param.getPrintType(), deliveryIds);
+        return deliveryService.printLogisticsWaybillPreview(printLogisticsBillConfirmParam);
+    }
+
+    @Override
+    public ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO) {
+        //修改波次打印状态为已打印
+        update(new UpdateWrapper<WaveListEntity>().set("print_status", PrintStatusEnum.PRINT_FINISH.getCode()).in("id", idsDTO.getIds()));
+        return ApiResult.success();
+    }
+
+    @Override
+    public List<String> listDeliveryIdBySql(String compareCodeSplicingValueSql) {
+        return baseMapper.listDeliveryIdBySql(compareCodeSplicingValueSql);
+    }
+
+    @Override
+    public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids) {
+        List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(ids);
+        List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        return deliveryService.printPickingView(deliveryIds);
     }
 }

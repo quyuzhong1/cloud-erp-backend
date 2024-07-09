@@ -61,7 +61,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
      * @param dto 任务信息
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         dto.setPlatformApiEnum(PlatformApiEnum.ORDER_GET_ORDER_LIST);
         List<OrderEntity> entityList = pullDate(dto);
@@ -288,7 +288,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         return items;
     }
 
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager",  propagation = Propagation.REQUIRES_NEW)
+//    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager",  propagation = Propagation.REQUIRES_NEW)
     public void addDeliveryOrder(OrderEntity entity) {
         // 更新mongo数据
         OrderMongoDTO updateDto = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());

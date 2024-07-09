@@ -59,6 +59,12 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		String type = dmpCfgInputEntity.getType();
 		String typeId = dmpCfgInputEntity.getTypeId();
+		if(!typeId.equals(dmpResponse.getDmpCfgInputEntity().getTypeId())) {
+			log.error("{}成员变量对象{}，参数对象{}" , inputTaskId , JSON.toJSONString(dmpCfgInputEntity) , JSON.toJSONString(dmpResponse.getDmpCfgInputEntity()));
+		}
+		if(!dmpCfgInputConvertEntity.getMainId().equals(dmpCfgInputEntity.getId())) {
+			log.error("基础成员变量不一致：{} ，{}" , JSON.toJSONString(dmpCfgInputConvertEntity) , JSON.toJSONString(dmpCfgInputEntity));
+		}
 		if(DmpCfgInputTypeEnum.API.getCode().equals(type)) {
 			DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
 			String apiClass = dmpCfgApiEntity.getApiClass();
@@ -75,7 +81,9 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				dmpInputApiInitRequest = new DmpInputKingdeeApiInitRequest();
 				dmpInputApiInitRequest = (DmpInputKingdeeApiInitRequest) dmpInputApiInitRequest;
 				dmpInputApiInitRequest.setFormId(dmpCfgApiEntity.getApiType());
-				
+				if(dmpCfgInputConvertEntity.getId().equals("1801574477567136974") && !dmpCfgApiEntity.getApiType().equals("STK_TransferDirect")) {
+					log.error("调拨单成员变量不一致：{} ，{}" , JSON.toJSONString(dmpCfgInputConvertEntity) , JSON.toJSONString(dmpCfgApiEntity));
+				}
 				String extendJson = dmpCfgInputEntity.getExtendJson();
 				if(StringUtils.isNotBlank(extendJson)) {
 					DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
