@@ -187,19 +187,19 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             entity.setFromWarehouseLocation(pair.getValue().getWarehouseLocation());
 
             //推荐补货库区
-            WarehouseLocationEntity pickAreaEntity = warehouseLocationService.getOne(new QueryWrapper<WarehouseLocationEntity>()
+            List<WarehouseLocationEntity> pickAreaList = warehouseLocationService.list(new QueryWrapper<WarehouseLocationEntity>()
                     .eq("warehouse_id", dto.getWarehouseId())
                     .eq("type", "area")
                     .eq("area_type", "pickingArea")
                     .eq("is_deleted", false)
             );
-            entity.setToWarehouseArea(pickAreaEntity.getCode());
+            List<String> pickAreaIds = pickAreaList.stream().map(item -> item.getId()).collect(Collectors.toList());
 
             //推荐补货仓位
             List<WarehouseLocationEntity> pickLocationList = warehouseLocationService.list(new QueryWrapper<WarehouseLocationEntity>()
                     .eq("warehouse_id", dto.getWarehouseId())
                     .eq("type", "location")
-                    .in("parent_id", pickAreaEntity.getId())
+                    .in("parent_id", pickAreaIds)
                     .eq("is_deleted", false)
             );
             List<String> pickLocationCodeList = pickLocationList.stream().map(item -> item.getCode()).collect(Collectors.toList());
@@ -212,6 +212,11 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             );
             InventoryEntity minQtyInventoryEntity = pickInventoryList.get(0);
             entity.setToWarehouseLocation(minQtyInventoryEntity.getWarehouseLocation());
+
+            //推荐补货库区
+            WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(minQtyInventoryEntity.getWarehouseLocation())).findAny().get();
+            WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findAny().get();
+            entity.setToWarehouseArea(pickAreaEntity.getCode());
 
             Integer suggestQty = 0;
             WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
