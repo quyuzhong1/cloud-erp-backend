@@ -90,8 +90,8 @@ public class DmpOutputRocketMQPushUtils{
 					return;
 				}
 				String id = dmpOutputTaskRecordEntity.getId();
-				
-				String redisKey = "dmp:output:task:" + id;
+				String dataId = dmpOutputTaskRecordEntity.getDataId();
+				String redisKey = "dmp:output:task:" + dataId;
 				if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 3600, TimeUnit.SECONDS)) {
 					try {
 						String requestData = dmpOutputTaskRecordEntity.getRequestData();

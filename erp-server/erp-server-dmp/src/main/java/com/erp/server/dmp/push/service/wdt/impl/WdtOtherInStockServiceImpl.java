@@ -11,6 +11,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
+import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.wms.external.in.CreateStockExternalInRequest;
 import com.sdk.wangdian.sdk.api.wms.external.in.CreateStockExternalInResponse;
@@ -18,6 +19,8 @@ import com.sdk.wangdian.sdk.api.wms.external.in.StockExternalInAPI;
 import com.sdk.wangdian.sdk.api.wms.stockin.StockinAPI;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinResponse;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.OtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.OtherStockinResponse;
 import com.sdk.wangdian.server.WangDianClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,8 +35,8 @@ import java.util.stream.Collectors;
  * @date 2024-05-24
  * @author tanmujin
  */
-@Service
 @Slf4j
+@Service
 public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -57,10 +60,15 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
             response = stockinAPI.createOtherOrder(request);
         } catch (WdtErpException e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", e.getMessage()));
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单异常: %s", e.getMessage()));
         }
         if(response.getStatus() != 0){
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", response.getMessage()));
+            log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockinRequest, response);
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s, %s, %s", stockinRequest.getOuterNo(), response.getStatus(), response.getMessage()));
+        }
+        if(null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()){
+            log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockinRequest, response);
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单审核失败: %s, %s, %s", stockinRequest.getOuterNo(), response.getStatus(), response.getMessage()));
         }
     }
 
@@ -103,5 +111,16 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
             log.error("推送旺店通其他出库单失败:{}", response.getMessage());
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", response.getMessage()));
         }
+    }
+
+    @Override
+    public OtherStockinResponse.DataInfoDto queryWithDetail(CreateOtherStockinRequest createRequest) {
+        OtherStockinRequest request = new OtherStockinRequest();
+        StockinAPI stockinAPI = wangDianClientService.get(StockinAPI.class);
+        OtherStockinResponse.DataInfoDto salesStockoutResponse;
+        request.setStockinNo(createRequest.getOuterNo());
+        Pager pager = new Pager(10, 0, true);
+        salesStockoutResponse = stockinAPI.queryWithDetail(request, pager);
+        return salesStockoutResponse;
     }
 }
