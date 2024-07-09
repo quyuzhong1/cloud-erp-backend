@@ -258,7 +258,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public Boolean updateStatusById(String waveId, String status) {
       return   lambdaUpdate().eq(WaveListEntity::getId,waveId)
-                .eq(WaveListEntity::getStatus,status)
+                .set(WaveListEntity::getStatus,status)
                 .update();
     }
 }

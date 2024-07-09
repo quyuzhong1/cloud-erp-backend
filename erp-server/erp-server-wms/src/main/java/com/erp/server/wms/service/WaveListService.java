@@ -109,7 +109,7 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * @author will
      * @date 2024/7/9 17:36
      * @param waveId
-     * @param code
+     * @param status
      */
     Boolean updateStatusById(String waveId, String status);
 }
