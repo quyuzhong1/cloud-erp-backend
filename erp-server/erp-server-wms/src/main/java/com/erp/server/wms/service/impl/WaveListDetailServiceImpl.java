@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -78,8 +79,8 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         if(pickingList.isEmpty()){
             throw new ServiceException("没有找到拣货单");
         }
-        Map<String, String> deliveryCode2IdMap = pickingList.stream().collect(Collectors.toMap(item1 -> item1.getSourceCode(), item2 -> item2.getId()));
-        List<PickingDetailEntity> pickingDetailList = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("main_id", deliveryCode2IdMap.values()));
+        List<String> pickingIdList = pickingList.stream().map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("main_id", pickingIdList));
 
         List<String> soIds = waveDetailList.stream().map(WaveListDetailEntity::getSoId).collect(Collectors.toList());
         List<SoB2cDetailEntity> soDetailTotalList = soB2cFeign.listDetailByMainIds(soIds);
@@ -93,7 +94,9 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         //发货单列表
         for (WaveListDetailEntity deliveryLevel : waveDetailList) {
             List<SoB2cDetailEntity> soDetailList = soDetailTotalList.stream().filter(item -> item.getMainId().equals(deliveryLevel.getSoId())).collect(Collectors.toList());
-            List<PickingDetailEntity> pickingDetailGroup = pickingDetailList.stream().filter(item -> item.getMainId().equals(deliveryCode2IdMap.get(deliveryLevel.getDeliveryCode()))).collect(Collectors.toList());
+
+            List<String> deliveryIdList = pickingList.stream().filter(obj -> StrUtil.equals(obj.getSourceCode(), deliveryLevel.getDeliveryCode())).map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
+            List<PickingDetailEntity> pickingDetailGroup = pickingDetailList.stream().filter(item -> deliveryIdList.contains(item.getMainId())).collect(Collectors.toList());
             //发货单下sku列表
             for (SoB2cDetailEntity skuLevel : soDetailList) {
                 List<PickingDetailEntity> groupBySkuPickingDetail = pickingDetailGroup.stream().filter(item -> item.getSkuId().equals(skuLevel.getSkuId())).collect(Collectors.toList());
