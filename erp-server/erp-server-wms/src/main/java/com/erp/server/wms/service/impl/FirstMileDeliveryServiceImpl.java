@@ -1600,82 +1600,82 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
     }
 
-    @Override
-    public WmsCartonSpecDTO.WmsCartonSpecView packingView(String id) {
-        WmsCartonSpecDTO.WmsCartonSpecView cartonView = new WmsCartonSpecDTO.WmsCartonSpecView();
-        FirstMileDeliveryEntity entity = this.getById(id);
-        //>仅可操作关联单号未审核通过时候可编辑修改
-        if(entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
-            throw new ServiceException(ApiError.ERROR_92140, entity.getCode());
-        }
-        //已下推入库单，不允许修改装箱信息
-        OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(entity.getId(),OverseasInstockStatusEnum.CANCELED.getCode());
-        if (ObjectUtil.isNotEmpty(overseasWarehouseInbound) && !OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equals(overseasWarehouseInbound.getInstockStatus())) {
-            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInbound.getCode());
-        }
-        //装箱任务
-        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceIdAndSourceType(id, entity.getSourceType());
-        if (CollectionUtils.isNotEmpty(taskEntityList)){
-            PackingTaskEntity taskEntity = taskEntityList.get(0);
-            cartonView.setTaskId(taskEntity.getId());
-            cartonView = wmsCartonSpecService.getCartonViewByPackingTaskId(taskEntity);
-        }
-        //查询装箱详情
-        cartonView.setSourceId(entity.getId());
-        cartonView.setSourceCode(entity.getCode());
-        return cartonView;
-    }
+//    @Override
+//    public WmsCartonSpecDTO.WmsCartonSpecView packingView(String id) {
+//        WmsCartonSpecDTO.WmsCartonSpecView cartonView = new WmsCartonSpecDTO.WmsCartonSpecView();
+//        FirstMileDeliveryEntity entity = this.getById(id);
+//        //>仅可操作关联单号未审核通过时候可编辑修改
+//        if(entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+//            throw new ServiceException(ApiError.ERROR_92140, entity.getCode());
+//        }
+//        //已下推入库单，不允许修改装箱信息
+//        OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(entity.getId(),OverseasInstockStatusEnum.CANCELED.getCode());
+//        if (ObjectUtil.isNotEmpty(overseasWarehouseInbound) && !OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equals(overseasWarehouseInbound.getInstockStatus())) {
+//            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInbound.getCode());
+//        }
+//        //装箱任务
+//        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceIdAndSourceType(id, entity.getSourceType());
+//        if (CollectionUtils.isNotEmpty(taskEntityList)){
+//            PackingTaskEntity taskEntity = taskEntityList.get(0);
+//            cartonView.setTaskId(taskEntity.getId());
+//            cartonView = wmsCartonSpecService.getCartonViewByPackingTaskId(taskEntity);
+//        }
+//        //查询装箱详情
+//        cartonView.setSourceId(entity.getId());
+//        cartonView.setSourceCode(entity.getCode());
+//        return cartonView;
+//    }
 
-    @Override
-    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
-        FirstMileDeliveryEntity entity = this.getById(id);
-    /*      if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
-            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
-        }*/
-        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
-        listPackingDTO.setId(entity.getId());
-        listPackingDTO.setCode(entity.getCode());
+//    @Override
+//    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
+//        FirstMileDeliveryEntity entity = this.getById(id);
+//    /*      if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
+//            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
+//        }*/
+//        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
+//        listPackingDTO.setId(entity.getId());
+//        listPackingDTO.setCode(entity.getCode());
+//
+//        //获取总箱数
+//        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listByMainIds(Arrays.asList(id));
+//        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
+//        listPackingDTO.setBoxQty(boxQty);
+//
+//        //箱子明细信息
+//        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Arrays.asList(id));
+//        listPackingDTO.setDetailList(detailList);
+//        return listPackingDTO;
+//    }
 
-        //获取总箱数
-        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listByMainIds(Arrays.asList(id));
-        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
-        listPackingDTO.setBoxQty(boxQty);
-
-        //箱子明细信息
-        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Arrays.asList(id));
-        listPackingDTO.setDetailList(detailList);
-        return listPackingDTO;
-    }
-
-    @Override
-    public void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
-        if (CollectionUtils.isEmpty(dto.getIds())) {
-            throw new ServiceException(ApiError.ERROR_98004);
-        }
-
-        List<WmsCartonSpecDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-
-        //只有已装箱的发货单可以查看/导出装箱数据
-        long count = list.stream().filter(req -> PackingStatusEnum.NOT_PACKING.getCode().equals(req.getPackingStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
-        }
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/packingExport.xlsx";
-        String name = "装箱清单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
-    }
+//    @Override
+//    public void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
+//        if (CollectionUtils.isEmpty(dto.getIds())) {
+//            throw new ServiceException(ApiError.ERROR_98004);
+//        }
+//
+//        List<WmsCartonSpecDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
+//        if(CollUtil.isEmpty(list)) {
+//            return;
+//        }
+//
+//        //只有已装箱的发货单可以查看/导出装箱数据
+//        long count = list.stream().filter(req -> PackingStatusEnum.NOT_PACKING.getCode().equals(req.getPackingStatus())).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
+//        }
+//
+//        // 导出数据
+//        StringBuffer sb = new StringBuffer();
+//        String excelPath = "excel/packingExport.xlsx";
+//        String name = "装箱清单导出";
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date).append(name);
+//        try {
+//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+//        } catch (Exception e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
+//    }
 
     @Override
     public OverseasWarehouseInboundDTO.ViewDTO getGenerateOverseasWarehouseInboundView(String id) {
@@ -1784,28 +1784,28 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .one();
     }
 
-    @Override
-    public void downloadPackingTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/packing.xlsx";
-        String excelName = "template.xlsx";
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
-            OutputStream output = response.getOutputStream();
-            response.reset();
-            // 设置文件头
-            response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
-            response.setContentType("application/msexcel");
-            wb.write(output);
-            wb.close();
-        } catch (Exception e) {
-            log.error("packing downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
-        }
-    }
+//    @Override
+//    public void downloadPackingTemplate(HttpServletResponse response) {
+//        String path = "classpath:excel/packing.xlsx";
+//        String excelName = "template.xlsx";
+//        ResourceLoader resourceLoader = new DefaultResourceLoader();
+//        try {
+//            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+//            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+//            // 输出Excel文件
+//            OutputStream output = response.getOutputStream();
+//            response.reset();
+//            // 设置文件头
+//            response.setHeader("Content-Disposition",
+//                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+//            response.setContentType("application/msexcel");
+//            wb.write(output);
+//            wb.close();
+//        } catch (Exception e) {
+//            log.error("packing downloadTemplate  出错了 e==", e);
+//            throw new ServiceException(ApiError.ERROR_95131);
+//        }
+//    }
 
     /**
      * 修改装箱状态
@@ -2046,7 +2046,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             deliveryDTO.setBoxQty(list.size());
             deliveryDTO.setGrossWeight(list.stream()
                     .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
-                    .map(BigDecimal::new)
                     .reduce(BigDecimal.ZERO, BigDecimal::add));
         }
         //合并相同的sku

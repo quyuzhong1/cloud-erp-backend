@@ -263,7 +263,7 @@ public class PackingTaskController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出装箱任务Excel")
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
-    public ApiResult exportPackingDetail(@RequestBody @Validated PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto, HttpServletResponse response) {
         packingTaskService.exportPackingDetail(dto, response);
         return success();
     }

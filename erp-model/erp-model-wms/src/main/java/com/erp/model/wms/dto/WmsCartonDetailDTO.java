@@ -128,6 +128,34 @@ public class WmsCartonDetailDTO implements Serializable {
          */
         private String id;
         /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 装箱任务编码
+         */
+        private String taskCode;
+        /**
+         * 源单id
+         */
+        private String sourceId;
+        /**
+         * 源单编码
+         */
+        private String sourceCode;
+        /**
+         * 单据类型(B2B,FBA,third)
+         * PickingSourceTypeEnum
+         * 字典地址 http://172.16.100.11:3002/project/92/interface/api/13147  type = packingSourceType
+         *
+         */
+        private String sourceType;
+        /**
+         * 单据类型名称
+         */
+        private String sourceTypeName;
+
+        /**
          * 装箱sku
          */
         private String sku;
@@ -142,7 +170,11 @@ public class WmsCartonDetailDTO implements Serializable {
         /**
          * 箱子包装重量
          */
-        private String packageWeight;
+        private BigDecimal packageWeight;
+        /**
+         * 箱子包装重量[导出使用]
+         */
+        private String packageWeightStr;
         /**
          * 重量单位
          */
@@ -158,6 +190,16 @@ public class WmsCartonDetailDTO implements Serializable {
          * 称重状态-单箱 名称
          */
         private String weightingStatusName;
+        /**
+         * 称重状态-总箱
+         * PackingWeightStatusEnum
+         * 字典接口地址
+         */
+        private String weightingTotalStatus;
+        /**
+         * 称重状态-总箱 名称
+         */
+        private String weightingTotalStatusName;
 
         /**
          * 单箱装箱状态
@@ -169,6 +211,16 @@ public class WmsCartonDetailDTO implements Serializable {
          * 装箱状态名称
          */
         private String packingStatusName;
+        /**
+         * 装箱状态-总
+         * PackingStatusEnum
+         */
+        private String packingTotalStatus;
+
+        /**
+         * 装箱状态名称-总
+         */
+        private String packingTotalStatusName;
 
         private BigDecimal multiplySize;
 
@@ -177,6 +229,20 @@ public class WmsCartonDetailDTO implements Serializable {
         private BigDecimal width;
 
         private BigDecimal height;
+        /**
+         * 箱规来源
+         * MeasureSourceEnum
+         */
+        private String measureSource;
+        private String measureSourceName;
+        /**
+         * 装箱员
+         */
+        private String packingUserName;
+        /**
+         * 异常原因
+         */
+        private String errorMsg;
     }
 
     /**

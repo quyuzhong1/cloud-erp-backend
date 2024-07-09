@@ -6,6 +6,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
+import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import com.erp.server.wms.service.PackingTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -27,17 +28,17 @@ public class PackingTaskFeignController extends BaseController {
      */
     @PostMapping("/dimensionalWeightTob")
     public ApiResult<String> dimensionalWeightTob(@RequestBody @Validated DimensionalWeightDTO dto) {
-        return packingTaskService.dimensionalWeight(dto, CfgRuleOutEnum.OverweightTypeEnum.B2B);
+        return packingTaskService.dimensionalWeight(dto, PickingSourceTypeEnum.B2B);
     }
 
 
     @PostMapping("/dimensionalWeightFba")
     public ApiResult<String> dimensionalWeightFba(@RequestBody @Validated DimensionalWeightDTO dto) {
-        return packingTaskService.dimensionalWeight(dto, CfgRuleOutEnum.OverweightTypeEnum.FBA);
+        return packingTaskService.dimensionalWeight(dto, PickingSourceTypeEnum.FBA);
     }
 
     @PostMapping("/dimensionalWeightThird")
     public ApiResult<String> dimensionalWeightThird(@RequestBody @Validated DimensionalWeightDTO dto) {
-        return packingTaskService.dimensionalWeight(dto, CfgRuleOutEnum.OverweightTypeEnum.THIRD_WAREHOUSE);
+        return packingTaskService.dimensionalWeight(dto, PickingSourceTypeEnum.THIRD);
     }
 }

@@ -149,7 +149,10 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
 
     @Override
     public List<FirstMileDeliveryDetailEntity> listDetailByMainId(String id) {
-        return null;
+        if(StringUtils.isBlank(id)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().eq(FirstMileDeliveryDetailEntity::getMainId,id).list();
     }
 
     /**

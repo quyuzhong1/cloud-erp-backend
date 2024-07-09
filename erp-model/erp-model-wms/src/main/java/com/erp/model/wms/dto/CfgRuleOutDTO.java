@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
+import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -172,7 +173,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 类型
          */
-        private CfgRuleOutEnum.OverweightTypeEnum type;
+        private PickingSourceTypeEnum type;
 
         /**
          * 称重重量（kg）

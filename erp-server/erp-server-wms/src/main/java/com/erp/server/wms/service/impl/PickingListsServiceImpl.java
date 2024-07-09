@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -36,6 +37,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,7 +90,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+    @Resource
+    private PackingTaskService packingTaskService;
 
+    @Resource
+    private WmsCartonService wmsCartonService;
+
+    @Resource
+    private WmsCartonDetailService wmsCartonDetailService;
     @Override
     public PagingVO<PickingListsDTO.PagingView> paging(PagingDTO<PickingListsDTO.PagingParam> dto) {
         IPage<PickingListsDTO.PagingView> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
@@ -324,6 +333,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<String> skuIds = dto.getDetails()
                 .stream().map(PickingDetailDTO.View::getSkuId)
                 .distinct().collect(Collectors.toList());
+        this.checkPickingQty(entity,dto.getDetails());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
         WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
         moveDto.setWarehouseId(entity.getWarehouseId());
@@ -352,6 +362,44 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             requisitionApplicationService.writeBackData(sourceDetailIds);
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(entity.getSourceId());
+        }
+    }
+
+    private void checkPickingQty(PickingListsEntity entity, List<PickingDetailDTO.View> detailList) {
+        PackingTaskEntity packingTaskEntity = null;
+        if(entity.getSourceType().equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())){
+            packingTaskEntity = packingTaskService.getBySourceCode(entity.getSourceCode());
+        }else if (entity.getSourceType().equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode())){
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
+            if(!CollectionUtils.isEmpty(firstMileDeliveryEntityList)){
+                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.get(0);
+                packingTaskEntity = packingTaskService.getBySourceCode(firstMileDeliveryEntity.getSourceCode());
+            }
+        }else {
+            return;
+        }
+        if(Objects.isNull(packingTaskEntity)){
+            return;
+        }
+        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Arrays.asList(packingTaskEntity.getId()));
+        if(CollectionUtils.isEmpty(wmsCartonEntityList)){
+            return;
+        }
+        List<WmsCartonDetailEntity> wmsCartonDetailEntityList = wmsCartonDetailService.listByMainIds(wmsCartonEntityList.stream().map(v->v.getId()).collect(Collectors.toList()));
+        if(CollectionUtils.isEmpty(wmsCartonDetailEntityList)){
+            return;
+        }
+        Map<String,Integer> packingQtyMap = wmsCartonDetailEntityList.stream().collect(Collectors.toMap(WmsCartonDetailEntity::getSkuNo, WmsCartonDetailEntity::getPackQty, Integer::sum));
+        Map<String,Integer> pickingQtyMap = detailList.stream().collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
+        List<String> errSku = new ArrayList<>();
+        pickingQtyMap.forEach((skuNo,qty)->{
+            Integer packingQty = packingQtyMap.get(skuNo);
+            if(Objects.nonNull(packingQty) && qty<packingQty){
+                errSku.add(skuNo);
+            }
+        });
+        if(!CollectionUtils.isEmpty(errSku)){
+            throw new ServiceException(StrUtil.format("sku【{}】编辑数量校验不可小于装箱数量",errSku));
         }
     }
 

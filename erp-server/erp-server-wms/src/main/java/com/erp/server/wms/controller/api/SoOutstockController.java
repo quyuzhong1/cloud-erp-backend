@@ -446,99 +446,99 @@ public class SoOutstockController extends BaseController {
     }
 
 
-    /**
-     * 装箱
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:21
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping("/packingSave")
-    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
-    public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
-        String packingStatus = soOutstockService.packingSave(dto);
+//    /**
+//     * 装箱
+//     * @Author Luo_WG
+//     * @Date 2023/11/17 11:21
+//     * @param dto
+//     * @return com.common.core.controller.vo.ApiResult
+//     **/
+//    @PostMapping("/packingSave")
+//    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
+//    public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
+//        String packingStatus = soOutstockService.packingSave(dto);
+//
+//        if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
+//        } else {
+//            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getSourceId()));
+//            List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+//            if (CollectionUtil.isNotEmpty(ids)) {
+//                TmsDeclareBillDTO.DeleteDTO deleteDTO = new TmsDeclareBillDTO.DeleteDTO();
+//                deleteDTO.setIds(ids);
+//                tmsDeclareBillFeign.delete(deleteDTO);
+//            }
+//        }
+//        return StringUtils.isNotBlank(packingStatus) ? success() : failure();
+//    }
 
-        if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
-        } else {
-            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getSourceId()));
-            List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
-            if (CollectionUtil.isNotEmpty(ids)) {
-                TmsDeclareBillDTO.DeleteDTO deleteDTO = new TmsDeclareBillDTO.DeleteDTO();
-                deleteDTO.setIds(ids);
-                tmsDeclareBillFeign.delete(deleteDTO);
-            }
-        }
-        return StringUtils.isNotBlank(packingStatus) ? success() : failure();
-    }
+//    /**
+//     * 装箱详情
+//     * @Author Luo_WG
+//     * @Date 2023/11/28 17:44
+//     * @param id
+//     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+//     **/
+//    @GetMapping("/packingView")
+//    public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingView(@RequestParam("id") String id) {
+//        WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = soOutstockService.packingView(id);
+//        return success(wmsCartonSpecView);
+//    }
 
-    /**
-     * 装箱详情
-     * @Author Luo_WG
-     * @Date 2023/11/28 17:44
-     * @param id
-     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
-     **/
-    @GetMapping("/packingView")
-    public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingView(@RequestParam("id") String id) {
-        WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = soOutstockService.packingView(id);
-        return success(wmsCartonSpecView);
-    }
+//    /**
+//     * 装箱清单
+//     * @Author Luo_WG
+//     * @Date 2023/11/17 11:21
+//     * @param id
+//     * @return com.common.core.controller.vo.ApiResult
+//     **/
+//    @GetMapping("/listPacking")
+//    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+//        WmsCartonSpecDTO.ListPackingDTO result = soOutstockService.listPacking(id);
+//        return success(result);
+//    }
 
-    /**
-     * 装箱清单
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:21
-     * @param id
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @GetMapping("/listPacking")
-    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
-        WmsCartonSpecDTO.ListPackingDTO result = soOutstockService.listPacking(id);
-        return success(result);
-    }
+//    /**
+//     * 导出装箱清单Excel
+//     * @author Luo_WG
+//     * @date 2023-10-30
+//     * @param dto
+//     * @param response
+//     */
+//    @PostMapping("/exportPacking")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "wms:fbaDelivery:exportPacking",
+//            tableAlias = "fd"
+//    )
+//    @LogAction(value = LogActionEnum.EXPORT, desc = "销售出库单导出装箱清单Excel")
+//    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
+//    public ApiResult exportPacking(@RequestBody @Validated SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
+//        soOutstockService.exportPacking(dto, response);
+//        return success();
+//    }
 
-    /**
-     * 导出装箱清单Excel
-     * @author Luo_WG
-     * @date 2023-10-30
-     * @param dto
-     * @param response
-     */
-    @PostMapping("/exportPacking")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:fbaDelivery:exportPacking",
-            tableAlias = "fd"
-    )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "销售出库单导出装箱清单Excel")
-    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
-    public ApiResult exportPacking(@RequestBody @Validated SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
-        soOutstockService.exportPacking(dto, response);
-        return success();
-    }
-
-    /**
-     * 下载装箱模板
-     *
-     * @return
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载装箱模板数据")
-    @GetMapping("/downloadPackingTemplate")
-    public ApiResult downloadPackingTemplate(HttpServletResponse response) {
-        soOutstockService.downloadPackingTemplate(response);
-        return success();
-    }
+//    /**
+//     * 下载装箱模板
+//     *
+//     * @return
+//     */
+//    @LogAction(value = LogActionEnum.EXPORT, desc = "下载装箱模板数据")
+//    @GetMapping("/downloadPackingTemplate")
+//    public ApiResult downloadPackingTemplate(HttpServletResponse response) {
+//        soOutstockService.downloadPackingTemplate(response);
+//        return success();
+//    }
 
 
-    /**
-     * 导入装箱数据
-     */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
-    @PostMapping("/importPacking")
-    public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = soOutstockService.importFile(excelFile, response);
-        return result == true ? success() : failure();
-    }
+//    /**
+//     * 导入装箱数据
+//     */
+//    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
+//    @PostMapping("/importPacking")
+//    public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+//        Boolean result = soOutstockService.importFile(excelFile, response);
+//        return result == true ? success() : failure();
+//    }
 
     /**
      *

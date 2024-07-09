@@ -291,7 +291,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             //预估实重
             BigDecimal actualWeight = packingDTOList.stream()
                     .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
-                    .map(BigDecimal::new)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             costAddDTO.setActualWeight(actualWeight);
             //设置预估体积重 = 长宽高/材积
@@ -321,7 +320,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             //预估实重
             BigDecimal actualWeight = packingDTOList.stream()
                     .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
-                    .map(BigDecimal::new)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             costUpdateDTO.setActualWeight(actualWeight);
             if(StringUtils.isNotBlank(updateDTO.getLogisticsChannelId())){
@@ -1608,7 +1606,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         BigDecimal totalWeight = packingDetailDTOList.stream()
                 .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
-                .map(BigDecimal::new)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         if(totalWeight.compareTo(BigDecimal.ZERO) == 0){
             return BigDecimal.ZERO;
