@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -158,7 +159,7 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
     private WdtReturnOrderDetailDTO getDetail(WdtWmsStockinRefundQuerywithdetailResponse.Order orderEntity, WdtWmsStockinRefundQuerywithdetailResponse.DetailsList detailDto) {
         WdtReturnOrderDetailDTO detail = new WdtReturnOrderDetailDTO();
         detail.setSkuNo(detailDto.getSpecNo());
-        detail.setMustQty(Double.valueOf(detailDto.getExpectNum()).intValue());
+        detail.setMustQty(new BigDecimal(detailDto.getExpectNum()).intValue());
         detail.setReceiveQty(Integer.valueOf(detailDto.getNum()));
         detail.setReturnReasonDict(orderEntity.getReason());
         detail.setWarehouseLocation(detailDto.getPositionNo());
