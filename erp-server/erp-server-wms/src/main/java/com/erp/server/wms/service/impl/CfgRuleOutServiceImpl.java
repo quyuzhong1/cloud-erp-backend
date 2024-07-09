@@ -144,15 +144,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             if(CollectionUtil.isEmpty(b2cAllowableDeviationsConditionDetail.getConditionDetailList())){
                 continue;
             }
-            Set<String> detailSet = new HashSet<>();
-            List<String> detailDuplicates = b2cAllowableDeviationsConditionDetail.getConditionDetailList().stream()
-                    .map(CfgRuleOutDTO.B2cAllowableDeviationsConditionDetail::getField)
-                    .filter(v -> !detailSet.add(v))
-                    .collect(Collectors.toList());
 
-            if (!detailDuplicates.isEmpty()) {
-                throw new ServiceException("B2C称重量方允许偏差条件存在相同配置");
-            }
             List<ConditionElement> conditionElementList = BeanUtil.copyToList(b2cAllowableDeviationsConditionDetail.getConditionDetailList(),ConditionElement.class);
             SpElExpressionDTO splElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
             String expression = splElDTO.getExpression();
