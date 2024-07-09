@@ -165,11 +165,15 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     public ApiResult<?> bindPickingCart(WaveListPdaDTO.BindPickingCartDTO bindDTO) {
         //核对扫描的拣货车类型是否匹配，核对失败返回错误
         PickingCartEntity pickingCart = pickingCartService.getOne(new QueryWrapper<PickingCartEntity>().eq("code", bindDTO.getPickingCartCode()));
+        if(pickingCart == null){
+            return ApiResult.error("拣货车编码错误");
+        }
         PickingCartTypeEntity pickingCartType = pickingCartTypeService.getOne(new QueryWrapper<PickingCartTypeEntity>().eq("id", pickingCart.getTypeId()));
         WaveListEntity waveEntity = waveListService.getById(bindDTO.getId());
-        if(! waveEntity.getPickingCartType().equals(pickingCartType.getName())){
+        if(! waveEntity.getPickingCartType().equals(pickingCart.getTypeId())){
             return ApiResult.error("拣货车不匹配");
         }
+        update(new UpdateWrapper<WaveListEntity>().set("picking_cart_code", bindDTO.getPickingCartCode()).eq("id", bindDTO.getId()));
         //核对成功返回拣货车信息
         bindDTO.setPickingCartName(pickingCartType.getName());
         bindDTO.setPickingCartType(pickingCartType.getName());
