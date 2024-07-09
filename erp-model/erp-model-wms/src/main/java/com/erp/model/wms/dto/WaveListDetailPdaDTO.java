@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.List;
 
@@ -153,5 +154,15 @@ public class WaveListDetailPdaDTO implements Serializable {
          * 商品种类已拣数量
          */
         private Integer skuPickedQty;
+    }
+
+
+    @Data
+    public static class StartPickingDTO {
+        /**
+         * 波次id
+         */
+        @NotBlank(message = "波次id不能为空")
+        private String waveId;
     }
 }

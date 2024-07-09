@@ -12,15 +12,18 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
-import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.model.wms.entity.PickingListsEntity;
+import com.erp.model.wms.entity.WaveListDetailEntity;
+import com.erp.model.wms.entity.WaveListEntity;
 import com.erp.model.wms.enums.PickingStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListDetailMapper;
 import com.erp.server.wms.service.*;
-import org.springframework.stereotype.Service;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -68,6 +71,9 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         List<WaveListDetailEntity> waveDetailList = list(Wrappers.<WaveListDetailEntity>lambdaQuery().eq(WaveListDetailEntity::getMainId, waveId));
 
         List<String> deliveryCodes = waveDetailList.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(deliveryCodes)) {
+            throw new ServiceException("未找到发货单信息");
+        }
         List<PickingListsEntity> pickingList = pickingListsService.list(new QueryWrapper<PickingListsEntity>().in("source_code", deliveryCodes));
         if(pickingList.isEmpty()){
             throw new ServiceException("没有找到拣货单");
