@@ -97,6 +97,10 @@ public class SecondarySortingDTO {
          */
         private String skuNo;
         /**
+         * 篮号
+         */
+        private String basketNo;
+        /**
          * ean
          */
         private String ean;

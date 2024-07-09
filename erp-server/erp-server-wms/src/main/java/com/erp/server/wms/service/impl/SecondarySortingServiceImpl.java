@@ -124,6 +124,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
                     int pickingQty = v.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getPickedQty).sum();
                     int allocatedQty = v.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getAllocatedQty).sum();
                     SecondarySortingDTO.BasketDetail detail = new SecondarySortingDTO.BasketDetail();
+                    detail.setBasketNo(detailDTO.getBasketNo());
                     detail.setSkuId(detailDTO.getSkuId());
                     detail.setSkuNo(detailDTO.getSkuNo());
                     detail.setEan(skuVO.getEan());
