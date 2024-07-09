@@ -6,9 +6,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.enums.CellExtraTypeEnum;
-import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -29,7 +26,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
@@ -51,7 +47,6 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -65,7 +60,6 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
-import com.erp.server.wms.listener.PackingExcelListener;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -78,7 +72,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -625,12 +618,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO delete(String id) {
-        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货单数据"));
+    public BatchResultDTO delete(FirstMileDeliveryEntity entity, PackingTaskDTO.StatusDTO packingStatusDTO, PackingTaskEntity packingTask) {
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1043);
         }
+        if (!(Objects.nonNull(packingStatusDTO) && StringUtils.isNotBlank(packingStatusDTO.getPackingStatus()) && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingStatusDTO.getPackingStatus()))) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已生成装箱清单且装箱中&已装箱不允许删除");
+        }
+        //删除装箱信息
+        packingTaskService.delete(packingTask);
+
+        String id = entity.getId();
         // 删除明细数据
         firstMileDeliveryDetailService.removeByMainIds(Arrays.asList(id));
         // 删除主单数据
@@ -647,19 +646,22 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO invalid(String id, String remark) {
-        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货单数据"));
+    public BatchResultDTO invalid(FirstMileDeliveryEntity entity, String remark, PackingTaskDTO.StatusDTO packingStatusDTO, PackingTaskEntity packingTask) {
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
-        log.info("作废 开始修改发货单状态数据，id：【{}】", id);
-        lambdaUpdate().eq(FirstMileDeliveryEntity::getId, id)
+        if (!(Objects.nonNull(packingStatusDTO) && StringUtils.isNotBlank(packingStatusDTO.getPackingStatus()) && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingStatusDTO.getPackingStatus()))) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已生成装箱清单且装箱中&已装箱不允许作废");
+        }
+        //删除装箱信息
+        packingTaskService.delete(packingTask);
+        log.info("作废 开始修改发货单状态数据，id：【{}】", entity);
+        lambdaUpdate().eq(FirstMileDeliveryEntity::getId, entity)
             .set(FirstMileDeliveryEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
             .set(FirstMileDeliveryEntity::getInvalidRemark, remark)
             .update();
-
-        log.info("作废 开始记录操作日志，id：【{}】", id);
+        log.info("作废 开始记录操作日志，id：【{}】", entity);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);

@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -28,11 +29,11 @@ import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -267,21 +268,26 @@ public class FirstMileDeliveryController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "头程发货单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(dto.getIds());
+        List<String> sourceCodeList = entityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(null, sourceCodeList);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getSourceCode, Function.identity(),(v1, v2)->v1));
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
         for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = firstMileDeliveryService.delete(id);
-            }catch (Exception e){
-                log.error("发货单删除失败",e);
-                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "发货单不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
+            BatchResultDTO invalidResult;
+            FirstMileDeliveryEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                invalidResult = BatchResultDTO.fail(id, id, "发货单不存在, 删除失败");
+            }else{
+                try {
+                    PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
+                    invalidResult = firstMileDeliveryService.delete(entity,statusDTOMap.get(entity.getCode()), packingTaskEntity);
+                }catch (Exception e){
+                    log.error("发货单删除失败",e);
+                    invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
-            resultDTOS.add(deleteResult);
+            resultDTOS.add(invalidResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -301,19 +307,24 @@ public class FirstMileDeliveryController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "头程发货单作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(dto.getIds());
+        List<String> sourceCodeList = entityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(null, sourceCodeList);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getSourceCode, Function.identity(),(v1, v2)->v1));
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
         for (String id : dto.getIds()) {
             BatchResultDTO invalidResult;
-            try {
-                invalidResult = firstMileDeliveryService.invalid(id,dto.getRemark());
-            }catch (Exception e){
-                log.error("发货单作废失败",e);
-                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    invalidResult = BatchResultDTO.fail(id, id, "发货单不存在, 作废失败");
-                    resultDTOS.add(invalidResult);
-                    continue;
+            FirstMileDeliveryEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                invalidResult = BatchResultDTO.fail(id, id, "发货单不存在, 作废失败");
+            }else{
+                try {
+                    PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
+                    invalidResult = firstMileDeliveryService.invalid(entity,dto.getRemark(),statusDTOMap.get(entity.getCode()), packingTaskEntity);
+                }catch (Exception e){
+                    log.error("发货单作废失败",e);
+                    invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 }
-                invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(invalidResult);
         }
