@@ -1016,6 +1016,10 @@ public enum ApiError implements Serializable {
     ERROR_92144(92144,"发货通知到记录不存在"),
     ERROR_92145(92145,"箱规记录不存在"),
     ERROR_92146(92146,"装箱记录不存在"),
+    ERROR_92147(92147,"SKU【{}】不可超过未装箱数量【{}】"),
+    ERROR_92148(92148,"SKU【{}】不可超过本箱已装箱数量【{}】"),
+    ERROR_92149(92149,"SKU【{}】在关联单中没有记录"),
+    ERROR_92150(92150,"SKU【{}】在装箱中没有记录不能移出"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
