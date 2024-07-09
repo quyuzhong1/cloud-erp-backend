@@ -104,4 +104,12 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * @param ids 波次号
      */
     List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids);
+    /**
+     * 更新波次列表状态
+     * @author will
+     * @date 2024/7/9 17:36
+     * @param waveId
+     * @param status
+     */
+    Boolean updateStatusById(String waveId, String status);
 }

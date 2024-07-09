@@ -1,9 +1,12 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.WaveListDetailDTO;
@@ -18,7 +21,9 @@ import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.WaveListDetailPdaMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -50,9 +55,13 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     private WarehouseLocationService warehouseLocationService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean hangUp(WaveListDetailPdaDTO.HangUpParamDTO hangUpDTO) {
         List<PickingDetailEntity> updateList = getPickingDetailEntities(hangUpDTO.getWaveId(), hangUpDTO.getLocationPickingDetailList());
         pickingDetailService.updateBatchById(updateList);
+
+        //更新波次列表状态
+        waveListService.updateStatusById(hangUpDTO.getWaveId(),WaveStatusEnum.HANG_UP.getCode());
         return Boolean.TRUE;
     }
 
@@ -95,7 +104,12 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             dto.setWarehouseLocationName(warehouseLocationCode2NameMap.get(entry.getKey()));
             dto.setSkuId(firstDelivery.getSkuId());
             dto.setSkuNo(firstDelivery.getSkuNo());
-            dto.setProductName(productMap.get(firstDelivery.getSkuId()).getName());
+            ProductDetailEntity productDetailEntity = productMap.get(firstDelivery.getSkuId());
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            dto.setSkuImagesUrl(productDetailEntity.getImagesUrl());
+            dto.setProductName(productDetailEntity.getName());
             dto.setIsOutStock(false);   //todo 查询仓位是否缺货
             int locationPickedTotalQty = locationGroupList.stream().mapToInt(item -> item.getPickedQty()).sum();
             dto.setPickedTotalQty(locationPickedTotalQty);
@@ -117,6 +131,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public WaveListDetailPdaDTO.FinishResultDTO finish(WaveListDetailPdaDTO.FinishParamDTO finishParamDTO) {
         String waveId = finishParamDTO.getWaveId();
         List<PickingDetailEntity> updateList = getPickingDetailEntities(waveId, finishParamDTO.getLocationPickingDetailList());
@@ -135,16 +150,22 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         resultDTO.setSkuPickedQty(skuIdsPicked.size());
         resultDTO.setGoodsShouldPickingQty(salesSumQty);
         resultDTO.setGoodsPickedQty(pickedSumQty);
+
+        //更新波次列表状态
+        waveListService.updateStatusById(finishParamDTO.getWaveId(),WaveStatusEnum.FINISH.getCode());
         return resultDTO;
     }
 
     @Override
     public ApiResult<?> scanSkuOrEanCode(String skuId, String code) {
         ProductDetailDTO.ServiceToWavePickingDTO productInfo = productDetailFeign.getProductInfoBySkuId(skuId);
-        if(code.equals(productInfo.getSkuNo()) || code.equals(productInfo.getEanNo())){
+        if(StringUtils.isNotBlank(productInfo.getSkuNo()) && productInfo.getSkuNo().equals(code)){
             return ApiResult.success();
         }
-        return ApiResult.error("商品不匹配");
+        if(StringUtils.isNotBlank(productInfo.getEanNo()) && productInfo.getEanNo().equals(code)){
+            return ApiResult.success();
+        }
+        return ApiResult.error("SKU不一致");
     }
 
     /**

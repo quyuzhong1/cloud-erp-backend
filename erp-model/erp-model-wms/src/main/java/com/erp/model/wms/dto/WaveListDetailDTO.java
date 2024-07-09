@@ -62,6 +62,11 @@ public class WaveListDetailDTO implements Serializable {
         private String status;
 
         /**
+         * 已检数量
+         */
+        private Integer totalPickedQty;
+
+        /**
          * 发货单列表
          */
         private List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList;

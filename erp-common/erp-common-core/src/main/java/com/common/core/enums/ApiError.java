@@ -864,6 +864,8 @@ public enum ApiError implements Serializable {
     ERROR_99116(99116,"非待处理的数据不能操作生成波次"),
 
     ERROR_99117(99117,"波次号和sku不能为空"),
+    ERROR_99118(99118,"波次号和篮号不能为空"),
+    ERROR_99119(99119,"波次号不能为空"),
 
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
