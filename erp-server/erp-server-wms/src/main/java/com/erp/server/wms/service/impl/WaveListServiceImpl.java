@@ -254,4 +254,11 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
         return deliveryService.printPickingView(deliveryIds);
     }
+
+    @Override
+    public Boolean updateStatusById(String waveId, String status) {
+      return   lambdaUpdate().eq(WaveListEntity::getId,waveId)
+                .eq(WaveListEntity::getStatus,status)
+                .update();
+    }
 }

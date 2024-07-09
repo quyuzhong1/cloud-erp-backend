@@ -9,6 +9,7 @@ import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
@@ -122,6 +123,8 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
                 }
             }
         }
+        Integer totalPickedQty = rowList.stream().map(WaveListDetailDTO.DeliveryInfoDTO::getPickedQty).reduce(MathUtil.ZERO, Integer::sum);
+        viewDTO.setTotalPickedQty(totalPickedQty);
         viewDTO.setDeliveryInfoList(rowList);
         viewDTO.setWarehouseId(warehouseId);
         viewDTO.setWarehouseName(warehouseName);

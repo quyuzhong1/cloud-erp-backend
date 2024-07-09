@@ -73,6 +73,11 @@ public class WaveListDetailPdaDTO implements Serializable {
         private String skuNo;
 
         /**
+         * sku图片Url
+         */
+        private String skuImagesUrl;
+
+        /**
          * 产品名称
          */
         private String productName;
