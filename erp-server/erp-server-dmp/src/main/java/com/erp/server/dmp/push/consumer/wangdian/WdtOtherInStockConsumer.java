@@ -113,9 +113,6 @@ public class WdtOtherInStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
         if(count > 0){
             return ApiResult.error(ApiError.ERROR_WDT_CANCEL_PUSH.code, String.format("前序任务未完成, 跳过本次推送: %s", request));
         }
-
-        limiter.acquire();
-
         //查询其他入库单
         OtherStockinResponse.DataInfoDto dataInfoDto = wdtPushOtherInStockService.queryWithDetail(request);
         List<OtherStockinResponse.OrderInfoDto> order = dataInfoDto.getOrder();
