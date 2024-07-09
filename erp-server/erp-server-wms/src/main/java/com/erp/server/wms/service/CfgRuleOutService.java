@@ -52,12 +52,12 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      * @param type
      * @return
      */
-    CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(PickingSourceTypeEnum type);
+    CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(String type);
 
     /**
      * 获取产品装箱配置
      * @param type
      * @return
      */
-    CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(PickingSourceTypeEnum type);
+    CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(String type);
 }

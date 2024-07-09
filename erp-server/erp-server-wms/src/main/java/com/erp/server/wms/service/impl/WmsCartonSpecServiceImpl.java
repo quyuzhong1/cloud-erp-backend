@@ -12,8 +12,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.*;
@@ -27,16 +30,14 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -177,8 +178,11 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
             viewDTO.setBoxNo(cartonEntity.getBoxNo() != 0 ? cartonEntity.getBoxNo() : null);
             viewDTO.setPackingUserId(cartonEntity.getPackingUserId());
             viewDTO.setPackingUserName(cartonEntity.getPackingUserName());
-            //TODO 预警提示：超重值：10KG，本次装箱预计已超重1KG！
-            viewDTO.setWarnMsg("");
+            //预警提示：超重值：10KG，本次装箱预计已超重1KG！
+            WmsCartonSpecDTO.WeightRuleDTO warnMsg = getWarnMsg(packingTaskEntity.getSourceType(), grossWeight);
+            viewDTO.setWarnMsg(warnMsg.getWarnMsg());
+            viewDTO.setMaxWeight(warnMsg.getMaxWeight());
+            viewDTO.setMinWeight(warnMsg.getMinWeight());
         }
         //装箱进度
         view.setDeliveryQty(taskDetailEntityList.stream().map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum));
@@ -189,9 +193,84 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         return view;
     }
 
-//    private WmsCartonSpecDTO.WeightRuleDTO getWarnMsg(String sourceType,BigDecimal grossWeight){
-//        cfgRuleOutService.getCfgOverweightDetailDTOByType(PickingSourceTypeEnum.FBA)
-//    }
+    @Override
+    public WmsCartonSpecDTO.WeightRuleDTO getWarnMsg(String sourceType,BigDecimal grossWeight){
+        WmsCartonSpecDTO.WeightRuleDTO weightRuleDTO = new WmsCartonSpecDTO.WeightRuleDTO();
+        CfgRuleOutDTO.CfgOverweightDetailDTO dto = cfgRuleOutService.getCfgOverweightDetailDTOByType(sourceType);
+        if (Objects.isNull(dto)){
+            return weightRuleDTO;
+        }
+        weightRuleDTO.setMaxWeight(dto.getMaxWeight());
+        weightRuleDTO.setMinWeight(dto.getMinWeight());
+        String warnMsg = "";
+        //小于最小限制
+        if (grossWeight.compareTo(dto.getMinWeight()) < 0){
+            BigDecimal subtract = dto.getMinWeight().subtract(grossWeight);
+            warnMsg = StrUtil.format("预警提示：重量低于最低重量：{}KG，本次装箱预计已低{}KG！", grossWeight, subtract);
+
+        }
+        //大于最大限制
+        if (grossWeight.compareTo(dto.getMaxWeight()) > 0){
+            BigDecimal subtract = grossWeight.subtract(dto.getMaxWeight());
+            warnMsg = StrUtil.format("预警提示：超重值：{}KG，本次装箱预计已超重{}KG！", grossWeight, subtract);
+        }
+        weightRuleDTO.setWarnMsg(warnMsg);
+        return weightRuleDTO;
+    }
+
+    @Override
+    public void checkProductPropertyIds(String sourceType, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds) || StrUtil.isBlank(sourceType)){
+            return;
+        }
+        CfgRuleOutDTO.CfgProductPackingDetail productRule = cfgRuleOutService.getCfgProductPackingDetailByType(sourceType);
+        if (Objects.isNull(productRule)){
+            return;
+        }
+        List<String> cannotPackingPropertyIds = productRule.getCannotPackingPropertyIds();
+        List<String> canPackingPropertyIds = productRule.getCanPackingPropertyIds();
+        if (CollectionUtils.isEmpty(canPackingPropertyIds) || CollectionUtils.isEmpty(canPackingPropertyIds)){
+            return;
+        }
+        //获取sku属性值
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuLogisticsByIds(skuIds);
+        Set<String> propertyIds = new HashSet<>();
+        skuVOList.forEach(skuVO -> {
+            String productPropertyId = skuVO.getProductPropertyId();
+            if (StrUtil.isNotBlank(productPropertyId)){
+                String[] split = productPropertyId.split(",");
+                propertyIds.addAll(Arrays.asList(split));
+            }
+        });
+        if (CollectionUtils.isEmpty(propertyIds)){
+            return;
+        }
+        List<String> containIds1 = cannotPackingPropertyIds.stream().filter(e -> propertyIds.stream().allMatch(e::equals)).collect(Collectors.toList());
+        List<String> containIds2 = canPackingPropertyIds.stream().filter(e -> propertyIds.stream().allMatch(e::equals)).collect(Collectors.toList());
+        List<BasicDictEntity> declarePropertyList = plmTaskFeign.listDictByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+        Map<String, String> dictMap = declarePropertyList.stream().collect(Collectors.toMap(BasicDictEntity::getId, BasicDictEntity::getName));
+        if (CollectionUtils.isNotEmpty(containIds1) && CollectionUtils.isNotEmpty(containIds2)){
+            List<String> canPackList = new ArrayList<>();
+            containIds2.stream().forEach(propertyId -> {
+                String name = dictMap.get(propertyId);
+                if (StrUtil.isNotBlank(name)){
+                    canPackList.add(name);
+                }
+            });
+            List<String> cannotPackList = new ArrayList<>();
+            containIds1.stream().forEach(propertyId -> {
+                String name = dictMap.get(propertyId);
+                if (StrUtil.isNotBlank(name)){
+                    cannotPackList.add(name);
+                }
+            });
+            String msg = StrUtil.format("分类【{}】装入【{}】不可装入【{}】", PickingSourceTypeEnum.getName(sourceType), String.join("," ,canPackList), String.join(",",cannotPackList));
+            throw new ServiceException(msg);
+        }
+
+    }
+
+
     /**
      * 删除原装箱信息
      * @param taskId
