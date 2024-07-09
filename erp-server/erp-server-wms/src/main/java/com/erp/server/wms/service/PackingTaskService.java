@@ -217,4 +217,5 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     PackingTaskEntity getBySourceCode(String sourceCode);
 
     ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto, CfgRuleOutEnum.OverweightTypeEnum type);
+    List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(List<String> packingTaskIds,List<String> sourceCodeList);
 }

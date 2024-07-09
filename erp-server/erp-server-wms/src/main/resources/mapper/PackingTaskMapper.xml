@@ -83,6 +83,7 @@
     <select id="selectPackingStatusByIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$StatusDTO">
         SELECT
             pt.ID,
+            pt.source_code as sourceCode,
             CASE
                 WHEN EXISTS ( SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE AND wc.packing_status = 'completed' ) THEN
                     'packed'
@@ -105,6 +106,12 @@
         <if test="taskIds!= null and taskIds.size > 0">
             AND pt.id IN
             <foreach collection="taskIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="sourceCodes!= null and sourceCodes.size > 0">
+            AND pt.source_code IN
+            <foreach collection="sourceCodes" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>

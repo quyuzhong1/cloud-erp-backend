@@ -42,10 +42,12 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
 
     /**
      * 根据任务id汇总状态
+     *
      * @param taskIds
+     * @param sourceCodes
      * @return
      */
-    List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(@Param("taskIds") List<String> taskIds);
+    List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(@Param("taskIds") List<String> taskIds,@Param("sourceCodes") List<String> sourceCodes);
 
     /**
      * 根据装箱任务进行sku分组

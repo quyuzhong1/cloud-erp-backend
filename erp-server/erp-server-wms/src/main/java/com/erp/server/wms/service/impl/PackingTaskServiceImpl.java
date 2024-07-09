@@ -1066,6 +1066,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
     }
 
+    @Override
+    public List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(List<String> packingTaskIds, List<String> sourceCodeList) {
+        if(CollectionUtils.isEmpty(packingTaskIds) && CollectionUtils.isEmpty(sourceCodeList)){
+            return new ArrayList<>();
+        }
+        return baseMapper.selectPackingStatusByIds(packingTaskIds,sourceCodeList);
+    }
+
     /**
      * 构建装箱信息
      * @param cartonEntityList
@@ -1328,7 +1336,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         List<String> taskIds = records.stream().map(PackingTaskDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
-        List<PackingTaskDTO.StatusDTO> statusDTOList = baseMapper.selectPackingStatusByIds(taskIds);
+        List<PackingTaskDTO.StatusDTO> statusDTOList = this.selectPackingStatusByIds(taskIds, null);
         Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
         records.forEach(pagingViewDTO -> {
             PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(pagingViewDTO.getId());

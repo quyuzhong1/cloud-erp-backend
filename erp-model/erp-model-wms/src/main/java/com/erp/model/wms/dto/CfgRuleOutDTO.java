@@ -333,7 +333,7 @@ public class CfgRuleOutDTO implements Serializable {
 
         public void check(){
             if(Objects.nonNull(maxWeight) && Objects.nonNull(minWeight) && maxWeight.compareTo(minWeight)<0){
-                throw new ServiceException("单箱超重重量不可大于最高重量");
+                throw new ServiceException("单箱超重重量不可小于最低重量");
             }
         }
     }

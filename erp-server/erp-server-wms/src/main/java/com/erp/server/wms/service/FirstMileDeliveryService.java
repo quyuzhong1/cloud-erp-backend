@@ -320,4 +320,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param packingStatus
      */
     void updatePackingStatus(String id, String packingStatus);
+
+    BatchResultDTO generatePackingTask(FirstMileDeliveryEntity firstMileDeliveryEntity);
 }

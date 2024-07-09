@@ -261,4 +261,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @param packingStatus
      */
     void updatePackingStatus(String id, String packingStatus);
+
+    BatchResultDTO generatePackingTask(SoDeliveryNoticeEntity entity);
 }
