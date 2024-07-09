@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
+import com.erp.model.wms.enums.PickingSourceTypeEnum;
 
 /**
  * <p>
@@ -51,12 +52,12 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      * @param type
      * @return
      */
-    CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(CfgRuleOutEnum.OverweightTypeEnum type);
+    CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(PickingSourceTypeEnum type);
 
     /**
      * 获取产品装箱配置
      * @param type
      * @return
      */
-    CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(CfgRuleOutEnum.OverweightTypeEnum type);
+    CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(PickingSourceTypeEnum type);
 }

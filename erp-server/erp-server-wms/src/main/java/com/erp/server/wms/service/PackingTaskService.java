@@ -11,6 +11,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
+import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -216,6 +217,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     PackingTaskEntity getBySourceCode(String sourceCode);
 
-    ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto, CfgRuleOutEnum.OverweightTypeEnum type);
+    ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto, PickingSourceTypeEnum type);
     List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(List<String> packingTaskIds,List<String> sourceCodeList);
 }

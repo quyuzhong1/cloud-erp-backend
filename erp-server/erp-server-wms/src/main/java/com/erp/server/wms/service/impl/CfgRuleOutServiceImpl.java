@@ -19,6 +19,7 @@ import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
+import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgRuleOutService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -293,7 +294,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     @Override
-    public CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(CfgRuleOutEnum.OverweightTypeEnum type) {
+    public CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(PickingSourceTypeEnum type) {
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutDTO.CfgOverweightDTO cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgOverweightDTO.class);
@@ -308,7 +309,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     @Override
-    public CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(CfgRuleOutEnum.OverweightTypeEnum type) {
+    public CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(PickingSourceTypeEnum type) {
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutDTO.CfgProductPacking cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgProductPacking.class);

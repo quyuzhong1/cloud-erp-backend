@@ -1078,7 +1078,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
 
     @Override
-    public ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto, CfgRuleOutEnum.OverweightTypeEnum type) {
+    public ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto, PickingSourceTypeEnum type) {
         String[] barCodeArr = dto.getBarCode().split("-");
         if(barCodeArr.length < 2){
             throw new ServiceException("barcode 解析失败，格式应该为 单号-箱号 当前为"+dto.getBarCode());
