@@ -1787,7 +1787,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     .filter(e -> e.getDeliveryId().equals(record.getId()))
                     .findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
             record.setWavesCode(dto.getWaveCode());
-            String warehouseLocation = views.stream().filter(e -> e.getSourceDetailId().equals(record.getDetailId()))
+            String warehouseLocation = views.stream().filter(e -> e.getSkuId().equals(record.getSkuId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
                     .distinct()
                     .collect(Collectors.joining(","));
@@ -1820,7 +1820,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 viewDTO.setProductName(skuVO.getSkuName());
             }
 
-            String warehouseLocation = views.stream().filter(e -> e.getSourceDetailId().equals(viewDTO.getId()))
+            String warehouseLocation = views.stream().filter(e -> e.getSkuId().equals(viewDTO.getSkuId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
                     .distinct()
                     .collect(Collectors.joining(","));
