@@ -2,6 +2,8 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -129,6 +131,22 @@ public class PackingTaskController extends BaseController {
         return success(wmsCartonSpecView);
     }
     /**
+     * 装箱-详情(箱规+产品明细)
+     * @Author zdy
+     * @Date 2024/7/8 17:44
+     * @param sourceCode 装箱任务源订单编码
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    @GetMapping("/packingViewBySourceCode")
+    public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingViewBySourceCode(@RequestParam("sourceCode") String sourceCode) {
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
+        if (CollectionUtil.isEmpty(taskEntityList)){
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = packingTaskService.packingView(taskEntityList.get(0).getId());
+        return success(wmsCartonSpecView);
+    }
+    /**
      *
      * 快粘贴查询sku
      * @Author zdy
@@ -149,6 +167,7 @@ public class PackingTaskController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @DataIdempotent(keyIdName = "dto.sourceId")
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "装箱任务装箱保存")
     public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {

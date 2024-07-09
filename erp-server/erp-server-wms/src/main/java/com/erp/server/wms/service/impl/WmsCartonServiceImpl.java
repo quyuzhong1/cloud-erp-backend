@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -123,26 +124,38 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     }
 
     @Override
-    public void add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity, String taskId) {
-        Integer boxQty = addDTO.getBoxQty();
-        for (int i = 0; i < boxQty; i++) {
-            WmsCartonEntity wmsCartonEntity = new WmsCartonEntity();
-            addDTO.setSpecId(wmsCartonSpecEntity.getId());
-            addDTO.setPackingTaskId(taskId);
-            BeanMapperUtils.copy(addDTO, wmsCartonEntity);
-            // 数据处理
-            handleData(wmsCartonEntity,addDTO.getDetailList());
+    public String add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity, String taskId) {
 
-            log.info("开始新增发货单箱子信息明细单");
-            boolean save = super.save(wmsCartonEntity);
-            if(!save) {
-                throw new ServiceException("发货单箱子信息明细单保存失败");
-            }
-            String msg = StrUtil.format("用户【{}】新增【{}】单据ID为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱信息" , wmsCartonEntity.getId());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON.getCode(), taskId, "新增操作");
-            //新增详情信息
-            wmsCartonDetailService.add(addDTO.getDetailList(), wmsCartonEntity,wmsCartonSpecEntity);
+        WmsCartonEntity wmsCartonEntity = new WmsCartonEntity();
+        addDTO.setSpecId(wmsCartonSpecEntity.getId());
+        addDTO.setTaskId(taskId);
+        BeanMapperUtils.copy(addDTO, wmsCartonEntity);
+        // 数据处理
+        handleData(wmsCartonEntity, addDTO.getDetailList());
+
+        log.info("开始新增发货单箱子信息明细单");
+        boolean save = super.save(wmsCartonEntity);
+        if (!save) {
+            throw new ServiceException("发货单箱子信息明细单保存失败");
         }
+        String msg = StrUtil.format("用户【{}】新增【{}】单据ID为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱信息", wmsCartonEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON.getCode(), taskId, "新增操作");
+        //新增详情信息
+        wmsCartonDetailService.add(addDTO.getDetailList(), wmsCartonEntity, wmsCartonSpecEntity);
+        return wmsCartonEntity.getId();
+    }
+
+    @Override
+    public WmsCartonEntity findCartonByTaskIdAndBoxNo(String taskId, Integer boxNo) {
+        if (StrUtil.isBlank(taskId) && Objects.isNull(boxNo)){
+            return null;
+        }
+        return lambdaQuery().eq(WmsCartonEntity::getPackingTaskId,taskId).eq(WmsCartonEntity::getBoxNo,boxNo).last("limit 1").one();
+    }
+
+    @Override
+    public Integer getBoxNoByTaskId(String id) {
+        return baseMapper.getBoxNoByTaskId(id);
     }
 
     /**
@@ -150,22 +163,26 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     */
     private void handleData(WmsCartonEntity wmsCartonEntity,List<WmsCartonDetailDTO.AddDTO> detailList) {
         //TODO 单箱状态判断
-        //发货数量
-        int deliveryQty = detailList.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getDeliveryQty).sum();
-        //待装箱数量=发货数量-所有已装箱数量
-        int packQtySum = detailList.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getPackQty).sum();
-        if (packQtySum >= 0 && packQtySum != deliveryQty){
-            wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.INCOMPLETE.getCode());
-        }else{
-            wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
+
+        if (StrUtil.isBlank(wmsCartonEntity.getPackingStatus())){
+            //发货数量
+            int deliveryQty = detailList.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getDeliveryQty).sum();
+            //待装箱数量=发货数量-所有已装箱数量
+            int packQtySum = detailList.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getPackQty).sum();
+            if (packQtySum >= 0 && packQtySum != deliveryQty){
+                wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.INCOMPLETE.getCode());
+            }else{
+                wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
+            }
         }
         //装箱人员填充
-        if (packQtySum > 0){
-            wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
-            wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
-        }
+        wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
+        wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
         //根据已装箱清单计算待装箱号
-        int boxNo = baseMapper.getBoxNoByTaskId(wmsCartonEntity.getPackingTaskId());
+        Integer boxNo = baseMapper.getBoxNoByTaskId(wmsCartonEntity.getPackingTaskId());
+        if (Objects.isNull(boxNo)){
+            boxNo = 0;
+        }
         wmsCartonEntity.setBoxNo(boxNo + 1);
     }
 }

@@ -54,8 +54,25 @@
             ptd.sku_id,
             ptd.sku_no
     </select>
-    <select id="countDeliveryQty">
+    <select id="countDeliveryQty" resultType="java.lang.Integer">
         select count(delivery_qty) FROM packing_task_detail where main_id = #{taskId}
+    </select>
+    <select id="searchProductBySearchKey" resultType="com.erp.model.wms.dto.PackingTaskDetailDTO$ViewDTO">
+        SELECT
+            ptd.id,
+            ptd.main_id,
+            ptd.sku_id,
+            ptd.sku_no,
+            ptd.fn_sku,
+            ptd.source_detail_id
+        FROM
+            packing_task_detail ptd
+                LEFT JOIN product_purchase pp ON ptd.sku_id = pp.sku_id AND pp.is_deleted = FALSE
+        where ptd.is_deleted = FALSE
+          AND (COALESCE(ptd.sku_no, '') || ' ' || COALESCE(ptd.fn_sku, '') || ' ' || COALESCE(pp.ean, '')) ILIKE CONCAT('%', #{searchKey}::text,'%')
+        <if test="taskId != null and taskId != ''">
+            AND ptd.main_id = #{taskId}
+        </if>
     </select>
 
 

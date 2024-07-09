@@ -54,7 +54,7 @@ public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
      * 预计毛重（装箱更新时计算）
      */
     @TableField("gross_weight")
-    private String grossWeight;
+    private BigDecimal grossWeight;
     /**
      * 重量单位（g） 页面展示kg，数据库存储g
      */

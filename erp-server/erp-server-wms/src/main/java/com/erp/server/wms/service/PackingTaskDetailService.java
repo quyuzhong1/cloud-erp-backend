@@ -61,5 +61,13 @@ public interface PackingTaskDetailService extends SuperService<PackingTaskDetail
      * @param id
      * @return
      */
-    int countDeliveryQty(String id);
+    Integer countDeliveryQty(String id);
+
+    /**
+     * 模糊搜索装箱任务明细
+     * @param taskId
+     * @param searchKey
+     * @return
+     */
+    List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId,String searchKey);
 }

@@ -116,11 +116,24 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
     }
 
     @Override
-    public int countDeliveryQty(String id) {
+    public Integer countDeliveryQty(String id) {
         if (StrUtil.isNotBlank(id)){
-            baseMapper.countDeliveryQty(id);
+            return baseMapper.countDeliveryQty(id);
         }
         return 0;
+    }
+
+    /**
+     * 模糊搜索装箱任务明细
+     * @param searchKey
+     * @return
+     */
+    @Override
+    public List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey) {
+        if (StrUtil.isBlank(searchKey)){
+            return Collections.emptyList();
+        }
+        return baseMapper.searchProductBySearchKey(taskId, searchKey);
     }
 
 

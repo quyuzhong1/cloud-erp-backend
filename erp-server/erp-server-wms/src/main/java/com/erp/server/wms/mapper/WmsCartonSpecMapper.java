@@ -39,4 +39,5 @@ public interface WmsCartonSpecMapper extends BaseMapper<WmsCartonSpecEntity> {
      **/
     List<WmsCartonSpecDTO.PackDateDTO> listPackDateByMainId(@Param("mainId") String mainId);
 
+    Integer selectBoxSpecNo(@Param("taskId") String taskId);
 }

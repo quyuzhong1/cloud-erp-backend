@@ -22,5 +22,5 @@ public interface WmsCartonMapper extends BaseMapper<WmsCartonEntity> {
      * @param packingTaskId
      * @return
      */
-    int getBoxNoByTaskId(@Param("packingTaskId") String packingTaskId);
+    Integer getBoxNoByTaskId(@Param("packingTaskId") String packingTaskId);
 }

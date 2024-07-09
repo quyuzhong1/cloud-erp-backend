@@ -7,9 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,7 +17,7 @@ import java.util.List;
  * 发货单箱规信息请求响应实体
  * </p>
  *
- * @author Luo_WG
+ * @author zdy
  * @since 2023-11-16
 */
 @Data
@@ -34,7 +32,7 @@ public class WmsCartonSpecDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-        * 主键id
+        * 主键id 箱规id
         */
         private String  id;
 
@@ -42,7 +40,11 @@ public class WmsCartonSpecDTO implements Serializable {
         * 来源id sourceId->mainId
          * packing_task表id
         */
-        private String mainId;
+        private String taskId;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
 
         /**
         * 箱规编号
@@ -50,10 +52,25 @@ public class WmsCartonSpecDTO implements Serializable {
         private Integer boxSpecNo;
 
         /**
-        * 包装重量
+        * 预计毛重
         */
-        private BigDecimal packageWeight;
-
+        private BigDecimal grossWeight;
+        /**
+         * 重量单位（kg） 页面展示kg，数据库存储kg
+         */
+        private String weightUnit;
+        /**
+         * 箱号
+         */
+        private Integer boxNo;
+        /**
+         * 装箱员id
+         */
+        private String packingUserId;
+        /**
+         * 装箱员名称
+         */
+        private String packingUserName;
         /**
         * 箱子尺寸（长）
         */
@@ -72,13 +89,16 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 尺寸单位
          */
-        @TableField("size_unit")
         private String sizeUnit;
 
         /**
         * 箱数
         */
         private Integer boxQty;
+        /**
+         * 预警提示
+         */
+        private String warnMsg;
 
         /**
          * 详情
@@ -97,9 +117,13 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String specId;
         /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
          * 装箱任务id
          */
-        private String packingTaskId;
+        private String taskId;
         /**
          * 详情
          */
@@ -115,15 +139,21 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
         * 箱规编号
         */
-        @NotNull(message = "箱规编号不能为空")
-        @Min(value = 1,message = "箱规编号最小值为1")
-        @Max(value = 999999999,message = "箱规编号最大值为999999999")
+//        @NotNull(message = "箱规编号不能为空")
+//        @Min(value = 1,message = "箱规编号最小值为1")
+//        @Max(value = 999999999,message = "箱规编号最大值为999999999")
         private Integer boxSpecNo;
 
         /**
         * 包装重量
         */
         private BigDecimal packageWeight;
+        /**
+         * 单箱状态(incomplete 未完成,completed 已完成)
+         * PackingTaskStatusEnum
+         * 字典接口地址
+         */
+        private String packingStatus;
         /**
          * 重量单位
          */
@@ -368,6 +398,14 @@ public class WmsCartonSpecDTO implements Serializable {
          * 产品产品名称
          */
         private String productName;
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 重量单位默认kg
+         */
+        private String weightUnit;
 
         /**
          * 发货数量
@@ -419,7 +457,35 @@ public class WmsCartonSpecDTO implements Serializable {
          * 装箱任务id
          */
         private String taskId;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
 
+        /**
+         * 装箱数量(总)
+         */
+        private Integer packTotalQty;
+        /**
+         * 本箱已装
+         */
+        private Integer packQty;
+        /**
+         * 预计毛重(已装箱预计毛重)总
+         */
+        private BigDecimal packGrossWeight;
+        /**
+         * 重量单位（kg） 页面展示kg，数据库存储kg
+         */
+        private String packWeightUnit;
+//        /**
+//         * 预计毛重(本箱已装-预计毛重)
+//         */
+//        private BigDecimal grossWeight;
+//        /**
+//         * 重量单位（kg） 页面展示kg，数据库存储kg
+//         */
+//        private String weightUnit;
         /**
          * 装箱信息-箱规
          */
@@ -491,7 +557,22 @@ public class WmsCartonSpecDTO implements Serializable {
          * 装箱数量
          */
         private Integer packQty;
-
+        /**
+         * 毛重(已装箱毛重)
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 毛重单位（已装箱重量kg）
+         */
+        private String weightUnit;
+        /**
+         * 单个sku毛重
+         */
+        private BigDecimal singleGrossWeight;
+        /**
+         * 单个sku毛重单位（g）
+         */
+        private String singleWeightUnit;
     }
 
     /**
@@ -564,7 +645,7 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 装箱信息
          */
-        private List<CartonDTO> cartonDetailList;
+        private List<CartonDTO> cartonList;
     }
 
     @Data
@@ -580,8 +661,6 @@ public class WmsCartonSpecDTO implements Serializable {
          * 箱子id
          */
         private String cartonId;
-        private String skuId;
-        private String skuNo;
         /**
          * 装箱员名称
          */
@@ -622,7 +701,7 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 装箱明细
          */
-        private List<CartonDetailDTO> cartonDetailDTOList;
+        private List<CartonDetailDTO> cartonDetailList;
     }
     @Data
     @Builder
@@ -639,5 +718,134 @@ public class WmsCartonSpecDTO implements Serializable {
          * 重量单位
          */
         private String weightUnit;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CartonSpecDTO{
+        private String sourceId;
+        private String sourceCode;
+        private Integer boxSpecNo;
+        private Integer boxNo;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 箱规id
+         */
+        private String specId;
+        /**
+         * 包装重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 重量单位 kg
+         */
+        private String weightUnit;
+        /**
+         * 箱规长
+         */
+        private BigDecimal boxLength;
+        /**
+         * 箱规宽
+         */
+        private BigDecimal boxWidth;
+        /**
+         * 箱规高
+         */
+        private BigDecimal boxHeight;
+        /**
+         * 尺寸单位 cm
+         */
+        private String sizeUnit;
+
+        /**
+         * 箱规来源(manual 手动, device 设备)
+         * MeasureSourceEnum
+         * 字典接口地址
+         */
+        private String measureSource;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SpecSaveDTO {
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 箱规id
+         */
+        @NotBlank(message = "箱规id不能为空")
+        private String specId;
+        private String sourceId;
+        private String sourceCode;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 重量单位 kg
+         */
+        private String weightUnit;
+        /**
+         * 箱规长
+         */
+        private BigDecimal boxLength;
+        /**
+         * 箱规宽
+         */
+        private BigDecimal boxWidth;
+        /**
+         * 箱规高
+         */
+        private BigDecimal boxHeight;
+        /**
+         * 尺寸单位 cm
+         */
+        private String sizeUnit;
+        /**
+         * 箱规来源(manual 手动, device 设备)
+         * MeasureSourceEnum
+         * 字典接口地址
+         */
+        private String measureSource;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SpecRequestDTO {
+
+        /**
+         * 箱子id(如果输入值，则以该值为准，否则以outBoxNo为准)
+         */
+        private String cartonId;
+        /**
+         * 外箱单号(关联单号{发货单}-箱号)
+         */
+        private String outBoxNo;
+        /**
+         * 源单号【后端使用】
+         */
+        private String sourceCode;
+        /**
+         * 箱号【后端使用】
+         */
+        private Integer boxNo;
+        /**
+         * 产品信息(输入SKU/FNSKU/EAN码)
+         */
+        private String productNo;
     }
 }

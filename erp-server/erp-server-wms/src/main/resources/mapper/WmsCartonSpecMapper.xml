@@ -54,8 +54,10 @@
             wcd.sku_no,
             SUM(wcd.pack_qty) AS packQty,
             SUM(wcd.delivery_qty) AS deliveryQty,
+            SUM(wcd.gross_weight) AS grossWeight,
             SUM(wcs.box_qty) AS boxQty,
-            wcs.box_spec_no
+            wcs.box_spec_no,
+            wc.box_no
         FROM wms_carton_spec wcs
         LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
         LEFT JOIN wms_carton_detail wcd ON wc.id = wcd.main_id AND wcd.is_deleted = FALSE
@@ -67,6 +69,16 @@
             wcs.main_id,
             wcd.sku_id,
             wcd.sku_no,
-            wcs.box_spec_no
+            wcs.box_spec_no,
+            wc.box_no
+    </select>
+    <select id="selectBoxSpecNo" resultType="java.lang.Integer">
+        SELECT
+            MAX( wcs.box_spec_no )
+        FROM
+            wms_carton_spec wcs
+        WHERE
+            wcs.is_deleted = FALSE
+          AND wcs.main_id = #{taskId}
     </select>
 </mapper>

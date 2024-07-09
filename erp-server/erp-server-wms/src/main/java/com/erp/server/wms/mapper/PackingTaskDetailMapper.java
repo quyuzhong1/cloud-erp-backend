@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.erp.model.wms.dto.PackingTaskDTO;
+import com.erp.model.wms.dto.PackingTaskDetailDTO;
 import com.erp.model.wms.entity.PackingTaskDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -31,5 +32,13 @@ public interface PackingTaskDetailMapper extends BaseMapper<PackingTaskDetailEnt
      * 统计发货数量总和
      * @param taskId
      */
-    void countDeliveryQty(@Param("taskId") String taskId);
+    Integer countDeliveryQty(@Param("taskId") String taskId);
+
+    /**
+     * 模糊搜索
+     * @param taskId
+     * @param searchKey
+     * @return
+     */
+    List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(@Param("taskId")String taskId, @Param("searchKey") String searchKey);
 }

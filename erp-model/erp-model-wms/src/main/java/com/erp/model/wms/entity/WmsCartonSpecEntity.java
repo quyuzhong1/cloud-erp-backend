@@ -35,7 +35,7 @@ public class WmsCartonSpecEntity extends BaseEntity<WmsCartonSpecEntity> {
     @TableField("package_weight")
     private BigDecimal packageWeight;
     /**
-     * 重量单位（g） 页面展示kg，数据库存储kg
+     * 重量单位（kg） 页面展示kg，数据库存储kg
      */
     @TableField("weight_unit")
     private String weightUnit;

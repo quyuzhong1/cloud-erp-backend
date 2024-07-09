@@ -74,6 +74,15 @@ public class WmsCartonDetailDTO implements Serializable {
          * 箱数
          */
         private Integer boxQty;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 重量单位（kg） 页面展示kg，数据库存储kg
+         */
+        private String weightUnit;
     }
 
     /**

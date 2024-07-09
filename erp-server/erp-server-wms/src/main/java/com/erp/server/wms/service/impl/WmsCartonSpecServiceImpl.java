@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -29,9 +30,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -59,21 +62,27 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void add(WmsCartonSpecDTO.AddDTO addDTO, String taskId) {
-        WmsCartonSpecEntity wmsCartonSpecEntity = new WmsCartonSpecEntity();
-        BeanMapperUtils.copy(addDTO, wmsCartonSpecEntity);
-        // 数据处理
-        handleData(wmsCartonSpecEntity, taskId);
+    public String add(WmsCartonSpecDTO.AddDTO addDTO, String taskId) {
+        Integer boxQty = addDTO.getBoxQty();
+        List<String> specIds = new ArrayList<>();
+        for (int i = 0; i < boxQty; i++) {
+            WmsCartonSpecEntity wmsCartonSpecEntity = new WmsCartonSpecEntity();
+            BeanMapperUtils.copy(addDTO, wmsCartonSpecEntity);
+            // 数据处理
+            handleData(wmsCartonSpecEntity, taskId);
 
-        log.info("开始新增发货单箱规信息");
-        boolean save = super.saveOrUpdate(wmsCartonSpecEntity);
-        if(!save) {
-            throw new ServiceException("发货单箱规信息保存失败");
+            log.info("开始新增发货单箱规信息");
+            boolean save = super.saveOrUpdate(wmsCartonSpecEntity);
+            if(!save) {
+                throw new ServiceException("发货单箱规信息保存失败");
+            }
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱箱规" , wmsCartonSpecEntity.getBoxSpecNo());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_SPC.getCode(), taskId, "新增操作");
+            //新增箱子信息
+            wmsCartonService.add(addDTO,wmsCartonSpecEntity, taskId);
+            specIds.add(wmsCartonSpecEntity.getId());
         }
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱箱规" , wmsCartonSpecEntity.getBoxSpecNo());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_SPC.getCode(), taskId, "新增操作");
-        //新增箱子信息
-        wmsCartonService.add(addDTO,wmsCartonSpecEntity, taskId);
+        return String.join(",", specIds);
     }
 
     @Override
@@ -128,23 +137,27 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         if (ObjectUtil.isEmpty(packingTaskEntity)){
             return view;
         }
+        //装箱任务
+        view.setTaskId(packingTaskEntity.getId());
+        //查询装箱详情
+        view.setSourceId(packingTaskEntity.getSourceId());
+        view.setSourceCode(packingTaskEntity.getSourceCode());
         String taskEntityId = packingTaskEntity.getId();
         //查询箱规信息
         List<WmsCartonSpecEntity> wmsCartonSpecEntities = this.listByMainIds(Collections.singletonList(taskEntityId));
+        List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(taskEntityId));
         List<WmsCartonSpecDTO.ViewDTO> wmsCartonSpecList = BeanMapper.copyList(wmsCartonSpecEntities, WmsCartonSpecDTO.ViewDTO.class);
         view.setWmsCartonSpecList(wmsCartonSpecList);
         List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(taskEntityId));
+        //根据主表id分组sku查询发货及待装箱数
+        List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = this.listPackDateByPackingTaskId(taskEntityId);
+        //查询产品信息
+        List<String> skuIdList = packDateDTOS.stream().map(WmsCartonSpecDTO.PackDateDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
         //查询箱规包含的产品信息
         for (WmsCartonSpecDTO.ViewDTO viewDTO : wmsCartonSpecList) {
-            //根据主表id分组sku查询发货及待装箱数
-            List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = this.listPackDateByPackingTaskId(taskEntityId);
-
+            WmsCartonEntity cartonEntity = cartonEntityList.stream().filter(e -> e.getSpecId().equals(viewDTO.getId())).findFirst().orElse(new WmsCartonEntity());
             List<WmsCartonSpecDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(viewDTO.getBoxSpecNo())).collect(Collectors.toList());
-
-            //查询产品信息
-            List<String> skuIdList = packDateDTOList.stream().map(WmsCartonSpecDTO.PackDateDTO::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-
             List<WmsCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(packDateDTOList, WmsCartonDetailDTO.ViewDTO.class);
             for (WmsCartonDetailDTO.ViewDTO dto : detailList) {
                 int deliveryQty = taskDetailEntityList.stream().filter(req -> dto.getSkuId().equals(req.getSkuId())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -156,9 +169,24 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 //匹配产品信息，设置中文名
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
                 dto.setProductName(skuVO.getSkuName());
+                dto.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
             }
             viewDTO.setDetailList(detailList);
+            viewDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
+            BigDecimal grossWeight= detailList.stream().map(WmsCartonDetailDTO.ViewDTO::getGrossWeight).reduce(BigDecimal.ZERO,BigDecimal::add);
+            viewDTO.setGrossWeight(grossWeight);
+            viewDTO.setBoxNo(cartonEntity.getBoxNo() != 0 ? cartonEntity.getBoxNo() : null);
+            viewDTO.setPackingUserId(cartonEntity.getPackingUserId());
+            viewDTO.setPackingUserName(cartonEntity.getPackingUserName());
+            //TODO 预警提示：超重值：10KG，本次装箱预计已超重1KG！
+            viewDTO.setWarnMsg("");
         }
+        //装箱进度
+        view.setDeliveryQty(taskDetailEntityList.stream().map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum));
+        view.setPackTotalQty(packDateDTOS.stream().map(WmsCartonSpecDTO.PackDateDTO::getPackQty).reduce(MathUtil.ZERO,Integer::sum));
+        view.setPackGrossWeight(packDateDTOS.stream().map(WmsCartonSpecDTO.PackDateDTO::getGrossWeight).reduce(BigDecimal.ZERO,BigDecimal::add));
+        view.setPackWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
+
         return view;
     }
 
@@ -183,11 +211,40 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         }
     }
 
+    @Override
+    public void updateSpec(WmsCartonSpecDTO.SpecSaveDTO dto) {
+        this.lambdaUpdate()
+                .eq(WmsCartonSpecEntity::getId, dto.getSpecId())
+                .set(WmsCartonSpecEntity::getPackageWeight, dto.getPackageWeight())
+                .set(WmsCartonSpecEntity::getWeightUnit, dto.getWeightUnit())
+                .set(WmsCartonSpecEntity::getBoxLength, dto.getBoxLength())
+                .set(WmsCartonSpecEntity::getBoxWidth, dto.getBoxWidth())
+                .set(WmsCartonSpecEntity::getBoxHeight, dto.getBoxHeight())
+                .set(WmsCartonSpecEntity::getSizeUnit, dto.getSizeUnit())
+                .set(WmsCartonSpecEntity::getMeasureSource, dto.getMeasureSource())
+                .update();
+    }
+
     /**
     * 新增修改处理数据
     */
     private void handleData(WmsCartonSpecEntity wmsCartonSpecEntity, String taskId) {
         wmsCartonSpecEntity.setMainId(taskId);
-        wmsCartonSpecEntity.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
+        if (StringUtils.isBlank(wmsCartonSpecEntity.getMeasureSource())){
+            wmsCartonSpecEntity.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
+        }
+        if (Objects.isNull(wmsCartonSpecEntity.getBoxQty())){
+            wmsCartonSpecEntity.setBoxQty(MathUtil.ONE);
+        }
+        if (Objects.isNull(wmsCartonSpecEntity.getBoxSpecNo())){
+            Integer boxSpecNo = baseMapper.selectBoxSpecNo(taskId);
+            if (Objects.isNull(boxSpecNo)){
+                wmsCartonSpecEntity.setBoxSpecNo(MathUtil.ONE);
+            }else {
+                wmsCartonSpecEntity.setBoxSpecNo(boxSpecNo + 1);
+            }
+        }
+        wmsCartonSpecEntity.setBoxQty(MathUtil.ONE);
+
     }
 }

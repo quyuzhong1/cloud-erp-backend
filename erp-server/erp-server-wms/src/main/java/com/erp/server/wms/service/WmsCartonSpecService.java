@@ -24,7 +24,7 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
     * @param taskId 来源id
     * @return
     */
-    void add(WmsCartonSpecDTO.AddDTO dto, String taskId);
+    String add(WmsCartonSpecDTO.AddDTO dto, String taskId);
 
     /**
     * 根据发货单id查询装箱信息
@@ -81,4 +81,10 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      * @param taskId
      */
     void deleteCarton(String taskId);
+
+    /**
+     * 更新箱规 pda
+     * @param dto
+     */
+    void updateSpec(WmsCartonSpecDTO.SpecSaveDTO dto);
 }

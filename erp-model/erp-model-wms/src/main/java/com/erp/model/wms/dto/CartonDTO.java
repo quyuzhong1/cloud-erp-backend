@@ -119,7 +119,7 @@ public class CartonDTO implements Serializable {
         */
         @NotBlank(message = "箱规id不能为空")
         @Size(max = 19,message = "箱规id最大长度不能超过19位")
-        private String spec_id;
+        private String specId;
 
         /**
          * 来源id

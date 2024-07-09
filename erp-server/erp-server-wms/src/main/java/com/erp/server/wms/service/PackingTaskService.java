@@ -1,6 +1,6 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -155,4 +155,59 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     WmsCartonSpecDTO.PackedView packedDetailView(String id);
+
+    /**
+     * 调整装箱-详情
+     * @param adjustDTO
+     * @return
+     */
+    WmsCartonDTO.WmsCartonView adjustPackingView(WmsCartonDTO.AdjustDTO adjustDTO);
+
+    /**
+     * 新增装箱 pda
+     * @param dto
+     * @return
+     */
+    String pdaPackingSave(WmsCartonSpecDTO.AddDTO dto);
+
+    /**
+     * 新增装箱-详情
+     * @param searchDTO
+     * @return
+     */
+    WmsCartonDTO.WmsCartonView packingSaveView(WmsCartonDTO.CartonSearchDTO searchDTO);
+
+    /**
+     * 根据箱子查询装箱详情
+     * @param cartonId
+     * @return
+     */
+    WmsCartonDTO.WmsCartonView packingViewByCartonId(String cartonId);
+
+    /**
+     * 暂存本箱
+     * @param dto
+     * @return
+     */
+    String stagingPacking(WmsCartonSpecDTO.AddDTO dto);
+
+    /**
+     * 根据外部单号进行查询箱规详情
+     * @param requestDTO
+     * @return
+     */
+    WmsCartonSpecDTO.CartonSpecDTO cartonSpecView(WmsCartonSpecDTO.SpecRequestDTO requestDTO);
+
+    /**
+     * 调整装箱保存
+     * @param dto
+     * @return
+     */
+    String adjustPackingSave(WmsCartonDTO.AdjustSaveDTO dto);
+
+    /**
+     * 箱规保存
+     * @param dto
+     */
+    void cartonSpecSave(WmsCartonSpecDTO.SpecSaveDTO dto);
 }

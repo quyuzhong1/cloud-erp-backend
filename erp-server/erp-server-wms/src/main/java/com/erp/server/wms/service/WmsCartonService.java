@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -75,5 +76,20 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * @param wmsCartonSpecEntity
      * @param taskId
      */
-    void add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity, String taskId);
+    String add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity, String taskId);
+
+    /**
+     * 根据任务id和箱号获取记录
+     * @param taskId
+     * @param boxNo
+     * @return
+     */
+    WmsCartonEntity findCartonByTaskIdAndBoxNo(String taskId, Integer boxNo);
+
+    /**
+     * 获取箱号
+     * @param id
+     * @return
+     */
+    Integer getBoxNoByTaskId(String id);
 }
