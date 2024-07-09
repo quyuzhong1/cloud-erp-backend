@@ -33,14 +33,14 @@
         fd.create_time AS createTime,
         fd.approve_user_name AS approveUserName,
         fd.approve_time AS approveTime,
-        op.code as provideCode,
         fdd.platform_sku_no as thirdWarehouseSku,
         fd.logistics_status,
+        (select sum(wcd.pack_qty) from wms_carton_detail wcd where wcd.main_id = wc.id and wcd.is_deleted = false and wcd.sku_id = fdd.sku_id) as packingQty,
         fd.declare_status
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
-        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        LEFT JOIN packing_task pt on pt.source_id = fd.id and pt.is_deleted = false
+        left join wms_carton wc on wc.packing_task_id = pt.id and wc.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and    fd.is_deleted = FALSE

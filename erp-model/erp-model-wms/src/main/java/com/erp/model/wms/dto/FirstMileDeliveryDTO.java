@@ -330,6 +330,11 @@ public class FirstMileDeliveryDTO implements Serializable {
         private Integer deliveryQty;
 
         /**
+         * 装箱数量
+         */
+        private Integer packingQty;
+
+        /**
          * 备注
          */
         private String remark;

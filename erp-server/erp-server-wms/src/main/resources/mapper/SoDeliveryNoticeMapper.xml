@@ -27,9 +27,12 @@
             sdn.pack_date AS packDate,
             sdn.approve_user_name AS approveUserName,
             sdn.create_user_name AS createUserName,
+        (select sum(wcd.pack_qty) from wms_carton_detail wcd where wcd.main_id = wc.id and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id) as packingQty,
             sdn.create_time AS createTime
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        LEFT JOIN packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
+        left join wms_carton wc on wc.packing_task_id = pt.id and wc.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and    sdnd.is_deleted = FALSE
