@@ -63,26 +63,21 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(WmsCartonSpecDTO.AddDTO addDTO, String taskId) {
-        Integer boxQty = addDTO.getBoxQty();
-        List<String> specIds = new ArrayList<>();
-        for (int i = 0; i < boxQty; i++) {
-            WmsCartonSpecEntity wmsCartonSpecEntity = new WmsCartonSpecEntity();
-            BeanMapperUtils.copy(addDTO, wmsCartonSpecEntity);
-            // 数据处理
-            handleData(wmsCartonSpecEntity, taskId);
+        WmsCartonSpecEntity wmsCartonSpecEntity = new WmsCartonSpecEntity();
+        BeanMapperUtils.copy(addDTO, wmsCartonSpecEntity);
+        // 数据处理
+        handleData(wmsCartonSpecEntity, taskId);
 
-            log.info("开始新增发货单箱规信息");
-            boolean save = super.saveOrUpdate(wmsCartonSpecEntity);
-            if(!save) {
-                throw new ServiceException("发货单箱规信息保存失败");
-            }
-            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱箱规" , wmsCartonSpecEntity.getBoxSpecNo());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_SPC.getCode(), taskId, "新增操作");
-            //新增箱子信息
-            wmsCartonService.add(addDTO,wmsCartonSpecEntity, taskId);
-            specIds.add(wmsCartonSpecEntity.getId());
+        log.info("开始新增发货单箱规信息");
+        boolean save = super.saveOrUpdate(wmsCartonSpecEntity);
+        if (!save) {
+            throw new ServiceException("发货单箱规信息保存失败");
         }
-        return String.join(",", specIds);
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱箱规", wmsCartonSpecEntity.getBoxSpecNo());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_SPC.getCode(), taskId, "新增操作");
+        //新增箱子信息
+        wmsCartonService.add(addDTO, wmsCartonSpecEntity, taskId);
+        return wmsCartonSpecEntity.getId();
     }
 
     @Override

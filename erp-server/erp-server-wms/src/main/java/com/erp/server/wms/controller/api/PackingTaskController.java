@@ -221,7 +221,7 @@ public class PackingTaskController extends BaseController {
     /**
      * 导入装箱数据
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱数据")
     @PostMapping("/importPacking")
     public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = packingTaskService.importFile(excelFile, response);

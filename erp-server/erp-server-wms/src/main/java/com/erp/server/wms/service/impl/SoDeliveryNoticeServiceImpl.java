@@ -726,6 +726,19 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.ERROR_98005);
         }
         pickingListsService.exist(ids);
+
+        List<String> sourceCodeList = deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(null, sourceCodeList);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getSourceCode, Function.identity(),(v1, v2)->v1));
+        for (SoDeliveryNoticeEntity entity : deliveryNoticeEntityList) {
+            PackingTaskDTO.StatusDTO packingStatusDTO = statusDTOMap.get(entity.getCode());
+            if (!(Objects.nonNull(packingStatusDTO) && StringUtils.isNotBlank(packingStatusDTO.getPackingStatus()) && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingStatusDTO.getPackingStatus()))) {
+                throw new ServiceException("已生成装箱清单且装箱中&已装箱不允许作废");
+            }
+        }
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
+        packingTaskEntityList.forEach(v->packingTaskService.delete(v));
+
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.TRUE)
                 .set(SoDeliveryNoticeEntity::getInvalidRemark, remark)
@@ -758,6 +771,17 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count != deliveryNoticeEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+        List<String> sourceCodeList = deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(null, sourceCodeList);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getSourceCode, Function.identity(),(v1, v2)->v1));
+        for (SoDeliveryNoticeEntity entity : deliveryNoticeEntityList) {
+            PackingTaskDTO.StatusDTO packingStatusDTO = statusDTOMap.get(entity.getCode());
+            if (!(Objects.nonNull(packingStatusDTO) && StringUtils.isNotBlank(packingStatusDTO.getPackingStatus()) && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingStatusDTO.getPackingStatus()))) {
+                throw new ServiceException("已生成装箱清单且装箱中&已装箱不允许删除");
+            }
+        }
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
+        packingTaskEntityList.forEach(v->packingTaskService.delete(v));
         //删除详情表
         soDeliveryNoticeDetailService.delete(ids);
 

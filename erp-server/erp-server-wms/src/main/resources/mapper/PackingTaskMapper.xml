@@ -136,7 +136,7 @@
             wc.box_no,
             concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
             wcs.package_weight,
-            wc.weight_unit,
+            wcs.weight_unit,
             wc.weighting_status,
             wc.packing_status,
             wc.packing_user_name,

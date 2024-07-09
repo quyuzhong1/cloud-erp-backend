@@ -190,6 +190,11 @@ public class SoDeliveryNoticeDTO {
          * 发货数量
          */
         private Integer deliveryQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packingQty;
         /**
          * 销售单位
          */
