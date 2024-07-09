@@ -721,7 +721,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public BatchResultDTO disApprove(WarehouseEntity entity) {
         // 删除缓存
         removeCache(Collections.singletonList(entity.getId()));
-        if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) {
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_99003.msg);
         }
         List<WarehouseEntity> list = Arrays.asList(entity);
