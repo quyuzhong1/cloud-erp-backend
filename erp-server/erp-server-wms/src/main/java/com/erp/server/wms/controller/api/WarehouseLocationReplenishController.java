@@ -143,4 +143,15 @@ public class WarehouseLocationReplenishController extends BaseController {
         List<WarehouseLocationReplenishDTO.LocationQtyDTO> list = replenishService.listLocationQty(paramlist);
         return ApiResult.success(list);
     }
+
+
+    @PostMapping("/finishBatch")
+    public ApiResult<List<BatchResultDTO>> finishBatch(@RequestBody List<WarehouseLocationReplenishDTO.HandleDTO> dtoList){
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (WarehouseLocationReplenishDTO.HandleDTO handleDTO : dtoList) {
+            BatchResultDTO finish = replenishService.finish(handleDTO);
+            resultDTOS.add(finish);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

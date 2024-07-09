@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -161,6 +162,40 @@ public class CfgRuleOutDTO implements Serializable {
     }
 
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class OverweightDTO {
+
+        /**
+         * 类型
+         */
+        private CfgRuleOutEnum.OverweightTypeEnum type;
+
+        /**
+         * 称重重量（kg）
+         */
+        private BigDecimal scanWeight;
+
+        /**
+         * 扫描长(cm)
+         */
+        private BigDecimal scanLength;
+
+        /**
+         * 扫描宽(cm)
+         */
+        private BigDecimal scanWidth;
+
+        /**
+         * 扫描高(cm)
+         */
+        private BigDecimal scanHeight;
+
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -243,6 +278,13 @@ public class CfgRuleOutDTO implements Serializable {
     @AllArgsConstructor
     @Builder
     public static class CfgOverweightDetailDTO {
+
+        /**
+         * 分类  wms/common/enumDropDown?type=OverweightType
+         */
+        @NotBlank(message = "装箱超重配置-分类不能为空")
+        private String overweightType;
+
         /**
          * 单箱超重重量（kg）
          */
@@ -302,27 +344,11 @@ public class CfgRuleOutDTO implements Serializable {
     public static class CfgOverweightDTO {
 
         /**
-         * 装箱超重配置-FBA
+         * 装箱配置明细
          */
         @Valid
-        private CfgOverweightDetailDTO fbaOverweight = new CfgOverweightDetailDTO();
+        private List<CfgOverweightDetailDTO> cfgOverweightDetailDTOList = new ArrayList<>();
 
-        /**
-         * 装箱超重配置-第三方仓
-         */
-        @Valid
-        private CfgOverweightDetailDTO thirdWarehouseOverweight = new CfgOverweightDetailDTO();
-        /**
-         * 装箱超重配置-B2B
-         */
-        @Valid
-        private CfgOverweightDetailDTO b2BOverweight = new CfgOverweightDetailDTO();
-
-        public void check(){
-            fbaOverweight.check();
-            thirdWarehouseOverweight.check();
-            b2BOverweight.check();
-        }
     }
 
     @Data
@@ -332,9 +358,9 @@ public class CfgRuleOutDTO implements Serializable {
     public static class CfgProductPackingDetail {
 
         /**
-         * 渠道id
+         * 分类  wms/common/enumDropDown?type=OverweightType
          */
-        private List<String> channelIds = new ArrayList<>();
+        private String overweightType;
 
         /**
          * 装入的产品属性id /plm/dict/list?type=declareProperty
@@ -356,6 +382,17 @@ public class CfgRuleOutDTO implements Serializable {
          * 产品装箱配置详情
          */
         private List<CfgProductPackingDetail> cfgProductPackingDetailList = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @Builder
+    @AllArgsConstructor
+    public static class CheckDTO {
+
+        private Boolean result;
+
+        private String msg;
     }
     @Data
     @NoArgsConstructor

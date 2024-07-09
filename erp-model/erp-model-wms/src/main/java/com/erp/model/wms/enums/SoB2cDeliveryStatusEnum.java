@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public enum SoB2cDeliveryStatusEnum implements EnumMessage {
     WAIT_HANDLE("waitHandle", "待处理"),
     PICKING("picking", "拣货中"),
-    FALSE_SHIPMENT("falseShipment", "手动标发"),
+    GENERATE_WAVE("generation_waves", "生成波次"),
     SHIPPED("shipped", "已发货"),
     EXCEPTION_ORDER("exceptionOrder","异常单"),
     CANCEL_DELIVERY("cancelDelivery", "取消发货");
@@ -64,4 +64,13 @@ public enum SoB2cDeliveryStatusEnum implements EnumMessage {
     public static List<String> getStatusList() {
         return Arrays.stream(SoB2cDeliveryStatusEnum.values()).map(SoB2cDeliveryStatusEnum::getStatus).collect(Collectors.toList());
     }
+
+    public static List<String> notShipment(){
+        return Arrays.asList(WAIT_HANDLE.getCode(), EXCEPTION_ORDER.getCode());
+    }
+    public static List<String> notPrint(){
+        return Arrays.asList(WAIT_HANDLE.getCode(), EXCEPTION_ORDER.getCode(), SHIPPED.getCode(), CANCEL_DELIVERY.getCode());
+    }
+
+
 }

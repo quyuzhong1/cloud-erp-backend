@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.service.mabang.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -152,7 +153,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         boolean isSuccess = (boolean)resultMap.get("success");
         if(isSuccess) {
             // 更新出入库同步信息
-            dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(dmpPushTaskEntity.getId(), SyncStatusEnum.SUCCESS_SYNC.getCode(), resultMap.get("result").toString()));
+            dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(dmpPushTaskEntity.getId(), SyncStatusEnum.SUCCESS_SYNC.getCode(), ObjUtil.isEmpty(resultMap.get("result")) ? "" : resultMap.get("result").toString()));
         } else {
             String msg = StrUtils.null2EmptyWithTrim(resultMap.get("msg"));
             // 更新出入库同步信息

@@ -75,4 +75,14 @@ public interface PickingCartService extends SuperService<PickingCartEntity> {
      * @return Boolean
      */
     Boolean updateStatus(PickingCartDTO.UpdateStatusDTO dto);
+
+    /**
+     * 模糊查询拣货车编号
+     *
+     * @param code
+     * @return
+     * @date: 2024-07-07
+     * @author: tanmujin
+     */
+    List<PickingCartDTO.ViewDTO> searchByKeyword(String code);
 }

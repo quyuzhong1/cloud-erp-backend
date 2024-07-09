@@ -42,7 +42,7 @@
         LEFT JOIN cfg_condition AS cc ON cc.condition_field = crc.field
         AND cc.is_deleted = FALSE
         WHERE
-        crc.is_deleted = FALSE
+        crc.is_deleted = FALSE and cc.rule_type = #{ruleType}
         AND crc.rule_id IN
         <foreach collection="cfgRuleIds" item="id" open="(" separator="," close=")">
             #{id}

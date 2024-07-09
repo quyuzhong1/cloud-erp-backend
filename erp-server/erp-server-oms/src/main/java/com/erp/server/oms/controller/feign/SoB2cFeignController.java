@@ -89,6 +89,19 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
+     * 根据跟踪单号查询订单物流信息
+     * @author will
+     * @date 2024/7/5 10:27
+     * @param logisticsCode
+     * @return SoB2cLogisticsEntity
+     */
+    @PostMapping("/getByTrackNoOrTransportNo")
+    public SoB2cLogisticsEntity getByTrackNoOrTransportNo(@RequestBody String logisticsCode) {
+        SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByTrackNoOrTransportNo(logisticsCode);
+        return soB2cLogistics;
+    }
+
+    /**
      * 根据订单id获取物流费用的参数
      *
      * @param orderId

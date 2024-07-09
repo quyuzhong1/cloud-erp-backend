@@ -100,4 +100,13 @@
     <select id="list" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
         <include refid="pageSql"/>
     </select>
+    <select id="countShipmentMark" resultType="java.lang.Integer">
+        select count(*) from so_b2c_delivery where
+        is_deleted=FALSE
+        and shipment_mark = 'manual'
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>

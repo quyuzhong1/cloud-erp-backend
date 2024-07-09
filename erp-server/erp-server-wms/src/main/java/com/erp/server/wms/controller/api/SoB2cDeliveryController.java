@@ -91,11 +91,11 @@ public class SoB2cDeliveryController extends BaseController {
      * @Date 2023/12/13 19:13
      **/
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soB2cDelivery:paging",
-            tableAlias = "sbd"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "wms:soB2cDelivery:paging",
+//            tableAlias = "sbd"
+//    )
     @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
         return success(soB2cDeliveryService.paging(dto));

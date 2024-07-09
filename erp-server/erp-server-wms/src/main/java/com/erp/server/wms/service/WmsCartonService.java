@@ -92,4 +92,6 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * @return
      */
     Integer getBoxNoByTaskId(String id);
+
+    WmsCartonEntity getByTaskIdAndBoxNo(String id, String boxNo);
 }

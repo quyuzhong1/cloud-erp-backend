@@ -9,10 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalTime;
 import java.util.List;
@@ -187,7 +184,7 @@ public class CfgRuleWaveDTO implements Serializable {
         private String executionType;
 
         /**
-        * 分拣方式（边拣边分，先拣后分）
+        * 分拣方式（sameWave边拣边分，mixedWave先拣后分）
         */
         private String pickingType;
 
@@ -275,22 +272,30 @@ public class CfgRuleWaveDTO implements Serializable {
         * 最小单数
         */
         @NotNull(message = "最小单数不能为空")
+        @Min(value = 1,message = "实发数量最小值为1")
+        @Max(value = 999999999,message = "实发数量最大值为999999999")
         private Integer minOrderQty;
 
         /**
         * 最大单数
         */
         @NotNull(message = "最大单数不能为空")
+        @Min(value = 1,message = "实发数量最小值为1")
+        @Max(value = 999999999,message = "实发数量最大值为999999999")
         private Integer maxOrderQty;
 
         /**
         * 最少商品数量
         */
+        @Min(value = 1,message = "实发数量最小值为1")
+        @Max(value = 999999999,message = "实发数量最大值为999999999")
         private Integer minQty;
 
         /**
         * 最多商品数量
         */
+        @Min(value = 1,message = "实发数量最小值为1")
+        @Max(value = 999999999,message = "实发数量最大值为999999999")
         private Integer maxQty;
 
         /**

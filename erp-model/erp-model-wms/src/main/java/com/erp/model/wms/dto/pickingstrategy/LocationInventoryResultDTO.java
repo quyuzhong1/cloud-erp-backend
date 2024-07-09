@@ -29,7 +29,7 @@ public class LocationInventoryResultDTO {
     /**
      * skuNo
      */
-    private String skuNO;
+    private String skuNo;
     /**
      * 可用库存
      */

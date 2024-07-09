@@ -17,7 +17,13 @@ public interface WaveListMapper extends BaseMapper<WaveListEntity> {
 
     List<WaveListDTO.PickingWaveDetailDTO> listDetailByMainId(@Param("waveId")String waveId, @Param("basketNo") String basketNo, @Param("skuId") String skuId);
 
-    int countDelivery(PermissionsDTO param);
+    int countDelivery( @Param("params") PermissionsDTO params);
 
     IPage<WaveListEntity> paging(Page<Object> page, @Param("params") WaveListDTO.SearchParamDTO params);
+
+    List<WaveListDTO.TabDTO> listTab();
+
+    List<WaveListDTO.WaveDeliveryDTO> listByDeliverIds(@Param("ids") List<String> ids);
+
+    List<String> listDeliveryIdBySql(@Param("sql") String compareCodeSplicingValueSql);
 }

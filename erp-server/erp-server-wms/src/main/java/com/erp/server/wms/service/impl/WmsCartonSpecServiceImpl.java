@@ -225,6 +225,14 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 .update();
     }
 
+    @Override
+    public WmsCartonSpecEntity getByTaskIdAndBoxNo(String packingTaskId, String boxNo) {
+        if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(packingTaskId) || com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(boxNo)){
+            return null;
+        }
+        return lambdaQuery().eq(WmsCartonSpecEntity::getMainId,packingTaskId).eq(WmsCartonSpecEntity::getBoxSpecNo,boxNo).last("limit 1").one();
+    }
+
     /**
     * 新增修改处理数据
     */

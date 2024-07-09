@@ -147,10 +147,12 @@ public class SoB2cDeliveryFeignController extends BaseController {
     }
 
     /**
-     * B2B称重
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
      */
-    @PostMapping("/dimensionalWeightTob")
-    public String dimensionalWeightTob(@RequestBody @Validated DimensionalWeightDTO dto) {
-        return soB2cDeliveryService.dimensionalWeightTob(dto);
+    @PostMapping("/updateShipmentMark")
+    void updateShipmentMark(List<String> ids, String code) {
+        soB2cDeliveryService.updateShipmentMark(ids, code);
     }
 }

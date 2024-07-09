@@ -606,4 +606,41 @@ public class WarehouseLocationDTO implements Serializable {
             private String warehouseAreaName;
         }
     }
+
+    @Data
+    public static class MappingDTO{
+        /**
+         * 库区ID
+         */
+        private String areaId;
+        /**
+         * 库区编码
+         */
+        private String areaCode;
+
+        /**
+         * 库区名称
+         */
+        private String areaName;
+
+        /**
+         * 库区类型
+         */
+        private String areaType;
+
+        /**
+         * 仓位ID
+         */
+        private String locationId;
+
+        /**
+         * 仓位编码
+         */
+        private String locationCode;
+
+        /**
+         * 仓位名称
+         */
+        private String locationName;
+    }
 }

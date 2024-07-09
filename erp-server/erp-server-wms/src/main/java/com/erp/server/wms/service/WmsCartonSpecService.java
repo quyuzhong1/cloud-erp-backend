@@ -87,4 +87,6 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      * @param dto
      */
     void updateSpec(WmsCartonSpecDTO.SpecSaveDTO dto);
+
+    WmsCartonSpecEntity getByTaskIdAndBoxNo(String packingTaskId, String boxNo);
 }

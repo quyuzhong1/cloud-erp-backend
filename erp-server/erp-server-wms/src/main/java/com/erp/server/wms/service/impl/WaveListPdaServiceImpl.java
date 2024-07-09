@@ -19,13 +19,15 @@ import com.erp.model.wms.entity.PickingCartEntity;
 import com.erp.model.wms.entity.PickingCartTypeEntity;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.enums.PickingTypeEnum;
+import com.erp.model.wms.enums.WavePickingTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
+import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListPdaMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -50,8 +52,9 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     private PickingCartService pickingCartService;
     @Resource
     private PickingCartTypeService pickingCartTypeService;
+    @Resource
+    private ProductDetailFeign productDetailFeign;
 
-    @Override
     public WaveListDetailPdaDTO.ViewDTO startPickingWithSideType(String waveId) {
         //返回波次详情列表
         WaveListDetailDTO.ViewDTO viewDTO = waveDetailService.view(waveId);
@@ -95,12 +98,6 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     }
 
     @Override
-    public WaveListDetailPdaDTO.ViewDTO startPickingWithSequenceType(String waveId) {
-
-        return null;
-    }
-
-    @Override
     public PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<WaveListEntity> result = this.baseMapper.paging(page, pagingDTO.getParams());
@@ -124,7 +121,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         HashMap<String, Integer> pickedTotalQtyMap = new HashMap<>();
         List<WaveListDetailDTO.DeliveryInfoDTO> deliveryList = view.getDeliveryInfoList();
         List<String> skuIds = deliveryList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productList = productDetailService.listByIds(skuIds);
+        List<ProductDetailEntity> productList = productDetailFeign.listByIds(skuIds);
         Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
         for (WaveListDetailDTO.DeliveryInfoDTO deliveryDto : deliveryList) {
             String skuId = deliveryDto.getSkuId();
@@ -149,12 +146,12 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             dto.setSkuNo(product.getSkuNo());
             dto.setProductName(product.getName());
             if(salesQtyMap.containsKey(skuId)){
-                dto.setShouldPickQty(salesQtyMap.get(skuId));
+                dto.setShouldPickTotalQty(salesQtyMap.get(skuId));
             }
             if(pickedTotalQtyMap.containsKey(skuId)){
                 dto.setPickedTotalQty(pickedTotalQtyMap.get(skuId));
             }
-            dto.setColor(product.getVariantProperty());
+            dto.setVariantProperty(product.getVariantProperty());
             dto.setImageUrl(product.getImagesUrl());
             dto.setRemark("");
 
@@ -174,15 +171,15 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             return ApiResult.error("拣货车不匹配");
         }
         //核对成功返回拣货车信息
-        bindDTO.setPickingCartName("");
+        bindDTO.setPickingCartName(pickingCartType.getName());
         bindDTO.setPickingCartType(pickingCartType.getName());
-        bindDTO.setPickingType(waveEntity.getPickType());
+        bindDTO.setPickingType(waveEntity.getPickingType());
         return ApiResult.success(bindDTO);
     }
 
     private void fillWaveInfo(WaveListPdaDTO.WaveBasicInfoDTO viewDTO) {
         //todo
-        viewDTO.setPickingTypeName("");
+        viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(viewDTO.getPickingType()));
         viewDTO.setWarehouseId("");
         viewDTO.setWarehouseName("");
         viewDTO.setStatusName(WaveStatusEnum.getNameByCode(viewDTO.getStatus()));
@@ -197,7 +194,8 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         List<WaveListDetailEntity> detailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().in("main_id", ids));
         Map<String, List<WaveListDetailEntity>> waveDetailMap = detailList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
         List<WaveListPdaDTO.ViewDTO> viewList = new ArrayList<>();
-        List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(ids);
+        List<String> soIds = detailList.stream().map(item -> item.getSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(soIds);
         Map<String, List<SoB2cDetailEntity>> soDetailMap = soDetailList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
         for (WaveListEntity record : records) {
             WaveListPdaDTO.ViewDTO view = new WaveListPdaDTO.ViewDTO();
@@ -210,11 +208,11 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             view.setDeliveryBillQty(deliveryIds.size());
 
             List<SoB2cDetailEntity> soB2cDetails = soDetailMap.get(record.getId());
-            List<String> skuIds = soB2cDetails.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
+            /*List<String> skuIds = soB2cDetails.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
             view.setSkuQty(skuIds.size());
 
             int goodsQty = soB2cDetails.stream().mapToInt(item -> item.getQty()).sum();
-            view.setGoodsQty(goodsQty);
+            view.setGoodsQty(goodsQty);*/
             viewList.add(view);
         }
 

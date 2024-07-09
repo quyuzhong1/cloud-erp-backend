@@ -69,7 +69,7 @@
         <include refid="Base_Column_List" />
         from cfg_rule_wave crw
         <where>
-            crw.is_deleted = false and crw.execution_type = 'auto' and crw.execution_time_json ~ #{time}
+            crw.is_deleted = false and crw.execution_type = 'auto' and crw.disabled = false and crw.execution_time_json ~ #{time}
         </where>
         order by crw.priority asc
     </select>

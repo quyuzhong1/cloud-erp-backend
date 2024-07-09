@@ -23,6 +23,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
@@ -108,6 +109,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource
     private PickingListsService pickingListsService;
+
+    @Resource
+    private CfgRuleOutService cfgRuleOutService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -925,6 +930,57 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     .build());
         }
         return cartonDetailDTOList;
+    }
+
+    @Override
+    public PackingTaskEntity getBySourceCode(String sourceCode) {
+        if(StringUtils.isBlank(sourceCode)){
+            return null;
+        }
+        return lambdaQuery().eq(PackingTaskEntity::getSourceCode,sourceCode).last("limit 1").one();
+    }
+
+
+    @Override
+    public ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto, CfgRuleOutEnum.OverweightTypeEnum type) {
+        String[] barCodeArr = dto.getBarCode().split("-");
+        if(barCodeArr.length < 2){
+            throw new ServiceException("barcode 解析失败，格式应该为 单号-箱号 当前为"+dto.getBarCode());
+        }
+        String sourceCode = barCodeArr[0];
+        String boxNo = barCodeArr[1];
+
+        PackingTaskEntity packingTaskEntity = Optional.ofNullable(this.getBySourceCode(sourceCode)).orElseThrow(() -> new ServiceException("未生成装箱任务"));
+        WmsCartonEntity wmsCartonEntity = Optional.ofNullable(wmsCartonService.getByTaskIdAndBoxNo(packingTaskEntity.getId(),boxNo)).orElseThrow(() -> new ServiceException("未找到该箱号装箱信息"));
+        WmsCartonSpecEntity wmsCartonSpecEntity = Optional.ofNullable(wmsCartonSpecService.getById(wmsCartonEntity.getSpecId())).orElseThrow(() -> new ServiceException("未找到该箱号箱规信息"));
+        CfgRuleOutDTO.OverweightDTO overweightDTO = CfgRuleOutDTO.OverweightDTO.builder()
+                .type(type)
+                .scanWeight(dto.getWeight())
+                .scanLength(dto.getLength())
+                .scanWidth(dto.getWidth())
+                .scanHeight(dto.getHeight())
+                .build();
+        CfgRuleOutDTO.CheckDTO checkDTO = cfgRuleOutService.handleOverweight(overweightDTO);
+        if(checkDTO.getResult()){
+            //更新装箱任务的尺寸重量，状态更新为称重成功
+            String log = StrUtil.format("修改箱规信息{}[重量，长，宽，高]由[{},{},{},{}]修改为[{},{},{},{}]",boxNo,wmsCartonSpecEntity.getPackageWeight(),wmsCartonSpecEntity.getBoxLength(),wmsCartonSpecEntity.getBoxWidth(),wmsCartonSpecEntity.getBoxHeight(),dto.getWeight(),dto.getLength(),dto.getWidth(),dto.getHeight());
+            wmsCartonSpecEntity.setPackageWeight(dto.getWeight());
+            wmsCartonSpecEntity.setBoxLength(dto.getLength());
+            wmsCartonSpecEntity.setBoxWidth(dto.getWidth());
+            wmsCartonSpecEntity.setBoxHeight(dto.getHeight());
+            wmsCartonSpecEntity.setMeasureSource(MeasureSourceEnum.DEVICE.getCode());
+            wmsCartonSpecService.updateById(wmsCartonSpecEntity);
+            wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.SUCCESS.getCode());
+            wmsCartonService.updateById(wmsCartonEntity);
+            operateLogService.addModuleOperateLog(log, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "修改箱规");
+            return ApiResult.success(checkDTO.getMsg());
+        }else{
+            //更新状态为称重失败
+            wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.FAIL.getCode());
+            wmsCartonEntity.setErrorMsg(checkDTO.getMsg());
+            wmsCartonService.updateById(wmsCartonEntity);
+            return ApiResult.error(checkDTO.getMsg());
+        }
     }
 
     /**

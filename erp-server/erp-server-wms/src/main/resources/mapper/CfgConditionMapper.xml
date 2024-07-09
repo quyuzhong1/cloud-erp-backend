@@ -37,7 +37,9 @@
             request_method,
             param,
             label,
-            value
+            value,
+            search_key,
+            remote_label
         FROM
             cfg_condition cc
         WHERE cc.rule_type = #{type}

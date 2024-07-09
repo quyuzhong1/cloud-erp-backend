@@ -120,10 +120,10 @@ public interface SoB2cDeliveryFeign {
     String dimensionalWeightPipeline(@RequestBody DimensionalWeightDTO dto);
 
     /**
-     * B2B称重
-     * @param dto
-     * @return
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
      */
-    @PostMapping("/feign/soB2cDelivery/dimensionalWeightTob")
-    String dimensionalWeightTob(@RequestBody DimensionalWeightDTO dto);
+    @PostMapping("feign/soB2cDelivery/updateShipmentMark")
+    void updateShipmentMark(@RequestParam("ids") List<String> ids,@RequestParam("code") String code);
 }
