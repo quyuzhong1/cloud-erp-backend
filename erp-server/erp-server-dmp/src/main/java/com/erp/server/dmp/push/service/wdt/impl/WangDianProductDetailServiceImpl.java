@@ -57,7 +57,7 @@ public class WangDianProductDetailServiceImpl implements WangDianProductDetailSe
             try {
                 RLock lock = redissonClient.getLock(LOCK + pushDTOS.getGoodsNo());
                 try {
-                    boolean locked = lock.tryLock(10, 30, TimeUnit.SECONDS);
+                    boolean locked = lock.tryLock(10, TimeUnit.SECONDS);
                     if (locked) {
                         GoodsAPI api = wangDianClientService.get(GoodsAPI.class);
                         Map<String, Object> map = JSON.parseObject(JSON.toJSONString(pushDTOS), new TypeReference<Map<String, Object>>() {
