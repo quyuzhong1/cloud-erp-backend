@@ -722,7 +722,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         String mainId = warehouseLocationMoveDetailEntity.getMainId();
         WarehouseLocationMoveEntity entity = super.getByIdOpt(mainId).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
         // 只有审核中的单据允许撤销
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程
