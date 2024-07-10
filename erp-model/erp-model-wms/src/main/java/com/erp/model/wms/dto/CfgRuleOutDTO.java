@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.xpath.operations.Bool;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -157,6 +158,14 @@ public class CfgRuleOutDTO implements Serializable {
         private boolean whenZeroNormalOutSwitch;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SortingPortResultDTO {
+        private String port;
+        private Boolean updateError;
+    }
 
     @Data
     @NoArgsConstructor
