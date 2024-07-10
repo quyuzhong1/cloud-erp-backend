@@ -45,7 +45,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -84,6 +83,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private OperateLogService operateLogService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+    @Autowired
+    private PackingTaskService packingTaskService;
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
     @Resource
@@ -393,11 +394,38 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //过滤掉错误数据
         Set<String> errorCodeSet = errorList.stream().map(PackingExcelDTO::getCode).collect(Collectors.toSet());
         packingExcelDTOList = packingExcelDTOList.stream().filter(v->!errorCodeSet.contains(v.getCode())).collect(Collectors.toList());
-        if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(packingExcelDTOList)){
+        if(CollectionUtils.isNotEmpty(packingExcelDTOList)){
             //根据发货单分组
             Map<String,List<PackingExcelDTO>> map = packingExcelDTOList.stream().collect(Collectors.groupingBy(PackingExcelDTO::getCode));
-            map.forEach((key,value)->{
-                PackingTaskEntity packingTask = this.listBySourceCodes(Collections.singletonList(key)).get(0);
+            for (String key : map.keySet()){
+                List<PackingExcelDTO> value = map.get(key);
+                List<PackingTaskEntity> packingTaskEntityList = this.listBySourceCodes(Collections.singletonList(key));
+                if (CollectionUtils.isNotEmpty(packingTaskEntityList)){
+                    //装箱任务已存在，不能重复创建
+                    value.forEach(packingExcelDTO -> {
+                        packingExcelDTO.setErrorMsg(StrUtil.format("装箱任务【{}】已存在，不能重复创建", key));
+                    });
+                    errorList.addAll(value);
+                    continue;
+                }
+                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getByCode(key);
+                SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByCode(key);
+                //创建装箱任务
+                if (Objects.nonNull(firstMileDeliveryEntity)){
+                    this.addPackingByFirstMileDelivery(firstMileDeliveryEntity);
+                }else if (Objects.nonNull(soDeliveryNoticeEntity)){
+                    this.addPackingByB2BDelivery(soDeliveryNoticeEntity);
+                }else {
+                    //装箱任务已存在，不能重复创建
+                    value.forEach(packingExcelDTO -> {
+                        packingExcelDTO.setErrorMsg(StrUtil.format("根据发货单编码【{}】未找到订单记录", key));
+                    });
+                    errorList.addAll(value);
+                    continue;
+                }
+                //查询装箱任务
+                List<PackingTaskEntity> packingTaskEntityList1 = this.listBySourceCodes(Collections.singletonList(key));
+                PackingTaskEntity packingTask = packingTaskEntityList1.get(0);
                 WmsCartonSpecDTO.WmsCartonAdd dto = new WmsCartonSpecDTO.WmsCartonAdd();
                 dto.setTaskId(packingTask.getId());
                 dto.setSourceId(packingTask.getSourceId());
@@ -418,36 +446,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     wmsCartonList.add(addDTO);
                 });
                 dto.setWmsCartonList(wmsCartonList);
-                if(!this.packingSave(dto)){
-                    throw new ServiceException("保存装箱信息失败");
+                try {
+                    packingTaskService.packingSave(dto);
+                }catch (Exception e){
+                    value.forEach(packingExcelDTO -> {
+                        packingExcelDTO.setErrorMsg(key + e.getMessage());
+                    });
+                    errorList.addAll(value);
                 }
-                if (PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())){
-
-                }else {
-                    //如果已下推海外仓入库单，需要更新海外仓的数据
-                    //查询是否下推了入库单
-                    FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getById(packingTask.getSourceId());
-                    OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(packingTask.getSourceId(), OverseasInstockStatusEnum.CANCELED.getCode());
-                    if (Objects.nonNull(inboundEntity)) {
-                        //用目的仓查询是否绑定第三方仓
-                        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(firstMileDeliveryEntity.getDestWarehouseId()));
-
-                        //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
-                        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities)) {
-                            // 查询发货目的仓平台
-                            OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(firstMileDeliveryEntity.getDestWarehouseId());
-                            //查询发货详情
-                            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(firstMileDeliveryEntity.getId()));
-                            ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.INIT.getCode());
-                            if (200 != resultInfo.getCode()) {
-                                log.error("改第三方仓库装箱信息失败:msg={}", JSONUtil.toJsonStr(resultInfo));
-                                throw new ServiceException("修改第三方仓库装箱信息失败:" + resultInfo.getMsg());
-                            }
-
-                        }
-                    }
-                }
-            });
+            }
         }
         if (!errorList.isEmpty()) {
             String fileName = "装箱错误数据";
@@ -1164,7 +1171,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void initPackingTaskData() {
         //源数据列表
-        List<PackingTaskDetailDTO.HistoryCartonDTO>  list = baseMapper.selectHistoryCartonListTest();
+        List<PackingTaskDetailDTO.HistoryCartonDTO>  list = baseMapper.selectHistoryCartonList();
         //补充毛重重量
         List<String> skuIds = list.stream().map(PackingTaskDetailDTO.HistoryCartonDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIds);

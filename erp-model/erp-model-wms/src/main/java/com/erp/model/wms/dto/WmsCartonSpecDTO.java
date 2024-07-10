@@ -1,13 +1,11 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -484,7 +482,7 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 装箱信息-箱规
          */
-        private List<WmsCartonSpecDTO.ViewDTO> wmsCartonSpecList;
+        private List<WmsCartonSpecDTO.ViewDTO> wmsCartonList;
     }
 
     /**

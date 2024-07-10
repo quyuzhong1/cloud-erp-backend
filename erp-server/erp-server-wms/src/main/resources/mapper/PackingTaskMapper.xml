@@ -63,9 +63,11 @@
         FROM (
             SELECT
                 pt.id,
-                CASE WHEN EXISTS (SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE AND wc.packing_status = 'completed') THEN 'packed'
-                     WHEN EXISTS (SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE AND wc.packing_status IN ('completed', 'incomplete')) THEN 'packing'
-                     ELSE 'unpacked' END AS packing_status
+                CASE WHEN
+                (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) =
+                (SELECT COALESCE(SUM(ptd.delivery_qty), 0) FROM packing_task_detail ptd WHERE ptd.main_id = pt.ID AND ptd.is_deleted = FALSE) THEN 'packed'
+                WHEN (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) = 0 THEN 'unpacked'
+                ELSE 'packing' END AS packing_status
             FROM
                 packing_task pt
             <if test="permissionSql!=null and permissionSql!=''">
@@ -84,18 +86,16 @@
         SELECT
             pt.ID,
             pt.source_code as sourceCode,
-            CASE
-                WHEN EXISTS ( SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE AND wc.packing_status = 'completed' ) THEN
-                    'packed'
-                WHEN EXISTS ( SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE AND wc.packing_status IN ( 'completed', 'incomplete' ) ) THEN 'packing'
-                ELSE 'unpacked'
-                END AS packing_status,
-            CASE
-                WHEN EXISTS ( SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE AND wc.packing_status = 'success' ) THEN
-                    'weighed'
-                WHEN EXISTS ( SELECT 1 FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE AND (wc.packing_status IN ( 'success', 'unweighed' ) or wc.packing_status IN ( 'success', 'fail' )) ) THEN
-                    'weighing' ELSE 'unweighed'
-                END AS weightingStatus ,
+            CASE WHEN
+                    (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) =
+                    (SELECT COALESCE(SUM(ptd.delivery_qty), 0) FROM packing_task_detail ptd WHERE ptd.main_id = pt.ID AND ptd.is_deleted = FALSE) THEN 'packed'
+                WHEN (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) = 0 THEN 'unpacked'
+                ELSE 'packing' END AS packing_status,
+            CASE WHEN
+                (SELECT SUM(wcd.pack_qty) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE and wc.weighting_status = 'success') =
+                (SELECT COALESCE(SUM(ptd.delivery_qty), 0) FROM packing_task_detail ptd WHERE ptd.main_id = pt.ID AND ptd.is_deleted = FALSE) THEN 'weighed'
+                WHEN (SELECT SUM(wcd.pack_qty) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE and wc.weighting_status = 'success') = 0 THEN 'unweighed'
+                ELSE 'weighing' END AS weightingStatus ,
             (SELECT error_msg FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE order by wc.create_time DESC limit 1) as eroorMsg,
             (SELECT SUM(wcd.pack_qty) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) as packedQty,
             (SELECT SUM(package_weight) FROM wms_carton_spec wcs WHERE wcs.main_id = pt.ID AND wcs.is_deleted = FALSE) as packingWeight,
@@ -160,33 +160,8 @@
             </if>
         ORDER BY wc.box_no
     </select>
-    <select id="selectHistoryCartonListUat"
-            resultType="com.erp.model.wms.dto.PackingTaskDetailDTO$HistoryCartonDTO">
-        SELECT
-            wc.id as taskId,
-            wc.source_id as sourceId,
-            wc.source_type as sourceType,
-            wc.box_spec_no as boxSpecNo,
-            wc.package_weight as packageWeight,
-            wc.box_length as boxLength,
-            wc.box_width as boxWidth,
-            wc.box_height as boxHeight,
-            wc.box_qty as boxQty,
-            wcb.box_no as boxNo,
-            wcd.sku_id as skuId,
-            wcd.sku_no as skuNo,
-            wcd.pack_qty as packQty,
-            wcd.update_user_id as packingUserId,
-            wcd.update_user_name as packingUserName
-        FROM
-            wms_carton_copy1 wc
-                LEFT JOIN wms_carton_bill_copy1 wcb on wcb.carton_id = wc.id and wcb.is_deleted = FALSE
-                LEFT JOIN wms_carton_detail_copy1 wcd on wcd.carton_id = wc.id and wcd.is_deleted = FALSE
-        where wc.is_deleted = FALSE
-        ORDER BY taskId
-    </select>
 
-    <select id="selectHistoryCartonListTest"
+    <select id="selectHistoryCartonList"
             resultType="com.erp.model.wms.dto.PackingTaskDetailDTO$HistoryCartonDTO">
         SELECT
             wc.id as taskId,
