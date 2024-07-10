@@ -200,14 +200,16 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     public String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
         ValidatorUtil.validateEntity(dto);
         CfgRuleOutDTO.CommonDTO commonDTO = this.view();
-        String sortingPort = this.getSortingPort(commonDTO,dto);
+        CfgRuleOutDTO.SortingPortResultDTO resultDTO = this.getSortingPort(commonDTO,dto);
+        String sortingPort = resultDTO.getPort();
         if(sortingPort.equals(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode())){
-            //更新异常
-            soB2cDeliveryService.updateAbnormal(Arrays.asList(dto.getDeliveryOrderId()), AbnormalCauseEnum.EQUIPMENT_SORTING);
+            if(resultDTO.getUpdateError()){
+                //更新异常
+                soB2cDeliveryService.updateAbnormal(Arrays.asList(dto.getDeliveryOrderId()), AbnormalCauseEnum.EQUIPMENT_SORTING);
+            }
         }
         return sortingPort;
     }
-
     @Override
     public CfgRuleOutDTO.CheckDTO handleOverweight(CfgRuleOutDTO.OverweightDTO dto) {
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
@@ -320,28 +322,28 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(type)).findFirst().orElse(new CfgRuleOutDTO.CfgProductPackingDetail());
     }
 
-    public String getSortingPort(CfgRuleOutDTO.CommonDTO commonDTO,CfgRuleOutDTO.SortingPortRuleDTO dto) {
+    public CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.CommonDTO commonDTO, CfgRuleOutDTO.SortingPortRuleDTO dto) {
         //校验称重量方规则，通过走设备分拣口规则
         CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations = commonDTO.getB2cAllowableDeviations();
         Boolean b2cAllowableDeviationsResult = this.handleB2cAllowableDeviations(b2cAllowableDeviations,dto);
         //不通过返回异常口
         if(!b2cAllowableDeviationsResult){
-            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+            return new CfgRuleOutDTO.SortingPortResultDTO(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode(),true);
         }
         List<CfgRuleOutDTO.EquipmentSortingPortConditionDTO> equipmentSortingPortDTO = commonDTO.getEquipmentSortingPortDTO().getSortingConditionDTOList();
         for (CfgRuleOutDTO.EquipmentSortingPortConditionDTO equipmentSortingPortConditionDTO : equipmentSortingPortDTO) {
             if(equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.IN_LIST.getCode()) || equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.EQ.getCode())){
                 if(equipmentSortingPortConditionDTO.getValueList().contains(dto.getLogisticsSupplierId()) || equipmentSortingPortConditionDTO.getValueList().contains(dto.getChannelId())){
-                    return equipmentSortingPortConditionDTO.getPort();
+                    return new CfgRuleOutDTO.SortingPortResultDTO(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode(),false);
                 }
             }
             if(equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.NOT_IN_LIST.getCode()) || equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.NQ.getCode())){
                 if(!equipmentSortingPortConditionDTO.getValueList().contains(dto.getLogisticsSupplierId()) && !equipmentSortingPortConditionDTO.getValueList().contains(dto.getChannelId())){
-                    return equipmentSortingPortConditionDTO.getPort();
+                    return new CfgRuleOutDTO.SortingPortResultDTO(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode(),false);
                 }
             }
         }
-        return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+        return new CfgRuleOutDTO.SortingPortResultDTO(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode(),true);
     }
 
     @Override
