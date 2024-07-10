@@ -642,5 +642,10 @@ public class WarehouseLocationDTO implements Serializable {
          * 仓位名称
          */
         private String locationName;
+
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
     }
 }
