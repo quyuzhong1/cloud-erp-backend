@@ -136,7 +136,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         addDTO.setTaskId(taskId);
         BeanMapperUtils.copy(addDTO, wmsCartonEntity);
         // 数据处理
-        handleData(wmsCartonEntity, addDTO.getDetailList());
+        handleData(wmsCartonEntity, addDTO);
 
         log.info("开始新增发货单箱子信息明细单");
         boolean save = super.save(wmsCartonEntity);
@@ -202,14 +202,14 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     /**
     * 新增修改处理数据
     */
-    private void handleData(WmsCartonEntity wmsCartonEntity,List<WmsCartonDetailDTO.AddDTO> detailList) {
+    private void handleData(WmsCartonEntity wmsCartonEntity,WmsCartonSpecDTO.AddDTO addDTO) {
         //TODO 单箱状态判断
 
         if (StrUtil.isBlank(wmsCartonEntity.getPackingStatus())){
             //发货数量
-            int deliveryQty = detailList.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getDeliveryQty).sum();
+            int deliveryQty = addDTO.getDetailList().stream().mapToInt(WmsCartonDetailDTO.AddDTO::getDeliveryQty).sum();
             //待装箱数量=发货数量-所有已装箱数量
-            int packQtySum = detailList.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getPackQty).sum();
+            int packQtySum = addDTO.getDetailList().stream().mapToInt(WmsCartonDetailDTO.AddDTO::getPackQty).sum();
             if (packQtySum >= 0 && packQtySum != deliveryQty){
                 wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.INCOMPLETE.getCode());
             }else{
@@ -225,5 +225,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
             boxNo = 0;
         }
         wmsCartonEntity.setBoxNo(boxNo + 1);
+        wmsCartonEntity.setPackingTaskId(addDTO.getTaskId());
+        wmsCartonEntity.setSpecId(addDTO.getSpecId());
     }
 }
