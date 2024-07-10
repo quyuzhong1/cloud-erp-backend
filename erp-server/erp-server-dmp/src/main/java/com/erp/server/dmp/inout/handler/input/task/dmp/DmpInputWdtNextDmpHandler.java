@@ -1,5 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +13,11 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Scope("prototype")
-public class DmpInputKingdeeNextDmpHandler extends DmpInputDoNextDmpHandler{
+public class DmpInputWdtNextDmpHandler extends DmpInputDoNextDmpHandler{
 	
+	@Override
+	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
+		return (List<Map<String, Object>>) dmpInputMongoEntity.get("details_list");
+	}
 	
 }
