@@ -252,7 +252,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             entity.setFromWarehouseArea(pair.getKey().getCode());
             entity.setFromWarehouseLocation(pair.getValue().getWarehouseLocation());
 
-            entity.setToWarehouseLocation(dto.getWarehouseArea());
+            entity.setToWarehouseArea(dto.getWarehouseArea());
             entity.setToWarehouseLocation(dto.getWarehouseLocation());
 
             Integer suggestQty = 0;
