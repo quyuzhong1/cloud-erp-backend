@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -49,10 +48,14 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 		if(CollUtil.isNotEmpty(listMaps)) {
 			Set<String> parentUniqueFieldSet = new HashSet<>(); 
 			DmpHandlerUtils.getAllFieldFlag(parentDmpCfgInputConvertEntity.getUniqueFieldName(), parentUniqueFieldSet);
-			parentUniqueFieldList = parentUniqueFieldSet.stream().map(p -> StrUtils.underlineByhump(p)).collect(Collectors.toList());
+			parentUniqueFieldList = new ArrayList<>(parentUniqueFieldSet);
+			List<String> unParentUniqueFieldList = new ArrayList<>();
+			for(String parentUniqueField: parentUniqueFieldList) {
+				unParentUniqueFieldList.add(StrUtils.underlineByhump(parentUniqueField));
+			}
 			for(Map<String, Object> listMap : listMaps) {
 				StringBuilder keySb = new StringBuilder();
-				for(String parentUniqueField : parentUniqueFieldList) {
+				for(String parentUniqueField : unParentUniqueFieldList) {
 					keySb.append(listMap.get(parentUniqueField).toString());
 					keySb.append("_");
 				}

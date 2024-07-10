@@ -298,6 +298,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			keyList.add(dmpInputMongoBaseEntity);
 			ArrayList<TreeMap<String, Object>> valueList = new ArrayList<>();
 			valueList.add(dmpInputDmpBaseEntity);
+			this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
 			dmpInputDataDmpRelationMaps.put(keyList, valueList);
 		}
 		this.afterConvertData(dmpInputDataDmpRelationMaps);
@@ -311,7 +312,6 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	protected void afterDmpInputDmpEntity(Map<String, Object> beanDmpInputDmpEntity) {
 		beanDmpInputDmpEntity.put(StrUtils.underlineToCamel(CONVERT_ID, true), convertId);
 		beanDmpInputDmpEntity.put(StrUtils.underlineToCamel(INPUT_TASK_ID, true), inputTaskId);
-		this.afterDmpInputMongoEntityFixedValue(beanDmpInputDmpEntity);
 	}
 	
 	protected void afterDmpInputMongoEntityFixedValue(Map<String , Object> beanDmpInputDmpEntity) {
@@ -319,7 +319,11 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		if(StringUtils.isNotBlank(fixedValueJson)) {
 			JSONObject fixedValueStr = JSON.parseObject(fixedValueJson);
 			for(Map.Entry<String, Object> fixedValue : fixedValueStr.entrySet()) {
-				beanDmpInputDmpEntity.put(fixedValue.getKey(), fixedValue.getValue());
+				String key = fixedValue.getKey();
+				Object object = beanDmpInputDmpEntity.get(key);
+				if(object == null) {
+					beanDmpInputDmpEntity.put(key, fixedValue.getValue());
+				}
 			}
 		}
 	}
