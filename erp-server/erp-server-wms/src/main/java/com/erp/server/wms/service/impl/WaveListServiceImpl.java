@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -274,5 +275,14 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
       return   lambdaUpdate().eq(WaveListEntity::getId,waveId)
                 .set(WaveListEntity::getStatus,status)
                 .update();
+    }
+
+    @Override
+    public List<WaveListEntity> listByPickingCartCodeList(List<String> pickingCartCodeList) {
+        if (CollectionUtil.isEmpty(pickingCartCodeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(WaveListEntity::getPickingCartCode,pickingCartCodeList)
+                .list();
     }
 }
