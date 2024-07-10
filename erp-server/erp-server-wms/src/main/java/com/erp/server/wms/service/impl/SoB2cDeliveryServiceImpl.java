@@ -1458,7 +1458,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
-        addDTO.setPickCartTypeId(dto.getPickingCartTypeId());
+//        addDTO.setPickCartTypeIdList(dto.getPickingCartTypeId());
         addDTO.setDeliveryIdList(dto.getIds());
         addDTO.setPickingType(dto.getPickingType());
         addDTO.setName("手动生成波次");
