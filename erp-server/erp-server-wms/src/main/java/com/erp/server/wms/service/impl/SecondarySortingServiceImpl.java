@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.renovation.SecondarySortingDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
+import com.erp.model.wms.enums.WavePickingTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,9 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
         WaveListEntity pickingWave = waveListService.getByCodeOrCarCode(code);
         if (ObjectUtils.isEmpty(pickingWave)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, code);
+        }
+        if (WavePickingTypeEnum.FIRST_PICK.getCode().equals(pickingWave.getPickingType())) {
+            throw new ServiceException(ApiError.ERROR_99120);
         }
         SecondarySortingDTO.ScanCodeView view = new SecondarySortingDTO.ScanCodeView();
         view.setWaveId(pickingWave.getId());
@@ -94,7 +98,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
                 .filter(v -> v.getSkuId().equals(productDetail.getId()))
                 .filter(v -> v.getPickedQty() > v.getAllocatedQty())
                 .min(Comparator.comparing(WaveListDTO.PickingWaveDetailDTO::getBasketNo))
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_99111));
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_99111, productDetail.getSkuNo()));
         int pickingQty = waveDetailList.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getPickedQty).sum();
         int allocatedQty = waveDetailList.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getAllocatedQty).sum();
         view.setBasketNo(detailDTO.getBasketNo());
