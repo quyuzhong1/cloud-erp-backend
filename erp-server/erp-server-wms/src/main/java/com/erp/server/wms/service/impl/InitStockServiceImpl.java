@@ -318,7 +318,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Override
     public BatchResultDTO approve(InitStockEntity entity, String type, String comment, Boolean isNeedProcess) {
         //只有审核中的数据允许审核
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())){
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(type);
