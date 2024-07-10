@@ -152,7 +152,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         for (WaveListEntity record : records) {
             WaveListDTO.ViewDTO viewDTO = new WaveListDTO.ViewDTO();
             BeanMapper.copy(record, viewDTO);
-            viewDTO.setPickingUserName(record.getPickingUser());
+            viewDTO.setPickingUserName(record.getPickingUserName());
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(record.getPrintStatus()));
