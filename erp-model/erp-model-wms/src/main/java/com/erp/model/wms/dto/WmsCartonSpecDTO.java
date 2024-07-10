@@ -505,6 +505,22 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String taskId;
         /**
+         * 发货数量
+         */
+        private Integer deliveryTotalQty;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingTotalQty;
+        /**
+         * 已装箱数量
+         */
+        private Integer packedTotalQty;
+        /**
+         * 未装箱数量
+         */
+        private Integer unpackedTotalQty;
+        /**
          * 装箱明细
          */
         private List<WmsCartonSpecDTO.NoPackingViewDTO> detailList;

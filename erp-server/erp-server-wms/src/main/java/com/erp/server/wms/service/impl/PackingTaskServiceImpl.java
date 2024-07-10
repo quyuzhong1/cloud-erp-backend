@@ -606,7 +606,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateByPackingTaskId(id);
         //拣货数量
         List<PickingListsDTO.DetailPickDTO> pickeDTOList = pickingListsService.listDetailBySourceIds(Collections.singletonList(packingTaskEntity.getSourceId()));
-        view.setDetailList(buildNoPackingDetailList(detailDTOList,packDateDTOS, pickeDTOList));
+        List<WmsCartonSpecDTO.NoPackingViewDTO> noPackingViewDTOS = buildNoPackingDetailList(detailDTOList, packDateDTOS, pickeDTOList);
+        view.setDetailList(noPackingViewDTOS);
+        view.setPackedTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getPackedQty).reduce(MathUtil.ZERO, Integer::sum));
+        view.setDeliveryTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum));
+        view.setUnpackedTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getUnpackedQty).reduce(MathUtil.ZERO, Integer::sum));
+        view.setPickingTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getPickingQty).reduce(MathUtil.ZERO, Integer::sum));
         return view;
     }
 
