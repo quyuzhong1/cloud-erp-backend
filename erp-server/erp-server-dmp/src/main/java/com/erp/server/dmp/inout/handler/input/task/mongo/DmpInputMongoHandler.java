@@ -228,9 +228,13 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 			}
 		}
 		resultDataList.add(dmpInputMongoEntity);
+		this.afterConvertData(resultDataList);
 		return resultDataList;
 	}
 	
+	protected void afterConvertData(List<TreeMap<String , Object>> resultDataList) {
+		
+	}
 	
 	/**
 	 * 设置mongo公共字段
