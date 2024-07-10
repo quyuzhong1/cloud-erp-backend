@@ -203,4 +203,43 @@
         GROUP BY
             ptd.main_id
     </select>
+    <select id="pagingSelect" resultType="com.erp.model.wms.dto.PackingTaskDTO$PackingTreeDTO">
+        select taskId,sourceId,sourceCode from
+        (
+        select
+        pt.id as taskId,
+        pt.source_id as sourceId,
+        pt.source_code as sourceCode
+        from packing_task pt where pt.is_deleted = false
+        <if test="params.searchKeyword != null and params.searchKey != ''">
+            and pt.source_code ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when pt.source_code ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when pt.source_code ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when pt.source_code ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end
+        </if>
+        ) pt2
+    </select>
+    <select id="getCartonSpecByTaskId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$SpecDTO">
+        select
+            wc.id as cartonId,
+            wc.box_no,
+            wcs.id as specId,
+            wcs.box_spec_no,
+            wcs.package_weight,
+            wcs.box_length,
+            wcs.box_width,
+            wcs.box_height,
+            wcs.weight_unit,
+            wcs.size_unit
+        from wms_carton_spec wcs
+        left join wms_carton wc on wc.spec_id = wcs.id on wc.is_deleted = false
+        where wcs.is_deleted =false
+        <if test="taskId != null and taskId != ''">
+            and wcs.main_id = #{taskId}
+        </if>
+    </select>
 </mapper>

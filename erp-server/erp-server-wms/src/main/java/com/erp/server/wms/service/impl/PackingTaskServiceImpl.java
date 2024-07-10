@@ -1251,6 +1251,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
     }
 
+    @Override
+    public PagingVO<PackingTaskDTO.PackingTreeDTO> searchSourceCode(PackingTaskDTO.SearchSourceCodeDTO dto) {
+        Page<PackingTaskDTO.PackingTreeDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<PackingTaskDTO.PackingTreeDTO> pageData = baseMapper.pagingSelect(query,dto);
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<WmsCartonSpecDTO.SpecDTO> getCartonSpecByTaskId(String taskId) {
+        return baseMapper.getCartonSpecByTaskId(taskId);
+    }
+
     /**
      * 构建装箱信息
      * @param cartonEntityList

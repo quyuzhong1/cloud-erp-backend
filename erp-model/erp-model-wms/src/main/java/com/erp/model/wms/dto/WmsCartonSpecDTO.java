@@ -858,4 +858,49 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String warnMsg;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class SpecDTO {
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 箱规id
+         */
+        private String specId;
+        /**
+         * 箱号
+         */
+        private String boxNo;
+        /**
+         * 箱规编码
+         */
+        private String boxSpecNo;
+        /**
+         * 包装重量
+         */
+        private String packageWeight;
+        /**
+         * 包装长
+         */
+        private String boxLength;
+        /**
+         * 包装宽
+         */
+        private String boxWidth;
+        /**
+         * 包装高
+         */
+        private String boxHeight;
+        /**
+         * 重量单位 kg
+         */
+        private String weightUnit;
+        /**
+         * 长度单位 cm
+         */
+        private String sizeUnit;
+    }
 }
