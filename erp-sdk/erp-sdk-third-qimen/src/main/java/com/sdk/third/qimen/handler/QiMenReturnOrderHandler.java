@@ -136,7 +136,7 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
             //仓库id
             dto.setWarehouseId(String.valueOf(orderEntity.getWarehouseId()));
             dto.setWarehouseName(orderEntity.getWarehouseName());
-            dto.setSourceType(SourceTypeEnum.QIMEN_RETURN_ORDER.getCode());
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
             dto.setSourceId(orderEntity.getTidList());
             dto.setSourceCode(orderEntity.getTradeNoList());
             List<WdtReturnOrderDetailDTO> detailList = new ArrayList<>();

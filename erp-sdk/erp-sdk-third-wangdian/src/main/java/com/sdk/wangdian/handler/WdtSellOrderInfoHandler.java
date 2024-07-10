@@ -95,7 +95,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             soOutStock.setTrackNo(order.getLogisticsNo());
             //来源信息
             soOutStock.setSourceId(order.getStockoutId());
-            soOutStock.setSourceType(SourceTypeEnum.WDT_OUT_STOCK.getCode());
+            soOutStock.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
             soOutStock.setSourceCode(order.getTradeNo());
             soOutStock.setOrderType(OrderTypeEnum.B2C.getCode());
             //审核时间
