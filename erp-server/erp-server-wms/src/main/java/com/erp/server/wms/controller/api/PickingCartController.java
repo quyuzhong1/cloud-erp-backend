@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 拣货车管理
@@ -166,12 +167,11 @@ public class PickingCartController extends BaseController {
     }
 
     /**
-     * 远程搜索
-     * 通过拣货车编号模糊查询
+     * 拣货车下拉框
      */
-    @GetMapping("/searchByKeyword")
-    public ApiResult<List<PickingCartDTO.ViewDTO>> searchByKeyword(@RequestParam String code){
-        List<PickingCartDTO.ViewDTO> list = pickingCartService.searchByKeyword(code);
+    @GetMapping("/dropDown")
+    public ApiResult<List<PickingCartEntity>> dropDown(){
+        List<PickingCartEntity> list = pickingCartService.list();
         return success(list);
     }
 
