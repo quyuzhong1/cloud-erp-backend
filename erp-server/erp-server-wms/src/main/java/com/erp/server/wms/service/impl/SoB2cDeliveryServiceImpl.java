@@ -439,6 +439,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<PickingListsEntity> list = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
         List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingIds));
+
+        //波次列表信息
+        List<String> sourceIdList = list.stream().map(PickingListsEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<WaveListDTO.WaveDeliveryDTO> waveDeliveryList = waveListService.listByDeliverIds(sourceIdList);
+
         for (PickingDetailEntity pickingDetail : pickingDetails) {
             SoB2cDeliveryDTO.PrintPickingViewDTO viewDTO = new SoB2cDeliveryDTO.PrintPickingViewDTO();
             BeanMapper.copy(pickingDetail, viewDTO);
@@ -457,6 +462,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //备注
             SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> req.getId().equals(pickingLists.getSourceId())).findFirst().orElse(new SoB2cDeliveryEntity());
             viewDTO.setRemark(entity.getRemark());
+            viewDTO.setDeliveryCode(entity.getCode());
+
+            //波次信息
+            WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> StrUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
+            viewDTO.setWaveCode(waveDeliveryDTO.getWaveCode());
             printPickingViewList.add(viewDTO);
         }
         // 合并处理数量不相同的行
@@ -1838,7 +1848,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             WaveListDTO.WaveDeliveryDTO dto = deliveryList.stream()
                     .filter(e -> e.getDeliveryId().equals(record.getId()))
                     .findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
-            record.setWavesCode(dto.getWaveCode());
+            record.setWaveCode(dto.getWaveCode());
             String warehouseLocation = views.stream().filter(e -> e.getSkuId().equals(record.getSkuId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
                     .distinct()

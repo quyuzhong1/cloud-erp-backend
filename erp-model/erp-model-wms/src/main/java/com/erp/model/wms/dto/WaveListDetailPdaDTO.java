@@ -170,4 +170,13 @@ public class WaveListDetailPdaDTO implements Serializable {
         @NotBlank(message = "波次id不能为空")
         private String waveId;
     }
+
+    @Data
+    public static class ExitPickingDTO{
+        /**
+         * 波次id
+         */
+        @NotBlank(message = "波次id不能为空")
+        private String id;
+    }
 }
