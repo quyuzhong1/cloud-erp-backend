@@ -91,6 +91,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
                 newDto.setDownloadAddressStatus(1);
                 // 判断是否有发货单下载(属于平台仓订单并且有物流信息)
                 newDto.setDownloadDeliveryStatus(newDto.convertDownloadDeliveryStatus());
+                newDto.setPlatformWarehouseOrder(newDto.isPlatformWarehouseOrder());
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                 newDto.setIsClean(2);
                 List<PlatformOrderDTO> convertDto = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
@@ -159,6 +160,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
             PlatformAliExpressOrderDTO newDto = aliExpressOrderHandler.downloadDetail(dto, null);
             newDto.setDownloadStatus(1);
             newDto.setDownloadAddressStatus(0);
+            newDto.setPlatformWarehouseOrder(newDto.isPlatformWarehouseOrder());
             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
             List<PlatformOrderDTO> convertDtoList = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
             PlatformOrderDTO convertDto = convertDtoList.get(0);
@@ -236,6 +238,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
             PlatformAliExpressOrderDTO newDto = aliExpressOrderHandler.downloadDeliveryDetail(dto);
             newDto.setDownloadDeliveryStatus(1);
             newDto.setDownloadDeliveryDetailStatus(1);
+            newDto.setPlatformWarehouseOrder(newDto.isPlatformWarehouseOrder());
             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
             List<PlatformOrderDTO> convertDtoList = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
             PlatformOrderDTO convertDto = convertDtoList.get(0);
