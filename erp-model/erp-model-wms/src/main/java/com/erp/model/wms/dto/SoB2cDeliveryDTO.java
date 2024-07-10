@@ -537,8 +537,14 @@ public class SoB2cDeliveryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PrintPickingViewDTO {
-
-
+        /**
+         * 波次号
+         */
+        private String waveCode;
+        /**
+         *发货单号
+         */
+        private String deliveryCode;
         /**
          * 产品id
          */

@@ -101,9 +101,9 @@ public interface WaveListService extends SuperService<WaveListEntity> {
 
     /**
      * 打印拣货单
-     * @param id 波次号
+     * @param ids 波次号
      */
-    SoB2cDeliveryDTO.PrintPickingMainViewDTO  printPickingBill(String id);
+    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids);
     /**
      * 更新波次列表状态
      * @author will
