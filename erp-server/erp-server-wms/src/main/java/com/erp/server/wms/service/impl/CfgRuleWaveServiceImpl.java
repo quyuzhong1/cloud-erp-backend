@@ -152,6 +152,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         // 记录主单操作日志
         log.info("编辑 开始记录波次规则日志数据，id：【{}】", cfgRuleWaveEntity.getId());
+        handlePickingCartTypeJsonName(old);
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleWaveEntity.getId(), "波次规则");
         operateLogService.addModuleOperateLogByObj(old, cfgRuleWaveEntity, ModuleTypeEnum.CFG_RULE_WAVE.getCode(), cfgRuleWaveEntity.getId(), msg);
         return Boolean.TRUE;
@@ -617,7 +618,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         }
         //拣货车类型
         cfgRuleWaveEntity.setPickingCartTypeJson(JSONUtil.toJsonStr(pickingCartTypeIdList));
-
+        handlePickingCartTypeJsonName(cfgRuleWaveEntity);
         //自动执行
         if (StrUtil.equals(cfgRuleWaveEntity.getExecutionType(), ExecutionTypeEnum.AUTO.getCode())) {
             if (CollectionUtil.isEmpty(executionTimeList)) {
@@ -636,6 +637,23 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if (ObjectUtil.isEmpty(cfgRuleWaveEntity.getMaxQty())) {
             cfgRuleWaveEntity.setMaxQty(MathUtil.ZERO);
         }
+    }
+
+    /**
+     * 格式话拣货车名称
+     * @author will
+     * @date 2024/7/10 15:34
+     * @param cfgRuleWaveEntity
+     */
+    private void handlePickingCartTypeJsonName (CfgRuleWaveEntity cfgRuleWaveEntity) {
+        String pickingCartTypeJson = cfgRuleWaveEntity.getPickingCartTypeJson();
+        List<String> pickingCartTypeIdList = Arrays.stream(JSONUtil.parseArray(pickingCartTypeJson).stream().toArray(String[]::new)).collect(Collectors.toList());
+        List<PickingCartTypeEntity> pickingCartTypeList = pickingCartTypeService.listByIds(pickingCartTypeIdList);
+        if (CollectionUtil.isEmpty(pickingCartTypeList)) {
+            return;
+        }
+        List<String> nameList = pickingCartTypeList.stream().map(PickingCartTypeEntity::getName).collect(Collectors.toList());
+        cfgRuleWaveEntity.setPickingCartTypeJsonName(JSONUtil.toJsonStr(nameList));
     }
 
     /**
