@@ -59,7 +59,6 @@ public class DimensionalWeightDTO implements Serializable {
     /**
      * 视频路径
      */
-    @NotBlank(message = "视频不能为空")
     private String videoUrl;
     /**
      * 仓库名
