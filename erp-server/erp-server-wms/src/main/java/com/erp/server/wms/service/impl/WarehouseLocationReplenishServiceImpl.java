@@ -355,6 +355,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         );
         List<String> stockAreaId = stockAreaList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
         if(stockAreaId.isEmpty()){
+            log.error(String.format("没有找到库区：%s", dto));
             return new Pair<>(new WarehouseLocationEntity(), new InventoryEntity());
         }
 
@@ -367,6 +368,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         );
         List<String> stockLocationCodeList = stockLocationList.stream().map(item -> item.getCode()).distinct().collect(Collectors.toList());
         if(stockLocationCodeList.isEmpty()){
+            log.error(String.format("没有找到仓位：%s", dto));
             return new Pair<>(new WarehouseLocationEntity(), new InventoryEntity());
         }
         //查找仓库下，备货区，sku的仓位库存
@@ -378,6 +380,10 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 .orderByDesc("qty")
         );
         //取可用库存最多的一个
+        if(stockInventoryList.isEmpty()){
+            log.error(String.format("没有找到可用库存：%s", dto));
+            return new Pair<>(new WarehouseLocationEntity(), new InventoryEntity());
+        }
         InventoryEntity maxQtyInventoryEntity = stockInventoryList.get(0);
 
         //根据最大库存仓位找库区
