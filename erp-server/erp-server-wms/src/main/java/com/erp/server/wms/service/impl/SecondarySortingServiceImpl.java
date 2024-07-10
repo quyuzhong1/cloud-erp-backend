@@ -13,6 +13,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
 import com.erp.model.wms.enums.WavePickingTypeEnum;
+import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,9 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
         }
         if (!WavePickingTypeEnum.FIRST_PICK.getCode().equals(pickingWave.getPickingType())) {
             throw new ServiceException(ApiError.ERROR_99120);
+        }
+        if (!WaveStatusEnum.FINISH.getCode().equals(pickingWave.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_99121);
         }
         SecondarySortingDTO.ScanCodeView view = new SecondarySortingDTO.ScanCodeView();
         view.setWaveId(pickingWave.getId());

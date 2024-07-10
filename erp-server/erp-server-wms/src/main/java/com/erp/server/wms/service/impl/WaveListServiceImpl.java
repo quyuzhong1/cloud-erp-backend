@@ -105,7 +105,10 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
     @Override
     public WaveListEntity getByCodeOrCarCode(String code) {
-        return getOne(Wrappers.<WaveListEntity>lambdaQuery().eq(WaveListEntity::getCode, code).or().eq(WaveListEntity::getPickingCartCode, code));
+        return getOne(Wrappers.<WaveListEntity>lambdaQuery().eq(WaveListEntity::getCode, code)
+                .or().eq(WaveListEntity::getPickingCartCode, code)
+                .orderByDesc(WaveListEntity::getCreateTime)
+                .last("limit 1"));
     }
 
     @Override
