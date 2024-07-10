@@ -652,8 +652,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(SoDeliveryNoticeEntity entity) {
         //已审核支持反审核
-        if (!entity.getInvalidStatus() && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98006);
         }
         //TODO 待加审核流程
 

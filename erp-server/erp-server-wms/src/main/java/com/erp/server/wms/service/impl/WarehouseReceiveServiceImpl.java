@@ -753,7 +753,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(WarehouseReceiveEntity entity,List<WarehouseReceiveDetailEntity> receiveDetailList) {
-        if (!entity.getInvalidStatus() && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
         //下推入库单不能反审核

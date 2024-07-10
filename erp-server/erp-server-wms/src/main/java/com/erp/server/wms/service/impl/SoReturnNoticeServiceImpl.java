@@ -431,7 +431,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(SoReturnNoticeEntity entity, String type, String comment, Boolean isNeedProcess) {
         //判断是否是审核中的状态
-        if (!entity.getInvalidStatus() && ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //TODO 待加审核流程
@@ -460,7 +460,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(SoReturnNoticeEntity entity) {
         //已审核支持反审核
-        if (!entity.getInvalidStatus() && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
         //TODO 待加审核流程
