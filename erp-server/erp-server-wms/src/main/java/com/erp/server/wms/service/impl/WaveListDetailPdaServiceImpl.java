@@ -188,7 +188,8 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         waveListService.update(new UpdateWrapper<WaveListEntity>()
                 .set("status", WaveStatusEnum.FINISH.getCode())
                 .set("picking_time", LocalDateTime.now())
-                .set("picking_user", loginUser.getUserName())
+                .set("picking_user_id", loginUser.getUid())
+                .set("picking_user_name", loginUser.getUserName())
                 .eq("id", finishParamDTO.getWaveId()));
 //        waveListService.updateStatusById(finishParamDTO.getWaveId(),WaveStatusEnum.FINISH.getCode());
         return resultDTO;
