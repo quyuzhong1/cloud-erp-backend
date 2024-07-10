@@ -547,7 +547,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(WarehouseReceiveEntity entity, String type, String comment, Boolean isNeedProcess,List<WarehouseReceiveDetailEntity> receiveDetailList) {
-        if (!entity.getInvalidStatus() && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();

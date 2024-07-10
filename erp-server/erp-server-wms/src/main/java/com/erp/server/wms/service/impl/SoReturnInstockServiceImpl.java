@@ -535,7 +535,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(SoReturnInstockEntity entity, String type, String comment, Boolean isNeedProcess) {
         //判断是否是审核中的状态
-        if (!entity.getInvalidStatus() && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //TODO 待加审核流程
