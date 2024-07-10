@@ -28,4 +28,9 @@ public interface WdtOtherOutStockService {
      * 查询其他出库单
      */
     StockoutOtherQueryResponse queryWithDetail(CreateOtherStockoutRequest request);
+
+    /**
+     * 查询外部出库单
+     */
+    void querySelfOut(CreateOtherStockoutRequest request);
 }
