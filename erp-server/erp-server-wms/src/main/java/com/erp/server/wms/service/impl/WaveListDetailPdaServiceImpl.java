@@ -17,6 +17,7 @@ import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PickingStatusEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.WaveListDetailPdaMapper;

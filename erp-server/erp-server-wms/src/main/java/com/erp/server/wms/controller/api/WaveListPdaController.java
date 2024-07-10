@@ -64,6 +64,14 @@ public class WaveListPdaController {
     }
 
     /**
+     * 退出拣货
+     */
+    @PostMapping("/exitPicking")
+    public ApiResult<?> exitPicking(@RequestBody WaveListDetailPdaDTO.ExitPickingDTO exitDTO){
+        return waveListPdaService.exitPicking(exitDTO);
+    }
+
+    /**
      * 产品详情
      * @param id 波次ID
      */

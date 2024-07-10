@@ -145,6 +145,15 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         return ApiResult.success(bindDTO);
     }
 
+    @Override
+    public ApiResult<?> exitPicking(WaveListDetailPdaDTO.ExitPickingDTO exitDTO) {
+        waveListService.update(new UpdateWrapper<WaveListEntity>()
+                .eq("id", exitDTO.getId())
+                .set("picking_cart_code", "")
+                .set("status", WaveStatusEnum.AWAIT_PICK.getCode()));
+        return ApiResult.success();
+    }
+
     private void fillWaveInfo(WaveListPdaDTO.WaveBasicInfoDTO viewDTO) {
         //todo
         viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(viewDTO.getPickingType()));
