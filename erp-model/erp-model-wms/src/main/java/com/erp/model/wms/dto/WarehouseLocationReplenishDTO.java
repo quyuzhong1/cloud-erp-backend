@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -177,7 +178,7 @@ public class WarehouseLocationReplenishDTO implements Serializable {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
 
         /**
          * 处理人
@@ -187,7 +188,7 @@ public class WarehouseLocationReplenishDTO implements Serializable {
         /**
          * 处理时间
          */
-        private String updateTime;
+        private LocalDateTime updateTime;
     }
 
     @EqualsAndHashCode(callSuper = true)
