@@ -149,6 +149,36 @@ public class WaveListDetailDTO implements Serializable {
         private Integer pickedSumQty;
 
         /**
+         * 仓位信息
+         */
+        private List<LocationInfoDTO> locationInfoList;
+    }
+
+    @Data
+    public static class SkuInfoDTO{
+        private String skuId;
+
+        private String skuNo;
+
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+
+        /**
+         * 已拣数量汇总
+         */
+        private Integer pickedSumQty;
+
+        /**
+         * 拣货仓位信息
+         */
+//        private List<WaveListDetailDTO.PickingLocationInfoDTO> pickingLocationInfoList;
+    }
+
+    @Data
+    public static class LocationInfoDTO{
+        /**
          * 拣货库区
          */
         private String warehouseArea;
@@ -182,27 +212,5 @@ public class WaveListDetailDTO implements Serializable {
          * 是否缺货
          */
         private Boolean isOutStock;
-    }
-
-    @Data
-    public static class SkuInfoDTO{
-        private String skuId;
-
-        private String skuNo;
-
-        /**
-         * 销售数量
-         */
-        private Integer salesQty;
-
-        /**
-         * 已拣数量汇总
-         */
-        private Integer pickedSumQty;
-
-        /**
-         * 拣货仓位信息
-         */
-//        private List<WaveListDetailDTO.PickingLocationInfoDTO> pickingLocationInfoList;
     }
 }
