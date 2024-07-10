@@ -47,55 +47,11 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     @Resource
     private SoB2cFeign soB2cFeign;
     @Resource
-    private ProductDetailService productDetailService;
-    @Resource
     private PickingCartService pickingCartService;
     @Resource
     private PickingCartTypeService pickingCartTypeService;
     @Resource
     private ProductDetailFeign productDetailFeign;
-
-    public WaveListDetailPdaDTO.ViewDTO startPickingWithSideType(String waveId) {
-        //返回波次详情列表
-        WaveListDetailDTO.ViewDTO viewDTO = waveDetailService.view(waveId);
-        List<WaveListDetailDTO.DeliveryInfoDTO> deliveryList = viewDTO.getDeliveryInfoList();
-        Map<String, List<WaveListDetailDTO.DeliveryInfoDTO>> map = deliveryList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseLocation()));
-        List<String> skuIds = deliveryList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productList = productDetailService.listByIds(skuIds);
-        Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
-
-        WaveListDetailPdaDTO.ViewDTO resultViewDTO = new WaveListDetailPdaDTO.ViewDTO();
-        resultViewDTO.setWaveId(waveId);
-        resultViewDTO.setWaveCode(viewDTO.getCode());
-        List<WaveListDetailPdaDTO.PickingLocationDTO> resultDetailList = new ArrayList<>();
-        for (Map.Entry<String, List<WaveListDetailDTO.DeliveryInfoDTO>> entry : map.entrySet()) {
-            List<WaveListDetailDTO.DeliveryInfoDTO> locationGroupList = map.get(entry.getKey());
-            WaveListDetailDTO.DeliveryInfoDTO firstDelivery = locationGroupList.get(0);
-            WaveListDetailPdaDTO.PickingLocationDTO dto = new WaveListDetailPdaDTO.PickingLocationDTO();
-            dto.setWarehouseLocation(entry.getKey());
-            dto.setSkuId(firstDelivery.getSkuId());
-            dto.setSkuNo(firstDelivery.getSkuNo());
-            dto.setProductName(productMap.get(firstDelivery.getSkuId()).getName());
-            dto.setIsOutStock(false);   //todo 查询仓位是否缺货
-            dto.setPickedTotalQty(0);
-            List<WaveListDetailPdaDTO.BasketDTO> basketList = new ArrayList<>();
-            for (WaveListDetailDTO.DeliveryInfoDTO deliveryDTO : locationGroupList) {
-                WaveListDetailPdaDTO.BasketDTO basket = new WaveListDetailPdaDTO.BasketDTO();
-                basket.setNo(deliveryDTO.getBasketNo());
-                basket.setShouldPickingQty(deliveryDTO.getShouldPickQty());
-                basket.setPickedQty(deliveryDTO.getPickedQty());
-                basketList.add(basket);
-            }
-            dto.setBasketList(basketList);
-            int shouldPickTotalQty = basketList.stream().mapToInt(WaveListDetailPdaDTO.BasketDTO::getShouldPickingQty).sum();
-            dto.setShouldPickingTotalQty(shouldPickTotalQty);
-            resultDetailList.add(dto);
-        }
-        resultViewDTO.setLocationPickingDetailList(resultDetailList);
-        //最后更新波次状态
-        waveListService.update(new UpdateWrapper<WaveListEntity>().eq("id", waveId).set("status", WaveStatusEnum.PICK_ING.getCode()));
-        return resultViewDTO;
-    }
 
     @Override
     public PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
@@ -173,6 +129,14 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         if(! waveEntity.getPickingCartType().equals(pickingCart.getTypeId())){
             return ApiResult.error("拣货车不匹配");
         }
+        List<WaveListEntity> waveList = waveListService.list(new QueryWrapper<WaveListEntity>()
+                .eq("picking_cart_code", pickingCart.getCode())
+                .ne("id", waveEntity.getPickingCartCode())
+                .ne("status", WaveStatusEnum.FINISH.getCode()));
+        if(!waveList.isEmpty()){
+            return ApiResult.error("拣货车正在使用，无法再次绑定");
+        }
+
         update(new UpdateWrapper<WaveListEntity>().set("picking_cart_code", bindDTO.getPickingCartCode()).eq("id", bindDTO.getId()));
         //核对成功返回拣货车信息
         bindDTO.setPickingCartName(pickingCartType.getName());
