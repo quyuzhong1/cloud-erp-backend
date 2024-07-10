@@ -10,29 +10,30 @@
     <select id="listDetailByMainId"
             resultType="com.erp.model.wms.dto.WaveListDTO$PickingWaveDetailDTO">
         SELECT
-            pwd.main_id,
-            pwd.basket_no,
-            pwd.delivery_id,
-            pd.id as pickDetailId,
-            pd.sku_id,
-            pd.sku_no,
-            pd.picked_qty,
-            pd.allocated_qty
+        pwd.main_id,
+        pwd.basket_no,
+        pwd.delivery_id,
+        pd.id as pickDetailId,
+        pd.sku_id,
+        pd.sku_no,
+        pd.picked_qty,
+        pd.allocated_qty
         FROM
-            wave_list_detail AS pwd
-                inner JOIN so_b2c_delivery_detail AS sbdd ON sbdd.is_deleted = FALSE
-                AND sbdd.main_id = pwd.delivery_id
-                inner JOIN picking_detail AS pd ON pd.is_deleted = FALSE
-                AND pd.source_detail_id = sbdd.ID
-        <if test="waveId != null and waveId != ''">
-            and pwd.main_id = #{waveId}
-        </if>
-        <if test="basketNo != null and basketNo != ''">
-            and pwd.basket_no = #{basketNo}
-        </if>
-        <if test="skuId != null and skuId != ''">
-            and pd.sku_id = #{skuId}
-        </if>
+        wave_list_detail AS pwd
+        inner join picking_lists AS pl on pl.source_id = pwd.delivery_id and pl.is_deleted = FALSE
+        inner JOIN picking_detail AS pd ON pd.is_deleted = FALSE AND pd.main_id = pl.id
+        <where>
+            <if test="waveId != null and waveId != ''">
+                pwd.main_id = #{waveId}
+            </if>
+            <if test="basketNo != null and basketNo != ''">
+                and pwd.basket_no = #{basketNo}
+            </if>
+            <if test="skuId != null and skuId != ''">
+                and pd.sku_id = #{skuId}
+            </if>
+        </where>
+
     </select>
 
     <select id="countDelivery" resultType="java.lang.Integer">
