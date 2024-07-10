@@ -16,14 +16,12 @@ import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.WaveListPdaDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.PickingTypeEnum;
 import com.erp.model.wms.enums.WavePickingTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
 import com.erp.server.wms.mapper.WaveListPdaMapper;
-import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +50,8 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     private ProductDetailFeign productDetailFeign;
     @Resource
     private WaveListCartTypeMapper waveListCartTypeMapper;
+    @Resource
+    private PickingListsService pickingListsService;
 
     @Override
     public PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
@@ -170,28 +170,43 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         }
 
         List<String> ids = records.stream().map(item -> item.getId()).collect(Collectors.toList());
-        List<WaveListDetailEntity> detailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().in("main_id", ids));
-        Map<String, List<WaveListDetailEntity>> waveDetailMap = detailList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
+        List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().in("main_id", ids));
+        Map<String, List<WaveListDetailEntity>> waveDetailMap = waveDetailList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
         List<WaveListPdaDTO.ViewDTO> viewList = new ArrayList<>();
-        List<String> soIds = detailList.stream().map(item -> item.getSoId()).distinct().collect(Collectors.toList());
+        List<String> soIds = waveDetailList.stream().map(item -> item.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(soIds);
         Map<String, List<SoB2cDetailEntity>> soDetailMap = soDetailList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
-        for (WaveListEntity record : records) {
+
+        List<PickingCartEntity> pickingCartList = pickingCartService.list();
+        List<PickingCartTypeEntity> pickingCartTypeList = pickingCartTypeService.list();
+
+        for (WaveListEntity waveEntity : records) {
             WaveListPdaDTO.ViewDTO view = new WaveListPdaDTO.ViewDTO();
-            BeanMapper.copy(record, view);
-
+            //波次明细
+            WaveListDetailDTO.ViewDTO waveDetailView = waveDetailService.view(waveEntity.getId());
+            List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList = waveDetailView.getDeliveryInfoList();
+            //波次id，波次编码，波次名称，创建时间
+            BeanMapper.copy(waveEntity, view);
+            //波次状态
             view.setStatusName(WaveStatusEnum.getNameByCode(view.getStatus()));
-
-            List<WaveListDetailEntity> list = waveDetailMap.get(record.getId());
+            //拣货车类型ID
+            PickingCartEntity pickingCart = pickingCartList.stream().filter(item -> item.getCode().equals(waveEntity.getPickingCartCode())).findFirst().orElse(new PickingCartEntity());
+            view.setPickingCartTypeId(pickingCart.getTypeId());
+            //拣货车类型名称
+            PickingCartTypeEntity pickingCartType = pickingCartTypeList.stream().filter(item -> item.getId().equals(pickingCart.getTypeId())).findFirst().orElse(new PickingCartTypeEntity());
+            view.setPickingCartTypeName(pickingCartType.getName());
+            //分拣方式
+            view.setPickingTypeName(WavePickingTypeEnum.getName(waveEntity.getPickingType()));
+            //订单数量
+            List<WaveListDetailEntity> list = waveDetailMap.get(waveEntity.getId());
             List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
             view.setDeliveryBillQty(deliveryIds.size());
-
-            List<SoB2cDetailEntity> soB2cDetails = soDetailMap.get(record.getId());
-            /*List<String> skuIds = soB2cDetails.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
+            //商品种类
+            List<String> skuIds = deliveryInfoList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
             view.setSkuQty(skuIds.size());
-
-            int goodsQty = soB2cDetails.stream().mapToInt(item -> item.getQty()).sum();
-            view.setGoodsQty(goodsQty);*/
+            //商品数量
+            int salesQty = deliveryInfoList.stream().mapToInt(item -> item.getSalesQty()).sum();
+            view.setGoodsQty(salesQty);
             viewList.add(view);
         }
 

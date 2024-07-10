@@ -45,7 +45,12 @@ public class WaveListPdaDTO implements Serializable {
         /**
          * 拣货车类型
          */
-        private String pickingCartType;
+        private String pickingCartTypeId;
+
+        /**
+         * 拣货车类型名称
+         */
+        private String pickingCartTypeName;
 
         /**
          * 创建时间
@@ -55,7 +60,7 @@ public class WaveListPdaDTO implements Serializable {
         /**
          * 分拣方式
          */
-        private String pickType;
+        private String pickingType;
 
         /**
          * 分拣方式名称
