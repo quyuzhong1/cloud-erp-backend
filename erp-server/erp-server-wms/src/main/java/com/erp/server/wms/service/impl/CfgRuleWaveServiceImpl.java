@@ -390,7 +390,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             if (StrUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
                 //发货单类SKU不一致则跳过
                 long skuCount = detailList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().count();
-                if (skuCount > 0) {
+                if (skuCount > 1) {
                     continue;
                 }
                 //波次SKU不一致则跳过
@@ -421,7 +421,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 //清空合计数据
                 totalQty = MathUtil.ZERO;
                 orderQty = MathUtil.ONE;
-                skuId = null;
                 deliveryIdList = new ArrayList<>();
                 addDTO = new WaveListDTO.AddDTO();
                 addDTO.setWaveType(entity.getWaveType());
