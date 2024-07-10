@@ -93,7 +93,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         viewDTO.setPickingCartTypeName(cartTypeEntity.getName());
 
         List<WarehouseLocationDTO.MappingDTO> locationMappingList = warehouseLocationService.listArea2LocationMapping(warehouseId);
-        Map<String, WarehouseLocationDTO.MappingDTO> locationMap = locationMappingList.stream().collect(Collectors.toMap(item -> item.getLocationCode(), item2 -> item2));
+        Map<String, WarehouseLocationDTO.MappingDTO> locationMap = locationMappingList.stream().collect(Collectors.toMap(item -> item.getLocationCode(), item2 -> item2, (o1, o2) -> o1));
 
         List<WaveListDetailDTO.DeliveryInfoDTO> rowList = new ArrayList<>(waveDetailList.size());
         //发货单列表
