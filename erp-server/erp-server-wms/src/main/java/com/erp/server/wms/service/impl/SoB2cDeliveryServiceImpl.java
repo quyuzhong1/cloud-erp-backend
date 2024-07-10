@@ -1789,7 +1789,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             WaveListDTO.WaveDeliveryDTO dto = deliveryList.stream()
                     .filter(e -> e.getDeliveryId().equals(record.getId()))
                     .findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
-            record.setWavesCode(dto.getWaveCode());
+            record.setWaveCode(dto.getWaveCode());
             String warehouseLocation = views.stream().filter(e -> e.getSkuId().equals(record.getSkuId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
                     .distinct()

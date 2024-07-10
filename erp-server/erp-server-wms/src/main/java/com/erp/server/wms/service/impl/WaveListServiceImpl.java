@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -14,6 +15,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
@@ -30,10 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +48,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     private SoB2cDeliveryService deliveryService;
     @Resource
     private PickingCartTypeService pickingCartTypeService;
+    @Resource
+    private WaveListService waveListService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -256,10 +257,19 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids) {
-        List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(ids);
+    public SoB2cDeliveryDTO.PrintPickingMainViewDTO printPickingBill(String id) {
+        SoB2cDeliveryDTO.PrintPickingMainViewDTO resultDTO = new SoB2cDeliveryDTO.PrintPickingMainViewDTO();
+        //波次号
+        WaveListEntity waveListEntity = waveListService.getById(id);
+        if (ObjectUtil.isEmpty(waveListEntity)) {
+            throw new ServiceException("波次列表不能为空");
+        }
+        resultDTO.setWaveCode(waveListEntity.getCode());
+        List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(Arrays.asList(id));
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
-        return deliveryService.printPickingView(deliveryIds);
+        List<SoB2cDeliveryDTO.PrintPickingViewDTO> detailList = deliveryService.printPickingView(deliveryIds);
+        resultDTO.setDetailList(detailList);
+        return  resultDTO;
     }
 
     @Override
