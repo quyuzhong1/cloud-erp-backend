@@ -58,7 +58,7 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 						TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
 						Object mainDmpIdObj = dmpInputMongoChildEntity.get(MAIN_ID);
 						if(mainDmpIdObj == null) {
-							throw new ServiceException("子类数据mongo集合" + childMongoStorageName + "的id=" + dmpInputMongoChildEntity.get(DmpInputMongoHandler.MONGO_BASE_ID) + "未查询到dmpid");
+							continue;
 						}
 						String mainDmpId = mainDmpIdObj.toString();
 						if(StringUtils.isNotBlank(mainDmpId)) {
