@@ -542,7 +542,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public BatchResultDTO disApprove(String id) {
         SoDeliveryNoticeEntity entity = this.getById(id);
         //已审核支持反审核
-        if (!Boolean.FALSE.equals(entity.getInvalidStatus()) || !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //TODO 待加审核流程

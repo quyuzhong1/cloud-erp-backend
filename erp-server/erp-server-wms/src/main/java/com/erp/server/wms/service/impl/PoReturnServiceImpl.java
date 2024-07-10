@@ -897,7 +897,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(PoReturnEntity entity,List<PoReturnDetailEntity> detailEntityList) {
         //已审核支持反审核
-        if (!entity.getInvalidStatus() && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
         //判断是否已生成采购订单
