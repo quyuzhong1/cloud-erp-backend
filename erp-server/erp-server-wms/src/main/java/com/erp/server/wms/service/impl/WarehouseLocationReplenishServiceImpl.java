@@ -10,6 +10,8 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapper;
@@ -33,6 +35,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -90,6 +93,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         for (WarehouseLocationReplenishEntity entity : entityList) {
             WarehouseLocationReplenishDTO.ViewDTO dto = new WarehouseLocationReplenishDTO.ViewDTO();
             BeanMapper.copy(entity, dto);
+            dto.setUpdateTime(entity.getHandleTime());
+            dto.setUpdateUserName(entity.getHandleUserName());
 
             //仓库名称
             dto.setWarehouseName(warehouseIdNameMap.get(entity.getWarehouseId()));
@@ -164,12 +169,16 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public BatchResultDTO handle(WarehouseLocationReplenishDTO.HandleDTO handleDTO) {
+        LoginUser loginUser = UserContext.getNonLoginUser();
         WarehouseLocationReplenishEntity entity = this.baseMapper.selectById(handleDTO.getId());
 
         WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
         BeanMapper.copy(handleDTO, updateEntity);
         updateEntity.setId(entity.getId());
         updateEntity.setStatus(ReplenishBillStatusEnum.HANDLED.getCode());
+        updateEntity.setHandleUserId(loginUser.getUid());
+        updateEntity.setHandleUserName(loginUser.getUserName());
+        updateEntity.setHandleTime(LocalDateTime.now());
         this.baseMapper.updateById(updateEntity);
 
         return BatchResultDTO.success(updateEntity.getId(), updateEntity.getSkuNo() + " : " + handleDTO.getFromWarehouseLocation(), OperationTypeEnum.ADD);
