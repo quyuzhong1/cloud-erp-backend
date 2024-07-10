@@ -42,7 +42,6 @@ import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.*;
@@ -166,6 +165,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "entity.code")
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));

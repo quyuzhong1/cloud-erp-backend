@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.service.wdt.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -11,11 +12,10 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
+import com.sdk.wangdian.enums.WdtExtInStockStatusEnum;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
-import com.sdk.wangdian.sdk.api.wms.external.in.CreateStockExternalInRequest;
-import com.sdk.wangdian.sdk.api.wms.external.in.CreateStockExternalInResponse;
-import com.sdk.wangdian.sdk.api.wms.external.in.StockExternalInAPI;
+import com.sdk.wangdian.sdk.api.wms.external.in.*;
 import com.sdk.wangdian.sdk.api.wms.stockin.StockinAPI;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinResponse;
@@ -32,8 +32,9 @@ import java.util.stream.Collectors;
 
 /**
  * 旺店通其他入库单消费
- * @date 2024-05-24
+ *
  * @author tanmujin
+ * @date 2024-05-24
  */
 @Slf4j
 @Service
@@ -53,7 +54,8 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
         }
 
         StockinAPI stockinAPI = wangDianClientService.get(StockinAPI.class);
-        Map<String, Object> requestMap = JSON.parseObject(JSON.toJSONString(stockinRequest), new TypeReference<Map<String, Object>>() {});
+        Map<String, Object> requestMap = JSON.parseObject(JSON.toJSONString(stockinRequest), new TypeReference<Map<String, Object>>() {
+        });
         Map<String, Object> request = commonService.makeApiFieldMap(requestMap, platformEntity.getId(), ApiModuleTypeEnum.WDT_OTHER_IN_STOCK.getCode());
         CreateOtherStockinResponse response = null;
         try {
@@ -62,11 +64,11 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
             e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单异常: %s", e.getMessage()));
         }
-        if(response.getStatus() != 0){
+        if (response.getStatus() != 0) {
             log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockinRequest, response);
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s, %s, %s", stockinRequest.getOuterNo(), response.getStatus(), response.getMessage()));
         }
-        if(null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()){
+        if (null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()) {
             log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockinRequest, response);
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单审核失败: %s, %s, %s", stockinRequest.getOuterNo(), response.getStatus(), response.getMessage()));
         }
@@ -98,7 +100,8 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
                 })
                 .collect(Collectors.toList());
         externalInRequest.setOrderDetails(orderDetails);
-        Map<String, Object> requestMap = JSON.parseObject(JSON.toJSONString(externalInRequest), new TypeReference<Map<String, Object>>() {});
+        Map<String, Object> requestMap = JSON.parseObject(JSON.toJSONString(externalInRequest), new TypeReference<Map<String, Object>>() {
+        });
         Map<String, Object> requestBody = commonService.makeApiFieldMap(requestMap, platformEntity.getId(), ApiModuleTypeEnum.WDT_EXT_IN_STOCK.getCode());
         CreateStockExternalInResponse response = null;
         try {
@@ -107,7 +110,7 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
             log.error("推送旺店通其他出库单失败:{}", e.getMessage(), e);
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", e.getMessage()));
         }
-        if(response.getStatus() != 0){
+        if (response.getStatus() != 0) {
             log.error("推送旺店通其他出库单失败:{}", response.getMessage());
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", response.getMessage()));
         }
@@ -117,10 +120,28 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
     public OtherStockinResponse.DataInfoDto queryWithDetail(CreateOtherStockinRequest createRequest) {
         OtherStockinRequest request = new OtherStockinRequest();
         StockinAPI stockinAPI = wangDianClientService.get(StockinAPI.class);
-        OtherStockinResponse.DataInfoDto salesStockoutResponse;
+        OtherStockinResponse.DataInfoDto dataInfoDto;
         request.setStockinNo(createRequest.getOuterNo());
         Pager pager = new Pager(10, 0, true);
-        salesStockoutResponse = stockinAPI.queryWithDetail(request, pager);
-        return salesStockoutResponse;
+        log.info("查询其他入库单request：{}，{}", JSON.toJSONString(createRequest), JSON.toJSONString(request));
+        dataInfoDto = stockinAPI.queryWithDetail(request, pager);
+        log.info("查询其他入库单response：{}", JSON.toJSONString(dataInfoDto));
+        return dataInfoDto;
+    }
+
+    @Override
+    public void querySelfIn(CreateOtherStockinRequest request) {
+        StockExternalInAPI stockExternalInAPI = wangDianClientService.get(StockExternalInAPI.class);
+        StockExternalInRequest inRequest = new StockExternalInRequest();
+        inRequest.setOuterInNo(request.getOuterNo());
+        StockExternalInResponse stockExternalInResponse = stockExternalInAPI.queryWithDetail(inRequest, new Pager(10, 0, true));
+        if (ObjectUtils.isNotEmpty(stockExternalInResponse) && CollectionUtils.isNotEmpty(stockExternalInResponse.getOrder())) {
+            StockExternalInResponse.Order order = stockExternalInResponse.getOrder().get(0);
+            if (!order.getStatus().equals(WdtExtInStockStatusEnum.FINISH.getStatus())) {
+                //修改任务的错误消息
+                String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtExtInStockStatusEnum.getName(order.getStatus()));
+                throw new ServiceException(format);
+            }
+        }
     }
 }

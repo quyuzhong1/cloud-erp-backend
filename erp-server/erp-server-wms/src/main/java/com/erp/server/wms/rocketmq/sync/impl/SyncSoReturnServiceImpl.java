@@ -210,6 +210,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "dto.thirdCode")
     public void syncWdtReturnOrderToSoReturn(WdtReturnOrderDTO dto) {
         SoReturnInstockEntity inStockEntity = BeanMapperUtils.map(SoReturnInstockEntity.class, dto);
         List<SoReturnInstockDetailEntity> detailList = BeanMapperUtils.copyList(SoReturnInstockDetailEntity.class, dto.getDetailList());

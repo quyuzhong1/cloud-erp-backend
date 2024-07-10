@@ -155,7 +155,7 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
             dto.setTrackNo(order.getLogisticsNo());
             //来源信息
             dto.setSourceId(String.valueOf(order.getStockoutId()));
-            dto.setSourceType(SourceTypeEnum.QIMEN_SO_OUT_STOCK.getCode());
+            dto.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
             dto.setSourceCode(order.getTradeNo());
             dto.setOrderType(OrderTypeEnum.B2C.getCode());
             //审核时间

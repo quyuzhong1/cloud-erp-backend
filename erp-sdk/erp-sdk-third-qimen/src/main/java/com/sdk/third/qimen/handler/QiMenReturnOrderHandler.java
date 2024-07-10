@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -135,7 +136,7 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
             //仓库id
             dto.setWarehouseId(String.valueOf(orderEntity.getWarehouseId()));
             dto.setWarehouseName(orderEntity.getWarehouseName());
-            dto.setSourceType(SourceTypeEnum.QIMEN_RETURN_ORDER.getCode());
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
             dto.setSourceId(orderEntity.getTidList());
             dto.setSourceCode(orderEntity.getTradeNoList());
             List<WdtReturnOrderDetailDTO> detailList = new ArrayList<>();
@@ -158,8 +159,9 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
     private WdtReturnOrderDetailDTO getDetail(WdtWmsStockinRefundQuerywithdetailResponse.Order orderEntity, WdtWmsStockinRefundQuerywithdetailResponse.DetailsList detailDto) {
         WdtReturnOrderDetailDTO detail = new WdtReturnOrderDetailDTO();
         detail.setSkuNo(detailDto.getSpecNo());
-        detail.setMustQty(Integer.valueOf(detailDto.getExpectNum()));
-        detail.setReceiveQty(Integer.valueOf(detailDto.getNum()));
+        detail.setMustQty(new BigDecimal(detailDto.getExpectNum()).intValue());
+        detail.setReceiveQty(new BigDecimal(detailDto.getNum()).intValue());
+        detail.setRealQty(new BigDecimal(detailDto.getNum()).intValue());
         detail.setReturnReasonDict(orderEntity.getReason());
         detail.setWarehouseLocation(detailDto.getPositionNo());
         detail.setIsSubContract(false);
