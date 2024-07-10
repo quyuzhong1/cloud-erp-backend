@@ -41,12 +41,12 @@
     </select>
     <select id="listWavePickingDTOBySkuIds"
             resultType="com.erp.model.plm.dto.ProductDetailDTO$ServiceToWavePickingDTO">
-        SELECT pd.id AS sku_id,
-               pd.sku_no,
-               pd.images_url,
-               pd.name,
-               pd.variant_property,
-               pp.ean
+        SELECT pd.id AS skuId,
+               pd.sku_no as skuNo,
+               pd.images_url as imageUrl,
+               pd.name as productName,
+               pd.variant_property variantProperty,
+               pp.ean as eanNo
         FROM product_detail pd
                  LEFT JOIN product_purchase pp ON pp.sku_id = pd.id AND pp.is_deleted = FALSE
         WHERE pd.is_deleted = FALSE
