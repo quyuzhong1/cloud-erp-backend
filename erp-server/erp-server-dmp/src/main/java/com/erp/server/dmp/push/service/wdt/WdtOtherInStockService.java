@@ -25,4 +25,8 @@ public interface WdtOtherInStockService {
     void executeSelfConsumer(CreateOtherStockinRequest request);
 
     OtherStockinResponse.DataInfoDto queryWithDetail(CreateOtherStockinRequest request);
+    /**
+     * 自留转仓调用外部入库单查询
+     */
+    void querySelfIn(CreateOtherStockinRequest request);
 }

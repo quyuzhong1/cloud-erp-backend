@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.service.wdt.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -11,20 +12,22 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
+import com.sdk.wangdian.enums.WdtExtOutStockStatusEnum;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
-import com.sdk.wangdian.sdk.api.wms.external.out.CreateStockExternalOutRequest;
-import com.sdk.wangdian.sdk.api.wms.external.out.CreateStockExternalOutResponse;
-import com.sdk.wangdian.sdk.api.wms.external.out.StockExternalOutAPI;
+import com.sdk.wangdian.sdk.api.wms.external.out.*;
 import com.sdk.wangdian.sdk.api.wms.stockout.StockoutAPI;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.*;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutOtherQueryRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutOtherQueryResponse;
 import com.sdk.wangdian.server.WangDianClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.net.ConnectException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -126,5 +129,21 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
             throw new RuntimeException(e);
         }
         return response;
+    }
+
+    @Override
+    public void querySelfOut(CreateOtherStockoutRequest request) {
+        StockExternalOutAPI stockExternalOutAPI = wangDianClientService.get(StockExternalOutAPI.class);
+        StockExternalOutRequest outRequest = new StockExternalOutRequest();
+        outRequest.setOuterOutNo(request.getOuterNo());
+        StockExternalOutResponse stockExternalOutResponse = stockExternalOutAPI.queryWithDetail(outRequest, new Pager(10, 0, true));
+        if (ObjectUtils.isNotEmpty(stockExternalOutResponse) && CollectionUtils.isNotEmpty(stockExternalOutResponse.getOrder())) {
+            StockExternalOutResponse.Order order = stockExternalOutResponse.getOrder().get(0);
+            if (!order.getStatus().equals(WdtExtOutStockStatusEnum.FINISH.getStatus())) {
+                //修改任务的错误消息
+                String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtExtOutStockStatusEnum.getName(order.getStatus()));
+                throw new ServiceException(format);
+            }
+        }
     }
 }
