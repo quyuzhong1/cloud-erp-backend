@@ -891,7 +891,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     public WmsCartonSpecDTO.CartonSpecDTO cartonSpecView(WmsCartonSpecDTO.SpecRequestDTO requestDTO) {
-        if (StringUtils.isNotBlank(requestDTO.getOutBoxNo())){
+        if (StringUtils.isBlank(requestDTO.getOutBoxNo())){
             throw new ServiceException("外部单号不能为空");
         }
         String[] split = requestDTO.getOutBoxNo().split("-");

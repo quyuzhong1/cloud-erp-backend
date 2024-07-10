@@ -26,7 +26,7 @@ public class PackingTaskQueryHandler extends AbstractQueryHandler {
              * 已装箱：装箱数量等于发货数量
              */
             if (PackingTaskStatusEnum.UNPACKED.getCode().equals(value)){
-                return "EXISTS ( SELECT 1 FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE GROUP BY wc.packing_task_id HAVING COALESCE(SUM(wcd.pack_qty), 0) = 0)";
+                return "EXISTS ( SELECT 1 FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE HAVING COALESCE(SUM(wcd.pack_qty), 0) = 0)";
             }else if (PackingTaskStatusEnum.PACKING.getCode().equals(value)){
                 return "EXISTS (SELECT 1 FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE GROUP BY wc.packing_task_id HAVING COALESCE(SUM(wcd.pack_qty), 0) > 0)" +
                         " AND " +
@@ -34,7 +34,7 @@ public class PackingTaskQueryHandler extends AbstractQueryHandler {
                         " COALESCE((SELECT SUM(wcd.pack_qty) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE), 0))";
             }else if (PackingTaskStatusEnum.PACKED.getCode().equals(value)){
                 return " EXISTS (SELECT 1 FROM (SELECT ptd.main_id, COALESCE(SUM(ptd.delivery_qty), 0) AS total_delivery_qty FROM packing_task_detail ptd WHERE ptd.is_deleted = FALSE GROUP BY ptd.main_id) AS ptd_agg WHERE ptd_agg.main_id = pt.id AND ptd_agg.total_delivery_qty = " +
-                        " COALESCE((SELECT SUM(wcd.pack_qty) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE), 0)";
+                        " COALESCE((SELECT SUM(wcd.pack_qty) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id WHERE wc.packing_task_id = pt.id AND wc.is_deleted = FALSE), 0))";
             }
 
         }
