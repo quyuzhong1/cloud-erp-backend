@@ -588,7 +588,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(SoReturnReceiveEntity entity) {
         //已审核支持反审核
-        if (!entity.getInvalidStatus() && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
         //下推质检单不能反审核
