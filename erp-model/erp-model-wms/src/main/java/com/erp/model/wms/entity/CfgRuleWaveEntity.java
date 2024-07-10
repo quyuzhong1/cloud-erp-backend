@@ -91,6 +91,12 @@ public class CfgRuleWaveEntity extends BaseEntity<CfgRuleWaveEntity> {
     private String remark;
 
 
+    /**
+     * 拣货车类型名称
+     */
+    @TableField(exist = false)
+    private String pickingCartTypeJsonName;
+
     public static final String NAME = "name";
 
     public static final String WAVE_TYPE = "wave_type";
