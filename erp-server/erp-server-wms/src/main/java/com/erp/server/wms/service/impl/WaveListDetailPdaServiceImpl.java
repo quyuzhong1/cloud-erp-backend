@@ -5,6 +5,8 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -161,6 +164,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WaveListDetailPdaDTO.FinishResultDTO finish(WaveListDetailPdaDTO.FinishParamDTO finishParamDTO) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String waveId = finishParamDTO.getWaveId();
         List<PickingDetailEntity> updateList = getPickingDetailEntities(waveId, finishParamDTO.getLocationPickingDetailList());
         pickingDetailService.updateBatchById(updateList);
@@ -181,7 +185,12 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         resultDTO.setGoodsPickedQty(pickedSumQty);
 
         //更新波次列表状态
-        waveListService.updateStatusById(finishParamDTO.getWaveId(),WaveStatusEnum.FINISH.getCode());
+        waveListService.update(new UpdateWrapper<WaveListEntity>()
+                .set("status", WaveStatusEnum.FINISH.getCode())
+                .set("picking_time", LocalDateTime.now())
+                .set("picking_user", loginUser.getUserName())
+                .eq("id", finishParamDTO.getWaveId()));
+//        waveListService.updateStatusById(finishParamDTO.getWaveId(),WaveStatusEnum.FINISH.getCode());
         return resultDTO;
     }
 
