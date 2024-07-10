@@ -161,6 +161,8 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
             newDto.setDownloadStatus(1);
             newDto.setDownloadAddressStatus(0);
             newDto.setPlatformWarehouseOrder(newDto.isPlatformWarehouseOrder());
+            // 判断是否有发货单下载(属于平台仓订单并且有物流信息)
+            newDto.setDownloadDeliveryStatus(newDto.convertDownloadDeliveryStatus());
             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
             List<PlatformOrderDTO> convertDtoList = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
             PlatformOrderDTO convertDto = convertDtoList.get(0);
