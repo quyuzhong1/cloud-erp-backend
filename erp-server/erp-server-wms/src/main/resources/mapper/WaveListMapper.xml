@@ -47,22 +47,23 @@
         </if>
     </select>
     <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
-        select id,
-               create_time,
-               update_time,
-               create_user_name,
-               update_user_name,
-               code,
-               name,
-               type,
-               status,
-               picking_cart_type,
-               picking_cart_code,
-               picking_type,
-               print_status,
-               picking_user,
-               picking_time
-        from wave_list
+        select wl.id,
+                wl.create_time,
+                wl.update_time,
+                wl.create_user_name,
+                wl.update_user_name,
+                wl.code,
+                wl.name,
+                wl.type,
+                wl.status,
+                wl.picking_cart_type,
+                wl.picking_cart_code,
+                wl.picking_type,
+                wl.print_status,
+                wl.picking_user_id,
+                wl.picking_user_name,
+                wl.picking_time
+        from wave_list wl
         where is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
