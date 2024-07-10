@@ -123,6 +123,9 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         if(pickingCart == null){
             return ApiResult.error("拣货车编码错误");
         }
+        if(pickingCart.getDisabled()){
+            return ApiResult.error("拣货车已禁用");
+        }
         PickingCartTypeEntity pickingCartType = pickingCartTypeService.getOne(new QueryWrapper<PickingCartTypeEntity>().eq("id", pickingCart.getTypeId()));
         WaveListEntity waveEntity = waveListService.getById(bindDTO.getId());
         List<WaveListCartTypeEntity> cartTypeList = waveListCartTypeMapper.selectList(new QueryWrapper<WaveListCartTypeEntity>().eq("wave_id", bindDTO.getId()));
