@@ -90,6 +90,8 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         List<ProductDetailEntity> productList = productDetailFeign.listByIds(skuIds);
         Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(BaseEntity::getId, item -> item));
 
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Collections.singletonList(viewDTO.getWarehouseId()));
+
         //主信息
         WaveListDetailPdaDTO.ViewDTO resultViewDTO = new WaveListDetailPdaDTO.ViewDTO();
         resultViewDTO.setWaveId(waveId);
@@ -125,7 +127,8 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             for (String skuId : skuSet) {
                 WaveListDetailPdaDTO.PickingLocationDTO card = new WaveListDetailPdaDTO.PickingLocationDTO();
                 card.setWarehouseLocation(location);
-                card.setWarehouseLocationName("");
+                WarehouseLocationEntity locationEntity = warehouseLocationList.stream().filter(item -> item.getType().equals("location") && item.getCode().equals(location)).findFirst().orElse(new WarehouseLocationEntity());
+                card.setWarehouseLocationName(locationEntity.getName());
                 card.setSkuId(skuId);
                 card.setSkuNo(skuMap.get(skuId));
                 ProductDetailEntity productDetail = productMap.get(skuId);
