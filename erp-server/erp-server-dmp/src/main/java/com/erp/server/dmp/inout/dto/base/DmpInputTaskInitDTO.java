@@ -21,7 +21,7 @@ public class DmpInputTaskInitDTO implements Serializable {
 	/**
      * 响应代码
      */
-    private Integer code;
+    private Integer code = 200;
     /**
      * 响应消息
      */
@@ -29,5 +29,5 @@ public class DmpInputTaskInitDTO implements Serializable {
 	/**
 	 * 内容形式
 	 */
-	private DmpInputTaskFileContentTypeEnum contentType;
+	private DmpInputTaskFileContentTypeEnum contentType = DmpInputTaskFileContentTypeEnum.JSON;
 }
