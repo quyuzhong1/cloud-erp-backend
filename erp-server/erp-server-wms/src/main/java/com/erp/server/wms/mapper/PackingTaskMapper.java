@@ -70,4 +70,8 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @return
      */
     List<PackingTaskDetailDTO.HistoryCartonDTO> selectHistoryCartonList();
+
+    IPage<PackingTaskDTO.PackingTreeDTO> pagingSelect(@Param("query") Page<PackingTaskDTO.PackingTreeDTO> query, @Param("params") PackingTaskDTO.SearchSourceCodeDTO dto);
+
+    List<WmsCartonSpecDTO.SpecDTO> getCartonSpecByTaskId(@Param("taskId") String taskId);
 }
