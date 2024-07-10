@@ -1,5 +1,8 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.annotation.Dict;
+import com.erp.model.wms.enums.WavePickingTypeEnum;
+import com.erp.model.wms.enums.WaveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -47,6 +50,11 @@ public class WaveListDetailDTO implements Serializable {
         private String pickingCartType;
 
         /**
+         * 拣货车类型名称
+         */
+        private String pickingCartTypeName;
+
+        /**
          * 拣货车编号
          */
         private String pickingCartCode;
@@ -54,11 +62,13 @@ public class WaveListDetailDTO implements Serializable {
         /**
          * 拣货方式
          */
+        @Dict(enumClass = WavePickingTypeEnum.class)
         private String pickingType;
 
         /**
          * 波次状态
          */
+        @Dict(enumClass = WaveStatusEnum.class)
         private String status;
 
         /**

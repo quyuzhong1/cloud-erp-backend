@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -346,21 +347,28 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
      */
     private Pair<WarehouseLocationEntity, InventoryEntity> getFromAreaAndLocation(WarehouseLocationReplenishDTO.AddDTO dto){
         //查找仓库下的备货区
-        WarehouseLocationEntity stockAreaEntity = warehouseLocationService.getOne(new QueryWrapper<WarehouseLocationEntity>()
+        List<WarehouseLocationEntity> stockAreaList = warehouseLocationService.list(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("warehouse_id", dto.getWarehouseId())
                 .eq("type", "area")
                 .eq("area_type", "stockingArea")
                 .eq("is_deleted", false)
         );
+        List<String> stockAreaId = stockAreaList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+        if(stockAreaId.isEmpty()){
+            return new Pair<>(new WarehouseLocationEntity(), new InventoryEntity());
+        }
 
         //查找备货区下的所有仓位
         List<WarehouseLocationEntity> stockLocationList = warehouseLocationService.list(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("warehouse_id", dto.getWarehouseId())
                 .eq("type", "location")
-                .in("parent_id", stockAreaEntity.getId())
+                .in("parent_id", stockAreaId)
                 .eq("is_deleted", false)
         );
         List<String> stockLocationCodeList = stockLocationList.stream().map(item -> item.getCode()).distinct().collect(Collectors.toList());
+        if(stockLocationCodeList.isEmpty()){
+            return new Pair<>(new WarehouseLocationEntity(), new InventoryEntity());
+        }
         //查找仓库下，备货区，sku的仓位库存
         List<InventoryEntity> stockInventoryList = inventoryService.list(new QueryWrapper<InventoryEntity>()
                 .eq("warehouse_id", dto.getWarehouseId())
@@ -372,7 +380,11 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         //取可用库存最多的一个
         InventoryEntity maxQtyInventoryEntity = stockInventoryList.get(0);
 
-        return new Pair<>(stockAreaEntity, maxQtyInventoryEntity);
+        //根据最大库存仓位找库区
+        WarehouseLocationEntity locationEntity = stockLocationList.stream().filter(item -> StringUtils.equals(item.getCode(), maxQtyInventoryEntity.getWarehouseLocation())).findFirst().get();
+        WarehouseLocationEntity areaEntity = stockAreaList.stream().filter(item -> StringUtils.equals(item.getId(), locationEntity.getParentId())).findFirst().get();
+
+        return new Pair<>(areaEntity, maxQtyInventoryEntity);
     }
 
     @Override
