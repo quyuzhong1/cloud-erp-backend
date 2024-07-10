@@ -15,16 +15,15 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
-import com.erp.model.wms.entity.PickingCartTypeEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.WaveListDetailEntity;
-import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.server.wms.mapper.WaveListCartTypeMapper;
 import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
@@ -51,6 +50,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     private SoB2cDeliveryService deliveryService;
     @Resource
     private PickingCartTypeService pickingCartTypeService;
+    @Resource
+    private WaveListCartTypeMapper waveListCartTypeMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -65,8 +66,16 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         entity.setPickingType(dto.getPickingType());
         entity.setStatus(WaveStatusEnum.AWAIT_PICK.getCode());
         entity.setPrintStatus(PackagePrintStatusEnum.NOT.getCode());
-        entity.setPickingCartType(dto.getPickCartTypeId());
         this.save(entity);
+
+        List<String> pickCartTypeIdList = dto.getPickCartTypeIdList();
+        if(pickCartTypeIdList.isEmpty()){
+            throw new ServiceException("拣货车类型不能为空");
+        }
+        for (String typeId : pickCartTypeIdList) {
+            WaveListCartTypeEntity cartType = new WaveListCartTypeEntity(entity.getId(), typeId);
+            waveListCartTypeMapper.insert(cartType);
+        }
 
         List<String> deliveryIdList = dto.getDeliveryIdList();
         List<SoB2cDeliveryEntity> deliveryList = deliveryService.getBaseMapper().selectBatchIds(deliveryIdList);

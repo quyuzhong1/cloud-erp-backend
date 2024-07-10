@@ -32,7 +32,7 @@ public class WaveListDTO implements Serializable {
         /**
          * 拣货车类型
          */
-        private String pickCartTypeId;
+        private List<String> pickCartTypeIdList;
 
         /**
          * 波次类型
