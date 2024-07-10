@@ -73,6 +73,12 @@ public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serial
     private String printStatus;
 
     /**
+     * 打印时间
+     */
+    @TableField("print_time")
+    private String printTime;
+
+    /**
      * 拣货人
      */
     @TableField("picking_user")

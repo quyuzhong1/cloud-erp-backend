@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -151,7 +152,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         for (WaveListEntity record : records) {
             WaveListDTO.ViewDTO viewDTO = new WaveListDTO.ViewDTO();
             BeanMapper.copy(record, viewDTO);
-            viewDTO.setPickingUserName(record.getUpdateUserName());
+            viewDTO.setPickingUserName(record.getPickingUser());
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(record.getPrintStatus()));
@@ -246,7 +247,10 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO) {
         //修改波次打印状态为已打印
-        update(new UpdateWrapper<WaveListEntity>().set("print_status", PrintStatusEnum.PRINT_FINISH.getCode()).in("id", idsDTO.getIds()));
+        update(new UpdateWrapper<WaveListEntity>()
+                .set("print_status", PrintStatusEnum.PRINT_FINISH.getCode())
+                .set("print_time", LocalDateTime.now())
+                .in("id", idsDTO.getIds()));
         return ApiResult.success();
     }
 
