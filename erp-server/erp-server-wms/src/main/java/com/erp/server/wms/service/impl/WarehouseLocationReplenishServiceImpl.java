@@ -14,6 +14,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
@@ -240,6 +241,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("warehouse_id", dto.getWarehouseId())
                     .eq("warehouse_location", minQtyInventoryEntity.getWarehouseLocation())
             );
+            if(safetyInventoryEntity == null){
+                throw new ServiceException("没有找到仓位安全库存");
+            }
             //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
             if(safetyInventoryEntity.getMaxQty() != 0){
                 suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - minQtyInventoryEntity.getQty();
