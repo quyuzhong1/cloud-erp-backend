@@ -186,4 +186,21 @@
         where wc.is_deleted = FALSE
         ORDER BY taskId
     </select>
+    <select id="selectProductNumByIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$ProductNum">
+        SELECT
+            ptd.main_id AS taskId,
+            COUNT ( DISTINCT ptd.sku_id ) AS productNum
+        FROM
+            packing_task_detail ptd
+        WHERE
+            ptd.is_deleted = FALSE
+        <if test="taskIds != null and taskIds.size > 0">
+            AND ptd.main_id IN
+            <foreach collection="taskIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY
+            ptd.main_id
+    </select>
 </mapper>
