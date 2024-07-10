@@ -189,80 +189,8 @@ public class DefaultClient implements Client
 	public Object execute(String method, Object[] args, Pager pager, Type returnType)
 			throws WdtErpException, IOException
 	{
-		Map<String, String> requestParams = new TreeMap<>();
-		requestParams.put("sid", this.sid);
-		requestParams.put("key", this.key);
-		requestParams.put("method", method);
-		requestParams.put("salt", this.salt);
-		requestParams.put("timestamp",
-				Integer.toString((int) (System.currentTimeMillis() / 1000 - WDT_UNIX_TIMESTAMP_DIFF)));
-		requestParams.put("v", version);
 
-		if (pager != null)
-		{
-			requestParams.put("page_size", Integer.toString(pager.getPageSize()));
-			requestParams.put("page_no", Integer.toString(pager.getPageNo()));
-			requestParams.put("calc_total", pager.isCalcTotal() ? "1" : "0");
-		}
-
-		// 请求参数
-		String body = gson.toJson(args);
-		requestParams.put("body", body);
-
-		// 计算签名
-		String sign = this.sign(requestParams, this.secret);
-		requestParams.remove("body");
-		requestParams.put("sign", sign);
-
-		String requestUrl = this.url + "?" + this.ToQueryString(requestParams);
-		log.error("旺店通请求参数：{}" ,requestUrl);
-		PrintWriter outWriter = null;
-		BufferedReader inReader = null;
-		String responseBody;
-		try
-		{
-			URL url = new URL(requestUrl);
-
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setConnectTimeout(timeout);
-			conn.setReadTimeout(timeout);
-
-			if (this.isMultiTenantMode)
-				conn.setRequestProperty("Connection", "close");
-
-			conn.setRequestProperty("Content-Type", "application/json");
-			conn.setDoOutput(true);
-			conn.setDoInput(true);
-
-			OutputStream outStream = conn.getOutputStream();
-			outWriter = new PrintWriter(new OutputStreamWriter(outStream, StandardCharsets.UTF_8));
-
-			outWriter.write(body);
-			outWriter.flush();
-
-			InputStream in = conn.getInputStream();
-			inReader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-
-			StringBuilder sb = new StringBuilder();
-			int len;
-			char[] tmp = new char[256];
-			while ((len = inReader.read(tmp)) > 0)
-			{
-				sb.append(tmp, 0, len);
-			}
-			responseBody = sb.toString();
-			log.error("旺店通响应参数：{}" ,responseBody);
-		}
-		finally
-		{
-			if (outWriter != null)
-				outWriter.close();
-
-			if (inReader != null)
-				inReader.close();
-		}
-
-		JsonObject jsonResponse = parser.parse(responseBody).getAsJsonObject();
+		JsonObject jsonResponse = parser.parse(this.execute(method, gson.toJson(args), pager)).getAsJsonObject();
 
 		int status = jsonResponse.get("status").getAsInt();
 		if (status > 0)
@@ -340,5 +268,81 @@ public class DefaultClient implements Client
 	public static Client get(String sid, String key, String secret)
 	{
 		return new DefaultClient(sid, WDT_SERVICE_URL, key, secret, false);
+	}
+
+	@Override
+	public String execute(String method, String body, Pager pager) throws WdtErpException, IOException {
+		Map<String, String> requestParams = new TreeMap<>();
+		requestParams.put("sid", this.sid);
+		requestParams.put("key", this.key);
+		requestParams.put("method", method);
+		requestParams.put("salt", this.salt);
+		requestParams.put("timestamp",
+				Integer.toString((int) (System.currentTimeMillis() / 1000 - WDT_UNIX_TIMESTAMP_DIFF)));
+		requestParams.put("v", version);
+
+		if (pager != null)
+		{
+			requestParams.put("page_size", Integer.toString(pager.getPageSize()));
+			requestParams.put("page_no", Integer.toString(pager.getPageNo()));
+			requestParams.put("calc_total", pager.isCalcTotal() ? "1" : "0");
+		}
+
+		// 请求参数
+		requestParams.put("body", body);
+
+		// 计算签名
+		String sign = this.sign(requestParams, this.secret);
+		requestParams.remove("body");
+		requestParams.put("sign", sign);
+
+		String requestUrl = this.url + "?" + this.ToQueryString(requestParams);
+		log.error("旺店通请求参数：{}" ,requestUrl);
+		PrintWriter outWriter = null;
+		BufferedReader inReader = null;
+		String responseBody;
+		try
+		{
+			URL url = new URL(requestUrl);
+
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setConnectTimeout(timeout);
+			conn.setReadTimeout(timeout);
+
+			if (this.isMultiTenantMode)
+				conn.setRequestProperty("Connection", "close");
+
+			conn.setRequestProperty("Content-Type", "application/json");
+			conn.setDoOutput(true);
+			conn.setDoInput(true);
+
+			OutputStream outStream = conn.getOutputStream();
+			outWriter = new PrintWriter(new OutputStreamWriter(outStream, StandardCharsets.UTF_8));
+
+			outWriter.write(body);
+			outWriter.flush();
+
+			InputStream in = conn.getInputStream();
+			inReader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+
+			StringBuilder sb = new StringBuilder();
+			int len;
+			char[] tmp = new char[256];
+			while ((len = inReader.read(tmp)) > 0)
+			{
+				sb.append(tmp, 0, len);
+			}
+			responseBody = sb.toString();
+			log.error("旺店通响应参数：{}" ,responseBody);
+		}
+		finally
+		{
+			if (outWriter != null)
+				outWriter.close();
+
+			if (inReader != null)
+				inReader.close();
+		}
+		return responseBody;
 	}
 }
