@@ -552,18 +552,18 @@ public class FirstMileDeliveryController extends BaseController {
 //        return success(result);
 //    }
 
-    /**
-     * 快粘贴查询sku
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:21
-     * @param id 发货单Id
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @GetMapping("/listGroupSkuById")
-    public ApiResult<List<FirstMileDeliveryDTO.GroupSkuDTO>> listGroupSkuByMainId(@RequestParam("id") String id) {
-        List<FirstMileDeliveryDTO.GroupSkuDTO> result = firstMileDeliveryDetailService.listGroupSkuByMainId(id);
-        return success(result);
-    }
+//    /**
+//     * 快粘贴查询sku
+//     * @Author Luo_WG
+//     * @Date 2023/11/17 11:21
+//     * @param id 发货单Id
+//     * @return com.common.core.controller.vo.ApiResult
+//     **/
+//    @GetMapping("/listGroupSkuById")
+//    public ApiResult<List<FirstMileDeliveryDTO.GroupSkuDTO>> listGroupSkuByMainId(@RequestParam("id") String id) {
+//        List<FirstMileDeliveryDTO.GroupSkuDTO> result = firstMileDeliveryDetailService.listGroupSkuByMainId(id);
+//        return success(result);
+//    }
 
 //    /**
 //     * 导出装箱清单Excel

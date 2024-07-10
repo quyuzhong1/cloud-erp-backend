@@ -308,6 +308,6 @@ public class PackingTaskController extends BaseController {
      */
     @PostMapping("initPackingTaskData")
     public void initPackingTaskData(){
-
+        packingTaskService.initPackingTaskData();
     }
 }

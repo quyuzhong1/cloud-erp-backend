@@ -45,6 +45,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -529,7 +530,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 String packingStatus = StringUtils.isBlank(statusDTO.getPackingStatus())? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus();
                 pagingViewDTO.setPackingTotalStatus(packingStatus);
                 pagingViewDTO.setPackingTotalStatusName(PackingTaskStatusEnum.getName(packingStatus));
-                String weightingStatus = StringUtils.isBlank(statusDTO.getWeightingStatus()) ? PackingWeightStatusEnum.UNWEIGHTED.getCode() : statusDTO.getWeightingStatus();
+                String weightingStatus = StringUtils.isBlank(statusDTO.getWeightingStatus()) ? PackingWeightStatusEnum.UNWEIGHED.getCode() : statusDTO.getWeightingStatus();
                 pagingViewDTO.setWeightingTotalStatus(weightingStatus);
                 pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.getName(weightingStatus));
                 pagingViewDTO.setErrorMsg(StringUtils.isBlank(statusDTO.getErrorMsg())? "" : statusDTO.getErrorMsg());
@@ -539,8 +540,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             }else {
                 pagingViewDTO.setPackingTotalStatus(PackingTaskStatusEnum.UNPACKED.getCode());
                 pagingViewDTO.setPackingTotalStatusName(PackingTaskStatusEnum.UNPACKED.getName());
-                pagingViewDTO.setWeightingTotalStatus(PackingWeightStatusEnum.UNWEIGHTED.getCode());
-                pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.UNWEIGHTED.getName());
+                pagingViewDTO.setWeightingTotalStatus(PackingWeightStatusEnum.UNWEIGHED.getCode());
+                pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.UNWEIGHED.getName());
                 pagingViewDTO.setPackageWeight(BigDecimal.ZERO);
                 pagingViewDTO.setPackageWeightStr("0" + UnitEnum.WeightUnitEnum.KG.getName());
             }
@@ -1159,6 +1160,90 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         return baseMapper.selectPackingStatusByIds(packingTaskIds,sourceCodeList);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void initPackingTaskData() {
+        //源数据列表
+        List<PackingTaskDetailDTO.HistoryCartonDTO>  list = baseMapper.selectHistoryCartonListTest();
+        //补充毛重重量
+        List<String> skuIds = list.stream().map(PackingTaskDetailDTO.HistoryCartonDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIds);
+        Map<String, BigDecimal> weightMap = skuVOList.stream().filter(e -> StringUtils.isNotBlank(e.getSkuId()) && Objects.nonNull(e.getGrossWeight())).collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getGrossWeight));
+        list.forEach(historyCartonDTO -> {
+            BigDecimal grossWeight = weightMap.get(historyCartonDTO.getSkuId());
+            if (Objects.nonNull(grossWeight)){
+                BigDecimal divide = MathUtil.divide(MathUtil.multiply(grossWeight, historyCartonDTO.getPackQty()), MathUtil.BigDecimal_1000);
+                historyCartonDTO.setGrossWeight(divide);
+            }else {
+                historyCartonDTO.setGrossWeight(BigDecimal.ZERO);
+            }
+        });
+        Map<String, List<PackingTaskDetailDTO.HistoryCartonDTO>> sourceMap = list.stream().collect(Collectors.groupingBy(PackingTaskDetailDTO.HistoryCartonDTO::getSourceId));
+        //数据分两个表进行填充  first_mile_delivery  so_delivery_notice
+        List<String> sourceIds = list.stream().map(PackingTaskDetailDTO.HistoryCartonDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listByIds(sourceIds);
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(sourceIds);
+        if (CollectionUtils.isNotEmpty(firstMileDeliveryEntities)){
+            for (FirstMileDeliveryEntity firstMileDeliveryEntity : firstMileDeliveryEntities){
+                //生成装箱任务
+                String demandType = firstMileDeliveryEntity.getDemandType();
+                String sourceType = FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)? PickingSourceTypeEnum.THIRD.getCode(): PickingSourceTypeEnum.FBA.getCode();
+                //关联单号是否已存在装箱任务
+                List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(firstMileDeliveryEntity.getId(), sourceType);
+                if (CollectionUtils.isNotEmpty(taskEntityList)){
+                    continue;
+                }
+                PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.firstMileDeliveryToPackingTask(firstMileDeliveryEntity,sourceType);
+                //查询明细
+                List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailEntities.stream().filter(e -> e.getMainId().equals(firstMileDeliveryEntity.getId())).collect(Collectors.toList());
+                packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));
+                packingTaskEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.ZXRW));
+                this.save(packingTaskEntity);
+                // 操作日志
+                String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱任务单" , packingTaskEntity.getCode());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
+                List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.firstMileDeliveryDetailToPackingTaskDetail(detailEntityList);
+                taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
+                //新增任务明细
+                packingTaskDetailService.saveBatch(taskDetailList);
+                //新增装箱详情
+                List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList = sourceMap.get(firstMileDeliveryEntity.getId());
+                if (CollectionUtils.isNotEmpty(cartonDTOList)){
+                    wmsCartonService.saveHistoryCartonList(packingTaskEntity.getId(), cartonDTOList);
+                }
+            }
+        }
+        List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities = soDeliveryNoticeService.listByIds(sourceIds);
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainIds(sourceIds);
+        if (CollectionUtils.isNotEmpty(soDeliveryNoticeEntities)){
+            for (SoDeliveryNoticeEntity soDeliveryNoticeEntity : soDeliveryNoticeEntities){
+                //关联单号是否已存在装箱任务
+                List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(soDeliveryNoticeEntity.getId(), PickingSourceTypeEnum.B2B.getCode());
+                if (CollectionUtils.isNotEmpty(taskEntityList)){
+                    continue;
+                }
+                PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.b2bDeliveryToPackingTask(soDeliveryNoticeEntity);
+                //查询明细
+                List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailEntities.stream().filter(e -> e.getMainId().equals(soDeliveryNoticeEntity.getId())).collect(Collectors.toList());
+                packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));
+                packingTaskEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.ZXRW));
+                this.save(packingTaskEntity);
+                // 操作日志
+                String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱任务单" , packingTaskEntity.getCode());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
+                List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.b2bDeliveryDetailToPackingTaskDetail(detailEntityList);
+                taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
+                //新增任务明细
+                packingTaskDetailService.saveBatch(taskDetailList);
+                //新增装箱详情
+                List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList = sourceMap.get(soDeliveryNoticeEntity.getId());
+                if (CollectionUtils.isNotEmpty(cartonDTOList)){
+                    wmsCartonService.saveHistoryCartonList(packingTaskEntity.getId(), cartonDTOList);
+                }
+            }
+        }
+    }
+
     /**
      * 构建装箱信息
      * @param cartonEntityList
@@ -1430,7 +1515,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 String packingStatus = StringUtils.isBlank(statusDTO.getPackingStatus())? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus();
                 pagingViewDTO.setPackingStatus(packingStatus);
                 pagingViewDTO.setPackingStatusName(PackingTaskStatusEnum.getName(packingStatus));
-                String weightingStatus = StringUtils.isBlank(statusDTO.getWeightingStatus()) ? PackingWeightStatusEnum.UNWEIGHTED.getCode() : statusDTO.getWeightingStatus();
+                String weightingStatus = StringUtils.isBlank(statusDTO.getWeightingStatus()) ? PackingWeightStatusEnum.UNWEIGHED.getCode() : statusDTO.getWeightingStatus();
                 pagingViewDTO.setWeightingStatus(weightingStatus);
                 pagingViewDTO.setWeightingStatusName(PackingWeightStatusEnum.getName(weightingStatus));
                 pagingViewDTO.setErrorMsg(StringUtils.isBlank(statusDTO.getErrorMsg())? "" : statusDTO.getErrorMsg());
@@ -1442,8 +1527,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             }else {
                 pagingViewDTO.setPackingStatus(PackingTaskStatusEnum.UNPACKED.getCode());
                 pagingViewDTO.setPackingStatusName(PackingTaskStatusEnum.UNPACKED.getName());
-                pagingViewDTO.setWeightingStatus(PackingWeightStatusEnum.UNWEIGHTED.getCode());
-                pagingViewDTO.setWeightingStatusName(PackingWeightStatusEnum.UNWEIGHTED.getName());
+                pagingViewDTO.setWeightingStatus(PackingWeightStatusEnum.UNWEIGHED.getCode());
+                pagingViewDTO.setWeightingStatusName(PackingWeightStatusEnum.UNWEIGHED.getName());
                 pagingViewDTO.setPackedQty(MathUtil.ZERO);
             }
             String sourceType = pagingViewDTO.getSourceType();

@@ -12,13 +12,16 @@
        <result column="update_user_id" property="updateUserId" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="source_id" property="sourceId" />
+       <result column="main_id" property="mainId" />
        <result column="box_spec_no" property="boxSpecNo" />
        <result column="package_weight" property="packageWeight" />
        <result column="box_length" property="boxLength" />
        <result column="box_width" property="boxWidth" />
        <result column="box_height" property="boxHeight" />
        <result column="box_qty" property="boxQty" />
+       <result column="weight_unit" property="weightUnit" />
+       <result column="size_unit" property="sizeUnit" />
+       <result column="measure_source" property="measureSource" />
     </resultMap>
 
     <!--查询已装箱数量-->
@@ -28,7 +31,6 @@
         wcd.sku_id,
         wcd.sku_no,
         SUM(wcd.pack_qty) AS packQty,
-        SUM(wcd.delivery_qty) AS deliveryQty,
         SUM(wcs.box_qty) AS boxQty
         FROM wms_carton_spec wcs
         LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
@@ -53,7 +55,6 @@
             wcd.sku_id,
             wcd.sku_no,
             SUM(wcd.pack_qty) AS packQty,
-            SUM(wcd.delivery_qty) AS deliveryQty,
             SUM(wcd.gross_weight) AS grossWeight,
             SUM(wcs.box_qty) AS boxQty,
             wcs.box_spec_no,

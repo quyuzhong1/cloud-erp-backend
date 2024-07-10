@@ -13,15 +13,19 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CartonDTO;
+import com.erp.model.wms.dto.PackingTaskDetailDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.server.wms.convert.CartonConverter;
 import com.erp.server.wms.mapper.WmsCartonMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.erp.server.wms.service.WmsCartonService;
+import com.erp.server.wms.service.WmsCartonSpecService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -30,10 +34,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -50,6 +52,8 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     private OperateLogService operateLogService;
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
+    @Resource
+    private WmsCartonSpecService wmsCartonSpecService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -165,6 +169,34 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
             return null;
         }
         return lambdaQuery().eq(WmsCartonEntity::getPackingTaskId,packingTaskId).eq(WmsCartonEntity::getBoxNo,boxNo).last("limit 1").one();
+    }
+
+    @Override
+    public void saveHistoryCartonList(String taskId, List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList) {
+        //根据箱号进行分组
+        Map<Integer, List<PackingTaskDetailDTO.HistoryCartonDTO>> boxMap = cartonDTOList.stream().collect(Collectors.groupingBy(PackingTaskDetailDTO.HistoryCartonDTO::getBoxNo));
+        //新增箱规
+        for (Integer boxNo : boxMap.keySet()){
+            //根据箱号进行生成箱规
+            List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList1 = boxMap.get(boxNo);
+            if (CollectionUtils.isNotEmpty(cartonDTOList1)){
+                WmsCartonSpecEntity specEntity = CartonConverter.INSTANCE.historyToSpec(cartonDTOList1.get(0));
+                specEntity.setMainId(taskId);
+                wmsCartonSpecService.save(specEntity);
+                String specId = specEntity.getId();
+                WmsCartonEntity wmsCartonEntity = CartonConverter.INSTANCE.historyToCarton(cartonDTOList1.get(0));
+                wmsCartonEntity.setSpecId(specId);
+                wmsCartonEntity.setPackingTaskId(taskId);
+                this.save(wmsCartonEntity);
+                List<WmsCartonDetailEntity> detailEntityList = CartonConverter.INSTANCE.historyToCartonDetail(cartonDTOList1);
+                if (CollectionUtils.isNotEmpty(detailEntityList)){
+                    detailEntityList.forEach(wmsCartonDetailEntity -> {
+                        wmsCartonDetailEntity.setMainId(wmsCartonEntity.getId());
+                    });
+                    wmsCartonDetailService.saveBatch(detailEntityList);
+                }
+            }
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -152,4 +153,24 @@ public class PackingTaskDetailDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class HistoryCartonDTO {
+        private String taskId;
+        private String sourceId;
+        private String sourceType;
+        private Integer boxSpecNo;
+        private BigDecimal packageWeight;
+        private BigDecimal boxLength;
+        private BigDecimal boxWidth;
+        private BigDecimal boxHeight;
+        private Integer boxQty;
+        private Integer boxNo;
+        private String skuId;
+        private String skuNo;
+        private Integer packQty;
+        private BigDecimal grossWeight;
+        private String packingUserId;
+        private String packingUserName;
+    }
 }
