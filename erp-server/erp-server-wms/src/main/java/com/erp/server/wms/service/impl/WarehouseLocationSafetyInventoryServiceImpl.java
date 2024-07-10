@@ -129,12 +129,12 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
                     .orElse(new WarehouseLocationEntity());
             entity.setWarehouseArea(areaEntity.getCode() == null ? "" : areaEntity.getCode());
 
-            boolean update = update(new UpdateWrapper<WarehouseLocationSafetyInventoryEntity>()
+            update(new UpdateWrapper<WarehouseLocationSafetyInventoryEntity>()
                     .eq("warehouse_id", entity.getWarehouseId())
                     .eq("warehouse_location", entity.getWarehouseLocation())
                     .eq("sku_no", entity.getSkuNo())
-                    .set("safety_qty", entity.getSafetyQty())
-                    .set("max_qty", entity.getMaxQty()));
+                    .set(entity.getSafetyQty() != null, "safety_qty", entity.getSafetyQty())
+                    .set(entity.getMaxQty() != null, "max_qty", entity.getMaxQty()));
         }
 
         if(errorList.isEmpty()){
