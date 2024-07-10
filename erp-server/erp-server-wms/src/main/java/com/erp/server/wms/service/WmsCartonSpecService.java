@@ -4,6 +4,7 @@ import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -82,6 +83,20 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      */
     void deleteCarton(String taskId);
 
+    /**
+     * 获取箱子预警信息
+     * @param sourceType
+     * @param grossWeight
+     * @return
+     */
+    WmsCartonSpecDTO.WeightRuleDTO getWarnMsg(String sourceType, BigDecimal grossWeight);
+
+    /**
+     * 根据来源类型和 装箱的sku进行校验
+     * @param sourceType
+     * @param skuIds
+     */
+    void checkProductPropertyIds(String sourceType, List<String> skuIds);
     /**
      * 更新箱规 pda
      * @param dto

@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -99,6 +100,14 @@ public class WmsCartonSpecDTO implements Serializable {
          * 预警提示
          */
         private String warnMsg;
+        /**
+         * 单箱超重重量（kg）
+         */
+        private BigDecimal maxWeight;
+        /**
+         * 单箱最低重量（kg）
+         */
+        private BigDecimal minWeight;
 
         /**
          * 详情
@@ -852,6 +861,17 @@ public class WmsCartonSpecDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class WeightRuleDTO {
-
+        /**
+         * 单箱超重重量（kg）
+         */
+        private BigDecimal maxWeight;
+        /**
+         * 单箱最低重量（kg）
+         */
+        private BigDecimal minWeight;
+        /**
+         * 预警提示
+         */
+        private String warnMsg;
     }
 }

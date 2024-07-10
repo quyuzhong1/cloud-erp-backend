@@ -186,6 +186,14 @@ public class WmsCartonDTO {
          */
         private String warnMsg;
         /**
+         * 单箱超重重量（kg）
+         */
+        private BigDecimal maxWeight;
+        /**
+         * 单箱最低重量（kg）
+         */
+        private BigDecimal minWeight;
+        /**
          * 装箱员id
          */
         private String packingUserId;

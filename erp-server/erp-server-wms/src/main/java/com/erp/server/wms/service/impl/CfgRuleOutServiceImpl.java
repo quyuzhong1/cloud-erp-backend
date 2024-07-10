@@ -26,8 +26,6 @@ import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.CfgRuleOutDTO;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -35,7 +33,6 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Resource;
 import static com.erp.model.wms.enums.CfgRuleOutEnum.AllowableDeviationsConditionEnum.*;
 
 /**
@@ -294,7 +291,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     @Override
-    public CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(PickingSourceTypeEnum type) {
+    public CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(String type) {
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutDTO.CfgOverweightDTO cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgOverweightDTO.class);
@@ -305,11 +302,11 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
             return new CfgRuleOutDTO.CfgOverweightDetailDTO();
         }
-        return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(type.getCode())).findFirst().orElse(new CfgRuleOutDTO.CfgOverweightDetailDTO());
+        return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(type)).findFirst().orElse(new CfgRuleOutDTO.CfgOverweightDetailDTO());
     }
 
     @Override
-    public CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(PickingSourceTypeEnum type) {
+    public CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(String type) {
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutDTO.CfgProductPacking cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgProductPacking.class);
@@ -320,7 +317,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
             return new CfgRuleOutDTO.CfgProductPackingDetail();
         }
-        return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(type.getCode())).findFirst().orElse(new CfgRuleOutDTO.CfgProductPackingDetail());
+        return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(type)).findFirst().orElse(new CfgRuleOutDTO.CfgProductPackingDetail());
     }
 
     public String getSortingPort(CfgRuleOutDTO.CommonDTO commonDTO,CfgRuleOutDTO.SortingPortRuleDTO dto) {
