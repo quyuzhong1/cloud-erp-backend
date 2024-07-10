@@ -115,14 +115,16 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
     public StockoutOtherQueryResponse queryWithDetail(CreateOtherStockoutRequest createOutstock) {
         StockoutOtherQueryRequest request = new StockoutOtherQueryRequest();
         StockoutAPI stockoutAPI = wangDianClientService.get(StockoutAPI.class);
-        StockoutOtherQueryResponse salesStockoutResponse;
+        StockoutOtherQueryResponse response;
         request.setStockoutNo(createOutstock.getOuterNo());
         Pager pager = new Pager(10, 0, true);
         try {
-            salesStockoutResponse = stockoutAPI.searchOther(request, pager);
+            log.info("查询其他出库单：{}，{}", JSON.toJSONString(createOutstock), JSON.toJSONString(request));
+            response = stockoutAPI.searchOther(request, pager);
+            log.info("查询其他入库单response：{}", JSON.toJSONString(response));
         } catch (WdtErpException | ConnectException e) {
             throw new RuntimeException(e);
         }
-        return salesStockoutResponse;
+        return response;
     }
 }

@@ -117,10 +117,12 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
     public OtherStockinResponse.DataInfoDto queryWithDetail(CreateOtherStockinRequest createRequest) {
         OtherStockinRequest request = new OtherStockinRequest();
         StockinAPI stockinAPI = wangDianClientService.get(StockinAPI.class);
-        OtherStockinResponse.DataInfoDto salesStockoutResponse;
+        OtherStockinResponse.DataInfoDto dataInfoDto;
         request.setStockinNo(createRequest.getOuterNo());
         Pager pager = new Pager(10, 0, true);
-        salesStockoutResponse = stockinAPI.queryWithDetail(request, pager);
-        return salesStockoutResponse;
+        log.info("查询其他入库单request：{}，{}", JSON.toJSONString(createRequest), JSON.toJSONString(request));
+        dataInfoDto = stockinAPI.queryWithDetail(request, pager);
+        log.info("查询其他入库单response：{}", JSON.toJSONString(dataInfoDto));
+        return dataInfoDto;
     }
 }
