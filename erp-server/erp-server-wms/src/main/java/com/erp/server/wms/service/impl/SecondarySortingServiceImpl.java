@@ -49,7 +49,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
         if (ObjectUtils.isEmpty(pickingWave)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, code);
         }
-        if (WavePickingTypeEnum.FIRST_PICK.getCode().equals(pickingWave.getPickingType())) {
+        if (!WavePickingTypeEnum.FIRST_PICK.getCode().equals(pickingWave.getPickingType())) {
             throw new ServiceException(ApiError.ERROR_99120);
         }
         SecondarySortingDTO.ScanCodeView view = new SecondarySortingDTO.ScanCodeView();
