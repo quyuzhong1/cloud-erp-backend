@@ -112,4 +112,12 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * @param status
      */
     Boolean updateStatusById(String waveId, String status);
+    /**
+     * 根据拣货车编码集合查询
+     * @author will
+     * @date 2024/7/10 18:01
+     * @param pickingCartCodeList
+     * @return List<WaveListEntity>
+     */
+    List<WaveListEntity> listByPickingCartCodeList(List<String> pickingCartCodeList);
 }
