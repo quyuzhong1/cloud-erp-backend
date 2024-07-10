@@ -176,7 +176,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     }
 
     @Override
-    @DataIdempotent
+    @DataIdempotent(keyIdName = "ids")
     public List<BatchResultDTO> bomSplitAndSave(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = this.listByIds(ids);
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(ids);
@@ -554,7 +554,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
 
     @Override
-    @DataIdempotent
+    @DataIdempotent(keyIdName = "dto.id")
     public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
         //订单拆分字段处理
         SoB2cDTO.SplitSaveResultDTO resultDTO = service.splitSaveHandle(dto);
