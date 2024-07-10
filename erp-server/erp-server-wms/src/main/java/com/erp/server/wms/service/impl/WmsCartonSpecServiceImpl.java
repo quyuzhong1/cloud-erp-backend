@@ -117,21 +117,6 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     }
 
     @Override
-    public Boolean packQtyCheck(String sourceId) {
-        //根据主表id分组sku查询发货及待装箱数
-        List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = this.listPackDateByPackingTaskId(sourceId);
-        for (WmsCartonSpecDTO.PackDateDTO packDateDTO : packDateDTOS) {
-            //待装箱数量=发货数量-所有已装箱数量
-            int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
-            if (packDateDTO.getDeliveryQty() < packQtySum) {
-                throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, packDateDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
-            }
-        }
-
-        return Boolean.TRUE;
-    }
-
-    @Override
     public WmsCartonSpecDTO.WmsCartonSpecView getCartonViewByPackingTaskId(PackingTaskEntity packingTaskEntity) {
         WmsCartonSpecDTO.WmsCartonSpecView view = new WmsCartonSpecDTO.WmsCartonSpecView();
         if (ObjectUtil.isEmpty(packingTaskEntity)){
@@ -195,6 +180,9 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
 
     @Override
     public WmsCartonSpecDTO.WeightRuleDTO getWarnMsg(String sourceType,BigDecimal grossWeight){
+        if (Objects.isNull(grossWeight)){
+            grossWeight = BigDecimal.ZERO;
+        }
         WmsCartonSpecDTO.WeightRuleDTO weightRuleDTO = new WmsCartonSpecDTO.WeightRuleDTO();
         CfgRuleOutDTO.CfgOverweightDetailDTO dto = cfgRuleOutService.getCfgOverweightDetailDTOByType(sourceType);
         if (Objects.isNull(dto)){
@@ -204,13 +192,13 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         weightRuleDTO.setMinWeight(dto.getMinWeight());
         String warnMsg = "";
         //小于最小限制
-        if (grossWeight.compareTo(dto.getMinWeight()) < 0){
+        if (Objects.nonNull(dto.getMinWeight()) && grossWeight.compareTo(dto.getMinWeight()) < 0){
             BigDecimal subtract = dto.getMinWeight().subtract(grossWeight);
             warnMsg = StrUtil.format("预警提示：重量低于最低重量：{}KG，本次装箱预计已低{}KG！", grossWeight, subtract);
 
         }
         //大于最大限制
-        if (grossWeight.compareTo(dto.getMaxWeight()) > 0){
+        if (Objects.nonNull(dto.getMaxWeight()) && grossWeight.compareTo(dto.getMaxWeight()) > 0){
             BigDecimal subtract = grossWeight.subtract(dto.getMaxWeight());
             warnMsg = StrUtil.format("预警提示：超重值：{}KG，本次装箱预计已超重{}KG！", grossWeight, subtract);
         }

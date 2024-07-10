@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 @AllArgsConstructor
 public enum PackingWeightStatusEnum implements EnumMessage {
-    UNWEIGHTED("unweighted", "未称重"),
+    UNWEIGHED("unweighed", "未称重"),
     WEIGHTING("weighing", "部分称重"),
     WEIGHTED("weighed", "全部称重"),
     SUCCESS("success", "称重成功"),

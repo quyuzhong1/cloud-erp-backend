@@ -63,12 +63,6 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      **/
     List<WmsCartonSpecDTO.PackDateDTO> listPackDateByPackingTaskId(String packingTaskId);
 
-    /**
-     * 校验打包数据是否超过发货数量
-     * @param sourceId
-     * @return
-     */
-    Boolean packQtyCheck(String sourceId);
 
     /**
      * 根据来源id查询装箱详情

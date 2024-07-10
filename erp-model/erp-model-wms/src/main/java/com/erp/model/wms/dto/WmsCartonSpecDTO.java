@@ -285,10 +285,6 @@ public class WmsCartonSpecDTO implements Serializable {
          * 箱数
          */
         private Integer boxQty;
-        /**
-         * 发货数量
-         */
-        private Integer deliveryQty;
 
         /**
          * 产品id
@@ -417,11 +413,6 @@ public class WmsCartonSpecDTO implements Serializable {
         private String weightUnit;
 
         /**
-         * 发货数量
-         */
-        private Integer deliveryQty;
-
-        /**
          * 待装箱数量
          */
         private Integer waitPackQty;
@@ -440,11 +431,6 @@ public class WmsCartonSpecDTO implements Serializable {
          * 箱数
          */
         private Integer boxQty;
-
-
-        public PackDateDTO() {
-            this.deliveryQty = 0;
-        }
     }
 
     /**

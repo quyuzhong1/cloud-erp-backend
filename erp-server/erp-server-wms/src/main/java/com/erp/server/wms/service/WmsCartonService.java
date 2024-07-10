@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PackingTaskDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
@@ -94,4 +95,11 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
     Integer getBoxNoByTaskId(String id);
 
     WmsCartonEntity getByTaskIdAndBoxNo(String id, String boxNo);
+
+    /**
+     * 历史数据装箱详情新增
+     * @param taskId
+     * @param cartonDTOList
+     */
+    void saveHistoryCartonList(String taskId, List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList);
 }

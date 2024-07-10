@@ -194,7 +194,7 @@ public class PackingTaskDTO implements Serializable {
          */
         private String packingStatusName;
         /**
-         * 称重状态-全部(unweighed 未称重,success 称重成功,fail 称重失败 )
+         * 称重状态-单箱(unweighed 未称重,success 称重成功,fail 称重失败 )
          * PackingWeightStatusEnum
          * 字典接口地址
          */

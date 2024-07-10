@@ -219,4 +219,9 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto, PickingSourceTypeEnum type);
     List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(List<String> packingTaskIds,List<String> sourceCodeList);
+
+    /**
+     * 从历史装箱数据补充装箱任务和装箱详情
+     */
+    void initPackingTaskData();
 }
