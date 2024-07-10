@@ -1362,7 +1362,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      * @param packDateDTOS
      * @param taskDetailEntityList
      */
-    private void checkDeliveryQty(List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS, List<PackingTaskDetailEntity> taskDetailEntityList) {
+    private void checkDeliveryQty(List<WmsCartonSpecDTO.PackDateDTO>
+                                          packDateDTOS, List<PackingTaskDetailEntity> taskDetailEntityList) {
         for (WmsCartonSpecDTO.PackDateDTO packDateDTO : packDateDTOS) {
             //发货数量
             int deliveryQty = taskDetailEntityList.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).sum();
