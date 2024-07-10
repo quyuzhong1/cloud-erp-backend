@@ -59,6 +59,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
+import com.erp.sdk.oms.amz.spapi.model.easyship.Code;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -1826,6 +1827,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public BatchResultDTO generatePackingTask(FirstMileDeliveryEntity entity) {
         packingTaskService.addPackingByFirstMileDelivery(entity);
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
+    }
+
+    @Override
+    public FirstMileDeliveryEntity getByCode(String code) {
+        if (StringUtils.isBlank(code)){
+            return null;
+        }
+        return this.lambdaQuery().eq(FirstMileDeliveryEntity::getCode, code).last("limit 1").one();
     }
 
 //    @Override

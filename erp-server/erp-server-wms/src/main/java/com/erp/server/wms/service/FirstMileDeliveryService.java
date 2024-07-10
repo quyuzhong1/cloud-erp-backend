@@ -326,4 +326,11 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     void updatePackingStatus(String id, String packingStatus);
 
     BatchResultDTO generatePackingTask(FirstMileDeliveryEntity firstMileDeliveryEntity);
+
+    /**
+     * 根据编码获取记录
+     * @param key
+     * @return
+     */
+    FirstMileDeliveryEntity getByCode(String key);
 }

@@ -3,25 +3,18 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.annotation.DataIdempotent;
-import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.entity.CustomerB2cEntity;
-import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.tms.entity.TmsDeclareBillEntity;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
-import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -39,7 +32,6 @@ import com.erp.model.wms.dto.PackingTaskDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 装箱任务表

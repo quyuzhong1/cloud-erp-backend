@@ -250,6 +250,10 @@ public class PackingTaskDTO implements Serializable {
          * 创建时间时间 【可排序】
          */
         private LocalDateTime createTime;
+        /**
+         * 产品种类
+         */
+        private Integer productNum;
     }
 
     @Data
@@ -367,5 +371,15 @@ public class PackingTaskDTO implements Serializable {
          * 发货数量
          */
         private Integer deliveryQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProductNum {
+        private String taskId;
+        /**
+         * 产品种类
+         */
+        private Integer productNum;
     }
 }

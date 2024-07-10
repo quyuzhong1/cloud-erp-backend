@@ -1245,4 +1245,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         packingTaskService.addPackingByB2BDelivery(entity);
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"");
     }
+
+    @Override
+    public SoDeliveryNoticeEntity getByCode(String code) {
+        if (StringUtils.isBlank(code)){
+            return null;
+        }
+        return this.lambdaQuery().eq(SoDeliveryNoticeEntity::getCode, code).last("limit 1").one();
+    }
 }
