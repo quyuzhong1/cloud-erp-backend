@@ -893,11 +893,21 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
-    public List<WarehouseLocationDTO.ViewDto> listAllArea() {
+    public List<WarehouseLocationDTO.CoreDTO> listAllArea() {
         List<WarehouseLocationEntity> entityList = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("type", "area")
-                .eq("is_deleted", false));
-        return BeanMapper.copyList(entityList, WarehouseLocationDTO.ViewDto.class);
+                .eq("type", "area"));
+        HashMap<String, String> hashMap = new HashMap<>();
+        for (WarehouseLocationEntity locationEntity : entityList) {
+            hashMap.put(locationEntity.getCode(), locationEntity.getName());
+        }
+        List<WarehouseLocationDTO.CoreDTO> list = new ArrayList<>();
+        for (Map.Entry<String, String> entry : hashMap.entrySet()) {
+            WarehouseLocationDTO.CoreDTO dto = new WarehouseLocationDTO.CoreDTO();
+            dto.setCode(entry.getKey());
+            dto.setName(entry.getValue());
+            list.add(dto);
+        }
+        return list;
     }
 
     @Override
