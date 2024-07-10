@@ -24,25 +24,27 @@ import cn.hutool.core.collection.CollUtil;
  */
 @Service
 @Scope("prototype")
-public class DmpInputKingdeeOutstockDmpHandler extends DmpInputDbConvertDmpHandler{
+public abstract class DmpInputThirdCodeDbDmpHandler extends DmpInputDbConvertDmpHandler{
+	
+	protected static final String THIRD_CODE = "third_code";
 	
 	@Override
 	protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(
 			List<Map<String, Object>> dmpInputMongoEntityList) {
 		Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertDataMap = super.convertData(dmpInputMongoEntityList);
 		Set<String> thirdCodeSet = new HashSet<>();
-		String thirdCodeName = StrUtils.underlineToCamel(DmpSoOutstockEntity.THIRD_CODE, true);
+		String thirdCodeName = StrUtils.underlineToCamel(THIRD_CODE, true);
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData : convertDataMap.entrySet()) {
 			thirdCodeSet.addAll(convertData.getValue().stream().map(c -> c.get(thirdCodeName).toString()).collect(Collectors.toSet()));
 		}
 		
 		QueryWrapper<?> wrapper = new QueryWrapper<>();
-		wrapper.in(DmpSoOutstockEntity.THIRD_CODE, thirdCodeSet);
-		wrapper.ne(DmpSoOutstockEntity.SOURCE_SYSTEM, DmpBasicSystemCodeEnum.KINGDEE.getCode());
+		wrapper.in(THIRD_CODE, thirdCodeSet);
+		wrapper.ne(DmpSoOutstockEntity.SOURCE_SYSTEM, this.getDmpBasicSystemCodeEnum().getCode());
 		wrapper.select(DmpSoOutstockEntity.THIRD_CODE);
 		List<Map<String, Object>> listMaps = dmpEntityServiceImpl.listMaps(wrapper);
 		if(CollUtil.isNotEmpty(listMaps)) {
-			Set<String> newThirdCodeName = listMaps.stream().map(l -> l.get(DmpSoOutstockEntity.THIRD_CODE).toString()).collect(Collectors.toSet());
+			Set<String> newThirdCodeName = listMaps.stream().map(l -> l.get(THIRD_CODE).toString()).collect(Collectors.toSet());
 			for(List<TreeMap<String, Object>> convertData : convertDataMap.values()) {
 				convertData.removeIf(c -> newThirdCodeName.contains(c.get(thirdCodeName).toString()));
 			}
@@ -51,5 +53,5 @@ public class DmpInputKingdeeOutstockDmpHandler extends DmpInputDbConvertDmpHandl
 		return convertDataMap;
 	}
 	
-	
+	protected abstract DmpBasicSystemCodeEnum getDmpBasicSystemCodeEnum();
 }

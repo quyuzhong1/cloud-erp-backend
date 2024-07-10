@@ -300,7 +300,12 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			valueList.add(dmpInputDmpBaseEntity);
 			dmpInputDataDmpRelationMaps.put(keyList, valueList);
 		}
+		this.afterConvertData(dmpInputDataDmpRelationMaps);
 		return dmpInputDataDmpRelationMaps;
+	}
+	
+	protected void afterConvertData(Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps) {
+		
 	}
 	
 	protected void afterDmpInputDmpEntity(Map<String, Object> beanDmpInputDmpEntity) {
