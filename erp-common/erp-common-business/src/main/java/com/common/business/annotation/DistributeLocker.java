@@ -7,23 +7,30 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 分布式锁注解
- * <pre>
- * 使用示例：
- * @取id作为分布式锁的key <br/>
- * @DistributeLocker(keyName=”id“)
- * public void updateById(String id){...}
- * @取user实体id和name作为分布式锁的key <br/>
- * @DistributeLocker(keyName="id,name")
- * public void updateUser(SysUserEntity user){...}
- * @取channel对象id作为分布式锁的key   <br/>
- * @DistributeLocker(argIndex=1,keyName="id")
- * public void updateChannel(String sellerId, BasicChannelEntity channel){...}
- * @取channel对象id(集合)作为分布式锁的key集合(批量加锁),支持内嵌集合a->list->list2-..  <br/>
- * @RedissonLocker(keyName="id")
- * public void updateChannel(List<BasicChannelEntity> channelList){...}
- * </pre>
- *
- * @Date 2024/07/05
+ * @since 2024/07/04
+ * @author Edison.Qu
+ * Edison.Qu 2024/07/04
+ * <p>使用示例：</p>
+ * <ul>
+ * <font color="red">@DistributeLocker()</font>
+ * <li>取id作为分布式锁的key</li>
+ * <li>public void updateById(String id){...}</li>
+ * </ul>
+ * <ul>
+ * <font color="red">@DistributeLocker(keyName="id,name")</font>
+ * <li>取user实体id和name作为分布式锁的key</li>
+ * <li>public void updateUser(SysUserEntity user){...}</li>
+ * </ul>
+ * <ul>
+ * <font color="red">@DistributeLocker(argIndex=1,keyName="id")</font>
+ * <li>取channel对象id作为分布式锁的key  </li>
+ * <li>public void updateChannel(String sellerId, BasicChannelEntity channel){...}</li>
+ * </ul>
+ * <ul>
+ * <font color="red">@DistributeLocker(keyName="id")</font>
+ * <li>取channel对象id(集合)作为分布式锁的key集合(批量加锁),支持内嵌集合a->list->list2-..</li>
+ * <li>public void updateChannel(List<BasicChannelEntity> channelList){...}</li>
+ * </ul>
  */
 
 @Target({ElementType.METHOD, ElementType.PARAMETER})
@@ -32,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 public @interface DistributeLocker {
     /**
      * 取第几个参数
-     * @return
+     * @return  参数索引
      */
     int argIndex() default 0;
 
@@ -44,7 +51,7 @@ public @interface DistributeLocker {
 
     /**
      * 业务类型
-     * @return
+     * @return  业务类型
      */
     String businessType() default "";
 
@@ -52,11 +59,6 @@ public @interface DistributeLocker {
      * 最大等待时间(等其他锁释放)
      */
     long waiteTime() default 30;
-
-    /**
-     * 锁的有效时间，即：拿到锁后持有锁的时间
-     */
-    long leaseTime() default 5;
 
     /**
      * 时间单位,默认为秒
