@@ -74,9 +74,7 @@ public class WdtOtherInStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
 
     @Override
     public void sendWarnMsg(String syncTaskId, String msg) {
-        if (!msg.contains("超过每分钟最大调用频率限制")) {
-            dmpPushTaskService.sendWarnMsg(syncTaskId);
-        }
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 
     @Override
