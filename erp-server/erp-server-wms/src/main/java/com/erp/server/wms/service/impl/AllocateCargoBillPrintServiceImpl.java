@@ -54,6 +54,9 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         }
         //根据拣货车编号查询
         List<WaveListEntity> pickingWaveList = waveListService.listByCarCode(businessCode);
+        if(CollectionUtil.isEmpty(pickingWaveList)){
+            throw new ServiceException("拣货车编号错误");
+        }
         //有拣货中的波次，直接返回
         WaveListEntity waveListEntity = pickingWaveList.stream().filter(v->v.getStatus().equals(WaveStatusEnum.PICK_ING.getCode())).findFirst().orElse(null);
         if(Objects.nonNull(waveListEntity)){
@@ -61,10 +64,10 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         }
         //过滤当天已完成的波次，根据拣货时间倒序，为空抛异常
         LocalDateTime today = LocalDateTime.now().toLocalDate().atStartOfDay();
-        pickingWaveList = pickingWaveList.stream().filter(v->v.getStatus().equals(WaveStatusEnum.FINISH.getCode()) && v.getPickingTime().isAfter(today)).sorted((o1, o2)->o2.getPickingTime().compareTo(o1.getPickingTime())).collect(Collectors.toList());
+        pickingWaveList = pickingWaveList.stream().filter(v->v.getStatus().equals(WaveStatusEnum.FINISH.getCode()) && Objects.nonNull(v.getPickingTime()) && v.getPickingTime().isAfter(today)).sorted((o1, o2)->o2.getPickingTime().compareTo(o1.getPickingTime())).collect(Collectors.toList());
 
         if(CollectionUtil.isEmpty(pickingWaveList)){
-            throw new ServiceException("未查询到有效波次号");
+            throw new ServiceException("拣货车关联没有今天完成的波次");
         }
 
         return AllocateCargoBillPrintDTO.ScanWaveDTO.builder().isDirectPrint(false).waveList(pickingWaveList.stream().map(AllocateCargoBillPrintDTO.WaveDTO::convertFromPickingWaveEntity).collect(Collectors.toList())).build();
