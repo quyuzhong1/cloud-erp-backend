@@ -8,6 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.exception.ExcelAnalysisException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -116,6 +117,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
+
+    @Resource
+    private WmsAttachmentService attachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1142,6 +1146,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 .scanHeight(dto.getHeight())
                 .build();
         CfgRuleOutDTO.CheckDTO checkDTO = cfgRuleOutService.handleOverweight(overweightDTO);
+        //更新图片
+        Class<PackingTaskEntity> aClass = PackingTaskEntity.class;
+        TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+        attachmentService.batchSave(Arrays.asList(dto.getImageUrl()),Arrays.asList(""),tableName.value(),packingTaskEntity.getId());
+
         if(checkDTO.getResult()){
             //更新装箱任务的尺寸重量，状态更新为称重成功
             String log = StrUtil.format("修改箱规信息{}[重量，长，宽，高]由[{},{},{},{}]修改为[{},{},{},{}]",boxNo,wmsCartonSpecEntity.getPackageWeight(),wmsCartonSpecEntity.getBoxLength(),wmsCartonSpecEntity.getBoxWidth(),wmsCartonSpecEntity.getBoxHeight(),dto.getWeight(),dto.getLength(),dto.getWidth(),dto.getHeight());
