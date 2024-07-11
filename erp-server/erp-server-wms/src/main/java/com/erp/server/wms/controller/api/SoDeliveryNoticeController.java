@@ -427,7 +427,7 @@ public class SoDeliveryNoticeController extends BaseController {
             try {
                 PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
                 if(Objects.nonNull(packingTaskEntity)){
-                    result.add(BatchResultDTO.fail(id,id,"已生成装箱任务不可重复生成"));
+                    result.add(BatchResultDTO.fail(id,entity.getCode(),"已生成装箱任务不可重复生成"));
                     continue;
                 }
                 result.add(soDeliveryNoticeService.generatePackingTask(entity));
