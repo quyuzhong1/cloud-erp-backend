@@ -384,13 +384,12 @@ public class PackingTaskDTO implements Serializable {
         private Integer productNum;
     }
     @Data
-    @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
-    public static class SearchSourceCodeDTO extends PagingDTO {
+    public static class SearchSourceCodeDTO {
         /**
          * 搜索单号（支持箱号/关联单号/任务单号）
          */
-        private String searchKey;
+        private String searchKeyword;
     }
 
     @Data

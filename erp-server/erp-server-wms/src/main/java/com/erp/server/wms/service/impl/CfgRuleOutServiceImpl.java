@@ -321,7 +321,6 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         }
         return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(type)).findFirst().orElse(new CfgRuleOutDTO.CfgProductPackingDetail());
     }
-
     public CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.CommonDTO commonDTO, CfgRuleOutDTO.SortingPortRuleDTO dto) {
         //校验称重量方规则，通过走设备分拣口规则
         CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations = commonDTO.getB2cAllowableDeviations();
