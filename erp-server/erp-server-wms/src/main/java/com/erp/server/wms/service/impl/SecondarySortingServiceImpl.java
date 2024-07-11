@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
@@ -14,6 +15,7 @@ import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
 import com.erp.model.wms.enums.WavePickingTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,8 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     @Override
     public SecondarySortingDTO.ScanCodeView scanCode(String code) {
@@ -55,12 +59,13 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
         view.setCode(pickingWave.getCode());
         List<WaveListDetailEntity> details = waveListDetailService.listByMainId(pickingWave.getId());
         List<String> deliveryIds = details.stream().map(WaveListDetailEntity::getDeliveryId).collect(Collectors.toList());
-        List<SoB2cDeliveryInterceptEntity> interceptList = soB2cDeliveryInterceptService.listByDeliveryIds(deliveryIds);
+        List<String> soIds = details.stream().map(WaveListDetailEntity::getSoId).collect(Collectors.toList());
+        List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIds);
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(deliveryIds);
         view.setBasketQty(details.size());
         List<SecondarySortingDTO.BasketDTO> dtoList = details.stream()
                 .map(v -> {
-                    SoB2cDeliveryInterceptEntity intercept = interceptList.stream().findFirst().orElse(null);
+                    SoB2cEntity soB2cEntity = soB2cList.stream().filter(e -> e.getId().equals(v.getSoId())).findFirst().orElse(new SoB2cEntity());
                     int qty = views.stream().filter(e -> e.getSourceId().equals(v.getDeliveryId())).mapToInt(PickingListsDTO.SourceView::getQty).sum();
                     int allocatedQty = views.stream().filter(e -> e.getSourceId().equals(v.getDeliveryId())).mapToInt(PickingListsDTO.SourceView::getAllocatedQty).sum();
                     boolean isOutStock = views.stream().filter(e -> e.getSourceId().equals(v.getDeliveryId())).anyMatch(PickingListsDTO.SourceView::getIsOutStock);
@@ -68,11 +73,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
                     dto.setBasketNo(v.getBasketNo());
                     dto.setPickingQty(qty);
                     dto.setAllocatedQty(allocatedQty);
-                    if (!ObjectUtils.isEmpty(intercept) && SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode().equals(intercept.getHandleStatus())) {
-                        dto.setIsIntercept(true);
-                    } else {
-                        dto.setIsIntercept(false);
-                    }
+                    dto.setIsIntercept(soB2cEntity.getIsIntercept());
                     dto.setIsOutStock(isOutStock);
                     return dto;
                 }).collect(Collectors.toList());
