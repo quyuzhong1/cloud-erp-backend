@@ -299,9 +299,13 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public BatchResultDTO finish(WarehouseLocationReplenishDTO.HandleDTO dto) {
+        LoginUser loginUser = UserContext.getNonLoginUser();
         WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
         BeanMapper.copy(dto, updateEntity);
         updateEntity.setStatus(ReplenishBillStatusEnum.HANDLED.getCode());
+        updateEntity.setHandleUserId(loginUser.getUid());
+        updateEntity.setHandleUserName(loginUser.getUserName());
+        updateEntity.setHandleTime(LocalDateTime.now());
         this.baseMapper.updateById(updateEntity);
 
         //生成仓位移动，并自动审核通过

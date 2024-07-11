@@ -92,7 +92,7 @@ public class WarehouseLocationReplenishController extends BaseController {
     public ApiResult<List<BatchResultDTO>> handleBatch(@RequestBody List<WarehouseLocationReplenishDTO.HandleDTO> dtoList){
         List<BatchResultDTO> resultList = new ArrayList<>(dtoList.size());
         for (WarehouseLocationReplenishDTO.HandleDTO dto : dtoList) {
-            BatchResultDTO resultDTO = replenishService.handle(dto);
+            BatchResultDTO resultDTO = replenishService.finish(dto);
             resultList.add(resultDTO);
         }
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
