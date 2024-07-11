@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.consumer.wangdian;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
@@ -23,7 +24,9 @@ import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdWarehouseService;
+import com.sdk.wangdian.enums.WdtExtInStockStatusEnum;
 import com.sdk.wangdian.enums.WdtInStockStatusEnum;
+import com.sdk.wangdian.sdk.api.wms.external.in.StockExternalInResponse;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.OtherStockinResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -124,7 +127,17 @@ public class WdtOtherInStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
         //根据旺店通仓库类型，决定调用的API
         if (WdtWarehouseTypeEnum.SELF_TRANSFER.getCode().equals(thirdWarehouse.getType())) {
             limiter.acquire();
-            wdtPushOtherInStockService.querySelfIn(request);
+            StockExternalInResponse stockExternalInResponse = wdtPushOtherInStockService.querySelfIn(request);
+            if (ObjectUtils.isNotEmpty(stockExternalInResponse) && CollectionUtils.isNotEmpty(stockExternalInResponse.getOrder())) {
+                StockExternalInResponse.Order order = stockExternalInResponse.getOrder().get(0);
+                if (WdtExtInStockStatusEnum.finish().contains(order.getStatus())) {
+                    return ApiResult.success();
+                } else {
+                    //修改任务的错误消息
+                    String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtExtInStockStatusEnum.getName(order.getStatus()));
+                    return ApiResult.error(format);
+                }
+            }
             wdtPushOtherInStockService.executeSelfConsumer(request);
         }else {
             //请求旺店通

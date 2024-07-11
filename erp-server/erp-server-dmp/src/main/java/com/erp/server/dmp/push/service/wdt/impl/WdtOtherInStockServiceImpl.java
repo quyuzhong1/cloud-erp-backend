@@ -2,7 +2,6 @@ package com.erp.server.dmp.push.service.wdt.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -12,7 +11,6 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
-import com.sdk.wangdian.enums.WdtExtInStockStatusEnum;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.wms.external.in.*;
@@ -130,18 +128,11 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
     }
 
     @Override
-    public void querySelfIn(CreateOtherStockinRequest request) {
+    public StockExternalInResponse querySelfIn(CreateOtherStockinRequest request) {
         StockExternalInAPI stockExternalInAPI = wangDianClientService.get(StockExternalInAPI.class);
         StockExternalInRequest inRequest = new StockExternalInRequest();
         inRequest.setOuterInNo(request.getOuterNo());
-        StockExternalInResponse stockExternalInResponse = stockExternalInAPI.queryWithDetail(inRequest, new Pager(10, 0, true));
-        if (ObjectUtils.isNotEmpty(stockExternalInResponse) && CollectionUtils.isNotEmpty(stockExternalInResponse.getOrder())) {
-            StockExternalInResponse.Order order = stockExternalInResponse.getOrder().get(0);
-            if (!order.getStatus().equals(WdtExtInStockStatusEnum.FINISH.getStatus())) {
-                //修改任务的错误消息
-                String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtExtInStockStatusEnum.getName(order.getStatus()));
-                throw new ServiceException(format);
-            }
-        }
+        return stockExternalInAPI.queryWithDetail(inRequest, new Pager(10, 0, true));
+
     }
 }

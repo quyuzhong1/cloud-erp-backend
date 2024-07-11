@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.wdt;
 
+import com.sdk.wangdian.sdk.api.wms.external.in.StockExternalInResponse;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.OtherStockinResponse;
 
@@ -28,5 +29,5 @@ public interface WdtOtherInStockService {
     /**
      * 自留转仓调用外部入库单查询
      */
-    void querySelfIn(CreateOtherStockinRequest request);
+    StockExternalInResponse querySelfIn(CreateOtherStockinRequest request);
 }
