@@ -19,4 +19,13 @@ public enum PrintStatusEnum implements EnumMessage {
 
     private String code;
     private String name;
+
+    public static String getName(String code){
+        for (PrintStatusEnum value : PrintStatusEnum.values()) {
+            if(value.getCode().equals(code)){
+                return value.getName();
+            }
+        }
+        return "";
+    }
 }
