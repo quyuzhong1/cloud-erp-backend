@@ -1327,11 +1327,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public Integer getQtyByLocation(String warehouseId, String warehouseLocation) {
-        return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation == null ? "" : warehouseLocation);
-    }
-
-    @Override
     public Integer getFrozenInventoryTotal(String warehouseId, String skuId) {
         // 查询仓库组织
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
@@ -1357,5 +1352,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         List<InventoryDTO.InventoryViewQtyDTO> list=baseMapper.getUsableQtyBySkuIdsAndWarehouseIds(paramDTO);
         return list;
+    }
+
+    @Override
+    public Integer getQtyByLocation(String warehouseId, String warehouseLocation) {
+        return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation == null ? "" : warehouseLocation);
     }
 }

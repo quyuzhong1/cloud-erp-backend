@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 旺店通其他入库单状态枚举
@@ -29,5 +30,8 @@ public enum WdtExtInStockStatusEnum {
                 .map(WdtExtInStockStatusEnum::getName)
                 .findFirst()
                 .orElse("");
+    }
+    public static List<String> finish() {
+        return Arrays.asList(WAIT_CONFIRM.getStatus(), FINISH.getStatus());
     }
 }

@@ -20,6 +20,10 @@ import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.PrintWayBillPdfDetailDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.PrintWayBillPdfDetailDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -48,6 +52,9 @@ import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -75,6 +82,9 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -187,6 +197,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private WaveListDetailService waveListDetailService;
 
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
@@ -1513,6 +1525,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 generateReplenish(detailEntities, entity);
                 //生成拣货单失败，发货单生成异常
                 updateAbnormal(Collections.singletonList(entity.getId()), AbnormalCauseEnum.GENERATION_WAVE);
+                dto.getIds().remove(entity.getId());
             }
         }
         WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
@@ -1858,7 +1871,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     .filter(e -> e.getDeliveryId().equals(record.getId()))
                     .findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
             record.setWaveCode(dto.getWaveCode());
-            String warehouseLocation = views.stream().filter(e -> e.getSkuId().equals(record.getSkuId()))
+            String warehouseLocation = views.stream().filter(e -> e.getSourceId().equals(record.getId()))
+                    .filter(e -> e.getSkuId().equals(record.getSkuId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
                     .distinct()
                     .collect(Collectors.joining(","));

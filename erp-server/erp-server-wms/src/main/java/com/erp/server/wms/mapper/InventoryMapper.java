@@ -148,6 +148,8 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      */
     List<InventoryEntity> listByParam(@Param("params")InventoryDTO.ParamDTO params );
 
+    List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(@Param("params")InventoryDTO.ParamDTO params);
+
     /**
      * 以库区的维度查询库存信息
      * @date 2024/06/04
@@ -197,5 +199,4 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      */
     List<InventoryDTO.PagingViewDTO> exportByLocation(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList);
 
-    List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(@Param("params")InventoryDTO.ParamDTO params);
 }
