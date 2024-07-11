@@ -175,7 +175,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 拓展字段
     */
     @TableField("extend_data")
-    private String extendData = "";
+    private String extendData = "{}";
     /**
     * 唯一字段md5值
     */

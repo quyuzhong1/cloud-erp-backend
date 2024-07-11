@@ -1,7 +1,5 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -16,30 +14,19 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Scope("prototype")
-public class DmpInputWdtSoOutStockNextDmpHandler extends DmpInputWdtNextDmpHandler{
-	
-	@Override
-	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
-		List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
-		detailList.forEach(d -> {
-			d.put("warehouse_id", dmpInputMongoEntity.get("warehouse_id"));
-			d.put("warehouse_name", dmpInputMongoEntity.get("warehouse_name"));
-			d.put("src_order_no", dmpInputMongoEntity.get("src_order_no"));
-		});
-		return detailList;
-	}
-	
+public class DmpInputWdtOrderReturnDmpHandler extends DmpInputWdtDmpHandler{
+
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-				Object amount = dmpDataMap.get("amount");
-				Object qty = dmpDataMap.get("qty");
-				if(amount != null && qty != null) {
-					dmpDataMap.put("sellPrice", new BigDecimal(amount.toString()).divide(new BigDecimal(qty.toString()) , 2, RoundingMode.HALF_UP));
+				Object status = dmpDataMap.get("status");
+				if(status != null) {
+					dmpDataMap.put("status", "80".equals(status.toString()) ? "4" : status);
 				}
 			}
 		}
 	}
+	
 }

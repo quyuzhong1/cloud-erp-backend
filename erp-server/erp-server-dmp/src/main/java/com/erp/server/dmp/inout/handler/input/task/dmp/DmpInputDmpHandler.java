@@ -323,6 +323,10 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 				Object object = beanDmpInputDmpEntity.get(key);
 				if(object == null) {
 					beanDmpInputDmpEntity.put(key, fixedValue.getValue());
+				}else {
+					if(object instanceof String && StringUtils.isBlank(object.toString())) {
+						beanDmpInputDmpEntity.put(key, fixedValue.getValue());
+					}
 				}
 			}
 		}
