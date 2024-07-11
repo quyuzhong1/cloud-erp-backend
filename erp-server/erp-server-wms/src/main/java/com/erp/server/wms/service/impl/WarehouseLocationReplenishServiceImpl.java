@@ -242,7 +242,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("warehouse_location", minQtyInventoryEntity.getWarehouseLocation())
             );
             if(safetyInventoryEntity == null){
-                BatchResultDTO.success(dto.getSkuId(), dto.getSkuNo(), "没有找到仓位安全库存");
+                return BatchResultDTO.fail(dto.getSkuId(), dto.getSkuNo(), "没有找到仓位安全库存");
             }
             //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
             if(safetyInventoryEntity.getMaxQty() != 0){
