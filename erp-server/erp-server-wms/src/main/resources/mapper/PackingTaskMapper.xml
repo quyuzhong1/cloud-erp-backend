@@ -45,7 +45,9 @@
         pt.warehouse_id as warehouseId,
         pt.warehouse_name as warehouseName,
         pt.create_user_name as createUserName,
-        pt.create_time as createTime
+        pt.create_time as createTime,
+        pt.packing_status as packingStatus,
+        pt.weighting_status as weightingStatus
         from packing_task pt
         where pt.is_deleted = FALSE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.defaultl != ''">
@@ -54,7 +56,13 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        order by pt.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pt.create_time DESC
     </sql>
     <select id="listTabCount" resultType="com.erp.model.wms.dto.PackingTaskDTO$TypeCountDTO">
         SELECT
@@ -63,11 +71,7 @@
         FROM (
             SELECT
                 pt.id,
-                CASE WHEN
-                (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) =
-                (SELECT COALESCE(SUM(ptd.delivery_qty), 0) FROM packing_task_detail ptd WHERE ptd.main_id = pt.ID AND ptd.is_deleted = FALSE) THEN 'packed'
-                WHEN (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) = 0 THEN 'unpacked'
-                ELSE 'packing' END AS packing_status
+                pt.packing_status
             FROM
                 packing_task pt
             <if test="permissionSql!=null and permissionSql!=''">
@@ -84,18 +88,10 @@
     </select>
     <select id="selectPackingStatusByIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$StatusDTO">
         SELECT
-            pt.ID,
+            pt.id,
             pt.source_code as sourceCode,
-            CASE WHEN
-                    (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) =
-                    (SELECT COALESCE(SUM(ptd.delivery_qty), 0) FROM packing_task_detail ptd WHERE ptd.main_id = pt.ID AND ptd.is_deleted = FALSE) THEN 'packed'
-                WHEN (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) = 0 THEN 'unpacked'
-                ELSE 'packing' END AS packing_status,
-            CASE WHEN
-                (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE and wc.weighting_status = 'success') =
-                (SELECT COALESCE(SUM(ptd.delivery_qty), 0) FROM packing_task_detail ptd WHERE ptd.main_id = pt.ID AND ptd.is_deleted = FALSE) THEN 'weighed'
-                WHEN (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE and wc.weighting_status = 'success') = 0 THEN 'unweighed'
-                ELSE 'weighing' END AS weightingStatus ,
+            pt.packing_status as packingStatus,
+            pt.weighting_status as weightingStatus,
             (SELECT CASE WHEN error_msg is null or error_msg = '' THEN '' ELSE concat('第',wc.box_no,'箱:',wc.error_msg) END AS errorMsg FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE order by wc.create_time DESC limit 1) as errorMsg,
             (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) as packedQty,
             (SELECT COALESCE(SUM(wcs.package_weight), 0) FROM wms_carton_spec wcs WHERE wcs.main_id = pt.ID AND wcs.is_deleted = FALSE) as packingWeight,
@@ -139,10 +135,12 @@
         FROM  packing_task_detail ptd
                   LEFT JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted=FALSE
         WHERE  ptd.is_deleted=FALSE
-          AND ptd.main_id in
-        <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        <if test="mainIds != null and mainIds.size > 0">
+            AND ptd.main_id in
+            <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         GROUP BY pt.id,
                  ptd.sku_id,
                  ptd.sku_no

@@ -46,6 +46,27 @@
         wcd.sku_id,
         wcd.sku_no
     </select>
+    <select id="listPackingQtyByMainIds" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingQtyDTO">
+        SELECT
+        wcs.id,
+        wcd.sku_id,
+        wcd.sku_no,
+        SUM(wcd.pack_qty) AS packQty,
+        SUM(wcs.box_qty) AS boxQty
+        FROM wms_carton_spec wcs
+        LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+        LEFT JOIN wms_carton_detail wcd ON wc.id = wcd.main_id AND wcd.is_deleted = FALSE
+        WHERE wcs.is_deleted = FALSE
+          <if test="mainIds != null and mainIds.size > 0">
+              AND wcs.main_id in
+              <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+                  #{item}
+              </foreach>
+          </if>
+        GROUP BY wcs.id,
+        wcd.sku_id,
+        wcd.sku_no
+    </select>
 
     <!--根据来源Id查询包装信息-->
     <select id="listPackDateByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackDateDTO">
