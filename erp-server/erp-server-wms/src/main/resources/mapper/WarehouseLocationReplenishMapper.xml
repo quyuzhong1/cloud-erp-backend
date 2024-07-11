@@ -42,7 +42,10 @@
                create_user_name,
                create_time,
                update_user_name,
-               update_time
+               update_time,
+               handle_user_id,
+               handle_user_name,
+               handle_time
         from warehouse_location_replenish
         where is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
