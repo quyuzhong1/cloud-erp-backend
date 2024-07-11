@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
@@ -26,6 +28,7 @@ import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -128,6 +131,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
     @Override
     public ApiResult<?> bindPickingCart(WaveListPdaDTO.BindPickingCartDTO bindDTO) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         PickingCartEntity pickingCart = pickingCartService.getOne(new QueryWrapper<PickingCartEntity>().eq("code", bindDTO.getPickingCartCode()));
         if(pickingCart == null){
             return ApiResult.error("拣货车编码错误");
@@ -152,8 +156,12 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         }
 
         update(new UpdateWrapper<WaveListEntity>()
+                .set("status", WaveStatusEnum.PICK_ING.getCode())
                 .set("picking_cart_code", bindDTO.getPickingCartCode())
                 .set("picking_cart_type", pickingCart.getTypeId())
+                .set("picking_user_id", loginUser.getUid())
+                .set("picking_user_name", loginUser.getUserName())
+                .set("picking_time", LocalDateTime.now())
                 .eq("id", bindDTO.getId()));
         //核对成功返回拣货车信息
         bindDTO.setPickingCartName(pickingCartType.getName());
