@@ -178,6 +178,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
      */
     @Override
     public ApiResult<?> moveOut(String deliveryId) {
+        LoginUser user = UserContext.getNonLoginUser();
         List<WaveListDetailEntity> entityList = baseMapper.selectList(new QueryWrapper<WaveListDetailEntity>()
                 .eq("delivery_id", deliveryId));
         List<String> ids = entityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
@@ -192,7 +193,8 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         if(detailList.isEmpty()){
             waveListService.getBaseMapper().delete(new QueryWrapper<WaveListEntity>().in("id", mainIds));
         }
-
+        WaveListDetailEntity entity = entityList.stream().findFirst().orElse(new WaveListDetailEntity());
+        operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
         return ApiResult.success();
     }
 }
