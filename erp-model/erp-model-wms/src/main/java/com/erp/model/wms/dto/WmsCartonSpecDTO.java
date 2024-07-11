@@ -139,7 +139,7 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 装箱任务id
          */
-        @NotBlank(message = "装箱任务id不能为空")
+//        @NotBlank(message = "装箱任务id不能为空")
         private String taskId;
         /**
          * 操作项
