@@ -37,7 +37,9 @@ public interface PackingConverter {
             @Mapping(target = "sourceType", constant = "B2B"),
             @Mapping(target = "warehouseId", source = "warehouseId"),
             @Mapping(target = "warehouseName", source = "warehouseName"),
-            @Mapping(target = "deliveryQty", constant = "0")
+            @Mapping(target = "deliveryQty", constant = "0"),
+            @Mapping(target = "weightingStatus", constant = "unweighed"),
+            @Mapping(target = "packingStatus", constant = "unpacked")
     })
     PackingTaskEntity b2bDeliveryToPackingTask(SoDeliveryNoticeEntity soDeliveryNoticeEntity);
     @Mappings({
@@ -75,7 +77,9 @@ public interface PackingConverter {
             @Mapping(target = "sourceType", source = "sourceType"),
             @Mapping(target = "warehouseId", source = "firstMileDeliveryEntity.deliveryWarehouseId"),
             @Mapping(target = "warehouseName", source = "firstMileDeliveryEntity.deliveryWarehouseName"),
-            @Mapping(target = "deliveryQty", constant = "0")
+            @Mapping(target = "deliveryQty", constant = "0"),
+            @Mapping(target = "weightingStatus", constant = "unweighed"),
+            @Mapping(target = "packingStatus", constant = "unpacked")
     })
     PackingTaskEntity firstMileDeliveryToPackingTask(FirstMileDeliveryEntity firstMileDeliveryEntity,String sourceType);
     @Mappings({
