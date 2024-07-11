@@ -335,8 +335,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }
-        }
-
         //将发货状态更新为已发货
         entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
         entity.setDeliveryTime(deliveryTime);
