@@ -142,7 +142,10 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             return ApiResult.error("拣货车正在使用，无法再次绑定");
         }
 
-        update(new UpdateWrapper<WaveListEntity>().set("picking_cart_code", bindDTO.getPickingCartCode()).eq("id", bindDTO.getId()));
+        update(new UpdateWrapper<WaveListEntity>()
+                .set("picking_cart_code", bindDTO.getPickingCartCode())
+                .set("picking_cart_type", pickingCart.getTypeId())
+                .eq("id", bindDTO.getId()));
         //核对成功返回拣货车信息
         bindDTO.setPickingCartName(pickingCartType.getName());
         bindDTO.setPickingCartType(pickingCartType.getName());

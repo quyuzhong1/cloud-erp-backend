@@ -236,7 +236,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("warehouse_location", minQtyInventoryEntity.getWarehouseLocation())
             );
             if(safetyInventoryEntity == null){
-                throw new ServiceException("没有找到仓位安全库存");
+                BatchResultDTO.success(dto.getSkuId(), dto.getSkuNo(), "没有找到仓位安全库存");
             }
             //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
             if(safetyInventoryEntity.getMaxQty() != 0){
@@ -267,8 +267,10 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("sku_id", dto.getSkuId())
                     .eq("warehouse_id", dto.getWarehouseId())
                     .eq("warehouse_location", dto.getWarehouseLocation())
-                    .eq("is_deleted", false)
             );
+            if(safetyInventoryEntity == null){
+                return BatchResultDTO.fail(dto.getSkuId(), dto.getSkuNo(), "没有找到仓位安全库存");
+            }
             InventoryEntity inventoryEntity = inventoryService.getOne(new QueryWrapper<InventoryEntity>()
                     .eq("warehouse_id", dto.getWarehouseId())
                     .eq("sku_id", dto.getSkuId())

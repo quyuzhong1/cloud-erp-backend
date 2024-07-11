@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -90,7 +91,9 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
 //        viewDTO.setPickingType(WavePickingTypeEnum.getName(waveEntity.getPickingType()));
 //        viewDTO.setStatus(WaveStatusEnum.getNameByCode(waveEntity.getStatus()));
         PickingCartTypeEntity cartTypeEntity = pickingCartTypeService.getById(waveEntity.getPickingCartType());
-        viewDTO.setPickingCartTypeName(cartTypeEntity.getName());
+        if(cartTypeEntity != null){
+            viewDTO.setPickingCartTypeName(cartTypeEntity.getName());
+        }
 
         List<WarehouseLocationDTO.MappingDTO> locationMappingList = warehouseLocationService.listArea2LocationMapping(warehouseId);
         Map<String, WarehouseLocationDTO.MappingDTO> locationMap = locationMappingList.stream().collect(Collectors.toMap(item -> item.getLocationCode(), item2 -> item2, (o1, o2) -> o1));
