@@ -291,10 +291,11 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
 
     /**
      * 查询所有库区
+     *
      * @date: 2024-06-26
      * @author: tanmujin
      */
-    List<WarehouseLocationDTO.ViewDto> listAllArea();
+    List<WarehouseLocationDTO.CoreDTO> listAllArea();
 
     List<WarehouseLocationDTO.ReplenishAreaDTO> listArea(BaseIdsDTO.IdsDTO idsDTO);
 

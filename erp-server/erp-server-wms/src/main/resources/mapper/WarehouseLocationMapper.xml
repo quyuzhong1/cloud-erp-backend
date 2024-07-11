@@ -396,7 +396,8 @@
         and wl.warehouse_id = #{warehouseId} and wl.code = #{warehouseLocation}
     </select>
     <select id="listArea2LocationMapping" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$MappingDTO">
-        select wa.id        as areaId,
+        select wa.warehouse_id as warehouseId,
+               wa.id        as areaId,
                wa.code      as areaCode,
                wa.name      as areaName,
                wa.area_type as areaType,

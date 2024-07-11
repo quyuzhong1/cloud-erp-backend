@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 仓位补货数据表实体
@@ -98,4 +99,22 @@ public class WarehouseLocationReplenishEntity extends BaseEntity<WarehouseLocati
      */
     @TableField("suggest_qty")
     private Integer suggestQty;
+
+    /**
+     * 处理人id
+     */
+    @TableField("handle_user_id")
+    private String handleUserId;
+
+    /**
+     * 处理人名称
+     */
+    @TableField("handle_user_name")
+    private String handleUserName;
+
+    /**
+     * 处理时间
+     */
+    @TableField("handle_time")
+    private LocalDateTime handleTime;
 }

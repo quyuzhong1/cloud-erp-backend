@@ -337,7 +337,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 波次号
          */
-        private String wavesCode;
+        private String waveCode;
         /**
          * 来源id
          */
@@ -522,6 +522,24 @@ public class SoB2cDeliveryDTO implements Serializable {
         private String abnormalCause;
 
     }
+
+    /**
+     * 打印拣货单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintPickingMainViewDTO {
+        /**
+         * 波次号
+         */
+        private String waveCode;
+        /**
+         * 拣货单信息
+         */
+        private List<PrintPickingViewDTO> detailList;
+    }
+
     /**
      * 打印拣货单
      */
@@ -529,6 +547,14 @@ public class SoB2cDeliveryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PrintPickingViewDTO {
+        /**
+         * 波次号
+         */
+        private String waveCode;
+        /**
+         *发货单号
+         */
+        private String deliveryCode;
         /**
          * 产品id
          */

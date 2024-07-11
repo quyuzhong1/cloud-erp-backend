@@ -24,10 +24,10 @@ public class WarehouseLocationSafetyInventoryExcelListener extends AnalysisEvent
     @Override
     public void invoke(WarehouseLocationSafetyInventoryDTO.importExcelDTO data, AnalysisContext context) {
         List<String> errorMsgList = FieldValidUtil.fieldValid(data);
-        if(data.getSafetyQty() < 0){
+        if(null != data.getSafetyQty() && data.getSafetyQty() < 0){
             data.setErrorInfo(data.getErrorInfo() + "，安全库存不能小于0");
         }
-        if(data.getMaxQty() < 0){
+        if(null != data.getMaxQty() && data.getMaxQty() < 0){
             data.setErrorInfo(data.getErrorInfo() + "，最大库存不能小于0");
         }
         if(ObjectUtils.isEmpty(errorMsgList)){

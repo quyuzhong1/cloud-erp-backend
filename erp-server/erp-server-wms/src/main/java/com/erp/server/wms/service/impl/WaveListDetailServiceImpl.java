@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -8,19 +10,19 @@ import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
-import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.PickingStatusEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListDetailMapper;
 import com.erp.server.wms.service.*;
-import org.springframework.stereotype.Service;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -48,6 +50,8 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     @Resource
     @Lazy
     private SoB2cDeliveryService deliveryService;
+    @Resource
+    private PickingCartTypeService pickingCartTypeService;
 
     @Override
     public List<WaveListDetailEntity> listByMainId(String mainId) {
@@ -68,55 +72,72 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         List<WaveListDetailEntity> waveDetailList = list(Wrappers.<WaveListDetailEntity>lambdaQuery().eq(WaveListDetailEntity::getMainId, waveId));
 
         List<String> deliveryCodes = waveDetailList.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(deliveryCodes)) {
+            throw new ServiceException("未找到发货单信息");
+        }
         List<PickingListsEntity> pickingList = pickingListsService.list(new QueryWrapper<PickingListsEntity>().in("source_code", deliveryCodes));
         if(pickingList.isEmpty()){
             throw new ServiceException("没有找到拣货单");
         }
-        Map<String, String> deliveryCode2IdMap = pickingList.stream().collect(Collectors.toMap(item1 -> item1.getSourceCode(), item2 -> item2.getId()));
-        List<PickingDetailEntity> pickingDetailList = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("main_id", deliveryCode2IdMap.values()));
+        List<String> pickingIds = pickingList.stream().map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("main_id", pickingIds));
 
         List<String> soIds = waveDetailList.stream().map(WaveListDetailEntity::getSoId).collect(Collectors.toList());
         List<SoB2cDetailEntity> soDetailTotalList = soB2cFeign.listDetailByMainIds(soIds);
         String warehouseId = soDetailTotalList.get(0).getWarehouseId();
         String warehouseName = soDetailTotalList.get(0).getWarehouseName();
+        viewDTO.setWarehouseId(warehouseId);
+        viewDTO.setWarehouseName(warehouseName);
+//        viewDTO.setPickingType(WavePickingTypeEnum.getName(waveEntity.getPickingType()));
+//        viewDTO.setStatus(WaveStatusEnum.getNameByCode(waveEntity.getStatus()));
+        PickingCartTypeEntity cartTypeEntity = pickingCartTypeService.getById(waveEntity.getPickingCartType());
+        if(cartTypeEntity != null){
+            viewDTO.setPickingCartTypeName(cartTypeEntity.getName());
+        }
 
         List<WarehouseLocationDTO.MappingDTO> locationMappingList = warehouseLocationService.listArea2LocationMapping(warehouseId);
-        Map<String, WarehouseLocationDTO.MappingDTO> locationMap = locationMappingList.stream().collect(Collectors.toMap(item -> item.getLocationCode(), item2 -> item2));
+        Map<String, WarehouseLocationDTO.MappingDTO> locationMap = locationMappingList.stream().collect(Collectors.toMap(item -> item.getLocationCode(), item2 -> item2, (o1, o2) -> o1));
 
         List<WaveListDetailDTO.DeliveryInfoDTO> rowList = new ArrayList<>(waveDetailList.size());
         //发货单列表
         for (WaveListDetailEntity deliveryLevel : waveDetailList) {
-            List<SoB2cDetailEntity> soDetailList = soDetailTotalList.stream().filter(item -> item.getMainId().equals(deliveryLevel.getSoId())).collect(Collectors.toList());
-            List<PickingDetailEntity> pickingDetailGroup = pickingDetailList.stream().filter(item -> item.getMainId().equals(deliveryCode2IdMap.get(deliveryLevel.getDeliveryCode()))).collect(Collectors.toList());
-            //发货单下sku列表
-            for (SoB2cDetailEntity skuLevel : soDetailList) {
-                List<PickingDetailEntity> groupBySkuPickingDetail = pickingDetailGroup.stream().filter(item -> item.getSkuId().equals(skuLevel.getSkuId())).collect(Collectors.toList());
-                //sku下仓位列表
-                for (PickingDetailEntity locationLevel : groupBySkuPickingDetail) {
-                    WarehouseLocationDTO.MappingDTO mappingDTO = locationMap.get(locationLevel.getWarehouseLocation());
-                    WaveListDetailDTO.DeliveryInfoDTO rowDTO = new WaveListDetailDTO.DeliveryInfoDTO();
-                    BeanMapper.copy(deliveryLevel, rowDTO);  //拷贝基本信息：篮筐号，销售订单编号，发货单号，拣货状态，物流渠道
-                    rowDTO.setSkuId(skuLevel.getSkuId());
-                    rowDTO.setSkuNo(skuLevel.getSkuNo());
-                    rowDTO.setSalesQty(skuLevel.getQty());
-                    rowDTO.setPickedSumQty(0);
-                    rowDTO.setPickingStatusName(PickingStatusEnum.getName(deliveryLevel.getPickingStatus()));
+            List<String> pickIds = pickingList.stream().filter(obj -> StrUtil.equals(obj.getSourceCode(), deliveryLevel.getDeliveryCode())).map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
+            List<PickingDetailEntity> pickingDetailGroup = pickingDetailList.stream().filter(item -> pickIds.contains(item.getMainId())).collect(Collectors.toList());
+            Map<String, List<PickingDetailEntity>> collect = pickingDetailGroup.stream().collect(Collectors.groupingBy(item -> item.getSkuId() + "#" + item.getSkuNo()));
+            //sku列表
+            for (Map.Entry<String, List<PickingDetailEntity>> skuEntry : collect.entrySet()) {
+                String key = skuEntry.getKey();
+                String[] split = key.split("#");
+                List<PickingDetailEntity> locationList = skuEntry.getValue();
 
-                    rowDTO.setWarehouseLocation(locationLevel.getWarehouseLocation());
-                    rowDTO.setWarehouseLocationName(mappingDTO.getLocationName());
-                    rowDTO.setWarehouseArea(mappingDTO.getAreaCode());
-                    rowDTO.setWarehouseAreaName(mappingDTO.getAreaName());
-                    rowDTO.setShouldPickQty(locationLevel.getQty());
-                    rowDTO.setPickedQty(locationLevel.getPickedQty());
-                    rowDTO.setIsOutStock(locationLevel.getIsOutStock());
-                    rowList.add(rowDTO);
+                WaveListDetailDTO.DeliveryInfoDTO rowDTO = new WaveListDetailDTO.DeliveryInfoDTO();
+                BeanMapper.copy(deliveryLevel, rowDTO);  //拷贝基本信息：篮筐号，销售订单编号，发货单号，拣货状态，物流渠道
+                rowDTO.setSkuId(split[0]);
+                rowDTO.setSkuNo(split[1]);
+                int salesQty = locationList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+                rowDTO.setSalesQty(salesQty);
+                int pickedQty = locationList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
+                rowDTO.setPickedSumQty(pickedQty);
+                rowDTO.setPickingStatusName(PickingStatusEnum.getName(deliveryLevel.getPickingStatus()));
+                //仓位列表
+                List<WaveListDetailDTO.LocationInfoDTO> locationInfoDTOS = new ArrayList<>(locationList.size());
+                for (PickingDetailEntity detail : locationList) {
+                    WaveListDetailDTO.LocationInfoDTO dto = new WaveListDetailDTO.LocationInfoDTO();
+                    WarehouseLocationDTO.MappingDTO mappingDTO = locationMap.get(detail.getWarehouseLocation());
+                    dto.setWarehouseLocation(detail.getWarehouseLocation());
+                    dto.setWarehouseLocationName(mappingDTO.getLocationName());
+                    dto.setWarehouseArea(mappingDTO.getAreaCode());
+                    dto.setWarehouseAreaName(mappingDTO.getAreaName());
+                    dto.setShouldPickQty(detail.getQty());
+                    dto.setPickedQty(detail.getPickedQty());
+                    dto.setIsOutStock(detail.getIsOutStock());
+                    locationInfoDTOS.add(dto);
                 }
+                rowDTO.setLocationInfoList(locationInfoDTOS);
+                rowList.add(rowDTO);
             }
         }
         viewDTO.setDeliveryInfoList(rowList);
-        viewDTO.setWarehouseId(warehouseId);
-        viewDTO.setWarehouseName(warehouseName);
-
         return viewDTO;
     }
 
