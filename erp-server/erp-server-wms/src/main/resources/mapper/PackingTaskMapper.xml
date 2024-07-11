@@ -130,6 +130,23 @@
             ptd.sku_id,
             ptd.sku_no
     </select>
+    <select id="listGroupSkuByMainIds" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
+        SELECT
+            pt.id,
+            ptd.sku_id,
+            ptd.sku_no,
+            SUM(ptd.delivery_qty) AS deliveryQty
+        FROM  packing_task_detail ptd
+                  LEFT JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted=FALSE
+        WHERE  ptd.is_deleted=FALSE
+          AND ptd.main_id in
+        <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        GROUP BY pt.id,
+                 ptd.sku_id,
+                 ptd.sku_no
+    </select>
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
             wc.id,
@@ -211,11 +228,11 @@
         pt.source_id as sourceId,
         pt.source_code as sourceCode
         from packing_task pt where pt.is_deleted = false
-        <if test="params.searchKeyword != null and params.searchKey != ''">
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and pt.source_code ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
-        order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            order by
             case when pt.source_code ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
             when pt.source_code ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
             when pt.source_code ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
@@ -236,7 +253,7 @@
             wcs.weight_unit,
             wcs.size_unit
         from wms_carton_spec wcs
-        left join wms_carton wc on wc.spec_id = wcs.id on wc.is_deleted = false
+        left join wms_carton wc on wc.spec_id = wcs.id and wc.is_deleted = false
         where wcs.is_deleted =false
         <if test="taskId != null and taskId != ''">
             and wcs.main_id = #{taskId}

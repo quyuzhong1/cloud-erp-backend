@@ -63,6 +63,21 @@ public class PackingTaskEntity extends BaseEntity<PackingTaskEntity> {
     @TableField("warehouse_name")
     private String warehouseName;
 
+    /**
+     * 装箱状态 wait:未生成;unpacked:待装箱;packing:装箱中;packed:已装箱
+     * PackingTaskStatusEnum
+     * 字典接口地址  http://172.16.100.11:3002/project/92/interface/api/13147  type = packingStatusSingle 单箱 / packingStatus总
+     */
+    @TableField("packing_status")
+    private String packingStatus;
+    /**
+     * 称重状态-总箱(unweighed 未称重,weighing 部分称重, weighed 全部称重 )
+     * PackingWeightStatusEnum
+     * 字典接口地址  http://172.16.100.11:3002/project/92/interface/api/13147 type= weightingStatusSingle单箱 /  weightingStatus 总
+     */
+    @TableField("weighting_status")
+    private String weightingStatus;
+
 
     public static final String CODE = "code";
 

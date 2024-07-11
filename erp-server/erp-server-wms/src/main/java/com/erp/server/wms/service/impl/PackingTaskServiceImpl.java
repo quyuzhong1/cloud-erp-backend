@@ -8,6 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.exception.ExcelAnalysisException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -116,6 +117,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
+
+    @Resource
+    private WmsAttachmentService attachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -308,14 +312,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         //根据主表id分组sku查询发货及待装箱数
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList = this.listGroupSkuById(dto.getTaskId());
+        //更新主表状态
+        updatePackingStatus(groupSkuList, dto.getTaskId());
         //当所有产品待装箱数量为0时，状态自动变更为已装箱
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList) && PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())) {
             autoGenerateSoDeliveryNotice(packingTask,soDeliveryNoticeEntity);
         }else if (CollectionUtils.isEmpty(groupSkuDTOList) && (PickingSourceTypeEnum.FBA.getCode().equals(packingTask.getSourceType()) || PickingSourceTypeEnum.THIRD.getCode().equals(packingTask.getSourceType()))){
             autoGenerateFirstMileDelivery(packingTask,firstMileDeliveryEntity);
-        } else {
-            updatePackingStatus(packingTask.getSourceId(),packingTask.getSourceType(), PackingStatusEnum.NOT_PACKING.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1142,6 +1146,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 .scanHeight(dto.getHeight())
                 .build();
         CfgRuleOutDTO.CheckDTO checkDTO = cfgRuleOutService.handleOverweight(overweightDTO);
+        //更新图片
+        Class<PackingTaskEntity> aClass = PackingTaskEntity.class;
+        TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+        attachmentService.batchSave(Arrays.asList(dto.getImageUrl()),Arrays.asList(""),tableName.value(),packingTaskEntity.getId());
+
         if(checkDTO.getResult()){
             //更新装箱任务的尺寸重量，状态更新为称重成功
             String log = StrUtil.format("修改箱规信息{}[重量，长，宽，高]由[{},{},{},{}]修改为[{},{},{},{}]",boxNo,wmsCartonSpecEntity.getPackageWeight(),wmsCartonSpecEntity.getBoxLength(),wmsCartonSpecEntity.getBoxWidth(),wmsCartonSpecEntity.getBoxHeight(),dto.getWeight(),dto.getLength(),dto.getWidth(),dto.getHeight());
@@ -1257,9 +1266,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public PagingVO<PackingTaskDTO.PackingTreeDTO> searchSourceCode(PackingTaskDTO.SearchSourceCodeDTO dto) {
+    public PagingVO<PackingTaskDTO.PackingTreeDTO> searchSourceCode(PagingDTO<PackingTaskDTO.SearchSourceCodeDTO> dto) {
         Page<PackingTaskDTO.PackingTreeDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage<PackingTaskDTO.PackingTreeDTO> pageData = baseMapper.pagingSelect(query,dto);
+        IPage<PackingTaskDTO.PackingTreeDTO> pageData = baseMapper.pagingSelect(query,dto.getParams());
         return new PagingVO<>(pageData);
     }
 
@@ -1345,7 +1354,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     private void autoGenerateFirstMileDelivery(PackingTaskEntity packingTask, FirstMileDeliveryEntity firstMileDeliveryEntity) {
-        updatePackingStatus(packingTask.getSourceId(),packingTask.getSourceType(), PackingStatusEnum.PACKING.getCode());
         //走TMS自动生成物流单逻辑
         AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
                 .id(firstMileDeliveryEntity.getId())
@@ -1385,7 +1393,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     private void autoGenerateSoDeliveryNotice(PackingTaskEntity packingTask, SoDeliveryNoticeEntity soDeliveryNoticeEntity) {
-//        updatePackingStatus(packingTask.getSourceId(),packingTask.getSourceType(), PackingStatusEnum.PACKING.getCode());
 //        //走TMS自动生成报关单逻辑
 //        if (!"CN".equalsIgnoreCase(soOutstock.getCountry()) && soOutstock.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && soOutstock.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
 //            //走TMS自动生成逻辑
@@ -1454,16 +1461,41 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     /**
      * 更新
-     * @param sourceId
-     * @param sourceType
-     * @param status
+     * @param groupSkuList
+     * @param taskId
      */
-    private void updatePackingStatus(String sourceId, String sourceType, String status) {
-        if (PickingSourceTypeEnum.B2B.getCode().equals(sourceType)){
-            soDeliveryNoticeService.updatePackingStatus(sourceId,status);
-        }else {
-            firstMileDeliveryService.updatePackingStatus(sourceId,status);
+    private void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList, String taskId) {
+        if (StringUtils.isBlank(taskId) || CollectionUtils.isEmpty(groupSkuList)){
+            return;
         }
+        Integer packQty = groupSkuList.stream().map(WmsCartonSpecDTO.GroupSkuDTO::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
+        Integer deliveryQty = groupSkuList.stream().map(WmsCartonSpecDTO.GroupSkuDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+        List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(taskId));
+        String packingStatus;
+        //更新装箱状态-汇总
+        if (packQty == 0){
+            packingStatus = PackingTaskStatusEnum.UNPACKED.getCode();
+        }else if (packQty > 0 && !deliveryQty.equals(packQty)){
+            packingStatus = PackingTaskStatusEnum.PACKING.getCode();
+        }else{
+            packingStatus = PackingTaskStatusEnum.PACKED.getCode();
+        }
+        //更新称重状态-汇总
+        List<WmsCartonEntity> unWeightList = cartonEntityList.stream().filter(e -> PackingWeightStatusEnum.UNWEIGHED.getCode().equals(e.getWeightingStatus()) || PackingWeightStatusEnum.FAIL.getCode().equals(e.getWeightingStatus())).collect(Collectors.toList());
+        List<WmsCartonEntity> weighedList = cartonEntityList.stream().filter(e -> PackingWeightStatusEnum.SUCCESS.getCode().equals(e.getWeightingStatus())).collect(Collectors.toList());
+        String weightingStatus;
+        if (deliveryQty.equals(packQty) && CollectionUtils.isEmpty(unWeightList)){
+            //全部称重
+            weightingStatus = PackingWeightStatusEnum.WEIGHTED.getCode();
+        }else if (CollectionUtils.isNotEmpty(weighedList)){
+            weightingStatus = PackingWeightStatusEnum.WEIGHTING.getCode();
+        }else {
+            weightingStatus = PackingWeightStatusEnum.UNWEIGHED.getCode();
+        }
+        this.lambdaUpdate().eq(PackingTaskEntity::getId, taskId)
+                .set(PackingTaskEntity::getPackingStatus, packingStatus)
+                .set(PackingTaskEntity::getWeightingStatus, weightingStatus)
+                .update();
     }
 
     /**

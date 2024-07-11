@@ -59,6 +59,13 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
     List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String mainId);
 
     /**
+     * 批量汇总
+     * @param mainIds
+     * @return
+     */
+    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuByMainIds(@Param("mainIds") List<String> mainIds);
+
+    /**
      * 获取装箱清单
      * @param taskIds
      * @return
