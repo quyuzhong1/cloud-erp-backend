@@ -99,7 +99,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         }
         deliveryService.updateStatus(deliveryIdList, SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode());
         waveListDetailService.saveBatch(detailList);
-        operateLogService.addModuleOperateLog(String.format("生成波次【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getId(), "新增操作", user.getUid(), user.getRealName());
+        operateLogService.addModuleOperateLog(String.format("生成波次【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getId(), "新增操作", user.getUid(), user.getUserName());
         return new BaseResultDTO.AddDTO(entity.getId(), entity.getCode());
     }
 
@@ -168,7 +168,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             viewDTO.setPickingUserName(record.getPickingUserName());
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
-            viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(record.getPrintStatus()));
+            viewDTO.setPrintStatusName(PrintStatusEnum.getName(record.getPrintStatus()));
             viewDTO.setPickingCartTypeName(typeMap.get(record.getPickingCartType()));
             viewDTO.setStatusName(WaveStatusEnum.getNameByCode(record.getStatus()));
             viewDTOList.add(viewDTO);
@@ -265,11 +265,16 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
     @Override
     public ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //修改波次打印状态为已打印
         update(new UpdateWrapper<WaveListEntity>()
                 .set("print_status", PrintStatusEnum.PRINT_FINISH.getCode())
                 .set("print_time", LocalDateTime.now())
                 .in("id", idsDTO.getIds()));
+
+        for (String id : idsDTO.getIds()) {
+            operateLogService.addModuleOperateLog("标记波次已打印", ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), id, "完成打印", loginUser.getUid(), loginUser.getUserName());
+        }
         return ApiResult.success();
     }
 
