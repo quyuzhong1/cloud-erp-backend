@@ -391,16 +391,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         }
         Map<String,Integer> packingQtyMap = wmsCartonDetailEntityList.stream().collect(Collectors.toMap(WmsCartonDetailEntity::getSkuNo, WmsCartonDetailEntity::getPackQty, Integer::sum));
         Map<String,Integer> pickingQtyMap = detailList.stream().collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
-        List<String> errSku = new ArrayList<>();
+
         pickingQtyMap.forEach((skuNo,qty)->{
             Integer packingQty = packingQtyMap.get(skuNo);
             if(Objects.nonNull(packingQty) && qty<packingQty){
-                errSku.add(skuNo);
+                throw new ServiceException(StrUtil.format("sku【{}】编辑数量校验不可小于装箱数量{}",skuNo,packingQty));
             }
         });
-        if(!CollectionUtils.isEmpty(errSku)){
-            throw new ServiceException(StrUtil.format("sku【{}】编辑数量校验不可小于装箱数量",errSku));
-        }
     }
 
     @Override
