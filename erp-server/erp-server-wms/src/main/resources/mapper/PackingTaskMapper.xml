@@ -74,6 +74,7 @@
                 pt.packing_status
             FROM
                 packing_task pt
+            where pt.is_deleted = FALSE
             <if test="permissionSql!=null and permissionSql!=''">
                 ${permissionSql}
             </if>
