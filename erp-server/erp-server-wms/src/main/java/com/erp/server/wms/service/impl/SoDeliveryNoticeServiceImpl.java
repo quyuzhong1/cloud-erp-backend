@@ -45,10 +45,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
-import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
-import com.erp.model.wms.enums.PackingTaskStatusEnum;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
@@ -481,8 +478,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(SoDeliveryNoticeEntity entity, String type, String comment, Boolean isNeedProcess) {
         //判断是否是审核中的状态
-        if (!entity.getInvalidStatus() && ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+        if (!Boolean.FALSE.equals(entity.getInvalidStatus()) || !ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException("只有未作废和审核中的数据允许审核");
+        }
+        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getSourceCode());
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException("未生成装箱任务，不允许审核");
+        }
+        if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
+            throw new ServiceException("{已装箱+全部称重}才能审核通过");
         }
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
