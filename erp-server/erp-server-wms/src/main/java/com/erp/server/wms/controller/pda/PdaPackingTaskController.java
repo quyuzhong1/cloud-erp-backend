@@ -158,6 +158,8 @@ public class PdaPackingTaskController extends BaseController {
     @PostMapping("/stagingPacking")
     @LogAction(value = LogActionEnum.INSERT, desc = "暂存本箱")
     public ApiResult<String> stagingPacking(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
+        dto.setOperation("装箱操作");
+        dto.setContent("暂存本箱");
         String code = packingTaskService.stagingPacking(dto);
         return success(code);
     }
@@ -173,6 +175,8 @@ public class PdaPackingTaskController extends BaseController {
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "完成并打印本箱")
     public ApiResult<String> pdaPackingSave(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
+        dto.setOperation("装箱操作");
+        dto.setContent("完成装箱");
         String code = packingTaskService.pdaPackingSave(dto);
         return success(code);
     }

@@ -59,7 +59,6 @@ import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.DictBasicDTO;
-import com.erp.model.wms.dto.excel.SoOutstockPackingExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -67,7 +66,7 @@ import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
-import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -1412,7 +1411,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
 
             //装箱状态
-            item.setPackingStatusName(PackingStatusEnum.getName(item.getPackingStatus()));
+            item.setPackingStatusName(PackingTaskStatusEnum.getName(item.getPackingStatus()));
 
         }
     }
@@ -2750,7 +2749,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 //            throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
 //        }
 //        //已装箱状态并且已报关不允许再次修改装箱数据
-//        if (PackingStatusEnum.PACKING.getCode().equals(entity.getPackingStatus()) && WmsDeclareStatusEnum.FINISH.getCode().equals(entity.getDeclareStatus())) {
+//        if (PackingTaskStatusEnum.PACKED.getCode().equals(entity.getPackingStatus()) && WmsDeclareStatusEnum.FINISH.getCode().equals(entity.getDeclareStatus())) {
 //            throw new ServiceException(ApiError.SO_OUTSTOCK_NOT_PACKING);
 //        }
 //
@@ -2783,7 +2782,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 //        //当所有产品待装箱数量为0时，状态自动变更为已装箱
 //        List<SoOutstockDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
 //        if (CollectionUtils.isEmpty(groupSkuDTOList)) {
-//            updatePackingStatus(dto.getSourceId(), PackingStatusEnum.PACKING.getCode());
+//            updatePackingStatus(dto.getSourceId(), PackingTaskStatusEnum.PACKED.getCode());
 //            //走TMS自动生成报关单逻辑
 //            if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
 //                //走TMS自动生成逻辑
@@ -2806,10 +2805,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 //                    throw new ServiceException(StrUtil.format("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
 //                }
 //            }
-//            return PackingStatusEnum.PACKING.getCode();
+//            return PackingTaskStatusEnum.PACKED.getCode();
 //        } else {
-//            updatePackingStatus(dto.getSourceId(), PackingStatusEnum.NOT_PACKING.getCode());
-//            return PackingStatusEnum.NOT_PACKING.getCode();
+//            updatePackingStatus(dto.getSourceId(), PackingTaskStatusEnum.WAIT.getCode());
+//            return PackingTaskStatusEnum.WAIT.getCode();
 //        }
 //    }
 
@@ -2891,7 +2890,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 //        }
 //
 //        //只有已装箱的发货单可以查看/导出装箱数据
-//        long count = list.stream().filter(req -> PackingStatusEnum.NOT_PACKING.getCode().equals(req.getPackingStatus())).count();
+//        long count = list.stream().filter(req -> PackingTaskStatusEnum.WAIT.getCode().equals(req.getPackingStatus())).count();
 //        if (count > 0) {
 //            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
 //        }

@@ -15,12 +15,10 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
-import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.server.wms.service.*;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.function.Function;
@@ -128,8 +126,7 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
                 it.remove();
                 continue;
             }
-            if(Objects.nonNull(firstMileDeliveryEntity) && PackingStatusEnum.PACKING.getCode().equals(firstMileDeliveryEntity.getPackingStatus())
-                    && (FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus()) || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus()))){
+            if(Objects.nonNull(firstMileDeliveryEntity) && (FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus()) || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus()))){
                 packingExcelDTO.setErrorMsg("物流单/报关单已生成，不支持修改");
                 errorList.add(packingExcelDTO);
                 it.remove();

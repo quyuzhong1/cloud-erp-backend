@@ -61,4 +61,28 @@ public enum UnitEnum {
             return this.name;
         }
     }
+
+    /**
+     * 重量单位枚举
+     */
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public enum SizeUnitEnum implements EnumMessage{
+        CM("cm","厘米"),
+        M("m","米")
+        ;
+        public  String code;
+        public  String name;
+
+        @Override
+        public String getCode() {
+            return this.code;
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
+    }
 }
