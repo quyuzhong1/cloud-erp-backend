@@ -4,7 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.exception.ExcelAnalysisException;
@@ -1160,7 +1159,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
 
     @Override
-    public ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto, PickingSourceTypeEnum type) {
+    public ApiResult<String> dimensionalWeight(DimensionalWeightDTO dto) {
         String[] barCodeArr = dto.getBarCode().split("-");
         if(barCodeArr.length < 2){
             throw new ServiceException("barcode 解析失败，格式应该为 单号-箱号 当前为"+dto.getBarCode());
@@ -1171,6 +1170,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(this.getBySourceCode(sourceCode)).orElseThrow(() -> new ServiceException("未生成装箱任务"));
         WmsCartonEntity wmsCartonEntity = Optional.ofNullable(wmsCartonService.getByTaskIdAndBoxNo(packingTaskEntity.getId(),boxNo)).orElseThrow(() -> new ServiceException("未找到该箱号装箱信息"));
         WmsCartonSpecEntity wmsCartonSpecEntity = Optional.ofNullable(wmsCartonSpecService.getById(wmsCartonEntity.getSpecId())).orElseThrow(() -> new ServiceException("未找到该箱号箱规信息"));
+        PickingSourceTypeEnum type = PickingSourceTypeEnum.getByStatus(packingTaskEntity.getSourceType());
+        if(type == null){
+            throw new ServiceException("未识别的来源类型");
+        }
         CfgRuleOutDTO.OverweightDTO overweightDTO = CfgRuleOutDTO.OverweightDTO.builder()
                 .type(type)
                 .scanWeight(dto.getWeight())

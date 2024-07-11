@@ -53,35 +53,14 @@ public class WarehouseOpenApi {
         String url = FastDFSClientUtil.uploadFile(multipartFile);
         return ApiResult.success(url);
     }
-
     /**
-     * B2B称重
+     * 称重
      * @param dto 参数
      */
-    @OpenApi("dimensionalWeightTob")
-    public ApiResult<String> dimensionalWeightTob(@Valid DimensionalWeightDTO dto) {
+    @OpenApi("dimensionalWeight")
+    public ApiResult<String> dimensionalWeight(@Valid DimensionalWeightDTO dto) {
         //设备回传的称重量方信息
-        return packingTaskFeign.dimensionalWeightTob(dto);
-    }
-
-    /**
-     * FBA称重
-     * @param dto 参数
-     */
-    @OpenApi("dimensionalWeightFba")
-    public ApiResult<String> dimensionalWeightFba(@Valid DimensionalWeightDTO dto) {
-        //设备回传的称重量方信息
-        return packingTaskFeign.dimensionalWeightFba(dto);
-    }
-
-    /**
-     * 第三方仓称重
-     * @param dto 参数
-     */
-    @OpenApi("dimensionalWeightThird")
-    public ApiResult<String> dimensionalWeightThird(@Valid DimensionalWeightDTO dto) {
-        //设备回传的称重量方信息
-        return packingTaskFeign.dimensionalWeightThird(dto);
+        return packingTaskFeign.dimensionalWeight(dto);
     }
 
     /**

@@ -16,13 +16,7 @@ public interface PackingTaskFeign {
      * B2B称重
      * @param dto
      * @return
-     */
-    @PostMapping("/feign/packingTask/dimensionalWeightTob")
-    ApiResult<String> dimensionalWeightTob(@RequestBody DimensionalWeightDTO dto);
-
-    @PostMapping("/feign/packingTask/dimensionalWeightFba")
-    ApiResult<String> dimensionalWeightFba(@RequestBody DimensionalWeightDTO dto);
-
-    @PostMapping("/feign/packingTask/dimensionalWeightThird")
-    ApiResult<String> dimensionalWeightThird(@RequestBody DimensionalWeightDTO dto);
+     * **/
+    @PostMapping("/feign/packingTask/dimensionalWeight")
+    ApiResult<String> dimensionalWeight(@RequestBody DimensionalWeightDTO dto);
 }
