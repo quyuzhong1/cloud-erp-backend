@@ -35,6 +35,9 @@ public class CfgRuleConditionEntity extends BaseEntity<CfgRuleConditionEntity> {
     @TableField("field")
     private String field;
 
+    @TableField(exist = false)
+    private String fieldName;
+
     /**
      * 比较符
      */
