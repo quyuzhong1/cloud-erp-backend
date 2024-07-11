@@ -11,6 +11,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -167,23 +168,6 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     }
 
     @Override
-    public BatchResultDTO handle(WarehouseLocationReplenishDTO.HandleDTO handleDTO) {
-        LoginUser loginUser = UserContext.getNonLoginUser();
-        WarehouseLocationReplenishEntity entity = this.baseMapper.selectById(handleDTO.getId());
-
-        WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
-        BeanMapper.copy(handleDTO, updateEntity);
-        updateEntity.setId(entity.getId());
-        updateEntity.setStatus(ReplenishBillStatusEnum.HANDLED.getCode());
-        updateEntity.setHandleUserId(loginUser.getUid());
-        updateEntity.setHandleUserName(loginUser.getUserName());
-        updateEntity.setHandleTime(LocalDateTime.now());
-        this.baseMapper.updateById(updateEntity);
-
-        return BatchResultDTO.success(updateEntity.getId(), updateEntity.getSkuNo() + " : " + handleDTO.getFromWarehouseLocation(), OperationTypeEnum.ADD);
-    }
-
-    @Override
     public BatchResultDTO add(WarehouseLocationReplenishDTO.AddDTO dto) {
         WarehouseLocationReplenishEntity entity = new WarehouseLocationReplenishEntity();
         entity.setSkuId(dto.getSkuId());
@@ -328,8 +312,13 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         addDTO.setWarehouseId(fullEntity.getWarehouseId());
         addDTO.setPcShow(Boolean.TRUE);
         addDTO.setDetailList(Collections.singletonList(moveDetail));
-        warehouseLocationMoveService.addAndApprove(addDTO);
-        
+        try{
+            warehouseLocationMoveService.addAndApprove(addDTO);
+        }catch (Exception e){
+            e.printStackTrace();
+            return BatchResultDTO.fail(fullEntity.getId(), fullEntity.getSourceCode(), OperationTypeEnum.UPDATE);
+        }
+
         return BatchResultDTO.success(fullEntity.getId(), fullEntity.getSourceCode(), OperationTypeEnum.UPDATE);
     }
 
@@ -444,5 +433,63 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         }
 
         return resultList;
+    }
+
+    @Override
+    public List<BatchResultDTO> verifyReplenishQty(List<WarehouseLocationReplenishDTO.HandleDTO> dtoList) {
+        List<String> ids = dtoList.stream().map(item -> item.getId()).collect(Collectors.toList());
+        List<WarehouseLocationReplenishEntity> list = listByIds(ids);
+        Map<String, String> warehouseIdMap = list.stream().collect(Collectors.toMap(BaseEntity::getId, WarehouseLocationReplenishEntity::getWarehouseId));
+        Map<String, String> skuIdMap = list.stream().collect(Collectors.toMap(BaseEntity::getId, WarehouseLocationReplenishEntity::getSkuId));
+        Map<String, String> skuNoMap = list.stream().collect(Collectors.toMap(BaseEntity::getId, WarehouseLocationReplenishEntity::getSkuNo));
+
+        List<BatchResultDTO> verifyResultList = new ArrayList<>(dtoList.size());
+        for (WarehouseLocationReplenishDTO.HandleDTO handleDTO : dtoList) {
+            String warehouseId = warehouseIdMap.get(handleDTO.getId());
+            String skuId = skuIdMap.get(handleDTO.getId());
+            String skuNo = skuNoMap.get(handleDTO.getId());
+            InventoryEntity inventory = inventoryService.getOne(new QueryWrapper<InventoryEntity>()
+                    .eq("warehouse_id", warehouseId)
+                    .eq("warehouse_location", handleDTO.getFromWarehouseLocation())
+                    .eq("sku_id", skuId)
+                    .eq("dict_inventory_status", "usable"));
+            if(handleDTO.getQty() > inventory.getQty()){
+                String format = String.format("仓位可用库存不足，可用数量：%s，取货数量：%s", inventory.getQty(), handleDTO.getQty());
+                verifyResultList.add(BatchResultDTO.fail(handleDTO.getId(), handleDTO.getFromWarehouseLocation() + " ：" + skuNo, format));
+            }else {
+                verifyResultList.add(BatchResultDTO.success(handleDTO.getId(), handleDTO.getFromWarehouseLocation() + " ：" + skuNo, "成功"));
+            }
+
+            handleDTO.setWarehouseId(warehouseId);
+            handleDTO.setSkuId(skuId);
+        }
+        if(! verifyResultList.stream().allMatch(BatchResultDTO::getSuccess)){
+            return verifyResultList;
+        }
+
+        List<BatchResultDTO> verifyList = new ArrayList<>(dtoList.size());
+        Map<String, List<WarehouseLocationReplenishDTO.HandleDTO>> collect = dtoList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId() + "#" + item.getFromWarehouseLocation() + "#" + item.getSkuId()));
+        int i = 0;
+        for (Map.Entry<String, List<WarehouseLocationReplenishDTO.HandleDTO>> entry : collect.entrySet()) {
+            String[] keySplit = entry.getKey().split("#");
+            String warehouseId = keySplit[0];
+            String warehouseLocation = keySplit[1];
+            String skuId = keySplit[2];
+            List<WarehouseLocationReplenishDTO.HandleDTO> handleList = entry.getValue();
+            int sum = handleList.stream().mapToInt(WarehouseLocationReplenishDTO.HandleDTO::getQty).sum();
+            InventoryEntity inventory = inventoryService.getOne(new QueryWrapper<InventoryEntity>()
+                    .eq("warehouse_id", warehouseId)
+                    .eq("warehouse_location", warehouseLocation)
+                    .eq("sku_id", skuId)
+                    .eq("dict_inventory_status", "usable"));
+            if(sum > inventory.getQty()){
+                String format = String.format("仓位可用库存不足，可用数量：%s，总取货数量：%s", inventory.getQty(), sum);
+                verifyList.add(BatchResultDTO.fail(String.valueOf(i), warehouseId + " ：" + warehouseLocation + " ：" + skuId, format));
+            }else {
+                verifyList.add(BatchResultDTO.fail(String.valueOf(i), warehouseId + " ：" + warehouseLocation + " ：" + skuId, "成功"));
+            }
+            i++;
+        }
+        return verifyList;
     }
 }
