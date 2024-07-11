@@ -1504,13 +1504,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 dto.getIds().remove(entity.getId());
             }
         }
-        WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
-        addDTO.setPickCartTypeIdList(Collections.singletonList(dto.getPickingCartTypeId()));
-        addDTO.setDeliveryIdList(dto.getIds());
-        addDTO.setPickingType(dto.getPickingType());
-        addDTO.setName("手动生成波次");
-        addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
-        return waveListService.add(addDTO);
+        if (CollectionUtils.isNotEmpty(dto.getIds())) {
+            WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
+            addDTO.setPickCartTypeIdList(Collections.singletonList(dto.getPickingCartTypeId()));
+            addDTO.setDeliveryIdList(dto.getIds());
+            addDTO.setPickingType(dto.getPickingType());
+            addDTO.setName("手动生成波次");
+            addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
+            return waveListService.add(addDTO);
+        }
+        return new BaseResultDTO.AddDTO();
     }
 
     private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList,SoB2cDeliveryEntity deliveryEntity) {
