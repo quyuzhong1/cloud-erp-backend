@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -100,16 +104,21 @@ public class WmsCartonDetailDTO implements Serializable {
         /**
         * 产品id
         */
+        @NotBlank(message = "skuId不能为空")
         private String skuId;
 
         /**
         * 产品编号
         */
+        @NotBlank(message = "skuNo不能为空")
         private String skuNo;
 
         /**
         * 装箱数量
         */
+        @NotNull(message = "装箱数量不能为空")
+        @Min(value = 1,message = "装箱数量最小值为1")
+        @Max(value = 999999999,message = "装箱数量最大值为999999999")
         private Integer packQty;
         /**
          * 发货数量
@@ -203,7 +212,7 @@ public class WmsCartonDetailDTO implements Serializable {
 
         /**
          * 单箱装箱状态
-         * PackingStatusEnum
+         * PackingTaskStatusEnum
          */
         private String packingStatus;
 
@@ -213,7 +222,7 @@ public class WmsCartonDetailDTO implements Serializable {
         private String packingStatusName;
         /**
          * 装箱状态-总
-         * PackingStatusEnum
+         * PackingTaskStatusEnum
          */
         private String packingTotalStatus;
 

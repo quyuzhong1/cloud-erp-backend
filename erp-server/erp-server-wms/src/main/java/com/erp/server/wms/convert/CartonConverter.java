@@ -89,4 +89,26 @@ public interface CartonConverter {
     })
     WmsCartonDetailEntity historyToCartonDetail(PackingTaskDetailDTO.HistoryCartonDTO cartonDTO);
     List<WmsCartonDetailEntity> historyToCartonDetail(List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList1);
+    @Mappings({
+            @Mapping(target = "id", source = "specId"),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "packageWeight", source = "packageWeight"),
+            @Mapping(target = "boxLength", source = "boxLength"),
+            @Mapping(target = "boxWidth", source = "boxWidth"),
+            @Mapping(target = "boxHeight", source = "boxHeight"),
+            @Mapping(target = "weightUnit", source = "weightUnit"),
+            @Mapping(target = "sizeUnit", source = "sizeUnit"),
+            @Mapping(target = "measureSource", source = "measureSource"),
+            @Mapping(target = "boxQty", constant = "1"),
+            @Mapping(target = "boxSpecNo", ignore = true),
+            @Mapping(target = "mainId", ignore = true)
+    })
+    WmsCartonSpecEntity convertDtoToCartonSpec(WmsCartonSpecDTO.SpecSaveDTO dto);
 }

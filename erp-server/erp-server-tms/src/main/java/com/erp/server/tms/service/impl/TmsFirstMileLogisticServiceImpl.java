@@ -49,7 +49,7 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
@@ -345,7 +345,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         FirstMileDeliveryDTO.GenerateLogisticReqDTO dto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
         dto.setIds(Arrays.asList(outstockId));
         if(!isAuto){
-            dto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
+            dto.setPackingStatus(PackingTaskStatusEnum.PACKED.getCode());
         }
         dto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(dto);
@@ -1434,7 +1434,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(StringUtils.isNotBlank(dto.getOutstockId())){
             reqDto.setIds(Arrays.asList(dto.getOutstockId()));
         }
-        reqDto.setPackingStatus(PackingStatusEnum.PACKING.getCode());
+        reqDto.setPackingStatus(PackingTaskStatusEnum.PACKED.getCode());
         reqDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
         List<TmsFirstMileLogisticDTO.DeliveryDTO> result = BeanUtil.copyToList(generateLogisticDTO,TmsFirstMileLogisticDTO.DeliveryDTO.class);

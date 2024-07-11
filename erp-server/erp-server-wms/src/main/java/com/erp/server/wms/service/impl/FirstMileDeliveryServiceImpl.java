@@ -1495,7 +1495,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 //        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
 //            throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
 //        }
-//        if(PackingStatusEnum.PACKING.getCode().equals(entity.getPackingStatus())
+//        if(PackingTaskStatusEnum.PACKED.getCode().equals(entity.getPackingStatus())
 //                && (FmDeliveryLogisticsStatusEnum.FINISH.equals(entity.getLogisticsStatus()) || WmsDeclareStatusEnum.FINISH.equals(entity.getDeclareStatus()))){
 //            throw new ServiceException("物流单/报关单已生成，不支持修改");
 //        }
@@ -1532,7 +1532,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 //        //当所有产品待装箱数量为0时，状态自动变更为已装箱
 //        List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
 //        if (CollectionUtils.isEmpty(groupSkuDTOList)) {
-//            updatePackingStatus(dto.getSourceId(), PackingStatusEnum.PACKING.getCode());
+//            updatePackingStatus(dto.getSourceId(), PackingTaskStatusEnum.PACKED.getCode());
 //            //走TMS自动生成物流单逻辑
 //            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
 //                    .id(dto.getSourceId())
@@ -1570,7 +1570,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 //                throw new ServiceException(StrUtil.format("头程发货单{} 装箱后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
 //            }
 //        } else {
-//            updatePackingStatus(dto.getSourceId(), PackingStatusEnum.NOT_PACKING.getCode());
+//            updatePackingStatus(dto.getSourceId(), PackingTaskStatusEnum.WAIT.getCode());
 //        }
 //        return Boolean.TRUE;
 //    }
@@ -1621,7 +1621,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 //    @Override
 //    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
 //        FirstMileDeliveryEntity entity = this.getById(id);
-//    /*      if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
+//    /*      if (PackingTaskStatusEnum.WAIT.getCode().equals(entity.getPackingStatus())) {
 //            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
 //        }*/
 //        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
@@ -1651,7 +1651,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 //        }
 //
 //        //只有已装箱的发货单可以查看/导出装箱数据
-//        long count = list.stream().filter(req -> PackingStatusEnum.NOT_PACKING.getCode().equals(req.getPackingStatus())).count();
+//        long count = list.stream().filter(req -> PackingTaskStatusEnum.WAIT.getCode().equals(req.getPackingStatus())).count();
 //        if (count > 0) {
 //            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
 //        }
@@ -1693,7 +1693,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //未装箱不能下推入库单
-        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
+        if (PackingTaskStatusEnum.WAIT.getCode().equals(entity.getPackingStatus())) {
             throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND, entity.getCode());
         }
 

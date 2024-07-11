@@ -64,21 +64,21 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(WmsCartonSpecDTO.AddDTO addDTO, String taskId) {
+    public String add(WmsCartonSpecDTO.AddDTO addDTO) {
         WmsCartonSpecEntity wmsCartonSpecEntity = new WmsCartonSpecEntity();
         BeanMapperUtils.copy(addDTO, wmsCartonSpecEntity);
         // 数据处理
-        handleData(wmsCartonSpecEntity, taskId);
+        handleData(wmsCartonSpecEntity, addDTO.getTaskId());
 
         log.info("开始新增发货单箱规信息");
         boolean save = super.saveOrUpdate(wmsCartonSpecEntity);
         if (!save) {
             throw new ServiceException("发货单箱规信息保存失败");
         }
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱箱规", wmsCartonSpecEntity.getBoxSpecNo());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_SPC.getCode(), taskId, "新增操作");
+        String msg = StrUtil.format("【{}】新增【{}】箱规号为【{}】", addDTO.getContent(),"装箱箱规", wmsCartonSpecEntity.getBoxSpecNo());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_SPC.getCode(), addDTO.getTaskId(), addDTO.getOperation());
         //新增箱子信息
-        wmsCartonService.add(addDTO, wmsCartonSpecEntity, taskId);
+        wmsCartonService.add(addDTO, wmsCartonSpecEntity);
         return wmsCartonSpecEntity.getId();
     }
 
@@ -101,15 +101,6 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     public List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainIds(List<String> mainIds) {
         return baseMapper.listPackingQtyByMainIds(mainIds);
     }
-
-    @Override
-    public Boolean deleteBySourceIds(List<String> sourceIds) {
-        if (CollectionUtil.isEmpty(sourceIds)) {
-            return Boolean.FALSE;
-        }
-        return lambdaUpdate().in(WmsCartonSpecEntity::getMainId, sourceIds).remove();
-    }
-
     @Override
     public List<WmsCartonSpecDTO.PackDateDTO> listPackDateByPackingTaskId(String packingTaskId) {
         if (StringUtils.isBlank(packingTaskId)) {
@@ -282,16 +273,16 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     }
 
     @Override
-    public void updateSpec(WmsCartonSpecDTO.SpecSaveDTO dto) {
+    public void updateSpec(WmsCartonSpecEntity specEntity) {
         this.lambdaUpdate()
-                .eq(WmsCartonSpecEntity::getId, dto.getSpecId())
-                .set(WmsCartonSpecEntity::getPackageWeight, dto.getPackageWeight())
-                .set(WmsCartonSpecEntity::getWeightUnit, dto.getWeightUnit())
-                .set(WmsCartonSpecEntity::getBoxLength, dto.getBoxLength())
-                .set(WmsCartonSpecEntity::getBoxWidth, dto.getBoxWidth())
-                .set(WmsCartonSpecEntity::getBoxHeight, dto.getBoxHeight())
-                .set(WmsCartonSpecEntity::getSizeUnit, dto.getSizeUnit())
-                .set(WmsCartonSpecEntity::getMeasureSource, dto.getMeasureSource())
+                .eq(WmsCartonSpecEntity::getId, specEntity.getId())
+                .set(WmsCartonSpecEntity::getPackageWeight, specEntity.getPackageWeight())
+                .set(WmsCartonSpecEntity::getWeightUnit, specEntity.getWeightUnit())
+                .set(WmsCartonSpecEntity::getBoxLength, specEntity.getBoxLength())
+                .set(WmsCartonSpecEntity::getBoxWidth, specEntity.getBoxWidth())
+                .set(WmsCartonSpecEntity::getBoxHeight, specEntity.getBoxHeight())
+                .set(WmsCartonSpecEntity::getSizeUnit, specEntity.getSizeUnit())
+                .set(WmsCartonSpecEntity::getMeasureSource, specEntity.getMeasureSource())
                 .update();
     }
 
@@ -322,7 +313,5 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 wmsCartonSpecEntity.setBoxSpecNo(boxSpecNo + 1);
             }
         }
-        wmsCartonSpecEntity.setBoxQty(MathUtil.ONE);
-
     }
 }

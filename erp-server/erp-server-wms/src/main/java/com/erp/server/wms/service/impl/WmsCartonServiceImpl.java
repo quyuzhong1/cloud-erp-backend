@@ -129,11 +129,11 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     }
 
     @Override
-    public String add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity, String taskId) {
+    public String add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity) {
 
         WmsCartonEntity wmsCartonEntity = new WmsCartonEntity();
         addDTO.setSpecId(wmsCartonSpecEntity.getId());
-        addDTO.setTaskId(taskId);
+        addDTO.setTaskId(addDTO.getTaskId());
         BeanMapperUtils.copy(addDTO, wmsCartonEntity);
         // 数据处理
         handleData(wmsCartonEntity, addDTO);
@@ -143,10 +143,10 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         if (!save) {
             throw new ServiceException("发货单箱子信息明细单保存失败");
         }
-        String msg = StrUtil.format("用户【{}】新增【{}】单据ID为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱信息", wmsCartonEntity.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON.getCode(), taskId, "新增操作");
+        String msg = StrUtil.format("【{}】新增【{}】箱号【{}】",addDTO.getContent(), "装箱信息", wmsCartonEntity.getBoxNo());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON.getCode(), addDTO.getTaskId(), addDTO.getOperation());
         //新增详情信息
-        wmsCartonDetailService.add(addDTO.getDetailList(), wmsCartonEntity, wmsCartonSpecEntity);
+        wmsCartonDetailService.add(addDTO, wmsCartonEntity, wmsCartonSpecEntity);
         return wmsCartonEntity.getId();
     }
 

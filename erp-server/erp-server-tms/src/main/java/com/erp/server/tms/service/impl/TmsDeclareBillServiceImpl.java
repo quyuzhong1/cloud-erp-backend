@@ -38,7 +38,7 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -130,12 +130,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
-//                .packingStatus(PackingStatusEnum.PACKING.getCode())
+//                .packingStatus(PackingTaskStatusEnum.PACKED.getCode())
                 .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
                 .ids(Arrays.asList(addDTO.getSourceId()))
                 .build();
         if(!addDTO.getIsAuto()){
-            querySourceDTO.setPackingStatus(PackingStatusEnum.PACKING.getCode());
+            querySourceDTO.setPackingStatus(PackingTaskStatusEnum.PACKED.getCode());
         }
         List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = wmsFirstMileDeliveryFeign.getCanGenerateDeclare(querySourceDTO);
         if(CollectionUtils.isEmpty(deliveryDTOList)){
@@ -865,12 +865,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
-//                .packingStatus(PackingStatusEnum.PACKING.getCode())
+//                .packingStatus(PackingTaskStatusEnum.PACKED.getCode())
                 .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
                 .ids(Arrays.asList(addDTO.getSourceId()))
                 .build();
         if(!addDTO.getIsAuto()){
-            querySourceDTO.setPackingStatus(PackingStatusEnum.PACKING.getCode());
+            querySourceDTO.setPackingStatus(PackingTaskStatusEnum.PACKED.getCode());
         }
         List<TmsDeclareBillDTO.SoOutDTO> soOutDTOList = soOutstockFeign.getCanGenerateDeclare(querySourceDTO);
         if(CollectionUtils.isEmpty(soOutDTOList)){

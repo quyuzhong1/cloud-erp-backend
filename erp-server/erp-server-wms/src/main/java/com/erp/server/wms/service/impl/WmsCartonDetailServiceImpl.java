@@ -23,6 +23,7 @@ import com.erp.server.wms.service.WmsCartonService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -71,9 +73,9 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
 
 
     @Override
-    public void add(List<WmsCartonDetailDTO.AddDTO> detailList, WmsCartonEntity wmsCartonEntity, WmsCartonSpecEntity wmsCartonSpecEntity) {
+    public void add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonEntity wmsCartonEntity, WmsCartonSpecEntity wmsCartonSpecEntity) {
         //校验必填
-        for (WmsCartonDetailDTO.AddDTO detail : detailList) {
+        for (WmsCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
             if (StringUtils.isBlank(detail.getSkuId()) || StringUtils.isBlank(detail.getSkuNo())) {
                 throw new ServiceException(ApiError.PACKING_SKU_IS_NOT_NULL, wmsCartonSpecEntity.getBoxSpecNo());
             }
@@ -85,7 +87,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
             }
         }
 
-        List<WmsCartonDetailEntity> detailEntityList = BeanMapper.copyList(detailList, WmsCartonDetailEntity.class);
+        List<WmsCartonDetailEntity> detailEntityList = BeanMapper.copyList(addDTO.getDetailList(), WmsCartonDetailEntity.class);
         // 数据处理
         handleData(detailEntityList, wmsCartonEntity.getId());
 
@@ -94,10 +96,9 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         if(!save) {
             throw new ServiceException("发货单箱子信息单保存失败");
         }
-//        String msg = StrUtil.format("用户【{}】新增【{}】单据ID为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱信息" , wmsCartonEntity.getId());
-//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON.getCode(), taskId, "新增操作");
-        //箱子信息明细
-//        this.firstMileCartonBillSave(addDTO.getBoxQty(), detailEntityList, cartonId, sourceId);
+        String msg = addDTO.getContent() + "新增装箱明细【"+wmsCartonEntity.getBoxNo()+"】【{}】";
+        List<Pair<String, String>> addPairList = detailEntityList.stream().map(obj -> new Pair<>(wmsCartonEntity.getPackingTaskId(), obj.getSkuNo() + "*"+ obj.getPackQty())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), addPairList, addDTO.getOperation());
     }
 
     @Override
