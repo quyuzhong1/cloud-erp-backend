@@ -63,11 +63,20 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
     @Override
     public WaveListPdaDTO.WaveBasicInfoDTO waveInfo(String waveId) {
-        WaveListEntity waveListEntity = waveListService.getById(waveId);
-        WaveListPdaDTO.WaveBasicInfoDTO viewDTO = new WaveListPdaDTO.WaveBasicInfoDTO();
-        BeanMapper.copy(waveListEntity, viewDTO);
-        fillWaveInfo(viewDTO);
-        return viewDTO;
+        WaveListDetailDTO.ViewDTO view = waveDetailService.view(waveId);
+        WaveListPdaDTO.WaveBasicInfoDTO basicInfoDTO = new WaveListPdaDTO.WaveBasicInfoDTO();
+        basicInfoDTO.setId(view.getId());
+        basicInfoDTO.setCode(view.getCode());
+        basicInfoDTO.setName(view.getName());
+        basicInfoDTO.setWarehouseId(view.getWarehouseId());
+        basicInfoDTO.setWarehouseName(view.getWarehouseName());
+        basicInfoDTO.setPickingCartCode(view.getPickingCartCode());
+        basicInfoDTO.setPickingCartType(view.getPickingCartTypeName());
+        basicInfoDTO.setPickingType(view.getPickingType());
+        basicInfoDTO.setPickingTypeName(WavePickingTypeEnum.getName(view.getPickingType()));
+        basicInfoDTO.setStatus(view.getStatus());
+        basicInfoDTO.setStatusName(WaveStatusEnum.getNameByCode(view.getStatus()));
+        return basicInfoDTO;
     }
 
     @Override
@@ -160,14 +169,6 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
                 .set("picking_cart_code", "")
                 .set("status", WaveStatusEnum.AWAIT_PICK.getCode()));
         return ApiResult.success();
-    }
-
-    private void fillWaveInfo(WaveListPdaDTO.WaveBasicInfoDTO viewDTO) {
-        //todo
-        viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(viewDTO.getPickingType()));
-        viewDTO.setWarehouseId("");
-        viewDTO.setWarehouseName("");
-        viewDTO.setStatusName(WaveStatusEnum.getNameByCode(viewDTO.getStatus()));
     }
 
     private List<WaveListPdaDTO.ViewDTO> fillViewList(List<WaveListEntity> records) {
