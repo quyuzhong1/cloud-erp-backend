@@ -81,6 +81,7 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 				}
 			}
 		}
+		this.afterConvertData(dmpInputDataDmpRelationMaps);
 		return dmpInputDataDmpRelationMaps;
 	}
 	
