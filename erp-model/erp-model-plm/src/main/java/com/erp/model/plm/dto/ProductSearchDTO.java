@@ -201,6 +201,16 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         @NotEmpty(message = "SKU不能为空")
         private List<String> skuNoList;
+
+        /**
+         * 销售方式
+         * 1商品 2 赠品 3包材 4半成品
+         */
+        private List<String> saleMethodList;
+        /**
+         * 销售方式(后端用)
+         */
+        private String saleMethod;
     }
 
     @Data

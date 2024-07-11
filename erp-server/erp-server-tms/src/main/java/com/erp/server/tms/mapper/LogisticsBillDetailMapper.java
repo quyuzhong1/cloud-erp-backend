@@ -25,6 +25,7 @@ public interface LogisticsBillDetailMapper extends BaseMapper<LogisticsBillDetai
 
     IPage<LogisticsBillDetailEntity> getTrackPage(@Param("page") Page<LogisticsBillDetailEntity> page, @Param("query") LogisticsBillDetailQueryDTO query);
     IPage<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(@Param("page") Page<LogisticsTrackDTO.UpdateTrackDTO> page, @Param("query") LogisticsBillDetailQueryDTO query);
+    List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(@Param("query") LogisticsBillDetailQueryDTO query);
     /**
      * @description: 根据平台订单号和物流跟踪单号查询
      * @author Will

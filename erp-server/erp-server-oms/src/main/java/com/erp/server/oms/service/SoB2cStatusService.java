@@ -1,6 +1,10 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 
 import java.util.List;
 
@@ -23,4 +27,7 @@ public interface SoB2cStatusService{
      */
     Boolean batchUpdateCancelAndLog(List<String> soB2cIdList);
 
+    BatchResultDTO freeze(String id, List<SoB2cEntity> soB2cEntityList);
+
+    BatchResultDTO unfreeze(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cDetailEntity> soB2cDetailEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList);
 }

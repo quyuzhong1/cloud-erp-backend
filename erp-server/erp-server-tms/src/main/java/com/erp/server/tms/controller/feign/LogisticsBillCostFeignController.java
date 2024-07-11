@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 
 @Slf4j
 @RestController
@@ -32,5 +33,10 @@ public class LogisticsBillCostFeignController {
     public Boolean updateShopCharge(@RequestBody LogisticsBillCostDTO.UpdateShopChargeDTO dto) {
         Boolean flag = logisticsBillCostService.updateShopCharge(dto);
         return flag;
+    }
+
+    @PostMapping("/getActualLogisticCost")
+    public BigDecimal getActualLogisticCost(@RequestBody String soId) {
+        return logisticsBillCostService.getActualLogisticCost(soId);
     }
 }

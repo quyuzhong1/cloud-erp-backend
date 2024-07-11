@@ -2,9 +2,12 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.constant.TaskConstant;
+import com.common.business.dto.CreateJobDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -13,13 +16,16 @@ import com.erp.server.dmp.service.PlatformApiService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +48,8 @@ public class TbTaskTypeService {
     private Long timeoutSeconds;
 
     private Long timeoutMabangHours;
+    @Resource
+    private CreateRequestReportTaskService createRequestReportTaskService;
 
     @Value("${openApi.mabang.timeoutHour:24}")
     public void setTimeoutMabangHours(Long timeoutMabangHours) {
@@ -136,5 +144,16 @@ public class TbTaskTypeService {
     }
 
 
-
+    public List<LocalDateTime> splitTimeRange(LocalDateTime startTime, LocalDateTime endTime, Duration interval) {
+        List<LocalDateTime> timeList = new ArrayList<>();
+        LocalDateTime current = startTime;
+        while (current.isBefore(endTime)) {
+            timeList.add(current);
+            current = current.plus(interval);
+        }
+        if (!current.equals(endTime)) {
+            timeList.add(endTime);
+        }
+        return timeList;
+    }
 }

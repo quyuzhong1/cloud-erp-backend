@@ -325,6 +325,10 @@ public class ProductDetailDTO implements Serializable {
          * sku编号
          */
         private String skuNo;
+        /**
+         * sku Url
+         */
+        private String imagesUrl;
 
         /**
          * 分类
@@ -366,7 +370,10 @@ public class ProductDetailDTO implements Serializable {
          * spu编号
          */
         private String spuNo;
-
+        /**
+         * 产品名称
+         */
+        private String productName;
     }
 
     @Data

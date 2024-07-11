@@ -12,14 +12,13 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.dmp.dto.*;
-import com.erp.server.bi.service.DmpShopChangeLogService;
-import com.erp.server.bi.service.DmpShopInfoService;
+import com.erp.server.bi.service.BiShopChangeLogService;
+import com.erp.server.bi.service.BiShopInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotBlank;
 
 /**
  * 数据源管理
@@ -34,10 +33,10 @@ import javax.validation.constraints.NotBlank;
 public class DmpShopInfoController extends BaseController {
 
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
     @Resource
-    private DmpShopChangeLogService dmpShopChangeLogService;
+    private BiShopChangeLogService biShopChangeLogService;
 
    /**
     * 店铺数据-分页查询
@@ -49,7 +48,7 @@ public class DmpShopInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpShopInfo:paging", tableAlias = "dsi")
     public ApiResult<PagingVO<DmpShopInfoShowDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpShopInfoSearchDTO> dto) {
-        PagingVO<DmpShopInfoShowDTO> pagingVO = dmpShopInfoService.paging(dto);
+        PagingVO<DmpShopInfoShowDTO> pagingVO = biShopInfoService.paging(dto);
         return success(pagingVO);
     }
 
@@ -63,7 +62,7 @@ public class DmpShopInfoController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "店铺数据新增")
     @PostMapping("/add")
     public ApiResult addDmpShopInfo(@RequestBody DmpShopInfoDTO dto) {
-        Boolean flag = this.dmpShopInfoService.addDmpShopInfo(dto);
+        Boolean flag = this.biShopInfoService.addDmpShopInfo(dto);
         return flag == true ? success() : failure();
     }
 
@@ -77,7 +76,7 @@ public class DmpShopInfoController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "店铺数据编辑")
     @PostMapping("/update")
     public ApiResult updateDmpShopInfo(@RequestBody DmpShopInfoDTO dto) {
-        Boolean flag = this.dmpShopInfoService.updateDmpShopInfo(dto);
+        Boolean flag = this.biShopInfoService.updateDmpShopInfo(dto);
         return flag == true ? success() : failure();
     }
 
@@ -91,7 +90,7 @@ public class DmpShopInfoController extends BaseController {
     @LogViewService
     @RequestMapping("/getDmpShopInfoById")
     public ApiResult<DmpShopInfoDTO>  getDmpShopInfoById(@RequestParam("id") String id) {
-        DmpShopInfoDTO dto = dmpShopInfoService.getDmpShopInfoById(id);
+        DmpShopInfoDTO dto = biShopInfoService.getDmpShopInfoById(id);
         return success(dto);
     }
     
@@ -106,7 +105,7 @@ public class DmpShopInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "店铺数据负责人变更:店铺id={id},负责人id={chargeId}")
     @PostMapping("/changeChargeName")
     public ApiResult changeChargeName(@RequestBody DmpShopInfoChangeDTO dto) {
-        Boolean flag = this.dmpShopInfoService.changeChargeName(dto);
+        Boolean flag = this.biShopInfoService.changeChargeName(dto);
         return flag == true ? success() : failure();
     }
 
@@ -120,7 +119,7 @@ public class DmpShopInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "店铺数据部门变更:部门id={deptId},负责人id={chargeId}")
     @PostMapping("/changeDept")
     public ApiResult changeDept(@RequestBody DmpShopInfoDeptChangeDTO dto) {
-        Boolean flag = this.dmpShopInfoService.changeDept(dto);
+        Boolean flag = this.biShopInfoService.changeDept(dto);
         return flag == true ? success() : failure();
     }
 
@@ -133,7 +132,7 @@ public class DmpShopInfoController extends BaseController {
      */
     @PostMapping("/listDmpShopChangeLog")
     public ApiResult<PagingVO<DmpShopChangeLogDTO>> listByShopId(@RequestBody PagingDTO<AdvanceSearchDTO> dto) {
-        PagingVO<DmpShopChangeLogDTO> pagingVO = dmpShopChangeLogService.paging(dto);
+        PagingVO<DmpShopChangeLogDTO> pagingVO = biShopChangeLogService.paging(dto);
         return success(pagingVO);
     }
 
@@ -148,7 +147,7 @@ public class DmpShopInfoController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpShopInfo:paging", tableAlias = "dsi")
     public ApiResult exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {
-        dmpShopInfoService.exportExcel(dto, response);
+        biShopInfoService.exportExcel(dto, response);
         return  success();
     }
 }

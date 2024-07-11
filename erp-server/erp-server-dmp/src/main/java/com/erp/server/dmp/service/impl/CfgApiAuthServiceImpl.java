@@ -60,7 +60,7 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void saveMongoTest(String type){
         CfgApiAuthEntity cfgApiAuthEntity = new CfgApiAuthEntity();
         cfgApiAuthEntity.setApiPlatform(type);

@@ -51,4 +51,14 @@ public interface CustomerB2cMapper extends BaseMapper<CustomerB2cEntity> {
      * @return
      */
     IPage<CustomerB2CDTO.DropListDTO> customerDropDown(Page<CustomerB2CDTO.DropListDTO> query, @Param("params") CustomerB2CDTO.DropSearchDTO params);
+
+    /**
+     * 远程搜索
+     *
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<CustomerB2CDTO.InfoDTO> pagingSelect(Page query, @Param("params") CustomerB2CDTO.SelectDTO params);
+
 }

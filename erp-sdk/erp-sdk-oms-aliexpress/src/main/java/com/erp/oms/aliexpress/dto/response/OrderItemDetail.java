@@ -106,5 +106,10 @@ public class OrderItemDetail implements Serializable {
     @SerializedName("logistics_service_name")
     private String logisticsServiceName;
 
+    /**
+     * 子订单序号，用于子订单发货，即sub_trade_order_index
+     */
+    @SerializedName("order_sort_id")
+    private String orderSortId;
 
 }

@@ -62,7 +62,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     private ShopInfoMappingService shopInfoMappingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<ShopEntity> entityList = pullDate();
 
@@ -139,7 +139,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ShopEntity shopInfo) {
         UniqueDto updateDto = UniqueDto.getUniqId(shopInfo.getSid().toString());
         if(null == shopInfo){

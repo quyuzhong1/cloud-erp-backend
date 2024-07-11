@@ -110,10 +110,9 @@ public enum ApiError implements Serializable {
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
     LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
     LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
-    ERROR_NAME_EXIST(1060,"名称【{}】已存在"),
+    ERROR_NAME_EXIST(1062,"名称【{}】已存在"),
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
-
 
     /**
      * 警告信息 从800 开始
@@ -187,7 +186,12 @@ public enum ApiError implements Serializable {
     ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA(80006,"未找到上级辅助资料"),
     ERROR_NOT_EXIST_DMP_PUSH_TASK(80007,"未找到中台推送任务"),
     ERROR_STATUS_NO_NEED_SYNC(80008,"只有同步失败状态才可更新为无需同步"),
-
+    ERROR_THIRD_BINDED(80009,"第三方{}【{}】已经被【{}】绑定"),
+    ERROR_SYS_BINDED(80009,"{}【{}】已经被第三方【{}】绑定"),
+    ERROR_THIRD_SHOP_NOTFOUND(80010,"第三方店铺不存在"),
+    ERROR_THIRD_WAREHOUSE_NOTFOUND(80011,"第三方仓库不存在"),
+    ERROR_THIRD_SYS_TYPE_BINDING(80012,"同一个第三方平台只能绑定一个{}"),
+    ERROR_SYS_TYPE_NOTFOUND(80013,"{}不存在"),
 
     /**
      * 工作流错误 workflow
@@ -727,6 +731,7 @@ public enum ApiError implements Serializable {
     PRICE_NOT_EXIST(98112,"采购价目表不存在"),
     PURCHASE_ORG_NOT_REPEAT(98113,"只有相同的采购组织可以批量变更报价"),
     ERROR_SUBCONTRACT_ORDER_WAREHOUSE_ORG(98114,"委外订单仓库【{}】与委外组织【{}】不匹配"),
+    ERROR_SO_DELIVERY_NOTICE_NOT_EXIST(98115,"发货通知单不存在"),
 
 
 
@@ -856,7 +861,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99114(99114,"待处理，异常单的数据不支持自动发货"),
     ERROR_99115(99115,"销售订单【{}】的发货单存在待处理，异常单的数据不支持自动发货"),
-    ERROR_99116(99116,"非待处理的数据不能操作生成波次"),
+    ERROR_99116(99116,"只有待处理、非拦截中的发货单可以操作生成波次"),
 
     ERROR_99117(99117,"波次号和sku不能为空"),
     ERROR_99118(99118,"波次号和篮号不能为空"),
@@ -969,7 +974,7 @@ public enum ApiError implements Serializable {
     WAREHOUSE_REPEAT_BINDING(99149,"仓库【{}】绑定了多个第三方仓，一个仓库只能绑定一个第三方仓"),
     GENERATE_INBOUND_NOT_DIS_APPROVE(99150,"已下推海外仓入库单【{}】不能反审核"),
     GENERATE_INBOUND_NOT_UPDATE_PACKING(99150,"已下推海外仓入库单【{}】不能修改装箱信息"),
-    IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
+    IS_NOT_FALSE_SHIPMENT(99151,"手动标发，已发货，取消发货的数据不允许操作手动标发"),
     B2C_SO_DELIVERY_NOT_EXISTS(99152,"b2c发货单不存在"),
     IS_NOT_MANUAL_DELIVERY(99152,"待处理、已发货、异常单、取消发货的数据不允许手动发货"),
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
@@ -979,10 +984,10 @@ public enum ApiError implements Serializable {
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
-    SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
-    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许虚假发货"),
-    LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交虚假发货"),
-    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】待处理、已发货和取消发货单状态，不允许打印拣货单"),
+    SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货，取消发货的数据不允许操作手动标发"),
+    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许手动标发"),
+    LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
+    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】待处理、已发货和取消发货单状态，不允许再打印拣货单"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
@@ -1007,6 +1012,7 @@ public enum ApiError implements Serializable {
     ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED(92133,"已有盘盈盘亏单【{}】不允许操作【{}】之前单据"),
 
     ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 自发货费用单据已确认状态下,不允许反审核"),
+    ERROR_DELIVERY_INTERCEPT_READY_PACKAGED(92139,"销售订单号【{}】已组包不支持拦截操作"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
@@ -1031,7 +1037,39 @@ public enum ApiError implements Serializable {
     SO_OUTSTOCK_NOT_PACKING(92137,"出库单报关单已生成，不支持修改"),
     TRANSFER_DECLARE_SO_EXISTS(92138,"订单【{}】已存在入库预报单，请不要重复新增"),
     PAPER_SIZE_INCONSISTENT_NOT_PRINT(92139,"纸张大小不一致，不支持批量打印"),
+    EXIST_THIRD_WAREHOUSE_MAPPING(99140,"仓库【{}】已存在第三方仓库映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
+    ERROR_VIRTUAL_INVENTORY_INSUFFICIENT(92141,"虚拟库存不足，SKU:[{}],虚拟仓库：[{}],实物仓库:[{}],库存状态:[{}],库存数量[{}],交易数量[{}]"),
+    ERROR_BINDING(99141,"绑定失败"),
+    ERROR_VMNAME_EXIST(92200,"虚拟仓名称已存在"),
+    ERROR_WAREHOUSE_BINDED(92202,"当前实体仓已被虚拟仓【{}】绑定"),
+    ERROR_SAME_DISABLED(92203,"存在相同状态"),
+    ERROR_WAREHOUSE_NOTFOUND(92204,"实体仓不存在"),
+    ERROR_WAREHOUSE_NOTACTIVE(92204,"实体仓必须是启用状态"),
+    ERROR_ONLYONE(92205,"一个渠道只能关联一种类型"),
+    ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST(92140,"虚拟仓不存在"),
+    ERROR_VMALLOCATION_DETAIL_ADD(92206 , "分货单明细保存失败"),
+    ERROR_INVENTORY_INSUFFICIENT(92207,"实体仓库存不足，SKU:【{}】,实物仓:【{}】,实物仓可分配库存:【{}】"),
+    ERROR_SKU_NOTFOUND(92208,"SKU不存在【{}】"),
+    ERROR_FROM_TO_VM_BOTHEMPTY(92209,"调入虚拟仓和调出虚拟仓不能同时为空"),
+    ERROR_FROM_TO_VM_SAME(92209,"调入虚拟仓和调出虚拟仓需不同"),
+    ERROR_TOVM_NOTFOUND(92210,"调入虚拟仓不存在"),
+    ERROR_TOVM_NOTACTIVE(92210,"调入虚拟仓不是启用状态"),
+    ERROR_FROMVM_NOTFOUND(92211,"调出虚拟仓不存在"),
+    ERROR_FROMVM_NOTACTIVE(92211,"调出虚拟仓不是启用状态"),
 
+    ERROR_FROMVM_INVENTORY_INSUFFICIENT(92212,"调出虚拟仓库存不足，SKU:【{}】,虚拟仓:【{}】,虚拟仓可用库存:【{}】"),
+    ERROR_VMALLOCATION_NOTFOUND(92213,"分货单不存在【{}】"),
+    ERROR_MANUAL_STATUS_ERROR(92214,"只有已处理且同步失败时才可以手动完结"),
+    ERROR_SYNC_ERROR(92214,"只有已处理且同步失败时才可以同步"),
+    ERROR_FROM_WAREHOUSE_INVENTORY_ERROR(92215,"调出仓库库存不足"),
+    ERROR_FROM_VM_INVENTORY_ERROR(92216,"调出虚拟仓库存不足"),
+    ERROR_APPROVEQTY_GT_VMUSABLEQTY_ERROR(92217,"批准数量不能大于虚拟仓可用库存"),
+    ERROR_APPROVEQTY_GT_MUSABLEQTY_ERROR(92218,"批准数量不能大于仓库可用库存"),
+    ERROR_WAREHOUSE_NORELATION_ERROR(92219,"实体仓没有关联虚拟仓"),
+    ERROR_VW_RELATION_ERROR(92220,"实体仓【{}】没有关联虚拟仓【{}】"),
+    ERROR_ALLOCATION_UNIQUE_ERROR(92221,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】”重复\n"),
+    ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR(92222,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】- 调出虚拟仓【{}】”重复\n"),
+    ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR(92223,"“SKU【{}】- 实体仓【{}】- 调出虚拟仓【{}】”重复\n"),
     WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
     POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除或禁用"),
     WAREHOUSE_LOCATION_EXIST(92144, "仓位{}已存在"),
@@ -1042,7 +1080,16 @@ public enum ApiError implements Serializable {
     CFG_RULE_WAVE_ORDER_QTY_COMPARE(92152, "最小单数不能大于最大单数"),
     CFG_RULE_WAVE_QTY_COMPARE(92153, "最少商品数量不能大于最大商品数量"),
 
-
+    ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST(92219,"平台【{}】、实体仓【{}】下未找到对应虚拟仓库"),
+    ERROR_VWSTOCK_NOTEMPRY(92230,"虚拟仓库存不为0，操作失败"),
+    ERROR_VWWSTOCK_NOTEMPRY(92231,"本虚拟仓在实体仓【{}】下库存不为0，操作失败"),
+    ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED(92232,"旺店通【{}】已与仓库【{}】关联"),
+    ERROR_NO_SYNC(92232,"没有同步信息"),
+    ERROR_CHECK_OUT_VIRTUAL_INVENTORY(92233,"虚拟仓库存已分配【{}】，出库数量不能超过【{}】"),
+    ERROR_VW_CHANNEL_ERROR(92234,"当前{}【{}】已经被虚拟仓【{}】绑定\n"),
+    ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
+    ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
+    ERROR_VW_INVENTORY_ERROR(92235,"虚拟仓【{}】库存不足"),
 
 
     /**
@@ -1181,7 +1228,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_ID_NOT_NULL(92113,"B2C销售订单【{}】物流渠道不能为空"),
     ERROR_SO_B2C_LOGISTICS_ID_AND_CODE_NOT_NULL(92114,"B2C销售订单【{}】物流渠道和物流单号不能为空"),
     ERROR_SO_B2C_UPDATE_CATEGORY(92115,"冻结中和已作废不支持更新分类"),
-    ERROR_SO_B2C_UPDATE_REMARK(92116,"冻结中和已作废不支持更新备注"),
+    ERROR_SO_B2C_UPDATE_REMARK(92116,"已作废不支持更新备注"),
     ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】未审核不支持配货"),
     ERROR_SO_B2C_APPROVE_NOT_GET_LOGISTICS(92118,"B2C销售订单【{}】未审核不支持获取物流单"),
     ERROR_SO_B2C_UPDATE_SUBMIT(92116,"B2C销售订单【{}】冻结中和已作废不支持提交"),
@@ -1241,6 +1288,11 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_TIKTOK_NOT_SPLIT(92119,"B2C销售订单【{}】在TikTok平台不允许拆分，平台提示【{}】"),
     ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
     ERROR_TIKTOK_SPLIT(92081,"订单【{}】TikTok拆分订单失败"),
+    ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING(92083,"同步旺店通B2C单据未找到对应的仓库映射【{}】"),
+    ERROR_WDT_NOT_FOUND_SHOP_MAPPING(92084,"同步旺店通B2C单据未找到对应的店铺映射【{}】"),
+    ERROR_WDT_NOT_FOUND_SKU(92085,"同步旺店通单据未找到对应的SKU【{}】"),
+
+    ERROR_SHOP_UNDISABLED(92142,"只有禁用的店铺允许删除"),
     ERROR_SO_B2C_ORDER_DECLARE_SKU_NO_NOT_EXIST(92142,"销售订单【{}】申报信息SKU不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_CN_NAME_NOT_EXIST(92143,"申报信息SKU【{}】报关中文名不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_EN_NAME_NOT_EXIST(92144,"申报信息SKU【{}】报关英文名不存在"),
@@ -1248,8 +1300,13 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_NOT_EXIST(92146,"申报信息SKU【{}】目的国申报价币种不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_SYM_NOT_EXIST(92147,"申报信息SKU【{}】目的国申报价币种符号不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_WEIGHT_NOT_EXIST(92148,"申报信息SKU【{}】重量不能为0"),
-    ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE(92149,"订单下的明细仓库一致，无法按仓库拆分"),
+    EXIST_THIRD_SHOP_MAPPING(99140,"店铺【{}】已存在第三方映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
 
+    ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE(92149,"订单下的明细仓库一致，无法按仓库拆分"),
+    ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL(92150,"B2C销售订单【{}】物流下单平台不能为空"),
+    ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】不能设置多个渠道"),
+    ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
+    ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
     /**
      * TMS 错误
      * 从94000 开始
@@ -1318,6 +1375,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST(94044,"渠道【{}】配置的打印配货单的类型设置未找到"),
     ERROR_CFG_COST_EMPTY(94045,"未发现【{}】费用配置信息"),
     ERROR_LOGISTICS_CHANNEL_WAREHOUSE_NOT_NULL(94046,"指定仓库不能为空"),
+    ERROR_SO_B2C_STATUS_NOT_ALLOWED(92150,"非待提交和审核不通过的订单不允许添加赠品"),
 
 
 
@@ -1337,7 +1395,8 @@ public enum ApiError implements Serializable {
     ERROR_PO_RECONCILIATION_RECEIVE(96007,"仅【已确认待完结】支持单据签收"),
     ERROR_PO_RECONCILIATION_UPDATE(96008,"仅【待供方确认】或【待采方确认】支持修改对账单"),
     ERROR_PO_RECONCILIATION_ADD_DETAIL(96009,"对账单【{}】添加对账明细数据的供应商【{}】和结算组织【{}】必须一致"),
-    ERROR_LOGIN_SRM_DISABLE(96010,"已停止跟您的合作，无法正常登录"),
+    ERROR_LOGIN_DISABLE(96010,"已停止跟您的合作，无法正常登录"),
+    ERROR_LOGIN_SRM_DISABLE(96010,"您的账号已被停用，无法使用"),
     ERROR_PO_RECONCILIATION_HAS_GENERATE(96010,"单据单号【{}】已生成对账单"),
     ERROR_PO_RECONCILIATION_NOT_GENERATE(96011,"单据单号【{}】非已确认不支持生成对账单"),
     ERROR_PO_RECONCILIATION_DATE(96012,"对账开始时间不能大于结束时间"),
@@ -1355,6 +1414,9 @@ public enum ApiError implements Serializable {
     ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
 
+    //旺店通异常
+    ERROR_3000(3000, "请求旺店通接口异常"),
+    ERROR_WDT_CANCEL_PUSH(3001, "该单据的前序推送任务未完成, 此任务取消执行"),
 
 
     // 亚马逊公用异常

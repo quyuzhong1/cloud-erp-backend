@@ -57,11 +57,11 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
                 ValidatorUtil.validateEntity(param);
 
                 if(0 == param.getQty()) {
-                    throw new ServiceException("库存变更数量不能等于0");
+                    ServiceException.runError("库存变更数量不能等于0");
                 }
 
                 if(!this.allowNegativeQtyBusinessList.contains(param.getSourceType()) && param.getQty() < 0) {
-                    throw new ServiceException("库存变更数量不能小于0");
+                    ServiceException.runError("库存变更数量不能小于0");
                 }
 
                 if(ignoreInventorySkuIds.contains(param.getSkuId())) {
@@ -81,24 +81,24 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
                 // 当前仓仓库和仓位信息
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(), v -> warehouseService.detailWithCache(v));
                 if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99002);
+                    ServiceException.runError(ApiError.ERROR_99002);
                 }
 
                 if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
                     WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(), v->warehouseLocationService.findByWarehouseIdAndCode(param.getCurWarehouseId(), v));
                     if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
-                        throw new ServiceException("仓位信息不存在");
+                        ServiceException.runError("仓位信息不存在");
                     }
                 }
                 // 目的仓仓库和仓位信息
                 warehouseDetail = warehouseMap.computeIfAbsent(param.getTargetWarehouseId(), v ->warehouseService.detailWithCache(v));
                 if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99002);
+                    ServiceException.runError(ApiError.ERROR_99002);
                 }
                 if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
                     WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),v->warehouseLocationService.findByWarehouseIdAndCode(param.getTargetWarehouseId(), v));
                     if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
-                        throw new ServiceException("仓位信息不存在");
+                        ServiceException.runError("仓位信息不存在");
                     }
                 }
 
@@ -139,6 +139,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
         Comparator<InventoryStockBaseDTO> comparing = Comparator.comparing(InventoryStockBaseDTO::getSkuId)
                 .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode() : "");
         paramList = paramList.stream().sorted(comparing).collect(Collectors.toList());
+
         for(InventoryStockBaseDTO baseParam : paramList) {
             // 当前仓出入库业务处理
             TransferDTO param = (TransferDTO)baseParam;
@@ -181,13 +182,13 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
             }
         } else {
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+                ServiceException.runError(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
             }
             log.info("参数未传库存状态，从配置读取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
             // 判断当前仓是入库还是出库
             transactionRuleParams = transactionRuleParams.stream().filter(r->Objects.equals(r.getWarehouseOption(), param.getWarehouseOptionEnum())).collect(Collectors.toList());
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+                ServiceException.runError(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
             }
             transactionRuleParams = transactionRuleParams.stream()
                     .sorted(Comparator.comparing(inventoryStatus -> inventoryStatus.getInventoryStatus().getCode()))

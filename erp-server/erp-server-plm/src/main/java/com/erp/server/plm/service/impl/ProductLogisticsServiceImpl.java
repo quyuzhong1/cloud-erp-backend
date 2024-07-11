@@ -1,27 +1,28 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.plm.mapper.ProductLogisticsMapper;
 import com.erp.server.plm.service.BasicDictService;
+import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductLogisticsService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +45,11 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
 
     @Resource
     private SysDictFeign sysDictFeign;
+    @Autowired
+    private BomInfoService bomInfoService;
+
+    @Resource
+    private ProductLogisticsService service;
 
     /**
      * @param productId:产品信息表id
@@ -80,7 +86,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     public Boolean saveOrUpdate(ProductLogisticsDTO productLogisticsDTO) {
         ProductLogisticsEntity logisticsEntity = new ProductLogisticsEntity();
         BeanMapper.copy(productLogisticsDTO, logisticsEntity);
-        return this.saveOrUpdate(logisticsEntity);
+        boolean result = service.saveOrUpdate(logisticsEntity);
+        this.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(logisticsEntity.getSkuId()));
+        return result;
     }
 
 
@@ -95,7 +103,10 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     @Override
     public Boolean saveOrUpdateBatch(List<ProductLogisticsDTO> productLogisticsList) {
         List<ProductLogisticsEntity> list = BeanMapper.copyList(productLogisticsList, ProductLogisticsEntity.class);
-        return this.saveOrUpdateBatch(list);
+        List<String> skuIdList = list.stream().map(ProductLogisticsEntity::getSkuId).collect(Collectors.toList());
+        boolean result = service.saveOrUpdateBatch(list);
+        this.saveOrUpdateParentPropertyIdByChildSkuId(skuIdList);
+        return result;
     }
 
     /**
@@ -185,6 +196,64 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
             }
         }
         return productLogisticDTOList;
+    }
+
+    @Override
+    public Boolean saveOrUpdateParentPropertyIdByChildSkuId(List<String> childSkuIds) {
+        if(CollectionUtils.isEmpty(childSkuIds)){
+            return true;
+        }
+        List<BomSkuEntity> bomSkuEntityList = bomSkuService.listByChildSkuIds(childSkuIds);
+        List<String> parentSkuIds = bomSkuEntityList.stream().map(BomSkuEntity::getParentSkuId).distinct().collect(Collectors.toList());
+        return saveOrUpdateParentPropertyId(parentSkuIds);
+    }
+
+    @Override
+    public Boolean saveOrUpdateParentPropertyId(List<String> parentSkuIds) {
+        if(CollectionUtils.isEmpty(parentSkuIds)){
+            return false;
+        }
+        List<BomSkuEntity> bomSkuEntityList = bomSkuService.listByParentSkuIds(parentSkuIds);
+        if(CollectionUtils.isEmpty(bomSkuEntityList)){
+            return false;
+        }
+        List<String> allBomIds = bomSkuEntityList.stream().map(BomSkuEntity::getBomId).distinct().collect(Collectors.toList());
+        List<BomInfoEntity> bomInfoEntityList = bomInfoService.listByIds(allBomIds);
+
+        List<ProductLogisticsEntity> productLogisticsList = this.listBySkuIdList(parentSkuIds);
+        List<String> childrenSkuIds = bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductLogisticsEntity> allChildProductLogisticsEntityList = this.listBySkuIdList(childrenSkuIds);
+        List<ProductLogisticsEntity> updateList = new ArrayList<>();
+        for (BomInfoEntity bomInfoEntity : bomInfoEntityList) {
+            if(!BomTypeEnum.COMBINATION.getType().equals(bomInfoEntity.getType())){
+                continue;
+            }
+            List<BomSkuEntity> bomSkuEntitys = bomSkuEntityList.stream().filter(v->v.getBomId().equals(bomInfoEntity.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(bomSkuEntitys)){
+                continue;
+            }
+            String parentSkuId = bomSkuEntitys.get(0).getParentSkuId();
+            List<String> childSkuIds = bomSkuEntitys.stream().map(BomSkuEntity::getSkuId).distinct().collect(Collectors.toList());
+            ProductLogisticsEntity productLogisticsEntity = productLogisticsList.stream().filter(v->v.getSkuId().equals(parentSkuId)).findAny().orElse(null);
+            if(Objects.isNull(productLogisticsEntity)){
+                continue;
+            }
+            List<ProductLogisticsEntity> childProductLogisticsEntityList = allChildProductLogisticsEntityList.stream().filter(v->childSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
+            //属性默认取子件SKU的属性合集
+            List<String> childrenLPropertyIds = childProductLogisticsEntityList.stream().map(ProductLogisticsEntity::getProductPropertyId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            String propertyIds = childrenLPropertyIds.stream()
+                    .flatMap(id -> Arrays.stream(id.split(",")))
+                    .distinct()
+                    .collect(Collectors.joining(","));
+            if(StringUtils.isNotBlank(propertyIds)){
+                productLogisticsEntity.setProductPropertyId(propertyIds);
+                updateList.add(productLogisticsEntity);
+            }
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            service.updateBatchById(updateList);
+        }
+        return true;
     }
 
 }

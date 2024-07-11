@@ -120,7 +120,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Override
     public List<ListingInfoEntity> listByParam(String type, String platform, List<String> skuNoList) {
         return lambdaQuery().eq(ListingInfoEntity::getType, type).
-                eq(ListingInfoEntity::getPlatform, platform).
+                eq(platform != null ,ListingInfoEntity::getPlatform, platform).
                 in(ListingInfoEntity::getPlatformSkuNo, skuNoList)
                 .list();
     }
@@ -275,6 +275,10 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 operateLogService.addModuleOperateLogByObj(skuMappingEntity, addSkuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
             }
         }
+        lambdaUpdate()
+                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .in(ListingInfoEntity::getId, listingIds)
+                .update();
         service.batchOperation(updateList,addList);
     }
 

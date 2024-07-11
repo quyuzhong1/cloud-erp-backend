@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -20,6 +21,7 @@ import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.server.tms.query.TmsTransferDeclareQueryHandler;
 import com.erp.server.tms.service.TransferDeclareDetailService;
 import com.erp.server.tms.service.TransferDeclareService;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +61,7 @@ public class TransferDeclareController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>>
      **/
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = TmsTransferDeclareQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:transferDeclare:paging",
@@ -241,6 +244,7 @@ public class TransferDeclareController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = TmsTransferDeclareQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:transferDeclare:paging",

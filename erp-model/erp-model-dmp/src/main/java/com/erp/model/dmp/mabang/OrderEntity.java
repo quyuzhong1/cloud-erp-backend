@@ -180,7 +180,7 @@ public class OrderEntity extends CleanBaseDTO {
      */
     private String street2;
     /**
-     * 虚假发货订单 1.是 2.否
+     * 手动标发订单 1.是 2.否
      */
     private String isVirtual;
     /**

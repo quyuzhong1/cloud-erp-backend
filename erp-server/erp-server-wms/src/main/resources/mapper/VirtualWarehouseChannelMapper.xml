@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.VirtualWarehouseChannelMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.VirtualWarehouseChannelEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="type" property="type" />
+       <result column="relation_id" property="relationId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        vwc.id,
+        vwc.create_user_id,
+        vwc.create_user_name,
+        vwc.create_time,
+        vwc.update_user_id,
+        vwc.update_user_name,
+        vwc.update_time,
+        vwc.version,
+        vwc.is_deleted,
+        vwc.virtual_warehouse_id, vwc.dict_platform, vwc.type, vwc.relation_id
+    </sql>
+    <select id="getBindedDictPlatform" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
+        SELECT vwc.dict_platform, vwc.type
+        FROM "virtual_warehouse_channel" vwc
+                 inner join virtual_warehouse vw
+                            on vw.id = vwc.virtual_warehouse_id and vw.is_deleted = false and vw.disabled = false
+        where vwc.is_deleted = false
+        group by vwc.dict_platform, vwc.type
+    </select>
+    <select id="getBindedDictPlatformNoGroup" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
+        SELECT vwc.dict_platform, vwc.type,vwc.virtual_warehouse_id,vwc.relation_id
+             ,vwc.virtual_warehouse_id
+        FROM "virtual_warehouse_channel" vwc
+                 inner join virtual_warehouse vw
+                            on vw.id = vwc.virtual_warehouse_id and vw.is_deleted = false and vw.disabled = false
+        where vwc.is_deleted = false
+        order by vwc.dict_platform
+    </select>
+    <select id="getBindedShopByDictPlatform" resultType="java.lang.String">
+        SELECT vwc.relation_id
+        FROM "virtual_warehouse_channel" vwc
+                 inner join virtual_warehouse vw
+                            on vw.id = vwc.virtual_warehouse_id and vw.is_deleted = false and vw.disabled = false
+        where vwc.is_deleted = false
+          and vwc.type = 'shop'
+          and vwc.dict_platform = #{dictPlatform}
+--         group by vwc.dict_platform,vwc.relation_id
+    </select>
+
+    <!-- 根据平台参数查询 -->
+    <select id="getByPlatform" resultType="com.erp.model.wms.entity.VirtualWarehouseChannelEntity">
+        select
+               <include refid="Base_Column_List" />
+        from  virtual_warehouse_channel vwc
+        inner join  virtual_warehouse vw on vwc.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+            vwc.is_deleted = false and vw.disabled = false
+            <if test="platformDTO.relationId != null and platformDTO.relationId != ''">
+                and ((vwc.type = 'shop' and vwc.dict_platform = #{platformDTO.dictPlatform} and vwc.relation_id = #{platformDTO.relationId})
+                or (vwc.type = 'platform' and vwc.dict_platform = #{platformDTO.dictPlatform}))
+            </if>
+            <if test="platformDTO.relationId != null and platformDTO.relationId == ''">
+                and vwc.type in('shop','platform')  and  vwc.dict_platform = #{platformDTO.dictPlatform}
+            </if>
+            order by vwc.id limit 1
+        </where>
+    </select>
+
+
+    <!-- 根据平台参数查询 -->
+    <select id="listVirtualWarehouseByPlatform" resultType="com.erp.model.wms.entity.VirtualWarehouseChannelEntity">
+        select
+        <include refid="Base_Column_List" />
+        from  virtual_warehouse_channel vwc
+        inner join  virtual_warehouse vw on vwc.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+            vwc.is_deleted = false and vw.disabled = false
+            and vwc.dict_platform in
+            <foreach collection="listPlatformDTO.dictPlatformList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+    <select id="getByParams" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
+        SELECT vwc.dict_platform, vwc.type,vwc.virtual_warehouse_id,vwc.relation_id
+        ,vwc.virtual_warehouse_id
+        FROM "virtual_warehouse_channel" vwc
+        inner join virtual_warehouse vw
+        on vw.id = vwc.virtual_warehouse_id and vw.is_deleted = false and vw.disabled = false
+        where vwc.is_deleted = false
+        and vwc.dict_platform=#{params.dictPlatform}
+        and vwc.type=#{params.type}
+        <if test="params.relationList !=null and params.relationList.size()>0">
+            and vwc.relation_id in
+            <foreach collection="params.relationList" item="relationId" separator="," open="(" close=")">
+                #{relationId}
+            </foreach>
+        </if>
+    </select>
+</mapper>

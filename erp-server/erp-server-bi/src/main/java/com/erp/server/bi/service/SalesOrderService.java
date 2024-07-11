@@ -5,7 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.Map;
  * @Date 2022-12-16 11:08
  * @Created by yl
  */
-public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
+public interface SalesOrderService extends IService<BiOrderInfoEntity> {
 
     /**
      * 月度趋势

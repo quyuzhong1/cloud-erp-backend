@@ -1,7 +1,7 @@
 package com.erp.server.dmp.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

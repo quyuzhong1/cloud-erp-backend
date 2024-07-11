@@ -1,15 +1,23 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.common.core.exception.ServiceException;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.python.antlr.ast.Str;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.zone.ZoneRulesException;
 
 
 /**
@@ -23,12 +31,18 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     /**
      * 处理状态：
      * -1=无需处理(已有订单直接处理)
-     * 0=待下载订单(检查订单下载处理)
-     * 1=待处理销售出库单(订单已下载处理)
-     * 2=已处理
+     * 0=待下载主订单(检查主订单下载处理)
+     * 1=待处理下载订单明细(订单主体已下载处理)
+     * 2=待处理销售出库单(订单所有信息已下载处理)
+     * 3=已处理
      */
     @Panno(findType = PannoEnum.EQ,field = "handleStatus")
     private String handleStatus;
+
+    /**
+     * 依赖订单的下载状态:0=未下载, 1=已下载
+     */
+    private Integer downloadStatus;
 
     @Panno(findType = PannoEnum.EQ,field = "amazonOrderId")
     private String amazonOrderId;
@@ -141,6 +155,30 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     @Panno(findType = PannoEnum.EQ, field = "platformShopCode")
     private String platformShopCode;
 
+    /**
+     * 仓库id
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseId")
+    private String warehouseId;
+
+    /**
+     * 仓库名称
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseName")
+    private String warehouseName;
+
+    /**
+     * 库存组织ID
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseOrgId")
+    private String warehouseOrgId;
+
+    /**
+     * 库存组织名称
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseOrgName")
+    private String warehouseOrgName;
+
 
     public void checkAndSetAllDateLocale(String timeZone) {
         if (StringUtils.isBlank(timeZone)){
@@ -158,5 +196,32 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
             OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
             this.setPurchaseDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
         }
+    }
+
+
+    public String convertOrderIdWithPlatformShopCode(){
+        return StrUtil.format("{}_{}", this.amazonOrderId, this.platformShopCode);
+    }
+
+    public static OffsetDateTime parseOffsetDateTime(String dateTimeStr) {
+        if (StringUtils.isBlank(dateTimeStr)){
+            return null;
+        }
+        //  兼容地区解析
+        if (dateTimeStr.contains("[") || dateTimeStr.contains("]") ) {
+            // 尝试解析包含时区的字符串
+            ZonedDateTime zdt = ZonedDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+            return zdt.toOffsetDateTime();
+        } else {
+            // 解析不包含时区的字符串
+            return OffsetDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        }
+    }
+
+    public static void main(String[] args) {
+        String ss = "2024-06-18T21:03:31+01:00[Europe/London]";
+        String ss1 = "2024-06-16T12:26:27+02:00";
+        System.out.println(parseOffsetDateTime(ss));
+        System.out.println(parseOffsetDateTime(ss1));
     }
 }

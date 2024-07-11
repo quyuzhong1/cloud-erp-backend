@@ -3,7 +3,6 @@ package com.erp.server.bi.controller.api;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.CurrencyEnum;
@@ -12,13 +11,14 @@ import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.SalesPlatformEnumVO;
 import com.erp.model.bi.vo.SelectShowVO;
 import com.erp.model.bi.vo.ShopDropDownVO;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
+import com.erp.model.dmp.entity.BiSkuInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.bi.enums.*;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import com.erp.server.bi.service.BiDictService;
-import com.erp.server.bi.service.DmpShopInfoService;
-import com.erp.server.bi.service.DmpSkuInfoService;
+import com.erp.server.bi.service.BiShopInfoService;
+import com.erp.server.bi.service.BiSkuInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,10 +49,10 @@ public class BiDropDownListController extends BaseController {
     private BiDataSourceCustomService biDataSourceCustomService;
 
     @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
+    private BiSkuInfoService dmpSkuInfoService;
 
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
     /**
      * 平台下拉列表
@@ -61,8 +61,9 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/platform/list")
     public ApiResult<List<SalesPlatformEnumVO>> listPlatformDropDown() {
-        List<SalesPlatformEnumVO> result = Arrays.stream(PlatformDictEnum.values())
-                .map(x -> new SalesPlatformEnumVO(x.getCode(), x.getName(), x.getDesc()))
+        List<BiDictEntity> biDictEntities = biDictService.listEntityByType(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<SalesPlatformEnumVO> result = biDictEntities.stream()
+                .map(x -> new SalesPlatformEnumVO(x.getValue(), x.getName(), x.getRemark()))
                 .collect(Collectors.toList());
         return success(result);
     }
@@ -74,7 +75,7 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/site/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listSiteDropDown() {
-        List<ShopDropDownVO.ShopDropDownNameVO> list = dmpShopInfoService.listSiteDropDown();
+        List<ShopDropDownVO.ShopDropDownNameVO> list = biShopInfoService.listSiteDropDown();
         return success(list);
     }
 
@@ -283,7 +284,7 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/shop/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam(value = "status", required = false) Integer status) {
-        List<ShopDropDownVO.ShopDropDownNameVO> list = dmpShopInfoService.listShopDropDown(status);
+        List<ShopDropDownVO.ShopDropDownNameVO> list = biShopInfoService.listShopDropDown(status);
         return success(list);
     }
 
@@ -292,9 +293,9 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/shop/listAll")
     public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@RequestParam(value = "status", required = false) Integer status) {
-        List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
-                .eq(DmpShopInfoEntity::getIsVijim, Boolean.TRUE)
-                .eq(null != status, DmpShopInfoEntity::getStatus, status)
+        List<BiShopInfoEntity> list = biShopInfoService.lambdaQuery()
+                .eq(BiShopInfoEntity::getIsVijim, Boolean.TRUE)
+                .eq(null != status, BiShopInfoEntity::getStatus, status)
                 .list();
         if (CollectionUtil.isEmpty(list)) {
             return success(new ArrayList<>());
@@ -311,7 +312,7 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/category/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listCategoryDropDown() {
-        List<DmpSkuInfoEntity> list = dmpSkuInfoService.list();
+        List<BiSkuInfoEntity> list = dmpSkuInfoService.list();
         if (CollectionUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
@@ -327,7 +328,7 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/brand/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listBrandDropDown() {
-        List<DmpSkuInfoEntity> list = dmpSkuInfoService.list();
+        List<BiSkuInfoEntity> list = dmpSkuInfoService.list();
         if (CollectionUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }

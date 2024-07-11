@@ -1,6 +1,7 @@
 package com.erp.server.oms.convert;
 
 import com.common.business.dto.*;
+import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.entity.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -9,6 +10,7 @@ import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * <p>
@@ -205,4 +207,71 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "vatCostType", source = "financeDTO.vatCostType"),
     })
     SoB2cFinanceEntity convertUpdateFinance(SoB2cFinanceEntity oldEntity, PlatformOrderFinanceDTO financeDTO);
+
+    /**
+     * 转换参数预览
+     * @param soB2cReceiverEntity
+     * @return
+     */
+    @Mappings({
+            // 更新的内容
+            @Mapping(target = "id", source = "soB2cReceiverEntity.id"),
+            @Mapping(target = "name", source = "soB2cReceiverEntity.name"),
+            @Mapping(target = "countryName", source = "soB2cReceiverEntity.countryName"),
+            @Mapping(target = "loginId", source = "soB2cReceiverEntity.loginId"),
+            @Mapping(target = "customerId", source = "soB2cReceiverEntity.customerId"),
+            @Mapping(target = "email", source = "soB2cReceiverEntity.email"),
+            @Mapping(target = "telNumber", source = "soB2cReceiverEntity.telNumber"),
+            @Mapping(target = "firstAddress", source = "soB2cReceiverEntity.firstAddress"),
+            @Mapping(target = "secondAddress", source = "soB2cReceiverEntity.secondAddress"),
+            @Mapping(target = "cityName", source = "soB2cReceiverEntity.cityName"),
+            @Mapping(target = "country", source = "soB2cReceiverEntity.country"),
+            @Mapping(target = "provinceName", source = "soB2cReceiverEntity.provinceName"),
+            @Mapping(target = "districtName", source = "soB2cReceiverEntity.districtName"),
+            @Mapping(target = "receiverName", source = "soB2cReceiverEntity.receiverName"),
+            @Mapping(target = "receiverTelNumber", source = "soB2cReceiverEntity.receiverTelNumber"),
+            @Mapping(target = "postCode", source = "soB2cReceiverEntity.postCode"),
+            @Mapping(target = "fullAddress", source = "soB2cReceiverEntity.fullAddress"),
+            @Mapping(target = "receiverTaxNo", source = "soB2cReceiverEntity.receiverTaxNo"),
+            @Mapping(target = "soB2cCode", source = "soB2cEntity.code"),
+            @Mapping(target = "mainId", source = "soB2cReceiverEntity.mainId")
+    })
+    SoB2cReceiverDTO.ViewDTO convertReceiverToView(SoB2cReceiverEntity soB2cReceiverEntity,SoB2cEntity soB2cEntity);
+
+    /**
+     * 收件人信息重置
+     * @param dto
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "createTime", source = "old.createTime"),
+            @Mapping(target = "createUserId", source = "old.createUserId"),
+            @Mapping(target = "createUserName", source = "old.createUserName"),
+            @Mapping(target = "updateTime", source = "old.updateTime"),
+            @Mapping(target = "updateUserId", source = "old.updateUserId"),
+            @Mapping(target = "updateUserName", source = "old.updateUserName"),
+            @Mapping(target = "isDeleted", source = "old.isDeleted"),
+            @Mapping(target = "version", source = "old.version"),
+            @Mapping(target = "customerId", source = "old.customerId"),
+            @Mapping(target = "districtName", source = "old.districtName"),
+            @Mapping(target = "email", source = "old.email"),
+            @Mapping(target = "loginId", source = "old.loginId"),
+            @Mapping(target = "name", source = "old.name"),
+            @Mapping(target = "telNumber", source = "old.telNumber"),
+            @Mapping(target = "id", source = "old.id"),
+            @Mapping(target = "mainId", source = "old.mainId"),
+            @Mapping(target = "country", source = "dto.country"),
+            @Mapping(target = "countryName", source = "dto.countryName"),
+            @Mapping(target = "provinceName", source = "dto.provinceName"),
+            @Mapping(target = "cityName", source = "dto.cityName"),
+            @Mapping(target = "postCode", source = "dto.postCode"),
+            @Mapping(target = "receiverName", source = "dto.receiverName"),
+            @Mapping(target = "receiverTelNumber", source = "dto.receiverTelNumber"),
+            @Mapping(target = "receiverTaxNo", source = "dto.receiverTaxNo"),
+            @Mapping(target = "firstAddress", source = "dto.firstAddress"),
+            @Mapping(target = "secondAddress", source = "dto.secondAddress"),
+            @Mapping(target = "fullAddress", source = "dto.fullAddress")
+
+    })
+    SoB2cReceiverEntity convertUpdateReceiverByDto(SoB2cReceiverDTO.UpdateBaseDTO dto,SoB2cReceiverEntity old);
 }

@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -22,7 +22,7 @@ import java.util.Map;
  * @Created by yl
  */
 @Mapper
-public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity> {
+public interface SalesOrderServiceMapper  extends BaseMapper<BiOrderInfoEntity> {
 
     List<SalesFlagVO> getMonthSales(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate, @Param("timeFlag") String timeFlag);
 

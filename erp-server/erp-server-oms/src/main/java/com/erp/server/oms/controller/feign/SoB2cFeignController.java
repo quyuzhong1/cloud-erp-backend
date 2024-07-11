@@ -54,10 +54,10 @@ public class SoB2cFeignController extends BaseController {
     private SoB2cRefService soB2cRefService;
 
     @Resource
-    private SoB2cStatusService b2cStatusService;
+    private OperateLogService operateLogService;
 
     @Resource
-    private OperateLogService operateLogService;
+    private SoB2cStatusService b2cStatusService;
 
     @Resource
     private SoB2cSplitService soB2cSplitService;
@@ -636,12 +636,11 @@ public class SoB2cFeignController extends BaseController {
     public Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto){
         return soB2cService.checkAndFillBySoOutStock(dto);
     }
-
+        
     @PostMapping("/getDataCompareByCondition")
     public List<WmsDataCompareTaskDTO.SoB2cDTO> getDataCompareByCondition(@RequestBody WmsDataCompareTaskDTO.SoOutstockDTO soOutstockDTO) {
         return soB2cService.getDataCompareByCondition(soOutstockDTO);
     }
-
 
     /**
      * 清除订单物流信息的发货信息

@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.*;
@@ -546,6 +547,15 @@ public class RequisitionApplicationDTO implements Serializable {
          * 调出仓库名称
          */
         private String fromWarehouseName;
+        /**
+         * 调出虚拟仓库
+         */
+        private String fromVirtualWarehouseId;
+
+        /**
+         * 调出虚拟仓库名称
+         */
+        private String fromVirtualWarehouseName;
 
         /**
          * 调入仓库id
@@ -657,6 +667,14 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         @NotBlank(message = "调出仓库不能为空")
         private String fromWarehouseId;
+        /**
+         * 调出虚拟仓库Id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 调出虚拟仓库名称
+         */
+        private String fromVirtualWarehouseName;
         /**
          * 调出仓库仓位
          */
@@ -898,6 +916,88 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer requisitionQty;
     }
+    /**
+     * 仓库列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseListDTO {
+
+        /**
+         * code
+         */
+        private String kingdeeWarehouseCode;
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 仓库类型 对应dict 表id
+         */
+        private String typeId;
+
+        /**
+         * 组织id
+         */
+        private String orgId;
+
+
+        /**
+         * 组织名称
+         */
+        private String orgName;
+
+        /**
+         * disabled
+         * true 禁用
+         */
+        private Boolean disabled;
+
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 是否可选
+         */
+        private Boolean canCheck=true;
+        /**
+         * 是否关联虚拟仓
+         */
+        private Boolean hasVw=false;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseSelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 前端忽略
+         */
+        private List<String> ids;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+    }
+
 
     @Getter
     @Setter

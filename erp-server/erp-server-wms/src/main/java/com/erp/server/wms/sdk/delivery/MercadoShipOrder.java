@@ -1,6 +1,7 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.Tuple;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
@@ -10,6 +11,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -22,11 +24,12 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.MERCADOLIBRE)
-public class MercadoShipOrder implements IPlatformService {
+public class MercadoShipOrder extends AbstractShipOrder {
     @Resource
     private SoB2cFeign soB2cFeign;
 
@@ -35,25 +38,28 @@ public class MercadoShipOrder implements IPlatformService {
 
     @Override
     public List<String> shipOrder(PlatformShipOrderDTO dto) {
-        SoB2cEntity entity = soB2cFeign.getById(dto.getSoB2cId());
+        Tuple tuple = super.allSourceOrderInfo(dto);
+        // 所有源单信息
+        List<SoB2cEntity> sourceOrderList = tuple.get(0);
+        // 当前单据物流信息
+        SoB2cLogisticsEntity logisticsEntity = tuple.get(2);
 
-        //映射发货需要的字段，如果合并的订单拆分返回
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(dto.getSoB2cId()));
-        if (CollectionUtil.isEmpty(soB2cLogisticsEntities)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        for (SoB2cEntity entity : sourceOrderList) {
+            //组装数据
+            MercadoShipOrderDTO shipOrderDTO = new MercadoShipOrderDTO();
+            shipOrderDTO.setShopId(entity.getShopId());
+            JSONObject jsonObject = JSONObject.parseObject(entity.getExtendData());
+            shipOrderDTO.setShipmentId(String.valueOf(jsonObject.get("shipmentId")));
+            shipOrderDTO.setCarrier(logisticsEntity.getLogisticsChannelName());
+            shipOrderDTO.setTrackingUrl("https://www.17track.net/en");
+
+            //标记发货
+            mercadoSdkClientService.shipOrder(shipOrderDTO);
         }
-        //组装数据
-        MercadoShipOrderDTO shipOrderDTO = new MercadoShipOrderDTO();
-        shipOrderDTO.setShopId(entity.getShopId());
-        JSONObject jsonObject = JSONObject.parseObject(entity.getExtendData());
-        shipOrderDTO.setShipmentId(String.valueOf(jsonObject.get("shipmentId")));
-        shipOrderDTO.setCarrier(soB2cLogisticsEntities.get(0).getLogisticsChannelName());
-        shipOrderDTO.setTrackingUrl("https://www.17track.net/en");
 
-        //标记发货
-        mercadoSdkClientService.shipOrder(shipOrderDTO);
         return new ArrayList<>();
     }
+
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {

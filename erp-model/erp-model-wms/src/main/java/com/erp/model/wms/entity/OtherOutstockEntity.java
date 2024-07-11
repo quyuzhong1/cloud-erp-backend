@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -25,6 +26,7 @@ import java.util.List;
 @Setter
 @Accessors(chain = true)
 @TableName("other_outstock")
+@NoArgsConstructor
 public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
 
     /**
@@ -40,7 +42,7 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     private String approveStatus;
 
     /**
-     * 出库类型
+     * 业务类型
      */
     @TableField("type")
     private String type;
@@ -171,6 +173,12 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 出库类型
+     */
+    @TableField("out_type")
+    private String outType;
+
     @TableField(exist = false)
     private List<OtherOutstockDetailEntity> detailEntityList;
 
@@ -221,7 +229,11 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
 
     public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
 
-   
+   public OtherOutstockEntity(String id, String code, String warehouseId){
+       this.setId(id);
+       this.setCode(code);
+       this.setWarehouseId(warehouseId);
+   }
 
     @Override
     public Serializable pkVal() {

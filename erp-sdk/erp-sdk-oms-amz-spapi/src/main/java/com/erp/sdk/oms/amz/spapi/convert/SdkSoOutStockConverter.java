@@ -2,9 +2,9 @@ package com.erp.sdk.oms.amz.spapi.convert;
 
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFulfilledShipmentsCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
+import jnr.ffi.annotations.In;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -32,14 +32,14 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "handleStatus", source = "handleStatus"),
             @Mapping(target = "shopId", source = "shopId"),
             @Mapping(target = "groupId", source = "groupId"),
-            @Mapping(target = "isClean", source = "isClean"),
+            @Mapping(target = "downloadStatus", source = "downloadStatus"),
     })
     PlatformAmazonFulfilledShipmentsDTO sourceDtoToOutStockDto(ReportFulfilledShipmentsMongoDTO sourceDTO,
                                                                String reportId,
                                                                String shopId,
                                                                String groupId,
                                                                String handleStatus,
-                                                               Integer isClean
+                                                               Integer downloadStatus
     );
 
 
@@ -51,7 +51,7 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "uniqueId", source = "uniqueId"),
             @Mapping(target = "detailList", expression = "java(sourceDetails.stream().map(INSTANCE::amazonConvertDetailDTO).collect(java.util.stream.Collectors.toList()))"),
     })
-    PlatformSoOutStockDTO amazonConvertDTO(String platformCode, String shopId, String uniqueId, List<PlatformAmazonFulfilledShipmentsDTO> sourceDetails);
+    PlatformSoOutStockDTO amazonConvertDTO(String platformCode, String shopId, String uniqueId, List<PlatformAmazonFulfilledShipmentsDTO> sourceDetails, String warehouseId, String warehouseName, String fulfillmentCenter);
 
 
     @Mappings({
@@ -59,10 +59,15 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "platformCode", source = "amazonOrderId"),
             @Mapping(target = "platformOrderDetailId", source = "amazonOrderItemId"),
             @Mapping(target = "trackNo", source = "trackingNumber"),
-            @Mapping(target = "platformOrderCreateTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPurchaseDateLocale()))"),
-            @Mapping(target = "platformPayTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getPaymentsDateLocale()))"),
-            @Mapping(target = "platformDeliveryTime", expression = "java(java.time.OffsetDateTime.parse(sourceDetail.getShipmentDateLocale()))"),
+            @Mapping(target = "platformOrderCreateTime", expression = "java(PlatformAmazonFulfilledShipmentsDTO.parseOffsetDateTime(sourceDetail.getPurchaseDateLocale()))"),
+            @Mapping(target = "platformPayTime", expression = "java(PlatformAmazonFulfilledShipmentsDTO.parseOffsetDateTime(sourceDetail.getPaymentsDateLocale()))"),
+            @Mapping(target = "platformDeliveryTime", expression = "java(PlatformAmazonFulfilledShipmentsDTO.parseOffsetDateTime(sourceDetail.getShipmentDateLocale()))"),
             @Mapping(target = "qtyShipped", source = "quantityShipped"),
+            @Mapping(target = "warehouseId", source = "warehouseId"),
+            @Mapping(target = "warehouseName", source = "warehouseName"),
+            @Mapping(target = "warehouseOrgId", source = "warehouseOrgId"),
+            @Mapping(target = "warehouseOrgName", source = "warehouseOrgName"),
+            @Mapping(target = "fulfillmentCenterId", source = "fulfillmentCenterId"),
     })
     PlatformSoOutStockDetailDTO amazonConvertDetailDTO(PlatformAmazonFulfilledShipmentsDTO sourceDetail);
 }

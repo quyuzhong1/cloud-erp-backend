@@ -16,8 +16,8 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -53,7 +53,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
+    private MQProducerService<BiDeliveryDetailInfoEntity> mqProducerService;
 
     /**
      * 拉取订单数据
@@ -61,7 +61,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
      * @param dto 任务信息
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         dto.setPlatformApiEnum(PlatformApiEnum.ORDER_GET_ORDER_LIST);
         List<OrderEntity> entityList = pullDate(dto);
@@ -101,13 +101,13 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
             return;
         }
         // 构造订单结构
-        List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(MabangDeliveryDetailServiceImpl::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        List<DmpDeliveryDetailInfoEntity> collect = entityToMqlist.stream().peek(msg -> {
+        List<BiDeliveryDetailInfoEntity> collect = entityToMqlist.stream().peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
                     msg, msg.getBillNo());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
@@ -140,8 +140,8 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     /**
      * 解析订单数据
      **/
-    public static DmpDeliveryDetailInfoEntity initOrderInfoEntity(OrderEntity orderEntity){
-        DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
+    public static BiDeliveryDetailInfoEntity initOrderInfoEntity(OrderEntity orderEntity){
+        BiDeliveryDetailInfoEntity deliveryDetailInfoEntity = new BiDeliveryDetailInfoEntity();
         //单据编号
         deliveryDetailInfoEntity.setPlatformOrderId(orderEntity.getPlatformOrderId());
         deliveryDetailInfoEntity.setBillNo(orderEntity.getSalesRecordNumber());
@@ -216,11 +216,11 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
 
         //平台单据修改时间
         if (StringUtils.isNotBlank(orderEntity.getOperTime()) && !"null".equals(orderEntity.getOperTime())) {
-            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
+            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getOperTime()));
         }
         //发货时间
         if (StringUtils.isNotBlank(orderEntity.getExpressTime()) && !"null".equals(orderEntity.getExpressTime())) {
-            deliveryDetailInfoEntity.setDeliveryDate(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
+            deliveryDetailInfoEntity.setDeliveryDate(LocalDateUtil.strToLocalDateTime(orderEntity.getExpressTime()));
         }
         //备注
         deliveryDetailInfoEntity.setRemark(orderEntity.getRemark());
@@ -240,15 +240,15 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     /**
      * 解析订单商品数据
      **/
-    public static List<DmpDeliveryDetailItemEntity> initOrderItem(OrderEntity orderEntity) {
+    public static List<BiDeliveryDetailItemEntity> initOrderItem(OrderEntity orderEntity) {
         List<OrderItemEntity> orderItems = orderEntity.getOrderItem();
         if(CollectionUtil.isEmpty(orderItems)){
             log.warn("MabangOrderInfoServiceImpl>>>initOrderItem>>>orderEntity 详情列表为空 {}", JSONUtil.toJsonStr(orderItems));
             return null;
         }
-        List<DmpDeliveryDetailItemEntity> items = new ArrayList<>();
+        List<BiDeliveryDetailItemEntity> items = new ArrayList<>();
         for (OrderItemEntity itemEntity : orderItems) {
-            DmpDeliveryDetailItemEntity delivery = new DmpDeliveryDetailItemEntity();
+            BiDeliveryDetailItemEntity delivery = new BiDeliveryDetailItemEntity();
             //商品id
             delivery.setItemId(itemEntity.getItemId());
             //平台sku
@@ -288,7 +288,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         return items;
     }
 
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager",  propagation = Propagation.REQUIRES_NEW)
+//    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager",  propagation = Propagation.REQUIRES_NEW)
     public void addDeliveryOrder(OrderEntity entity) {
         // 更新mongo数据
         OrderMongoDTO updateDto = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());
@@ -296,7 +296,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         // 构造订单结构
-        DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(entity);
+        BiDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(entity);
         // 异步推送到MQ
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
                 deliveryDetailInfo, deliveryDetailInfo.getBillNo());

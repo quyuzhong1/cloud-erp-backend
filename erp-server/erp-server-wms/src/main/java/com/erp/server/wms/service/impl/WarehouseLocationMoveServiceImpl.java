@@ -26,6 +26,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -34,17 +36,21 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.MoveInfoExcelListener;
 import com.erp.server.wms.mapper.WarehouseLocationMoveMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -54,6 +60,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StopWatch;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -61,6 +69,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -101,6 +110,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     @Resource
     @Lazy
     private WarehouseLocationMoveServiceImpl service;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private SyncWdtOtherOutStockService wdtOtherOutStockService;
+
+    @Resource
+    private SyncWdtOtherInStockService wdtOtherInStockService;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -508,10 +528,72 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO, Arrays.asList(id));
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
+
+        //发送旺店通
+        syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    private void syncDisApproveInfoToWdt(WarehouseLocationMoveEntity entity,SyncOperateEnum operateCode) {
+
+        List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
+        HashSet<String> warehouseIdSet = new HashSet<>();
+        for (WarehouseLocationMoveDetailEntity detail : detailEntityList) {
+            warehouseIdSet.add(detail.getWarehouseId());
+        }
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
+
+        //同步旺店通 审核{调入仓位做其他入库单，调出仓位做其他出库单}，反审核{调入仓位做其他出库单，调出仓位做其他入库单}
+        List<DmpPushTaskEntity> dmpPushTaskEntityList = new ArrayList<>();
+        for (WarehouseLocationMoveDetailEntity moveDetailEntity : detailEntityList) {
+            //转换成出库单
+            if(! thirdWarehouseMap.containsKey(moveDetailEntity.getWarehouseId())){
+                continue;
+            }
+            CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+            outGoods.setSpecNo(moveDetailEntity.getSkuNo());
+            outGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
+            outGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE) ?
+                    (StringUtils.isNotBlank(moveDetailEntity.getOutWarehouseLocation()) ? moveDetailEntity.getOutWarehouseLocation() : "") :
+                    (StringUtils.isNotBlank(moveDetailEntity.getInWarehouseLocation()) ? moveDetailEntity.getInWarehouseLocation() : ""));
+
+            String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+            String outWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
+            DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(Collections.singletonList(outGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), outCode, outWarehouseId, false);
+            if(outDmpPushTask != null){
+                dmpPushTaskEntityList.add(outDmpPushTask);
+            }
+            //调入仓转换为其他入库单
+            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+            inGoods.setSpecNo(moveDetailEntity.getSkuNo());
+            inGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
+            inGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)?
+                    (ObjectUtils.isEmpty(moveDetailEntity.getInWarehouseLocation()) ? "" : moveDetailEntity.getInWarehouseLocation()) : ObjectUtils.isEmpty(moveDetailEntity.getOutWarehouseLocation()) ? "" : moveDetailEntity.getOutWarehouseLocation());
+
+            String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+            String inWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
+            DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(Collections.singletonList(inGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), inCode, inWarehouseId, false);
+            if(inDmpPushTask != null){
+                dmpPushTaskEntityList.add(inDmpPushTask);
+            }
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                if(! dmpPushTaskEntityList.isEmpty()){
+                    dmpMqFeign.sendTask(dmpPushTaskEntityList);
+                }
+            }
+        });
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -705,8 +787,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
             ruleDTO.setRules(transactionRuleDTOList);
             inventoryTransCoreService.approveByRule(ruleDTO);
-        }
 
+
+            //发送旺店通
+            syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
+        }
         return Boolean.TRUE;
     }
 

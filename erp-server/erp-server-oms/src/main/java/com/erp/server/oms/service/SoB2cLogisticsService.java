@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
@@ -136,6 +137,8 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
    Boolean clearB2cLogisticsCode(List<String> soIdList);
 
    Boolean updateWeight(String soId,String logisticsId, BigDecimal weightByG);
+
+    BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList);
     /**
      * 根据物流跟踪号或运单好查询订单物流信息
      * @author will

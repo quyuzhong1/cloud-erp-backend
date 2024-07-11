@@ -3,14 +3,13 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
 /**
  * <p>
@@ -134,6 +133,12 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     @TableField("track_no")
     private String trackNo;
 
+
+    /**
+     * 虚拟仓库Id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
     /**
      * 仓库id
      */

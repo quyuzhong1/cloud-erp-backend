@@ -134,6 +134,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             updateStatus.setBillStatus(billStatus);
         }
         updateStatus.setTrackNo(dto.getTrackNo());
+        updateStatus.setFromThirdWarehouseFlag(true);
+        if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(curBillStatus)){
+            updateStatus.setAddOperationLog(false);
+        }
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
 
@@ -144,6 +148,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 asyncService.asyncShipOrder(mainEntity.getId(),
                         mainEntity.getCode(),
                         mainEntity.getDictPlatform(),
+                        mainEntity.convertSubmitPlatformUniqueKey(),
                         JSONUtil.toJsonStr(dto),
                         businessDesc, false);
             }

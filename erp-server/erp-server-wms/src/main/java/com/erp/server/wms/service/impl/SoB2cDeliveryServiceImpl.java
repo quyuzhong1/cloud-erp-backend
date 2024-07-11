@@ -20,6 +20,10 @@ import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.PrintWayBillPdfDetailDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.PrintWayBillPdfDetailDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -47,6 +51,10 @@ import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -70,9 +78,14 @@ import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -120,6 +133,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
+    private CommonService commonService;
+    @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
@@ -159,6 +174,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private WaveListDetailService waveListDetailService;
 
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
@@ -207,8 +224,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "新增操作");
         // 新增明细
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
+
+        //冻结虚拟库存
+        freezeVirtualInventory(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
         return save;
     }
+
 
     @Override
     public List<SoB2cDeliveryDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -293,7 +314,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         }
 
-        //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
+        //如果是手动标发不用再次调用第三方SDK标记发货，因为手动标发已经调用过了
         if (ShipmentMarkTypeEnum.MANUAL.getCode().equals(entity.getShipmentMark())) {
 //            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
 //                //调用第三方平台SDK发货
@@ -313,6 +334,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 asyncService.asyncShipOrder(soB2cEntity.getId(),
                         soB2cEntity.getCode(),
                         soB2cEntity.getDictPlatform(),
+                        soB2cEntity.convertSubmitPlatformUniqueKey(),
                         id,
                         businessDesc, false);
             } else {
@@ -333,6 +355,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //修改订单状态待发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
         updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
@@ -351,7 +374,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO falseDelivery(String id) {
         SoB2cDeliveryEntity entity = this.getById(id);
-        //虚假发货，已发货，取消发货的数据不允许操作虚假发货
+        //手动标发，已发货，取消发货的数据不允许操作手动标发
         if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())) {
             return BatchResultDTO.fail(id, entity.getCode(), ApiError.IS_NOT_FALSE_SHIPMENT.msg);
@@ -370,21 +393,22 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //修改订单状态待发货
         soB2cFeign.updateSoB2cStatus(Arrays.asList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】虚假发货单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "虚假发货");
+        String msg = StrUtil.format("用户【{}】手动标发单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动标发");
 
         if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
             // 调用第三方平台SDK标记发货(独立事务)
-            String businessDesc = "虚假标记发货";
+            String businessDesc = "手动标发";
             asyncService.asyncShipOrder(soB2cEntity.getId(),
                     soB2cEntity.getCode(),
                     soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
                     id,
                     businessDesc, true);
         } else {
             log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动标发");
     }
 
     @Override
@@ -739,7 +763,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 }
             }
         }
-
+        if(CollectionUtils.isEmpty(base64List)){
+            throw new ServiceException("未找到面单数据");
+        }
         try {
             String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
 
@@ -987,8 +1013,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //修改状态为取消发货
         this.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
 
-        //回滚库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_B2C_DELIVERY, ids);
+
+        //回滚虚拟仓库存
+        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+
+        //回滚实体仓库存
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //新增日志
@@ -1123,7 +1153,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public Boolean mergePackageDelivery(List<String> soIdList) {
 
-        //记录需要虚假发货的订单id
+        //记录需要手动标发的订单id
         List<String> deliverySoIdList = new ArrayList<>();
         for (String soId : soIdList) {
             Boolean flag = soB2cFeign.checkPlatformShipOrder(soId);
@@ -1157,6 +1187,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //修改订单状态已发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
         updateDeliveryTimeDTO.setSoB2cIds(soIdList);
+        List<SoB2cDTO.SoDeliveryDTO> soDeliveryDTOList = new ArrayList<>();
+        for (String soId : soIdList) {
+            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityList.stream().filter(v->v.getSourceId().equals(soId)).findFirst().orElse(new SoB2cDeliveryEntity());
+            soDeliveryDTOList.add(new SoB2cDTO.SoDeliveryDTO(soId,soB2cDeliveryEntity.getCode()));
+        }
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(soDeliveryDTOList);
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
@@ -1440,6 +1476,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 platformShipOrderDTO.getSoB2cId(),
                 platformShipOrderDTO.getDictPlatform(),
                 platformShipOrderDTO.getSoB2cId(),
+                platformShipOrderDTO.getSubmitPlatformUniqueKey(),
                 businessDesc, platformShipOrderDTO.isFalseDeliveryFlag());
         return true;
     }
@@ -1464,6 +1501,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 generateReplenish(detailEntities, entity);
                 //生成拣货单失败，发货单生成异常
                 updateAbnormal(Collections.singletonList(entity.getId()), AbnormalCauseEnum.GENERATION_WAVE);
+                dto.getIds().remove(entity.getId());
             }
         }
         WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
@@ -1809,7 +1847,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     .filter(e -> e.getDeliveryId().equals(record.getId()))
                     .findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
             record.setWaveCode(dto.getWaveCode());
-            String warehouseLocation = views.stream().filter(e -> e.getSkuId().equals(record.getSkuId()))
+            String warehouseLocation = views.stream().filter(e -> e.getSourceId().equals(record.getId()))
+                    .filter(e -> e.getSkuId().equals(record.getSkuId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
                     .distinct()
                     .collect(Collectors.joining(","));
@@ -1930,5 +1969,43 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
         taskFeignDTO.setSyncOperate(view.getStatus());
         dmpMqFeign.saveTask(taskFeignDTO);
+    }
+
+    /**
+     * 冻结虚拟库存
+     * @author will
+     * @date 2024/6/12 10:58
+     * @param entity
+     * @param soB2cDeliveryDetailList
+     */
+    private void freezeVirtualInventory (SoB2cDeliveryEntity entity,List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
+        List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
+        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+            outInStockDTO.setSourceId(entity.getId());
+            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setQty(detailEntity.getDeliveryQty());
+            outInStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            if (StrUtil.isBlank(detailEntity.getVirtualWarehouseId())) {
+                continue;
+            }
+            outInStockDTO.setVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
+            paramList.add(outInStockDTO);
+        }
+        //无虚拟仓库不扣虚拟库存
+        if (CollectionUtils.isEmpty(paramList)) {
+            return;
+        }
+        //添加冻结库存
+        VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+        dto.setParamList(paramList);
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
+        //更新库存
+        virtualInventoryTransCoreService.approve(dto);
     }
 }

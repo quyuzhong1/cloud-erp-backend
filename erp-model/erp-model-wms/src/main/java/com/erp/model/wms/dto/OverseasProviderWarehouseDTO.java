@@ -123,6 +123,24 @@ public class OverseasProviderWarehouseDTO implements Serializable {
          * 是否禁用 true 禁用 false 启用
          */
         private Boolean disabled;
+        /**
+         * 仓库编码
+         */
+        private String platformWarehouseCode;
+
+        /**
+         * 仓库名称
+         */
+        private String platformWarehouseName;
+        /**
+         * 系统仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 系统仓库编码
+         */
+        private String warehouseCode;
     }
 
     @Data
@@ -175,5 +193,39 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         private Boolean disabled;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PageSelectDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 编号
+         */
+        private String code;
+    }
+
+    /**
+     * 远程搜索
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 系统类型
+         */
+        @NotBlank(message = "平台编码不能为空")
+        private String code;
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
 
 }

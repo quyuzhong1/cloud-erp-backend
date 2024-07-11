@@ -14,10 +14,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpReturnOrderInfoService;
-import com.erp.server.bi.service.DmpReturnOrderItemService;
-import com.erp.server.bi.service.DmpShopInfoService;
+import com.erp.server.bi.service.BiOrderInfoService;
+import com.erp.server.bi.service.BiReturnOrderInfoService;
+import com.erp.server.bi.service.BiReturnOrderItemService;
+import com.erp.server.bi.service.BiShopInfoService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -44,16 +44,16 @@ import java.io.OutputStream;
 public class DmpReturnOrderInfoController extends BaseController {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    private BiReturnOrderInfoService biReturnOrderInfoService;
 
     @Resource
-    private DmpReturnOrderItemService dmpReturnOrderItemService;
+    private BiReturnOrderItemService biReturnOrderItemService;
 
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -66,7 +66,7 @@ public class DmpReturnOrderInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpReturnOrderInfo:paging", tableAlias = "droi")
     public ApiResult<PagingVO<DmpReturnOrderInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
-        PagingVO<DmpReturnOrderInfoDTO> pagingVO = dmpReturnOrderInfoService.paging(dto);
+        PagingVO<DmpReturnOrderInfoDTO> pagingVO = biReturnOrderInfoService.paging(dto);
         return success(pagingVO);
     }
 
@@ -81,7 +81,7 @@ public class DmpReturnOrderInfoController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpReturnOrderInfo:paging", tableAlias = "droi")
     public ApiResult exportExcel(@RequestBody DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response) {
-        dmpReturnOrderInfoService.exportExcel(dto, response);
+        biReturnOrderInfoService.exportExcel(dto, response);
         return success();
     }
 
@@ -96,7 +96,7 @@ public class DmpReturnOrderInfoController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "退货数据导入")
     @PostMapping("/importReturnOrderFile")
     public ApiResult importReturnOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = dmpReturnOrderInfoService.importOrderFile(excelFile, importType, response);
+        Boolean flag = biReturnOrderInfoService.importOrderFile(excelFile, importType, response);
         return flag == true ? this.success() : this.failure();
     }
 

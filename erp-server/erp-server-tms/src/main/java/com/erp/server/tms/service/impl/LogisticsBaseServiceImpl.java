@@ -146,9 +146,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                         logisticsTrackService.deleteByTrackNo(logisticsBillDetailEntity.getTrackNo());
                         //新增
                         logisticsTrackService.saveBatch(logisticsTrackEntities);
-                        //TODO 根据记录最新状态修改订单状态
-                        //Student latest = Collections.max(studentList,
-                        //                                 Comparator.comparing(s -> s.getDate()));
+                        //根据记录最新状态修改订单状态
                         LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
                         logisticsTrackService.checkTrackStatus(max);
                     }
@@ -381,7 +379,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             //把结果存储数据库
             if (channels.isSuccess()) {
                 channels.getData().forEach(logisticsSaleChannelEntity -> {
-//                    logisticsSaleChannelEntity.setAuthId(map.get("id"));
+                    if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                        logisticsSaleChannelEntity.setServicePlatform("tms");
+                    }
                     logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                     logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                 });
@@ -416,7 +416,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
             for (ShopAuthEntity shopAuthEntity : data) {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
-                Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
+                Map<String, String> map = service.getLogisticsAuthConfigByShopId(shopAuthEntity.getShopId());
                 if (CollectionUtils.isEmpty(map)) {
                     continue;
                 }
@@ -425,7 +425,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
-//                        logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
+                        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                            logisticsSaleChannelEntity.setServicePlatform("tms");
+                        }
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                         logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                     });
@@ -461,7 +463,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 //            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE); 速卖通需要进行渠道增量
             for (ShopAuthEntity shopAuthEntity : data) {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
-                Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
+                Map<String, String> map = service.getLogisticsAuthConfigByShopId(shopAuthEntity.getShopId());
                 if (CollectionUtils.isEmpty(map)) {
                     continue;
                 }
@@ -480,6 +482,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
                 if (channels.isSuccess() && Objects.nonNull(channels.getData())) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
+                        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                            logisticsSaleChannelEntity.setServicePlatform("tms");
+                        }
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                         logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                     });
@@ -527,6 +532,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
             if (channels.isSuccess()) {
                 channels.getData().forEach(logisticsSaleChannelEntity -> {
+                    if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                        logisticsSaleChannelEntity.setServicePlatform("tms");
+                    }
                     logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                     logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                 });
@@ -611,7 +619,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
-//                        logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
+                        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                            logisticsSaleChannelEntity.setServicePlatform("tms");
+                        }
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                         logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                     });

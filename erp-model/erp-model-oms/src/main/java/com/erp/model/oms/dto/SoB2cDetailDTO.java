@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -87,6 +86,12 @@ public class SoB2cDetailDTO implements Serializable {
          * 本位币别（默认人民币）
          */
        private String currency;
+
+       /**
+        * 虚拟仓id
+        */
+       private String virtualWarehouseId;
+
         /**
          * 出货仓库
          */
@@ -133,6 +138,10 @@ public class SoB2cDetailDTO implements Serializable {
 
 
         /**
+         * 属性对象
+         */
+       private List<PropertyDTO> propertyDTOList;
+        /**
          * 目的国申报价
          */
         private BigDecimal toDeclarePrice;
@@ -178,6 +187,21 @@ public class SoB2cDetailDTO implements Serializable {
          */
         private Boolean isRefunded;
     }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PropertyDTO {
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -204,6 +228,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 缺货订单(待审核、配货中订单，仓库可用库存为0)
          */
        private Boolean isOutStock;
+
+       /**
+        * 虚拟仓是否缺货
+        */
+       private Boolean isVirtualOutStock;
 
        /**
         * 当前是否退款: true=退款, false=未退款

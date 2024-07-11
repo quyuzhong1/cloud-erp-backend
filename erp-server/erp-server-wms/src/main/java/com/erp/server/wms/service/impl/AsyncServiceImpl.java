@@ -8,7 +8,9 @@ import com.common.business.handler.PlatformSaveHandler;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.wms.service.AsyncService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -32,6 +34,9 @@ public class AsyncServiceImpl implements AsyncService {
     @Resource
     private SoB2cFeign soB2cFeign;
 
+    @Resource
+    private LogisticsBillFeign logisticsBillFeign;
+
     @Async("wmsErpExecutor")
     @Override
     public void asyncBatchQueryAndUpdateOrderStatus(List<SoB2cEntity> soB2cEntityList) {
@@ -49,19 +54,20 @@ public class AsyncServiceImpl implements AsyncService {
         }).collect(Collectors.toList());
     }
 
+    @Override
+    @Async("wmsErpExecutor")
+    public void updateLogisticWeight(LogisticsBillDTO.UpdateWeight updateWeight) {
+
+        logisticsBillFeign.updateLogisticWeight(updateWeight);
+    }
+
 
     @Async("wmsErpExecutor")
     @Override
-    @DataIdempotent(keyIdName = "soId")
-    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
-        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-        platformShipOrderDTO.setSoB2cId(soId);
-        platformShipOrderDTO.setDictPlatform(dictPlatform);
-        platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
+    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
         try {
-            List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-            //更新销售明细标识
-            soB2cFeign.updateSignShippedByDetailId(detailIds);
+            // 根据提交平台唯一key幂等提交
+            submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey);
         } catch (Exception e) {
             log.error("【{}】销售单【{}】 标记发货失败 >>>错误信息{}", businessDesc, soCode, ExceptionUtil.stacktraceToString(e));
             // 独立异常
@@ -75,6 +81,28 @@ public class AsyncServiceImpl implements AsyncService {
             );
             soB2cFeign.addSoB2cError(addError);
             log.warn("【{}】销售单【{}】标记发货失败记录结束", businessDesc, soCode);
+            return;
         }
+        // 成功后删除历史(独立事务)
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setType(SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode());
+        deleteDTO.setMainId(soId);
+        soB2cFeign.deleteError(deleteDTO);
+    }
+
+
+    @Override
+    @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
+    public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey) {
+        log.info("【{}】销售单【{}】 标记发货开始 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
+        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+        platformShipOrderDTO.setSoB2cId(soId);
+        platformShipOrderDTO.setDictPlatform(dictPlatform);
+        platformShipOrderDTO.setSubmitPlatformUniqueKey(submitPlatformUniqueKey);
+        platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
+        List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        //更新销售明细标识
+        soB2cFeign.updateSignShippedByDetailId(detailIds);
+        return detailIds;
     }
 }

@@ -11,7 +11,6 @@ import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
-import com.erp.sdk.oms.amz.spapi.model.sellers.Marketplace;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -109,23 +108,13 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 1 根据站点判断店铺ID
         AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(order.getMarketplaceId());
         if (null == shopNameDTO){
-            // 2, 多渠道订单找不到站点配置通过销售渠道匹配
+            // 2, 根据销售渠道匹配
             CfgTimezoneEntity timeZoneEntity = timeZoneList.stream()
                     .filter(t -> t.getAndParseCondition().contains(order.getSalesChannel()))
                     .findFirst()
                     .orElse(null);
             if (null != timeZoneEntity){
                 AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(timeZoneEntity.getCountry());
-                if (null != marketplaceEnum){
-                    shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceEnum.getMarketplaceId());
-                }
-            }
-        }
-        if (null == shopNameDTO && null != order.getShippingAddress()){
-            //3, 根据地址国家判断
-            String countryCode = order.getShippingAddress().getCountryCode();
-            if (StringUtils.isNotBlank(countryCode)) {
-                AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(countryCode);
                 if (null != marketplaceEnum){
                     shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceEnum.getMarketplaceId());
                 }
@@ -162,6 +151,10 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
     public static String combineUnique(String orderId, String shopId){
         return StrUtil.format("{}_{}", orderId, shopId);
+    }
+
+    public String convertOrderIdWithPlatformShopCode(){
+        return StrUtil.format("{}_{}", this.order.getAmazonOrderId(), this.platformShopCode);
     }
 
     /**

@@ -111,6 +111,12 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     private Boolean isCollectShippingFee;
 
     /**
+     * 虚拟仓库Id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
+
+    /**
      * 仓库id
      */
     @TableField("warehouse_id")
