@@ -152,9 +152,12 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             new ExcelPrintUtils().patchExport(viewList, response, fileName, excelPath);
 
             //更新状态：处理中
-            WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
-            updateEntity.setStatus(ReplenishBillStatusEnum.HANDLE_ING.getCode());
-            this.baseMapper.update(updateEntity, new QueryWrapper<WarehouseLocationReplenishEntity>().in("id", ids));
+            boolean isExportById = dto.getAdvanceQueryDTOList().stream().anyMatch(item -> item.getField().equals("id"));
+            if(isExportById){
+                WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
+                updateEntity.setStatus(ReplenishBillStatusEnum.HANDLE_ING.getCode());
+                this.baseMapper.update(updateEntity, new QueryWrapper<WarehouseLocationReplenishEntity>().in("id", ids));
+            }
         } catch (IOException e) {
             log.error("导出仓位补货清单失败：{}", e);
             return Boolean.FALSE;
