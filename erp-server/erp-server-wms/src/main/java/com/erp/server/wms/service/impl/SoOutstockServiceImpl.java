@@ -3037,28 +3037,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 //        return true;
 //    }
 
-    @Override
-    public List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id) {
-        List<WmsCartonSpecDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(id);
-        //查询产品信息
-        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-        //查询已装箱数
-        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(id, null);
-        for (WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO : list) {
-            //待装箱数量=发货数量-已装箱数量
-            int usePackQty = packingQtyDTOS.stream()
-                    .filter(req -> req.getSkuId().equals(groupSkuDTO.getId())
-                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
-                    .mapToInt(req -> req.getPackQty()).sum();
-            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
-            groupSkuDTO.setPackQty(usePackQty);
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
-            groupSkuDTO.setProductName(skuVO.getSkuName());
-            groupSkuDTO.setSkuNo(skuVO.getSkuNo());
-        }
-        return list;
-    }
+//    @Override
+//    public List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id) {
+//        List<WmsCartonSpecDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(id);
+//        //查询产品信息
+//        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+//        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+//        //查询已装箱数
+//        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(id, null);
+//        for (WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO : list) {
+//            //待装箱数量=发货数量-已装箱数量
+//            int usePackQty = packingQtyDTOS.stream()
+//                    .filter(req -> req.getSkuId().equals(groupSkuDTO.getId())
+//                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
+//                    .mapToInt(req -> req.getPackQty()).sum();
+//            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
+//            groupSkuDTO.setPackQty(usePackQty);
+//            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+//            groupSkuDTO.setProductName(skuVO.getSkuName());
+//            groupSkuDTO.setSkuNo(skuVO.getSkuNo());
+//        }
+//        return list;
+//    }
 
     @Override
     public List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {

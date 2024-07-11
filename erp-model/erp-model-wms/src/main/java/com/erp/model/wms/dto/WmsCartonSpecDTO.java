@@ -530,7 +530,7 @@ public class WmsCartonSpecDTO implements Serializable {
     public static class GroupSkuDTO{
 
         /**
-         * 销售出库单id
+         * 装箱任务id
          */
         private String id;
         /**

@@ -510,7 +510,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @date 2024-03-26 14:10
      * @author Lambda
      */
-    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id);
+//    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id);
 
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 

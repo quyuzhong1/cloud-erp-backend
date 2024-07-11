@@ -36,11 +36,11 @@ public class PackingTaskQueryHandler extends AbstractQueryHandler {
          * 已装箱：装箱数量等于发货数量
          */
         if (PackingTaskStatusEnum.UNPACKED.getCode().equals(value)){
-            return "pt.packing_status = unpacked";
+            return "pt.packing_status = 'unpacked'";
         }else if (PackingTaskStatusEnum.PACKING.getCode().equals(value)){
-            return "pt.packing_status = packing";
+            return "pt.packing_status = 'packing'";
         }else if (PackingTaskStatusEnum.PACKED.getCode().equals(value)){
-            return "pt.packing_status = packed";
+            return "pt.packing_status = 'packed'";
         }
         return super.getSplicingSQL();
     }
