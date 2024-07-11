@@ -265,4 +265,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     BatchResultDTO generatePackingTask(SoDeliveryNoticeEntity entity);
 
     SoDeliveryNoticeEntity getByCode(String key);
+
+    List<SoDeliveryNoticeEntity> listByCodes(List<String> codes);
 }

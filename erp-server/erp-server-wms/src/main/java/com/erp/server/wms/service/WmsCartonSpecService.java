@@ -46,6 +46,13 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
     List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId, Integer boxSpecNo);
 
     /**
+     * 批量汇总装箱信息
+     * @param mainIds
+     * @return
+     */
+    List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainIds(List<String> mainIds);
+
+    /**
      * 根据主表id删除箱规信息
      * @Author Luo_WG
      * @Date 2023/11/29 10:33

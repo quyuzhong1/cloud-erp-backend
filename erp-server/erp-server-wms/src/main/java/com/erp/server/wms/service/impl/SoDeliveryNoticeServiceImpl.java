@@ -1180,4 +1180,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         return this.lambdaQuery().eq(SoDeliveryNoticeEntity::getCode, code).last("limit 1").one();
     }
+
+    @Override
+    public List<SoDeliveryNoticeEntity> listByCodes(List<String> codes) {
+        if (CollectionUtils.isEmpty(codes)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoDeliveryNoticeEntity::getCode, codes).list();
+    }
 }
