@@ -105,6 +105,6 @@ public class ReportListingMongoDTO extends ReportSuperMongoDTO  {
 
     @Override
     public String convertBusinessUniqueKey() {
-        return StrUtil.format("{}_{}", this.listingId, this.sellerSku);
+        return StrUtil.format("{}_{}_{}",this.listingId, this.getRequestShopId(), this.sellerSku);
     }
 }
