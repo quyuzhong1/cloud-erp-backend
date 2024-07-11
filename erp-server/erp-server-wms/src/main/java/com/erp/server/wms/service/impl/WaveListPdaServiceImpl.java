@@ -25,6 +25,7 @@ import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
 import com.erp.server.wms.mapper.WaveListPdaMapper;
 import com.erp.server.wms.service.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -139,22 +140,33 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         if(pickingCart.getDisabled()){
             return ApiResult.error("拣货车已禁用");
         }
-        PickingCartTypeEntity pickingCartType = pickingCartTypeService.getOne(new QueryWrapper<PickingCartTypeEntity>().eq("id", pickingCart.getTypeId()));
-        WaveListEntity waveEntity = waveListService.getById(bindDTO.getId());
+
         List<WaveListCartTypeEntity> cartTypeList = waveListCartTypeMapper.selectList(new QueryWrapper<WaveListCartTypeEntity>().eq("wave_id", bindDTO.getId()));
         List<String> typeIds = cartTypeList.stream().map(WaveListCartTypeEntity::getPickingCartTypeId).collect(Collectors.toList());
         if(! typeIds.contains(pickingCart.getTypeId())){
             return ApiResult.error("拣货车类型不匹配");
         }
 
-        List<WaveListEntity> waveList = waveListService.list(new QueryWrapper<WaveListEntity>()
+        WaveListEntity currentWave = waveListService.getById(bindDTO.getId());
+        if(StringUtils.equals(WaveStatusEnum.HANG_UP.getCode(), currentWave.getStatus())){
+            if(StringUtils.equals(bindDTO.getPickingCartCode(), currentWave.getPickingCartCode())){
+                doBindCart(bindDTO, pickingCart, loginUser);
+            }
+            return ApiResult.error("挂起的波次只能匹配已绑定的拣货车");
+        }
+
+        List<WaveListEntity> entityList = waveListService.list(new QueryWrapper<WaveListEntity>()
                 .eq("picking_cart_code", pickingCart.getCode())
-                .ne("id", bindDTO.getId())
                 .ne("status", WaveStatusEnum.FINISH.getCode()));
-        if(!waveList.isEmpty()){
+        if(!entityList.isEmpty()){
             return ApiResult.error("拣货车正在使用，无法再次绑定");
         }
 
+        doBindCart(bindDTO, pickingCart, loginUser);
+        return ApiResult.success(bindDTO);
+    }
+
+    private void doBindCart(WaveListPdaDTO.BindPickingCartDTO bindDTO, PickingCartEntity pickingCart, LoginUser loginUser) {
         update(new UpdateWrapper<WaveListEntity>()
                 .set("status", WaveStatusEnum.PICK_ING.getCode())
                 .set("picking_cart_code", bindDTO.getPickingCartCode())
@@ -164,10 +176,11 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
                 .set("picking_time", LocalDateTime.now())
                 .eq("id", bindDTO.getId()));
         //核对成功返回拣货车信息
+        PickingCartTypeEntity pickingCartType = pickingCartTypeService.getOne(new QueryWrapper<PickingCartTypeEntity>().eq("id", pickingCart.getTypeId()));
+        WaveListEntity waveEntity = waveListService.getById(bindDTO.getId());
         bindDTO.setPickingCartName(pickingCartType.getName());
         bindDTO.setPickingCartType(pickingCartType.getName());
         bindDTO.setPickingType(waveEntity.getPickingType());
-        return ApiResult.success(bindDTO);
     }
 
     @Override
