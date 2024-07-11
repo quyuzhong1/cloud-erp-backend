@@ -96,10 +96,10 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
         WaveListDTO.PickingWaveDetailDTO detailDTO = waveDetailList.stream()
                 .filter(v -> v.getSkuId().equals(productDetail.getId()))
                 .filter(v -> v.getPickedQty() > v.getAllocatedQty())
-                .min(Comparator.comparing(WaveListDTO.PickingWaveDetailDTO::getBasketNo))
+                .min(Comparator.comparing(v -> Integer.parseInt(v.getBasketNo())))
                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_99111, productDetail.getSkuNo()));
         int pickingQty = waveDetailList.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getPickedQty).sum();
-        int allocatedQty = waveDetailList.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getAllocatedQty).sum();
+        int allocatedQty = Optional.ofNullable(detailDTO.getAllocatedQty()).orElse(0);
         view.setBasketNo(detailDTO.getBasketNo());
         view.setSkuId(detailDTO.getSkuId());
         view.setSkuNo(detailDTO.getSkuNo());
