@@ -16,6 +16,7 @@ import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
@@ -68,7 +69,12 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         pickingDetailService.updateBatchById(updateList);
 
         //更新波次列表状态
-        waveListService.updateStatusById(hangUpDTO.getWaveId(),WaveStatusEnum.HANG_UP.getCode());
+        boolean isOutStock = updateList.stream().anyMatch(item -> item.getIsOutStock());
+        waveListService.update(new UpdateWrapper<WaveListEntity>()
+                .eq("id", hangUpDTO.getWaveId())
+                .set("status", WaveStatusEnum.HANG_UP.getCode())
+                .set(isOutStock, "is_out_stock", true)
+        );
         return Boolean.TRUE;
     }
 
@@ -258,7 +264,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             if(isOutStock){
                 soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
                         .set("status", SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode())
-                        .set("abnormal_cause", "拣货时手动标记缺货")
+                        .set("abnormal_cause", AbnormalCauseEnum.PICK_MARKINGS.getCode())
                         .in("id", outStockDeliveryIds));
             }
         }
