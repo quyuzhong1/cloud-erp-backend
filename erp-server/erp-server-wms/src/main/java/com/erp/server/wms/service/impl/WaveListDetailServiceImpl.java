@@ -8,6 +8,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
@@ -169,5 +170,29 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     @Override
     public List<WaveListDetailEntity> listByMainIds(List<String> waveIds) {
         return list(Wrappers.<WaveListDetailEntity>lambdaQuery().in(WaveListDetailEntity::getMainId, waveIds));
+    }
+
+    /**
+     * 移出波次
+     * @param deliveryId 发货单ID
+     */
+    @Override
+    public ApiResult<?> moveOut(String deliveryId) {
+        List<WaveListDetailEntity> entityList = baseMapper.selectList(new QueryWrapper<WaveListDetailEntity>()
+                .eq("delivery_id", deliveryId));
+        List<String> ids = entityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
+        List<String> mainIds = entityList.stream().map(WaveListDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        if(mainIds.size() > 1){
+            return ApiResult.error("该发货单关联了多个波次，请检查");
+        }
+        //删除该明细
+        baseMapper.deleteBatchIds(ids);
+        //如果波次下明细为空，删除波次
+        List<WaveListDetailEntity> detailList = this.list(new QueryWrapper<WaveListDetailEntity>().eq("main_id", mainIds));
+        if(detailList.isEmpty()){
+            waveListService.getBaseMapper().delete(new QueryWrapper<WaveListEntity>().in("id", mainIds));
+        }
+
+        return ApiResult.success();
     }
 }
