@@ -96,7 +96,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             BeanMapper.copy(entity, dto);
             dto.setUpdateTime(entity.getHandleTime());
             dto.setUpdateUserName(entity.getHandleUserName());
-
+            //补货类型（来源类型）
+            dto.setSourceTypeName(ReplenishTypeEnum.getName(entity.getSourceType()));
             //仓库名称
             dto.setWarehouseName(warehouseIdNameMap.get(entity.getWarehouseId()));
 
@@ -157,7 +158,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             String excelPath = "excel/warehouseLocationReplenishExport.xlsx";
             new ExcelPrintUtils().patchExport(viewList, response, fileName, excelPath);
 
-            //更新状态：处理中
+            //只有勾选导出的才更新状态：处理中
             boolean isExportById = dto.getAdvanceQueryDTOList().stream().anyMatch(item -> item.getField().equals("id"));
             if(isExportById){
                 WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
