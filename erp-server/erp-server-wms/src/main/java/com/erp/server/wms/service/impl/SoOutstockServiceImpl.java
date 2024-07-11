@@ -22,6 +22,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -2261,7 +2262,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             ApproveStatusEnum approveStatus = outstock.getApproveStatus();
             // 检查关账时间
             LocalDate closedDate = inventoryClosedRecordService.checkClosed(outstock.getWarehouseOrgId(), outstock.getBillDate());
-            if (null == closedDate){
+            if (null != closedDate){
                 // 已关账
                 return Boolean.TRUE;
             }
@@ -3209,6 +3210,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             dto.setWarehouseName(platformDeliveryDetailDTO.get(0).getWarehouseName());
             dto.setWarehouseOrgId(platformDeliveryDetailDTO.get(0).getWarehouseOrgId());
             dto.setWarehouseOrgName(platformDeliveryDetailDTO.get(0).getWarehouseOrgName());
+
+            // 临时跳过生成已关账之前的销售出库单
+            // 查询订单发货时间
+            List<SoB2cLogisticsEntity> list = FeignQuery.create(SoB2cLogisticsEntity.class)
+                    .eq(SoB2cLogisticsEntity::getMainId, soB2cId)
+                    .list();
+            if (CollectionUtils.isNotEmpty(list)){
+                LocalDateTime deliveryTime = list.stream()
+                        .map(SoB2cLogisticsEntity::getDeliveryTime)
+                        .findFirst()
+                        .orElse(null);
+                if (null != deliveryTime){
+                    // 检查关账时间
+                    LocalDate closedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), deliveryTime.toLocalDate());
+                    if (null != closedDate){
+                        // 临时跳过生成已关账之前的销售出库单
+                        return false;
+                    }
+                }
+            }
+
+
             //通过平台发货单生成销售出库单，不与销售订单明细关联
             LinkedList<SoOutstockDetailDTO.AddDTO> skuList = new LinkedList<>();
             for (PlatformDeliveryDetailDTO deliveryDetailDTO : platformDeliveryDetailDTO) {
@@ -3224,7 +3247,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             ApproveStatusEnum approveStatus = outstock.getApproveStatus();
             // 检查关账时间
             LocalDate closedDate = inventoryClosedRecordService.checkClosed(outstock.getWarehouseOrgId(), outstock.getBillDate());
-            if (null == closedDate) {
+            if (null != closedDate){
                 // 已关账
                 return;
             }
