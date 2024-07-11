@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import lombok.Data;
@@ -104,6 +105,6 @@ public class ReportListingMongoDTO extends ReportSuperMongoDTO  {
 
     @Override
     public String convertBusinessUniqueKey() {
-        return super.getUniqueId();
+        return StrUtil.format("{}_{}", this.listingId, this.sellerSku);
     }
 }
