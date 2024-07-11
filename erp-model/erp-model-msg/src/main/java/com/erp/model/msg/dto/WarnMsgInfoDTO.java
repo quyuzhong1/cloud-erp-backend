@@ -71,5 +71,13 @@ public class WarnMsgInfoDTO implements Serializable {
      * 异常发生事件
      */
     private LocalDateTime happenTime;
-
+    /**
+     * 消息唯一键
+     */
+    private String msgId;
+    /**
+     * 是否发送
+     * 0未发送 1发送中 2已发送 -1发送异常 3无需发送
+     */
+    private Integer isSend;
 }

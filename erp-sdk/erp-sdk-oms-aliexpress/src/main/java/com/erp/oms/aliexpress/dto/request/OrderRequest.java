@@ -1,10 +1,15 @@
 package com.erp.oms.aliexpress.dto.request;
 
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -28,15 +33,15 @@ public class OrderRequest implements Serializable {
     private String apiName;
 
     /**
-     * 开始时间
+     * 更新开始时间
      */
     private String startTime;
 
     /**
-     * 结束时间
+     * 更新结束时间
      */
     private String endTime;
-    
+
     private String token;
 
     /**
@@ -53,6 +58,18 @@ public class OrderRequest implements Serializable {
      * 当前页
      */
     private Integer currentPage;
+
+    /**
+     * 订单创建开始时间
+     */
+    private String createDateStart;
+
+    /**
+     * 订单创建结束时间
+     */
+    private String createDateEnd;
+
+
 
     public static OrderRequest builderByShopInfo(String apiName, AliExpressShopInfoDTO shopInfoDTO) {
         return OrderRequest.builder().

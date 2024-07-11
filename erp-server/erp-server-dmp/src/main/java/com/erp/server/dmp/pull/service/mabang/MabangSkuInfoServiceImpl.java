@@ -66,7 +66,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     private RedisUtil redisUtil;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<SkuInfoEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -154,7 +154,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(SkuInfoEntity mongoDatum) {
         ComboSkuInfoEntity comboSkuInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());

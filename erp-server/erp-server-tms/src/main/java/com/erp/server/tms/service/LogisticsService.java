@@ -26,7 +26,14 @@ public interface LogisticsService {
      * @param authId
      * @return
      */
-    Map<String, String> getLogisticsAuthConfig(String authId);
+    Map<String, String> getLogisticsAuthConfigByAuthId(String authId);
+    /**
+     * 获取授权信息
+     *
+     * @param shopId
+     * @return
+     */
+    Map<String, String> getLogisticsAuthConfigByShopId(String shopId);
 
     /**
      * 根据平台获取授权列表
@@ -142,4 +149,10 @@ public interface LogisticsService {
     LogisticsPlatformEnum getPlatForm();
 
     ApiResult<List<LogisticsServiceResponseVO>>  listLogisticsService(Map<String, String> authMap);
+
+    /**
+     * 更新重量
+     * @return
+     */
+    ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO);
 }

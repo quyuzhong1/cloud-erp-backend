@@ -6,10 +6,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.sdk.tms.tongyou.constants.TongYouConstants;
 import com.sdk.tms.tongyou.dto.TongYouSignDTO;
-import com.sdk.tms.tongyou.dto.request.TongYouCallBackOrderRequest;
-import com.sdk.tms.tongyou.dto.request.TongYouCreateOrderRequest;
-import com.sdk.tms.tongyou.dto.request.TongYouGetOrderRequest;
-import com.sdk.tms.tongyou.dto.request.TongYouPrintLabelRequest;
+import com.sdk.tms.tongyou.dto.request.*;
 import com.sdk.tms.tongyou.dto.response.*;
 import com.sdk.tms.tongyou.utils.TongYouUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -88,5 +85,15 @@ public class TongYouService {
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
         String response = TongYouUtils.sendPost(TongYouConstants.METHOD_ORDER_GET,paramsMap,authMap.get("clientSecret"));
         return JSONObject.parseObject(response,TongYouOrderInfo.class);
+    }
+
+    /**
+     *  更新重量
+     */
+    public TongYouResponse<String> updateWeight(TongYouUpdateWeightRequest request, Map<String, String> authMap){
+        Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
+        String sign = TongYouUtils.getUpdateWeightSign(request,authMap.get("clientSecret"));
+        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_UPDATE_WEIGHT,paramsMap,sign,authMap.get("clientSecret"));
+        return JSONObject.parseObject(response,new TypeReference<TongYouResponse<String>>() {}.getType());
     }
 }

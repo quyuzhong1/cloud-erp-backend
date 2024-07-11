@@ -15,10 +15,12 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum AmazonHandleStatusEnum {
 
+    ERROR("-2",	"异常数据(无法匹配销售渠道或仓储中心)"),
     NONE("-1",	"无需处理(已有订单直接处理)"),
     WAIT_DOWNLOAD("0",	"待下载主订单信息(检查订单下载处理)"),
-    WAIT_HANDLE("1",	"已下载主订单信息(订单已下载处理)"),
-    HANDLE("2",	"已处理"),
+    WAIT_DOWNLOAD_DETAIL("1",	"待下载明细订单信息(主订单已下载)"),
+    WAIT_HANDLE("2",	"已下载主所有订单信息(订单已下载处理)"),
+    HANDLE("3",	"已处理"),
 
     ;
 

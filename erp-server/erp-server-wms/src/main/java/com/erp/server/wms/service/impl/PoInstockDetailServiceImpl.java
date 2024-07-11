@@ -149,6 +149,9 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
 
     @Override
     public  List<PoInstockDetailEntity> listDetailByPodIds(List<String> podIds) {
+        if(CollectionUtils.isEmpty(podIds)){
+            return new ArrayList<>();
+        }
         return baseMapper.listDetailByPodIds(podIds);
     }
 

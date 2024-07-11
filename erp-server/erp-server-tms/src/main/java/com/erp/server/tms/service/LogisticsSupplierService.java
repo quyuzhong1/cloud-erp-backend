@@ -56,15 +56,6 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
     PagingVO<LogisticsSupplierDTO.PagingViewDTO> paging(PagingDTO<LogisticsSupplierDTO.PagingParamDTO> dto);
 
     /**
-     * 分页获取渠道相关信息
-     *@parms id
-     *@return 
-     *@author yl
-     *@date 2023-11-14
-     */
-    List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id,String name);
-
-    /**
      * 删除物流商
      *@parms id
      *@return 

@@ -242,4 +242,6 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return BaseDTO
      */
     LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(String logisticsCode);
+
+    ApiResult<String> updateLogisticWeight(LogisticsBillDTO.UpdateWeight dto);
 }

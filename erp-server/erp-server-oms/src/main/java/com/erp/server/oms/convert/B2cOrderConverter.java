@@ -1,5 +1,6 @@
 package com.erp.server.oms.convert;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.mapper.BigDecimalMapperWork;
 import com.common.business.mapper.BooleanMapperWork;
 import com.common.business.mapper.NumberMapperWork;
@@ -248,6 +249,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "englishUsage", source = "productDTO.englishUsage"),
             @Mapping(target = "exemption", source = "productDTO.exemption"),
             @Mapping(target = "isElectric", source = "productDTO.isElectric"),
+            @Mapping(target = "onlyBattery", source = "productDTO.onlyBattery"),
             @Mapping(target = "isLiquid", source = "productDTO.isLiquid"),
             @Mapping(target = "productProperty", source = "productDTO.productProperty"),
             @Mapping(target = "productPropertyId", source = "productDTO.productPropertyId"),
@@ -310,4 +312,19 @@ public interface B2cOrderConverter {
      * @return
      */
     SoB2cDTO.ViewDTO convertEntityToViewDTO(SoB2cEntity soB2cEntity);
+    /**
+     * 转换订单明细
+     * @param dto
+     * @return
+     */
+    @Mapping(target = "mainId", source = "id")
+    @Mapping(target = "imageUrl", source = "imageUrl")
+    @Mapping(target = "skuId", source = "skuId")
+    @Mapping(target = "skuNo", source = "skuNo")
+    @Mapping(target = "qty", source = "qty")
+    @Mapping(target = "warehouseId", source = "warehouseId")
+    @Mapping(target = "warehouseName", source = "warehouseName")
+    @Mapping(target = "id", ignore = true)
+    SoB2cDetailEntity convertB2cDetailByGiftDto(SoB2cDTO.GiftDTO dto);
+    List<SoB2cDetailEntity> convertB2cDetailByGiftDto(List<SoB2cDTO.GiftDTO> dtoList);
 }

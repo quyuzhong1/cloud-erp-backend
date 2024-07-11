@@ -165,20 +165,6 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public ApiResult authLogistics(String id, String logisticsPlatform) {
-        LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
-        if (Objects.isNull(service)){
-            return ApiResult.error(-1,"功能未开发");
-        }
-        Map<String, String> authConfig = this.getLogisticsAuthConfig(id, logisticsPlatform);
-        if (CollectionUtils.isEmpty(authConfig)){
-            return ApiResult.error(-1,"未找到配置信息");
-        }
-        ApiResult authorization = service.authorization(authConfig);
-        return authorization;
-    }
-
-    @Override
     public ApiResult authLogistics(String logisticsPlatform, Map<String, String> authConfig) {
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
         if (Objects.isNull(service)){
@@ -196,6 +182,14 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         }
         supplierEntity.setAuthStatus(authStatus);
         logisticsSupplierService.updateById(supplierEntity);
+    }
+
+    @Override
+    public List<LogisticsAuthEntity> listByMainIds(List<String> supplierIds) {
+        if (CollectionUtils.isEmpty(supplierIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsAuthEntity::getMainId, supplierIds).list();
     }
 
     public LogisticsAuthEntity getDbByMainId(String mainId){
@@ -229,8 +223,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
         if (Objects.nonNull(channelEntity)) {
             LogisticsAuthEntity logisticsAuthEntity = this.getByMainId(null,channelEntity.getMainId());
-            if(Objects.isNull(logisticsAuthEntity)){
-                return new LogisticsAuthEntity();
+            if(Objects.nonNull(logisticsAuthEntity)){
+                return logisticsAuthEntity;
             }
         }
         return new LogisticsAuthEntity();
@@ -269,12 +263,12 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId,String logisticsPlatform) {
+    public Map<String, String> getLogisticsAuthConfig(String authId,String shopId,String logisticsPlatform) {
         Map<String, String> map = new HashMap<>();
         List<LogisticsAuthFieldEntity> fieldEntities = null;
         if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
-            return service.getLogisticsAuthConfig(authId);
+            return service.getLogisticsAuthConfigByShopId(shopId);
         }else {
             if (StringUtils.isNoneBlank(authId)) {
                 map.put("id", authId);
@@ -292,27 +286,6 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return map;
     }
 
-    @Override
-    public List<Map<String, String>> getLogisticsAuthByPlatform(String platform) {
-        if (StringUtils.isBlank(platform)) return Collections.emptyList();
-        List<LogisticsAuthEntity> list = lambdaQuery().eq(LogisticsAuthEntity::getLogisticsPlatform, platform)
-                .eq(LogisticsAuthEntity::getIsDeleted, false).list();
-        if (CollectionUtils.isEmpty(list)) return Collections.emptyList();
-        List<Map<String, String>> mapList = new ArrayList<>(list.size());
-        list.forEach(logisticsAuthEntity -> {
-            Map<String, String> map = new HashMap<>();
-            map.put("id", logisticsAuthEntity.getId());
-            map.put("logisticsPlatform", platform);
-            List<LogisticsAuthFieldEntity> fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(logisticsAuthEntity.getId());
-            if (CollectionUtils.isNotEmpty(fieldEntities)) {
-                fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                    map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-                });
-                mapList.add(map);
-            }
-        });
-        return mapList;
-    }
 
     @Override
     public void syncUpdateSaleChannel(String logisticsPlatform, Map<String, String> authConfig) {

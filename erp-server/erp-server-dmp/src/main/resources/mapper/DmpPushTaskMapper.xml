@@ -40,6 +40,12 @@
         is_deleted,
         target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times, sync_operate
     </sql>
+    <delete id="deleteByIds">
+        delete from dmp_push_task where id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
     <update id="updateStatus">
         update dmp_push_task set status=0
         where is_deleted = false
@@ -50,46 +56,16 @@
             </foreach>
         </if>
     </update>
-    <delete id="deleteByIds">
-        delete from dmp_push_task where id in
-        <foreach collection="ids" item="item" open="(" separator="," close=")">
-            #{item}
-        </foreach>
-    </delete>
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$ListDTO">
         select
             <include refid="Base_Column_List"></include>
         from dmp_push_task
-        where is_deleted = false
-        <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
-            and source_type in
-            <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.sourceCode != null and params.sourceCode != '' ">
-            and source_code ilike concat('%',#{params.sourceCode}::text,'%')
-        </if>
-        <if test="params.returnMsg != null and params.returnMsg != '' ">
-            and return_msg ilike concat('%',#{params.returnMsg}::text,'%')
-        </if>
-        <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
-            and target_platform_name = #{params.targetPlatformName}
-        </if>
-        <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
-            and source_platform_name = #{params.sourcePlatformName}
-        </if>
-        <if test="params.statusList != null and params.statusList.size > 0">
-            and status in
-            <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
-            and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
-        </if>
+        where     ${params.sqlMap.default}
+          and  is_deleted = false
+
+
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -115,42 +91,10 @@
         select
         <include refid="Base_Column_List"></include>
         from dmp_push_task
-        where is_deleted = false
-        <if test="params.ids != null and params.ids.size > 0">
-            and id in
-            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.ids == null or params.ids.size == 0">
-            <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
-                and source_type in
-                <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.sourceCode != null and params.sourceCode != '' ">
-                and source_code ilike concat('%',#{params.sourceCode}::text,'%')
-            </if>
-            <if test="params.returnMsg != null and params.returnMsg != '' ">
-                and return_msg ilike concat('%',#{params.returnMsg}::text,'%')
-            </if>
-            <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
-                and target_platform_name = #{params.targetPlatformName}
-            </if>
-            <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
-                and source_platform_name = #{params.sourcePlatformName}
-            </if>
-            <if test="params.statusList != null and params.statusList != '' ">
-                and status in
-                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
-                and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
-            </if>
-        </if>
+        where  ${params.sqlMap.default}
+          and  is_deleted = false
+
+
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}

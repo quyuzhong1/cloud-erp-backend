@@ -21,8 +21,8 @@ import java.util.Arrays;
 @AllArgsConstructor
 public enum DmpMongoHandleTypeEnum {
 
-    AMZ_REPORT_FULFILLED_SHIPMENTS("amzReportFulfilledShipments", "亚马逊物流销售报告处理", "amzFulfilledShipmentsMongoHandler"),
-    AMZ_REPORT_ALL_LISTING("amzReportAllListing", "亚马逊Listing报告处理", "amzReportAllListingHandler"),
+    AMZ_REPORT_FULFILLED_SHIPMENTS("amzReportFulfilledShipments", "亚马逊物流销售报告处理", "amzFulfilledShipmentsMongoHandler", MongoTableNameContant.DATA_REPORT_AMZ_FULFILLED_SHIPMENTS),
+    AMZ_REPORT_ALL_LISTING("amzReportAllListing", "亚马逊Listing报告处理", "amzReportAllListingHandler", MongoTableNameContant.DATA_REPORT_AMZ_LISTING),
 
     ;
 
@@ -41,6 +41,12 @@ public enum DmpMongoHandleTypeEnum {
      * DmpMongoHandler实现的Handler名称
      */
     private final String handlerName;
+
+
+    /**
+     * DmpMongoHandler处理的mongoTable名称
+     */
+    private final String mongoTableName;
 
 
     public static DmpMongoHandleTypeEnum getByCode(String code, boolean nullThrow) {

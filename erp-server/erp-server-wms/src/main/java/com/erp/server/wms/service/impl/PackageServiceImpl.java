@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.UnitEnum;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -15,9 +16,11 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
@@ -28,16 +31,16 @@ import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
-import com.erp.server.wms.service.PackageForecastService;
-import com.erp.server.wms.service.PackageService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -75,6 +78,13 @@ public class PackageServiceImpl implements PackageService {
     @Resource
     private MQProducerService mqProducerService;
 
+    @Resource
+    private LogisticsBillFeign logisticsBillFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
+    @Lazy
+    @Resource
+    private AsyncService asyncService;
     @Override
     public PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO) {
         PackageDTO.ScanResultDTO scanResult = soB2cFeign.packageScanByCode(scanDTO.getCode());
@@ -128,16 +138,6 @@ public class PackageServiceImpl implements PackageService {
             throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
         }
 
-        if (!TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
-            TransferLogisticsStatusEnum platformTransferStatus = transferLogisticsFeign.getPlatformTransferStatus(entity.getShippingOrderNo(), scanResult.getTransferLogisticsSupplierId());
-            if (ObjectUtil.isEmpty(platformTransferStatus)
-                    || TransferLogisticsStatusEnum.DELETED.getCode().equals(platformTransferStatus.getCode())
-                    || TransferLogisticsStatusEnum.UNUSUAL.getCode().equals(platformTransferStatus.getCode())
-            ) {
-                throw new ServiceException(ApiError.ORDER_CANCEL_NOT_PACKAGE);
-            }
-        }
-
         if (entity.getIsIntercept()) {
             throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
         }
@@ -170,6 +170,13 @@ public class PackageServiceImpl implements PackageService {
             if(StringUtils.isNotBlank(scanResult.getLogisticsId())){
                 soB2cFeign.updateWeight(scanResult.getSoId(),scanResult.getLogisticsId(),weightByG);
             }
+            //查询订单物流信息获取跟踪号
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(entity.getId()));
+            if(CollectionUtils.isEmpty(soB2cLogisticsEntities)){
+                throw new ServiceException("订单物流信息为空");
+            }
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.get(0);
+
             // 更新发货单重量
             SoB2cDeliveryDTO.UpdateWeightDTO dto = SoB2cDeliveryDTO.UpdateWeightDTO.builder()
                     .soId(scanResult.getSoId())
@@ -178,6 +185,14 @@ public class PackageServiceImpl implements PackageService {
                     .build();
             soB2cDeliveryService.updateB2cDeliveryWeightBySoId(dto);
             scanResult.setWeight(weightByG);
+            //更新物流商重量
+            if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode()) && StringUtils.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
+                LogisticsBillDTO.UpdateWeight updateWeight = LogisticsBillDTO.UpdateWeight.builder()
+                        .soB2cEntity(entity)
+                        .soB2cLogisticsEntity(soB2cLogisticsEntity)
+                        .build();
+                asyncService.updateLogisticWeight(updateWeight);
+            }
         }
 
         //查询发货单
@@ -200,6 +215,10 @@ public class PackageServiceImpl implements PackageService {
             }
 
             if (TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
+                //判断是否是组包限制的发货物流商
+                Boolean isPackageSupplier = cfgSettingService.getPackageSupplierSetting(scanResult.getLogisticsSupplierId());
+                scanResult.setIsPackageSupplier(isPackageSupplier);
+                scanResult.setUniqueId(getPackageUniqueId(isPackageSupplier,scanResult.getLogisticsSupplierId(),scanResult.getTransferLogisticsChannelId(),scanResult.getTransferLogisticsSupplierId(), scanResult.getShopId()));
                 return scanResult;
             }
 
@@ -218,9 +237,21 @@ public class PackageServiceImpl implements PackageService {
                 }
             }
         }
-
+        //判断是否是组包限制的发货物流商
+        Boolean isPackageSupplier = cfgSettingService.getPackageSupplierSetting(scanResult.getLogisticsSupplierId());
+        scanResult.setIsPackageSupplier(isPackageSupplier);
+        scanResult.setUniqueId(getPackageUniqueId(isPackageSupplier,scanResult.getLogisticsSupplierId(),scanResult.getTransferLogisticsChannelId(),scanResult.getTransferLogisticsSupplierId(), scanResult.getShopId()));
         return scanResult;
     }
+
+    private String getPackageUniqueId(Boolean isPackageSupplier, String logisticsSupplierId, String transferLogisticsChannelId, String transferLogisticsSupplierId, String shopId) {
+        if (isPackageSupplier){
+            return logisticsSupplierId+"-"+transferLogisticsChannelId+"-"+transferLogisticsSupplierId + "-" + shopId;
+        }else {
+            return logisticsSupplierId+"-"+transferLogisticsChannelId+"-"+transferLogisticsSupplierId;
+        }
+    }
+
 
     /**
      * 组包合并
@@ -289,13 +320,15 @@ public class PackageServiceImpl implements PackageService {
             if(logisticsChannel!=null){
                 item.setLogisticsChannelName(logisticsChannel.getName());
                 item.setLogisticsSupplierId(logisticsChannel.getLogisticsSupplierId());
+                item.setIsPackageSupplier(cfgSettingService.getPackageSupplierSetting(logisticsChannel.getLogisticsSupplierId()));
                 item.setLogisticsSupplierName(logisticsChannel.getLogisticsSupplierName());
                 item.setLogisticsSupplierShortName(logisticsChannel.getLogisticsSupplierShortName());
             }
+            item.setUniqueId(getPackageUniqueId(item.getIsPackageSupplier(),item.getLogisticsSupplierId(),item.getTransferLogisticsChannelId(),item.getTransferLogisticsSupplierId(), item.getShopId()));
         }
 
         Map<String, List<PackageDTO.ScanResultDTO>> map = list.stream().filter(s -> StringUtils.isNotBlank(s.getLogisticsSupplierId())).
-                collect(Collectors.groupingBy(req -> req.getLogisticsSupplierId()+"-"+req.getTransferLogisticsChannelId()+"-"+req.getTransferLogisticsSupplierId()));
+                collect(Collectors.groupingBy(PackageDTO.ScanResultDTO::getUniqueId));
 
         LocalDate nowDate = LocalDate.now();
         String weightUnit= UnitEnum.WeightUnitEnum.G.getCode();

@@ -3,6 +3,7 @@ package com.erp.server.tms.convert;
 import com.common.business.mapper.BigDecimalToIntMapperWork;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsServicePlatformEntity;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.request.ParceInfoVO;
@@ -32,9 +33,9 @@ public interface LogisticsServiceConverter {
 
 
     @Mappings({
-            @Mapping(target = "serviceName", source = "serviceName"),
-            @Mapping(target = "logisticsType", source = "logisticsType")
+            @Mapping(target = "cnName", source = "serviceName"),
+            @Mapping(target = "code", source = "logisticsType")
     })
-    LogisticsServicePlatformEntity convertLogisticsService(LogisticsServiceResponseVO obj);
-    List<LogisticsServicePlatformEntity> convertLogisticsService( List<LogisticsServiceResponseVO> list);
+    LogisticsSaleChannelEntity convertLogisticsService(LogisticsServiceResponseVO obj);
+    List<LogisticsSaleChannelEntity> convertLogisticsService( List<LogisticsServiceResponseVO> list);
 }

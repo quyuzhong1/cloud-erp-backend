@@ -999,6 +999,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.UpdateDTO> detailList;
 
@@ -1530,6 +1531,12 @@ public class SoOutstockDTO implements Serializable {
          * 明细
          */
         private LinkedList<SoOutstockDetailDTO.AddDTO> detailList;
+
+
+        /**
+         * 是否检查sku历史映射
+         */
+        private boolean checkSkuHistory = true;
 
     }
 

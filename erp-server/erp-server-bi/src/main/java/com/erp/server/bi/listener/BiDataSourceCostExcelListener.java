@@ -14,7 +14,7 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.server.bi.enums.BiDataSourceCostEnum;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
@@ -37,7 +37,7 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
 
     private BiDataSourceCostDetailService biDataSourceCostDetailService;
 
-    private List<DmpShopInfoEntity> shopList;
+    private List<BiShopInfoEntity> shopList;
 
     private List<FindUserDTO> userList;
 
@@ -51,8 +51,8 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
 
     private List<String> headList;
 
-    public BiDataSourceCostExcelListener(BiDataSourceCostService biDataSourceCostService,BiDataSourceCostDetailService biDataSourceCostDetailService,
-                                         List<DmpShopInfoEntity> shopList,List<FindUserDTO> userList,List<BiDictEntity> dictList,List<SysDepartmentDTO> deptList) {
+    public BiDataSourceCostExcelListener(BiDataSourceCostService biDataSourceCostService, BiDataSourceCostDetailService biDataSourceCostDetailService,
+                                         List<BiShopInfoEntity> shopList, List<FindUserDTO> userList, List<BiDictEntity> dictList, List<SysDepartmentDTO> deptList) {
         this.biDataSourceCostService = biDataSourceCostService;
         this.biDataSourceCostDetailService = biDataSourceCostDetailService;
         this.shopList = shopList;
@@ -174,8 +174,8 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
             if (StringUtils.isBlank(entity.getChargeName())) {
                 errorMsgList.add("负责人不能为空");
             }
-            DmpShopInfoEntity dmpShopInfoEntity = shopList.stream().filter(obj -> obj.getName().equals(entity.getShopName()) && obj.getSite().equals(entity.getSite()) && obj.getPlatformName().equals(entity.getPlatformName())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(dmpShopInfoEntity)) {
+            BiShopInfoEntity biShopInfoEntity = shopList.stream().filter(obj -> obj.getName().equals(entity.getShopName()) && obj.getSite().equals(entity.getSite()) && obj.getPlatformName().equals(entity.getPlatformName())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(biShopInfoEntity)) {
                 errorMsgList.add("在平台站点中未找到该店铺");
             }
             String errStr = "";
@@ -188,7 +188,7 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                 list.add(map);
                 return;
             }
-            entity.setShopId(dmpShopInfoEntity.getId());
+            entity.setShopId(biShopInfoEntity.getId());
             //根据月份、店铺数据查询
             BiDataSourceCostEntity cost = biDataSourceCostService.getByCostParam(entity);
             if (ObjectUtils.isEmpty(cost)) {

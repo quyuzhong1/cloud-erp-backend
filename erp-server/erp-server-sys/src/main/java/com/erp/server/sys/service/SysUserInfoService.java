@@ -4,6 +4,7 @@ package com.erp.server.sys.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -283,5 +284,12 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     void updateStateSrm(UpdateUserStateDTO stateDTO);
 
     List<SysUserInfoEntity> listErpUser();
+    /**
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
+     */
+    PagingVO<UserSelectDto.PageSelectDTO> pagingSelect(PagingDTO<UserSelectDto.SelectDTO> dto);
 }
 

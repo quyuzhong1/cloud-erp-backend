@@ -46,10 +46,10 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
      * @description: 根据关键词查询
      * @author Will
      * @date: 2024/5/23 19:43
-     * @param searchKeyword
+     * @param params
      * @return List<WarehouseEntity>
      */
-    List<WarehouseEntity> listWarehouse(@Param("searchKeyword") String searchKeyword);
+    List<WarehouseEntity> listWarehouse(@Param("params") WarehouseDTO.ListInventoryQtyParamDTO params);
     /**
      * @description: 分页远程查询
      * @author Will

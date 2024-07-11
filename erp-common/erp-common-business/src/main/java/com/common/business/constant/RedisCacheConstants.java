@@ -143,6 +143,11 @@ public interface RedisCacheConstants {
      */
     String PLATFORM_RATE_LIMIT_ENDPOINTS = "platform_rate_limit:{}:{}:{}:{}";
 
+    /**
+     * 平台请求频率:{(平台类型:sellerId::端点)=groupId}:{业务类型/接口类型}
+     */
+    String PLATFORM_RATE_LIMIT_GROUP_ID_PREFIX = "platform_rate_limit:{}:{}";
+
 
     /**
      * 平台请求频率前缀:groupId
@@ -194,5 +199,12 @@ public interface RedisCacheConstants {
      * 物流报关单合同号
      */
     String TMS_DECLARE_CODE = "tms_declare_code:{}_{}";
+
+    /**
+     * 亚马逊订单任务开始时间前置:taskId
+     */
+    String AMAZON_ORDER_TASK_TIME_PREFIX = "amazon_order_start_time:{}";
+
+    String SNOWFLAKE_KEY = "snowflake_key:{}";
 
 }

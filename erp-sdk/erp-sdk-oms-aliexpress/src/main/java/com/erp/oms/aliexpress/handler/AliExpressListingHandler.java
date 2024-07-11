@@ -110,7 +110,7 @@ public class AliExpressListingHandler extends AbstractProductHandler<PlatformAli
 
     @Override
     public Boolean getIsSendMq() {
-        return false;
+        return true;
     }
 
     @Override

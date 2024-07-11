@@ -21,10 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -87,7 +84,7 @@ public class GetLogisticsTrackNoTaskJob {
                     List<SoB2cLogisticsEntity> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
                         String deliveryNo = item.getDeliveryNo();
-                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getDeliveryNo().equals(deliveryNo)).
+                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getDeliveryNo().equals(deliveryNo) && f.getTransportNo().equals(item.getTransportNo())).
                                 map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
                         if (StringUtils.isNotBlank(b2cLogisticsId)) {
                             List<String> trackNoList = new ArrayList<>(2);
@@ -147,7 +144,7 @@ public class GetLogisticsTrackNoTaskJob {
                 }
                 item.setDeliveryNo(deliveryNo);
                 queryBase.setDeliveryNo(deliveryNo);
-                Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId, logisticsPlatform);
+                Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId,item.getShopId(), logisticsPlatform);
                 authMap.put("token", item.getShopToken());
                 queryBase.setAuthMap(authMap);
                 queryBaseList.add(queryBase);

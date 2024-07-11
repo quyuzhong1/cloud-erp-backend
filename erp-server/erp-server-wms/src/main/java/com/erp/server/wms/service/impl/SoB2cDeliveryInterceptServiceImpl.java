@@ -23,12 +23,15 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -36,6 +39,8 @@ import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -268,6 +273,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .referenceNumber(soB2cEntity.getCode())
                 .reason("b2c发货拦截单自动拦截")
                 .orderId(entity.getId())
+                .shopId(soB2cEntity.getShopId())
                 .build();
         //先取消订单，取消订单失败的再拦截订单
         ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(dto);
@@ -434,12 +440,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 //更新备注
                 soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
 
-                if (!soB2cEntity.getIsCancel() && !SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
+                if (!soB2cEntity.getIsCancel() && soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
                     // 调用第三方平台SDK标记发货(独立事务)
                     String businessDesc = "称重出库";
                     asyncService.asyncShipOrder(soB2cEntity.getId(),
                             soB2cEntity.getCode(),
                             soB2cEntity.getDictPlatform(),
+                            soB2cEntity.convertSubmitPlatformUniqueKey(),
                             JSONUtil.toJsonStr(dto),
                             businessDesc, false);
                 } else {

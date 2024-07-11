@@ -9,13 +9,10 @@ package com.erp.server.bi.listener;/**
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
-import com.erp.model.bi.dto.excel.TargetShopSettingImportExcelDTO;
 import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.enums.MetricsEnum;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.server.bi.service.BiProductDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 

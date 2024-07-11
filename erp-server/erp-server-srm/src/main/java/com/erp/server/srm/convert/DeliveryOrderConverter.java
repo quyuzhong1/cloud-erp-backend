@@ -19,6 +19,9 @@ public interface DeliveryOrderConverter {
 
     @Mapping(target = "detailId", source = "id")
     @Mapping(target = "purchaseQty", source = "orderQty")
+    @Mapping(target = "receiveCode", source = "receiveCode")
+    @Mapping(target = "detailReceiptStatus", source = "receiptStatus")
+    @Mapping(target = "detailReceiptStatusName", expression = "java(com.common.core.constant.EnumMessage.getNameByCode(com.erp.model.srm.enums.DeliveryOrderEnum.ReceiptStatusEnum.class,detail.getReceiptStatus()))")
     DeliveryOrderDetailDTO.ViewDTO detailViewConvert(DeliveryOrderDetailEntity detail);
     List<DeliveryOrderDetailDTO.ViewDTO> detailViewConvert(List<DeliveryOrderDetailEntity> details);
 

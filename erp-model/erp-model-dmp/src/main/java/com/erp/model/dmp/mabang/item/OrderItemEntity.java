@@ -107,6 +107,10 @@ public class OrderItemEntity {
      */
     private String stockGrid;
     /**
+     * 库存skuId
+     */
+    private String stockId;
+    /**
      * 库存sku
      */
     private String stockSku;

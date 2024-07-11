@@ -42,7 +42,7 @@ public class DsfLogisticsHandlerImplTest {
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = dsfLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = dsfLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){

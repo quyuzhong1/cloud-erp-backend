@@ -1,6 +1,6 @@
 package com.erp.oms.aliexpress.handler;
+
 import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -33,8 +33,9 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -70,6 +71,8 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         // 订单状态
         String orderStatus = "";
         List<String> orderStatusList = new LinkedList<>();
+        // 是否请求历史订单(请求历史订单不带更新时间区间)
+        boolean historyQuery = false;
         Map<String, Object> apiParam = data.getApiParam();
         if (!apiParam.isEmpty() && apiParam.containsKey("order_status")){
             orderStatus = (String) apiParam.get("order_status");
@@ -80,27 +83,86 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
                 orderStatusList = (List<String>) listObj;
             }
         }
+        if (!apiParam.isEmpty() && apiParam.containsKey("history_query")) {
+            Object historyQueryObj = apiParam.get("history_query");
+            if (null != historyQueryObj){
+                historyQuery = (Boolean) historyQueryObj;
+            }
+        }
 
-        // 上次执行时间
-        LocalDateTime lastTime = data.getLastTime();
-        // 下次执行时间
-        LocalDateTime nextTime = data.getNextTime();
+//        性能问题：
+//        aliexpress.trade.seller.orderlist.get 获取卖家已结束的订单
+//        必须显式提供已结束状态作为order_status入参，同时加上创建时间作为查询条件。请注意：如果要使用修改时间作为入参，必须加上创建时间，且创建开始时间和创建结束时间的范围不能超过30天（大促期间可能会缩小）。
+//        由于卖家已结束的订单量比较大，建议把订单切分成按创建时间的天获取，减少单次请求对数据库的记录扫描量，以提升效率。
+//        aliexpress.trade.seller.orderlist.get 获取增量订单（不包括已结束的订单）
+//        建议显式指定order_status入参，同时加上修改时间作为查询条件，以减少数据库的记录扫描量。请注意：如果要使用修改时间作为入参，必须加上创建时间，且创建开始时间和创建结束时间的范围不能超过180天（大促期间可能会缩小）。
+//        https://open.aliexpress.com/doc/doc.htm#/?docId=641
+
         String formatStr = DateUtil.fmt;
+        // 上次执行时间(数据提前10分钟)
+        // 格式: yyyy-mm-dd hh:mm:ss。此时间为美国太平洋时间
+        LocalDateTime lastTime = data.getLastTime()
+                .minusMinutes(10)
+                .atZone(ZoneId.systemDefault())
+                .toOffsetDateTime()
+                .atZoneSameInstant(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
+                .toLocalDateTime()
+                ;
+        // 下次执行时间
+        // 格式: yyyy-mm-dd hh:mm:ss。此时间为美国太平洋时间
+        LocalDateTime nextTime = data.getNextTime()
+                .atZone(ZoneId.systemDefault())
+                .toOffsetDateTime()
+                .atZoneSameInstant(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
+                .toLocalDateTime();
+        // 创建开始时间
+        String createDateStart;
+        // 创建结束时间
+        String createDateEnd;
+        // 请求的更新开始时间
+        String modifyStartTime = "";
+        // 请求的更新结束时间
+        String modifyEndTime = "";
+
+        if (historyQuery){
+            // 请求历史订单不带更新时间区间
+            // 创建开始时间
+            createDateStart = LocalDateUtil.formatTime(lastTime, formatStr);
+            // 创建结束时间
+            createDateEnd = LocalDateUtil.formatTime(nextTime, formatStr);
+        } else {
+            // 请求增量订单必须带更新时间区间和创建时间区间(完结订单:间隔不超过30天)
+            // 请求的更新开始时间
+            modifyStartTime = LocalDateUtil.formatTime(lastTime, formatStr);
+            // 请求的更新结束时间
+            modifyEndTime = LocalDateUtil.formatTime(nextTime, formatStr);
+
+            // 设置开始时间和结束时间
+            // 创建开始时间
+            // 完结订单：更新结束时间 - 30 天 = 创建开始时间
+            LocalDateTime startLocalDateTime = nextTime.minusDays(30);
+            createDateStart =  LocalDateUtil.formatTime(startLocalDateTime, formatStr);
+            // 创建结束时间 = 更新结束时间
+            createDateEnd = modifyEndTime;
+        }
+
         OrderRequest orderRequest = OrderRequest.builder().
                 clientId(shopInfoDTO.getClientId()).
-                clientSecret(shopInfoDTO.getClientSecret()).
-                startTime(LocalDateUtil.formatTime(lastTime, formatStr)).
-                endTime(LocalDateUtil.formatTime(nextTime, formatStr)).
-                baseUrl(shopInfoDTO.getBaseUrl()).
-                apiName(apiName).
-                currentPage(1).
-                token(shopInfoDTO.getToken())
+                clientSecret(shopInfoDTO.getClientSecret())
+                .startTime(modifyStartTime)
+                .endTime(modifyEndTime)
+                .baseUrl(shopInfoDTO.getBaseUrl())
+                .apiName(apiName)
+                .currentPage(1)
+                .token(shopInfoDTO.getToken())
                 .orderStatus(orderStatus)
                 .orderStatusList(orderStatusList)
+                .createDateStart(createDateStart)
+                .createDateEnd(createDateEnd)
                 .build();
-        List<AliExpressOrder> orderList = new ArrayList<>(20);
+        List<AliExpressOrder> orderList;
         try {
-            aliExpressOrderService.listOrder(orderRequest,orderList);
+            orderList = aliExpressOrderService.allOrder(orderRequest);
         } catch (Exception e) {
             log.error("获取速卖通订单数据异常:{}", ExceptionUtil.stacktraceToString(e));
             throw new RuntimeException(e);
@@ -108,7 +170,6 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         if (CollectionUtils.isEmpty(orderList)) {
             return Collections.emptyList();
         }
-
 
         return orderList.stream()
                 .map(e -> new PlatformAliExpressOrderDTO(data, e, shopInfoDTO))
@@ -155,7 +216,10 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
             List<LogisitcsDTO> logisticInfoList = platformAliExpressOrderDTO.getAliExpressOrder().getDetail().getLogisticInfoList();
             if (!CollectionUtils.isEmpty(logisticInfoList)){
                 for (LogisitcsDTO logisitcsDTO : logisticInfoList) {
-                    ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId()) && req.getTrackingNo().equals(logisitcsDTO.getLogisticsNo())).findFirst().orElse(null);
+                    ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean = deliveryList.stream()
+                            .filter(e -> StringUtils.isNotBlank(e.getTradeOrderNo()) && StringUtils.isNotBlank(e.getTrackingNo()) )
+                            .filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId()) && req.getTrackingNo().equals(logisitcsDTO.getLogisticsNo()))
+                            .findFirst().orElse(null);
                     if (null != erpFulfillmentForwardDtoBean) {
                         logisitcsDTO.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName());
                     } else {
@@ -305,5 +369,11 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
     @Override
     public Boolean getIsSendMq() {
         return false;
+    }
+
+    public static void main(String[] args) {
+        OffsetDateTime offsetDateTime = LocalDateTime.of(2024, 5, 1, 0, 0, 0).atZone(ZoneId.systemDefault()).toOffsetDateTime();
+        LocalDateTime localDateTime = offsetDateTime.atZoneSameInstant(ZoneId.of("America/Tijuana")).toLocalDateTime();
+        System.out.println(localDateTime.toString());
     }
 }

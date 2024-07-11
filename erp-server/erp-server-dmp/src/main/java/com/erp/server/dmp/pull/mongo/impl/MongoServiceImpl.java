@@ -1,14 +1,12 @@
 package com.erp.server.dmp.pull.mongo.impl;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.core.utils.MapUtil;
-import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.utils.MongoUtil;
-import com.google.common.collect.Lists;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.WriteModel;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,11 +21,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import com.common.business.dto.CleanBaseDTO;
+import com.common.core.anno.ParamData;
+import com.common.core.utils.MapUtil;
+import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.utils.MongoUtil;
+import com.google.common.collect.Lists;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.WriteModel;
+
+import cn.hutool.core.collection.CollUtil;
+import lombok.extern.slf4j.Slf4j;
 
 @Service("mongoService")
 @Slf4j
@@ -223,13 +228,13 @@ public class MongoServiceImpl implements MongoService {
 	}
 
 	@Override
-	public <T> void upsertMongoDataBatch(List<Map<String,Object>> newData, String table, Class<T> clazz) {
+	public <T> void upsertMongoDataBatch(List<Map<String,Object>> newData, String table) {
 		ArrayList<WriteModel<Document>> writeModels = new ArrayList<>();
 		if(!CollectionUtils.isEmpty(newData)){
 			for (int i = 0; i < newData.size(); i++) {
-
-				Document document1 = new Document("mainId",newData.get(i).get("mainId"));
-				Document document2 = new Document("$set",newData.get(i).get("entity"));
+				Map<String, Object> map = newData.get(i);
+				Document document1 = new Document("_id",map.get("_id"));
+				Document document2 = new Document("$set",map);
 				UpdateOneModel<Document> documentUpdateOneModel = new UpdateOneModel<Document>(document1,document2,new UpdateOptions().upsert(true));
 				writeModels.add(documentUpdateOneModel);
 			}
@@ -271,6 +276,27 @@ public class MongoServiceImpl implements MongoService {
 
 			// 执行更新操作
 			orderTemplate.updateMulti(query, update, tClass, tableName);
+		}
+	}
+
+	@Override
+	public List<Map<String, Object>> findMongoData(List<ParamData> paramDataList, String table) {
+		Criteria criteria = MongoUtil.mongoFilter_duplicateKey(paramDataList);
+		Query query = new Query(criteria);
+		List<Map> list = orderTemplate.find(query, Map.class, table);
+		if(CollUtil.isEmpty(list)) {
+			return new ArrayList<Map<String,Object>>();
+		}else {
+			List<Map<String, Object>> resultList = new ArrayList<>();
+			for(Map l : list) {
+				Set<Entry> entrySet = l.entrySet();
+				Map<String, Object> map = new HashMap<>();
+				for(Entry entry : entrySet) {
+					map.put(entry.getKey().toString(), entry.getValue());
+				}
+				resultList.add(map);
+			}
+			return resultList;
 		}
 	}
 

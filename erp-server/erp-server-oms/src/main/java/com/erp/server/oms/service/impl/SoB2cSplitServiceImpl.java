@@ -2,12 +2,14 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.annotation.DataIdempotent;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -33,7 +35,6 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConverter;
@@ -54,7 +55,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -108,10 +108,15 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if(CollectionUtils.isEmpty(detailEntityList)){
             throw new ServiceException("明细为空");
         }
+        SoB2cEntity soB2cEntity = soB2cService.getById(detailEntityList.get(0).getMainId());
         List<String> skuIds = detailEntityList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
         List<SoB2cDetailDTO.ViewDTO> resultList = new ArrayList<>();
         //根据SKU查询BOM判断是否是组合SKU
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<SkuMappingDTO.ListSkuParamDTO> listParamList = bomChildrenList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), "",soB2cEntity.getDictPlatform(),soB2cEntity.getShopId())).collect(Collectors.toList());
+        ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
+        listSkuParamList.setList(listParamList);
+        List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
         for (SoB2cDetailEntity detailEntity : detailEntityList) {
             String combination = BomTypeEnum.COMBINATION.getType();
             bomChildrenList = bomChildrenList.stream().filter(b -> combination.equals(b.getType())).collect(Collectors.toList());
@@ -145,6 +150,12 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 }
                 viewDTO.setTaxCost(costPrice);
                 totalCostPrice = totalCostPrice.add(costPrice);
+                //平台SKU
+                SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(bomChildrenSkuDTO.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
+                    viewDTO.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
+                    viewDTO.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
+                }
                 resultList.add(viewDTO);
             }
             for (int i = 0; i < resultList.size(); i++) {
@@ -176,6 +187,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     }
 
     @Override
+    @DataIdempotent(keyIdName = "ids")
     public List<BatchResultDTO> bomSplitAndSave(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = this.listByIds(ids);
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(ids);
@@ -255,7 +267,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
                 //封装平台sku信息
                 //SKU对照表信息
-                List<SkuMappingDTO.ListSkuParamDTO> listParamList = addDetailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), detailEntity.getWarehouseId(),soB2cEntity.getDictPlatform())).collect(Collectors.toList());
+                List<SkuMappingDTO.ListSkuParamDTO> listParamList = addDetailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), detailEntity.getWarehouseId(),soB2cEntity.getDictPlatform(),soB2cEntity.getShopId())).collect(Collectors.toList());
                 ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
                 listSkuParamList.setList(listParamList);
                 List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
@@ -270,11 +282,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     //平台SKU
                     SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(soB2cDetailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
-                        // 非平台下载的订单
-                        if (!SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
-                            soB2cDetailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
-                            soB2cDetailEntity.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
-                        }
+                        soB2cDetailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
+                        soB2cDetailEntity.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
                     } else {
                         soB2cDetailEntity.setPlatformSkuNo("");
                         soB2cDetailEntity.setPlatformSpuNo("");
@@ -553,14 +562,41 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "dto.id")
     public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
         //订单拆分字段处理
-        SoB2cDTO.SplitSaveResultDTO resultDTO = splitSaveHandle(dto);
-
+        SoB2cDTO.SplitSaveResultDTO resultDTO = service.splitSaveHandle(dto);
+        List<SoB2cEntity> entityList = resultDTO.getNeedRuleIds();
+        if(CollectionUtils.isNotEmpty(entityList)){
+            for (SoB2cEntity entity : entityList) {
+                //走仓库规则和物流规则的
+                SoB2cDTO.RuleResultDTO warehouseRuleResult = new SoB2cDTO.RuleResultDTO();
+                try {
+                    //拉取订单正常处理
+                    warehouseRuleResult = soB2cService.warehouseRule(entity.getId(), new ArrayList<>(), new HashMap<>());
+                }catch (Exception e){
+                    log.error("{}仓库规则异常",entity.getCode(),e);
+                    warehouseRuleResult.setIsRuleMatch(false);
+                }
+                Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+                if (warehouseRuleMatch) {
+                    SoB2cDTO.RuleResultDTO logisticsRuleResult = new SoB2cDTO.RuleResultDTO();
+                    try {
+                        logisticsRuleResult = soB2cService.logisticsRule(entity.getId(), new HashMap<>(), true);
+                    }catch (Exception e){
+                        logisticsRuleResult.setAutoGetTrackNo(false);
+                        log.error("{}物流规则异常",entity.getCode(),e);
+                    }
+                    Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                    if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                        soB2cService.getLogisticsCode(entity.getId(), true);
+                    }
+                }
+            }
+        }
         //如果是TikTok平台拆分订单，需要同步到平台
         if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform())) {
-            tikTokSplit(resultDTO);
+            service.tikTokSplit(resultDTO);
         }
         return resultDTO;
     }
@@ -632,6 +668,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         //拆分同步tiktok入参
         OrderSplitPramDTO tikTokPramDTO = new OrderSplitPramDTO();
         List<SplittableGroupsBean> splittableGroups = new ArrayList<>();
+        List<SoB2cEntity> needRuleList = new ArrayList<>();
 
         for (int i = 0; i < splitList.size(); i++) {
             SplittableGroupsBean groupsBean = new SplittableGroupsBean();
@@ -709,6 +746,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setWidth(null);
             logisticsAddDTO.setHeight(null);
             logisticsAddDTO.setWeight(null);
+            logisticsAddDTO.setLogisticsChannelId("");
             addDTO.setLogisticsDTO(logisticsAddDTO);
             addDTO.setRemark(StrUtil.format("【{}】拆分订单", entity.getCode()));
 
@@ -719,7 +757,17 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             String code = StrUtil.format("{}_{}", entity.getCode(), flag);
             SoB2cEntity add = soB2cService.add(addDTO, code);
             soIdList.add(add.getId());
-
+            //迭代1.27.4 拆分的子订单的审核状态默认等于原订单审核状态 订单状态：如果子件不是审核通过，则默认待配货；如果子单是审核通过，则子件走仓库和物流规则，按实际规则执行结果确认订单状态
+            add.setApproveStatus(entity.getApproveStatus());
+            if(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                soB2cService.approveEnd(approveOneDTO,add,true);
+                needRuleList.add(add);
+            }else{
+                add.setApproveStatus(entity.getApproveStatus());
+                this.updateById(add);
+            }
             //用于同步到TikTok拆分数据的入参
             List<String> sourceDetailIds = detailList.stream().map(req -> req.getSourceDetailId()).collect(Collectors.toList());
             groupsBean.setOrderLineItemIds(sourceDetailIds);
@@ -744,6 +792,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         splitSaveResultDTO.setSoB2cIds(soIdList);
         splitSaveResultDTO.setTikTokPramDTO(tikTokPramDTO);
         splitSaveResultDTO.setOldEntity(entity);
+        splitSaveResultDTO.setNeedRuleIds(needRuleList);
         return splitSaveResultDTO;
     }
 
@@ -779,7 +828,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             throw new ServiceException(ApiError.ERROR_SO_B2C_SAVE_SPLIT_INVALID);
         }
         if(Objects.nonNull(soB2cLogisticsEntity) && StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())){
-            throw new ServiceException("已获取跟踪号不允许拆分");
+            throw new ServiceException("已获取跟踪号，请取消物流单后再执行拆分");
         }
         if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_SPLIT, entity.getCode());
@@ -965,6 +1014,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         //操作日志
         String msg = "从【{}】取消拆分";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消拆分");
+        operateLogService.addModuleOperateLog(StrUtil.format("订单取消拆分"), ModuleTypeEnum.SO_B2C.getCode(), soB2cRefList.get(0).getSourceId(), "取消拆分");
+        //删除原单备注
+        this.lambdaUpdate().eq(SoB2cEntity::getId,soB2cRefList.get(0).getSourceId()).set(SoB2cEntity::getRemark,"").update();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消拆分");
     }
 }

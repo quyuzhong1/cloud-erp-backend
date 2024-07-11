@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 /**
  * 店铺表
- * @TableName dmp_shop_info
+ * @TableName bi_shop_info
  */
 @Data
 public class DmpShopInfoDTO implements Serializable {

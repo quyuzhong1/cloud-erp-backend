@@ -77,6 +77,7 @@ public enum InventoryBusinessTypeEnum {
     SO_B2C_DELIVERY_CANCEL("so_b2c_delivery_cancel", "36","b2c发货单取消发货(退回)"),
     SO_B2C_DELIVERY_SHELVES("so_b2c_delivery_shelves", "37","b2c发货单取消发货(上架)"),
 
+
     ;
 
     private String code;

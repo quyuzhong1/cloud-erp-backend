@@ -431,7 +431,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @author Will
      * @date: 2023/3/9 9:26
      * @param id
-     * @param syncKingdeeStatus
+     * @param syncKingdeeId
      */
     Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
@@ -743,18 +743,56 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @date 2023-03-21 12:06
      */
     List<SkuVO> listSkuAllAttributeByIds(List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
     List<SkuVO> listSkuPackByIds(List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku销售信息 （基础信息+产品信息+销售信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
     List<SkuVO> listSkuSaleByIds(List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku物流信息 （基础信息+产品信息+物流信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
     List<SkuVO> listSkuLogisticsByIds(List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+分类信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
     List<SkuVO> listSkuCategoryByIds(List<String> skuIds);
-
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+采购信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
     List<SkuVO> listSkuPurchaseByIds(List<String> skuIds);
 
     ProductDetailEntity getBySkuNoOrEan(String skuCode);
 
     String dimensionalWeightMeasure(DimensionalWeightDTO dto);
+    void initProductToWangDian(List<String> ids);
+    PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
+
 }

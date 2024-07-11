@@ -172,7 +172,6 @@ public class DeliveryOrderFeginController extends BaseController {
      * 更新主记录
      */
     @PostMapping("/updateDeliveryOrder")
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean updateDeliveryOrder(@RequestBody DeliveryOrderEntity deliveryOrderEntity){
         return deliveryOrderService.updateById(deliveryOrderEntity);
     }
@@ -181,17 +180,16 @@ public class DeliveryOrderFeginController extends BaseController {
      * 更新明细
      */
     @PostMapping("/updateDeliveryDetail")
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean updateDeliveryDetail(@RequestBody List<DeliveryOrderDetailEntity> detailEntityGroupList){
-        return detailService.updateBatchById(detailEntityGroupList);
+        return detailService.updateDeliveryDetail(detailEntityGroupList);
     }
 
     /**
      * 确认收货
      */
     @PostMapping("/confirmReceiveStatus")
-    public Boolean confirmReceiveStatus(@RequestBody List<String> ids){
-        return deliveryOrderService.confirmReceiveStatus(ids);
+    public Boolean confirmReceiveStatus(@RequestBody List<String> detailIds){
+        return detailService.confirmReceiveStatus(detailIds);
     }
 
 
@@ -199,15 +197,15 @@ public class DeliveryOrderFeginController extends BaseController {
      * 反确认收货
      */
     @PostMapping("/unConfirmReceiveStatus")
-    public Boolean unConfirmReceiveStatus(@RequestBody List<String> ids){
-        return deliveryOrderService.unConfirmReceiveStatus(ids);
+    public Boolean unConfirmReceiveStatus(@RequestBody List<String> detailIds){
+        return detailService.unConfirmReceiveStatus(detailIds);
     }
 
     /**
      * 取消收货
      */
     @PostMapping("/cancelReceive")
-    public Boolean cancelReceive(@RequestBody List<String> ids){
-        return deliveryOrderService.cancelReceive(ids);
+    public Boolean cancelReceive(@RequestBody List<String> detailIds){
+        return detailService.cancelReceive(detailIds);
     }
 }

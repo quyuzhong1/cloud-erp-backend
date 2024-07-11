@@ -17,7 +17,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.OrderStateEnum;
-import com.erp.server.bi.service.DmpShopInfoService;
+import com.erp.server.bi.service.BiShopInfoService;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import java.util.Map;
 public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInfoImportExcelDTO> {
     private Integer importType;
 
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
     private SysUserFeign sysUserFeign;
 
@@ -43,9 +43,9 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
 
     private List<SysDepartmentDTO> deptList;
 
-    public DmpOrderInfoExcelListener(Integer importType, List<SysDepartmentDTO> deptList, PlmTaskFeign plmTaskFeign, DmpShopInfoService dmpShopInfoService, SysUserFeign sysUserFeign) {
+    public DmpOrderInfoExcelListener(Integer importType, List<SysDepartmentDTO> deptList, PlmTaskFeign plmTaskFeign, BiShopInfoService biShopInfoService, SysUserFeign sysUserFeign) {
         this.importType = importType;
-        this.dmpShopInfoService = dmpShopInfoService;
+        this.biShopInfoService = biShopInfoService;
         this.sysUserFeign = sysUserFeign;
         this.plmTaskFeign = plmTaskFeign;
         this.deptList = deptList;
@@ -86,7 +86,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
             }
         }
         if (StringUtils.isNotBlank(dto.getShopName())) {
-            Integer count = dmpShopInfoService.getDmpShopInfoByParam(dto.getSourcePlatform(), dto.getSite(), dto.getShopName());
+            Integer count = biShopInfoService.getDmpShopInfoByParam(dto.getSourcePlatform(), dto.getSite(), dto.getShopName());
             if (count == 0) {
                 errorMsgList.add("在平台站点中未找到该店铺");
             }

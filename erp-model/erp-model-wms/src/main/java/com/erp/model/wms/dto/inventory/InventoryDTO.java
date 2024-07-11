@@ -877,6 +877,10 @@ public class InventoryDTO implements Serializable {
          * 仓位id
          */
         private String warehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
 
 
         /**
@@ -1075,6 +1079,11 @@ public class InventoryDTO implements Serializable {
          * 可用库存
          */
         private Integer usableQty;
+
+        /**
+         * 冻结库存数量
+         */
+        private Integer frozenQty;
     }
 
 

@@ -181,6 +181,8 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
 
     List<BatchResultDTO> bindShipment(List<RequisitionApplicationDTO.BindShipment> dto);
 
+    PagingVO<RequisitionApplicationDTO.WarehouseListDTO> pagingSelect(PagingDTO<RequisitionApplicationDTO.WarehouseSelectDTO> dto);
+
     /**
      * 修改拣货单反写要货申请单
      * @param sourceDetailIds 明细id

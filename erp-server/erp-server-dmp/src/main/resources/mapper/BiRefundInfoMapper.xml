@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.pull.mapper.BiRefundInfoMapper">
+
+    <sql id="Base_Column_List">
+        id,platform_order_id,currency_code,
+        refund_amount,refund_type,refund_reason_desc,
+        refund_remark,refund_status,refund_create_time,
+        shop_no,shop_name,platform_name,
+        refund_time,currency_rate,country_code,
+        country_cn,country_en,sales_record_number,
+        buyer_user_id,buyer_name,item_total_origin,
+        shipping_total_origin,order_time,express_time,
+        picture_url,platform_update_time,track_number,refund_code
+        cny_settle_amount,clean_state,retry_count
+
+    </sql>
+
+    <select id="cleanRefundList" resultType="com.erp.model.dmp.entity.BiRefundInfoEntity">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM bi_refund_info
+        WHERE clean_state = 1
+        OR order_time IS NULL
+        ORDER BY retry_count
+        limit #{pageSize} offset (#{pageIndex}-1) * #{pageSize}
+    </select>
+</mapper>

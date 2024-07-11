@@ -141,6 +141,7 @@ public class ProductSkuDTO extends PermissionsDTO {
 
     /**
      * 销售方式
+     * 1商品 2 赠品 3包材 4半成品
      */
     private List<String> saleMethodList;
 

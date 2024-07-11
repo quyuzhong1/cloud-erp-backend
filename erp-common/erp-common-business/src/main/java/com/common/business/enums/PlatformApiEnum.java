@@ -128,6 +128,13 @@ public enum PlatformApiEnum {
      * 亚马逊api
      */
     FBA_SHIPMENT_DETAIL(65, "fba_shipment_detail", MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT, ""),
+
+    //----------------------------------------------------------旺店通----------------------------------------------------------------------------
+    WDT_SELL_STOCK_OUT_ORDER(100, "wdt.wms.stockout.Sales.queryWithDetail", MongoTableNameContant.THIRD_SYSTEM_WDT_SELL_STOCK_OUT_ORDER, TaskConstant.WDT_PULL_DATA_TASK),
+    WDT_RETURN_STOCK_OUT_ORDER(101, "wdt.wms.stockin.Refund.queryWithDetail", MongoTableNameContant.THIRD_SYSTEM_WDT_RETURN_STOCK_OUT_ORDER, TaskConstant.WDT_PULL_DATA_TASK),
+    WANGDIAN_SHOP(102, "setting.Shop.queryShop", MongoTableNameContant.ORIGNAL_WANGDIAN_SHOP, TaskConstant.WDT_PULL_DATA_TASK),
+    WANGDIAN_WAREHOUSE(103, "setting.Warehouse.queryWarehouse", MongoTableNameContant.ORIGNAL_WANGDIAN_WAREHOUSE, TaskConstant.WDT_PULL_DATA_TASK),
+    WANGDIAN_VIRTUAL_WAREHOUSE(104, "setting.strategy.VirtualWarehouse.warehouseSearch", MongoTableNameContant.ORIGNAL_WANGDIAN_VIRTUAL_WAREHOUSE, TaskConstant.WDT_PULL_DATA_TASK),
     ;
 
     /** 状态码 */

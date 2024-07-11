@@ -62,7 +62,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "deptId", source = "salesDeptId"),
             @Mapping(target = "chargeId", source = "sellerId")
     })
-    DmpOrderInfoEntity soInfoToDmpOrder(SoInfoEntity soInfo);
+    BiOrderInfoEntity soInfoToDmpOrder(SoInfoEntity soInfo);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -84,7 +84,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "cnySettleRate", source = "exchangeRate"),
             @Mapping(target = "sourceItemId", source = "id")
     })
-    DmpOrderItemSplitEntity soDetailToDmpOrderItem(SoDetailEntity soDetailEntity);
+    BiOrderItemSplitEntity soDetailToDmpOrderItem(SoDetailEntity soDetailEntity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -104,7 +104,7 @@ public interface DmpOrderConverter {
 //            @Mapping(target = "deliveryDate", source = "actualDeliveryDate"),
             @Mapping(target = "platformOrderId", source = "code")
     })
-    DmpDeliveryDetailInfoEntity soOutstockToDmpDelivery(SoOutstockEntity soOutstockEntity);
+    BiDeliveryDetailInfoEntity soOutstockToDmpDelivery(SoOutstockEntity soOutstockEntity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -115,7 +115,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "stockName", source = "warehouseName"),
             @Mapping(target = "warehouseLocation", source = "warehouseLocation")
     })
-    DmpDeliveryDetailItemEntity soOutstockToDmpDeliveryItem(SoOutstockDetailEntity detail);
+    BiDeliveryDetailItemEntity soOutstockToDmpDeliveryItem(SoOutstockDetailEntity detail);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -137,7 +137,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "chargeName", source = "sellerName"),
             @Mapping(target = "platformReturnCode", source = "code")
     })
-    DmpReturnOrderInfoEntity soReturnOrderToDmpReturn(SoReturnEntity soReturnEntity);
+    BiReturnOrderInfoEntity soReturnOrderToDmpReturn(SoReturnEntity soReturnEntity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -146,11 +146,11 @@ public interface DmpOrderConverter {
             @Mapping(target = "status", constant = "2"),
             @Mapping(target = "originalSkuNo", source = "skuNo")
     })
-    DmpReturnOrderItemEntity soReturnOrderToDmpReturnItem(SoReturnDetailEntity soReturnDetailEntity);
+    BiReturnOrderItemEntity soReturnOrderToDmpReturnItem(SoReturnDetailEntity soReturnDetailEntity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
-            @Mapping(target = "platformOrderId", source = "viewDTO.code"),
+            @Mapping(target = "platformOrderId", source = "viewDTO.platformCode"),
             @Mapping(target = "buyerUserId", source = "viewDTO.receiverDTO.loginId"),
             @Mapping(target = "buyerName", source = "viewDTO.receiverDTO.name"),
             @Mapping(target = "shopNo", source = "shopId"),
@@ -159,10 +159,10 @@ public interface DmpOrderConverter {
             @Mapping(target = "isReturned", constant = "2"),
             @Mapping(target = "isRefund", constant = "2"),
             @Mapping(target = "paidTime", source = "payTime"),
-            @Mapping(target = "salesRecordNumber", source = "viewDTO.platformCode"),
+            @Mapping(target = "salesRecordNumber", source = "viewDTO.code"),
             @Mapping(target = "platformOrderStatus", source = "approveStatus"),
             @Mapping(target = "orderFee", source = "amount"),
-            @Mapping(target = "sourcePlatform", constant = "soB2c"),
+            @Mapping(target = "sourcePlatform", source = "viewDTO.dictPlatform"),
             @Mapping(target = "isUnion", constant = "2"),
             @Mapping(target = "isSplit", constant = "2"),
             @Mapping(target = "isResend", constant = "2"),
@@ -183,14 +183,14 @@ public interface DmpOrderConverter {
             @Mapping(target = "subsidyAmount", constant = "0"),
             @Mapping(target = "countryNameEn", source = "viewDTO.receiverDTO.country"),
             @Mapping(target = "countryNameCn", source = "viewDTO.receiverDTO.countryName"),
-            @Mapping(target = "platformSign", constant = "erp-oms"),
+            @Mapping(target = "platformSign", constant = "erp-oms-b2c"),
             @Mapping(target = "createTime", ignore = true),
             @Mapping(target = "companyId", source = "orgId"),
             @Mapping(target = "companyName", source = "orgName"),
             @Mapping(target = "platformCreateTime", source = "platformOrderCreateTime"),
             @Mapping(target = "shippingFee", source = "viewDTO.shippingFee"),
     })
-    DmpOrderInfoEntity soB2cToDmpOrder(SoB2cDTO.ViewDTO viewDTO);
+    BiOrderInfoEntity soB2cToDmpOrder(SoB2cDTO.ViewDTO viewDTO);
 
 
     @Mappings({
@@ -219,8 +219,8 @@ public interface DmpOrderConverter {
             @Mapping(target = "sourceItemId", source = "id"),
             @Mapping(target = "amountAfter", source = "detailViewDTO.amount")
     })
-    DmpOrderItemSplitEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
-    List<DmpOrderItemSplitEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
+    BiOrderItemSplitEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
+    List<BiOrderItemSplitEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
 
 
     @Mappings({
@@ -255,7 +255,7 @@ public interface DmpOrderConverter {
             @Mapping(target = "companyName", source = "soB2cView.orgName"),
             @Mapping(target = "platformSign", constant = "erp-oms")
     })
-    DmpDeliveryDetailInfoEntity soB2cDeliveryToDmpDelivery(SoB2cDeliveryDTO.ViewDTO viewDTO, SoB2cDTO.ViewDTO soB2cView);
+    BiDeliveryDetailInfoEntity soB2cDeliveryToDmpDelivery(SoB2cDeliveryDTO.ViewDTO viewDTO, SoB2cDTO.ViewDTO soB2cView);
 
 
     @Mappings({
@@ -269,8 +269,8 @@ public interface DmpOrderConverter {
             @Mapping(target = "saleOrderNo", source = "detailViewDTO.skuNo"),
 
     })
-    DmpDeliveryDetailItemEntity soB2cDeliveryDetailToDmpDeliveryItem(SoB2cDeliveryDetailDTO.ViewDTO detailViewDTO);
-    List<DmpDeliveryDetailItemEntity> soB2cDeliveryDetailToDmpDeliveryItem(List<SoB2cDeliveryDetailDTO.ViewDTO> detailViewDTO);
+    BiDeliveryDetailItemEntity soB2cDeliveryDetailToDmpDeliveryItem(SoB2cDeliveryDetailDTO.ViewDTO detailViewDTO);
+    List<BiDeliveryDetailItemEntity> soB2cDeliveryDetailToDmpDeliveryItem(List<SoB2cDeliveryDetailDTO.ViewDTO> detailViewDTO);
 
     static int getIsGift(SoDetailEntity soDetailEntity) {
         if (Optional.ofNullable(soDetailEntity.getIsGift()).isPresent()) {

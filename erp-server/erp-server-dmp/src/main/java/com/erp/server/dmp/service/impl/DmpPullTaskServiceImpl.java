@@ -41,7 +41,6 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -69,10 +68,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -97,11 +92,11 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     private ProductDetailService productDetailService;
     @Lazy
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
     @Resource
-    private DmpDeliveryDetailInfoService dmpDeliveryDetailInfoService;
+    private BiDeliveryDetailInfoService biDeliveryDetailInfoService;
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    private BiReturnOrderInfoService biReturnOrderInfoService;
     @Resource
     private SysUserFeign sysUserFeign;
     @Resource
@@ -279,8 +274,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         //同步中
         DmpPullTaskDTO.TabListDTO syncIng = new DmpPullTaskDTO.TabListDTO();
         syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getCode());
-        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(syncIng.getTabFlag())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(syncIng.getTabFlag()) || a.getTabFlag().equals(SyncStatusEnum.TO_BE_SYNC.getCode())).mapToInt(DmpPullTaskDTO.TabListDTO::getCount).sum();
         syncIng.setCount(syncIngCount);
         result.add(syncIng);
         //无需同步
@@ -396,7 +390,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         if (Objects.equals(dmpPullTaskEntity.getStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
             return;
         }
-        //统一处理数据映射问题，并合并到 dmp_order_info
+        //统一处理数据映射问题，并合并到 bi_order_info
         SoInfoEntity soInfoEntity = null;
         try {
             soInfoEntity = soInfoFeign.getSoInfoById(String.valueOf(id));
@@ -411,9 +405,9 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_APPROVE.getCode())) {
             //审核
             try {
-                DmpOrderInfoEntity dmpOrderInfoEntity = orderDataConvert(soInfoEntity);
+                BiOrderInfoEntity biOrderInfoEntity = orderDataConvert(soInfoEntity);
                 //订单入库
-                dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
+                biOrderInfoService.checkOrder(biOrderInfoEntity);
                 //更新推送状态
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
@@ -422,7 +416,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
             try {
-                dmpOrderInfoService.removeOrderByCode(Collections.singletonList(String.valueOf(code)));
+                biOrderInfoService.removeOrderByCode(Collections.singletonList(String.valueOf(code)));
                 //更新推送状态
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
@@ -456,7 +450,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         if (Objects.equals(dmpPullTaskEntity.getStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
             return;
         }
-        //统一处理数据映射问题，并合并到 dmp_order_info
+        //统一处理数据映射问题，并合并到 bi_order_info
         SoOutstockEntity entity = soOutstockFeign.getSoOutstockEntityById(String.valueOf(id));
         if (Objects.isNull(entity)) {
             return;
@@ -465,9 +459,9 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_APPROVE.getCode())) {
             //审核
             try {
-                DmpDeliveryDetailInfoEntity dmpOrderInfoEntity = outStockDataConvert(entity);
+                BiDeliveryDetailInfoEntity dmpOrderInfoEntity = outStockDataConvert(entity);
                 //订单入库
-                dmpDeliveryDetailInfoService.checkOrder(dmpOrderInfoEntity);
+                biDeliveryDetailInfoService.checkOrder(dmpOrderInfoEntity);
                 //更新推送状态
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
@@ -477,7 +471,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
             try {
-                dmpDeliveryDetailInfoService.removeDeliveryByCodes(Collections.singletonList(String.valueOf(code)));
+                biDeliveryDetailInfoService.removeDeliveryByCodes(Collections.singletonList(String.valueOf(code)));
                 //更新推送状态
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
@@ -512,7 +506,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         if (Objects.equals(dmpPullTaskEntity.getStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
             return;
         }
-        //统一处理数据映射问题，并合并到 dmp_return_order_info
+        //统一处理数据映射问题，并合并到 bi_return_order_info
         SoReturnEntity entity = soReturnFeign.getSoReturnById(String.valueOf(id));
         if (Objects.isNull(entity)) {
             return;
@@ -521,9 +515,9 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_APPROVE.getCode())) {
             //审核
             try {
-                DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = returnOrderDataConvert(entity);
+                BiReturnOrderInfoEntity biReturnOrderInfoEntity = returnOrderDataConvert(entity);
                 //订单入库
-                dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);
+                biReturnOrderInfoService.checkOrder(biReturnOrderInfoEntity);
                 //更新推送状态
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
@@ -533,7 +527,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
             try {
-                dmpReturnOrderInfoService.removeReturnOrderByCode(Collections.singletonList(String.valueOf(code)));
+                biReturnOrderInfoService.removeReturnOrderByCode(Collections.singletonList(String.valueOf(code)));
                 //更新推送状态
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
@@ -553,8 +547,8 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     }
 
-    private DmpOrderInfoEntity orderDataConvert(SoInfoEntity soInfoEntity) {
-        DmpOrderInfoEntity dmpOrderInfoEntity = DmpOrderConverter.INSTANCE.soInfoToDmpOrder(soInfoEntity);
+    private BiOrderInfoEntity orderDataConvert(SoInfoEntity soInfoEntity) {
+        BiOrderInfoEntity biOrderInfoEntity = DmpOrderConverter.INSTANCE.soInfoToDmpOrder(soInfoEntity);
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
         SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
         BigDecimal exchangeRate;
@@ -565,20 +559,20 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
         //订单业务字段设置
         if (Objects.nonNull(soInfoEntity.getInvalidStatus()) && soInfoEntity.getInvalidStatus()) {
-            dmpOrderInfoEntity.setOrderStatus(5);
+            biOrderInfoEntity.setOrderStatus(5);
         } else {
             //默认待配货
-            dmpOrderInfoEntity.setOrderStatus(1);
+            biOrderInfoEntity.setOrderStatus(1);
         }
-        dmpOrderInfoEntity.setPaidTime(Objects.nonNull(soInfoEntity.getReceiveDate()) ? soInfoEntity.getReceiveDate().atStartOfDay() : null);
+        biOrderInfoEntity.setPaidTime(Objects.nonNull(soInfoEntity.getReceiveDate()) ? soInfoEntity.getReceiveDate().atStartOfDay() : null);
         CustomerInfoEntity customerInfo = null;
         try {
             customerInfo = customerFeign.getCustomerById(soInfoEntity.getCustomerId());
             if (Objects.nonNull(customerInfo)) {
-                dmpOrderInfoEntity.setBuyerName(customerInfo.getName());
-                dmpOrderInfoEntity.setBuyerUserId(customerInfo.getCode());
-                dmpOrderInfoEntity.setShopName(customerInfo.getName());
-                dmpOrderInfoEntity.setShopNo(customerInfo.getCode());
+                biOrderInfoEntity.setBuyerName(customerInfo.getName());
+                biOrderInfoEntity.setBuyerUserId(customerInfo.getCode());
+                biOrderInfoEntity.setShopName(customerInfo.getName());
+                biOrderInfoEntity.setShopNo(customerInfo.getCode());
             }
         } catch (Exception e) {
             log.error("请求erp-oms customerFeign.getCustomerById异常:{}", e.getMessage());
@@ -599,42 +593,42 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 }
         );
         //订单成本价
-        dmpOrderInfoEntity.setOrderCost(orderCost);
-        dmpOrderInfoEntity.setCurrencyRate(exchangeRate);
-        dmpOrderInfoEntity.setItemTotal(itemTotal);
+        biOrderInfoEntity.setOrderCost(orderCost);
+        biOrderInfoEntity.setCurrencyRate(exchangeRate);
+        biOrderInfoEntity.setItemTotal(itemTotal);
         //先计算运费收入（原币）
         if (Optional.ofNullable(soInfoEntity.getIsCollectShippingFee()).isPresent()) {
-            dmpOrderInfoEntity.setShippingTotalOrigin(soInfoEntity.getShippingFee());
+            biOrderInfoEntity.setShippingTotalOrigin(soInfoEntity.getShippingFee());
         } else {
-            dmpOrderInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);
+            biOrderInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);
         }
         //运费收入（本位币）
-        dmpOrderInfoEntity.setShippingFee(dmpOrderInfoEntity.getShippingTotalOrigin().multiply(exchangeRate));
+        biOrderInfoEntity.setShippingFee(biOrderInfoEntity.getShippingTotalOrigin().multiply(exchangeRate));
         //商品销售总金额(原币)
-        dmpOrderInfoEntity.setItemTotalOrigin(itemTotalOrigin);
+        biOrderInfoEntity.setItemTotalOrigin(itemTotalOrigin);
         //商品总成本(原币)
-        dmpOrderInfoEntity.setItemTotalCost(itemTotalCost);
+        biOrderInfoEntity.setItemTotalCost(itemTotalCost);
         //国家字典
         if (Objects.nonNull(customerInfo) && StringUtils.isNotEmpty(customerInfo.getCountryId())) {
             try {
                 DictCountryEntity country = sysUserFeign.getCountryById(customerInfo.getCountryId());
                 if (Objects.nonNull(country)) {
-                    dmpOrderInfoEntity.setCountryNameCn(country.getNameCn());
-                    dmpOrderInfoEntity.setCountryNameEn(country.getNameEn());
-                    dmpOrderInfoEntity.setSite(country.getId());
+                    biOrderInfoEntity.setCountryNameCn(country.getNameCn());
+                    biOrderInfoEntity.setCountryNameEn(country.getNameEn());
+                    biOrderInfoEntity.setSite(country.getId());
                 }
             } catch (Exception e) {
                 log.error("erp-sys sysUserFeign.getCountryById {}异常：{}", customerInfo.getCountryId(), e.getMessage());
             }
         }
         //平台创建时间
-        dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
+        biOrderInfoEntity.setCreateTime(LocalDateTime.now());
         //部门名称
         if (StringUtils.isNotEmpty(soInfoEntity.getSalesDeptId())) {
             try {
                 List<SysDepartmentEntity> dept = sysUserFeign.listDeptByIds(Collections.singletonList(soInfoEntity.getSalesDeptId()));
                 if (CollectionUtil.isNotEmpty(dept)) {
-                    dmpOrderInfoEntity.setDeptName(dept.get(0).getName());
+                    biOrderInfoEntity.setDeptName(dept.get(0).getName());
                 }
             } catch (Exception e) {
                 log.error("erp-sys sysUserFeign.listDeptByIds {}异常：{}", soInfoEntity.getSalesDeptId(), e.getMessage());
@@ -642,32 +636,32 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             }
         }
 
-        dmpOrderInfoEntity.setCnySettleRate(exchangeRate);
-        dmpOrderInfoEntity.setSourceId(soInfoEntity.getId());
+        biOrderInfoEntity.setCnySettleRate(exchangeRate);
+        biOrderInfoEntity.setSourceId(soInfoEntity.getId());
         //订单明细
-        List<DmpOrderItemSplitEntity> orderItemEntities = new ArrayList<>(soDetailEntities.size());
+        List<BiOrderItemSplitEntity> orderItemEntities = new ArrayList<>(soDetailEntities.size());
         //明细字段转换
         if (CollectionUtil.isNotEmpty(soDetailEntities)) {
             soDetailEntities.forEach(soDetailEntity -> {
-                DmpOrderItemSplitEntity dmpOrderItemSplitEntity = DmpOrderConverter.INSTANCE.soDetailToDmpOrderItem(soDetailEntity);
-                dmpOrderItemSplitEntity.setOrderId(dmpOrderInfoEntity.getId());
+                BiOrderItemSplitEntity biOrderItemSplitEntity = DmpOrderConverter.INSTANCE.soDetailToDmpOrderItem(soDetailEntity);
+                biOrderItemSplitEntity.setOrderId(biOrderInfoEntity.getId());
                 if (StringUtils.isNotEmpty(soDetailEntity.getSkuId())) {
                     ProductDetailEntity productDetail = productDetailService.getById(soDetailEntity.getSkuId());
                     if (Objects.nonNull(productDetail)) {
-                        dmpOrderItemSplitEntity.setItemName(productDetail.getName());
-                        dmpOrderItemSplitEntity.setPictureUrl(productDetail.getImagesUrl());
-                        dmpOrderItemSplitEntity.setSpecifics(productDetail.getVariantProperty());
+                        biOrderItemSplitEntity.setItemName(productDetail.getName());
+                        biOrderItemSplitEntity.setPictureUrl(productDetail.getImagesUrl());
+                        biOrderItemSplitEntity.setSpecifics(productDetail.getVariantProperty());
                     }
                 }
-                dmpOrderItemSplitEntity.setCostPrice(Optional.ofNullable(soDetailEntity.getPurchasePrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
-                dmpOrderItemSplitEntity.setSellPrice(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
-                dmpOrderItemSplitEntity.setStockWarehouseId(soInfoEntity.getWarehouseId());
-                dmpOrderItemSplitEntity.setAmountAfter(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO).subtract(Optional.ofNullable(soDetailEntity.getDiscountAmount()).orElse(BigDecimal.ZERO)));
-                orderItemEntities.add(dmpOrderItemSplitEntity);
+                biOrderItemSplitEntity.setCostPrice(Optional.ofNullable(soDetailEntity.getPurchasePrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+                biOrderItemSplitEntity.setSellPrice(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+                biOrderItemSplitEntity.setStockWarehouseId(soInfoEntity.getWarehouseId());
+                biOrderItemSplitEntity.setAmountAfter(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO).subtract(Optional.ofNullable(soDetailEntity.getDiscountAmount()).orElse(BigDecimal.ZERO)));
+                orderItemEntities.add(biOrderItemSplitEntity);
             });
         }
-        dmpOrderInfoEntity.setItemList(orderItemEntities);
-        return dmpOrderInfoEntity;
+        biOrderInfoEntity.setItemList(orderItemEntities);
+        return biOrderInfoEntity;
     }
 
     /**
@@ -676,15 +670,15 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
      * @param soOutstockEntity
      * @return
      */
-    private DmpDeliveryDetailInfoEntity outStockDataConvert(SoOutstockEntity soOutstockEntity) {
+    private BiDeliveryDetailInfoEntity outStockDataConvert(SoOutstockEntity soOutstockEntity) {
         String soId = "";
         String soCode = "";
         String receiveAddress = "";
         String currency = "";
         String remark = "";
         BigDecimal shippingFee = BigDecimal.ZERO;
-                DmpDeliveryDetailInfoEntity entity = DmpOrderConverter.INSTANCE.soOutstockToDmpDelivery(soOutstockEntity);
-        DmpOrderInfoEntity dmpOrderInfoEntity;
+                BiDeliveryDetailInfoEntity entity = DmpOrderConverter.INSTANCE.soOutstockToDmpDelivery(soOutstockEntity);
+        BiOrderInfoEntity biOrderInfoEntity;
         BigDecimal exchangeRate;
         entity.setDeliveryDate(Objects.nonNull(soOutstockEntity.getActualDeliveryDate()) ? soOutstockEntity.getActualDeliveryDate() : null);
         try {
@@ -759,14 +753,14 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             entity.setShippingFee(shippingFee);
 
             //dmp同步订单
-            dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(soCode);
-            if (Objects.isNull(dmpOrderInfoEntity)) {
+            biOrderInfoEntity = biOrderInfoService.getOrderByPlatformOrderId(soCode);
+            if (Objects.isNull(biOrderInfoEntity)) {
                 log.error("请求erp-dmp dmpOrderInfoService.getOrderByPlatformOrderId 同步单不存在");
             } else {
                 //订单更新
-                dmpOrderInfoEntity.setOrderStatus(3);
-                dmpOrderInfoEntity.setDeliveryTime(soOutstockEntity.getActualDeliveryDate());
-                dmpOrderInfoService.updateById(dmpOrderInfoEntity);
+                biOrderInfoEntity.setOrderStatus(3);
+                biOrderInfoEntity.setDeliveryTime(soOutstockEntity.getActualDeliveryDate());
+                biOrderInfoService.updateById(biOrderInfoEntity);
             }
 
         } catch (Exception e) {
@@ -830,7 +824,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         //明细字段转换
         if (CollectionUtil.isNotEmpty(details)) {
             //订单明细
-            List<DmpDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(details.size());
+            List<BiDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(details.size());
             String finalSoCode = soCode;
             String finalSoId = soId;
 
@@ -842,7 +836,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainIds(soDetailIds);
 
             details.forEach(soOutstockDetailEntity -> {
-                DmpDeliveryDetailItemEntity dmpOrderItemEntity = DmpOrderConverter.INSTANCE.soOutstockToDmpDeliveryItem(soOutstockDetailEntity);
+                BiDeliveryDetailItemEntity dmpOrderItemEntity = DmpOrderConverter.INSTANCE.soOutstockToDmpDeliveryItem(soOutstockDetailEntity);
                 dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
                     dmpOrderItemEntity.setSaleOrderNo(finalSoId);
                     dmpOrderItemEntity.setPlatformOrderId(finalSoCode);
@@ -887,8 +881,8 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
      * @param soReturnEntity
      * @return
      */
-    private DmpReturnOrderInfoEntity returnOrderDataConvert(SoReturnEntity soReturnEntity) {
-        DmpReturnOrderInfoEntity entity = DmpOrderConverter.INSTANCE.soReturnOrderToDmpReturn(soReturnEntity);
+    private BiReturnOrderInfoEntity returnOrderDataConvert(SoReturnEntity soReturnEntity) {
+        BiReturnOrderInfoEntity entity = DmpOrderConverter.INSTANCE.soReturnOrderToDmpReturn(soReturnEntity);
         //原始订单
         SoInfoEntity soInfoEntity = null;
         Map<String, SoDetailEntity> soDetailEntityMap = null;
@@ -952,52 +946,52 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
 
         //dmp同步订单
-        DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(soInfoEntity.getCode());
-        if (Objects.nonNull(dmpOrderInfoEntity)) {
+        BiOrderInfoEntity biOrderInfoEntity = biOrderInfoService.getOrderByPlatformOrderId(soInfoEntity.getCode());
+        if (Objects.nonNull(biOrderInfoEntity)) {
             //订单更新
-            dmpOrderInfoEntity.setOrderStatus(6);
-            dmpOrderInfoEntity.setCorrectionStatus(6);
-            dmpOrderInfoEntity.setIsReturned(1);
-            dmpOrderInfoService.updateById(dmpOrderInfoEntity);
+            biOrderInfoEntity.setOrderStatus(6);
+            biOrderInfoEntity.setCorrectionStatus(6);
+            biOrderInfoEntity.setIsReturned(1);
+            biOrderInfoService.updateById(biOrderInfoEntity);
         }
         //出货单详情
         List<SoReturnDetailEntity> details = soReturnFeign.listDetailByMainId(soReturnEntity.getId());
         //明细字段转换
         if (CollectionUtil.isNotEmpty(details)) {
             //订单明细
-            List<DmpReturnOrderItemEntity> orderItemEntities = new ArrayList<>(details.size());
+            List<BiReturnOrderItemEntity> orderItemEntities = new ArrayList<>(details.size());
 
             Map<String, SoDetailEntity> finalSoDetailEntityMap = soDetailEntityMap;
             details.forEach(soReturnDetail -> {
-                DmpReturnOrderItemEntity dmpReturnOrderItemEntity = DmpOrderConverter.INSTANCE.soReturnOrderToDmpReturnItem(soReturnDetail);
+                BiReturnOrderItemEntity biReturnOrderItemEntity = DmpOrderConverter.INSTANCE.soReturnOrderToDmpReturnItem(soReturnDetail);
                 //保存时会重置主表id
-                dmpReturnOrderItemEntity.setReturnOrderId(entity.getId());
+                biReturnOrderItemEntity.setReturnOrderId(entity.getId());
                 if (StringUtils.isNotEmpty(soReturnDetail.getSkuId())) {
                     ProductDetailEntity productDetail = productDetailService.getById(soReturnDetail.getSkuId());
                     if (Objects.nonNull(productDetail)) {
-                        dmpReturnOrderItemEntity.setItemName(productDetail.getName());
-                        dmpReturnOrderItemEntity.setProductUnit(productDetail.getUnitId());
-                        dmpReturnOrderItemEntity.setPictureUrl(productDetail.getImagesUrl());
-                        dmpReturnOrderItemEntity.setSpecifics(productDetail.getVariantProperty());
+                        biReturnOrderItemEntity.setItemName(productDetail.getName());
+                        biReturnOrderItemEntity.setProductUnit(productDetail.getUnitId());
+                        biReturnOrderItemEntity.setPictureUrl(productDetail.getImagesUrl());
+                        biReturnOrderItemEntity.setSpecifics(productDetail.getVariantProperty());
                     }
                 }
                 //获取订单详情表
                 if (StringUtils.isNotEmpty(soReturnDetail.getSourceDetailId())) {
                     SoDetailEntity soDetail = finalSoDetailEntityMap.get(soReturnDetail.getSourceDetailId());
                     if (Objects.nonNull(soDetail)) {
-                        dmpReturnOrderItemEntity.setSellPrice(soDetail.getAmount());
+                        biReturnOrderItemEntity.setSellPrice(soDetail.getAmount());
                         if (Objects.nonNull(soDetail.getTaxAmount()) && Objects.nonNull(soDetail.getQty()) && Objects.nonNull(soReturnDetail.getReturnQty())) {
-                            dmpReturnOrderItemEntity.setAmountAfter(soDetail.getTaxAmount().divide(BigDecimal.valueOf(soDetail.getQty())).multiply(BigDecimal.valueOf(soReturnDetail.getReturnQty())));
+                            biReturnOrderItemEntity.setAmountAfter(soDetail.getTaxAmount().divide(BigDecimal.valueOf(soDetail.getQty())).multiply(BigDecimal.valueOf(soReturnDetail.getReturnQty())));
                         }
-                        dmpReturnOrderItemEntity.setCleanCostPrice(soDetail.getSaleCost());
+                        biReturnOrderItemEntity.setCleanCostPrice(soDetail.getSaleCost());
                         if (Objects.nonNull(soDetail.getIsGift()) && soDetail.getIsGift()) {
-                            dmpReturnOrderItemEntity.setIsGift(1);
+                            biReturnOrderItemEntity.setIsGift(1);
                         } else {
-                            dmpReturnOrderItemEntity.setIsGift(2);
+                            biReturnOrderItemEntity.setIsGift(2);
                         }
                     }
                 }
-                orderItemEntities.add(dmpReturnOrderItemEntity);
+                orderItemEntities.add(biReturnOrderItemEntity);
             });
             entity.setItemList(orderItemEntities);
         }
@@ -1070,17 +1064,24 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     public List<DmpPullTaskEntity> batchCheckSaveAndUpdate(List<DmpPullTaskEntity> allList, String platform, String sourceType, String targetPlatform, String topic, String tag) {
         List<DmpPullTaskEntity> resultList = new ArrayList<>();
         List<String> sourceIds = allList.stream().map(DmpPullTaskEntity::getSourceId).collect(Collectors.toList());
-        // 查询所有
-        List<DmpPullTaskEntity> existTaskList = this.findList(platform, sourceType, targetPlatform, topic, tag, sourceIds);
+        // 查询所有(去重)
+        List<DmpPullTaskEntity> existTaskList = new ArrayList<>(this.findList(platform, sourceType, targetPlatform, topic, tag, sourceIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        DmpPullTaskEntity::uniqueKey,
+                        obj -> obj,
+                        (existing, replacement) -> existing
+                ))
+                .values());
 
-        Map<String, DmpPullTaskEntity> taskMap = existTaskList.stream().collect(Collectors.toMap(DmpPullTaskEntity::redissonKey, Function.identity()));
+        Map<String, DmpPullTaskEntity> taskMap = existTaskList.stream().collect(Collectors.toMap(DmpPullTaskEntity::uniqueKey, Function.identity()));
         // 需要保存的List
         List<DmpPullTaskEntity> saveList = new LinkedList<>();
         // 需要更新的List
         List<DmpPullTaskEntity> updateList = new LinkedList<>();
         LocalDateTime now = LocalDateTime.now();
         allList.forEach(e->{
-            DmpPullTaskEntity entity = taskMap.get(e.redissonKey());
+            DmpPullTaskEntity entity = taskMap.get(e.uniqueKey());
             if (null == entity){
                 // 不存在添加到新增列表
                 saveList.add(e);
@@ -1135,5 +1136,15 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             return;
         }
         baseMapper.deleteByIds(ids);
+    }
+
+    @Override
+    public int countMonth(LocalDateTime date) {
+        return baseMapper.countMonth(date);
+    }
+
+    @Override
+    public List<DmpPullTaskEntity> listMonth(LocalDateTime date, int pageSize, int effect) {
+        return baseMapper.listMonth(date, pageSize, effect);
     }
 }

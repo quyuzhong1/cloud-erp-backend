@@ -37,6 +37,8 @@ public enum InventorySourceTypeEnum {
     WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo", "仓位移动"),
     FBA_DELIVERY("fbaDelivery", "FBA发货单"),
     SO_B2C_DELIVERY("soB2cDelivery", "b2c发货单"),
+    VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单"),
+    REQUISITION_APPLICATION("requisitionApplication", "要货申请"),
     ;
 
     /**

@@ -46,16 +46,6 @@ public class CfgLogisticsAuthFieldController extends BaseController {
     @Resource
     private LogisticsRegistry logisticsRegistry;
 
-    private void auth(String authId){
-        LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
-        Map<String, String> authMap = service.getLogisticsAuthConfig(authId);
-        ApiResult authorization = service.authorization(authMap);
-        if (authorization.isSuccess()){
-            System.out.println("授权成功");
-        }else {
-            System.out.println("授权失败");
-        }
-    }
     /**
      * 新增
      *

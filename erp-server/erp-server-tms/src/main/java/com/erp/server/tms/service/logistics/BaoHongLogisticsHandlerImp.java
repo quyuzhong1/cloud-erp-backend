@@ -46,16 +46,6 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
 
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
-        return super.getLogisticsAuthConfig(authId);
-    }
-
-    @Override
-    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform) {
-        return super.getLogisticsAuthConfigByPlatform(platform);
-    }
-
-    @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
         //主信息

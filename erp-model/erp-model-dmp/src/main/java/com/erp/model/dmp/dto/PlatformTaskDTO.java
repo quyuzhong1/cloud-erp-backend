@@ -1,11 +1,9 @@
 package com.erp.model.dmp.dto;
 
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
@@ -73,7 +71,7 @@ public class PlatformTaskDTO {
         /**
          * 国家id
          */
-        @NotBlank(message = "国家id不能为空")
+//        @NotBlank(message = "国家id不能为空")
         private String dictCountryCode;
         /**
          * 平台店铺代号/平台卖家ID

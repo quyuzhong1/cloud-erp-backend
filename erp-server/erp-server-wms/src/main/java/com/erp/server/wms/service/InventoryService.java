@@ -316,4 +316,19 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @author: tanmujin
      */
     Integer getQtyByLocation(String warehouseId, String warehouseLocation);
+
+    /**
+     * 统计冻结库存数量
+     * @param warehouseId
+     * @param skuId
+     * @return
+     */
+    Integer getFrozenInventoryTotal(String warehouseId, String skuId);
+    /**
+     * 根据skuId和仓库id获取可用数量
+     * @param paramDTO
+     * @return
+     */
+    List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(InventoryDTO.ParamDTO paramDTO);
+
 }

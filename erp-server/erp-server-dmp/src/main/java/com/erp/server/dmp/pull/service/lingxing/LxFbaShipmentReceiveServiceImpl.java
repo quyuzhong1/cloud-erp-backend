@@ -78,7 +78,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
      * @param dto 任务信息
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         // 取上次开始的时间
         LocalDateTime requestTime = dto.getJobTaskDTO().getLastTime();
@@ -165,7 +165,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(FbaReceiveGroupEntity mongoDatum) {
         UniqueDto updateDto = UniqueDto.getUniqId(mongoDatum.getUniqueId());
         if(null == mongoDatum){

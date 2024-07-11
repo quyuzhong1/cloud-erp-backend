@@ -1741,6 +1741,7 @@
                 pi.id as productId,
                 pd.id as skuId,
                 pd.sku_no,
+                pd.images_url,
                 pi.category,
                 pi.category_id,
                 pi.property,

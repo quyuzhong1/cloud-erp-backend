@@ -37,7 +37,7 @@ public interface DmpTaskFeign {
      * 获取所有的店铺信息
      */
     @PostMapping("feign/listShop")
-    List<DmpShopInfoEntity> listShop();
+    List<BiShopInfoEntity> listShop();
 
     /**
      * 根据条件获详情

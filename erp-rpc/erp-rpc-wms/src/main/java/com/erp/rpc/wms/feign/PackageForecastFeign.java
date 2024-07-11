@@ -35,7 +35,7 @@ public interface PackageForecastFeign {
      * @param soIdList
      * @return List<PackageForecastDetailEntity>
      */
-    @PostMapping("feign/packageForecast/listBySoIdList")
-    List<PackageForecastDetailEntity> listBySoIdList(@RequestBody List<String> soIdList);
+    @PostMapping("feign/packageForecast/listPackageForecastBySoIdList")
+    List<PackageForecastDTO.ExportViewDTO> listPackageForecastBySoIdList(@RequestBody List<String> soIdList);
 
 }

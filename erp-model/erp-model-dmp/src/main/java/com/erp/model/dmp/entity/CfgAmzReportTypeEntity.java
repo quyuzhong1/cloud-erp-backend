@@ -109,7 +109,6 @@ public class CfgAmzReportTypeEntity extends BaseEntity<CfgAmzReportTypeEntity> {
     @TableField("parse_row_count")
     private Integer parseRowCount;
 
-
     public static final String REPORT_TYPE = "report_type";
 
     public static final String REMARK = "remark";

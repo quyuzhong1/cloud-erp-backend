@@ -28,6 +28,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.excel.ExportTransactionFlowDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO.InOutStockSummaryPagingViewDTO;
@@ -526,6 +527,9 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         List<String> sourceIdList = dataList.stream().map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSourceId).distinct().collect(Collectors.toList());
         DmpSyncTaskDTO.ListDTO listDTO = new DmpSyncTaskDTO.ListDTO(sourceIdList, PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc());
         List<DmpPushTaskEntity> pushTaskList = dmpMqFeign.listByParam(listDTO);
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = dataList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         dataList.stream().forEach(data->{
             if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
@@ -549,6 +553,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
             InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(data.getInventoryStatus());
             data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(data.getWarehouseId()) && e.getCode().equals(data.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            data.setWarehouseLocationName(warehouseLocationEntity.getName());
         });
     }
 

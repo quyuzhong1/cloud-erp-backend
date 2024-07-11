@@ -101,6 +101,21 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return dto;
     }
 
+    @Override
+    public Boolean getPackageSupplierSetting(String logisticsSupplierId) {
+        if (StringUtils.isBlank(logisticsSupplierId)){
+            return Boolean.FALSE;
+        }
+        CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.PACKAGE_SETTING.getCode());
+        if (ObjectUtil.isNotEmpty(entity) && ObjectUtil.isNotEmpty(entity.getDataJson())) {
+            CfgSettingValueDTO.PackageSettingDTO dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PackageSettingDTO.class);
+            if (CollectionUtils.isNotEmpty(dto.getSupplierIds()) && dto.getSupplierIds().contains(logisticsSupplierId)){
+                return Boolean.TRUE;
+            }
+        }
+        return Boolean.FALSE;
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -152,6 +167,12 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
             case FS_QC_NOTICE:
                 jsonObject = JSONUtil.parseObj(addDTO.getFsQcNoticeDTO());
+                break;
+            case DELIVERY_INTERCEPT:
+                jsonObject = JSONUtil.parseObj(addDTO.getB2cDeliveryInterceptDTO());
+                break;
+            case PACKAGE_SETTING:
+                jsonObject = JSONUtil.parseObj(addDTO.getPackageSettingDTO());
                 break;
             default:
                 break;
@@ -205,6 +226,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case FS_QC_NOTICE:
                 CfgSettingValueDTO.FsQcNoticeDTO fsQcNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsQcNoticeDTO.class);
                 viewDTO.setFsQcNoticeDTO(fsQcNoticeDTO);
+                break;
+            case DELIVERY_INTERCEPT:
+                CfgSettingValueDTO.B2cDeliveryInterceptDTO deliveryInterceptDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.B2cDeliveryInterceptDTO.class);
+                viewDTO.setB2cDeliveryInterceptDTO(deliveryInterceptDTO);
+                break;
+            case PACKAGE_SETTING:
+                CfgSettingValueDTO.PackageSettingDTO packageSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PackageSettingDTO.class);
+                viewDTO.setPackageSettingDTO(packageSettingDTO);
                 break;
             default:
                 break;

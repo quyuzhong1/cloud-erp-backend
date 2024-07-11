@@ -235,6 +235,7 @@ public class SoB2cLogisticsDTO implements Serializable {
 
         //b2c销售订单id
         private String soB2cId;
+        private String shopId;
 
         private String transportNo;
 

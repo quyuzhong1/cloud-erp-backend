@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.VirtualWarehouseAllocationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.VirtualWarehouseAllocationEntity">
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="disabled" property="disabled"/>
+        <result column="code" property="code"/>
+        <result column="type" property="type"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="direction" property="direction"/>
+        <result column="invalid_description" property="invalidDescription"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id
+        ,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        disabled, code, type, status, remark, direction, invalid_description
+    </sql>
+    <select id="paging" resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDTO$ListDTO">
+        <include refid="list"/>
+    </select>
+    <select id="listExport" resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDTO$ListDTO">
+        <include refid="list"/>
+    </select>
+    <select id="listCount" resultType="integer">
+        select
+        count(distinct vma.id)
+        FROM virtual_warehouse_allocation_detail vmad
+        inner JOIN virtual_warehouse_allocation vma
+        on vma.id = vmad.main_id and vma.is_deleted = false
+        where vmad.is_deleted = false
+        <if test="params.status!=null and params.status!=''">
+            and vma.status = #{params.status}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+    <select id="listCountBySyncStatus" resultType="integer">
+        select
+        count(distinct vma.id)
+        FROM virtual_warehouse_allocation_detail vmad
+        inner JOIN virtual_warehouse_allocation vma
+        on vma.id = vmad.main_id and vma.is_deleted = false
+        where vmad.is_deleted = false
+        and vmad.sync_status= #{params.syncStatus}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <sql id="list">
+        SELECT vma.id,
+        vmad.id as detailId,
+        vma.code,
+        vma.status,
+        vma.type,
+        vma.remark,
+        vmad.sku_id as skuId,
+        vmad.sku_no as skuNo,
+        vmad.product_name as productName,
+        vmad.warehouse_id as warehouseId,
+        vmad.warehouse_name,
+        vmad.from_virtual_warehouse_id as fromVirtualWarehouseId,
+        vmad.from_virtual_warehouse_name,
+        vmad.qty,
+        vmad.to_virtual_warehouse_id as toVirtualWarehouseId,
+        vmad.to_virtual_warehouse_name,
+        vmad.finish_description,
+        vma.invalid_description,
+        vmad.sync_status as syncStatus,
+        vmad.create_user_id,
+        vmad.create_user_name,
+        vmad.create_time,
+        vmad.update_user_id,
+        vmad.update_user_name,
+        vmad.update_time,
+        vmad.third_code as thirdCode,
+        vmad.sys_type,
+        vmad.sys_type_name
+        FROM virtual_warehouse_allocation_detail vmad
+        inner JOIN virtual_warehouse_allocation vma
+        on vma.id = vmad.main_id and vma.is_deleted = false
+        where ${params.sqlMap.default}
+        and vmad.is_deleted = false
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vma.id desc,vmad.id asc
+    </sql>
+
+</mapper>

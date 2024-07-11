@@ -5,8 +5,11 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpMongoHandleTaskEntity;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
+import com.erp.server.dmp.enums.DmpMongoHandleTypeEnum;
 import com.erp.server.dmp.mapper.DmpMongoHandleTaskMapper;
 import com.erp.server.dmp.service.DmpMongoHandleTaskService;
+import com.mongodb.client.result.DeleteResult;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
@@ -15,8 +18,10 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -35,11 +40,22 @@ public class DmpMongoHandleTaskServiceImpl extends SuperServiceImpl<DmpMongoHand
     private MongoTemplate mongoTemplate;
 
     @Override
-    public <T> List<T> findMongoData(String lastId, Integer handleCount, String mongoTableName, Class<T> mongoDTOClass) {
+    public <T> List<T> findMongoData(String lastId, Integer handleCount, String mongoTableName, Class<T> mongoDTOClass, Boolean queryIsAddOrUpdate) {
         // 查询
         Query query = new Query();
+        Criteria criteria = null;
         if (StringUtils.isNotBlank(lastId)) {
-            query.addCriteria(Criteria.where("_id").gt(new ObjectId(lastId)));
+            criteria = Criteria.where("_id").gt(new ObjectId(lastId));
+        }
+        if (null != queryIsAddOrUpdate){
+            if (null != criteria){
+                criteria.and("isAddOrUpdate").is(queryIsAddOrUpdate);
+            } else {
+                Criteria.where("isAddOrUpdate").is(queryIsAddOrUpdate);
+            }
+        }
+        if (null != criteria){
+            query.addCriteria(criteria);
         }
         query.with(Sort.by(Sort.Direction.ASC, "_id")).limit(handleCount);
         return mongoTemplate.find(query, mongoDTOClass, mongoTableName);
@@ -52,5 +68,23 @@ public class DmpMongoHandleTaskServiceImpl extends SuperServiceImpl<DmpMongoHand
         if (!this.updateById(mongoHandleTaskEntity)){
             throw new ServiceException("[dmp_mongo_handle_task] 更新lastId和NextTime失败");
         }
+    }
+
+    @Override
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public Long clearHistory(DmpMongoHandleTypeEnum handleTypeEnum, LocalDateTime historyDateTime, Integer size) {
+        // 构建查询条件
+        Criteria criteria = Criteria.where("downloadTime").gt(historyDateTime);
+
+        // 创建查询对象并设置条件
+        Query query = new Query(criteria);
+        query.with(Sort.by(Sort.Direction.ASC, "downloadTime"));
+
+        // 设置删除操作的限制数量
+        query.limit(size);
+
+        // 执行删除操作
+        DeleteResult deleteResult = mongoTemplate.remove(query, handleTypeEnum.getMongoTableName());
+        return deleteResult.getDeletedCount();
     }
 }
