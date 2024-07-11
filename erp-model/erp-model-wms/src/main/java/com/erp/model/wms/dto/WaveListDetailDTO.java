@@ -68,8 +68,13 @@ public class WaveListDetailDTO implements Serializable {
         /**
          * 波次状态
          */
-        @Dict(enumClass = WaveStatusEnum.class)
+//        @Dict(enumClass = WaveStatusEnum.class)
         private String status;
+
+        /**
+         * 波次状态名称
+         */
+        private String statusName;
 
         /**
          * 已检数量

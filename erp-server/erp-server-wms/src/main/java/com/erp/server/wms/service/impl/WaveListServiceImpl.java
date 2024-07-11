@@ -226,21 +226,27 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
     @Override
     public BatchResultDTO cancelPrinted(String waveId) {
-        WaveListDetailDTO.ViewDTO viewDTO = waveListDetailService.view(waveId);
+        /*WaveListDetailDTO.ViewDTO viewDTO = waveListDetailService.view(waveId);
         for (WaveListDetailDTO.DeliveryInfoDTO deliveryDto : viewDTO.getDeliveryInfoList()) {
             Integer pickedSumQty = deliveryDto.getPickedSumQty();
             if(pickedSumQty != 0){
                 return BatchResultDTO.fail(waveId, viewDTO.getCode(), "已部分拣货，无法取消打印");
             }
+        }*/
+        WaveListEntity waveListEntity = getById(waveId);
+        if(! StringUtils.equals(waveListEntity.getStatus(), WaveStatusEnum.AWAIT_PICK.getCode())) {
+            return BatchResultDTO.fail(waveListEntity.getId(), waveListEntity.getCode(), "已部分拣货，无法取消打印");
         }
 
         update(new UpdateWrapper<WaveListEntity>()
                 .eq("id", waveId)
                 .set("status", WaveStatusEnum.AWAIT_PICK.getCode())
-                .set("picking_user", "")
+                .set("picking_user_id", "")
+                .set("picking_user_name", "")
+                .set("picking_time", "")
                 .set("print_time", "")
         );
-        return BatchResultDTO.fail(waveId, viewDTO.getCode(), "成功");
+        return BatchResultDTO.success(waveListEntity.getId(), waveListEntity.getCode(), "成功");
     }
 
     @Override

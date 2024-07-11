@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -93,8 +94,13 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
         }
         SecondarySortingDTO.ScanSkuView view = new SecondarySortingDTO.ScanSkuView();
         List<WaveListDTO.PickingWaveDetailDTO> waveDetailList = waveListService.listDetailByMainId(waveId, null, productDetail.getId());
-        WaveListDTO.PickingWaveDetailDTO detailDTO = waveDetailList.stream()
+        List<WaveListDTO.PickingWaveDetailDTO> skuList = waveDetailList.stream()
                 .filter(v -> v.getSkuId().equals(productDetail.getId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_99120);
+        }
+        WaveListDTO.PickingWaveDetailDTO detailDTO = skuList.stream()
                 .filter(v -> v.getPickedQty() > v.getAllocatedQty())
                 .min(Comparator.comparing(v -> Integer.parseInt(v.getBasketNo())))
                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_99111, productDetail.getSkuNo()));

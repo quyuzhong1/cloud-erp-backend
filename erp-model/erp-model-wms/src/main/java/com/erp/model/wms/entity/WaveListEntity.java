@@ -95,4 +95,10 @@ public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serial
      */
     @TableField("picking_time")
     private LocalDateTime pickingTime;
+
+    /**
+     * 波次是否缺货
+     */
+    @TableField("is_out_stock")
+    private Boolean isOutStock;
 }

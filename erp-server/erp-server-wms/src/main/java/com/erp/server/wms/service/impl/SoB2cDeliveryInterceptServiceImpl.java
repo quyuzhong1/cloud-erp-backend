@@ -417,6 +417,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     //删除拣货单
                     pickingListsService.deleteBySourceId(rollbackInventoryIds);
                 }
+                // 生成波次状态得发货单需要移除波次
+                List<String> removeDeliveryIds = soB2cDeliveryEntities.stream()
+                        .filter(e -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(e.getAbnormalCause()))
+                        .map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(rollbackInventoryIds)) {
+                    removeDeliveryIds.forEach(deliveryId -> waveListDetailService.moveOut(deliveryId));
+                }
             }
         } else {
             //拦截失败的订单正常自动出库流程

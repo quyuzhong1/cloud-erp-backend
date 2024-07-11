@@ -158,9 +158,12 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             new ExcelPrintUtils().patchExport(viewList, response, fileName, excelPath);
 
             //更新状态：处理中
-            WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
-            updateEntity.setStatus(ReplenishBillStatusEnum.HANDLE_ING.getCode());
-            this.baseMapper.update(updateEntity, new QueryWrapper<WarehouseLocationReplenishEntity>().in("id", ids));
+            boolean isExportById = dto.getAdvanceQueryDTOList().stream().anyMatch(item -> item.getField().equals("id"));
+            if(isExportById){
+                WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
+                updateEntity.setStatus(ReplenishBillStatusEnum.HANDLE_ING.getCode());
+                this.baseMapper.update(updateEntity, new QueryWrapper<WarehouseLocationReplenishEntity>().in("id", ids));
+            }
         } catch (IOException e) {
             log.error("导出仓位补货清单失败：{}", e);
             return Boolean.FALSE;
@@ -305,9 +308,13 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public BatchResultDTO finish(WarehouseLocationReplenishDTO.HandleDTO dto) {
+        LoginUser loginUser = UserContext.getNonLoginUser();
         WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
         BeanMapper.copy(dto, updateEntity);
         updateEntity.setStatus(ReplenishBillStatusEnum.HANDLED.getCode());
+        updateEntity.setHandleUserId(loginUser.getUid());
+        updateEntity.setHandleUserName(loginUser.getUserName());
+        updateEntity.setHandleTime(LocalDateTime.now());
         this.baseMapper.updateById(updateEntity);
 
         //生成仓位移动，并自动审核通过

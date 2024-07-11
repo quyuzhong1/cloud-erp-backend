@@ -195,6 +195,8 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             BeanMapper.copy(waveEntity, view);
             //波次状态
             view.setStatusName(WaveStatusEnum.getNameByCode(view.getStatus()));
+            //拣货车编号
+            view.setPickingCartCode(waveEntity.getPickingCartCode());
             //拣货车类型ID
             PickingCartEntity pickingCart = pickingCartList.stream().filter(item -> item.getCode().equals(waveEntity.getPickingCartCode())).findFirst().orElse(new PickingCartEntity());
             view.setPickingCartTypeId(pickingCart.getTypeId());
