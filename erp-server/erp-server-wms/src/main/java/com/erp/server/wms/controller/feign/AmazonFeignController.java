@@ -8,12 +8,15 @@ import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
+import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
+import com.erp.rpc.wms.feign.WmsAmazonFeign;
 import com.erp.server.wms.convert.FbaShipmentReceiveConverter;
 import com.erp.server.wms.rocketmq.consumer.PlatformFbaShipmentConsumerService;
 import com.erp.server.wms.rocketmq.consumer.PlatformOtherOutStockConsumerService;
 import com.erp.server.wms.rocketmq.consumer.PlatformSoOutStockConsumerService;
+import com.erp.server.wms.service.CfgAmzFulfillmentCenterService;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +34,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/feign/amz")
-public class AmazonFeignController extends BaseController {
+public class AmazonFeignController extends BaseController{
 
     @Resource
     private PlatformFbaShipmentConsumerService<?> platformFbaShipmentConsumerService;
@@ -41,6 +44,8 @@ public class AmazonFeignController extends BaseController {
     private PlatformSoOutStockConsumerService<?> platformSoOutStockConsumerService;
     @Resource
     private PlatformOtherOutStockConsumerService<?> platformOtherOutStockConsumerService;
+    @Resource
+    private CfgAmzFulfillmentCenterService cfgAmzFulfillmentCenterService;
 
     /**
      * 直接消费销售出库单
@@ -61,4 +66,13 @@ public class AmazonFeignController extends BaseController {
         return platformOtherOutStockConsumerService.handle(new JSONObject(dto));
     }
 
+
+    /**
+     * 批量新增未知国家仓库中心代号记录
+     */
+    @PostMapping("/CfgAmzFulfillmentCenter/batchInsert")
+    public ApiResult<?> addCfgAmzFulfillmentCenterList(@RequestBody List<CfgAmzFulfillmentCenterEntity> newCenterList){
+        cfgAmzFulfillmentCenterService.saveBatch(newCenterList);
+        return ApiResult.success();
+    }
 }
