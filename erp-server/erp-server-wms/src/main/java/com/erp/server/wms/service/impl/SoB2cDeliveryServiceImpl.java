@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -199,6 +200,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
+    @Resource
+    private WmsAttachmentService attachmentService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -919,6 +922,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 log.error("发货单【{}】自动出库失败",entity.getCode());
             }
         }
+        //更新图片
+        Class<SoB2cDeliveryEntity> aClass = SoB2cDeliveryEntity.class;
+        TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        attachmentService.batchSave(Arrays.asList(dto.getImageUrl()),Arrays.asList(""),type,entity.getId());
         //更新发货单
         this.updateById(entity);
 
@@ -1507,7 +1516,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
-//        addDTO.setPickCartTypeIdList(dto.getPickingCartTypeId());
+        addDTO.setPickCartTypeIdList(Collections.singletonList(dto.getPickingCartTypeId()));
         addDTO.setDeliveryIdList(dto.getIds());
         addDTO.setPickingType(dto.getPickingType());
         addDTO.setName("手动生成波次");
