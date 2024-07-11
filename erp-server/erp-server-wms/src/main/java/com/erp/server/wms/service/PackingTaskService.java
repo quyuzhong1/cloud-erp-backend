@@ -230,7 +230,7 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @param requestDTO
      * @return
      */
-    PagingVO<PackingTaskDTO.PackingTreeDTO> searchSourceCode(PackingTaskDTO.SearchSourceCodeDTO requestDTO);
+    PagingVO<PackingTaskDTO.PackingTreeDTO> searchSourceCode(PagingDTO<PackingTaskDTO.SearchSourceCodeDTO> requestDTO);
 
     /**
      * 根据任务id获取箱规列表

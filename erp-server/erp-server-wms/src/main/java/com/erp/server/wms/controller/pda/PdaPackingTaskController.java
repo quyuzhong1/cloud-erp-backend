@@ -235,7 +235,7 @@ public class PdaPackingTaskController extends BaseController {
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
     @PostMapping("/searchSourceCode")
-    public ApiResult<PagingVO<PackingTaskDTO.PackingTreeDTO>> searchSourceCode(@RequestBody @Validated PackingTaskDTO.SearchSourceCodeDTO requestDTO) {
+    public ApiResult<PagingVO<PackingTaskDTO.PackingTreeDTO>> searchSourceCode(@RequestBody @Validated PagingDTO<PackingTaskDTO.SearchSourceCodeDTO> requestDTO) {
         return success(packingTaskService.searchSourceCode(requestDTO));
     }
 

@@ -211,7 +211,7 @@
         pt.source_id as sourceId,
         pt.source_code as sourceCode
         from packing_task pt where pt.is_deleted = false
-        <if test="params.searchKeyword != null and params.searchKey != ''">
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and pt.source_code ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         order by
