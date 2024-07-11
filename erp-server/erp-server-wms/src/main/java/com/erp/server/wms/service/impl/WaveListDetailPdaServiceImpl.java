@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -17,7 +16,7 @@ import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.PickingStatusEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.WaveListDetailPdaMapper;
@@ -54,6 +53,8 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     private ProductDetailFeign productDetailFeign;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -189,11 +190,13 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         resultDTO.setGoodsPickedQty(pickedSumQty);
 
         //更新波次列表状态
+        boolean isOutStock = updateList.stream().anyMatch(item -> item.getIsOutStock());
         waveListService.update(new UpdateWrapper<WaveListEntity>()
                 .set("status", WaveStatusEnum.FINISH.getCode())
                 .set("picking_time", LocalDateTime.now())
                 .set("picking_user_id", loginUser.getUid())
                 .set("picking_user_name", loginUser.getUserName())
+                .set(isOutStock, "is_out_stock", true)
                 .eq("id", finishParamDTO.getWaveId()));
 //        waveListService.updateStatusById(finishParamDTO.getWaveId(),WaveStatusEnum.FINISH.getCode());
         return resultDTO;
@@ -227,6 +230,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             Boolean isOutStock = dto.getIsOutStock();   //业务人员标记是否缺货
             String skuId = dto.getSkuId();  //这个仓位存放的sku
             List<WaveListDetailPdaDTO.BasketDTO> basketList = dto.getBasketList();
+            List<String> outStockDeliveryIds = new ArrayList<>();
             //遍历每个拣货仓位的篮筐
             for (WaveListDetailPdaDTO.BasketDTO basketDTO : basketList) {
                 //根据篮筐号拿到发货单
@@ -241,6 +245,15 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 updateDto.setPickedQty(basketDTO.getPickedQty());
                 updateDto.setIsOutStock(isOutStock);
                 updateList.add(updateDto);
+
+                outStockDeliveryIds.add(deliveryId);
+            }
+            //仓位标记缺货，则所有涉及的发货单都置为异常
+            if(isOutStock){
+                soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
+                        .set("status", SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode())
+                        .set("abnormal_cause", "拣货时手动标记缺货")
+                        .in("id", outStockDeliveryIds));
             }
         }
         return updateList;

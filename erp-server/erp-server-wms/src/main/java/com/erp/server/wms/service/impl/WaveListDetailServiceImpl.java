@@ -152,11 +152,16 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         if(! entity.getPickingStatus().equals(PickingStatusEnum.NOT_START.getCode())){
             return ApiResult.error("只能针对未开始的订单移出波次");
         }
+
+        //发货单移出波次
         baseMapper.deleteById(entity.getId());
         List<WaveListDetailEntity> detailList = baseMapper.selectList(new QueryWrapper<WaveListDetailEntity>().eq("main_id", moveOutDTO.getWaveId()));
         if(detailList.isEmpty()){
             waveListService.getBaseMapper().deleteById(moveOutDTO.getWaveId());
         }
+        //释放冻结库存
+        deliveryService.rollbackInventory(Collections.singletonList(moveOutDTO.getDeliveryId()));
+        //修改发货单状态
         deliveryService.updateStatus(Collections.singletonList(moveOutDTO.getDeliveryId()) , SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode());
         operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
         return ApiResult.success();
