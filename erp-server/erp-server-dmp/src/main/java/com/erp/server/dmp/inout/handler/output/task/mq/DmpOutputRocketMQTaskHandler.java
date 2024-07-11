@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -26,6 +27,7 @@ import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import cn.hutool.core.collection.CollUtil;
 
 @Service
+@Scope("prototype")
 public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 
 	@Autowired

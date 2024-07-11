@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum DmpOutputTaskTypeEnum implements EnumMessage {
 	INPUT("input", "输入任务"),
+	HOTFIX("hotfix", "快速任务"),
     ;
     /**
      * 类型

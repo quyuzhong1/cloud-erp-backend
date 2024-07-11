@@ -11,16 +11,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.common.business.wrapper.QueryParam;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
+import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.service.DmpCfgInputConvertService;
 import com.erp.server.dmp.service.DmpCfgMqService;
+
+import cn.hutool.core.collection.CollUtil;
 
 
 /**
@@ -44,9 +50,21 @@ public class DmpInoutController extends BaseController {
 	@Autowired
 	private DmpCfgMqService dmpCfgMqService;
 	
+	@Autowired
+	private DmpOutputCreateFactory dmpOutputCreateFactory;
+	
     @PostMapping("doInputTask")
     public ApiResult<?> doInputTask(@RequestBody DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest) {
     	return success(dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest));
+    }
+    
+    @PostMapping("doOutputTask")
+    public ApiResult<?> doOutputTask(@RequestBody DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest) {
+    	List<QueryParam> queryParams = dmpOutputHotfixCreateRequest.getQueryParams();
+    	if(CollUtil.isEmpty(queryParams)) {
+    		throw new ServiceException("过滤条件queryParams不能为空");
+    	}
+    	return success(dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest));
     }
     
     @PostMapping("getCache")
