@@ -104,4 +104,20 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * @param ids 波次号
      */
     List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids);
+    /**
+     * 更新波次列表状态
+     * @author will
+     * @date 2024/7/9 17:36
+     * @param waveId
+     * @param status
+     */
+    Boolean updateStatusById(String waveId, String status);
+    /**
+     * 根据拣货车编码集合查询
+     * @author will
+     * @date 2024/7/10 18:01
+     * @param pickingCartCodeList
+     * @return List<WaveListEntity>
+     */
+    List<WaveListEntity> listByPickingCartCodeList(List<String> pickingCartCodeList);
 }

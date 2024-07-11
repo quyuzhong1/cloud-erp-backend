@@ -39,6 +39,9 @@ public class WaveListDetailPdaController extends BaseController {
         return ApiResult.success(resultDTO);
     }
 
+    /**
+     * 校验SKU或EAN码
+     */
     @GetMapping("/scanSkuOrEanCode")
     public ApiResult<?> scanSkuOrEanCode(@RequestParam String skuId, @RequestParam String code){
         return waveListDetailPdaService.scanSkuOrEanCode(skuId, code);

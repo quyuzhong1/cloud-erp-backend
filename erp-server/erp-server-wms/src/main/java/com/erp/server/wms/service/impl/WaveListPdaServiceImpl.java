@@ -15,17 +15,13 @@ import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.WaveListPdaDTO;
-import com.erp.model.wms.entity.PickingCartEntity;
-import com.erp.model.wms.entity.PickingCartTypeEntity;
-import com.erp.model.wms.entity.WaveListDetailEntity;
-import com.erp.model.wms.entity.WaveListEntity;
-import com.erp.model.wms.enums.PickingTypeEnum;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.WavePickingTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.rpc.wms.feign.SoB2cFeign;
+import com.erp.server.wms.mapper.WaveListCartTypeMapper;
 import com.erp.server.wms.mapper.WaveListPdaMapper;
-import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
@@ -47,55 +43,15 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     @Resource
     private SoB2cFeign soB2cFeign;
     @Resource
-    private ProductDetailService productDetailService;
-    @Resource
     private PickingCartService pickingCartService;
     @Resource
     private PickingCartTypeService pickingCartTypeService;
     @Resource
     private ProductDetailFeign productDetailFeign;
-
-    public WaveListDetailPdaDTO.ViewDTO startPickingWithSideType(String waveId) {
-        //返回波次详情列表
-        WaveListDetailDTO.ViewDTO viewDTO = waveDetailService.view(waveId);
-        List<WaveListDetailDTO.DeliveryInfoDTO> deliveryList = viewDTO.getDeliveryInfoList();
-        Map<String, List<WaveListDetailDTO.DeliveryInfoDTO>> map = deliveryList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseLocation()));
-        List<String> skuIds = deliveryList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productList = productDetailService.listByIds(skuIds);
-        Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
-
-        WaveListDetailPdaDTO.ViewDTO resultViewDTO = new WaveListDetailPdaDTO.ViewDTO();
-        resultViewDTO.setWaveId(waveId);
-        resultViewDTO.setWaveCode(viewDTO.getCode());
-        List<WaveListDetailPdaDTO.PickingLocationDTO> resultDetailList = new ArrayList<>();
-        for (Map.Entry<String, List<WaveListDetailDTO.DeliveryInfoDTO>> entry : map.entrySet()) {
-            List<WaveListDetailDTO.DeliveryInfoDTO> locationGroupList = map.get(entry.getKey());
-            WaveListDetailDTO.DeliveryInfoDTO firstDelivery = locationGroupList.get(0);
-            WaveListDetailPdaDTO.PickingLocationDTO dto = new WaveListDetailPdaDTO.PickingLocationDTO();
-            dto.setWarehouseLocation(entry.getKey());
-            dto.setSkuId(firstDelivery.getSkuId());
-            dto.setSkuNo(firstDelivery.getSkuNo());
-            dto.setProductName(productMap.get(firstDelivery.getSkuId()).getName());
-            dto.setIsOutStock(false);   //todo 查询仓位是否缺货
-            dto.setPickedTotalQty(0);
-            List<WaveListDetailPdaDTO.BasketDTO> basketList = new ArrayList<>();
-            for (WaveListDetailDTO.DeliveryInfoDTO deliveryDTO : locationGroupList) {
-                WaveListDetailPdaDTO.BasketDTO basket = new WaveListDetailPdaDTO.BasketDTO();
-                basket.setNo(deliveryDTO.getBasketNo());
-                basket.setShouldPickingQty(deliveryDTO.getShouldPickQty());
-                basket.setPickedQty(deliveryDTO.getPickedQty());
-                basketList.add(basket);
-            }
-            dto.setBasketList(basketList);
-            int shouldPickTotalQty = basketList.stream().mapToInt(WaveListDetailPdaDTO.BasketDTO::getShouldPickingQty).sum();
-            dto.setShouldPickingTotalQty(shouldPickTotalQty);
-            resultDetailList.add(dto);
-        }
-        resultViewDTO.setLocationPickingDetailList(resultDetailList);
-        //最后更新波次状态
-        waveListService.update(new UpdateWrapper<WaveListEntity>().eq("id", waveId).set("status", WaveStatusEnum.PICK_ING.getCode()));
-        return resultViewDTO;
-    }
+    @Resource
+    private WaveListCartTypeMapper waveListCartTypeMapper;
+    @Resource
+    private PickingListsService pickingListsService;
 
     @Override
     public PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
@@ -163,18 +119,47 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
     @Override
     public ApiResult<?> bindPickingCart(WaveListPdaDTO.BindPickingCartDTO bindDTO) {
-        //核对扫描的拣货车类型是否匹配，核对失败返回错误
         PickingCartEntity pickingCart = pickingCartService.getOne(new QueryWrapper<PickingCartEntity>().eq("code", bindDTO.getPickingCartCode()));
+        if(pickingCart == null){
+            return ApiResult.error("拣货车编码错误");
+        }
+        if(pickingCart.getDisabled()){
+            return ApiResult.error("拣货车已禁用");
+        }
         PickingCartTypeEntity pickingCartType = pickingCartTypeService.getOne(new QueryWrapper<PickingCartTypeEntity>().eq("id", pickingCart.getTypeId()));
         WaveListEntity waveEntity = waveListService.getById(bindDTO.getId());
-        if(! waveEntity.getPickingCartType().equals(pickingCartType.getName())){
-            return ApiResult.error("拣货车不匹配");
+        List<WaveListCartTypeEntity> cartTypeList = waveListCartTypeMapper.selectList(new QueryWrapper<WaveListCartTypeEntity>().eq("wave_id", bindDTO.getId()));
+        List<String> typeIds = cartTypeList.stream().map(WaveListCartTypeEntity::getPickingCartTypeId).collect(Collectors.toList());
+        if(! typeIds.contains(pickingCart.getTypeId())){
+            return ApiResult.error("拣货车类型不匹配");
         }
+
+        List<WaveListEntity> waveList = waveListService.list(new QueryWrapper<WaveListEntity>()
+                .eq("picking_cart_code", pickingCart.getCode())
+                .ne("id", bindDTO.getId())
+                .ne("status", WaveStatusEnum.FINISH.getCode()));
+        if(!waveList.isEmpty()){
+            return ApiResult.error("拣货车正在使用，无法再次绑定");
+        }
+
+        update(new UpdateWrapper<WaveListEntity>()
+                .set("picking_cart_code", bindDTO.getPickingCartCode())
+                .set("picking_cart_type", pickingCart.getTypeId())
+                .eq("id", bindDTO.getId()));
         //核对成功返回拣货车信息
         bindDTO.setPickingCartName(pickingCartType.getName());
         bindDTO.setPickingCartType(pickingCartType.getName());
         bindDTO.setPickingType(waveEntity.getPickingType());
         return ApiResult.success(bindDTO);
+    }
+
+    @Override
+    public ApiResult<?> exitPicking(WaveListDetailPdaDTO.ExitPickingDTO exitDTO) {
+        waveListService.update(new UpdateWrapper<WaveListEntity>()
+                .eq("id", exitDTO.getId())
+                .set("picking_cart_code", "")
+                .set("status", WaveStatusEnum.AWAIT_PICK.getCode()));
+        return ApiResult.success();
     }
 
     private void fillWaveInfo(WaveListPdaDTO.WaveBasicInfoDTO viewDTO) {
@@ -191,28 +176,43 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         }
 
         List<String> ids = records.stream().map(item -> item.getId()).collect(Collectors.toList());
-        List<WaveListDetailEntity> detailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().in("main_id", ids));
-        Map<String, List<WaveListDetailEntity>> waveDetailMap = detailList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
+        List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().in("main_id", ids));
+        Map<String, List<WaveListDetailEntity>> waveDetailMap = waveDetailList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
         List<WaveListPdaDTO.ViewDTO> viewList = new ArrayList<>();
-        List<String> soIds = detailList.stream().map(item -> item.getSoId()).distinct().collect(Collectors.toList());
+        List<String> soIds = waveDetailList.stream().map(item -> item.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(soIds);
         Map<String, List<SoB2cDetailEntity>> soDetailMap = soDetailList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
-        for (WaveListEntity record : records) {
+
+        List<PickingCartEntity> pickingCartList = pickingCartService.list();
+        List<PickingCartTypeEntity> pickingCartTypeList = pickingCartTypeService.list();
+
+        for (WaveListEntity waveEntity : records) {
             WaveListPdaDTO.ViewDTO view = new WaveListPdaDTO.ViewDTO();
-            BeanMapper.copy(record, view);
-
+            //波次明细
+            WaveListDetailDTO.ViewDTO waveDetailView = waveDetailService.view(waveEntity.getId());
+            List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList = waveDetailView.getDeliveryInfoList();
+            //波次id，波次编码，波次名称，创建时间
+            BeanMapper.copy(waveEntity, view);
+            //波次状态
             view.setStatusName(WaveStatusEnum.getNameByCode(view.getStatus()));
-
-            List<WaveListDetailEntity> list = waveDetailMap.get(record.getId());
+            //拣货车类型ID
+            PickingCartEntity pickingCart = pickingCartList.stream().filter(item -> item.getCode().equals(waveEntity.getPickingCartCode())).findFirst().orElse(new PickingCartEntity());
+            view.setPickingCartTypeId(pickingCart.getTypeId());
+            //拣货车类型名称
+            PickingCartTypeEntity pickingCartType = pickingCartTypeList.stream().filter(item -> item.getId().equals(pickingCart.getTypeId())).findFirst().orElse(new PickingCartTypeEntity());
+            view.setPickingCartTypeName(pickingCartType.getName());
+            //分拣方式
+            view.setPickingTypeName(WavePickingTypeEnum.getName(waveEntity.getPickingType()));
+            //订单数量
+            List<WaveListDetailEntity> list = waveDetailMap.get(waveEntity.getId());
             List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
             view.setDeliveryBillQty(deliveryIds.size());
-
-            List<SoB2cDetailEntity> soB2cDetails = soDetailMap.get(record.getId());
-            /*List<String> skuIds = soB2cDetails.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
+            //商品种类
+            List<String> skuIds = deliveryInfoList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
             view.setSkuQty(skuIds.size());
-
-            int goodsQty = soB2cDetails.stream().mapToInt(item -> item.getQty()).sum();
-            view.setGoodsQty(goodsQty);*/
+            //商品数量
+            int salesQty = deliveryInfoList.stream().mapToInt(item -> item.getSalesQty()).sum();
+            view.setGoodsQty(salesQty);
             viewList.add(view);
         }
 

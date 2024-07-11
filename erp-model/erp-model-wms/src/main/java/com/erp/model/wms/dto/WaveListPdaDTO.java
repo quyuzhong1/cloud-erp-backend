@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -44,7 +45,12 @@ public class WaveListPdaDTO implements Serializable {
         /**
          * 拣货车类型
          */
-        private String pickingCartType;
+        private String pickingCartTypeId;
+
+        /**
+         * 拣货车类型名称
+         */
+        private String pickingCartTypeName;
 
         /**
          * 创建时间
@@ -54,7 +60,7 @@ public class WaveListPdaDTO implements Serializable {
         /**
          * 分拣方式
          */
-        private String pickType;
+        private String pickingType;
 
         /**
          * 分拣方式名称
@@ -182,11 +188,13 @@ public class WaveListPdaDTO implements Serializable {
         /**
          * 波次ID
          */
+        @NotBlank
         private String id;
 
         /**
          * 拣货车编码
          */
+        @NotBlank
         private String pickingCartCode;
 
         /**

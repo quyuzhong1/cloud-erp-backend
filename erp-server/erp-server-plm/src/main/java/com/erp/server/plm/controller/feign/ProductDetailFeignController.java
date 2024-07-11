@@ -28,8 +28,8 @@ public class ProductDetailFeignController {
         return productDetailService.listByIds(ids);
     }
 
-    @GetMapping("feign/productDetail/getProductInfoBySkuId")
-    ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(String skuId){
+    @GetMapping("/getProductInfoBySkuId")
+    ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(@RequestParam String skuId){
         return productPurchaseService.getProductInfoBySkuId(skuId);
     }
 }

@@ -38,7 +38,15 @@
         <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
             and ${param.sqlMap.default}
         </if>
-        order by warehouse_id, sku_no
+        ORDER BY
+        <if test="param.sortList != null and param.sortList.size > 0">
+            <foreach collection="param.sortList" item="item" separator="," close=",">
+                <if test="item.field == 'skuNo'">
+                    sku_no ${item.sort}
+                </if>
+            </foreach>
+        </if>
+        create_time DESC
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity">
         select id,
@@ -55,5 +63,14 @@
         <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
             and ${param.sqlMap.default}
         </if>
+        ORDER BY
+        <if test="param.sortList != null and param.sortList.size > 0">
+            <foreach collection="param.sortList" item="item" separator="," close=",">
+                <if test="item.field == 'skuNo'">
+                    sku_no ${item.sort}
+                </if>
+            </foreach>
+        </if>
+        create_time DESC
     </select>
 </mapper>

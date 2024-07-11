@@ -152,6 +152,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         // 记录主单操作日志
         log.info("编辑 开始记录波次规则日志数据，id：【{}】", cfgRuleWaveEntity.getId());
+        handlePickingCartTypeJsonName(old);
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleWaveEntity.getId(), "波次规则");
         operateLogService.addModuleOperateLogByObj(old, cfgRuleWaveEntity, ModuleTypeEnum.CFG_RULE_WAVE.getCode(), cfgRuleWaveEntity.getId(), msg);
         return Boolean.TRUE;
@@ -188,6 +189,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到波次规则数据"));
+
+        if (!entity.getDisabled()) {
+            throw new ServiceException("仅禁用规则允许删除");
+        }
 
         // 删除主单数据
         log.info("删除 开始删除波次规则主单数据，id：【{}】", id);
@@ -353,6 +358,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         List<SoB2cDeliveryEntity> sortedList = compliantList.stream().sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime)).collect(Collectors.toList());
         Integer totalQty = MathUtil.ZERO;
         Integer orderQty = MathUtil.ONE;
+        String skuId = null;
 
         WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
         addDTO.setWaveType(entity.getWaveType());
@@ -381,6 +387,19 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 continue;
             }
 
+            //判断是否是同类波次,同类波次需要保证波次列表中sku一致
+            if (StrUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
+                //发货单类SKU不一致则跳过
+                long skuCount = detailList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().count();
+                if (skuCount > 1) {
+                    continue;
+                }
+                //波次SKU不一致则跳过
+                if (ObjectUtil.isNotEmpty(skuId) && !StrUtil.equals(skuId,detailList.get(0).getSkuId())) {
+                    continue;
+                }
+            }
+
             try {
                 soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList);
             } catch (ServiceException e) {
@@ -394,9 +413,12 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
             if ((MathUtil.compareTo(entity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO && detailTotalQty + totalQty > entity.getMaxQty())
                     || orderQty > entity.getMaxOrderQty()) {
-                addDTO.setDeliveryIdList(deliveryIdList);
-                resultList.add(addDTO);
 
+                //原波次数量和单数必须大于等于最小数量
+                if ((MathUtil.compareTo(entity.getMinQty(),MathUtil.ZERO) != MathUtil.ZERO && totalQty >= entity.getMinQty()) &&  orderQty > entity.getMinOrderQty()) {
+                    addDTO.setDeliveryIdList(deliveryIdList);
+                    resultList.add(addDTO);
+                }
                 //清空合计数据
                 totalQty = MathUtil.ZERO;
                 orderQty = MathUtil.ONE;
@@ -415,6 +437,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
             //发货单订单数量
             orderQty++;
+
+            //波次SKU
+            skuId = detailList.get(0).getSkuId();
         }
         //添加波次生成的缺货异常
         if (CollectionUtil.isNotEmpty(updateDeliveryList)) {
@@ -593,7 +618,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         }
         //拣货车类型
         cfgRuleWaveEntity.setPickingCartTypeJson(JSONUtil.toJsonStr(pickingCartTypeIdList));
-
+        handlePickingCartTypeJsonName(cfgRuleWaveEntity);
         //自动执行
         if (StrUtil.equals(cfgRuleWaveEntity.getExecutionType(), ExecutionTypeEnum.AUTO.getCode())) {
             if (CollectionUtil.isEmpty(executionTimeList)) {
@@ -605,6 +630,30 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         } else {
             cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.toJsonStr(new JSONArray()));
         }
+        //清空数量
+        if (ObjectUtil.isEmpty(cfgRuleWaveEntity.getMinQty())) {
+            cfgRuleWaveEntity.setMinQty(MathUtil.ZERO);
+        }
+        if (ObjectUtil.isEmpty(cfgRuleWaveEntity.getMaxQty())) {
+            cfgRuleWaveEntity.setMaxQty(MathUtil.ZERO);
+        }
+    }
+
+    /**
+     * 格式话拣货车名称
+     * @author will
+     * @date 2024/7/10 15:34
+     * @param cfgRuleWaveEntity
+     */
+    private void handlePickingCartTypeJsonName (CfgRuleWaveEntity cfgRuleWaveEntity) {
+        String pickingCartTypeJson = cfgRuleWaveEntity.getPickingCartTypeJson();
+        List<String> pickingCartTypeIdList = Arrays.stream(JSONUtil.parseArray(pickingCartTypeJson).stream().toArray(String[]::new)).collect(Collectors.toList());
+        List<PickingCartTypeEntity> pickingCartTypeList = pickingCartTypeService.listByIds(pickingCartTypeIdList);
+        if (CollectionUtil.isEmpty(pickingCartTypeList)) {
+            return;
+        }
+        List<String> nameList = pickingCartTypeList.stream().map(PickingCartTypeEntity::getName).collect(Collectors.toList());
+        cfgRuleWaveEntity.setPickingCartTypeJsonName(JSONUtil.toJsonStr(nameList));
     }
 
     /**

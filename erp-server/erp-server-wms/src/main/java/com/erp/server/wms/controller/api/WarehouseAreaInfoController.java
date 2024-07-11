@@ -122,7 +122,7 @@ public class WarehouseAreaInfoController extends BaseController {
      * 查询所有库区
      */
     @GetMapping("/listAllArea")
-    public ApiResult<List<WarehouseLocationDTO.ViewDto>> listAllArea(){
+    public ApiResult<List<WarehouseLocationDTO.CoreDTO>> listAllArea(){
         return success(warehouseLocationService.listAllArea());
     }
 }

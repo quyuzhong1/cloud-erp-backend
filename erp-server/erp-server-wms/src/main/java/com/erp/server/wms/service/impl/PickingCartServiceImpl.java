@@ -24,18 +24,21 @@ import com.erp.model.wms.dto.PickingCartDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.model.wms.entity.PickingCartEntity;
+import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.server.wms.mapper.PickingCartMapper;
 import com.erp.server.wms.service.CfgRuleConditionService;
 import com.erp.server.wms.service.PickingCartService;
+import com.erp.server.wms.service.WaveListService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -55,6 +58,8 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
     @Autowired
     private CfgRuleConditionService cfgRuleConditionService;
 
+    @Autowired
+    private WaveListService waveListService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -113,6 +118,14 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
     @Override
     public BatchResultDTO delete(String id) {
         PickingCartEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到拣货车数据"));
+
+        //判断拣货车是否被波次使用
+        List<WaveListEntity> waveList = waveListService.listByPickingCartCodeList(Arrays.asList(entity.getCode()));
+        long count = waveList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), WaveStatusEnum.FINISH.getCode())).count();
+        if (count > 0) {
+            throw new ServiceException(StrUtil.format("拣货车【{}】已被波次列表使用，不支持删除",entity.getCode()));
+        }
+
         // 删除主单数据
         log.info("删除 开始删除拣货车主单数据，id：【{}】", id);
         super.removeById(id);

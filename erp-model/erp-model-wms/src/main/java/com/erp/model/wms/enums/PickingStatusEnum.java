@@ -12,9 +12,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum PickingStatusEnum implements EnumMessage {
-    PICK_ING("pick_ing", "拣货中"),
+    PICK_ING("pickIng", "拣货中"),
     FINISH("finish", "已完成"),
-    NOT_START("not_start", "未开始")
+    NOT_START("notStart", "未开始")
     ;
 
     private String code;

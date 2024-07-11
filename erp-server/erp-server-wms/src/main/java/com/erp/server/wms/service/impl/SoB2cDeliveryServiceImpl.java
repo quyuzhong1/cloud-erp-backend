@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -181,6 +182,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
+    @Resource
+    private WmsAttachmentService attachmentService;
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
@@ -419,6 +422,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<PickingListsEntity> list = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
         List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingIds));
+
+        //波次列表信息
+        List<String> sourceIdList = list.stream().map(PickingListsEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<WaveListDTO.WaveDeliveryDTO> waveDeliveryList = waveListService.listByDeliverIds(sourceIdList);
+
         for (PickingDetailEntity pickingDetail : pickingDetails) {
             SoB2cDeliveryDTO.PrintPickingViewDTO viewDTO = new SoB2cDeliveryDTO.PrintPickingViewDTO();
             BeanMapper.copy(pickingDetail, viewDTO);
@@ -437,6 +445,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //备注
             SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> req.getId().equals(pickingLists.getSourceId())).findFirst().orElse(new SoB2cDeliveryEntity());
             viewDTO.setRemark(entity.getRemark());
+            viewDTO.setDeliveryCode(entity.getCode());
+
+            //波次信息
+            WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> StrUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
+            viewDTO.setWaveCode(waveDeliveryDTO.getWaveCode());
             printPickingViewList.add(viewDTO);
         }
         // 合并处理数量不相同的行
@@ -889,6 +902,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 log.error("发货单【{}】自动出库失败",entity.getCode());
             }
         }
+        //更新图片
+        Class<SoB2cDeliveryEntity> aClass = SoB2cDeliveryEntity.class;
+        TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        attachmentService.batchSave(Arrays.asList(dto.getImageUrl()),Arrays.asList(""),type,entity.getId());
         //更新发货单
         this.updateById(entity);
 
@@ -1459,7 +1478,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
         List<SoB2cDeliveryEntity> b2cDelivery = listByIds(dto.getIds());
         boolean match = b2cDelivery.stream().allMatch(v -> SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(v.getStatus()));
-        if (Boolean.FALSE.equals(match)) {
+        List<String> soIds = b2cDelivery.stream().map(SoB2cDeliveryEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        boolean isIntercept = soB2cEntities.stream().anyMatch(SoB2cEntity::getIsIntercept);
+        if (Boolean.FALSE.equals(match) || Boolean.TRUE.equals(isIntercept)) {
             throw new ServiceException(ApiError.ERROR_99116);
         }
         List<SoB2cDeliveryDetailEntity> detailList = soB2cDeliveryDetailService.listByMainIds(dto.getIds());
@@ -1474,7 +1496,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
-        addDTO.setPickCartTypeId(dto.getPickingCartTypeId());
+//        addDTO.setPickCartTypeIdList(dto.getPickingCartTypeId());
         addDTO.setDeliveryIdList(dto.getIds());
         addDTO.setPickingType(dto.getPickingType());
         addDTO.setName("手动生成波次");
@@ -1546,6 +1568,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cDeliveryEntity entity = getById(id);
         checkDelivery(entity);
         entity.setStatus(SoB2cDeliveryStatusEnum.PICKING.getStatus());
+        entity.setAbnormalCause("");
         updateById(entity);
         // 操作日志
         operateLogService.addModuleOperateLog("仓库清除异常", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "清除异常");
@@ -1814,8 +1837,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             WaveListDTO.WaveDeliveryDTO dto = deliveryList.stream()
                     .filter(e -> e.getDeliveryId().equals(record.getId()))
                     .findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
-            record.setWavesCode(dto.getWaveCode());
-            String warehouseLocation = views.stream().filter(e -> e.getSourceDetailId().equals(record.getDetailId()))
+            record.setWaveCode(dto.getWaveCode());
+            String warehouseLocation = views.stream().filter(e -> e.getSkuId().equals(record.getSkuId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
                     .distinct()
                     .collect(Collectors.joining(","));
@@ -1848,7 +1871,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 viewDTO.setProductName(skuVO.getSkuName());
             }
 
-            String warehouseLocation = views.stream().filter(e -> e.getSourceDetailId().equals(viewDTO.getId()))
+            String warehouseLocation = views.stream().filter(e -> e.getSkuId().equals(viewDTO.getSkuId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
                     .distinct()
                     .collect(Collectors.joining(","));

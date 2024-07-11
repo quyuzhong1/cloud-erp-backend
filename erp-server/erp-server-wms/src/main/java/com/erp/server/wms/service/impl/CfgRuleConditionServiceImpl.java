@@ -7,6 +7,7 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.RuleCompareEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapperUtils;
@@ -68,6 +69,7 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                     entity.setIndex(index.incrementAndGet());
                     return entity;
                 }).collect(Collectors.toList());
+        handleDataList(ruleConditionEntities);
         saveBatch(ruleConditionEntities);
     }
 
@@ -141,11 +143,25 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                 operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));
             }
         }
+        handleDataList(ruleConditionEntities);
         ApplicationContextUtils.getBean(CfgRuleConditionService.class).saveOrUpdateBatch(ruleConditionEntities);
     }
 
     @Override
     public List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleIds(List<String> cfgRuleIds,String ruleType) {
         return baseMapper.listByRuleIds(cfgRuleIds,ruleType);
+    }
+
+
+    /**
+     * 新增修改处理数据
+     */
+    private void handleDataList(List<CfgRuleConditionEntity> ruleConditionList) {
+        for (CfgRuleConditionEntity item : ruleConditionList) {
+            String compare = item.getCompare();
+            if (RuleCompareEnum.IS_NULL.getCode().equals(compare) || RuleCompareEnum.NOT_NULL.getCode().equals(compare)) {
+                item.setValue("");
+            }
+        }
     }
 }

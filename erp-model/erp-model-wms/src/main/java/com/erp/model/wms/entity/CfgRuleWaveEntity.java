@@ -30,7 +30,7 @@ public class CfgRuleWaveEntity extends BaseEntity<CfgRuleWaveEntity> {
     @TableField("name")
     private String name;
     /**
-    * 波次类型((waveType类型)
+    * 波次类型((waveType类型)，枚举PickingWaveTypeEnum
     */
     @TableField("wave_type")
     private String waveType;
@@ -90,6 +90,12 @@ public class CfgRuleWaveEntity extends BaseEntity<CfgRuleWaveEntity> {
     @TableField("remark")
     private String remark;
 
+
+    /**
+     * 拣货车类型名称
+     */
+    @TableField(exist = false)
+    private String pickingCartTypeJsonName;
 
     public static final String NAME = "name";
 
