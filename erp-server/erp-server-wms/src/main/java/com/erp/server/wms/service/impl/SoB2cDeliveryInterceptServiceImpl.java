@@ -127,6 +127,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Resource
     private AsyncService asyncService;
 
+    @Resource
+    @Lazy
+    private WaveListDetailService waveListDetailService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDTO.AddDTO addDTO) {
