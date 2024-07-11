@@ -364,6 +364,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         addDTO.setWaveType(entity.getWaveType());
         addDTO.setPickingType(entity.getPickingType());
         addDTO.setName(entity.getName());
+        //
+        List<String> pickingCartTypeIdList = Arrays.stream(JSONUtil.parseArray(entity.getPickingCartTypeJson()).stream().toArray(String[]::new)).collect(Collectors.toList());
+        addDTO.setPickCartTypeIdList(pickingCartTypeIdList);
         //需要更新发货单的异常状态
         List<String> updateDeliveryList = new ArrayList<>();
         //波次中的发货单
