@@ -74,9 +74,15 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
 
     @Override
     public WaveListDetailPdaDTO.ViewDTO startPicking(String waveId) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //构造波次详情列表
         WaveListDetailPdaDTO.ViewDTO resultViewDTO = getViewDTO(waveId);
-        waveListService.update(new UpdateWrapper<WaveListEntity>().eq("id", waveId).set("status", WaveStatusEnum.PICK_ING.getCode()));
+        waveListService.update(new UpdateWrapper<WaveListEntity>()
+                .eq("id", waveId)
+                .set("status", WaveStatusEnum.PICK_ING.getCode())
+                .set("picking_user_id", loginUser.getUid())
+                .set("picking_user_name", loginUser.getUserName())
+                .set("picking_time", LocalDateTime.now()));
         return resultViewDTO;
     }
 
