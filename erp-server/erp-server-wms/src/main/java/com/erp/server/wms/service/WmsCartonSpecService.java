@@ -22,10 +22,9 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
     * @author Luo_WG
     * @date: 2023-11-16
     * @param dto 界面传递的新增数据
-    * @param taskId 来源id
     * @return
     */
-    String add(WmsCartonSpecDTO.AddDTO dto, String taskId);
+    String add(WmsCartonSpecDTO.AddDTO dto);
 
     /**
     * 根据发货单id查询装箱信息
@@ -51,15 +50,6 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      * @return
      */
     List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainIds(List<String> mainIds);
-
-    /**
-     * 根据主表id删除箱规信息
-     * @Author Luo_WG
-     * @Date 2023/11/29 10:33
-     * @param mainIds
-     * @return java.lang.Boolean
-     **/
-    Boolean deleteBySourceIds(List<String> mainIds);
 
     /**
      * 根据来源Id查询包装信息
@@ -100,9 +90,9 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
     void checkProductPropertyIds(String sourceType, List<String> skuIds);
     /**
      * 更新箱规 pda
-     * @param dto
+     * @param specEntity
      */
-    void updateSpec(WmsCartonSpecDTO.SpecSaveDTO dto);
+    void updateSpec(WmsCartonSpecEntity specEntity);
 
     WmsCartonSpecEntity getByTaskIdAndBoxNo(String packingTaskId, String boxNo);
 }

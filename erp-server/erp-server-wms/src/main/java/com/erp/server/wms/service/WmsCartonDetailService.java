@@ -47,11 +47,11 @@ public interface WmsCartonDetailService extends SuperService<WmsCartonDetailEnti
 
     /**
      * 新增箱子明细
-     * @param detailList
+     * @param addDTO
      * @param wmsCartonEntity
      * @param wmsCartonSpecEntity
      */
-    void add(List<WmsCartonDetailDTO.AddDTO> detailList, WmsCartonEntity wmsCartonEntity, WmsCartonSpecEntity wmsCartonSpecEntity);
+    void add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonEntity wmsCartonEntity, WmsCartonSpecEntity wmsCartonSpecEntity);
 
     /**
      * 根据箱子获取装箱明细列表

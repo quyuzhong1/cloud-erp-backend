@@ -1,12 +1,17 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -54,6 +59,10 @@ public class WmsCartonSpecDTO implements Serializable {
         * 预计毛重
         */
         private BigDecimal grossWeight;
+        /**
+         * 实际箱重（设备更新）
+         */
+        private BigDecimal packageWeight;
         /**
          * 重量单位（kg） 页面展示kg，数据库存储kg
          */
@@ -130,7 +139,16 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 装箱任务id
          */
+        @NotBlank(message = "装箱任务id不能为空")
         private String taskId;
+        /**
+         * 操作项
+         */
+        private String operation;
+        /**
+         * 内容
+         */
+        private String content;
         /**
          * 详情
          */
@@ -146,9 +164,9 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
         * 箱规编号
         */
-//        @NotNull(message = "箱规编号不能为空")
-//        @Min(value = 1,message = "箱规编号最小值为1")
-//        @Max(value = 999999999,message = "箱规编号最大值为999999999")
+        @NotNull(message = "箱规编号不能为空")
+        @Min(value = 1,message = "箱规编号最小值为1")
+        @Max(value = 999999999,message = "箱规编号最大值为999999999")
         private Integer boxSpecNo;
 
         /**
@@ -323,8 +341,17 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 装箱任务Id
          */
+        @NotBlank(message = "装箱任务id不能为空")
         private String taskId;
 
+        /**
+         * 操作项【后端使用】
+         */
+        private String operation;
+        /**
+         * 功能描述
+         */
+        private String content;
         /**
          * 装箱信息
          */
@@ -830,6 +857,8 @@ public class WmsCartonSpecDTO implements Serializable {
          * MeasureSourceEnum
          * 字典接口地址
          */
+        @NotBlank(message = "箱规来源不能为空")
+        @StateEnumValue(strValues = {"device","manual"},message = "箱规来源有误")
         private String measureSource;
     }
     @Data

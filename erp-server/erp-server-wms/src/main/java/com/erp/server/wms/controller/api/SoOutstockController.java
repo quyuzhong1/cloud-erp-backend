@@ -14,12 +14,8 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
@@ -29,15 +25,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 销售出库-销售出库单
@@ -458,7 +451,7 @@ public class SoOutstockController extends BaseController {
 //    public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
 //        String packingStatus = soOutstockService.packingSave(dto);
 //
-//        if (PackingStatusEnum.PACKING.getCode().equals(packingStatus)) {
+//        if (PackingTaskStatusEnum.PACKED.getCode().equals(packingStatus)) {
 //        } else {
 //            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(dto.getSourceId()));
 //            List<String> ids = tmsDeclareBillEntities.stream().map(req -> req.getId()).collect(Collectors.toList());

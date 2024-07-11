@@ -75,9 +75,8 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * 生成装箱信息
      * @param addDTO
      * @param wmsCartonSpecEntity
-     * @param taskId
      */
-    String add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity, String taskId);
+    String add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonSpecEntity wmsCartonSpecEntity);
 
     /**
      * 根据任务id和箱号获取记录
