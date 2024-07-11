@@ -25,6 +25,7 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.entity.CfgRuleConditionEntity;
 import com.erp.model.wms.entity.PickingCartEntity;
 import com.erp.model.wms.entity.WaveListEntity;
+import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.server.wms.mapper.PickingCartMapper;
 import com.erp.server.wms.service.CfgRuleConditionService;
 import com.erp.server.wms.service.PickingCartService;
@@ -120,7 +121,8 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
 
         //判断拣货车是否被波次使用
         List<WaveListEntity> waveList = waveListService.listByPickingCartCodeList(Arrays.asList(entity.getCode()));
-        if (CollectionUtil.isNotEmpty(waveList)) {
+        long count = waveList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), WaveStatusEnum.FINISH.getCode())).count();
+        if (count > 0) {
             throw new ServiceException(StrUtil.format("拣货车【{}】已被波次列表使用，不支持删除",entity.getCode()));
         }
 
