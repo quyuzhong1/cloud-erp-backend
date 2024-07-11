@@ -308,14 +308,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         //根据主表id分组sku查询发货及待装箱数
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList = this.listGroupSkuById(dto.getTaskId());
+        //更新主表状态
+        updatePackingStatus(groupSkuList, dto.getTaskId());
         //当所有产品待装箱数量为0时，状态自动变更为已装箱
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList) && PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())) {
             autoGenerateSoDeliveryNotice(packingTask,soDeliveryNoticeEntity);
         }else if (CollectionUtils.isEmpty(groupSkuDTOList) && (PickingSourceTypeEnum.FBA.getCode().equals(packingTask.getSourceType()) || PickingSourceTypeEnum.THIRD.getCode().equals(packingTask.getSourceType()))){
             autoGenerateFirstMileDelivery(packingTask,firstMileDeliveryEntity);
-        } else {
-            updatePackingStatus(packingTask.getSourceId(),packingTask.getSourceType(), PackingStatusEnum.NOT_PACKING.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1345,7 +1345,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     private void autoGenerateFirstMileDelivery(PackingTaskEntity packingTask, FirstMileDeliveryEntity firstMileDeliveryEntity) {
-        updatePackingStatus(packingTask.getSourceId(),packingTask.getSourceType(), PackingStatusEnum.PACKING.getCode());
         //走TMS自动生成物流单逻辑
         AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
                 .id(firstMileDeliveryEntity.getId())
@@ -1385,7 +1384,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     private void autoGenerateSoDeliveryNotice(PackingTaskEntity packingTask, SoDeliveryNoticeEntity soDeliveryNoticeEntity) {
-//        updatePackingStatus(packingTask.getSourceId(),packingTask.getSourceType(), PackingStatusEnum.PACKING.getCode());
 //        //走TMS自动生成报关单逻辑
 //        if (!"CN".equalsIgnoreCase(soOutstock.getCountry()) && soOutstock.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && soOutstock.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
 //            //走TMS自动生成逻辑
@@ -1454,16 +1452,41 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     /**
      * 更新
-     * @param sourceId
-     * @param sourceType
-     * @param status
+     * @param groupSkuList
+     * @param taskId
      */
-    private void updatePackingStatus(String sourceId, String sourceType, String status) {
-        if (PickingSourceTypeEnum.B2B.getCode().equals(sourceType)){
-            soDeliveryNoticeService.updatePackingStatus(sourceId,status);
-        }else {
-            firstMileDeliveryService.updatePackingStatus(sourceId,status);
+    private void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList, String taskId) {
+        if (StringUtils.isBlank(taskId) || CollectionUtils.isEmpty(groupSkuList)){
+            return;
         }
+        Integer packQty = groupSkuList.stream().map(WmsCartonSpecDTO.GroupSkuDTO::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
+        Integer deliveryQty = groupSkuList.stream().map(WmsCartonSpecDTO.GroupSkuDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+        List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(taskId));
+        String packingStatus;
+        //更新装箱状态-汇总
+        if (packQty == 0){
+            packingStatus = PackingTaskStatusEnum.UNPACKED.getCode();
+        }else if (packQty > 0 && !deliveryQty.equals(packQty)){
+            packingStatus = PackingTaskStatusEnum.PACKING.getCode();
+        }else{
+            packingStatus = PackingTaskStatusEnum.PACKED.getCode();
+        }
+        //更新称重状态-汇总
+        List<WmsCartonEntity> unWeightList = cartonEntityList.stream().filter(e -> PackingWeightStatusEnum.UNWEIGHED.getCode().equals(e.getWeightingStatus()) || PackingWeightStatusEnum.FAIL.getCode().equals(e.getWeightingStatus())).collect(Collectors.toList());
+        List<WmsCartonEntity> weighedList = cartonEntityList.stream().filter(e -> PackingWeightStatusEnum.SUCCESS.getCode().equals(e.getWeightingStatus())).collect(Collectors.toList());
+        String weightingStatus;
+        if (deliveryQty.equals(packQty) && CollectionUtils.isEmpty(unWeightList)){
+            //全部称重
+            weightingStatus = PackingWeightStatusEnum.WEIGHTED.getCode();
+        }else if (CollectionUtils.isNotEmpty(weighedList)){
+            weightingStatus = PackingWeightStatusEnum.WEIGHTING.getCode();
+        }else {
+            weightingStatus = PackingWeightStatusEnum.UNWEIGHED.getCode();
+        }
+        this.lambdaUpdate().eq(PackingTaskEntity::getId, taskId)
+                .set(PackingTaskEntity::getPackingStatus, packingStatus)
+                .set(PackingTaskEntity::getWeightingStatus, weightingStatus)
+                .update();
     }
 
     /**
