@@ -606,7 +606,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateByPackingTaskId(id);
         //拣货数量
         List<PickingListsDTO.DetailPickDTO> pickeDTOList = pickingListsService.listDetailBySourceIds(Collections.singletonList(packingTaskEntity.getSourceId()));
-        view.setDetailList(buildNoPackingDetailList(detailDTOList,packDateDTOS, pickeDTOList));
+        List<WmsCartonSpecDTO.NoPackingViewDTO> noPackingViewDTOS = buildNoPackingDetailList(detailDTOList, packDateDTOS, pickeDTOList);
+        view.setDetailList(noPackingViewDTOS);
+        view.setPackedTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getPackedQty).reduce(MathUtil.ZERO, Integer::sum));
+        view.setDeliveryTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum));
+        view.setUnpackedTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getUnpackedQty).reduce(MathUtil.ZERO, Integer::sum));
+        view.setPickingTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getPickingQty).reduce(MathUtil.ZERO, Integer::sum));
         return view;
     }
 
@@ -891,7 +896,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     public WmsCartonSpecDTO.CartonSpecDTO cartonSpecView(WmsCartonSpecDTO.SpecRequestDTO requestDTO) {
-        if (StringUtils.isNotBlank(requestDTO.getOutBoxNo())){
+        if (StringUtils.isBlank(requestDTO.getOutBoxNo())){
             throw new ServiceException("外部单号不能为空");
         }
         String[] split = requestDTO.getOutBoxNo().split("-");
@@ -1249,6 +1254,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 }
             }
         }
+    }
+
+    @Override
+    public PagingVO<PackingTaskDTO.PackingTreeDTO> searchSourceCode(PackingTaskDTO.SearchSourceCodeDTO dto) {
+        Page<PackingTaskDTO.PackingTreeDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<PackingTaskDTO.PackingTreeDTO> pageData = baseMapper.pagingSelect(query,dto);
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<WmsCartonSpecDTO.SpecDTO> getCartonSpecByTaskId(String taskId) {
+        return baseMapper.getCartonSpecByTaskId(taskId);
     }
 
     /**

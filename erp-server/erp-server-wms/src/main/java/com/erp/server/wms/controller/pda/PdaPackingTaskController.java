@@ -226,4 +226,26 @@ public class PdaPackingTaskController extends BaseController {
         packingTaskService.cartonSpecSave(dto);
         return success();
     }
+
+    /**
+     * 关联单号查询-支持模糊搜索
+     * @Author zdy
+     * @Date 2024/7/8 17:44
+     * @param requestDTO
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    @PostMapping("/searchSourceCode")
+    public ApiResult<PagingVO<PackingTaskDTO.PackingTreeDTO>> searchSourceCode(@RequestBody @Validated PackingTaskDTO.SearchSourceCodeDTO requestDTO) {
+        return success(packingTaskService.searchSourceCode(requestDTO));
+    }
+
+    /**
+     * 根据任务id获取箱规列表
+     * @param taskId
+     * @return
+     */
+    @GetMapping("/getCartonSpecByTaskId")
+    public ApiResult<List<WmsCartonSpecDTO.SpecDTO>> getCartonSpecByTaskId(@RequestParam("taskId") String taskId){
+        return success(packingTaskService.getCartonSpecByTaskId(taskId));
+    }
 }

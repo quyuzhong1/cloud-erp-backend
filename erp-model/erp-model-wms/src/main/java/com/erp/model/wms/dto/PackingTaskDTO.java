@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -381,5 +382,22 @@ public class PackingTaskDTO implements Serializable {
          * 产品种类
          */
         private Integer productNum;
+    }
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @NoArgsConstructor
+    public static class SearchSourceCodeDTO extends PagingDTO {
+        /**
+         * 搜索单号（支持箱号/关联单号/任务单号）
+         */
+        private String searchKey;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PackingTreeDTO {
+        private String taskId;
+        private String sourceId;
+        private String sourceCode;
     }
 }

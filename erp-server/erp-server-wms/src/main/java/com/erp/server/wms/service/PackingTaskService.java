@@ -224,4 +224,18 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * 从历史装箱数据补充装箱任务和装箱详情
      */
     void initPackingTaskData();
+
+    /**
+     * 模糊搜索-支持分页
+     * @param requestDTO
+     * @return
+     */
+    PagingVO<PackingTaskDTO.PackingTreeDTO> searchSourceCode(PackingTaskDTO.SearchSourceCodeDTO requestDTO);
+
+    /**
+     * 根据任务id获取箱规列表
+     * @param taskId
+     * @return
+     */
+    List<WmsCartonSpecDTO.SpecDTO> getCartonSpecByTaskId(String taskId);
 }

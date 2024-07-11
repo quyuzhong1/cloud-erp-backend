@@ -505,6 +505,22 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String taskId;
         /**
+         * 发货数量
+         */
+        private Integer deliveryTotalQty;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingTotalQty;
+        /**
+         * 已装箱数量
+         */
+        private Integer packedTotalQty;
+        /**
+         * 未装箱数量
+         */
+        private Integer unpackedTotalQty;
+        /**
          * 装箱明细
          */
         private List<WmsCartonSpecDTO.NoPackingViewDTO> detailList;
@@ -857,5 +873,50 @@ public class WmsCartonSpecDTO implements Serializable {
          * 预警提示
          */
         private String warnMsg;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SpecDTO {
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 箱规id
+         */
+        private String specId;
+        /**
+         * 箱号
+         */
+        private String boxNo;
+        /**
+         * 箱规编码
+         */
+        private String boxSpecNo;
+        /**
+         * 包装重量
+         */
+        private String packageWeight;
+        /**
+         * 包装长
+         */
+        private String boxLength;
+        /**
+         * 包装宽
+         */
+        private String boxWidth;
+        /**
+         * 包装高
+         */
+        private String boxHeight;
+        /**
+         * 重量单位 kg
+         */
+        private String weightUnit;
+        /**
+         * 长度单位 cm
+         */
+        private String sizeUnit;
     }
 }
