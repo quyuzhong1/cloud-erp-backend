@@ -34,37 +34,37 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 来源详情id
     */
     @TableField("third_detail_id")
-    private String thirdDetailId;
+    private String thirdDetailId = "";
     /**
     * 平台原始详情id
     */
     @TableField("platform_detail_id")
-    private String platformDetailId;
+    private String platformDetailId = "";
     /**
     * 产品id
     */
     @TableField("sku_id")
-    private String skuId;
+    private String skuId = "";
     /**
     * 产品编码
     */
     @TableField("sku_no")
-    private String skuNo;
+    private String skuNo = "";
     /**
     * 平台sku
     */
     @TableField("platform_sku")
-    private String platformSku;
+    private String platformSku = "";
     /**
     * 平台产品id
     */
     @TableField("platform_spu_no")
-    private String platformSpuNo;
+    private String platformSpuNo = "";
     /**
     * 产品多属性
     */
     @TableField("specifics")
-    private String specifics;
+    private String specifics = "";
     /**
     * 数量
     */
@@ -74,17 +74,17 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 单位
     */
     @TableField("product_unit")
-    private String productUnit;
+    private String productUnit = "";
     /**
     * 产品名称
     */
     @TableField("sku_name")
-    private String skuName;
+    private String skuName = "";
     /**
     * 产品图片
     */
     @TableField("sku_url")
-    private String skuUrl;
+    private String skuUrl = "";
     /**
     * 是否赠品：true/false
     */
@@ -94,22 +94,22 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 仓库编码
     */
     @TableField("warehouse_id")
-    private String warehouseId;
+    private String warehouseId = "";
     /**
     * 仓库名称
     */
     @TableField("warehouse_name")
-    private String warehouseName;
+    private String warehouseName = "";
     /**
     * 仓位
     */
     @TableField("warehouse_location")
-    private String warehouseLocation;
+    private String warehouseLocation = "";
     /**
     * 订单商品备注
     */
     @TableField("item_remark")
-    private String itemRemark;
+    private String itemRemark = "";
     /**
     * 汇率
     */
@@ -144,7 +144,7 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 拓展字段
     */
     @TableField("extend_data")
-    private String extendData;
+    private String extendData = "";
     /**
     * 输入任务id
     */

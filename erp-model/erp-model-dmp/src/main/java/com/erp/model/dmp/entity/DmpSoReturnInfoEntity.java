@@ -45,7 +45,7 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     * 来源平台：gyy，kingdee，mabang
     */
     @TableField("source_system")
-    private String sourceSystem;
+    private String sourceSystem = "";
     /**
     * 第三方单据编号（唯一）
     */
@@ -55,52 +55,52 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     * 平台原始单号
     */
     @TableField("platform_code")
-    private String platformCode;
+    private String platformCode = "";
     /**
     * 店铺编号
     */
     @TableField("shop_id")
-    private String shopId;
+    private String shopId = "";
     /**
     * 店铺名称
     */
     @TableField("shop_name")
-    private String shopName;
+    private String shopName = "";
     /**
     * 单据状态：1待处理 2已退款 3已重发 4已完成 5已作废
     */
     @TableField("status")
-    private String status;
+    private String status = "";
     /**
     * 平台原始状态
     */
     @TableField("platform_status")
-    private String platformStatus;
+    private String platformStatus = "";
     /**
     * 国家二字码
     */
     @TableField("country")
-    private String country;
+    private String country = "";
     /**
     * 买家账号
     */
     @TableField("buyer_user_id")
-    private String buyerUserId;
+    private String buyerUserId = "";
     /**
     * 买家姓名
     */
     @TableField("buyer_name")
-    private String buyerName;
+    private String buyerName = "";
     /**
     * 备注
     */
     @TableField("remark")
-    private String remark;
+    private String remark = "";
     /**
     * 币种
     */
     @TableField("currency_code")
-    private String currencyCode;
+    private String currencyCode = "";
     /**
     * 汇率
     */
@@ -116,43 +116,43 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
      * 销售组织id
      */
      @TableField("sale_org_id")
-     private String saleOrgId;
+     private String saleOrgId = "";
      
      /**
       * ulz数据来源
       */
      @TableField("ulz_data_sources")
-     private String ulzDataSources;
+     private String ulzDataSources = "";
      
      /**
       * 销售部门名称
       */
      @TableField("saledept_name")
-     private String saledeptName;
+     private String saledeptName = "";
      
      /**
       * 销售人名称
       */
      @TableField("sales_man_name")
-     private String salesManName;
+     private String salesManName = "";
      
      /**
       * 第三方单据编号
       */
      @TableField("third_bill_no")
-     private String thirdBillNo;
+     private String thirdBillNo = "";
      
      /**
       * 销售组织名称
       */
      @TableField("sale_org_name")
-     private String saleOrgName;
+     private String saleOrgName = "";
      
      /**
       * 销售组织编码
       */
      @TableField("saledept_number")
-     private String saledeptNumber;
+     private String saledeptNumber = "";
      
     /**
     * 输入任务id

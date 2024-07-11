@@ -34,37 +34,37 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
     * 来源详情id
     */
     @TableField("third_detail_id")
-    private String thirdDetailId;
+    private String thirdDetailId = "";
     /**
     * 销售平台原始详情id
     */
     @TableField("platform_detail_id")
-    private String platformDetailId;
+    private String platformDetailId = "";
     /**
     * skuId
     */
     @TableField("sku_id")
-    private String skuId;
+    private String skuId = "";
     /**
     * sku编码
     */
     @TableField("sku_no")
-    private String skuNo;
+    private String skuNo = "";
     /**
     * 产品名称
     */
     @TableField("sku_name")
-    private String skuName;
+    private String skuName = "";
     /**
     * 平台sku
     */
     @TableField("platform_sku")
-    private String platformSku;
+    private String platformSku = "";
     /**
     * 单位
     */
     @TableField("product_unit")
-    private String productUnit;
+    private String productUnit = "";
     /**
     * 是否赠品：true/false
     */
@@ -74,27 +74,27 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
     * 商品规格
     */
     @TableField("specifics")
-    private String specifics;
+    private String specifics = "";
     /**
     * 商品备注
     */
     @TableField("item_remark")
-    private String itemRemark;
+    private String itemRemark = "";
     /**
     * 仓库编号
     */
     @TableField("warehouse_id")
-    private String warehouseId;
+    private String warehouseId = "";
     /**
     * 仓库名称
     */
     @TableField("warehouse_name")
-    private String warehouseName;
+    private String warehouseName = "";
     /**
     * 商品仓位
     */
     @TableField("warehouse_location")
-    private String warehouseLocation;
+    private String warehouseLocation = "";
     /**
     * 商品单价
     */
@@ -114,17 +114,17 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
     * 第三方平台订单编号
     */
     @TableField("third_order_code")
-    private String thirdOrderCode;
+    private String thirdOrderCode = "";
     /**
     * 销售平台原始订单编号
     */
     @TableField("platform_order_code")
-    private String platformOrderCode;
+    private String platformOrderCode = "";
     /**
      * 备注
      */
      @TableField("remark")
-     private String remark;
+     private String remark = "";
     /**
     * 输入任务id
     */

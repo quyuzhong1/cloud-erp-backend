@@ -33,72 +33,72 @@ public class DmpSoReceiverEntity extends BaseEntity<DmpSoReceiverEntity> {
     * 国家二字码
     */
     @TableField("country")
-    private String country;
+    private String country = "";
     /**
     * 买家账号
     */
     @TableField("buyer_id")
-    private String buyerId;
+    private String buyerId = "";
     /**
     * 买家姓名
     */
     @TableField("buyer_name")
-    private String buyerName;
+    private String buyerName = "";
     /**
     * 收货人名称
     */
     @TableField("receiver_name")
-    private String receiverName;
+    private String receiverName = "";
     /**
     * 收货人电话
     */
     @TableField("receiver_tel_number")
-    private String receiverTelNumber;
+    private String receiverTelNumber = "";
     /**
     * 邮编
     */
     @TableField("post_code")
-    private String postCode;
+    private String postCode = "";
     /**
     * 省份
     */
     @TableField("province")
-    private String province;
+    private String province = "";
     /**
     * 城市
     */
     @TableField("city")
-    private String city;
+    private String city = "";
     /**
     * 所属区域
     */
     @TableField("district")
-    private String district;
+    private String district = "";
     /**
     * 街道详细地址
     */
     @TableField("full_address")
-    private String fullAddress;
+    private String fullAddress = "";
     /**
     * 买家地址1
     */
     @TableField("main_street")
-    private String mainStreet;
+    private String mainStreet = "";
     /**
     * 买家地址2
     */
     @TableField("second_street")
-    private String secondStreet;
+    private String secondStreet = "";
     /**
     * 买家电话1
     */
     @TableField("main_phone")
-    private String mainPhone;
+    private String mainPhone = "";
     /**
     * 买家电话2
     */
     @TableField("second_phone")
-    private String secondPhone;
+    private String secondPhone = "";
     /**
     * 输入任务id
     */
