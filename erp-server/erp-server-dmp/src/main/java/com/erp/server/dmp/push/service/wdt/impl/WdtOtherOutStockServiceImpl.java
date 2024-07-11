@@ -2,7 +2,6 @@ package com.erp.server.dmp.push.service.wdt.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -12,7 +11,6 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
-import com.sdk.wangdian.enums.WdtExtOutStockStatusEnum;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.wms.external.out.*;
@@ -132,18 +130,10 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
     }
 
     @Override
-    public void querySelfOut(CreateOtherStockoutRequest request) {
+    public StockExternalOutResponse querySelfOut(CreateOtherStockoutRequest request) {
         StockExternalOutAPI stockExternalOutAPI = wangDianClientService.get(StockExternalOutAPI.class);
         StockExternalOutRequest outRequest = new StockExternalOutRequest();
         outRequest.setOuterOutNo(request.getOuterNo());
-        StockExternalOutResponse stockExternalOutResponse = stockExternalOutAPI.queryWithDetail(outRequest, new Pager(10, 0, true));
-        if (ObjectUtils.isNotEmpty(stockExternalOutResponse) && CollectionUtils.isNotEmpty(stockExternalOutResponse.getOrder())) {
-            StockExternalOutResponse.Order order = stockExternalOutResponse.getOrder().get(0);
-            if (!order.getStatus().equals(WdtExtOutStockStatusEnum.FINISH.getStatus())) {
-                //修改任务的错误消息
-                String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtExtOutStockStatusEnum.getName(order.getStatus()));
-                throw new ServiceException(format);
-            }
-        }
+        return stockExternalOutAPI.queryWithDetail(outRequest, new Pager(10, 0, true));
     }
 }
