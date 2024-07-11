@@ -326,6 +326,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         wmsCartonSpecService.deleteCarton(dto.getTaskId());
         //新增装箱信息
         for (WmsCartonSpecDTO.AddDTO addDTO : dto.getWmsCartonList()) {
+            addDTO.setTaskId(dto.getTaskId());
             //不同物流属性配置校验
             List<String> skuIds = addDTO.getDetailList().stream().map(WmsCartonDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
             wmsCartonSpecService.checkProductPropertyIds(packingTask.getSourceType(), skuIds);
@@ -882,6 +883,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public String stagingPacking(WmsCartonSpecDTO.AddDTO addDTO) {
         if (Objects.isNull(addDTO.getBoxQty())){
             addDTO.setBoxQty(MathUtil.ONE);
+        }
+        if (StringUtils.isBlank(addDTO.getTaskId())){
+            throw new ServiceException("装箱任务id不能为空");
         }
         PackingTaskEntity packingTaskEntity = this.getById(addDTO.getTaskId());
         if (Objects.isNull(packingTaskEntity)){

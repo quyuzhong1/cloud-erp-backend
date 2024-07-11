@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
@@ -26,6 +28,7 @@ import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,11 +66,20 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
     @Override
     public WaveListPdaDTO.WaveBasicInfoDTO waveInfo(String waveId) {
-        WaveListEntity waveListEntity = waveListService.getById(waveId);
-        WaveListPdaDTO.WaveBasicInfoDTO viewDTO = new WaveListPdaDTO.WaveBasicInfoDTO();
-        BeanMapper.copy(waveListEntity, viewDTO);
-        fillWaveInfo(viewDTO);
-        return viewDTO;
+        WaveListDetailDTO.ViewDTO view = waveDetailService.view(waveId);
+        WaveListPdaDTO.WaveBasicInfoDTO basicInfoDTO = new WaveListPdaDTO.WaveBasicInfoDTO();
+        basicInfoDTO.setId(view.getId());
+        basicInfoDTO.setCode(view.getCode());
+        basicInfoDTO.setName(view.getName());
+        basicInfoDTO.setWarehouseId(view.getWarehouseId());
+        basicInfoDTO.setWarehouseName(view.getWarehouseName());
+        basicInfoDTO.setPickingCartCode(view.getPickingCartCode());
+        basicInfoDTO.setPickingCartType(view.getPickingCartTypeName());
+        basicInfoDTO.setPickingType(view.getPickingType());
+        basicInfoDTO.setPickingTypeName(WavePickingTypeEnum.getName(view.getPickingType()));
+        basicInfoDTO.setStatus(view.getStatus());
+        basicInfoDTO.setStatusName(WaveStatusEnum.getNameByCode(view.getStatus()));
+        return basicInfoDTO;
     }
 
     @Override
@@ -119,6 +131,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
     @Override
     public ApiResult<?> bindPickingCart(WaveListPdaDTO.BindPickingCartDTO bindDTO) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         PickingCartEntity pickingCart = pickingCartService.getOne(new QueryWrapper<PickingCartEntity>().eq("code", bindDTO.getPickingCartCode()));
         if(pickingCart == null){
             return ApiResult.error("拣货车编码错误");
@@ -143,8 +156,12 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         }
 
         update(new UpdateWrapper<WaveListEntity>()
+                .set("status", WaveStatusEnum.PICK_ING.getCode())
                 .set("picking_cart_code", bindDTO.getPickingCartCode())
                 .set("picking_cart_type", pickingCart.getTypeId())
+                .set("picking_user_id", loginUser.getUid())
+                .set("picking_user_name", loginUser.getUserName())
+                .set("picking_time", LocalDateTime.now())
                 .eq("id", bindDTO.getId()));
         //核对成功返回拣货车信息
         bindDTO.setPickingCartName(pickingCartType.getName());
@@ -160,14 +177,6 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
                 .set("picking_cart_code", "")
                 .set("status", WaveStatusEnum.AWAIT_PICK.getCode()));
         return ApiResult.success();
-    }
-
-    private void fillWaveInfo(WaveListPdaDTO.WaveBasicInfoDTO viewDTO) {
-        //todo
-        viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(viewDTO.getPickingType()));
-        viewDTO.setWarehouseId("");
-        viewDTO.setWarehouseName("");
-        viewDTO.setStatusName(WaveStatusEnum.getNameByCode(viewDTO.getStatus()));
     }
 
     private List<WaveListPdaDTO.ViewDTO> fillViewList(List<WaveListEntity> records) {
