@@ -883,6 +883,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (Objects.isNull(addDTO.getBoxQty())){
             addDTO.setBoxQty(MathUtil.ONE);
         }
+        if (StringUtils.isBlank(addDTO.getTaskId())){
+            throw new ServiceException("装箱任务id不能为空");
+        }
         PackingTaskEntity packingTaskEntity = this.getById(addDTO.getTaskId());
         if (Objects.isNull(packingTaskEntity)){
             throw new ServiceException(ApiError.ERROR_92141);
