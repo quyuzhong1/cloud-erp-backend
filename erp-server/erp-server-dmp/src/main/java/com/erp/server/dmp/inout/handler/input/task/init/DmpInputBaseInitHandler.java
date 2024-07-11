@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.server.dmp.inout.dto.request.*;
+import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputMabangApiInitHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -25,10 +27,6 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgInputTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
-import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputKingdeeApiInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputWdtApiInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputKingdeeApiInitHandler;
@@ -129,6 +127,12 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				dmpInputApiInitRequest = dmpInputWdtApiInitRequest;
 				dmpInputWdtApiInitRequest.setRequestParam(extendJson);
 				dmpInputWdtApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
+			}else if(DmpBasicSystemCodeEnum.MABANG.getCode().equals(dmpBasicSystemEntity.getCode())){
+				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputMabangApiInitHandler.class);
+				DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = new DmpInputMabangApiInitRequest();
+				dmpInputApiInitRequest = dmpInputMabangApiInitRequest;
+				dmpInputMabangApiInitRequest.setRequestParam(extendJson);
+				dmpInputMabangApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
 			}
 			
 			dmpInputApiInitRequest.setStartTime(startTime);
