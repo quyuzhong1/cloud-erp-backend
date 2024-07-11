@@ -88,8 +88,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         String warehouseName = soDetailTotalList.get(0).getWarehouseName();
         viewDTO.setWarehouseId(warehouseId);
         viewDTO.setWarehouseName(warehouseName);
-//        viewDTO.setPickingType(WavePickingTypeEnum.getName(waveEntity.getPickingType()));
-//        viewDTO.setStatus(WaveStatusEnum.getNameByCode(waveEntity.getStatus()));
+        viewDTO.setStatusName(WaveStatusEnum.getNameByCode(waveEntity.getStatus()));
         PickingCartTypeEntity cartTypeEntity = pickingCartTypeService.getById(waveEntity.getPickingCartType());
         if(cartTypeEntity != null){
             viewDTO.setPickingCartTypeName(cartTypeEntity.getName());
