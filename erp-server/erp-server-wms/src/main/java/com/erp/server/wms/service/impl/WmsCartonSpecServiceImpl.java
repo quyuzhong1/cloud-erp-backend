@@ -98,6 +98,11 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     }
 
     @Override
+    public List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainIds(List<String> mainIds) {
+        return baseMapper.listPackingQtyByMainIds(mainIds);
+    }
+
+    @Override
     public Boolean deleteBySourceIds(List<String> sourceIds) {
         if (CollectionUtil.isEmpty(sourceIds)) {
             return Boolean.FALSE;

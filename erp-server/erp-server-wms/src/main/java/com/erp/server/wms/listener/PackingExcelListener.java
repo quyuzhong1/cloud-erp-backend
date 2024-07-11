@@ -16,13 +16,11 @@ import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
 import com.erp.model.wms.enums.PackingStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
-import com.erp.server.wms.service.FirstMileDeliveryDetailService;
-import com.erp.server.wms.service.FirstMileDeliveryService;
-import com.erp.server.wms.service.OverseasProviderService;
-import com.erp.server.wms.service.OverseasWarehouseInboundService;
+import com.erp.server.wms.service.*;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -47,6 +45,7 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
     private List<PackingExcelDTO> errorList = new ArrayList<>();
 
     private final FirstMileDeliveryService firstMileDeliveryService = SpringUtil.getBean(FirstMileDeliveryService.class);
+    private final SoDeliveryNoticeService soDeliveryNoticeService = SpringUtil.getBean(SoDeliveryNoticeService.class);
 
     private final FirstMileDeliveryDetailService firstMileDeliveryDetailService = SpringUtil.getBean(FirstMileDeliveryDetailService.class);
 
@@ -97,7 +96,9 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
         List<String> codes = packingExcelDTOList.stream().map(PackingExcelDTO::getCode).distinct().collect(Collectors.toList());
         //发货单主记录
         List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listByCodes(codes);
+        List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities =  soDeliveryNoticeService.listByCodes(codes);
         Map<String,FirstMileDeliveryEntity> firstMileDeliveryServiceMap = firstMileDeliveryEntities.stream().collect(Collectors.toMap(FirstMileDeliveryEntity::getCode, Function.identity()));
+        Map<String,SoDeliveryNoticeEntity> soDeliveryNoticeEntityMap = soDeliveryNoticeEntities.stream().collect(Collectors.toMap(SoDeliveryNoticeEntity::getCode, Function.identity()));
         List<String> firstMileDeliveryId = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getId).distinct().collect(Collectors.toList());
         //发货单明细
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(firstMileDeliveryId);
@@ -118,6 +119,8 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             }
             //检查发货单是否存在
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryServiceMap.get(packingExcelDTO.getCode());
+//            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getByCode(key);
+//            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByCode(key);
             if(Objects.isNull(firstMileDeliveryEntity)){
                 packingExcelDTO.setErrorMsg("发货单号不存在");
                 errorList.add(packingExcelDTO);

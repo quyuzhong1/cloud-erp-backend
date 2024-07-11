@@ -28,6 +28,7 @@ public interface WmsCartonSpecMapper extends BaseMapper<WmsCartonSpecEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
     List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(@Param("mainId") String mainId, @Param("boxSpecNo") Integer boxSpecNo);
+    List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainIds(@Param("mainIds") List<String> mainIds);
 
 
     /**
