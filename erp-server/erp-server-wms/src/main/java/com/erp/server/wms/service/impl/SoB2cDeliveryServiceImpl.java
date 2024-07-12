@@ -1907,6 +1907,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //详情信息
         List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(logisticsWaybillDetailDTO.getId()));
 
+        List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewDTOList = this.printPickingView(Arrays.asList(logisticsWaybillDetailDTO.getId()));
+        boolean isStockOut =printWayBillPdf.getIsOutStock() || printPickingViewDTOList.stream().anyMatch(SoB2cDeliveryDTO.PrintPickingViewDTO::getIsOutStock);
+        printWayBillPdf.setIsOutStock(isStockOut);
         //查询产品信息
         List<String> skuNoList = deliveryDetailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuNoList);
