@@ -5,8 +5,6 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.PackingTaskDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -115,25 +113,25 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     BatchResultDTO disApprove(String id);
 
     /**
-    * 删除
-    * @author Luo_WG
-    * @date: 2023-10-30
-    * @param id
-    * @return
-    */
-    BatchResultDTO delete(FirstMileDeliveryEntity entity, PackingTaskDTO.StatusDTO packingStatusDTO, PackingTaskEntity packingTask);
+     * 删除
+     *
+     * @param id
+     * @return
+     * @author Luo_WG
+     * @date: 2023-10-30
+     */
+    BatchResultDTO delete(FirstMileDeliveryEntity entity, PackingTaskEntity packingTask);
     /**
      * 作废
      *
      * @param entity
      * @param remark
-     * @param packingStatusDTO
      * @param packingTask
      * @return
      * @author Luo_WG
      * @date: 2023-10-30
      */
-    BatchResultDTO invalid(FirstMileDeliveryEntity entity, String remark, PackingTaskDTO.StatusDTO packingStatusDTO, PackingTaskEntity packingTask);
+    BatchResultDTO invalid(FirstMileDeliveryEntity entity, String remark, PackingTaskEntity packingTask);
 
     /**
     * 撤销

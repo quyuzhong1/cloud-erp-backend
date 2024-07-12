@@ -36,6 +36,7 @@
         fdd.platform_sku_no as thirdWarehouseSku,
         fd.logistics_status,
         (select sum(wcd.pack_qty) from wms_carton_detail wcd where wcd.main_id = wc.id and wcd.is_deleted = false and wcd.sku_id = fdd.sku_id) as packingQty,
+        pt.packing_status as packingStatusName,
         fd.declare_status
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
