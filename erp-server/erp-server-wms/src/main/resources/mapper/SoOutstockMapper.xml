@@ -333,22 +333,24 @@
     <!--根据发货单id查询装箱清单-->
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
-            so.id,
-            fmcb.box_no as boxNo,
-            concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
-            box_length*box_width*box_height as multiplySize,
-            fmc.package_weight as packageWeight,
-            fmcb.box_desc as boxDesc,
-        (select string_agg(cd.sku_no , ',') from wms_carton_detail cd where cd.is_deleted = false and cd.carton_id = fmc.id) as sku
+        so.id,
+        wc.box_no as boxNo,
+        concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
+        box_length*box_width*box_height as multiplySize,
+        wcs.package_weight as packageWeight,
+        (select string_agg(concat(wcd.sku_no,'*',wcd.pack_qty), ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as boxDesc,
+        (select string_agg(wcd.sku_no , ',') from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
         FROM so_outstock so
-        INNER JOIN wms_carton_spec fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
-        INNER JOIN wms_carton fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        inner join so_delivery_notice sdn on sdn.id = so.source_id and sdn.is_deleted = false
+        inner join packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
+        INNER JOIN wms_carton wc ON wc.packing_task_id = pt.id AND wc.is_deleted = FALSE
+        INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
         WHERE so.is_deleted = FALSE
         AND so.id in
         <foreach collection="ids" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>
-        ORDER BY CAST(fmcb.box_no AS INTEGER)
+        ORDER BY CAST(wc.box_no AS INTEGER)
     </select>
 
     <!--导出装箱信息-->
@@ -397,10 +399,12 @@
                so.country,
                so.order_type as businessType
             from so_outstock so
+        inner join so_delivery_notice sdn on sdn.id = so.source_id and sdn.is_deleted = false
+        inner join packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
         where so.is_deleted = false
           and so.country != 'CN' and so.order_type = 'B2B'
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND (so.packing_status = #{params.packingStatus} or so.approve_status ='approve')
+            AND (pt.packing_status = #{params.packingStatus} or so.approve_status ='approve')
         </if>
         <if test="params.declareStatus != null and params.declareStatus != ''">
             AND so.declare_status = #{params.declareStatus}
