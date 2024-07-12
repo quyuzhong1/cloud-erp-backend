@@ -19,7 +19,6 @@ import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
-import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgRuleOutService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -300,18 +299,18 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     @Override
-    public CfgRuleOutDTO.CfgProductPackingDetail getCfgProductPackingDetailByType(String type) {
+    public List<CfgRuleOutDTO.CfgProductPackingDetail> getCfgProductPackingDetailByType(String type) {
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutDTO.CfgProductPacking cfgOverweightDTO = BeanUtil.toBeanIgnoreError(cfgOverWeight.getRuleContent(), CfgRuleOutDTO.CfgProductPacking.class);
         if(Objects.isNull(cfgOverweightDTO)){
-            return new CfgRuleOutDTO.CfgProductPackingDetail();
+            return new ArrayList<>();
         }
         List<CfgRuleOutDTO.CfgProductPackingDetail> cfgOverweightDetailDTOList = cfgOverweightDTO.getCfgProductPackingDetailList();
         if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
-            return new CfgRuleOutDTO.CfgProductPackingDetail();
+            return new ArrayList<>();
         }
-        return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equalsIgnoreCase(type)).findFirst().orElse(new CfgRuleOutDTO.CfgProductPackingDetail());
+        return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equalsIgnoreCase(type)).collect(Collectors.toList());
     }
     public CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.CommonDTO commonDTO, CfgRuleOutDTO.SortingPortRuleDTO dto) {
         //校验称重量方规则，通过走设备分拣口规则
