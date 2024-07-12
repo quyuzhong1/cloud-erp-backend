@@ -612,7 +612,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if (MathUtil.compareTo(cfgRuleWaveEntity.getMinOrderQty(), cfgRuleWaveEntity.getMaxOrderQty()) > MathUtil.ZERO) {
             throw new ServiceException(ApiError.CFG_RULE_WAVE_ORDER_QTY_COMPARE);
         }
-        if (MathUtil.compareTo(cfgRuleWaveEntity.getMinQty(), cfgRuleWaveEntity.getMaxQty()) > MathUtil.ZERO) {
+        if (MathUtil.compareTo(cfgRuleWaveEntity.getMinQty(),MathUtil.ZERO) != MathUtil.ZERO
+                && MathUtil.compareTo(cfgRuleWaveEntity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO
+                && MathUtil.compareTo(cfgRuleWaveEntity.getMinQty(), cfgRuleWaveEntity.getMaxQty()) > MathUtil.ZERO) {
             throw new ServiceException(ApiError.CFG_RULE_WAVE_QTY_COMPARE);
         }
         //波次名称重复验证
