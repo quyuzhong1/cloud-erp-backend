@@ -440,7 +440,8 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         boolean isLock;
         try {
             // 设置最大等待锁时间
-            Long waitTime = null != param.getLockWaitTime() && param.getLockWaitTime() > 0 ? param.getLockWaitTime() : 5;
+            long waitTime = null != param.getLockWaitTime() && param.getLockWaitTime() > 0 ? param.getLockWaitTime() : 5;
+            log.info("交易业务：【{}】:单据id：【{}】:等待时间：{}:", businessType.getName(), param.getSourceId(), waitTime);
             isLock = rLock.tryLock(waitTime, TimeUnit.SECONDS);
             if (!isLock) {
                 log.error("单据：{},SKU:{},入库加锁失败,key={}",param.getSourceCode(),param.getSkuNo(), lockKey);
