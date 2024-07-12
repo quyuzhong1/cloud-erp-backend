@@ -26,4 +26,9 @@ public class RocketMqNewTag {
      * 新中台旺店通退货单
      */
     public static final String DMP_WDT_ORDER_RETURN_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_order_return_to_wms_tag";
+    
+    /**
+     * 新中台旺店通销售出库单
+     */
+    public static final String DMP_WDT_SO_OUTSTOCK_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_so_outstock_to_wms_tag";
 }

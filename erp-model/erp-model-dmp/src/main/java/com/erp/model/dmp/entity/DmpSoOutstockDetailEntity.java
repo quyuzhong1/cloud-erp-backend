@@ -121,6 +121,16 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
     @TableField("platform_order_code")
     private String platformOrderCode = "";
     /**
+     * 税率
+     */
+     @TableField("tax_rate")
+     private BigDecimal taxRate;
+    /**
+     * 来源订单明细id
+     */
+     @TableField("src_order_detail_id")
+     private String srcOrderDetailId = "";
+    /**
      * 备注
      */
      @TableField("remark")

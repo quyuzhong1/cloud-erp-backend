@@ -988,13 +988,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         PackingTaskEntity packingTaskEntity = this.getById(wmsCartonEntity.getPackingTaskId());
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonId));
         //不同物流属性配置校验
-        List<String> skuIds1 = dto.getAdjustDetailDTOList().stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIds1 = dto.getCartonDetailList().stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         List<String> skuIds2 = detailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //合并sku
         List<String> skuIds = Stream.concat(skuIds1.stream(), skuIds2.stream()).distinct().collect(Collectors.toList());
         wmsCartonSpecService.checkProductPropertyIds(packingTaskEntity.getSourceType(), skuIds);
 
-        List<WmsCartonDTO.AdjustDetailDTO> adjustDetailDTOList = dto.getAdjustDetailDTOList();
+        List<WmsCartonDTO.AdjustDetailDTO> adjustDetailDTOList = dto.getCartonDetailList();
         for (WmsCartonDTO.AdjustDetailDTO adjustDetailDTO : adjustDetailDTOList){
             WmsCartonDetailEntity wmsCartonDetailEntity = detailEntityList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
             if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType())){
@@ -1038,7 +1038,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //调整前装箱情况
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = this.listGroupSkuById(dto.getTaskId());
         if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType()) || AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
-            dto.getAdjustDetailDTOList().forEach(adjustDetailDTO -> {
+            dto.getCartonDetailList().forEach(adjustDetailDTO -> {
                 WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO = groupSkuDTOList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
                 if (Objects.isNull(groupSkuDTO)){
                     throw new ServiceException(ApiError.ERROR_92149,adjustDetailDTO.getSkuNo());
@@ -1050,7 +1050,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
         }else if (AdjustTypeEnum.PRETEND.getCode().equals(dto.getAdjustType())){
             List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(dto.getCartonId()));
-            dto.getAdjustDetailDTOList().forEach(adjustDetailDTO -> {
+            dto.getCartonDetailList().forEach(adjustDetailDTO -> {
                 WmsCartonDetailEntity wmsCartonDetailEntity = detailEntityList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
                 if (Objects.isNull(wmsCartonDetailEntity)){
                     throw new ServiceException(ApiError.ERROR_92150,adjustDetailDTO.getSkuNo());

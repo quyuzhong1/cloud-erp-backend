@@ -17,6 +17,7 @@ import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
+import com.erp.model.wms.enums.PickingStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
@@ -75,20 +76,37 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 .set("status", WaveStatusEnum.HANG_UP.getCode())
                 .set(isOutStock, "is_out_stock", true)
         );
+
+        //更新波次明细状态
+        WaveListDetailDTO.ViewDTO view = waveDetailService.view(hangUpDTO.getWaveId());
+        List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList = view.getDeliveryInfoList();
+        Set<String> deliveryIds = new HashSet<>();
+        for (WaveListDetailDTO.DeliveryInfoDTO dto : deliveryInfoList) {
+            if(Objects.equals(dto.getSalesQty(), dto.getPickedSumQty())){
+                deliveryIds.add(dto.getDeliveryId());
+            }
+        }
+        if(! deliveryIds.isEmpty()){
+            waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>()
+                    .set("picking_status", PickingStatusEnum.FINISH.getCode())
+                    .in("delivery_id", deliveryIds)
+            );
+        }
+
         return Boolean.TRUE;
     }
 
     @Override
     public WaveListDetailPdaDTO.ViewDTO startPicking(String waveId) {
-//        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         //构造波次详情列表
         WaveListDetailPdaDTO.ViewDTO resultViewDTO = getViewDTO(waveId);
-//        waveListService.update(new UpdateWrapper<WaveListEntity>()
-//                .eq("id", waveId)
-//                .set("status", WaveStatusEnum.PICK_ING.getCode())
-//                .set("picking_user_id", loginUser.getUid())
-//                .set("picking_user_name", loginUser.getUserName())
-//                .set("picking_time", LocalDateTime.now()));
+        waveListService.update(new UpdateWrapper<WaveListEntity>()
+                .eq("id", waveId)
+                .set("status", WaveStatusEnum.PICK_ING.getCode())
+                .set("picking_user_id", loginUser.getUid())
+                .set("picking_user_name", loginUser.getUserName())
+                .set("picking_time", LocalDateTime.now()));
         return resultViewDTO;
     }
 
@@ -237,6 +255,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("main_id", pickingIds));
 
         List<PickingDetailEntity> updateList = new ArrayList<>();
+        Set<String> pickedDeliveryIds = new HashSet<>();
         //遍历PDA上显示的每个拣货仓位
         for (WaveListDetailPdaDTO.PickingLocationDTO dto : pickingLocationList) {
             Boolean isOutStock = dto.getIsOutStock();   //业务人员标记是否缺货
@@ -259,6 +278,9 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 updateList.add(updateDto);
 
                 outStockDeliveryIds.add(deliveryId);
+                if(basketDTO.getPickedQty() > 0){
+                    pickedDeliveryIds.add(deliveryId);
+                }
             }
             //仓位标记缺货，则所有涉及的发货单都置为异常
             if(isOutStock){
@@ -267,6 +289,12 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                         .set("abnormal_cause", AbnormalCauseEnum.PICK_MARKINGS.getCode())
                         .in("id", outStockDeliveryIds));
             }
+        }
+        //将有已拣数量的发货单标记为拣货中
+        if(! pickedDeliveryIds.isEmpty()){
+            waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>()
+                    .set("picking_status", PickingStatusEnum.PICK_ING.getCode())
+                    .in("delivery_id", pickedDeliveryIds));
         }
         return updateList;
     }
