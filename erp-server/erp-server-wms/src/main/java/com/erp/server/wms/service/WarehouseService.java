@@ -284,4 +284,10 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return PagingVO<ListDTO>
      */
     PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> dto);
+
+    /**
+     * 查询所有仓库信息(不带权限控制) 不带权限控制的查询所有仓库信息
+     * @return List<WarehouseEntity>    仓库信息
+     */
+    List<WarehouseEntity> listWarehouseWithCaches();
 }

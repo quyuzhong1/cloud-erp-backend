@@ -27,6 +27,7 @@ import com.erp.server.wms.mapper.WarehouseLocationMapper;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -226,6 +227,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:wms:listByWarehouseIds",keyGenerator = "myKeyGenerator")
     public List<WarehouseLocationEntity> listByWarehouseIds(List<String> warehouseIds) {
         if(CollUtil.isEmpty(warehouseIds)) {
             return Lists.newArrayList();
@@ -386,6 +388,18 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .in(CollectionUtils.isNotEmpty(warehouseIds), WarehouseLocationEntity::getWarehouseId,warehouseIds)
                 .eq(StrUtil.isNotBlank(warehouseLocation), WarehouseLocationEntity::getCode, warehouseLocation)
                 .list();
+    }
+
+    @Override
+    @Cacheable(cacheNames = "cache:wms:getWarehouseLocation",keyGenerator = "myKeyGenerator")
+    public WarehouseLocationEntity getWarehouseLocation(String warehouseId, String warehouseLocation,WarehouseLocationTypeEnum type) {
+        WarehouseLocationEntity warehouseLocationEntity = lambdaQuery()
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+                .eq(WarehouseLocationEntity::getCode, warehouseLocation)
+                .eq(WarehouseLocationEntity::getType, type.getCode())
+                .last("limit 1")
+                .one();
+        return warehouseLocationEntity;
     }
 
 
