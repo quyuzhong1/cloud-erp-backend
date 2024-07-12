@@ -193,6 +193,13 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     @TableField("shipment_mark")
     private String shipmentMark;
 
+    /**
+     * 批次号
+     */
+    @TableField(exist = false)
+    private String batchNo;
+
+
     public static final String CODE = "code";
 
     public static final String STATUS = "status";

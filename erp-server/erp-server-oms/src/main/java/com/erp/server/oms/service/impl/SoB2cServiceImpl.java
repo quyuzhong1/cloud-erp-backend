@@ -5370,12 +5370,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
                     .list();
             if (CollectionUtil.isEmpty(list)) {
-                CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
-                if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
-                    throw new ServiceException("中转设置仓库不能为空");
-                }
-                warehouseId = transitSettingDTO.getWarehouseId();
+                throw new ServiceException("未配置中转设置仓库");
             }
+            CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+            if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+                throw new ServiceException("中转设置仓库不能为空");
+            }
+            warehouseId = transitSettingDTO.getWarehouseId();
+
         } else {
             if(StringUtils.isBlank(warehouseId)){
                 warehouseId = detailList.get(0).getWarehouseId();
