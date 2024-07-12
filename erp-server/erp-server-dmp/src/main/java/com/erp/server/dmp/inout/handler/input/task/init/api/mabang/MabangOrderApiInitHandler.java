@@ -1,6 +1,5 @@
-package com.erp.server.dmp.inout.handler.input.task.init.api;
+package com.erp.server.dmp.inout.handler.input.task.init.api.mabang;
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -9,8 +8,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.UrlContant;
 import com.common.business.dto.ParamHeaderVO;
 import com.common.core.utils.HttpCommonUtil;
-import com.common.core.utils.date.EnumTimePattern;
-import com.erp.model.dmp.mabang.RefundOrderEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputMabangApiInitRequest;
@@ -25,48 +22,59 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
- * 马帮退货订单接口API
+ * 马帮订单接口API
  */
 @Service
 @Slf4j
 @Scope("prototype")
-public class MabangReturnApiInitHandler implements DmpInputApiInitHandler {
+public class MabangOrderApiInitHandler implements DmpInputApiInitHandler {
+    private static final Integer NOT_SHIPPED_STATUS = 6;
+    private static final Integer NOT_UNSHIPPED_STATUS = 7;
 
 	@Override
 	public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
-        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+
+		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
         DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = (DmpInputMabangApiInitRequest) dmpInputApiInitRequest;
 
         String requestParam = dmpInputMabangApiInitRequest.getRequestParam();
         Map<String, Object> paramMap = JSON.parseObject(requestParam, Map.class);
 
-        //每页显示的条数 最小10 最大2000
-        Integer pageSize = 1000;
-        Integer pageIndex = 1;
+        String pageSize = "1000";
+        String pageIndex = "";
         //总页数
-        Integer pageCount = 1;
-        while (pageIndex <= pageCount) {
-            paramMap.put("timeStart", dmpInputMabangApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            paramMap.put("timeEnd", dmpInputMabangApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            paramMap.put("pageSize", pageSize);
-            ParamHeaderVO paramVo = MabangTool.getParamMap(dmpInputMabangApiInitRequest.getApiType(), pageIndex, paramMap);
+        Integer status = NOT_SHIPPED_STATUS;
+        Boolean hasNext = false;
+
+        while (hasNext || NOT_SHIPPED_STATUS.equals(status)) {
+            paramMap.put("status", status);
+            if (StrUtil.isNotBlank(pageIndex)){
+                paramMap.put("cursor", pageIndex);
+            }
+            paramMap.put("updateTimeStart", dmpInputMabangApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            paramMap.put("updateTimeEnd", dmpInputMabangApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            paramMap.put("maxRows", pageSize);
+            ParamHeaderVO paramVo = MabangTool.getParamMap(dmpInputMabangApiInitRequest.getApiType(), 0, paramMap);
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
-                log.error("调用url={} param={}马帮退款订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
-                throw new RuntimeException(StrUtil.format("调用url={} param={}马帮退款订单数据失败 responseMap={}",
+                log.error("调用url={} param={} {}马帮销售订单数据失败 responseMap={}", UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                throw new RuntimeException(StrUtil.format("调用url={} param={} {}马帮销售订单数据失败 responseMap={}",
                         UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
             }
-            JSONObject dataJson = JSONObject.parseObject(String.valueOf(responseMap.get("data")));
-            Integer totalCount = dataJson.getInteger("total");
-            pageCount = (totalCount + pageSize - 1) / pageSize;
+            JSONObject dataJson = JSONObject.parseObject(responseMap.getString("data"));
+            hasNext = dataJson.getBoolean("hasNext");
+            pageIndex = dataJson.getString("nextCursor");
 
-            pageIndex ++;
-
+            if (!hasNext && NOT_SHIPPED_STATUS.equals(status)) {
+                status = NOT_UNSHIPPED_STATUS;
+                pageIndex = "";
+                hasNext = true;
+            }
             JSONArray data = dataJson.getJSONArray("data");
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
             dmpInputTaskInitDTO.setMsg(data.toJSONString());
             dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         }
-        return dmpInputTaskInitDTOList;
+		return dmpInputTaskInitDTOList;
 	}
 }

@@ -15,7 +15,7 @@ public class MabangReturnOrderGetDetailDmpHandler extends DmpInputDoNextDmpHandl
 
 	@Override
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
-		return (List<Map<String, Object>>) dmpInputMongoEntity.get("orderItem");
+		return (List<Map<String, Object>>) dmpInputMongoEntity.get("item");
 	}
 
 }
