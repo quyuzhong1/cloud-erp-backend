@@ -124,6 +124,14 @@ public class WmsCartonDetailDTO implements Serializable {
          * 发货数量
          */
         private Integer deliveryQty;
+        /**
+         * 预计毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
     }
 
     /**

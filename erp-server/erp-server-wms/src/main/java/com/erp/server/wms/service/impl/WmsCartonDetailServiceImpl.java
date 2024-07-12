@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
+import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -115,6 +116,9 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     private void handleData(List<WmsCartonDetailEntity> detailEntityList, String mainId) {
         for (WmsCartonDetailEntity wmsCartonDetailEntity : detailEntityList) {
             wmsCartonDetailEntity.setMainId(mainId);
+            if (StringUtils.isBlank(wmsCartonDetailEntity.getWeightUnit())){
+                wmsCartonDetailEntity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
+            }
         }
     }
 
