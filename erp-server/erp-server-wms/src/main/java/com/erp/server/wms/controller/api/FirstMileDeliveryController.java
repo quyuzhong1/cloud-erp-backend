@@ -561,25 +561,25 @@ public class FirstMileDeliveryController extends BaseController {
 //        return success(result);
 //    }
 
-//    /**
-//     * 导出装箱清单Excel
-//     * @author Luo_WG
-//     * @date 2023-10-30
-//     * @param dto
-//     * @param response
-//     */
-//    @PostMapping("/exportPacking")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "wms:fbaDelivery:exportPacking",
-//            tableAlias = "fd"
-//    )
-//    @LogAction(value = LogActionEnum.EXPORT, desc = "头程发货单导出装箱清单Excel")
-//    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
-//    public ApiResult exportPacking(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
-//        firstMileDeliveryService.exportPacking(dto, response);
-//        return success();
-//    }
+    /**
+     * 导出装箱清单Excel
+     * @author Luo_WG
+     * @date 2023-10-30
+     * @param dto
+     * @param response
+     */
+    @PostMapping("/exportPacking")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaDelivery:exportPacking",
+            tableAlias = "fd"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "头程发货单导出装箱清单Excel")
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+    public ApiResult exportPacking(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
+        firstMileDeliveryService.exportPacking(dto, response);
+        return success();
+    }
 
     /**
      * 下推海外仓入库单单个查询
