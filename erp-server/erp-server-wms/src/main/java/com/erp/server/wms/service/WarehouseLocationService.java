@@ -309,10 +309,10 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(String warehouseId);
 
     /**
-     * 根据仓库ids和库位code查询库位列表
+     * 根据仓库ids和库位code集合查询库位列表
      * @param warehouseIds
-     * @param warehouseLocation
+     * @param warehouseLocationList
      * @return
      */
-    List<WarehouseLocationEntity> findByWarehouseIdsAndCode(List<String> warehouseIds, String warehouseLocation);
+    List<WarehouseLocationEntity> listByWarehouseIdsAndCodeList(List<String> warehouseIds, List<String> warehouseLocationList);
 }
