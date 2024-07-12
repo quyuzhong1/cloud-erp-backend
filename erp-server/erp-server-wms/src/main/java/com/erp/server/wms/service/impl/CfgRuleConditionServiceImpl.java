@@ -140,6 +140,8 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
         for (CfgRuleConditionEntity updateItem : updateList) {
             CfgRuleConditionEntity old = oleConditions.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
             if (Objects.nonNull(old)) {
+                old.setFieldName(cfgConditionMap.get(old.getField()));
+                updateItem.setFieldName(cfgConditionMap.get(updateItem.getField()));
                 operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));
             }
         }
