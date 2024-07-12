@@ -168,12 +168,12 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
     private void doBindCart(WaveListPdaDTO.BindPickingCartDTO bindDTO, PickingCartEntity pickingCart, LoginUser loginUser) {
         update(new UpdateWrapper<WaveListEntity>()
-                .set("status", WaveStatusEnum.PICK_ING.getCode())
+//                .set("status", WaveStatusEnum.PICK_ING.getCode())
                 .set("picking_cart_code", bindDTO.getPickingCartCode())
                 .set("picking_cart_type", pickingCart.getTypeId())
-                .set("picking_user_id", loginUser.getUid())
-                .set("picking_user_name", loginUser.getUserName())
-                .set("picking_time", LocalDateTime.now())
+//                .set("picking_user_id", loginUser.getUid())
+//                .set("picking_user_name", loginUser.getUserName())
+//                .set("picking_time", LocalDateTime.now())
                 .eq("id", bindDTO.getId()));
         //核对成功返回拣货车信息
         PickingCartTypeEntity pickingCartType = pickingCartTypeService.getOne(new QueryWrapper<PickingCartTypeEntity>().eq("id", pickingCart.getTypeId()));
