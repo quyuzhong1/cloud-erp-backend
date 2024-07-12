@@ -141,6 +141,11 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public BatchResultDTO cancelHandle(String id) {
+        WarehouseLocationReplenishEntity selectById = baseMapper.selectById(id);
+        if(selectById.getStatus().equals(ReplenishBillStatusEnum.HANDLED.getCode())){
+            return BatchResultDTO.fail(id, id, "补货单已处理完成，操作失败");
+        }
+
         WarehouseLocationReplenishEntity entity = new WarehouseLocationReplenishEntity();
         entity.setId(id);
         entity.setStatus(ReplenishBillStatusEnum.NO_NEED_HANDLE.getCode());
