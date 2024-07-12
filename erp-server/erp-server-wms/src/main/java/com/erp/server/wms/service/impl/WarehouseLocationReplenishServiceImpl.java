@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.lang.Pair;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
@@ -22,6 +23,7 @@ import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.server.wms.mapper.WarehouseLocationReplenishMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections.CollectionUtils;
@@ -54,6 +56,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     private WarehouseLocationSafetyInventoryService safetyInventoryService;
     @Resource
     private WarehouseLocationMoveService warehouseLocationMoveService;
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
 
     @Override
     public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> paging(PagingDTO<WarehouseLocationReplenishDTO.SearchParamDTO> pagingDTO) {
@@ -135,6 +139,23 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         entity.setId(id);
         entity.setStatus(ReplenishBillStatusEnum.NO_NEED_HANDLE.getCode());
         this.baseMapper.updateById(entity);
+
+        //没有待处理的补货单之后，将发货单状态变为待处理，并清除异常原因
+        WarehouseLocationReplenishEntity replenish = this.baseMapper.selectById(id);
+        String sourceId = replenish.getSourceId();
+        if(StringUtils.isNotBlank(sourceId)){
+            List<WarehouseLocationReplenishEntity> commonSourceList = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationReplenishEntity>().eq("source_id", sourceId));
+            boolean allMatch = commonSourceList.stream().allMatch(item -> {
+                String status = item.getStatus();
+                return StringUtils.equals(ReplenishBillStatusEnum.HANDLED.getCode(), status) || StringUtils.equals(ReplenishBillStatusEnum.NO_NEED_HANDLE.getCode(), status);
+            });
+            if(allMatch){
+                soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
+                        .set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
+                        .set("abnormal_cause", "")
+                        .eq("id", sourceId));
+            }
+        }
 
         WarehouseLocationReplenishEntity replenishEntity = this.baseMapper.selectById(id);
         String code = replenishEntity.getSkuNo() + " : " + replenishEntity.getToWarehouseLocation();
