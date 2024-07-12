@@ -2,11 +2,17 @@ package com.erp.server.msg.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.msg.config.MsgContext;
 import com.erp.server.msg.constant.MongoTableConstant;
-import com.mongodb.client.result.UpdateResult;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +39,8 @@ public class FeiShuMsgJob {
     private MongoTemplate mongoTemplate;
     @Autowired
     private MsgContext msgContext;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     /**
      * 发送飞书预警消息
      */
@@ -53,6 +62,51 @@ public class FeiShuMsgJob {
             sendWarnMsg(list);
         }
         XxlJobHelper.log("发送飞书预警消息:end");
+    }
+
+    @XxlJob("sendFeiShuWarnPushMsg")
+    public void sendFeiShuWarnPushMsg(){
+        List<WarnMsgInfoDTO> list = getPushTask();
+        XxlJobHelper.log("待发送Push飞书预警消息数量:{}", list.size());
+        //对全量数据进行分区
+        if (list.size() > 100){
+            List<List<WarnMsgInfoDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+            partition.forEach(this::sendWarnMsgByTask);
+        }else {
+            sendWarnMsgByTask(list);
+        }
+        XxlJobHelper.log("发送飞书预警消息:end");
+    }
+
+    @XxlJob("sendFeiShuWarnPullMsg")
+    public void sendFeiShuWarnPullMsg(){
+        List<WarnMsgInfoDTO> list = getPullTask();
+        XxlJobHelper.log("待发送Pull飞书预警消息数量:{}", list.size());
+        //对全量数据进行分区
+        if (list.size() > 100){
+            List<List<WarnMsgInfoDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+            partition.forEach(this::sendWarnMsgByTask);
+        }else {
+            sendWarnMsgByTask(list);
+        }
+        XxlJobHelper.log("发送飞书预警消息:end");
+    }
+    private void sendWarnMsgByTask(List<WarnMsgInfoDTO> list){
+        XxlJobHelper.log("批量发送飞书预警消息数量:{}", list.size());
+        if (CollectionUtil.isEmpty(list)){
+            return;
+        }
+        //批量发送异常提醒，并更新mongo数据记录状态
+        list.forEach(msgContext::routeSendWarnMsg);
+        try {
+            XxlJobHelper.log("发送飞书预警消息休眠 start:{}", System.currentTimeMillis());
+            //增加休眠，避免飞书请求限制
+            Thread.sleep(60000);
+            XxlJobHelper.log("发送飞书预警消息休眠 end:{}", System.currentTimeMillis());
+        } catch (InterruptedException e) {
+            log.error("FeiShuMsgJob.sendWarnMsg：休眠异常");
+        }
+        XxlJobHelper.log("批量发送飞书预警消息完成:{}", list.size());
     }
 
     private void sendWarnMsg(List<WarnMsgInfoDTO> list){
@@ -79,5 +133,38 @@ public class FeiShuMsgJob {
             log.error("FeiShuMsgJob.sendWarnMsg：休眠异常");
         }
         XxlJobHelper.log("批量发送飞书预警消息完成:{}", list.size());
+    }
+    public  List<WarnMsgInfoDTO> getPushTask(){
+        List<DmpPushTaskEntity> warnPushTaskList = dmpTaskFeign.getWarnPushTaskList();
+        List<WarnMsgInfoDTO> warnMsgInfoDTOS = new ArrayList<>(warnPushTaskList.size());
+        for (DmpPushTaskEntity entity:warnPushTaskList ){
+            WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+            warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+            warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+            warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
+            warnMsgInfo.setTableId(entity.getSourceId());
+            warnMsgInfo.setKeyInfo(entity.getReturnMsg());
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            warnMsgInfoDTOS.add(warnMsgInfo);
+        }
+        return warnMsgInfoDTOS;
+    }
+
+    public List<WarnMsgInfoDTO> getPullTask(){
+        List<DmpPullTaskEntity> warnPullTaskList = dmpTaskFeign.getWarnPullTaskList();
+        List<WarnMsgInfoDTO> warnMsgInfoDTOS = new ArrayList<>(warnPullTaskList.size());
+        for (DmpPullTaskEntity entity : warnPullTaskList){
+            WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+            warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+            warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}拉取至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+            warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
+            warnMsgInfo.setTableId(entity.getSourceId());
+            warnMsgInfo.setKeyInfo(entity.getReturnMsg());
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            warnMsgInfoDTOS.add(warnMsgInfo);
+        }
+        return warnMsgInfoDTOS;
     }
 }

@@ -3,7 +3,9 @@ package com.erp.server.dmp.controller.feign;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.server.dmp.service.DmpPullTaskService;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 中台发送MQFeign控制类
@@ -30,6 +33,8 @@ public class DmpTaskFeignController {
 
     @Resource
     private DmpPullTaskService dmpPullTaskService;
+    @Resource
+    private DmpPushTaskService dmpPushTaskService;
 
     @PostMapping("/createPlatformTask")
     public Boolean createPlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto){
@@ -63,5 +68,22 @@ public class DmpTaskFeignController {
     @PostMapping("/allAddOrUpdateTaskAndSchedule")
     public Boolean allAddOrUpdateTaskAndSchedule(@RequestBody @Valid PlatformTaskDTO.DisabledDTO dto){
         return platformApiTaskService.allAddOrUpdateTaskAndSchedule(dto);
+    }
+    /**
+     * 获取飞书预警信息需要推送的(PushTask任务记录)
+     * @return
+     */
+    @PostMapping("/getWarnPushTaskList")
+    public List<DmpPushTaskEntity> getWarnPushTaskList(){
+        return dmpPushTaskService.getWarnPushTaskList();
+    }
+
+    /**
+     * 获取飞书预警信息需要推送的(PullTask任务记录)
+     * @return
+     */
+    @PostMapping("/getWarnPullTaskList")
+    public List<DmpPullTaskEntity> getWarnPullTaskList(){
+        return dmpPullTaskService.getWarnPullTaskList();
     }
 }
