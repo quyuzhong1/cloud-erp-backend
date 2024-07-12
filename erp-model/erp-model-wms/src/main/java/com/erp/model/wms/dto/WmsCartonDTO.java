@@ -47,7 +47,7 @@ public class WmsCartonDTO {
         /**
          * 产品信息(输入SKU/FNSKU/EAN码)
          */
-        private String productNo;
+        private String searchKey;
         /**
          * 调整装箱类型
          * 接口地址： http://172.16.100.11:3002/project/92/interface/api/13147 type=packingAdjustType

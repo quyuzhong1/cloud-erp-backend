@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CartonDTO;
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
@@ -219,12 +220,14 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         //装箱人员填充
         wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
         wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
-        //根据已装箱清单计算待装箱号
-        Integer boxNo = baseMapper.getBoxNoByTaskId(wmsCartonEntity.getPackingTaskId());
-        if (Objects.isNull(boxNo)){
-            boxNo = 0;
+        if (Objects.isNull(wmsCartonEntity.getId())){
+            Integer boxNo = baseMapper.getBoxNoByTaskId(addDTO.getTaskId());
+            if (Objects.isNull(boxNo)){
+                wmsCartonEntity.setBoxNo(MathUtil.ONE);
+            }else {
+                wmsCartonEntity.setBoxNo(boxNo + 1);
+            }
         }
-        wmsCartonEntity.setBoxNo(boxNo + 1);
         wmsCartonEntity.setPackingTaskId(addDTO.getTaskId());
         wmsCartonEntity.setSpecId(addDTO.getSpecId());
     }

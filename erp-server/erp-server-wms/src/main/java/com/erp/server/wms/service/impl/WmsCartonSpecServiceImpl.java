@@ -305,7 +305,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         if (Objects.isNull(wmsCartonSpecEntity.getBoxQty())){
             wmsCartonSpecEntity.setBoxQty(MathUtil.ONE);
         }
-        if (Objects.isNull(wmsCartonSpecEntity.getBoxSpecNo())){
+        if (Objects.isNull(wmsCartonSpecEntity.getId())){
             Integer boxSpecNo = baseMapper.selectBoxSpecNo(taskId);
             if (Objects.isNull(boxSpecNo)){
                 wmsCartonSpecEntity.setBoxSpecNo(MathUtil.ONE);
