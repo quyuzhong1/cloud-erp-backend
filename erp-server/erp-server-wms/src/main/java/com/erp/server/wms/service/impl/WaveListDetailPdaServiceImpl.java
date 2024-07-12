@@ -16,14 +16,12 @@ import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.AbnormalCauseEnum;
-import com.erp.model.wms.enums.PickingStatusEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
-import com.erp.model.wms.enums.WaveStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.WaveListDetailPdaMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,7 +64,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         if (!StrUtil.equals(old.getStatus(),WaveStatusEnum.PICK_ING.getCode())) {
             throw new ServiceException(StrUtil.format("波次【{}】非拣货中，不支持挂起。",old.getCode()));
         }
-        List<PickingDetailEntity> updateList = getPickingDetailEntities(hangUpDTO.getWaveId(), hangUpDTO.getLocationPickingDetailList());
+        List<PickingDetailEntity> updateList = getPickingDetailEntities(hangUpDTO);
         pickingDetailService.updateBatchById(updateList);
 
         //更新波次列表状态
@@ -201,7 +199,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     public WaveListDetailPdaDTO.FinishResultDTO finish(WaveListDetailPdaDTO.FinishParamDTO finishParamDTO) {
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         String waveId = finishParamDTO.getWaveId();
-        List<PickingDetailEntity> updateList = getPickingDetailEntities(waveId, finishParamDTO.getLocationPickingDetailList());
+        List<PickingDetailEntity> updateList = getPickingDetailEntities(finishParamDTO);
         pickingDetailService.updateBatchById(updateList);
 
         //统计结果
@@ -245,9 +243,12 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     }
 
     /**
-     * 获取即将更新的拣货单明细
+     * 获取PDA的已拣数量明细
      */
-    private List<PickingDetailEntity> getPickingDetailEntities(String waveId, List<WaveListDetailPdaDTO.PickingLocationDTO> pickingLocationList) {
+    private <T extends WaveListDetailPdaDTO.ViewDTO> List<PickingDetailEntity> getPickingDetailEntities(T hangUpDTO) {
+        String waveId = hangUpDTO.getWaveId();
+        List<WaveListDetailPdaDTO.PickingLocationDTO> pickingLocationList = hangUpDTO.getLocationPickingDetailList();
+
         List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().eq("main_id", waveId));
         List<String> deliveryIds = waveDetailList.stream().map(item -> item.getDeliveryId()).collect(Collectors.toList());
         List<PickingListsDTO.SourceView> pickingBillList = pickingListsService.listBySourceIds(deliveryIds);
@@ -261,6 +262,10 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             Boolean isOutStock = dto.getIsOutStock();   //业务人员标记是否缺货
             String skuId = dto.getSkuId();  //这个仓位存放的sku
             List<WaveListDetailPdaDTO.BasketDTO> basketList = dto.getBasketList();
+            Integer pickedTotalQty = dto.getPickedTotalQty();
+            if(ObjectUtils.isEmpty(pickedTotalQty)){
+                pickedTotalQty = 0;
+            }
             List<String> outStockDeliveryIds = new ArrayList<>();
             //遍历每个拣货仓位的篮筐
             for (WaveListDetailPdaDTO.BasketDTO basketDTO : basketList) {
@@ -273,12 +278,21 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 //更新拣货单上这个sku的已拣数量和缺货状态
                 PickingDetailEntity updateDto = new PickingDetailEntity();
                 updateDto.setId(pickingDetail.getId());
-                updateDto.setPickedQty(basketDTO.getPickedQty());
+                if(StringUtils.equals(hangUpDTO.getPickingType(), WavePickingTypeEnum.FIRST_PICK.getCode())){
+                    if(pickedTotalQty >= basketDTO.getShouldPickingQty()){
+                        basketDTO.setPickedQty(basketDTO.getShouldPickingQty());
+                        pickedTotalQty -= basketDTO.getPickedQty();
+                    } else if (pickedTotalQty > 0) {
+                        basketDTO.setPickedQty(pickedTotalQty);
+                        pickedTotalQty = 0;
+                    }
+                }
+                updateDto.setPickedQty(ObjectUtils.isEmpty(basketDTO.getPickedQty()) ? 0 : basketDTO.getPickedQty());
                 updateDto.setIsOutStock(isOutStock);
                 updateList.add(updateDto);
 
                 outStockDeliveryIds.add(deliveryId);
-                if(basketDTO.getPickedQty() > 0){
+                if(updateDto.getPickedQty() > 0){
                     pickedDeliveryIds.add(deliveryId);
                 }
             }
