@@ -20,6 +20,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
@@ -520,7 +521,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isEmpty(dto.getIds())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = baseMapper.listPackingDetail(dto.getIds());
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = baseMapper.listPackingDetailBySkuId(dto.getIds());
         if (CollectionUtils.isEmpty(listPackingDetailDTOS)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -648,7 +649,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         packedView.setSourceId(packingTaskEntity.getSourceId());
         packedView.setSourceCode(packingTaskEntity.getSourceCode());
         //发货数量
-        packedView.setDeliveryQty(packingTaskDetailService.countDeliveryQty(id));
+        packedView.setDeliveryQty(packingTaskEntity.getDeliveryQty());
         //已装箱数量
         int packedQty = 0;
         List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(id));
@@ -1209,14 +1210,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonSpecService.updateById(wmsCartonSpecEntity);
             wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.SUCCESS.getCode());
             wmsCartonService.updateById(wmsCartonEntity);
+            packingTaskService.updateWeightStatus(packingTaskEntity);
             operateLogService.addModuleOperateLog(log, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "修改箱规");
-            updatePackingStatus(listGroupSkuById(wmsCartonEntity.getPackingTaskId()),wmsCartonEntity.getPackingTaskId());
             return ApiResult.success(checkDTO.getMsg());
         }else{
             //更新状态为称重失败
             wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.FAIL.getCode());
             wmsCartonEntity.setErrorMsg(checkDTO.getMsg());
             wmsCartonService.updateById(wmsCartonEntity);
+            packingTaskService.updateWeightStatus(packingTaskEntity);
             return ApiResult.error(checkDTO.getMsg());
         }
     }
@@ -1555,6 +1557,34 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         this.lambdaUpdate().eq(PackingTaskEntity::getId, taskId)
                 .set(PackingTaskEntity::getPackingStatus, packingStatus)
+                .set(PackingTaskEntity::getWeightingStatus, weightingStatus)
+                .update();
+    }
+
+    @Override
+    public void updateWeightStatus(PackingTaskEntity packingTaskEntity) {
+        if(Objects.isNull(packingTaskEntity)){
+            return;
+        }
+        String taskId = packingTaskEntity.getId();
+        List<PackingTaskDetailEntity> detailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
+        List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(taskId));
+        List<WmsCartonEntity> unWeightList = cartonEntityList.stream().filter(e -> PackingWeightStatusEnum.UNWEIGHED.getCode().equals(e.getWeightingStatus()) || PackingWeightStatusEnum.FAIL.getCode().equals(e.getWeightingStatus())).collect(Collectors.toList());
+        List<WmsCartonEntity> weighedList = cartonEntityList.stream().filter(e -> PackingWeightStatusEnum.SUCCESS.getCode().equals(e.getWeightingStatus())).collect(Collectors.toList());
+        List<String> cartonIds = cartonEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<WmsCartonDetailEntity> wmsCartonDetailEntityList = wmsCartonDetailService.listByMainIds(cartonIds);
+        Integer deliveryQty = detailEntityList.stream().map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+        Integer packQty = wmsCartonDetailEntityList.stream().map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
+        String weightingStatus;
+        if (deliveryQty.equals(packQty) && CollectionUtils.isEmpty(unWeightList)){
+            //全部称重
+            weightingStatus = PackingWeightStatusEnum.WEIGHTED.getCode();
+        }else if (CollectionUtils.isNotEmpty(weighedList)){
+            weightingStatus = PackingWeightStatusEnum.WEIGHTING.getCode();
+        }else {
+            weightingStatus = PackingWeightStatusEnum.UNWEIGHED.getCode();
+        }
+        this.lambdaUpdate().eq(PackingTaskEntity::getId, taskId)
                 .set(PackingTaskEntity::getWeightingStatus, weightingStatus)
                 .update();
     }
