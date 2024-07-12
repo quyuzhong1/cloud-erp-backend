@@ -82,5 +82,10 @@ public class InOutStockCoreDTO implements Serializable {
      */
     private InventoryOperationModeEnum operationMode =  InventoryOperationModeEnum.APPROVE;
 
+    /**
+     * 库存锁等待时间  默认： 5s
+     */
+    private Long lockWaitTime;
+
 
 }
