@@ -729,6 +729,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(printWayBillPdf, logisticsWaybillDetailDTO);
                         // 自定义配货单
                         customDistribute(base64List, printWayBillPdfDTO);
+                    }else{
+                        throw new ServiceException(StrUtil.format("{}未设置打印配货单",logisticsWaybillDetailDTO.getLogisticsChannelName()));
                     }
                 } else {
                     //先获取订单的面单，没有就请求sdk获取
