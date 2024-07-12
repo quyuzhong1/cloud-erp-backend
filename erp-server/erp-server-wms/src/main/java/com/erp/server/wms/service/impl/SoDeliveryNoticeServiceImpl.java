@@ -474,7 +474,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!Boolean.FALSE.equals(entity.getInvalidStatus()) || !ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException("只有未作废和审核中的数据允许审核");
         }
-        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getSourceCode());
+        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getCode());
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException("未生成装箱任务，不允许审核");
         }
