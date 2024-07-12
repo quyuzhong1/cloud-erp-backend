@@ -535,18 +535,18 @@ public class FirstMileDeliveryController extends BaseController {
 //        return success(wmsCartonSpecView);
 //    }
 
-//    /**
-//     * 装箱清单
-//     * @Author Luo_WG
-//     * @Date 2023/11/17 11:21
-//     * @param id
-//     * @return com.common.core.controller.vo.ApiResult
-//     **/
-//    @GetMapping("/listPacking")
-//    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
-//        WmsCartonSpecDTO.ListPackingDTO result = firstMileDeliveryService.listPacking(id);
-//        return success(result);
-//    }
+    /**
+     * 装箱清单
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listPacking")
+    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+        WmsCartonSpecDTO.ListPackingDTO result = firstMileDeliveryService.listPacking(id);
+        return success(result);
+    }
 
 //    /**
 //     * 快粘贴查询sku

@@ -336,7 +336,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //已装箱才能审核
-        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getSourceCode());
+        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getCode());
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException("未生成装箱任务，不允许审核");
         }
@@ -654,12 +654,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (Objects.nonNull(packingTask)  && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingTask.getPackingStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已生成装箱清单且装箱中&已装箱不允许删除");
         }
-        log.info("作废 开始修改发货单状态数据，id：【{}】", entity);
-        lambdaUpdate().eq(FirstMileDeliveryEntity::getId, entity)
+        String id = entity.getId();
+        log.info("作废 开始修改发货单状态数据，id：【{}】", id);
+        lambdaUpdate().eq(FirstMileDeliveryEntity::getId, id)
             .set(FirstMileDeliveryEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
             .set(FirstMileDeliveryEntity::getInvalidRemark, remark)
             .update();
-        log.info("作废 开始记录操作日志，id：【{}】", entity);
+        log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
@@ -1606,26 +1607,26 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 //        return cartonView;
 //    }
 
-//    @Override
-//    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
-//        FirstMileDeliveryEntity entity = this.getById(id);
-//    /*      if (PackingTaskStatusEnum.WAIT.getCode().equals(entity.getPackingStatus())) {
-//            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
-//        }*/
-//        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
-//        listPackingDTO.setId(entity.getId());
-//        listPackingDTO.setCode(entity.getCode());
-//
-//        //获取总箱数
-//        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listByMainIds(Arrays.asList(id));
-//        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
-//        listPackingDTO.setBoxQty(boxQty);
-//
-//        //箱子明细信息
-//        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Arrays.asList(id));
-//        listPackingDTO.setDetailList(detailList);
-//        return listPackingDTO;
-//    }
+    @Override
+    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
+        FirstMileDeliveryEntity entity = this.getById(id);
+    /*      if (PackingTaskStatusEnum.WAIT.getCode().equals(entity.getPackingStatus())) {
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
+        }*/
+        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
+        listPackingDTO.setId(entity.getId());
+        listPackingDTO.setCode(entity.getCode());
+
+        //获取总箱数
+        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listByMainIds(Arrays.asList(id));
+        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
+        listPackingDTO.setBoxQty(boxQty);
+
+        //箱子明细信息
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Arrays.asList(id));
+        listPackingDTO.setDetailList(detailList);
+        return listPackingDTO;
+    }
 
     @Override
     public void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
