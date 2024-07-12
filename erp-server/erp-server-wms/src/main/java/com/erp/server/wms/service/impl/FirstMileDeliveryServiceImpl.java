@@ -59,7 +59,6 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
-import com.erp.sdk.oms.amz.spapi.model.easyship.Code;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -67,17 +66,12 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -622,12 +616,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO delete(FirstMileDeliveryEntity entity, PackingTaskDTO.StatusDTO packingStatusDTO, PackingTaskEntity packingTask) {
+    public BatchResultDTO delete(FirstMileDeliveryEntity entity, PackingTaskEntity packingTask) {
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1043);
         }
-        if (!(Objects.nonNull(packingStatusDTO) && StringUtils.isNotBlank(packingStatusDTO.getPackingStatus()) && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingStatusDTO.getPackingStatus()))) {
+        if (Objects.nonNull(packingTask)  && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingTask.getPackingStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已生成装箱清单且装箱中&已装箱不允许删除");
         }
         //删除装箱信息
@@ -650,16 +644,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO invalid(FirstMileDeliveryEntity entity, String remark, PackingTaskDTO.StatusDTO packingStatusDTO, PackingTaskEntity packingTask) {
+    public BatchResultDTO invalid(FirstMileDeliveryEntity entity, String remark, PackingTaskEntity packingTask) {
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
-        if (!(Objects.nonNull(packingStatusDTO) && StringUtils.isNotBlank(packingStatusDTO.getPackingStatus()) && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingStatusDTO.getPackingStatus()))) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已生成装箱清单且装箱中&已装箱不允许作废");
+        if (Objects.nonNull(packingTask)  && !PackingTaskStatusEnum.UNPACKED.getCode().equals(packingTask.getPackingStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已生成装箱清单且装箱中&已装箱不允许删除");
         }
-        //删除装箱信息
-        packingTaskService.delete(packingTask);
         log.info("作废 开始修改发货单状态数据，id：【{}】", entity);
         lambdaUpdate().eq(FirstMileDeliveryEntity::getId, entity)
             .set(FirstMileDeliveryEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
@@ -1349,16 +1341,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         String bomType = BomTypeEnum.COMBINATION.getType();
 
-        List<String> sourceCodeList = list.stream().map(FirstMileDeliveryDTO.ListDTO::getCode).distinct().collect(Collectors.toList());
-        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(null, sourceCodeList);
-        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getSourceCode, Function.identity(),(v1,v2)->v1));
-        // 属性赋值
+       // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {
-            PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(data.getCode());
-            if (Objects.nonNull(statusDTO)) {
-                String packingStatus = StringUtils.isBlank(statusDTO.getPackingStatus()) ? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus();
-                data.setPackingStatus(packingStatus);
-                data.setPackingStatusName(PackingTaskStatusEnum.getName(packingStatus));
+            if (StringUtils.isNotBlank(data.getPackingStatus())) {
+                data.setPackingStatusName(PackingTaskStatusEnum.getName(data.getPackingStatus()));
             }else{
                 data.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
                 data.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
