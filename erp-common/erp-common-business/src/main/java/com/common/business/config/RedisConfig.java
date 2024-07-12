@@ -151,9 +151,9 @@ public class RedisConfig {
 
         // 特定缓存的配置
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-        cacheConfigurations.put("halfHourCache", redisCacheConfiguration.entryTtl(Duration.ofMinutes(5)));
-        cacheConfigurations.put("oneHourCache", redisCacheConfiguration.entryTtl(Duration.ofHours(1)));
-        cacheConfigurations.put("twoHourCache", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
+        cacheConfigurations.put("cache:wms:", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
+        cacheConfigurations.put("cache:sys", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
+
 
         return RedisCacheManager
                 .builder(redisCacheWriter)
