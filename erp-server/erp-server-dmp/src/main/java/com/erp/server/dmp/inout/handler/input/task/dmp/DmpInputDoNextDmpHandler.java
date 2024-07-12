@@ -110,7 +110,7 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 			}
 			dmpInputDataDmpRelationMaps.put(keyList, valueList);
 		}
-		
+		this.afterConvertData(dmpInputDataDmpRelationMaps);
 		return dmpInputDataDmpRelationMaps;
 	}
 	

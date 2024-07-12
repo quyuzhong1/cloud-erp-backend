@@ -21,19 +21,9 @@ public class DmpInputWdtSoOutStockDmpHandler extends DmpInputWdtDmpHandler{
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-				for(Map.Entry<String, Object> dmpData : dmpDataMap.entrySet()) {
-					String key = dmpData.getKey();
-					if(key.equals("status")) {//转换状态
-						Object value = dmpData.getValue();
-						if(value.toString().equals("100")) {
-							dmpDataMap.put(key, "C");
-						}
-					}else if(key.equals("city")) {//转换城市
-						Object value = dmpData.getValue();
-						if(value.toString().equals("深圳")) {
-							dmpDataMap.put(key, "41800");
-						}
-					}
+				Object status = dmpDataMap.get("status");
+				if(status != null) {
+					dmpDataMap.put("status", "110".equals(status.toString()) ? "1" : status);
 				}
 			}
 		}

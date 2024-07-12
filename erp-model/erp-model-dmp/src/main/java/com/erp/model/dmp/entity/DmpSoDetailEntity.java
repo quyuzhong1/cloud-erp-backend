@@ -144,7 +144,7 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 拓展字段
     */
     @TableField("extend_data")
-    private String extendData = "";
+    private String extendData = "{}";
     /**
     * 输入任务id
     */
