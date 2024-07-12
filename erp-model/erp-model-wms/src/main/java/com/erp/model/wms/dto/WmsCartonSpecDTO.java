@@ -164,9 +164,9 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
         * 箱规编号
         */
-        @NotNull(message = "箱规编号不能为空")
-        @Min(value = 1,message = "箱规编号最小值为1")
-        @Max(value = 999999999,message = "箱规编号最大值为999999999")
+//        @NotNull(message = "箱规编号不能为空")
+//        @Min(value = 1,message = "箱规编号最小值为1")
+//        @Max(value = 999999999,message = "箱规编号最大值为999999999")
         private Integer boxSpecNo;
 
         /**

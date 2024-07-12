@@ -55,7 +55,7 @@
             ptd.sku_no
     </select>
     <select id="countDeliveryQty" resultType="java.lang.Integer">
-        select count(delivery_qty) FROM packing_task_detail where main_id = #{taskId}
+        select sum(delivery_qty) FROM packing_task_detail where main_id = #{taskId}
     </select>
     <select id="searchProductBySearchKey" resultType="com.erp.model.wms.dto.PackingTaskDetailDTO$ViewDTO">
         SELECT

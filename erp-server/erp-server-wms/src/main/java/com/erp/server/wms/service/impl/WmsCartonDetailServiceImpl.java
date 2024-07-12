@@ -96,7 +96,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         if(!save) {
             throw new ServiceException("发货单箱子信息单保存失败");
         }
-        String msg = addDTO.getContent() + "新增装箱明细【"+wmsCartonEntity.getBoxNo()+"】【%s】";
+        String msg = "【"+addDTO.getContent() + "】新增装箱明细【"+wmsCartonEntity.getBoxNo()+"】【%s】";
         List<Pair<String, String>> addPairList = detailEntityList.stream().map(obj -> new Pair<>(wmsCartonEntity.getPackingTaskId(), obj.getSkuNo() + "*"+ obj.getPackQty())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), addPairList, addDTO.getOperation());
     }

@@ -521,7 +521,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isEmpty(dto.getIds())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = baseMapper.listPackingDetail(dto.getIds());
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = baseMapper.listPackingDetailBySkuId(dto.getIds());
         if (CollectionUtils.isEmpty(listPackingDetailDTOS)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -649,7 +649,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         packedView.setSourceId(packingTaskEntity.getSourceId());
         packedView.setSourceCode(packingTaskEntity.getSourceCode());
         //发货数量
-        packedView.setDeliveryQty(packingTaskDetailService.countDeliveryQty(id));
+        packedView.setDeliveryQty(packingTaskEntity.getDeliveryQty());
         //已装箱数量
         int packedQty = 0;
         List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(id));
