@@ -250,21 +250,23 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("warehouse_id", dto.getWarehouseId())
                     .eq("warehouse_location", minQtyInventoryEntity.getWarehouseLocation())
             );
-            if(safetyInventoryEntity == null){
-                return BatchResultDTO.fail(dto.getSkuId(), dto.getSkuNo(), "没有找到仓位安全库存");
-            }
-            //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
-            if(safetyInventoryEntity.getMaxQty() != 0){
-                suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - minQtyInventoryEntity.getQty();
-            }
-            //无最大补货量有安全库存时：等于安全库存+缺货数量-仓位可用库存
-            if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0){
-                suggestQty = safetyInventoryEntity.getSafetyQty() + dto.getQty() - minQtyInventoryEntity.getQty();
-            }
-            //无最大补货量无安全库存时：等于缺货数量
-            if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() == 0){
+            if(safetyInventoryEntity != null){
+                //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
+                if(safetyInventoryEntity.getMaxQty() != 0){
+                    suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - minQtyInventoryEntity.getQty();
+                }
+                //无最大补货量有安全库存时：等于安全库存+缺货数量-仓位可用库存
+                if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0){
+                    suggestQty = safetyInventoryEntity.getSafetyQty() + dto.getQty() - minQtyInventoryEntity.getQty();
+                }
+                //无最大补货量无安全库存时：等于缺货数量
+                if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() == 0){
+                    suggestQty = dto.getQty();
+                }
+            }else {
                 suggestQty = dto.getQty();
             }
+
             entity.setSuggestQty(suggestQty);
         }
 
