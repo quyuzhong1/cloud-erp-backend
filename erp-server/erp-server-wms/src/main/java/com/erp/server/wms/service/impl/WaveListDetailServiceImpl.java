@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -153,6 +154,9 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
 
         //发货单移出波次
         baseMapper.deleteById(entity.getId());
+        //修改波次状态为待处理
+        waveListService.update(new UpdateWrapper<WaveListEntity>().set("status", WaveStatusEnum.AWAIT_PICK.getCode()).eq("id", moveOutDTO.getWaveId()));
+        //删除波次
         List<WaveListDetailEntity> detailList = baseMapper.selectList(new QueryWrapper<WaveListDetailEntity>().eq("main_id", moveOutDTO.getWaveId()));
         if(detailList.isEmpty()){
             waveListService.getBaseMapper().deleteById(moveOutDTO.getWaveId());
@@ -161,6 +165,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         deliveryService.rollbackInventory(Collections.singletonList(moveOutDTO.getDeliveryId()));
         //修改发货单状态
         deliveryService.updateStatus(Collections.singletonList(moveOutDTO.getDeliveryId()) , SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode());
+        //记录日志
         operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
         return ApiResult.success();
     }
