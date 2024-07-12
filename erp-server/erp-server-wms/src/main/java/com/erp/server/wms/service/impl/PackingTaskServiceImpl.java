@@ -561,7 +561,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 pagingViewDTO.setWeightingTotalStatus(weightingStatus);
                 pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.getName(weightingStatus));
                 pagingViewDTO.setErrorMsg(StringUtils.isBlank(statusDTO.getErrorMsg())? "" : statusDTO.getErrorMsg());
-                BigDecimal packageWeight = Objects.isNull(statusDTO.getPackingWeight()) ? BigDecimal.ZERO : MathUtil.divide(statusDTO.getPackingWeight(), MathUtil.BigDecimal_1000);
+                BigDecimal packageWeight = Objects.isNull(statusDTO.getPackingWeight()) ? BigDecimal.ZERO : statusDTO.getPackingWeight();
                 pagingViewDTO.setPackageWeight(packageWeight);
                 pagingViewDTO.setPackageWeightStr(packageWeight.toPlainString() + UnitEnum.WeightUnitEnum.KG.getName());
             }else {
@@ -647,7 +647,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //已装箱数量
         int packedQty = 0;
         List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(id));
-        packedView.setBoxQty(cartonEntityList.size());
+        packedView.setBoxNum(cartonEntityList.size());
         if (CollectionUtils.isNotEmpty(cartonEntityList)){
             List<String> cartonIds = cartonEntityList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
             List<WmsCartonDetailEntity> cartonDetailEntityList = wmsCartonDetailService.listByMainIds(cartonIds);
@@ -1632,7 +1632,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 pagingViewDTO.setErrorMsg(StringUtils.isBlank(statusDTO.getErrorMsg())? "" : statusDTO.getErrorMsg());
                 pagingViewDTO.setPackedQty(Objects.isNull(statusDTO.getPackedQty())? MathUtil.ZERO: statusDTO.getPackedQty());
                 pagingViewDTO.setPickedQty(statusDTO.getPickedQty());
-                BigDecimal packageWeight = Objects.isNull(statusDTO.getPackingWeight()) ? BigDecimal.ZERO : MathUtil.divide(statusDTO.getPackingWeight(), MathUtil.BigDecimal_1000);
+                BigDecimal packageWeight = Objects.isNull(statusDTO.getPackingWeight()) ? BigDecimal.ZERO : statusDTO.getPackingWeight();
                 pagingViewDTO.setPackageWeight(packageWeight);
                 pagingViewDTO.setPackageWeightStr(packageWeight.toPlainString() + UnitEnum.WeightUnitEnum.KG.getName());
             }else {
