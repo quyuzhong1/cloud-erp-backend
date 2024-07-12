@@ -103,15 +103,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         if(CollectionUtil.isEmpty(cfgProductPackingDetailList)){
             return;
         }
-        List<String> valueList = cfgProductPackingDetailList.stream().map(CfgRuleOutDTO.CfgProductPackingDetail::getOverweightType).collect(Collectors.toList());
-        Set<String> values = new HashSet<>();
-        List<String> duplicates = valueList.stream()
-                .filter(v -> !values.add(v))
-                .collect(Collectors.toList());
 
-        if (!duplicates.isEmpty()) {
-            throw new ServiceException("产品装箱配置-存在相同分类配置");
-        }
         for (CfgRuleOutDTO.CfgProductPackingDetail cfgProductPackingDetail : cfgProductPackingDetailList) {
             if(cfgProductPackingDetail.getCannotPackingPropertyIds().stream().anyMatch(v->cfgProductPackingDetail.getCanPackingPropertyIds().contains(v))){
                 throw new ServiceException("产品装箱配置-不可装入与可装入存在相同产品属性");

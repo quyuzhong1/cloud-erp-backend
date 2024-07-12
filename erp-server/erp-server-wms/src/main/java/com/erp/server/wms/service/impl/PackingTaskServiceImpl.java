@@ -1212,13 +1212,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonService.updateById(wmsCartonEntity);
             packingTaskService.updateWeightStatus(packingTaskEntity);
             operateLogService.addModuleOperateLog(log, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "修改箱规");
-            updatePackingStatus(listGroupSkuById(wmsCartonEntity.getPackingTaskId()),wmsCartonEntity.getPackingTaskId());
             return ApiResult.success(checkDTO.getMsg());
         }else{
             //更新状态为称重失败
             wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.FAIL.getCode());
             wmsCartonEntity.setErrorMsg(checkDTO.getMsg());
             wmsCartonService.updateById(wmsCartonEntity);
+            packingTaskService.updateWeightStatus(packingTaskEntity);
             return ApiResult.error(checkDTO.getMsg());
         }
     }
