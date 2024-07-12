@@ -756,6 +756,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         for (InOutStockDTO member : members) {
             member.setSourceType(inventorySourceTypeEnum);
+            // B2C销售出库单审核等待时间20秒
+            member.setLockWaitTime(20L);
         }
         if (CollectionUtils.isNotEmpty(members)) {
             //无虚拟仓无需扣减库存
