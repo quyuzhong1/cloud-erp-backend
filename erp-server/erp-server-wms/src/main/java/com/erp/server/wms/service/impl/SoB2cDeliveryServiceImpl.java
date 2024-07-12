@@ -409,13 +409,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
         List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
 
-        //待处理、异常单、已发货和取消发货单 状态，不允许在打印拣货单
+        //待处理、已发货和取消发货单 状态，不允许在打印拣货单
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
         List<String> codeList = deliveryEntityList.stream()
                 .filter(req -> SoB2cDeliveryStatusEnum.notPrint().contains(req.getStatus()))
                 .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, CharSequenceUtil.join(",", codeList));
+        }
+        // 异常单生成波次异常状态，不允许在打印拣货单
+        List<String> codes = deliveryEntityList.stream()
+                .filter(req -> SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(req.getStatus()))
+                .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
+                .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(codes)) {
+            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
         }
         //查询产品信息
         List<String> skuIds = deliveryDetailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -532,7 +540,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillView(List<String> ids) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-        //待处理、异常单、已发货和取消发货单 状态，不允许在打印拣货单
+        //待处理、已发货和取消发货单 状态，不允许在打印拣货单
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
         List<String> codeList = deliveryEntityList.stream()
                 .filter(req -> SoB2cDeliveryStatusEnum.notPrint().contains(req.getStatus()))
@@ -540,7 +548,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, CharSequenceUtil.join(",", codeList));
         }
-
+        // 异常单生成波次异常状态，不允许在打印拣货单
+        List<String> codes = deliveryEntityList.stream()
+                .filter(req -> SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(req.getStatus()))
+                .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
+                .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(codes)) {
+            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
+        }
         //查询是否冻结
         List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
@@ -1213,7 +1228,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
 
-        //待处理、异常单、已发货和取消发货单 状态，不允许在打印拣货单
+        //待处理、已发货和取消发货单 状态，不允许在打印拣货单
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
         List<String> codeList = deliveryEntityList.stream()
                 .filter(req -> SoB2cDeliveryStatusEnum.notPrint().contains(req.getStatus()))
@@ -1221,7 +1236,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, CharSequenceUtil.join(",", codeList));
         }
-
+        // 异常单生成波次异常状态，不允许在打印拣货单
+        List<String> codes = deliveryEntityList.stream()
+                .filter(req -> SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(req.getStatus()))
+                .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
+                .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(codes)) {
+            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
+        }
         //查询是否冻结
         List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
