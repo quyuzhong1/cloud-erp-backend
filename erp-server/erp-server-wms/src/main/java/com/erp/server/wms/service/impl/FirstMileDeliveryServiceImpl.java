@@ -1606,26 +1606,26 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 //        return cartonView;
 //    }
 
-//    @Override
-//    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
-//        FirstMileDeliveryEntity entity = this.getById(id);
-//    /*      if (PackingTaskStatusEnum.WAIT.getCode().equals(entity.getPackingStatus())) {
-//            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
-//        }*/
-//        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
-//        listPackingDTO.setId(entity.getId());
-//        listPackingDTO.setCode(entity.getCode());
-//
-//        //获取总箱数
-//        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listByMainIds(Arrays.asList(id));
-//        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
-//        listPackingDTO.setBoxQty(boxQty);
-//
-//        //箱子明细信息
-//        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Arrays.asList(id));
-//        listPackingDTO.setDetailList(detailList);
-//        return listPackingDTO;
-//    }
+    @Override
+    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
+        FirstMileDeliveryEntity entity = this.getById(id);
+    /*      if (PackingTaskStatusEnum.WAIT.getCode().equals(entity.getPackingStatus())) {
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
+        }*/
+        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
+        listPackingDTO.setId(entity.getId());
+        listPackingDTO.setCode(entity.getCode());
+
+        //获取总箱数
+        List<WmsCartonSpecEntity> firstMileCartonEntities = wmsCartonSpecService.listByMainIds(Arrays.asList(id));
+        int boxQty = firstMileCartonEntities.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
+        listPackingDTO.setBoxQty(boxQty);
+
+        //箱子明细信息
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Arrays.asList(id));
+        listPackingDTO.setDetailList(detailList);
+        return listPackingDTO;
+    }
 
     @Override
     public void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
