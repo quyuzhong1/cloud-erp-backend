@@ -336,7 +336,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //已装箱才能审核
-        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getSourceCode());
+        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getCode());
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException("未生成装箱任务，不允许审核");
         }
