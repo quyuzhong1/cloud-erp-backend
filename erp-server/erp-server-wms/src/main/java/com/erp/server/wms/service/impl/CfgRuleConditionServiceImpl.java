@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
@@ -142,6 +143,10 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
             if (Objects.nonNull(old)) {
                 old.setFieldName(cfgConditionMap.get(old.getField()));
                 updateItem.setFieldName(cfgConditionMap.get(updateItem.getField()));
+                //值没有的时候名称置空
+                if (StrUtil.isBlank(updateItem.getValue())) {
+                    updateItem.setName("");
+                }
                 operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));
             }
         }
