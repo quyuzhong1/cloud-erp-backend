@@ -69,7 +69,7 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
         WdtWmsStockoutSalesQuerywithdetailRequest.Params params = new WdtWmsStockoutSalesQuerywithdetailRequest.Params();
         params.setStatus("110");
         params.setStatusType(3L);
-        params.setStartTime(dto.getLastTime().minusMinutes(15).format(timeFormatter));
+        params.setStartTime(dto.getLastTime().minusMinutes(5).format(timeFormatter));
         params.setEndTime(dto.getNextTime().format(timeFormatter));
 
         WdtWmsStockoutSalesQuerywithdetailRequest request = new WdtWmsStockoutSalesQuerywithdetailRequest();
@@ -78,16 +78,17 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
         request.setTargetAppKey(qimenService.getTargetAppKey());
         request.setWdtAppkey(qimenService.getWdtAppKey());
         request.setWdtSalt(qimenService.getWdtSalt());
-        request.setDatetime(qimenService.format(new Date()));
         request.putOtherTextParam(qimenService.getCustomerIdKey(), qimenService.getCustomerIdValue());
-        request.setWdtSign(QiMenUtils.getQimenCustomWdtSign(request, qimenService.getWdtSecret()));
 
         List<WdtWmsStockoutSalesQuerywithdetailResponse.Order> result = new ArrayList<>();
         boolean hasNext = true;
         while (hasNext) {
+            request.setDatetime(qimenService.format(new Date()));
+            request.setWdtSign(QiMenUtils.getQimenCustomWdtSign(request, qimenService.getWdtSecret()));
             WdtWmsStockoutSalesQuerywithdetailResponse response;
             try {
                 response = qimenService.execute(request);
+                log.info("奇门销售出库单响应参数：{}", JSONUtil.toJsonStr(response));
             } catch (ApiException e) {
                 log.error("拉取奇门销售出库单异常：{}", e);
                 return result;
@@ -103,10 +104,11 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
 
             result.addAll(response.getData().getOrder());
             Long totalCount = response.getData().getTotalCount();
-            pager.setPageNo(pager.getPageNo() + 1);
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
+            pager.setPageNo(pager.getPageNo() + 1);
+            request.setPager(pager);
         }
 
         return result;
@@ -153,7 +155,7 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
             dto.setTrackNo(order.getLogisticsNo());
             //来源信息
             dto.setSourceId(String.valueOf(order.getStockoutId()));
-            dto.setSourceType(SourceTypeEnum.QIMEN_SO_OUT_STOCK.getCode());
+            dto.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
             dto.setSourceCode(order.getTradeNo());
             dto.setOrderType(OrderTypeEnum.B2C.getCode());
             //审核时间

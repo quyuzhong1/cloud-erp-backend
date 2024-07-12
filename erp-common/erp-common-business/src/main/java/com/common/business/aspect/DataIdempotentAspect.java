@@ -86,7 +86,8 @@ public class DataIdempotentAspect {
                 RLock clientLock = redissonClient.getLock(submitKey);
 
                 //不设置 lockTime watch dog会 默认 锁定30s 10s重试
-                boolean locked = clientLock.tryLock(waitTime, leaseTime, TimeUnit.SECONDS);
+//                boolean locked = clientLock.tryLock(waitTime, leaseTime, TimeUnit.SECONDS);
+                boolean locked = clientLock.tryLock(waitTime, TimeUnit.SECONDS);
                 if (!locked) {
                     log.error("{}上锁失败", submitKey);
                     throw new ServiceException(ApiError.ERROR_1026);

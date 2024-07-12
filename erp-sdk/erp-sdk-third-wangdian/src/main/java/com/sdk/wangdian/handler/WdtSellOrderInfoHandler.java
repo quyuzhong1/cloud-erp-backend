@@ -11,7 +11,6 @@ import com.common.business.dto.WdtSoOutStockDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractSoOutStockHandler;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.wangdian.dto.WangDianOrderEntity;
@@ -96,7 +95,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             soOutStock.setTrackNo(order.getLogisticsNo());
             //来源信息
             soOutStock.setSourceId(order.getStockoutId());
-            soOutStock.setSourceType(SourceTypeEnum.WDT_OUT_STOCK.getCode());
+            soOutStock.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
             soOutStock.setSourceCode(order.getTradeNo());
             soOutStock.setOrderType(OrderTypeEnum.B2C.getCode());
             //审核时间
@@ -166,7 +165,7 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
         SalesStockoutRequest request = new SalesStockoutRequest();
         request.setStatusType(SalesStockoutRequest.STATUS_TYPE_CONSIGNED);
         request.setStatus("110");
-        request.setStartTime(dto.getLastTime().minusMinutes(15).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        request.setStartTime(dto.getLastTime().minusMinutes(5).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         request.setEndTime(dto.getNextTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         Pager pager = new Pager();
         int pageSize = 200;
@@ -187,10 +186,10 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
             }
             result.addAll(response.getOrderList());
             Integer totalCount = response.getTotal();
-            pager.setPageNo(pager.getPageNo() + 1);
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
+            pager.setPageNo(pager.getPageNo() + 1);
         }
         return result;
     }

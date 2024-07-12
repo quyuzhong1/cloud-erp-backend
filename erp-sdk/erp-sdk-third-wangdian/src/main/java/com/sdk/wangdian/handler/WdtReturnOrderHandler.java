@@ -88,10 +88,10 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
             }
             result.addAll(response.getOrders());
             Integer totalCount = response.getTotal();
-            pager.setPageNo(pager.getPageNo() + 1);
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
+            pager.setPageNo(pager.getPageNo() + 1);
         }
         return result;
     }
@@ -120,7 +120,7 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
             //仓库id
             dto.setWarehouseId(orderEntity.getWarehouseId());
             dto.setWarehouseName(orderEntity.getWarehouseName());
-            dto.setSourceType(SourceTypeEnum.WDT_RETURN_ORDER.getCode());
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
             dto.setSourceId(orderEntity.getTidList());
             dto.setSourceCode(orderEntity.getTradeNoList());
             List<WdtReturnOrderDetailDTO> detailList = new ArrayList<>();

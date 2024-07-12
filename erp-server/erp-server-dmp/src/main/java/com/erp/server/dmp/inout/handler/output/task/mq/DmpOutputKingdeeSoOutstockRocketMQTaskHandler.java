@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
@@ -23,6 +24,7 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import cn.hutool.core.collection.CollUtil;
 
 @Service
+@Scope("prototype")
 public class DmpOutputKingdeeSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler{
 
 	@Override

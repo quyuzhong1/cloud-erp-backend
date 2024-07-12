@@ -80,7 +80,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
     public void handlerAddressDetail(String key, List<PlatformApiTaskEntity> list, String platform, String category, String business, Integer size) {
         // 店铺IDS
         List<String> shopIds = list.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
-        List<PlatformAliExpressOrderDTO> orderEntityList = this.mongoListPlatformOrder(shopIds, DownloadStatusEnum.FINISH.getCode(), DownloadStatusEnum.WAIT.getCode(), null, null, 1, size);
+        List<PlatformAliExpressOrderDTO> orderEntityList = this.mongoListPlatformOrder(shopIds, DownloadStatusEnum.FINISH.getCode(), DownloadStatusEnum.WAIT.getCode(), null, null,false, 1, size);
         if (CollectionUtils.isEmpty(orderEntityList)) {
             return;
         }
@@ -91,6 +91,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
                 newDto.setDownloadAddressStatus(1);
                 // 判断是否有发货单下载(属于平台仓订单并且有物流信息)
                 newDto.setDownloadDeliveryStatus(newDto.convertDownloadDeliveryStatus());
+                newDto.setPlatformWarehouseOrder(newDto.isPlatformWarehouseOrder());
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                 newDto.setIsClean(2);
                 List<PlatformOrderDTO> convertDto = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
@@ -110,6 +111,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
                                                                    Integer downloadAddressStatus,
                                                                    Integer downloadDeliveryStatus,
                                                                    Integer downloadDeliveryDetailStatus,
+                                                                   Boolean hasPlatformWarehouseOrder,
                                                                    int currentPage,
                                                                    int pageSize
     ) {
@@ -127,6 +129,9 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
         if (null != downloadDeliveryDetailStatus) {
             criteria.and("downloadDeliveryDetailStatus").is(downloadDeliveryDetailStatus);
         }
+        if (null != hasPlatformWarehouseOrder){
+            criteria.and("platformWarehouseOrder").is(hasPlatformWarehouseOrder);
+        }
         query.addCriteria(criteria);
         if (currentPage > 0 && pageSize > 0) {
             query.skip((long) (currentPage - 1) * pageSize).limit(pageSize);
@@ -139,7 +144,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
     public void handlerOrderDetailDownload(List<PlatformApiTaskEntity> taskList, Integer size, String platform, String category, List<ShopInfoEntity> list) {
         List<String> queryShopIds = taskList.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
         // 查询当前分组未下载的mongo订单
-        List<PlatformAliExpressOrderDTO> orderEntityList = this.mongoListPlatformOrder(queryShopIds, DownloadStatusEnum.WAIT.getCode(), null, null, null, 1, size);
+        List<PlatformAliExpressOrderDTO> orderEntityList = this.mongoListPlatformOrder(queryShopIds, DownloadStatusEnum.WAIT.getCode(), null, null, null, null,1, size);
         if (CollectionUtil.isEmpty(orderEntityList)) {
             XxlJobHelper.log("[拉取速卖通订单详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(queryShopIds));
             return;
@@ -155,6 +160,9 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
             PlatformAliExpressOrderDTO newDto = aliExpressOrderHandler.downloadDetail(dto, null);
             newDto.setDownloadStatus(1);
             newDto.setDownloadAddressStatus(0);
+            newDto.setPlatformWarehouseOrder(newDto.isPlatformWarehouseOrder());
+            // 判断是否有发货单下载(属于平台仓订单并且有物流信息)
+            newDto.setDownloadDeliveryStatus(newDto.convertDownloadDeliveryStatus());
             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
             List<PlatformOrderDTO> convertDtoList = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
             PlatformOrderDTO convertDto = convertDtoList.get(0);
@@ -176,7 +184,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
     public void handlerSoDeliveryDownload(List<PlatformApiTaskEntity> value, Integer size, String platform, String category, List<ShopInfoEntity> list) {
         List<String> queryShopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
         // 查询当前分组未下载的mongo订单
-        List<PlatformAliExpressOrderDTO> orderEntityList = this.mongoListPlatformOrder(queryShopIds, DownloadStatusEnum.FINISH.getCode(), DownloadStatusEnum.FINISH.getCode(), DownloadStatusEnum.WAIT.getCode(), null, 1, size);
+        List<PlatformAliExpressOrderDTO> orderEntityList = this.mongoListPlatformOrder(queryShopIds, DownloadStatusEnum.FINISH.getCode(), null, DownloadStatusEnum.WAIT.getCode(), null,true, 1, size);
         if (CollectionUtil.isEmpty(orderEntityList)) {
             XxlJobHelper.log("[拉取速卖通发货单任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(queryShopIds));
             return;
@@ -204,9 +212,10 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
             log.info("[拉取速卖通发货单任务] 下载成功，orderIds={}", orderIds);
             XxlJobHelper.log("[拉取速卖通发货单任务] 下载成功，orderIds={}", orderIds);
         } catch (Exception error) {
+            log.error("[拉取速卖通发货单任务] 下载失败，orderIds={}, error={}", shopId, ExceptionUtil.stacktraceToString(error));
             XxlJobHelper.log("[拉取速卖通发货单任务] 下载失败，orderIds={}, error={}",
                     shopId,
-                    error.getMessage());
+                    ExceptionUtil.stacktraceToString(error));
         }
     }
 
@@ -215,7 +224,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
     public void handlerSoDeliveryDetailDownload(List<PlatformApiTaskEntity> value, Integer size, String platform, String category, List<ShopInfoEntity> list) {
         List<String> queryShopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
         // 查询当前分组未下载的mongo订单
-        List<PlatformAliExpressOrderDTO> orderEntityList = this.mongoListPlatformOrder(queryShopIds, DownloadStatusEnum.FINISH.getCode(), null, DownloadStatusEnum.FINISH.getCode(), DownloadStatusEnum.WAIT.getCode(), 1, size);
+        List<PlatformAliExpressOrderDTO> orderEntityList = this.mongoListPlatformOrder(queryShopIds, DownloadStatusEnum.FINISH.getCode(), null, DownloadStatusEnum.FINISH.getCode(), DownloadStatusEnum.WAIT.getCode(), null,1, size);
         if (CollectionUtil.isEmpty(orderEntityList)) {
             XxlJobHelper.log("[拉取速卖通订单详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(queryShopIds));
             return;
@@ -229,7 +238,9 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
     public void singleHandlerSoDeliveryDetailDownload(String platform, String category, PlatformAliExpressOrderDTO dto) {
         try {
             PlatformAliExpressOrderDTO newDto = aliExpressOrderHandler.downloadDeliveryDetail(dto);
+            newDto.setDownloadDeliveryStatus(1);
             newDto.setDownloadDeliveryDetailStatus(1);
+            newDto.setPlatformWarehouseOrder(newDto.isPlatformWarehouseOrder());
             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
             List<PlatformOrderDTO> convertDtoList = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
             PlatformOrderDTO convertDto = convertDtoList.get(0);
@@ -241,7 +252,7 @@ public class AliExpressDownloadServiceImpl implements AliExpressDownloadService 
         } catch (Exception error) {
             XxlJobHelper.log("[拉取速卖通发货单详情任务] 下载失败，uniqueId={}, error={}",
                     dto.getUniqueId(),
-                    error.getMessage());
+                    ExceptionUtil.stacktraceToString(error));
             // 发送预警
             dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
         }

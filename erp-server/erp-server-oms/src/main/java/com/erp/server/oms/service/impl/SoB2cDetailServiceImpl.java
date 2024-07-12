@@ -867,12 +867,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 //                detailEntity.setPlatformSkuNo("");
 //                detailEntity.setPlatformSpuNo("");
 //            }
-            // 手工单不记录平台SKU和平台SPU
-           if (!SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode().equalsIgnoreCase(detailEntity.getSourcePlatform())) {
-               // 非平台下载的订单不记录SKU
-               detailEntity.setPlatformSkuNo("");
-               detailEntity.setPlatformSpuNo("");
-            }
 
             //操作日志
             if (StringUtils.isNotBlank(detailEntity.getId())) {
