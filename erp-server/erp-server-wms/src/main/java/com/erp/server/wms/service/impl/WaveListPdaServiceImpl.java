@@ -151,8 +151,10 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         if(StringUtils.equals(WaveStatusEnum.HANG_UP.getCode(), currentWave.getStatus())){
             if(StringUtils.equals(bindDTO.getPickingCartCode(), currentWave.getPickingCartCode())){
                 doBindCart(bindDTO, pickingCart, loginUser);
+                return ApiResult.success(bindDTO);
+            }else {
+                return ApiResult.error("挂起的波次只能匹配已绑定的拣货车");
             }
-            return ApiResult.error("挂起的波次只能匹配已绑定的拣货车");
         }
 
         List<WaveListEntity> entityList = waveListService.list(new QueryWrapper<WaveListEntity>()
