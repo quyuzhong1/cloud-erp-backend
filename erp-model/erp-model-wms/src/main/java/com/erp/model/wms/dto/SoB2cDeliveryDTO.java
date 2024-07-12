@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -595,6 +596,11 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
+
 
         @Override
         public boolean equals(Object o) {
