@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -36,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveListEntity> implements WaveListService {
@@ -159,10 +161,13 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     private List<WaveListDTO.ViewDTO> fillViewList(List<WaveListEntity> records) {
         List<PickingCartTypeEntity> cartTypeList = pickingCartTypeService.list();
         Map<String, String> typeMap = cartTypeList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getName()));
-
         if (records.isEmpty()){
             return Collections.emptyList();
         }
+
+        List<String> waveIds = records.stream().map(item -> item.getId()).collect(Collectors.toList());
+        List<WaveListCartTypeEntity> waveCartTypeList = waveListCartTypeMapper.selectList(new QueryWrapper<WaveListCartTypeEntity>().in("wave_id", waveIds));
+        Map<String, List<WaveListCartTypeEntity>> cartTypeMap = waveCartTypeList.stream().collect(Collectors.groupingBy(item -> item.getWaveId()));
         List<WaveListDTO.ViewDTO> viewDTOList = new ArrayList<>(records.size());
         for (WaveListEntity record : records) {
             WaveListDTO.ViewDTO viewDTO = new WaveListDTO.ViewDTO();
@@ -171,7 +176,18 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PrintStatusEnum.getName(record.getPrintStatus()));
-            viewDTO.setPickingCartTypeName(typeMap.get(record.getPickingCartType()));
+            if(StringUtils.isBlank(record.getPickingCartCode())){
+                List<WaveListCartTypeEntity> entityList = cartTypeMap.get(record.getId());
+                if(entityList != null && !entityList.isEmpty()){
+                    List<String> typeIds = entityList.stream().map(WaveListCartTypeEntity::getPickingCartTypeId).collect(Collectors.toList());
+                    List<String> typeNameList = new ArrayList<>();
+                    typeIds.forEach(id -> typeNameList.add(typeMap.get(id)));
+                    String cartTypeName = String.join(",", typeNameList);
+                    viewDTO.setPickingCartTypeName(cartTypeName);
+                }
+            }else {
+                viewDTO.setPickingCartTypeName(typeMap.get(record.getPickingCartType()));
+            }
             viewDTO.setStatusName(WaveStatusEnum.getNameByCode(record.getStatus()));
             viewDTOList.add(viewDTO);
         }
