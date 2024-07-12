@@ -204,13 +204,8 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         if (CollectionUtils.isEmpty(skuIds) || StrUtil.isBlank(sourceType)){
             return;
         }
-        CfgRuleOutDTO.CfgProductPackingDetail productRule = cfgRuleOutService.getCfgProductPackingDetailByType(sourceType);
-        if (Objects.isNull(productRule)){
-            return;
-        }
-        List<String> cannotPackingPropertyIds = productRule.getCannotPackingPropertyIds();
-        List<String> canPackingPropertyIds = productRule.getCanPackingPropertyIds();
-        if (CollectionUtils.isEmpty(canPackingPropertyIds) || CollectionUtils.isEmpty(canPackingPropertyIds)){
+        List<CfgRuleOutDTO.CfgProductPackingDetail> productRuleList = cfgRuleOutService.getCfgProductPackingDetailByType(sourceType);
+        if (CollectionUtils.isEmpty(productRuleList)){
             return;
         }
         //获取sku属性值
@@ -226,28 +221,36 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         if (CollectionUtils.isEmpty(propertyIds)){
             return;
         }
-        List<String> containIds1 = cannotPackingPropertyIds.stream().filter(propertyIds::contains).collect(Collectors.toList());
-        List<String> containIds2 = canPackingPropertyIds.stream().filter(propertyIds::contains).collect(Collectors.toList());
-        List<BasicDictEntity> declarePropertyList = plmTaskFeign.listDictByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
-        Map<String, String> dictMap = declarePropertyList.stream().collect(Collectors.toMap(BasicDictEntity::getId, BasicDictEntity::getName));
-        if (CollectionUtils.isNotEmpty(containIds1) && CollectionUtils.isNotEmpty(containIds2)){
-            List<String> canPackList = new ArrayList<>();
-            containIds2.stream().forEach(propertyId -> {
-                String name = dictMap.get(propertyId);
-                if (StrUtil.isNotBlank(name)){
-                    canPackList.add(name);
-                }
-            });
-            List<String> cannotPackList = new ArrayList<>();
-            containIds1.stream().forEach(propertyId -> {
-                String name = dictMap.get(propertyId);
-                if (StrUtil.isNotBlank(name)){
-                    cannotPackList.add(name);
-                }
-            });
-            String msg = StrUtil.format("分类【{}】装入【{}】不可装入【{}】", PickingSourceTypeEnum.getName(sourceType), String.join("," ,canPackList), String.join(",",cannotPackList));
-            throw new ServiceException(msg);
+        for (CfgRuleOutDTO.CfgProductPackingDetail productRule : productRuleList) {
+            List<String> cannotPackingPropertyIds = productRule.getCannotPackingPropertyIds();
+            List<String> canPackingPropertyIds = productRule.getCanPackingPropertyIds();
+            if (CollectionUtils.isEmpty(canPackingPropertyIds) || CollectionUtils.isEmpty(canPackingPropertyIds)){
+                continue;
+            }
+            List<String> containIds1 = cannotPackingPropertyIds.stream().filter(propertyIds::contains).collect(Collectors.toList());
+            List<String> containIds2 = canPackingPropertyIds.stream().filter(propertyIds::contains).collect(Collectors.toList());
+            List<BasicDictEntity> declarePropertyList = plmTaskFeign.listDictByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+            Map<String, String> dictMap = declarePropertyList.stream().collect(Collectors.toMap(BasicDictEntity::getId, BasicDictEntity::getName));
+            if (CollectionUtils.isNotEmpty(containIds1) && CollectionUtils.isNotEmpty(containIds2)){
+                List<String> canPackList = new ArrayList<>();
+                containIds2.forEach(propertyId -> {
+                    String name = dictMap.get(propertyId);
+                    if (StrUtil.isNotBlank(name)){
+                        canPackList.add(name);
+                    }
+                });
+                List<String> cannotPackList = new ArrayList<>();
+                containIds1.forEach(propertyId -> {
+                    String name = dictMap.get(propertyId);
+                    if (StrUtil.isNotBlank(name)){
+                        cannotPackList.add(name);
+                    }
+                });
+                String msg = StrUtil.format("分类【{}】装入【{}】不可装入【{}】", PickingSourceTypeEnum.getName(sourceType), String.join("," ,canPackList), String.join(",",cannotPackList));
+                throw new ServiceException(msg);
+            }
         }
+
 
     }
 
