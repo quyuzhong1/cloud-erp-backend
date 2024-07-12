@@ -1,7 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +10,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.text.Bidi;
 import java.util.List;
 
 /**
@@ -85,7 +82,7 @@ public class WmsCartonDTO {
         /**
          * 调整装箱详情
          */
-        private List<AdjustDetailDTO> adjustDetailDTOList;
+        private List<AdjustDetailDTO> cartonDetailList;
     }
     @Data
     @NoArgsConstructor
