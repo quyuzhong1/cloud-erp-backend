@@ -32,6 +32,7 @@ public class DmpInputWdtOrderReturnNextDmpHandler extends DmpInputWdtNextDmpHand
 	
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
+		super.afterConvertData(dmpInputDataDmpRelationMaps);
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {

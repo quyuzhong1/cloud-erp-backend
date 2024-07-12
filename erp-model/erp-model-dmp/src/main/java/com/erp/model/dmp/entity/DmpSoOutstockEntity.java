@@ -167,6 +167,18 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
       */
      @TableField(value = "sale_org_id")
      private String saleOrgId = "";
+     
+     /**
+      * 整单折扣
+      */
+      @TableField(value = "total_discount_amount")
+      private BigDecimal totalDiscountAmount;
+      
+      /**
+       * 来源id
+       */
+       @TableField(value = "source_id")
+       private String sourceId;
     
     /**
      * 唯一字段md5值
