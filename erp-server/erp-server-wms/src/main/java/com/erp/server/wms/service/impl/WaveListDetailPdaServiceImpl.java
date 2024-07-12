@@ -76,20 +76,33 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         );
 
         //更新波次明细状态
-        WaveListDetailDTO.ViewDTO view = waveDetailService.view(hangUpDTO.getWaveId());
-        List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList = view.getDeliveryInfoList();
-        Set<String> deliveryIds = new HashSet<>();
-        for (WaveListDetailDTO.DeliveryInfoDTO dto : deliveryInfoList) {
-            if(Objects.equals(dto.getSalesQty(), dto.getPickedSumQty())){
-                deliveryIds.add(dto.getDeliveryId());
+        List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().eq("main_id", hangUpDTO.getWaveId()));
+        for (WaveListDetailEntity waveDetail : waveDetailList) {
+            List<PickingDetailEntity> pickingDetailList = getPickingDetailByDeliveryId(waveDetail.getDeliveryId());
+            int qty = pickingDetailList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+            int pickedQty = pickingDetailList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
+            if(pickedQty == qty){
+                waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>().set("status", PickingStatusEnum.FINISH.getCode()).eq("delivery_id", waveDetail.getDeliveryId()));
+            }
+            if(pickedQty < qty && pickedQty != 0){
+                waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>().set("status", PickingStatusEnum.PICK_ING.getCode()).eq("delivery_id", waveDetail.getDeliveryId()));
             }
         }
-        if(! deliveryIds.isEmpty()){
-            waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>()
-                    .set("picking_status", PickingStatusEnum.FINISH.getCode())
-                    .in("delivery_id", deliveryIds)
-            );
-        }
+
+//        WaveListDetailDTO.ViewDTO view = waveDetailService.view(hangUpDTO.getWaveId());
+//        List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList = view.getDeliveryInfoList();
+//        Set<String> deliveryIds = new HashSet<>();
+//        for (WaveListDetailDTO.DeliveryInfoDTO dto : deliveryInfoList) {
+//            if(Objects.equals(dto.getSalesQty(), dto.getPickedSumQty())){
+//                deliveryIds.add(dto.getDeliveryId());
+//            }
+//        }
+//        if(! deliveryIds.isEmpty()){
+//            waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>()
+//                    .set("picking_status", PickingStatusEnum.FINISH.getCode())
+//                    .in("delivery_id", deliveryIds)
+//            );
+//        }
 
         return Boolean.TRUE;
     }
@@ -106,6 +119,15 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 .set("picking_user_name", loginUser.getUserName())
                 .set("picking_time", LocalDateTime.now()));
         return resultViewDTO;
+    }
+
+    /**
+     * 通过发货单号查询发货单关联的所有拣货单明细
+     */
+    private List<PickingDetailEntity> getPickingDetailByDeliveryId(String deliveryId){
+        PickingListsEntity pickingEntity = pickingListsService.getOne(new QueryWrapper<PickingListsEntity>().eq("source_id", deliveryId));
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().eq("main_id", pickingEntity.getId()));
+        return pickingDetailList;
     }
 
     private WaveListDetailPdaDTO.ViewDTO getViewDTO(String waveId) {
@@ -207,7 +229,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         WaveListDetailDTO.ViewDTO view = waveDetailService.view(waveId);
         List<WaveListDetailDTO.DeliveryInfoDTO> deliveryList = view.getDeliveryInfoList();
         long skuIdsCount = deliveryList.stream().map(WaveListDetailDTO.DeliveryInfoDTO::getSkuId).distinct().count();
-        long skuIdsPickedCount = deliveryList.stream().filter(item -> item.getPickedSumQty() != 0).map(item -> item.getSkuId()).distinct().count();
+        long skuIdsPickedCount = deliveryList.stream().filter(item -> item.getPickedSumQty() != 0).map(WaveListDetailDTO.DeliveryInfoDTO::getSkuId).distinct().count();
         int salesSumQty = deliveryList.stream().mapToInt(WaveListDetailDTO.DeliveryInfoDTO::getSalesQty).sum();
         int pickedSumQty = deliveryList.stream().mapToInt(WaveListDetailDTO.DeliveryInfoDTO::getPickedSumQty).sum();
 
@@ -218,7 +240,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         resultDTO.setGoodsPickedQty(pickedSumQty);
 
         //更新波次列表状态
-        boolean isOutStock = updateList.stream().anyMatch(item -> item.getIsOutStock());
+        boolean isOutStock = updateList.stream().anyMatch(PickingDetailEntity::getIsOutStock);
         waveListService.update(new UpdateWrapper<WaveListEntity>()
                 .set("status", WaveStatusEnum.FINISH.getCode())
                 .set("picking_time", LocalDateTime.now())
@@ -226,7 +248,20 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 .set("picking_user_name", loginUser.getUserName())
                 .set(isOutStock, "is_out_stock", true)
                 .eq("id", finishParamDTO.getWaveId()));
-//        waveListService.updateStatusById(finishParamDTO.getWaveId(),WaveStatusEnum.FINISH.getCode());
+        //更新波次明细状态
+        List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().eq("main_id", finishParamDTO.getWaveId()));
+        for (WaveListDetailEntity waveDetail : waveDetailList) {
+            List<PickingDetailEntity> pickingDetailList = getPickingDetailByDeliveryId(waveDetail.getDeliveryId());
+            int qty = pickingDetailList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+            int pickedQty = pickingDetailList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
+            if(pickedQty == qty){
+                waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>().set("status", PickingStatusEnum.FINISH.getCode()).eq("delivery_id", waveDetail.getDeliveryId()));
+            }
+            if(pickedQty < qty && pickedQty != 0){
+                waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>().set("status", PickingStatusEnum.PICK_ING.getCode()).eq("delivery_id", waveDetail.getDeliveryId()));
+            }
+        }
+
         return resultDTO;
     }
 
@@ -305,11 +340,11 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             }
         }
         //将有已拣数量的发货单标记为拣货中
-        if(! pickedDeliveryIds.isEmpty()){
-            waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>()
-                    .set("picking_status", PickingStatusEnum.PICK_ING.getCode())
-                    .in("delivery_id", pickedDeliveryIds));
-        }
+//        if(! pickedDeliveryIds.isEmpty()){
+//            waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>()
+//                    .set("picking_status", PickingStatusEnum.PICK_ING.getCode())
+//                    .in("delivery_id", pickedDeliveryIds));
+//        }
         return updateList;
     }
 }
