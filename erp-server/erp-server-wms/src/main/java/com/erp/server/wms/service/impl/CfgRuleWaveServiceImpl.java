@@ -471,6 +471,11 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 addDTO.setPickingType(entity.getPickingType());
                 addDTO.setName(entity.getName());
                 addDTO.setPickCartTypeIdList(pickingCartTypeIdList);
+            } else {
+                //订单数和商品数不符合并且也不是同类波次则跳过
+                if (!isSame) {
+                    continue;
+                }
             }
 
             //添加发货单
