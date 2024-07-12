@@ -140,7 +140,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         handleData(wmsCartonEntity, addDTO);
 
         log.info("开始新增发货单箱子信息明细单");
-        boolean save = super.save(wmsCartonEntity);
+        boolean save = super.saveOrUpdate(wmsCartonEntity);
         if (!save) {
             throw new ServiceException("发货单箱子信息明细单保存失败");
         }
@@ -205,7 +205,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     */
     private void handleData(WmsCartonEntity wmsCartonEntity,WmsCartonSpecDTO.AddDTO addDTO) {
         //TODO 单箱状态判断
-
+        wmsCartonEntity.setId(addDTO.getCartonId());
         if (StrUtil.isBlank(wmsCartonEntity.getPackingStatus())){
             //发货数量
             int deliveryQty = addDTO.getDetailList().stream().mapToInt(WmsCartonDetailDTO.AddDTO::getDeliveryQty).sum();
