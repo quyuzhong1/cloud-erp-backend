@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 
@@ -259,14 +260,14 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
 //     **/
 //    WmsCartonSpecDTO.WmsCartonSpecView packingView(String id);
 
-//    /**
-//     * 装箱清单
-//     * @Author Luo_WG
-//     * @Date 2023/11/17 11:52
-//     * @param id
-//     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
-//     **/
-//    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
+    /**
+     * 装箱清单
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:52
+     * @param id
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
+     **/
+    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
 
     /**
      * 导出装箱清单Excel
