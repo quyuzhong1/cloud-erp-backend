@@ -38,12 +38,6 @@ import java.util.concurrent.TimeUnit;
 @Documented
 public @interface DistributeLocker {
     /**
-     * 取第几个参数
-     * @return  参数索引
-     */
-    int argIndex() default 0;
-
-    /**
      * 指定组成分布式锁的key，以逗号分隔。
      * 如：key="name,age",则分布式锁的key为这两个字段value的拼接 name+"|"+age
      */
@@ -59,6 +53,12 @@ public @interface DistributeLocker {
      * 最大等待时间(等其他锁释放)
      */
     long waiteTime() default 30;
+
+    /**
+     * 最大等待时间(等其他锁释放) key,用于动态获取等待时间
+     * @return  key
+     */
+    String waitTimeKey() default "";
 
     /**
      * 时间单位,默认为秒
