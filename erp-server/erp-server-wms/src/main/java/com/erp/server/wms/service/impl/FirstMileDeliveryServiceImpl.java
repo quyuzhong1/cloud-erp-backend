@@ -1637,35 +1637,36 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 //        return listPackingDTO;
 //    }
 
-//    @Override
-//    public void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
-//        if (CollectionUtils.isEmpty(dto.getIds())) {
-//            throw new ServiceException(ApiError.ERROR_98004);
-//        }
-//
-//        List<WmsCartonSpecDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
-//        if(CollUtil.isEmpty(list)) {
-//            return;
-//        }
-//
-//        //只有已装箱的发货单可以查看/导出装箱数据
-//        long count = list.stream().filter(req -> PackingTaskStatusEnum.WAIT.getCode().equals(req.getPackingStatus())).count();
-//        if (count > 0) {
-//            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
-//        }
-//
-//        // 导出数据
-//        StringBuffer sb = new StringBuffer();
-//        String excelPath = "excel/packingExport.xlsx";
-//        String name = "装箱清单导出";
-//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//        sb.append(date).append(name);
-//        try {
-//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-//        } catch (Exception e) {
-//            throw new ServiceException(ApiError.ERROR_1015);
-//        }
-//    }
+    @Override
+    public void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
+        if (CollectionUtils.isEmpty(dto.getIds())) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+
+
+        List<WmsCartonSpecDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+
+        //只有已装箱的发货单可以查看/导出装箱数据
+        long count = list.stream().filter(req -> StringUtils.isBlank(req.getPackingStatus()) || !PackingTaskStatusEnum.PACKED.getCode().equals(req.getPackingStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
+        }
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/packingExport.xlsx";
+        String name = "装箱清单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
 
     @Override
     public OverseasWarehouseInboundDTO.ViewDTO getGenerateOverseasWarehouseInboundView(String id) {

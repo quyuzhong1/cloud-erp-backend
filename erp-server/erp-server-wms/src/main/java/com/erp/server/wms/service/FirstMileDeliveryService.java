@@ -268,14 +268,14 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
 //     **/
 //    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
 
-//    /**
-//     * 导出装箱清单Excel
-//     * @author Luo_WG
-//     * @date:  2023-10-30
-//     * @param dto
-//     * @param response
-//     */
-//    void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
+    /**
+     * 导出装箱清单Excel
+     * @author Luo_WG
+     * @date:  2023-10-30
+     * @param dto
+     * @param response
+     */
+    void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 下推海外仓入库单单个查询
