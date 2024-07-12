@@ -219,6 +219,11 @@ public class WmsCartonDTO {
         private String skuId;
         private String skuNo;
         /**
+         * fnSku
+         */
+        private String fnSku;
+        private String ean;
+        /**
          * 发货数量
          */
         private Integer deliveryQty;

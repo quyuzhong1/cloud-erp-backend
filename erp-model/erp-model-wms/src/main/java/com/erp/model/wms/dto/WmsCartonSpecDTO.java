@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -753,6 +754,10 @@ public class WmsCartonSpecDTO implements Serializable {
          * 重量单位
          */
         private String weightUnit;
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
     }
 
     @Data
